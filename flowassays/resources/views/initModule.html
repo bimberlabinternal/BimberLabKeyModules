@@ -1,0 +1,135 @@
+<head>
+<script type="text/javascript">
+
+/*!
+ * Ext JS Library 3.2.1
+ * Copyright(c) 2006-2010 Ext JS, Inc.
+ * licensing@extjs.com
+ * http://www.extjs.com/license
+ */
+
+
+Ext.onReady(function(){
+
+    var pendingInserts = 0;
+    var pendingDeletes = 0;
+
+    //records for :
+    function btn1(){
+        pendingInserts++;
+
+        var config = {
+             schemaName: 'laboratory',
+             queryName: 'site_module_properties',
+             rows: [],
+             success: onSuccess,
+             failure: onError
+        };
+        var fields = ('prop_name,jsonvalue').split(',');
+        var data = [
+
+        ];
+
+        LABKEY.Query.insertRows(makeObject(config, data, fields));
+    }
+
+    function btn2(){
+        pendingInserts++;
+
+        var config = {
+             schemaName: 'laboratory',
+             queryName: 'site_module_properties',
+             rows: [],
+             success: onSuccess,
+             failure: onError
+        };
+        var fields = ('prop_name,jsonvalue').split(',');
+        var data = [
+            ['NavItem.Report', '{"name":"TruCount Summary","controller":"query","action":"executeQuery","urlParams":{"schemaName":"assay","query.queryName":"TruCount Pivoted"}}']
+        ];
+
+        LABKEY.Query.insertRows(makeObject(config, data, fields));
+    }
+
+    function btn3(){
+        pendingInserts++;
+
+        var config = {
+             schemaName: 'laboratory',
+             queryName: 'site_module_properties',
+             rows: [],
+             success: onSuccess,
+             failure: onError
+        };
+        var fields = ('prop_name,jsonvalue').split(',');
+        var data = [
+
+        ];
+
+        LABKEY.Query.insertRows(makeObject(config, data, fields));
+    }
+
+    function onSuccess(result){
+        pendingInserts--;
+
+        console.log('Success: '+result.queryName);
+
+        if(pendingInserts==0){
+            Ext.get('init_success').update('Insert Complete');
+        }
+    }
+
+    function onError(result){
+        pendingInserts--;
+
+        console.log('Error Loading Data: '+result.queryName);
+        console.log(result)
+
+        if(pendingInserts==0){
+            Ext.get('init_success').update('Insert Complete');
+        }
+    }
+
+    function makeObject(config, data, fields){
+        Ext.each(data, function(row){
+            var record = {};
+            Ext.each(fields, function(f, idx){
+                record[f] = row[idx];
+            }, this);
+            config.rows.push(record);
+        }, this);
+        return config;
+    }
+
+    var panel = new Ext.Panel({
+        renderTo: 'initModule',
+        layout: 'table',
+        layoutConfig: {
+            columns: 1
+        },
+        defaults: {
+            style: 'padding:10px;'
+        },
+        items: [{
+//            xtype: 'button',
+//            text: 'Populate Sample Items',
+//            scope: this,
+//            handler: btn1
+//        },{
+            xtype: 'button',
+            text: 'Populate Report Items',
+            scope: this,
+            handler: btn2
+//        },{
+//            xtype: 'button',
+//            text: 'Populate Misc Items',
+//            scope: this,
+//            handler: btn3
+        }]
+    });
+});
+
+</script>
+</head>
+<div id="initModule"></div>
+<div id="init_success"></div>

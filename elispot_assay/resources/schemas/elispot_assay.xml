@@ -1,0 +1,63 @@
+<ns:tables xmlns:ns="http://labkey.org/data/xml">
+    <ns:table tableName="peptide_pools" tableDbType="TABLE">
+        <ns:tableTitle>Peptide Pools</ns:tableTitle>
+        <ns:javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</ns:javaCustomizer>
+        <ns:titleColumn>pool_name</ns:titleColumn>
+        <ns:columns>
+            <ns:column columnName="rowid"/>
+            <ns:column columnName="pool_name"/>
+            <ns:column columnName="category"/>
+            <ns:column columnName="comments"/>
+            <ns:column columnName="container"/>
+            <ns:column columnName="createdby"/>
+            <ns:column columnName="created"/>
+            <ns:column columnName="modifiedby"/>
+            <ns:column columnName="modified"/>
+        </ns:columns>
+    </ns:table>
+    <ns:table tableName="assay_types" tableDbType="TABLE">
+        <ns:tableTitle>ELISPOT Assay Types</ns:tableTitle>
+        <ns:javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</ns:javaCustomizer>
+        <ns:columns>
+            <ns:column columnName="rowid"/>
+            <ns:column columnName="name"/>
+            <ns:column columnName="description"/>
+            <ns:column columnName="category"/>
+            <ns:column columnName="createdby"/>
+            <ns:column columnName="created"/>
+            <ns:column columnName="modifiedby"/>
+            <ns:column columnName="modified"/>
+        </ns:columns>
+    </ns:table>
+    <ns:table tableName="peptide_pool_members" tableDbType="TABLE">
+        <ns:tableTitle>Peptide Pool Members</ns:tableTitle>
+        <ns:javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</ns:javaCustomizer>
+        <ns:titleColumn>sequence</ns:titleColumn>
+        <ns:columns>
+            <ns:column columnName="rowid"/>
+            <ns:column columnName="poolid">
+                <ns:columnTitle>Pool Name</ns:columnTitle>
+                <ns:fk>
+                    <ns:fkDbSchema>elispot_assay</ns:fkDbSchema>
+                    <ns:fkTable>peptide_pools</ns:fkTable>
+                    <ns:fkColumnName>rowid</ns:fkColumnName>
+                </ns:fk>
+            </ns:column>
+            <ns:column columnName="sequence"/>
+            <ns:column columnName="container"/>
+            <ns:column columnName="createdby"/>
+            <ns:column columnName="created"/>
+            <ns:column columnName="modifiedby"/>
+            <ns:column columnName="modified"/>
+        </ns:columns>
+    </ns:table>
+    <ns:table tableName="instruments" tableDbType="TABLE">
+        <ns:tableTitle>ELISPOT Assay Instruments</ns:tableTitle>
+        <ns:javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</ns:javaCustomizer>
+        <ns:pkColumnName>instrument</ns:pkColumnName>
+        <ns:columns>
+            <ns:column columnName="instrument">
+            </ns:column>
+        </ns:columns>
+    </ns:table>
+</ns:tables>

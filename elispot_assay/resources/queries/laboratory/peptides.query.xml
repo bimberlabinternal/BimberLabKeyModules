@@ -1,0 +1,36 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="peptides" tableDbType="TABLE">
+                <columns>
+                    <column columnName="location" wrappedColumnName="sequence">
+                        <isUnselectable>true</isUnselectable>
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <columnTitle>Peptide Locations</columnTitle>
+                        <displayWidth>300</displayWidth>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>peptide_position_summary</fkTable>
+                            <fkColumnName>sequence</fkColumnName>
+                            <fkDisplayColumnName>locations</fkDisplayColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="pools" wrappedColumnName="rowid">
+                        <isUnselectable>true</isUnselectable>
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <columnTitle>Pools Using This Peptide</columnTitle>
+                        <displayWidth>300</displayWidth>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>pools_using_peptide</fkTable>
+                            <fkColumnName>rowid</fkColumnName>
+                            <fkDisplayColumnName>pools</fkDisplayColumnName>
+                        </fk>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

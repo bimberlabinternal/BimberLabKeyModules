@@ -1,0 +1,28 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="subjectId"/>
+        <column name="date"/>
+        <!--<column name="category"/>-->
+        <column name="peptide" />
+        <column name="cell_number"/>
+        <column name="spots"/>
+        <column name="spotsAboveBackground"/>
+        <column name="pvalue"/>
+        <column name="qual_result"/>
+        <column name="num_replicates"/>
+        <column name="comment"/>
+        <column name="sampleId"/>
+        <column name="sampleType"/>
+        <column name="qcflag"/>
+        <column name="Run/RowId">
+            <properties>
+                <property name="columnTitle" value="Run"/>
+            </properties>
+        </column>
+        <column name="workbook"/>
+    </columns>
+    <sorts>
+        <sort column="subjectId" />
+        <sort column="date" descending="true"/>
+    </sorts>
+</customView>

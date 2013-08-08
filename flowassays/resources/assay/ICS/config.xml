@@ -1,0 +1,4 @@
+<ap:provider xmlns:ap="http://labkey.org/study/assay/xml">
+    <ap:name>ICS</ap:name>
+    <ap:description>Intracellular Cytokine Staining</ap:description>
+</ap:provider>

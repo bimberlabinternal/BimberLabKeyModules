@@ -1,0 +1,18 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="pools_using_peptide" tableDbType="TABLE">
+                <tableTitle>Pools Using Peptide</tableTitle>
+                <columns>
+                    <column columnName="rowid">
+                        <isKeyField>true</isKeyField>
+                    </column>
+                    <column columnName="pools">
+                        <displayWidth>300</displayWidth>
+                        <columnTitle>Pools Using Peptide</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

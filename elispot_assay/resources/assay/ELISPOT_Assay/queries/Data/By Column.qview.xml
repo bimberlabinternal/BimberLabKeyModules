@@ -1,0 +1,26 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="well"/>
+        <column name="well96/addressByColumn"/>
+        <!--<column name="well96/addressByRow"/>-->
+        <column name="subjectId"/>
+        <column name="date"/>
+        <column name="peptide" />
+        <column name="cell_number"/>
+        <column name="spotsAboveBackground"/>
+        <column name="pvalue"/>
+        <column name="qual_result"/>
+        <column name="comment"/>
+        <column name="sampleId"/>
+        <column name="sampleType"/>
+        <column name="Run/RowId">
+            <properties>
+                <property name="columnTitle" value="Run"/>
+            </properties>
+        </column>
+    </columns>
+    <sorts>
+        <!--<sort column="Run/RowId" />-->
+        <sort column="well96/addressByColumn" />
+    </sorts>
+</customView>

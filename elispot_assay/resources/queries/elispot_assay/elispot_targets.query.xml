@@ -1,0 +1,27 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="elispot_targets" tableDbType="TABLE">
+                <tableTitle>ELISPOT Targets</tableTitle>
+                <columns>
+                    <column columnName="target">
+                        <isKeyField>true</isKeyField>
+                    </column>
+                    <column columnName="location" wrappedColumnName="sequence">
+                        <isUnselectable>true</isUnselectable>
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <columnTitle>Peptide Locations</columnTitle>
+                        <displayWidth>300</displayWidth>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>peptide_position_summary</fkTable>
+                            <fkColumnName>sequence</fkColumnName>
+                            <fkDisplayColumnName>locations</fkDisplayColumnName>
+                        </fk>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

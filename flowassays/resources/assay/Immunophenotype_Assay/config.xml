@@ -1,0 +1,4 @@
+<ap:provider xmlns:ap="http://labkey.org/study/assay/xml">
+    <ap:name>Immunophenotyping</ap:name>
+    <ap:description>Immunophenotype data, such as BD TruCount</ap:description>
+</ap:provider>

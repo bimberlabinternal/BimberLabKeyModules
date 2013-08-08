@@ -1,0 +1,16 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="FCSAnalyses" tableDbType="TABLE" useColumnOrder="true">
+                <tableTitle>FCS Analyses</tableTitle>
+                <javaCustomizer>org.labkey.laboratory.query.DefaultAssayCustomizer</javaCustomizer>
+                <columns>
+
+                </columns>
+                <buttonBarOptions position="both" includeStandardButtons="true">
+
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>

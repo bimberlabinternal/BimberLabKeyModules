@@ -1,0 +1,80 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="Runs" tableDbType="TABLE" useColumnOrder="true">
+                <javaCustomizer>org.labkey.laboratory.query.DefaultAssayCustomizer</javaCustomizer>
+                <columns>
+                    <column columnName="Name">
+                        <columnTitle>Run Name</columnTitle>
+                    </column>
+                    <column columnName="RowId">
+                        <columnTitle>Run Id</columnTitle>
+                    </column>
+                    <column columnName="comments">
+                        <columnTitle>Run Description</columnTitle>
+                        <nullable>true</nullable>
+                    </column>
+                    <column columnName="runDate">
+                        <description>The date this assay was performed</description>
+                    </column>
+                    <column columnName="performedBy">
+                        <description>The name of the person who performed this assay</description>
+                    </column>
+                    <column columnName="assayName">
+                        <description>The type of assay performed, such as IFN-Gamma</description>
+                        <fk>
+                            <fkDbSchema>elispot_assay</fkDbSchema>
+                            <fkTable>assay_types</fkTable>
+                            <fkColumnName>rowid</fkColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="instrument">
+                        <description>The instrument used to perform this assay</description>
+                        <fk>
+                            <fkDbSchema>elispot_assay</fkDbSchema>
+                            <fkTable>instruments</fkTable>
+                            <fkColumnName>instrument</fkColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="minspots">
+                        <columnTitle>Min. Spots For Positive</columnTitle>
+                        <description>If a value is provided, for a well to be considered positive, at least this many spots must be present.  If zero, no minimum spot requirement is used</description>
+                        <defaultValue>0</defaultValue>
+                    </column>
+                    <column columnName="positivity_threshold">
+                        <columnTitle>Positivity Threshold</columnTitle>
+                        <description>For a well to be considered positive, all replicates will be compared against all negative controls using a one-tailed T-test.  If the alpha is below this threshold, the sample is called positive.  The alpha of each result will also be stored for future reference.</description>
+                        <defaultValue>0.05</defaultValue>
+                    </column>
+                    <column columnName="Flag">
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <isUserEditable>false</isUserEditable>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="created">
+
+                    </column>
+                    <column columnName="createdby">
+
+                    </column>
+                </columns>
+                <buttonBarOptions position="both" includeStandardButtons="true">
+                    <includeScript>/laboratory/assayButtons.js</includeScript>
+                    <!--<onRender>Laboratory.onAssayLoad</onRender>-->
+                    <item text="More Actions" insertAfter="last">
+                        <item text="View Batches">
+                            <onClick>Laboratory.Assay.viewBatchesBtn(dataRegion, 'Runs')</onClick>
+                        </item>
+                        <item text="View Results">
+                            <onClick>Laboratory.Assay.viewResultsBtn(dataRegion, 'Runs')</onClick>
+                        </item>
+                        <item text="Manage Assay">
+                            <onClick>Laboratory.Assay.manageAssayBtn(dataRegion, 'Runs')</onClick>
+                        </item>
+                    </item>
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>

@@ -1,0 +1,113 @@
+<ap:domain xmlns:exp="http://cpas.fhcrc.org/exp/xml" xmlns:ap="http://labkey.org/study/assay/xml">
+    <exp:Description>These are the ELISPOT assay result fields.</exp:Description>
+    <exp:PropertyDescriptor>
+        <exp:Name>subjectId</exp:Name>
+        <exp:Required>true</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:ConceptURI>http://cpas.labkey.com/Study#ParticipantId</exp:ConceptURI>
+        <exp:Label>Subject Id</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>sampleType</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Sample Type</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>date</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#dateTime</exp:RangeURI>
+        <exp:ConceptURI>http://cpas.labkey.com/laboratory#sampleDate</exp:ConceptURI>
+        <exp:Label>Sample Date</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>category</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Sample Category</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>peptide</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Peptide/Pool</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>plate</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Plate</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>well</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Well</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>cell_number</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Cell Number</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>spots</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Raw Spots</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>pvalue</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>p-Value</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>comment</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Comment</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>qual_result</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>Result</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>num_replicates</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label># Replicates</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>sampleId</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Freezer Id</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>requestid</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>requestId</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>qcflag</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>QC Flags</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>spotsAboveBackground</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Spots Above Background</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>concentration</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Peptide Concentration</exp:Label>
+    </exp:PropertyDescriptor>
+</ap:domain>

@@ -1,0 +1,17 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="peptide_position_summary" tableDbType="TABLE">
+                <tableTitle>Peptide Position Summary</tableTitle>
+                <columns>
+                    <column columnName="sequence">
+                        <isKeyField>true</isKeyField>
+                    </column>
+                    <column columnName="locations">
+                        <displayWidth>300</displayWidth>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

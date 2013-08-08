@@ -1,0 +1,143 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="ELISPOT Result Summary" tableDbType="TABLE" useColumnOrder="true">
+                <columns>
+                    <column columnName="subjectId">
+                    </column>
+                    <column columnName="date">
+                    </column>
+                    <column columnName="category">
+                        <description>The result category, which is primarily used to differentiate experimental controls from other results</description>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>samplecategory</fkTable>
+                            <fkColumnName>category</fkColumnName>
+                        </fk>
+                        <measure>false</measure>
+                        <dimension>true</dimension>
+                    </column>
+                    <column columnName="peptide">
+                        <fk>
+                            <fkDbSchema>elispot_assay</fkDbSchema>
+                            <fkTable>elispot_targets</fkTable>
+                            <fkColumnName>target</fkColumnName>
+                            <fkDisplayColumnName>target</fkDisplayColumnName>
+                        </fk>
+                        <measure>false</measure>
+                        <dimension>true</dimension>
+                    </column>
+                    <column columnName="well">
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="avgSpots">
+                        <conceptURI>http://cpas.labkey.com/laboratory#assayResult</conceptURI>
+                        <measure>true</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="avgSpotsAboveBackground">
+                        <conceptURI>http://cpas.labkey.com/laboratory#assayResult</conceptURI>
+                        <measure>true</measure>
+                        <dimension>false</dimension>
+                        <formatString>0.###</formatString>
+                    </column>
+                    <column columnName="stdDeviation">
+                        <columnTitle>Std Deviation</columnTitle>
+                        <shownInInsertView>false</shownInInsertView>
+                        <isHidden>true</isHidden>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="result">
+                        <shownInInsertView>false</shownInInsertView>
+                        <columnTitle>Result</columnTitle>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>qual_results</fkTable>
+                            <fkColumnName>rowid</fkColumnName>
+                        </fk>
+                        <conditionalFormats>
+                            <conditionalFormat>
+                                <filters>
+                                    <filter operator="eq" value="POS"/>
+                                </filters>
+                                <backgroundColor>FFFF00</backgroundColor>
+                            </conditionalFormat>
+                        </conditionalFormats>
+                    </column>
+                    <column columnName="pvalue">
+                        <formatString>0.###</formatString>
+                    </column>
+                    <column columnName="comment">
+                        <inputType>textarea</inputType>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="sampleId">
+                        <columnTitle>Freezer Id</columnTitle>
+                        <description>The unique Id of the sample, which corresponds to a record in the Samples table</description>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>samples</fkTable>
+                            <fkColumnName>freezerid</fkColumnName>
+                        </fk>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="requestid">
+                        <columnTitle>RequestId</columnTitle>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                        <!--<fk>-->
+                        <!--<fkDbSchema>laboratory</fkDbSchema>-->
+                        <!--<fkTable>assay_requests</fkTable>-->
+                        <!--<fkColumnName>rowid</fkColumnName>-->
+                        <!--</fk>-->
+                    </column>
+                    <column columnName="qcflag">
+                        <columnTitle>QC Flags</columnTitle>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                        <conditionalFormats>
+                            <conditionalFormat>
+                                <filters>
+                                    <filter operator="isnonblank" value=""/>
+                                </filters>
+                                <backgroundColor>FFFF00</backgroundColor>
+                            </conditionalFormat>
+                        </conditionalFormats>
+                    </column>
+                    <column columnName="well96" wrappedColumnName="well">
+                        <isUnselectable>true</isUnselectable>
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <columnTitle>Well Position in 96-well Plate</columnTitle>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>96well_plate</fkTable>
+                            <fkColumnName>well</fkColumnName>
+                        </fk>
+                    </column>
+                </columns>
+                <buttonBarOptions position="both" includeStandardButtons="true">
+                    <includeScript>/laboratory/assayButtons.js</includeScript>
+                    <!--<onRender>Laboratory.onAssayLoad</onRender>-->
+                    <item text="More Actions" insertAfter="last">
+                        <item text="View Batches">
+                            <onClick>Laboratory.Assay.viewBatchesBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                        <item text="View Runs">
+                            <onClick>Laboratory.Assay.viewRunsBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                        <item text="Manage Assay">
+                            <onClick>Laboratory.Assay.manageAssayBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                    </item>
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>
