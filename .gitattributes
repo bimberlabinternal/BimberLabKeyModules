@@ -37,6 +37,8 @@ labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/Runs.query.xml -
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/Runs/.qview.xml -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/resultSummaryBySubject.query.xml -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/resultSummaryBySubject.sql -text
+labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/resultSummaryBySubjectAndMethod.query.xml -text
+labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/resultSummaryBySubjectAndMethod.sql -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/strConflicts.query.xml -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/strConflicts.sql -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/queries/strSummary.query.xml -text
