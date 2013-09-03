@@ -7,7 +7,6 @@ iths/VBD/resources/views/samplesearch.view.xml -text
 iths/VBD/resources/views/searchresults.html -text
 iths/VBD/resources/views/searchresults.view.xml -text
 iths/VBD/resources/web/VBD/VBDSearchFilterPanel.js -text
-iths/cbr/build.xml -text
 iths/cbr/module.properties -text
 iths/cbr/resources/schemas/cbr.xml -text
 iths/cbr/resources/schemas/dbscripts/postgresql/cbr-0.00-0.01.sql -text
@@ -24,7 +23,6 @@ iths/cbr/resources/web/cbr/SampleBrowserPanel.js -text
 iths/cbr/resources/web/cbr/cbr.css -text
 iths/cbr/tools/cbr_data_transfer.sql -text
 labModules/GenotypeAssays/GenotypeAssays.iml -text
-labModules/GenotypeAssays/build.xml -text
 labModules/GenotypeAssays/module.properties -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/config.xml -text
 labModules/GenotypeAssays/resources/assay/GenotypeAssay/domains/batch.xml -text
@@ -96,7 +94,6 @@ labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/SSPImportHelper.ja
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/SSPPivotingImportMethod.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/UCDavisSTRImportMethod.java -text
 labModules/elispot_assay/ELISPOT_Assay.iml -text
-labModules/elispot_assay/build.xml -text
 labModules/elispot_assay/module.properties -text
 labModules/elispot_assay/resources/assay/ELISPOT_Assay/config.xml -text
 labModules/elispot_assay/resources/assay/ELISPOT_Assay/domains/batch.xml -text
@@ -145,7 +142,6 @@ labModules/elispot_assay/src/org/labkey/elispot_assay/ELISPOT_AssaySchema.java -
 labModules/elispot_assay/src/org/labkey/elispot_assay/assay/AIDImportMethod.java -text
 labModules/elispot_assay/src/org/labkey/elispot_assay/assay/DefaultImportMethod.java -text
 labModules/flowassays/FlowAssays.iml -text
-labModules/flowassays/build.xml -text
 labModules/flowassays/module.properties -text
 labModules/flowassays/resources/assay/ICS/config.xml -text
 labModules/flowassays/resources/assay/ICS/domains/batch.xml -text
