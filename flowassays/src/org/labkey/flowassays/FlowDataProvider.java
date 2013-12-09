@@ -5,6 +5,7 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.laboratory.QueryCountNavItem;
+import org.labkey.api.laboratory.SummaryNavItem;
 import org.labkey.api.laboratory.TabbedReportItem;
 import org.labkey.api.laboratory.assay.AbstractAssayDataProvider;
 import org.labkey.api.laboratory.assay.AssayImportMethod;
@@ -77,9 +78,9 @@ public class FlowDataProvider extends AbstractAssayDataProvider
     }
 
     @Override
-    public List<NavItem> getSummary(Container c, User u)
+    public List<SummaryNavItem> getSummary(Container c, User u)
     {
-        List<NavItem> items = new ArrayList<NavItem>();
+        List<SummaryNavItem> items = new ArrayList<>();
 
         if (areModulesActive(c))
         {

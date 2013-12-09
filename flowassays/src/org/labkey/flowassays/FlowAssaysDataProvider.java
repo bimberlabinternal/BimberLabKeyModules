@@ -19,6 +19,7 @@ import org.json.JSONObject;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.laboratory.AbstractDataProvider;
+import org.labkey.api.laboratory.SummaryNavItem;
 import org.labkey.api.ldk.NavItem;
 import org.labkey.api.laboratory.SimpleSettingsItem;
 import org.labkey.api.module.Module;
@@ -101,7 +102,7 @@ public class FlowAssaysDataProvider extends AbstractDataProvider
         return _module;
     }
 
-    public List<NavItem> getSummary(Container c, User u)
+    public List<SummaryNavItem> getSummary(Container c, User u)
     {
         return Collections.emptyList();
     }
