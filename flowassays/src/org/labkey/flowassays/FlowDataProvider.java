@@ -54,7 +54,7 @@ public class FlowDataProvider extends AbstractAssayDataProvider
             List<ExpProtocol> protocols = getProtocols(c);
             for (ExpProtocol p : protocols)
             {
-                items.add(new FlowNavItem(this, p));
+                items.add(new FlowNavItem(this));
             }
         }
 
