@@ -132,7 +132,7 @@ public class FlowImportHelper
     {
         JSONObject runMeta = getJsonObject(meta, "Run");
         JSONObject instrument = getJsonObject(runMeta, "instrument");
-        instrument.put("value", "BD LSR II");
+        instrument.put("defaultValue", "BD LSR II");
         runMeta.put("instrument", instrument);
         meta.put("Run", runMeta);
 
@@ -140,7 +140,7 @@ public class FlowImportHelper
 
         JSONObject sampleType = getJsonObject(resultsMeta, "sampleType");
         sampleType.put("setGlobally", true);
-        sampleType.put("value", "PBMC");
+        sampleType.put("defaultValue", "PBMC");
         resultsMeta.put("sampleType", sampleType);
 
         JSONObject parentPopulation = getJsonObject(resultsMeta, "parentPopulation");

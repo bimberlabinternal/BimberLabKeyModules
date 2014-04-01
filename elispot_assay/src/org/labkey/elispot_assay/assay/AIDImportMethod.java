@@ -93,7 +93,7 @@ public class AIDImportMethod extends DefaultImportMethod
         JSONObject runMeta = getJsonObject(meta, "Run");
 
         JSONObject instrumentJson = getJsonObject(runMeta, "instrument");
-        instrumentJson.put("value", "AID Plate Reader");
+        instrumentJson.put("defaultValue", "AID Plate Reader");
         runMeta.put("instrument", instrumentJson);
 
         meta.put("Run", runMeta);

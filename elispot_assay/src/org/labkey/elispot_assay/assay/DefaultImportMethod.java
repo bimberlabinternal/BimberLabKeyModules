@@ -78,7 +78,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
         JSONObject runMeta = getJsonObject(meta, "Run");
 
         JSONObject assayJson = getJsonObject(runMeta, "assayName");
-        assayJson.put("value", 1);
+        assayJson.put("defaultValue", 1);
         runMeta.put("assayName", assayJson);
 
         meta.put("Run", runMeta);
