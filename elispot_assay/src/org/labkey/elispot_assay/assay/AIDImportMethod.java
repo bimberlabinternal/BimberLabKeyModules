@@ -1,5 +1,6 @@
 package org.labkey.elispot_assay.assay;
 
+import au.com.bytecode.opencsv.CSVWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
@@ -23,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -133,21 +135,18 @@ public class AIDImportMethod extends DefaultImportMethod
         protected String readRawFile(ImportContext context) throws BatchValidationException
         {
             ParserErrors errors = context.getErrors();
-            BufferedReader reader = null;
 
-            try
+            try (StringWriter sw = new StringWriter(); CSVWriter out = new CSVWriter(sw, '\t'))
             {
-                reader = new BufferedReader(new FileReader(context.getFile()));
-                StringBuilder sb = new StringBuilder();
-                Map<String, Map<String, String>> rowMap = new LinkedHashMap<String, Map<String, String>>();
-
-                String line;
+                Map<String, Map<String, String>> rowMap = new LinkedHashMap<>();
                 int idx = 0;
                 boolean withinPlate = false;
                 PLATE p = null;
                 int rowInPlate = 0;
-                while (null != (line = reader.readLine()))
+
+                for (List<String> row : getFileLines(context.getFile()))
                 {
+                    String line = StringUtils.trimToNull(StringUtils.join(row, "\n"));
                     idx++;
 
                     if (StringUtils.isEmpty(line))
@@ -182,41 +181,38 @@ public class AIDImportMethod extends DefaultImportMethod
                 }
 
                 int num = 0;
-                String delim = "\t";
                 for (String well : rowMap.keySet())
                 {
                     Map<String, String> row = rowMap.get(well);
                     if (num == 0)
                     {
-                        sb.append("well").append(delim);
+                        List<String> toAdd = new ArrayList<>();
+                        toAdd.add("well");
                         for (String field : row.keySet())
                         {
-                            sb.append(field).append(delim);
+                            toAdd.add(field);
                         }
-                        sb.append(System.getProperty("line.separator"));
+                        out.writeNext(toAdd.toArray(new String[toAdd.size()]));
                     }
                     num++;
 
-                    sb.append(well).append(delim);
+                    List<String> toAdd = new ArrayList<>();
+                    toAdd.add(well);
                     for (String field : row.keySet())
                     {
-                        sb.append(row.get(field)).append(delim);
+                        toAdd.add(row.get(field));
                     }
-                    sb.append(System.getProperty("line.separator"));
+                    out.writeNext(toAdd.toArray(new String[toAdd.size()]));
                 }
 
                 errors.confirmNoErrors();
 
-                return sb.toString();
+                return sw.toString();
             }
             catch (IOException e)
             {
                 errors.addError(e.getMessage());
                 throw errors.getErrors();
-            }
-            finally
-            {
-                try { if (reader != null) reader.close(); } catch (IOException e) {}
             }
         }
 
