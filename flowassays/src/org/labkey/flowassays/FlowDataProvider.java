@@ -54,7 +54,7 @@ public class FlowDataProvider extends AbstractAssayDataProvider
             List<ExpProtocol> protocols = getProtocols(c);
             for (ExpProtocol p : protocols)
             {
-                items.add(new FlowNavItem(this));
+                items.add(new FlowNavItem(this, LaboratoryService.NavItemCategory.data));
             }
         }
 
@@ -85,7 +85,7 @@ public class FlowDataProvider extends AbstractAssayDataProvider
         if (areModulesActive(c))
         {
             //items.add(new QueryCountNavItem(this, FlowAssaysSchema.NAME, "FCSFileMetadata", LaboratoryService.NavItemCategory.data.name(), "FCS Files"));
-            items.add(new QueryCountNavItem(this, FlowAssaysManager.FLOW_SCHEMA_NAME, "FCSFiles", LaboratoryService.NavItemCategory.data.name(), "FCS Files"));
+            items.add(new QueryCountNavItem(this, FlowAssaysManager.FLOW_SCHEMA_NAME, "FCSFiles", LaboratoryService.NavItemCategory.data, LaboratoryService.NavItemCategory.data.name(), "FCS Files"));
         }
 
         return Collections.unmodifiableList(items);
@@ -98,7 +98,7 @@ public class FlowDataProvider extends AbstractAssayDataProvider
 
         if (areModulesActive(c))
         {
-            QueryCountNavItem item = new QueryCountNavItem(this, FlowAssaysSchema.NAME, "FCSFileMetadata", LaboratoryService.NavItemCategory.data.name(), "FCS Files");
+            QueryCountNavItem item = new QueryCountNavItem(this, FlowAssaysSchema.NAME, "FCSFileMetadata", LaboratoryService.NavItemCategory.data, LaboratoryService.NavItemCategory.data.name(), "FCS Files");
             item.setFilter(new SimpleFilter(FieldKey.fromString("subjectId"), subjectId));
             items.add(item);
         }

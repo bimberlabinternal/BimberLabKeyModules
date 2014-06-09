@@ -4,6 +4,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.laboratory.AbstractImportingNavItem;
 import org.labkey.api.laboratory.DataProvider;
+import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.laboratory.LaboratoryUrls;
 import org.labkey.api.laboratory.assay.AssayDataProvider;
 import org.labkey.api.module.ModuleLoader;
@@ -25,9 +26,9 @@ public class FlowNavItem extends AbstractImportingNavItem
 {
     public static final String NAME = "Flow";
 
-    public FlowNavItem(AssayDataProvider provider)
+    public FlowNavItem(AssayDataProvider provider, LaboratoryService.NavItemCategory itemType)
     {
-        super(provider, NAME, NAME, NAME);
+        super(provider, NAME, NAME, itemType, NAME);
     }
 
     @Override
