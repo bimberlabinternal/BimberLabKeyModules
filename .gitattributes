@@ -304,7 +304,6 @@ labModules/GenotypeAssays/resources/schemas/genotypeassays.xml -text
 labModules/GenotypeAssays/resources/web/genotypeassays/data/BeadStudioExample.xlsx -text
 labModules/GenotypeAssays/resources/web/genotypeassays/data/QuantStudioExample.txt -text
 labModules/GenotypeAssays/resources/web/genotypeassays/data/UCDavis.txt -text
-labModules/GenotypeAssays/resources/web/genotypeassays/window/CacheResultsWindow.js -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/GenotypeAssaysController.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/GenotypeAssaysManager.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/GenotypeAssaysModule.java -text
@@ -433,6 +432,7 @@ onprcEHRModules/GeneticsCore/GeneticsCore.iml -text
 onprcEHRModules/GeneticsCore/build.xml -text
 onprcEHRModules/GeneticsCore/module.properties -text
 onprcEHRModules/GeneticsCore/resources/module.xml -text
+onprcEHRModules/GeneticsCore/resources/queries/sequenceanalysis/sequence_analyses/SBT[!!-~]Information.qview.xml -text
 onprcEHRModules/GeneticsCore/resources/queries/study/dnaFlagSummary.query.xml -text
 onprcEHRModules/GeneticsCore/resources/queries/study/dnaFlagSummary.sql -text
 onprcEHRModules/GeneticsCore/resources/queries/study/mhcFlagSummary.query.xml -text
@@ -448,10 +448,15 @@ onprcEHRModules/GeneticsCore/resources/views/geneticsMenu.webpart.xml -text
 onprcEHRModules/GeneticsCore/resources/views/sbtReview.html -text
 onprcEHRModules/GeneticsCore/resources/views/sbtReview.view.xml -text
 onprcEHRModules/GeneticsCore/resources/web/geneticscore/buttons.js -text
+onprcEHRModules/GeneticsCore/resources/web/geneticscore/window/ChangeReadsetStatusWindow.js -text
 onprcEHRModules/GeneticsCore/resources/web/geneticscore/window/ManageFlagsWindow.js -text
+onprcEHRModules/GeneticsCore/resources/web/geneticscore/window/PublishResultsWindow.js -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsCoreController.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsCoreManager.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsCoreModule.java -text
+onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsTableCustomizer.java -text
+onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/button/ChangeReadsetStatusButton.java -text
+onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/button/PublishSBTResultsButton.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/button/SBTReviewButton.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/notification/GeneticsCoreNotification.java -text
 onprcEHRModules/README.txt -text
