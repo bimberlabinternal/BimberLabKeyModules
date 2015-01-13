@@ -56,6 +56,7 @@ public class ELISPOT_AssayModule extends ExtendedSimpleModule
     }
 
     @Override
+    @NotNull
     protected Collection<WebPartFactory> createWebPartFactories()
     {
         return Collections.emptyList();
@@ -75,6 +76,7 @@ public class ELISPOT_AssayModule extends ExtendedSimpleModule
     }
 
     @Override
+    @NotNull
     public Collection<String> getSummary(Container c)
     {
         return Collections.emptyList();
