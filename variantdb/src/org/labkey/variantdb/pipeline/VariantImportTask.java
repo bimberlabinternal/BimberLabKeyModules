@@ -281,7 +281,7 @@ public class VariantImportTask extends PipelineJob.Task<VariantImportTask.Factor
 
     private TempTableInfo createTempTable(DbSchema schema, String name, List<ColumnInfo> columnInfos)
     {
-        TempTableInfo tt = new TempTableInfo(DbSchema.get("temp"), name, columnInfos, Arrays.asList("objectid"));
+        TempTableInfo tt = new TempTableInfo(name, columnInfos, Arrays.asList("objectid"));
 
         String sql = "CREATE TABLE " + tt.toString() + " ( ";
         String delim = "\n";
