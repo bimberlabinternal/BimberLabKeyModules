@@ -1,0 +1,63 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function (){
+        var variantId = LABKEY.ActionURL.getParameter('variantId');
+
+        if (!variantId){
+            alert('Must Provide The Variant Id');
+            return;
+        }
+
+        var webpart = <%=webpartContext%>;
+
+        Ext4.get(webpart.wrapperDivId).update(
+            '<div id="variantDetails_'+webpart.wrapperDivId+'"></div>' +
+            '<div style="margin-bottom: 10px;"></div>' +
+            '<div id="alleles_'+webpart.wrapperDivId+'"></div>' +
+            '<div style="margin-bottom: 10px;"></div>' +
+            '<div id="attributes_'+webpart.wrapperDivId+'"></div>' +
+            '<div style="margin-bottom: 10px;"></div>' +
+            '<div id="observed_'+webpart.wrapperDivId+'"></div>'
+        );
+
+        Ext4.create('LDK.panel.DetailsPanel', {
+            title: 'Reference Variant Details:',
+            showBackBtn: false,
+            renderTo: 'variantDetails_'+webpart.wrapperDivId,
+            store: {
+                schemaName: 'variantdb',
+                queryName: 'referenceVariants',
+                filterArray: [LABKEY.Filter.create('objectid', variantId, LABKEY.Filter.Types.EQUAL)]
+            }
+        });
+
+        LDK.Utils.getReadOnlyQWP({
+            title: 'Alleles',
+            schemaName: 'variantdb',
+            queryName: 'referenceVariantAlleles',
+            //maxRows: 10,
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
+            filterArray: [LABKEY.Filter.create('referenceVariantId', variantId, LABKEY.Filter.Types.EQUAL)]
+        }).render('alleles_'+webpart.wrapperDivId);
+
+        LDK.Utils.getReadOnlyQWP({
+            title: 'References Where This Variant Has Been Observed',
+            schemaName: 'variantdb',
+            queryName: 'variants',
+            viewName: 'Genome Info',
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
+            filterArray: [LABKEY.Filter.create('referenceVariantId', variantId, LABKEY.Filter.Types.EQUAL)]
+        }).render('observed_'+webpart.wrapperDivId);
+
+        LDK.Utils.getReadOnlyQWP({
+            title: 'Attributes',
+            schemaName: 'variantdb',
+            queryName: 'VariantAttributes',
+            columns: 'attribute,value,referenceAllele/allele',
+            //maxRows: 10,
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
+            filterArray: [LABKEY.Filter.create('referenceVariantId', variantId, LABKEY.Filter.Types.EQUAL)]
+        }).render('attributes_'+webpart.wrapperDivId);
+    });
+
+</script>

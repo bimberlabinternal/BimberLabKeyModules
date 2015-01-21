@@ -1,0 +1,5 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Reference Variant Details" frame="none">
+    <dependencies>
+        <dependency path="laboratory.context" />
+    </dependencies>
+</view>

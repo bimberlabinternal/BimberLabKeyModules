@@ -1,0 +1,1 @@
+CREATE INDEX IDX_VariantLiftover ON variantdb.VariantLiftover (variantid);

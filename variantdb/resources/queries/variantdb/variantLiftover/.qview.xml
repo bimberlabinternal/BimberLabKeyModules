@@ -1,0 +1,37 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="variantId"/>
+        <column name="variantId/sequenceid/species">
+            <properties>
+                <property name="columnTitle" value="Source Species"/>
+            </properties>
+        </column>
+        <column name="variantId/sequenceid">
+            <properties>
+                <property name="columnTitle" value="Source Sequence"/>
+            </properties>
+        </column>
+        <column name="variantId/startPosition">
+            <properties>
+                <property name="columnTitle" value="Source Start Position"/>
+            </properties>
+        </column>
+        <column name="variantId/endPosition" >
+            <properties>
+                <property name="columnTitle" value="Source End Position"/>
+            </properties>
+        </column>
+
+        <column name="sequenceid/species"/>
+        <column name="sequenceid"/>
+        <column name="sequenceid/genomes"/>
+        <column name="startPosition"/>
+        <column name="endPosition" />
+        <column name="reference" />
+        <column name="allele" />
+        <column name="status" />
+        <column name="referenceVariantId" />
+        <column name="referenceAlleleId" />
+        <column name="neighboringVariants" />
+    </columns>
+</customView>
