@@ -18,6 +18,12 @@ package org.labkey.variantdb;
 
 import htsjdk.samtools.liftover.LiftOver;
 import htsjdk.samtools.util.Interval;
+import htsjdk.tribble.AbstractFeatureReader;
+import htsjdk.tribble.FeatureReader;
+import htsjdk.variant.vcf.VCF3Codec;
+import htsjdk.variant.vcf.VCFCodec;
+import htsjdk.variant.vcf.VCFFileReader;
+import htsjdk.variant.vcf.VCFHeader;
 import org.apache.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
@@ -39,12 +45,16 @@ import org.labkey.api.util.Pair;
 import org.labkey.variantdb.query.LiftedVariant;
 import org.labkey.variantdb.query.Variant;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class VariantDBManager
@@ -290,6 +300,16 @@ public class VariantDBManager
             }
 
             return _cachedReferences.get(sequenceName);
+        }
+    }
+
+    public List<String> getSamplesForVcf(File vcf) throws IOException
+    {
+        try (FeatureReader reader = AbstractFeatureReader.getFeatureReader(vcf.getPath(), new VCFCodec(), false))
+        {
+            VCFHeader header = (VCFHeader)reader.getHeader();
+
+            return header.getSampleNamesInOrder();
         }
     }
 }

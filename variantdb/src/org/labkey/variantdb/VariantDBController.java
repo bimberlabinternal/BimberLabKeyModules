@@ -18,6 +18,7 @@ package org.labkey.variantdb;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.labkey.api.action.ApiAction;
 import org.labkey.api.action.ApiResponse;
 import org.labkey.api.action.ApiSimpleResponse;
@@ -42,7 +43,9 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class VariantDBController extends SpringActionController
 {
@@ -77,7 +80,7 @@ public class VariantDBController extends SpringActionController
                 return null;
             }
 
-            URL url = new URL(DbSnpImportPipelineProvider.URL_BASE + "/" + form.getSnpPath() + "/") ;
+            URL url = new URL(DbSnpImportPipelineProvider.URL_BASE + "/" + form.getSnpPath() + "/");
             try (InputStream inputStream = url.openConnection().getInputStream())
             {
                 //just open to test if file exists
@@ -87,7 +90,7 @@ public class VariantDBController extends SpringActionController
                 throw new NotFoundException("Unable to find remote file: " + form.getSnpPath());
             }
 
-            URL url2 = new URL(DbSnpImportPipelineProvider.URL_BASE + "/" + form.getSnpPath() + "/VCF/") ;
+            URL url2 = new URL(DbSnpImportPipelineProvider.URL_BASE + "/" + form.getSnpPath() + "/VCF/");
             try (InputStream inputStream = url2.openConnection().getInputStream())
             {
                 //just open to test if file exists
@@ -253,6 +256,56 @@ public class VariantDBController extends SpringActionController
         public void setSourceGenomeId(Integer sourceGenomeId)
         {
             _sourceGenomeId = sourceGenomeId;
+        }
+    }
+
+    @RequiresPermissionClass(InsertPermission.class)
+    @CSRF
+    public class GetSamplesFromVcfAction extends ApiAction<GetSamplesFromVcfForm>
+    {
+        public ApiResponse execute(GetSamplesFromVcfForm form, BindException errors) throws Exception
+        {
+            Map<String, Object> resp = new HashMap<>();
+
+            Map<Integer, JSONObject> fileMap = new HashMap<>();
+            for (Integer rowId : form.getOutputFileIds())
+            {
+                SequenceOutputFile f = SequenceOutputFile.getForId(rowId);
+                if (f != null)
+                {
+                    fileMap.put(f.getRowid(), f.toJSON());
+
+                    List<String> samples = VariantDBManager.get().getSamplesForVcf(f.getFile());
+                    resp.put(f.getRowid().toString(), samples);
+                }
+                else
+                {
+                    errors.reject(ERROR_MSG, "Unable to find output file with ID: " + rowId);
+                    return null;
+                }
+            }
+
+            Map<String, Object> ret = new HashMap<>();
+            ret.put("success", true);
+            ret.put("samples", resp);
+            ret.put("outputFileMap", fileMap);
+
+            return new ApiSimpleResponse(ret);
+        }
+    }
+
+    public static class GetSamplesFromVcfForm
+    {
+        Integer[] _outputFileIds;
+
+        public Integer[] getOutputFileIds()
+        {
+            return _outputFileIds;
+        }
+
+        public void setOutputFileIds(Integer[] outputFileIds)
+        {
+            _outputFileIds = outputFileIds;
         }
     }
 }

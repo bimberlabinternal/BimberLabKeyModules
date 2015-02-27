@@ -1,0 +1,460 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function () {
+
+        /**
+         * @cfg outputFileIds
+         */
+        Ext4.define('VariantDB.panel.ImputationPanel', {
+            extend: 'Ext.form.Panel',
+
+            initComponent: function(){
+                Ext4.apply(this, {
+                    border: false,
+                    defaults: {
+                        bodyStyle: 'padding: 5px;',
+                        style: 'padding-bottom: 10px;',
+                        fieldDefaults: {
+                            width: 400,
+                            labelWidth: 180
+                        }
+                    },
+                    items: [{
+                        html: 'Loading...',
+                        border: false
+                    }],
+                    buttonAlign: 'left',
+                    buttons: [{
+                        text: 'Submit',
+                        itemId: 'submitBtn',
+                        disabled: true,
+                        scope: this,
+                        handler: this.onSubmit
+                    }]
+                });
+
+                this.callParent(arguments);
+                this.loadSampleInfo();
+            },
+
+            loadSampleInfo: function(){
+                Ext4.Msg.wait('Loading sample information...');
+
+                LABKEY.Ajax.request({
+                    url: LABKEY.ActionURL.buildURL('variantdb', 'getSamplesFromVcf', null, {outputFileIds: this.outputFileIds}),
+                    failure: LDK.Utils.getErrorCallback(),
+                    success: LABKEY.Utils.getCallbackWrapper(this.onLoad, this, false),
+                    scope: this
+                })
+            },
+
+            onLoad: function(results){
+                Ext4.Msg.hide();
+
+                this.sampleNames = [];
+                this.sampleStore = Ext4.create('Ext.data.Store', {
+                    fields: ['outputFileId', 'sampleName', 'fileName']
+                });
+
+                this.imputationStore = Ext4.create('Ext.data.Store', {
+                    fields: ['outputFileId', 'sampleName', 'fileName']
+                });
+
+                var outputFileMap = results.outputFileMap || {};
+                for (var rowId in results.samples){
+                    Ext4.Array.forEach(results.samples[rowId], function(sampleName){
+                        this.sampleStore.add(this.sampleStore.createModel({
+                            fileName: outputFileMap[rowId].fileName,
+                            sampleName: sampleName,
+                            outputFileId: rowId
+                        }));
+
+                        this.imputationStore.add(this.imputationStore.createModel({
+                            fileName: outputFileMap[rowId].fileName,
+                            sampleName: sampleName,
+                            outputFileId: rowId
+                        }));
+
+                        this.sampleNames.push(sampleName);
+                    }, this);
+                }
+
+                this.addItems();
+                this.down('#submitBtn').setDisabled(false);
+            },
+
+            addItems: function(){
+                this.removeAll();
+                this.add([{
+                    title: 'Instructions',
+                    html: 'This allows you to perform genotype imputation on the selected VCF files.  This is not currently designed to be a very end-user friendly UI.  It will capture parameters, most of which are passed directly to the tools that are run.  For each field, hover over the question mark for more information.'
+                },{
+                    title: 'Samples',
+                    items: [{
+                        xtype: 'dataview',
+                        store: this.sampleStore,
+                        tpl: [
+                            '<table class="fileNames"><tr class="fileNames"><td style="min-width: 200px;">Sample Name</td><td>File Name</td></tr>',
+                            '<tpl for=".">',
+                            '<tr class="file_list">',
+                            '<td>{sampleName:htmlEncode}</td>',
+                            '<td>{fileName:htmlEncode}</td>',
+                            '</tr>',
+                            '</tpl>',
+                            '</table>'
+                        ]
+                    }]
+                },{
+                    title: 'Step 1: Framework Markers',
+                    xtype: 'form',
+                    defaults: {
+                        border: false
+                    },
+                    items: [{
+                        html: 'This will take the input VCF file and subset using the parameters below to create a list of informative framework markers.  It will first run GATK\'s SelectVariants using the parameters below.  ',
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        xtype: 'textfield',
+                        fieldLabel: 'Select Type',
+                        name: 'selectType',
+                        helpPopup: 'Select only a certain type of variants from the input file. Valid types are INDEL, SNP, MIXED, MNP, SYMBOLIC, NO_VARIATION. Can be specified multiple times',
+                        value: 'SNP'
+                    },{
+                        xtype: 'textfield',
+                        fieldLabel: 'Restrict Alleles To',
+                        name: 'restrictAllelesTo',
+                        helpPopup: 'Select only variants of a particular allelicity. Valid options are ALL (default), MULTIALLELIC or BIALLELIC',
+                        value: 'BIALLELIC'
+                    },{
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Cluster Size',
+                        name: 'cluster',
+                        helpPopup: 'The number of SNPs which make up a cluster',
+                        value: 3
+                    },{
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Cluster Window Size',
+                        name: 'clusterSize',
+                        helpPopup: 'The window size (in bases) in which to evaluate clustered SNPs',
+                        value: 25
+                    },{
+                        xtype: 'textarea',
+                        fieldLabel: 'Filter Expression',
+                        name: 'filterExpression',
+                        helpPopup: 'These will be passed directly to GATK\'s SelectVariants',
+                        value: 'QD >= 2.0 && FS <= 60.0 && MQ >= 40.0 && MQRankSum >= -12.5 && ReadPosRankSum >= -8.0'
+                    },{
+                        xtype: 'checkbox',
+                        name: 'mendelianCheck',
+                        fieldLabel: 'Remove Loci Violating Mendelian Inheritance',
+                        checked: true
+                    },{
+                        xtype: 'sequenceanalysis-filtergrid',
+                        itemId: 'frameworkFilters'
+                    }]
+                },{
+                    title: 'Step 2: Pedigree',
+                    defaults: {
+                        border: false
+                    },
+                    items: [{
+                        html: 'This step uses pedigree information stored in the Laboratory module\'s subjects table.  Please review the information below.  If it is not correct, imputation will not work properly.',
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        xtype: 'ldk-querypanel',
+                        border: true,
+                        queryConfig: {
+                            containerPath: Laboratory.Utils.getQueryContainerPath(),
+                            schemaName: 'laboratory',
+                            queryName: 'subjects',
+                            filterArray: [LABKEY.Filter.create('subjectname', this.sampleNames.join(';'), LABKEY.Filter.Types.IN)]
+                        }
+                    }]
+                },{
+                    title: 'Step 3: Imputation Configuration',
+                    minHeight: 500,
+                    defaults: {
+                        border: false
+                    },
+                    items: [{
+                        html: 'For imputation, some of the samples should have comprehensive genotypes, while some should have sparse genotyping.  Use the grid below to separate which samples are complete.  Note: this step is largely added for the purposes of testing.  Once complete, each target will be compared against the original file.  If that original VCF contained complete genotypes, this will be used to calculate accuracy.',
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        xtype: 'textfield',
+                        fieldLabel: 'Call Method',
+                        name: 'callMethod',
+                        value: '2 0.6 0.8'
+                    },{
+                        xtype: 'sequenceanalysis-filtergrid',
+                        itemId: 'allSampleFilters',
+                        title: 'Additional Filters To Apply To All Samples'
+                    },{
+                        xtype: 'sequenceanalysis-filtergrid',
+                        itemId: 'targetSampleFilters',
+                        title: 'Additional Filters To Apply To Targets (ie. Method to Create Test Data)'
+                    },{
+                        xtype: 'panel',
+                        layout: 'hbox',
+                        style: 'padding-top: 5px;',
+                        //width: '100%',
+                        items: [{
+                            xtype: 'grid',
+                            style: 'padding-right: 5px;',
+                            width: 300,
+                            minHeight: 300,
+                            title: 'Complete Genotypes',
+                            itemId: 'completeGrid',
+                            store: this.imputationStore,
+                            columns: [{
+                                text: 'Sample Name',
+                                dataIndex: 'sampleName'
+                            },{
+                                text: 'File Name',
+                                dataIndex: 'fileName'
+                            }],
+                            viewConfig: {
+                                plugins: [{
+                                    ptype: 'gridviewdragdrop',
+                                    dragGroup: 'gridDDGroup',
+                                    dropGroup: 'gridDDGroup'
+                                }]
+                            },
+                            selModel: {
+                                mode: 'MULTI'
+                            }
+                        },{
+                            xtype: 'grid',
+                            width: 300,
+                            minHeight: 300,
+                            style: 'padding-right: 5px;',
+                            title: 'Targets',
+                            itemId: 'targetsGrid',
+                            store: Ext4.create('Ext.data.Store', {
+                                fields: ['outputFileId', 'sampleName', 'fileName']
+                            }),
+                            columns: [{
+                                text: 'Sample',
+                                dataIndex: 'sampleName'
+                            },{
+                                text: 'File Name',
+                                dataIndex: 'fileName'
+                            }],
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'gridviewdragdrop',
+                                    dragGroup: 'gridDDGroup',
+                                    dropGroup: 'gridDDGroup'
+                                }
+                            },
+                            selModel: {
+                                mode: 'MULTI'
+                            }
+                        },{
+                            xtype: 'grid',
+                            width: 300,
+                            minHeight: 300,
+                            title: 'Allele Frequency Calculation Only',
+                            itemId: 'alleleFrequencyGrid',
+                            store: Ext4.create('Ext.data.Store', {
+                                fields: ['outputFileId', 'sampleName', 'fileName']
+                            }),
+                            columns: [{
+                                text: 'Sample',
+                                dataIndex: 'sampleName'
+                            },{
+                                text: 'File Name',
+                                dataIndex: 'fileName'
+                            }],
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'gridviewdragdrop',
+                                    dragGroup: 'gridDDGroup',
+                                    dropGroup: 'gridDDGroup'
+                                }
+                            },
+                            selModel: {
+                                mode: 'MULTI'
+                            }
+                        },{
+                            xtype: 'grid',
+                            width: 300,
+                            minHeight: 300,
+                            title: 'Ignored',
+                            itemId: 'ignoredGrid',
+                            store: Ext4.create('Ext.data.Store', {
+                                fields: ['outputFileId', 'sampleName', 'fileName']
+                            }),
+                            columns: [{
+                                text: 'Sample',
+                                dataIndex: 'sampleName'
+                            },{
+                                text: 'File Name',
+                                dataIndex: 'fileName'
+                            }],
+                            viewConfig: {
+                                plugins: {
+                                    ptype: 'gridviewdragdrop',
+                                    dragGroup: 'gridDDGroup',
+                                    dropGroup: 'gridDDGroup'
+                                }
+                            },
+                            selModel: {
+                                mode: 'MULTI'
+                            }
+                        }]
+                    }]
+                }]);
+            },
+
+            onSubmit: function(){
+                var vals = this.getForm().getFieldValues();
+                Ext4.Array.forEach(['complete', 'targets', 'alleleFrequency', 'ignored'], function(name){
+                    vals[name] = [];
+                    var store = this.down('#' + name + 'Grid').store;
+                    store.each(function(rec){
+                        vals[name].push(rec.get('sampleName'));
+                    }, this);
+                }, this);
+
+                //filters
+                vals.frameworkFilters = [];
+                this.down('#frameworkFilters').store.each(function(r){
+                    vals.frameworkFilters.push([r.get('dataId'), r.get('action')]);
+                }, this);
+
+
+                vals.targetFilters = [];
+                this.down('#targetSampleFilters').store.each(function(r){
+                    vals.targetFilters.push([r.get('dataId'), r.get('action')]);
+                }, this);
+
+                vals.allSampleFilters = [];
+                this.down('#allSampleFilters').store.each(function(r){
+                    vals.allSampleFilters.push([r.get('dataId'), r.get('action')]);
+                }, this);
+
+                Ext4.Msg.wait('Saving...');
+                LABKEY.Ajax.request({
+                    url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'runSequenceHandler'),
+                    jsonData: {
+                        handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
+                        outputFileIds: this.outputFileIds,
+                        params: Ext4.encode(vals)
+                    },
+                    scope: this,
+                    success: function(){
+                        Ext4.Msg.hide();
+
+                        window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
+                    },
+                    failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback())
+                });
+            }
+        });
+
+        Ext4.define('SequenceAnalysis.grid.AdditionaFiltersGrid', {
+            extend: 'LDK.grid.Panel',
+            alias: 'widget.sequenceanalysis-filtergrid',
+            title: 'Restrict Using Other Files',
+
+            initComponent: function(){
+                Ext4.apply(this, {
+                    clicksToEdit: 1,
+                    border: true,
+                    columns: [{
+                        text: 'Id',
+                        dataIndex: 'dataId',
+                        editor: {
+                            xtype: 'ldk-integerfield'
+                        }
+                    },{
+                        text: 'Action',
+                        width: 250,
+                        dataIndex: 'action',
+                        editor: {
+                            xtype: 'combo',
+                            displayField: 'display',
+                            valueField: 'value',
+                            store: {
+                                type: 'array',
+                                fields: ['display', 'value'],
+                                data: [
+                                    ['Exclude Overlapping', 'exclude'],
+                                    ['Retain Overlapping', 'include']
+                                ]
+                            }
+                        },
+                        renderer: function(val){
+                            if (val == 'exclude'){
+                                return 'Exclude Overlapping'
+                            }
+                            else if (val == 'include'){
+                                return 'Retain Overlapping'
+                            }
+                            else {
+                                return val;
+                            }
+                        }
+                    },{
+                        text: 'File Name',
+                        width: 250,
+                        dataIndex: 'fileName'
+                    }],
+                    store: Ext4.create('Ext.data.Store', {
+                        fields: ['dataId', 'fileName', 'action'],
+                        listeners: {
+                            scope: this,
+                            update: function(store, r){
+                                this.resolveValue(r);
+                            }
+                        }
+                    }),
+                    tbar: [LABKEY.ext4.GRIDBUTTONS.ADDRECORD(),LABKEY.ext4.GRIDBUTTONS.DELETERECORD()]
+                });
+
+                this.callParent(arguments);
+            },
+
+            resolveValue: function(record){
+                var val = record.get('dataId');
+                if (!val){
+                    record.set('fileName', null);
+                    return;
+                }
+
+                LABKEY.Query.selectRows({
+                    containerFilter: 'WorkbookAssay',
+                    containerPath: Laboratory.Utils.getQueryContainerPath(),
+                    schemaName: 'exp',
+                    queryName: 'data',
+                    filterArray: [LABKEY.Filter.create('rowid', val)],
+                    failure: LDK.Utils.getErrorCallback(),
+                    columns: 'RowId,Name,Extension',
+                    success: function(results){
+                        if (!results.rows.length){
+                            Ext4.Msg.alert('Error', 'Data with Id: ' + val + ' not found');
+                            record.set('fileName', null);
+                        }
+                        else {
+                            record.set('fileName', results.rows[0].Name)
+                        }
+                    },
+                    scope: this
+                });
+            }
+        });
+
+        var outputFileIds = LABKEY.ActionURL.getParameter("outputFileIds");
+        if (!outputFileIds){
+            Ext4.Msg.alert('Error', 'Must provide output file IDs');
+            return;
+        }
+        outputFileIds = outputFileIds.split(';');
+
+        var webpart = <%=webpartContext%>;
+        Ext4.create('VariantDB.panel.ImputationPanel', {
+            outputFileIds: outputFileIds
+        }).render(webpart.wrapperDivId);
+    });
+
+</script>

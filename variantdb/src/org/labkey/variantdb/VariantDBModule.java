@@ -26,7 +26,9 @@ import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.variantdb.analysis.ImputationAnalysis;
 import org.labkey.variantdb.analysis.VariantImportHandler;
+import org.labkey.variantdb.analysis.VcfToMorganHandler;
 import org.labkey.variantdb.button.DbSnpLoadButton;
 import org.labkey.variantdb.pipeline.DbSnpImportPipelineProvider;
 import org.labkey.variantdb.pipeline.VariantImportPipelineProvider;
@@ -82,7 +84,8 @@ public class VariantDBModule extends ExtendedSimpleModule
         PipelineService.get().registerPipelineProvider(new VariantImportPipelineProvider(this));
 
         LDKService.get().registerQueryButton(new DbSnpLoadButton(), VariantDBSchema.NAME, VariantDBSchema.TABLE_REFERENCE_VARIANTS);
-        SequenceAnalysisService.get().registerFileHandler(new VariantImportHandler());
+        SequenceAnalysisService.get().registerFileHandler(new ImputationAnalysis());
+        SequenceAnalysisService.get().registerFileHandler(new VcfToMorganHandler());
     }
 
     @Override

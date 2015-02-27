@@ -24,6 +24,9 @@ DISCVR/variantdb/resources/schemas/dbscripts/sqlserver/variantdb-13.37-13.38.sql
 DISCVR/variantdb/resources/schemas/dbscripts/sqlserver/variantdb-13.38-13.39.sql -text
 DISCVR/variantdb/resources/schemas/dbscripts/sqlserver/variantdb-13.39-13.40.sql -text
 DISCVR/variantdb/resources/schemas/variantdb.xml -text
+DISCVR/variantdb/resources/views/gigiFramework.html -text
+DISCVR/variantdb/resources/views/imputationAnalysis.html -text
+DISCVR/variantdb/resources/views/imputationAnalysis.view.xml -text
 DISCVR/variantdb/resources/views/referenceAlleleDetails.html -text
 DISCVR/variantdb/resources/views/referenceAlleleDetails.view.xml -text
 DISCVR/variantdb/resources/views/referenceVariantDetails.html -text
@@ -37,7 +40,9 @@ DISCVR/variantdb/src/org/labkey/variantdb/VariantDBDataProvider.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/VariantDBManager.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/VariantDBModule.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/VariantDBSchema.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/analysis/ImputationAnalysis.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/VariantImportHandler.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/analysis/VcfToMorganHandler.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/button/DbSnpLoadButton.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/ClinVarVCFRecord.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/DbSnpImportPipelineJob.java -text
@@ -50,6 +55,10 @@ DISCVR/variantdb/src/org/labkey/variantdb/query/LiftedVariant.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/query/NeighboringVariantsDisplayColumnFactory.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/query/Variant.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/query/VariantDBUserSchema.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/BedtoolsRunner.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/GLAutoRunner.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/SelectVariantsWrapper.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/VCFtoMorganConverter.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerPermission.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerRole.java -text
 DISCVR/variantdb/webapp/WEB-INF/variantdb/variantdbContext.xml -text

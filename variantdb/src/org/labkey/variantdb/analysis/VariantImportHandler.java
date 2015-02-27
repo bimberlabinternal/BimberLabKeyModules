@@ -65,9 +65,9 @@ public class VariantImportHandler implements SequenceOutputHandler
     }
 
     @Override
-    public LinkedHashSet<ClientDependency> getClientDependencies()
+    public LinkedHashSet<String> getClientDependencies()
     {
-        return new LinkedHashSet<>(Arrays.asList(ClientDependency.fromPath("variantdb/window/VariantImportWindow.js")));
+        return new LinkedHashSet<>(Arrays.asList("variantdb/window/VariantImportWindow.js"));
     }
 
     @Override
@@ -102,6 +102,12 @@ public class VariantImportHandler implements SequenceOutputHandler
 
     public class Processor implements OutputProcessor
     {
+        @Override
+        public void init(PipelineJob job, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        {
+
+        }
+
         @Override
         public void processFilesOnWebserver(PipelineJob job, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
