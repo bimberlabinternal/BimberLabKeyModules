@@ -19,8 +19,8 @@ public class BedtoolsRunner extends AbstractCommandWrapper
         super(logger);
     }
 
-    public File getSamtoolsPath()
+    public File getExe()
     {
-        return SequencePipelineService.get().getExeForPackage("SAMTOOLSPATH", "samtools");
+        return SequencePipelineService.get().getExeForPackage("BEDTOOLSPATH", "bedtools");
     }
 }

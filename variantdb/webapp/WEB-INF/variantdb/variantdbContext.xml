@@ -31,4 +31,9 @@
             </list>
         </property>
     </bean>
+
+    <!-- This is intended to force registration of the SequencePipelineServer and also PipelineSteps -->
+    <bean id="pipelineStartup" class="org.labkey.variantdb.VariantDBModule$PipelineStartup">
+
+    </bean>
 </beans>

@@ -22,6 +22,7 @@ import org.labkey.api.ldk.NavItem;
 import org.labkey.api.laboratory.SimpleSettingsItem;
 import org.labkey.api.laboratory.assay.AbstractAssayDataProvider;
 import org.labkey.api.module.Module;
+import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.security.User;
 import org.labkey.api.view.ViewContext;
 import org.labkey.elispot_assay.assay.AIDImportMethod;
@@ -29,6 +30,7 @@ import org.labkey.elispot_assay.assay.DefaultImportMethod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,6 +52,11 @@ public class ELISPOT_AssayDataProvider extends AbstractAssayDataProvider
     @Override
     public List<NavItem> getSettingsItems(Container c, User u)
     {
+        if (!c.isRoot() && !ContainerManager.getSharedContainer().equals(c) && !c.getActiveModules().contains(ModuleLoader.getInstance().getModule(ELISPOT_AssayModule.class)))
+        {
+            return Collections.emptyList();
+        }
+
         List<NavItem> items = new ArrayList<NavItem>();
         String categoryName = "ELISPOT Assay";
         if (ContainerManager.getSharedContainer().equals(c))

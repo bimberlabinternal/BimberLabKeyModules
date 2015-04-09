@@ -9,6 +9,8 @@
             extend: 'Ext.form.Panel',
 
             initComponent: function(){
+                Ext4.QuickTips.init();
+
                 Ext4.apply(this, {
                     border: false,
                     defaults: {
@@ -79,6 +81,21 @@
                     }, this);
                 }
 
+                var genomeIds = [];
+                for (var outputFileId in outputFileMap){
+                    if (outputFileMap[outputFileId].genomeId){
+                        genomeIds.push(outputFileMap[outputFileId].genomeId);
+                    }
+                }
+
+                genomeIds = Ext4.unique(genomeIds);
+                if (genomeIds.length != 1){
+                    Ext4.Msg.alert('Error', 'All files must use the same base genome.  Please select different files');
+                    return;
+                }
+
+                this.genomeId = genomeIds[0];
+
                 this.addItems();
                 this.down('#submitBtn').setDisabled(false);
             },
@@ -105,25 +122,26 @@
                         ]
                     }]
                 },{
-                    title: 'Step 1: VCF Files',
+                    title: 'Step 1: Markers',
+                    minHeight: 150,
                     xtype: 'form',
                     defaults: {
                         border: false
                     },
                     items: [{
-                        xtype: 'combo',
+                        xtype: 'ldk-expdatafield',
                         fieldLabel: 'Framework Markers File',
+                        allowBlank: false,
+                        helpPopup: 'This should be a BED file containing the coordinates to use as framework markers',
                         name: 'frameworkFile',
-                        store: {
-
-                        }
+                        value: LABKEY.ActionURL.getParameter('frameworkFile')
                     },{
-                        xtype: 'combo',
-                        fieldLabel: 'Dense Genotype Data',
-                        name: 'frameworkFile',
-                        store: {
-
-                        }
+                        xtype: 'ldk-expdatafield',
+                        fieldLabel: 'Dense Markers File',
+                        allowBlank: false,
+                        helpPopup: 'This should be a BED file containing the coordinates to use as dense markers',
+                        name: 'denseFile',
+                        value: LABKEY.ActionURL.getParameter('denseFile')
                     }]
                 },{
                     title: 'Step 2: Pedigree',
@@ -151,57 +169,273 @@
                     },
                     items: [{
                         html: 'For imputation, some of the samples should have comprehensive genotypes, while some should have sparse genotyping.  Use the grid below to separate which samples are complete.  Note: this step is largely added for the purposes of testing.  Once complete, each target will be compared against the original file.  If that original VCF contained complete genotypes, this will be used to calculate accuracy.',
-                        style: 'padding-bottom: 10px;'
+                        style: 'padding-bottom: 10px;',
+                        width: 1000
+                    },{
+                        xtype: 'checkbox',
+                        fieldLabel: 'Skip Mendelian Check',
+                        name: 'skipMendelianCheck'
                     },{
                         xtype: 'textfield',
                         fieldLabel: 'Call Method',
                         name: 'callMethod',
                         value: '2 0.6 0.8'
                     },{
+                        xtype: 'checkcombo',
+                        fieldLabel: 'Chromosome(s)',
+                        multiSelect: true,
+                        allowBlank: false,
+                        helpPopup: 'If provided, we will only consider markers on this chromosome.  This is primarily for debugging purposes.',
+                        name: 'chromosome',
+                        store: {
+                            type: 'labkey-store',
+                            containerPath: Laboratory.Utils.getQueryContainerPath(),
+                            schemaName: 'sequenceanalysis',
+                            queryName: 'reference_library_members',
+                            filterArray: [LABKEY.Filter.create('library_id', this.genomeId)],
+                            columns: 'ref_nt_id/name',
+                            sort: 'ref_nt_id/name',
+                            autoLoad: true,
+                            listeners: {
+                                scope: this,
+                                load: function(s){
+                                    var field = this.down('field[name=chromosome]');
+                                    var names = [];
+                                    s.each(function(r){
+                                        names.push(r.get('ref_nt_id/name'));
+                                    }, this);
+
+                                    if (!field.getValue()){
+                                        field.setValue(names);
+                                    }
+                                }
+                            }
+                        },
+                        valueField: 'ref_nt_id/name',
+                        displayField: 'ref_nt_id/name',
+                        value: LABKEY.ActionURL.getParameter('chromosome')
+                    },{
+                        xtype: 'button',
+                        border: true,
+                        text: 'Add/Modify Groups',
+                        handler: this.addSet,
+                        scope: this
+                    },{
                         xtype: 'panel',
                         style: 'padding-top: 5px;',
-                        itemId: 'imputationSets',
-                        buttons: [{
-                            text: 'Add',
-                            handler: this.addSet,
-                            scope: this
-                        }]
+                        itemId: 'imputationSets'
                     }]
                 }]);
             },
 
             addSet: function(btn){
-                Ext4.window.create({
-                    title: 'Add Set of Animals'
+                Ext4.create('Ext.window.Window', {
+                    title: 'Add Set of Animals',
+                    bodyStyle: 'padding: 5px;',
+                    variantPanel: this,
+                    border: false,
+                    defaults: {
+                        border: false
+                    },
+                    width: 800,
+                    items: [{
+                        html: 'In the box below you can paste sample names in 2 columns.  The first column contains a commas separated list of samples where we should generate complete genotypes.  The second contains a list of sample names where we should generate only those matching the framework markers.  For example:<br><br>' +
+                        '<pre>Sample1,Sample2\tSample3,Sample4</pre>',
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        xtype: 'textarea',
+                        height: 300,
+                        width: 780,
+                        listeners: {
+                            afterrender: function(field){
+                                field.focus.defer(100, field);
+                            }
+                        }
+                    }],
+                    buttons: [{
+                        text: 'Submit',
+                        scope: this,
+                        handler: function(btn){
+                            var text = btn.up('window').down('textarea').getValue();
+                            if (!text){
+                                Ext4.Msg.alert('Error', 'Must enter a list of samples');
+                                return;
+                            }
+
+                            text = Ext4.String.trim(text);
+                            text = LDK.Utils.CSVToArray(text, '\t');
+
+                            var win = btn.up('window');
+
+                            var toAdd = [];
+                            var errors = [];
+                            Ext4.Array.forEach(text, function(line, idx){
+                                if (line.length < 1){
+                                    errors.push('Line ' + (idx+1) + ' does not have 2 elements');
+                                    return;
+                                }
+
+                                toAdd.push([win.textToArray(line[0]), win.textToArray(line[1])]);
+                            }, this);
+
+                            if (errors.length){
+                                Ext4.Msg.alert('Error', errors.join('<br>'));
+                                return;
+                            }
+
+                            win.addSamples(toAdd);
+                        }
+                    },{
+                        text: 'Test All Combinations',
+                        scope: this,
+                        handler: function(btn){
+                            var win = btn.up('window');
+
+                            Ext4.create('Ext.window.Window', {
+                                title: 'Enter Sample Names',
+                                bodyStyle: 'padding: 5px;',
+                                items: [{
+                                    xtype: 'textarea',
+                                    fieldLabel: 'Enter a list of samples',
+                                    height: 100,
+                                    width: 300
+                                }],
+                                buttons: [{
+                                    text: 'Submit',
+                                    scope: this,
+                                    handler: function(btn){
+                                        var val = btn.up('window').down('textarea').getValue();
+                                        if (!val){
+                                            Ext4.Msg.alert('Error', 'Must enter a value');
+                                            return;
+                                        }
+
+                                        val = win.textToArray(val);
+
+                                        var ret = [];
+                                        for (var r=0;r<val.length;r++){
+                                            win.getAllCombinations(val, new Array(r), 0, 0, (r + 1), ret);
+                                        }
+
+                                        var toAdd = [];
+                                        Ext4.Array.forEach(ret, function(a){
+                                            toAdd.push([a, Ext4.Array.difference(val, a)]);
+                                        }, this);
+
+                                        btn.up('window').close();
+                                        win.addSamples(toAdd);
+                                    }
+
+                                },{
+                                    text: 'Cancel',
+                                    handler: function(btn){
+                                        btn.up('window').close();
+                                    }
+                                }]
+                            }).show();
+                        }
+                    },{
+                        text: 'Close',
+                        handler: function(btn){
+                            btn.up('window').close();
+                        }
+                    }],
+                    getAllCombinations: function (arr, reordered, currentIdx, level, size, ret){
+                        if (level == size){
+                            ret.push(Ext4.Array.clone(reordered));
+                            return;
+                        }
+
+                        var arrays = [];
+                        for (var i = currentIdx; i < arr.length; i++) {
+                            reordered[level] = arr[i];
+                            this.getAllCombinations(arr, reordered, i + 1, level + 1, size, ret);
+                            if (i < arr.length-1 && arr[i] == arr[i+1]){
+                                i++;
+                            }
+                        }
+                    },
+                    textToArray: function(val){
+                        if (Ext4.isEmpty(val)){
+                            return new Array();
+                        }
+
+                        val = val.replace(/[\s,;]+/g, ';');
+                        val = val.replace(/(^;|;$)/g, '');
+                        val = val.toLowerCase();
+
+                        if(val)
+                            val = val.split(';');
+                        else
+                            val = new Array();
+
+                        return val;
+                    },
+                    addSamples: function(toAdd){
+                        this.close();
+
+                        var items = [];
+                        Ext4.Array.forEach(toAdd, function(r){
+                            items.push({
+                                html: r[0].join(';')
+                            });
+
+                            items.push({
+                                html: r[1].join(';')
+                            });
+                        });
+
+                        var target = this.variantPanel.down('#imputationSets');
+                        target.rawData = toAdd;
+                        target.removeAll();
+                        if (items.length) {
+                            target.add({
+                                layout: {
+                                    type: 'table',
+                                    columns: 2
+                                },
+                                defaults: {
+                                    bodyStyle: 'padding: 5px;',
+                                    border: 4,
+                                    style: 'vertical-align:text-top;'
+                                },
+                                items: [{
+                                    html: 'Complete Genotypes'
+                                },{
+                                    html: 'Imputed'
+                                }].concat(items)
+                            });
+                        }
+                    }
                 }).show(btn);
             },
 
             onSubmit: function(){
                 var vals = this.getForm().getFieldValues();
-                Ext4.Array.forEach(['complete', 'targets', 'alleleFrequency', 'ignored'], function(name){
-                    vals[name] = [];
-                    var store = this.down('#' + name + 'Grid').store;
-                    store.each(function(rec){
-                        vals[name].push(rec.get('sampleName'));
-                    }, this);
-                }, this);
+                vals.sampleSets = this.down('#imputationSets').rawData;
 
-                //filters
-                vals.frameworkFilters = [];
-                this.down('#frameworkFilters').store.each(function(r){
-                    vals.frameworkFilters.push([r.get('dataId'), r.get('action')]);
-                }, this);
+                console.log(vals);
 
+                var errors = [];
+                if (!vals.frameworkFile)
+                    errors.push('Missing value for framework marker file');
 
-                vals.targetFilters = [];
-                this.down('#targetSampleFilters').store.each(function(r){
-                    vals.targetFilters.push([r.get('dataId'), r.get('action')]);
-                }, this);
+                if (!vals.denseFile)
+                    errors.push('Missing value for dense marker file');
 
-                vals.allSampleFilters = [];
-                this.down('#allSampleFilters').store.each(function(r){
-                    vals.allSampleFilters.push([r.get('dataId'), r.get('action')]);
-                }, this);
+                if (!vals.sampleSets || Ext4.isEmpty(vals.sampleSets))
+                    errors.push('No sample sets provided');
+
+                if (!vals.callMethod)
+                    errors.push('Missing value for GIGI call method');
+
+                if (!vals.chromosome || Ext4.isEmpty(vals.chromosome))
+                    errors.push('No chromosomes selected');
+
+                if (errors.length){
+                    Ext4.Msg.alert('Error', errors.join('<br>'));
+                    return;
+                }
 
                 Ext4.Msg.wait('Saving...');
                 LABKEY.Ajax.request({
@@ -229,8 +463,8 @@
         }
         outputFileIds = outputFileIds.split(';');
 
-        if (outputFileIds.length != 2){
-            Ext4.Msg.alert('Error', 'Must provide 2 files, a framework markers VCF and a dense markers VCF');
+        if (outputFileIds.length != 1){
+            Ext4.Msg.alert('Error', 'At the moment only 1 VCF file is supported at a time');
             return;
         }
 

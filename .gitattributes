@@ -42,7 +42,6 @@ DISCVR/variantdb/src/org/labkey/variantdb/VariantDBModule.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/VariantDBSchema.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/ImputationAnalysis.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/VariantImportHandler.java -text
-DISCVR/variantdb/src/org/labkey/variantdb/analysis/VcfToMorganHandler.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/button/DbSnpLoadButton.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/ClinVarVCFRecord.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/DbSnpImportPipelineJob.java -text
@@ -57,8 +56,9 @@ DISCVR/variantdb/src/org/labkey/variantdb/query/Variant.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/query/VariantDBUserSchema.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/BedtoolsRunner.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/GLAutoRunner.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/GigiRunner.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/ImputationRunner.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/SelectVariantsWrapper.java -text
-DISCVR/variantdb/src/org/labkey/variantdb/run/VCFtoMorganConverter.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerPermission.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerRole.java -text
 DISCVR/variantdb/webapp/WEB-INF/variantdb/variantdbContext.xml -text
@@ -254,6 +254,7 @@ labModules/flowassays/src/org/labkey/flowassays/assay/ImmunophenotypingDataProvi
 onprcEHRModules/GeneticsCore/GeneticsCore.iml -text
 onprcEHRModules/GeneticsCore/build.xml -text
 onprcEHRModules/GeneticsCore/module.properties -text
+onprcEHRModules/GeneticsCore/resources/external/amplicon_standard_curve.R -text
 onprcEHRModules/GeneticsCore/resources/module.xml -text
 onprcEHRModules/GeneticsCore/resources/queries/sequenceanalysis/sequence_analyses/SBT[!!-~]Information.qview.xml -text
 onprcEHRModules/GeneticsCore/resources/queries/study/dnaFlagSummary.query.xml -text
@@ -268,6 +269,8 @@ onprcEHRModules/GeneticsCore/resources/views/begin.webpart.xml -text
 onprcEHRModules/GeneticsCore/resources/views/geneticsMenu.html -text
 onprcEHRModules/GeneticsCore/resources/views/geneticsMenu.view.xml -text
 onprcEHRModules/GeneticsCore/resources/views/geneticsMenu.webpart.xml -text
+onprcEHRModules/GeneticsCore/resources/views/methylationComparison.html -text
+onprcEHRModules/GeneticsCore/resources/views/methylationComparison.view.xml -text
 onprcEHRModules/GeneticsCore/resources/views/sbtReview.html -text
 onprcEHRModules/GeneticsCore/resources/views/sbtReview.view.xml -text
 onprcEHRModules/GeneticsCore/resources/web/geneticscore/buttons.js -text
@@ -278,6 +281,7 @@ onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsCoreController.
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsCoreManager.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsCoreModule.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/GeneticsTableCustomizer.java -text
+onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/analysis/MethylationRateComparison.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/button/ChangeReadsetStatusButton.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/button/PublishSBTResultsButton.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/button/SBTReviewButton.java -text

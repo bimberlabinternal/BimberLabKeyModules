@@ -16,6 +16,7 @@
 
 package org.labkey.variantdb;
 
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.data.Container;
 import org.labkey.api.laboratory.LaboratoryService;
@@ -25,10 +26,9 @@ import org.labkey.api.module.ModuleContext;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.variantdb.analysis.ImputationAnalysis;
-import org.labkey.variantdb.analysis.VariantImportHandler;
-import org.labkey.variantdb.analysis.VcfToMorganHandler;
 import org.labkey.variantdb.button.DbSnpLoadButton;
 import org.labkey.variantdb.pipeline.DbSnpImportPipelineProvider;
 import org.labkey.variantdb.pipeline.VariantImportPipelineProvider;
@@ -84,8 +84,9 @@ public class VariantDBModule extends ExtendedSimpleModule
         PipelineService.get().registerPipelineProvider(new VariantImportPipelineProvider(this));
 
         LDKService.get().registerQueryButton(new DbSnpLoadButton(), VariantDBSchema.NAME, VariantDBSchema.TABLE_REFERENCE_VARIANTS);
-        SequenceAnalysisService.get().registerFileHandler(new ImputationAnalysis());
-        SequenceAnalysisService.get().registerFileHandler(new VcfToMorganHandler());
+
+        //register resources
+        new PipelineStartup();
     }
 
     @Override
@@ -106,5 +107,24 @@ public class VariantDBModule extends ExtendedSimpleModule
     public Set<String> getSchemaNames()
     {
         return Collections.singleton(VariantDBSchema.NAME);
+    }
+
+    public static class PipelineStartup
+    {
+        private static final Logger _log = Logger.getLogger(PipelineStartup.class);
+        private static boolean _hasRegistered = false;
+
+        public PipelineStartup()
+        {
+            if (_hasRegistered)
+            {
+                _log.warn("SequenceAnalysis resources have already been registered, skipping");
+            }
+            else
+            {
+                SequenceAnalysisService.get().registerFileHandler(new ImputationAnalysis());
+                _hasRegistered = true;
+            }
+        }
     }
 }
