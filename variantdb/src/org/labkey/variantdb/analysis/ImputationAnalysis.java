@@ -8,6 +8,7 @@ import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
@@ -143,6 +144,19 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
     public class Processor implements OutputProcessor
     {
+        private TableInfo _subjectTable = null;
+
+        private TableInfo getSubjectTable(User u, Container c)
+        {
+            if (_subjectTable == null)
+            {
+                UserSchema us = QueryService.get().getUserSchema(u, (c.isWorkbook() ? c.getParent() : c), "laboratory");
+                _subjectTable = us.getTable("subjects");
+            }
+
+            return _subjectTable;
+        }
+
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
@@ -187,17 +201,8 @@ public class ImputationAnalysis implements SequenceOutputHandler
                 }
             }
 
-            UserSchema us = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), "laboratory");
-            TableInfo ti = us.getTable("subjects");
-            SimpleFilter filter = new SimpleFilter();
-            filter.addClause(new SimpleFilter.OrClause(
-                    new SimpleFilter.InClause(FieldKey.fromString("subjectname"), sampleNames),
-                    new SimpleFilter.InClause(FieldKey.fromString("mother"), sampleNames),
-                    new SimpleFilter.InClause(FieldKey.fromString("father"), sampleNames)
-            ));
-
             final List<PedigreeRecord> pedigreeRecords = new ArrayList<>();
-            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "mother", "father", "gender"), filter, null);
+            TableSelector ts = new TableSelector(getSubjectTable(job.getUser(), job.getContainer()), PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), sampleNames, CompareType.IN), null);
             ts.forEach(new Selector.ForEachBlock<ResultSet>()
             {
                 @Override
@@ -220,31 +225,22 @@ public class ImputationAnalysis implements SequenceOutputHandler
                 subjects.add(p.subjectName);
             }
 
-//            for (String subject : getSampleSets(params))
-//            {
-//                //TODO
-//            }
+            job.getLogger().info("initial subjects: " + pedigreeRecords.size());
+            if (params.optBoolean("includeAncestors", false))
+            {
+                job.getLogger().info("will attempt to include all ancestors");
+            }
+
+            Set<String> distinctSubjects = new HashSet<>();
+            for (PedigreeRecord p : pedigreeRecords)
+            {
+                distinctSubjects.add(p.subjectName);
+            }
 
             List<PedigreeRecord> newRecords = new ArrayList<>();
             for (PedigreeRecord p : pedigreeRecords)
             {
-                if (p.father != null && !subjects.contains(p.father))
-                {
-                    PedigreeRecord pr = new PedigreeRecord();
-                    pr.subjectName = p.father;
-                    pr.gender = "m";
-                    newRecords.add(pr);
-                    subjects.add(p.father);
-                }
-
-                if (p.mother != null && !subjects.contains(p.mother))
-                {
-                    PedigreeRecord pr = new PedigreeRecord();
-                    pr.subjectName = p.mother;
-                    pr.gender = "f";
-                    newRecords.add(pr);
-                    subjects.add(p.mother);
-                }
+                appendParents(job.getUser(), job.getContainer(), distinctSubjects, p, newRecords, params.optBoolean("includeAncestors", false));
             }
             pedigreeRecords.addAll(newRecords);
 
@@ -265,6 +261,36 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     return o1.subjectName.compareTo(o2.subjectName);
                 }
             });
+
+            //morgan doesnt allow IDs with only one parent, so add a dummy ID
+            List<PedigreeRecord> toAdd = new ArrayList<>();
+            for (PedigreeRecord pd : pedigreeRecords)
+            {
+                if (StringUtils.isEmpty(pd.father) && !StringUtils.isEmpty(pd.mother))
+                {
+                    pd.father = "xf" + pd.subjectName;
+                    PedigreeRecord pr = new PedigreeRecord();
+                    pr.subjectName = pd.father;
+                    pr.gender = "m";
+                    toAdd.add(pr);
+                }
+                else if (!StringUtils.isEmpty(pd.father) && StringUtils.isEmpty(pd.mother))
+                {
+                    pd.mother = "xm" + pd.subjectName;
+                    PedigreeRecord pr = new PedigreeRecord();
+                    pr.subjectName = pd.mother;
+                    pr.gender = "f";
+                    toAdd.add(pr);
+                }
+            }
+
+            if (!toAdd.isEmpty())
+            {
+                job.getLogger().info("adding " + toAdd.size() + " subjects to handle IDs with only one parent known");
+                pedigreeRecords.addAll(toAdd);
+            }
+
+            job.getLogger().info("total subjects: " + pedigreeRecords.size());
 
             File gatkPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "gatkPed.ped");
             File morganPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "morgan.ped");
@@ -334,6 +360,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
                 RecordedAction action = new RecordedAction(getName());
                 actions.add(action);
+                action.addInput(gatkPed, "Pedigree File");
 
                 File baseDir = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), SequencePipelineService.get().getUnzippedBaseName(f.getFile().getName()));
                 baseDir.mkdirs();
@@ -532,7 +559,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                             totalMatching++;
                                         }
 
-                                        if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!trueGenos.get(0).equals("0") || !trueGenos.get(1).equals("0")))
+                                        if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!imputedGenos.get(0).equals("0") || !imputedGenos.get(1).equals("0")))
                                         {
                                             int intervalIdx = i / 2;  //there are 2 markers per genome position.  this is 1-based
                                             Interval errorIv = converter.getDensePositionByIndex(chr, intervalIdx);
@@ -659,47 +686,58 @@ public class ImputationAnalysis implements SequenceOutputHandler
             }
         }
 
-        public class PedigreeRecord
+        private void appendParents(User u, Container c, Set<String> distinctSubjects, PedigreeRecord p, List<PedigreeRecord> newRecords, boolean includeAncestors)
         {
-            String subjectName;
-            String father;
-            String mother;
-            String gender;
-
-            /**
-             * returns the first order relatives present in the passed list.
-             */
-            public Set<String> getRelativesPresent(Collection<PedigreeRecord> animals)
+            if (p.father != null && !distinctSubjects.contains(p.father))
             {
-                Set<String> ret = new HashSet<>();
-                for (PedigreeRecord potentialRelative : animals)
+                //lookup ancestors
+                PedigreeRecord pr = null;
+                if (includeAncestors)
                 {
-                    if (isParentOf(potentialRelative) || isChildOf(potentialRelative))
+                    TableSelector ts = new TableSelector(getSubjectTable(u, c), PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.father), null);
+                    pr = ts.getObject(PedigreeRecord.class);
+                    if (pr.gender == null)
                     {
-                        ret.add(potentialRelative.subjectName);
+                        pr.gender = "m";
                     }
                 }
 
-                return ret;
-            }
-
-            public boolean isParentOf(PedigreeRecord potentialOffspring)
-            {
-                return subjectName.equals(potentialOffspring.father) || subjectName.equals(potentialOffspring.mother);
-            }
-
-            public boolean isChildOf(PedigreeRecord potentialParent)
-            {
-                if (father != null && father.equals(potentialParent.subjectName))
+                if (pr == null)
                 {
-                    return true;
-                }
-                else if (mother != null && mother.equals(potentialParent.subjectName))
-                {
-                    return true;
+                    pr = new PedigreeRecord();
+                    pr.subjectName = p.father;
+                    pr.gender = "m";
                 }
 
-                return false;
+                newRecords.add(pr);
+                distinctSubjects.add(p.father);
+                appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
+            }
+
+            if (p.mother != null && !distinctSubjects.contains(p.mother))
+            {
+                //lookup ancestors
+                PedigreeRecord pr = null;
+                if (includeAncestors)
+                {
+                    TableSelector ts = new TableSelector(getSubjectTable(u, c), PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.mother), null);
+                    pr = ts.getObject(PedigreeRecord.class);
+                    if (pr.gender == null)
+                    {
+                        pr.gender = "f";
+                    }
+                }
+
+                if (pr == null)
+                {
+                    pr = new PedigreeRecord();
+                    pr.subjectName = p.mother;
+                    pr.gender = "f";
+                }
+
+                newRecords.add(pr);
+                distinctSubjects.add(p.mother);
+                appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
             }
         }
 
@@ -764,6 +802,95 @@ public class ImputationAnalysis implements SequenceOutputHandler
             {
                 throw new PipelineJobException(e);
             }
+        }
+    }
+
+    public static class PedigreeRecord
+    {
+        String subjectName;
+        String father;
+        String mother;
+        String gender;
+
+        public PedigreeRecord()
+        {
+
+        }
+
+        /**
+         * returns the first order relatives present in the passed list.
+         */
+        public Set<String> getRelativesPresent(Collection<PedigreeRecord> animals)
+        {
+            Set<String> ret = new HashSet<>();
+            for (PedigreeRecord potentialRelative : animals)
+            {
+                if (isParentOf(potentialRelative) || isChildOf(potentialRelative))
+                {
+                    ret.add(potentialRelative.subjectName);
+                }
+            }
+
+            return ret;
+        }
+
+        public boolean isParentOf(PedigreeRecord potentialOffspring)
+        {
+            return subjectName.equals(potentialOffspring.father) || subjectName.equals(potentialOffspring.mother);
+        }
+
+        public boolean isChildOf(PedigreeRecord potentialParent)
+        {
+            if (father != null && father.equals(potentialParent.subjectName))
+            {
+                return true;
+            }
+            else if (mother != null && mother.equals(potentialParent.subjectName))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public String getSubjectName()
+        {
+            return subjectName;
+        }
+
+        public void setSubjectName(String subjectName)
+        {
+            this.subjectName = subjectName;
+        }
+
+        public String getFather()
+        {
+            return father;
+        }
+
+        public void setFather(String father)
+        {
+            this.father = father;
+        }
+
+        public String getMother()
+        {
+            return mother;
+        }
+
+        public void setMother(String mother)
+        {
+            this.mother = mother;
+        }
+
+        public String getGender()
+        {
+            return gender;
+        }
+
+        public void setGender(String gender)
+        {
+            this.gender = gender;
         }
     }
 }

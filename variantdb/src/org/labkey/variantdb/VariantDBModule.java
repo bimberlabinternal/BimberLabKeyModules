@@ -26,8 +26,8 @@ import org.labkey.api.module.ModuleContext;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
-import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.variantdb.analysis.GBSAnalysisHandler;
 import org.labkey.variantdb.analysis.ImputationAnalysis;
 import org.labkey.variantdb.button.DbSnpLoadButton;
 import org.labkey.variantdb.pipeline.DbSnpImportPipelineProvider;
@@ -123,6 +123,8 @@ public class VariantDBModule extends ExtendedSimpleModule
             else
             {
                 SequenceAnalysisService.get().registerFileHandler(new ImputationAnalysis());
+                SequenceAnalysisService.get().registerFileHandler(new GBSAnalysisHandler());
+
                 _hasRegistered = true;
             }
         }

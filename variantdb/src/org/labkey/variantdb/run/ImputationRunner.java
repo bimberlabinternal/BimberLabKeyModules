@@ -148,7 +148,17 @@ public class ImputationRunner
             File gigiParams = new File(basedir, "gigi.par");
             try (BufferedWriter paramWriter = new BufferedWriter(new FileWriter(gigiParams)))
             {
-                paramWriter.write(new File(basedir, "../../../morgan.ped").getPath() + '\n');
+                File orderedPed = new File(basedir, "ordered.ped");
+                if (orderedPed.exists())
+                {
+                    log.info("using ordered.ped file created by gl_auto");
+                    File ped = preparePedigreeForGigi(orderedPed);
+                    paramWriter.write(ped.getPath() + '\n');
+                }
+                else
+                {
+                    paramWriter.write(new File(basedir, "../../../morgan.ped").getPath() + '\n');
+                }
                 paramWriter.write(new File(basedir, "framework.IVs").getPath() + '\n');
                 paramWriter.write("1000\n");
                 paramWriter.write(new File(basedir, "framework_map.txt").getPath() + '\n');
@@ -159,6 +169,44 @@ public class ImputationRunner
             }
             gigi.execute(gigiParams, gigiParams.getParentFile());
         }
+    }
+
+    /**
+     * If we supply an input pedigree that is not sorted as GL_AUTO expects, it will output a new ordered.ped file.
+     * Unfortunately, this pedigree doesnt conform to what GIGI expects, so we need to tweak the header here
+     */
+    private File preparePedigreeForGigi(File pedigree) throws IOException
+    {
+        File output = new File(pedigree.getParent(), "orderedGigi.ped");
+        try (BufferedReader reader = new BufferedReader(new FileReader(pedigree));BufferedWriter writer = new BufferedWriter(new FileWriter(output)))
+        {
+            boolean inHeader = true;
+            String line;
+            int lineNo = 0;
+            while ((line = reader.readLine()) != null)
+            {
+                lineNo++;
+                if (inHeader)
+                {
+                    if (lineNo <= 3)
+                    {
+                        writer.write(line + '\n');
+                    }
+
+                    if (line.startsWith("*"))
+                    {
+                        inHeader = false;
+                        writer.write(line + '\n');
+                    }
+                }
+                else
+                {
+                    writer.write(line + '\n');
+                }
+            }
+        }
+
+        return output;
     }
 
     private void runGlAuto(File basedir, File markerFile, Logger log) throws PipelineJobException, IOException
@@ -213,6 +261,12 @@ public class ImputationRunner
             glautoWriter.write("set tloc 11 allele freqs 0.5 0.5\n");
         }
 
+        File orderedPed = new File(basedir, "ordered.ped");
+        if (orderedPed.exists())
+        {
+            orderedPed.delete();
+
+        }
         GLAutoRunner runner = new GLAutoRunner(log);
         runner.setWorkingDir(basedir);
         runner.execute(glAutoParams);
