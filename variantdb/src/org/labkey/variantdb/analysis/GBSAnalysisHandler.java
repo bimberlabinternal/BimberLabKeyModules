@@ -180,7 +180,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                     File insertSize = new File(outputDir, basename + "_insertSize.pdf");
                     if (insertSize.exists())
                     {
-                        action.addOutput(insertSize, "Insert Size Histogram", false);
+                        action.addOutput(insertSize, "Insert Size Histogram", false, true);
                     }
 
                     writer.write("<html><body><h2>" + o.getName() + ":</h2>");
@@ -218,10 +218,10 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                     File coverageSummary = new File(outputDir, "coverage_summary.txt");
                     if (coverageSummary.exists())
                     {
-                        action.addOutput(coverageSummary, "GBS Summary", false);
+                        action.addOutput(coverageSummary, "GBS Summary", false, true);
                     }
 
-                    action.addOutput(html, "GBS Summary Report", false);
+                    action.addOutput(html, "GBS Summary Report", false, true);
 
                     action.setEndTime(new Date());
                     actions.add(action);

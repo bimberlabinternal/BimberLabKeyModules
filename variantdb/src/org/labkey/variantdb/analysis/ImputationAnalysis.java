@@ -386,7 +386,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     SelectVariantsWrapper selectVariantsWrapper = new SelectVariantsWrapper(job.getLogger());
                     File nonMendelianVcf = new File(baseDir, basename + ".mendelianViolations.vcf.gz");
                     selectVariantsWrapper.execute(genome.getSourceFastaFile(), f.getFile(), nonMendelianVcf, Arrays.asList("-mv", "-mvq", "50", "-pedValidationType", "SILENT", "-ped", gatkPed.getPath()));
-                    action.addOutput(nonMendelianVcf, "Mendelian Violation SNPs", false);
+                    action.addOutput(nonMendelianVcf, "Mendelian Violation SNPs", false, true);
                     int nonMendelian = 0;
 
                     job.getLogger().info("counting non-mendelian SNPs");
@@ -408,7 +408,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     {
                         job.getLogger().info("removing non-mendelian SNPs");
                         vcfFiltered = postBedtools;
-                        action.addOutput(nonMendelianVcf, "Mendelian SNPs", true);
+                        action.addOutput(nonMendelianVcf, "Mendelian SNPs", true, true);
                         BedtoolsRunner bt = new BedtoolsRunner(job.getLogger());
                         bt.execute(Arrays.asList(bt.getExe().getPath(), "intersect", "-v", "-header", "-sorted", "-a", f.getFile().getPath(), "-b", nonMendelianVcf.getPath()), vcfFiltered);
 
@@ -425,10 +425,10 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
                 job.getLogger().info("starting imputation:");
                 File summary = new File(baseDir, "summary.txt");
-                action.addOutput(summary, "Summary Table", false);
+                action.addOutput(summary, "Summary Table", false, true);
 
                 File errorSummary = new File(baseDir, "errorSummary.txt");
-                action.addOutput(errorSummary, "Error Summary Table", false);
+                action.addOutput(errorSummary, "Error Summary Table", false, true);
 
                 Map<String, PedigreeRecord> pedigreeRecordMap = parsePedigree(gatkPed);
                 job.getLogger().debug("pedigree size: " + pedigreeRecordMap.size());
