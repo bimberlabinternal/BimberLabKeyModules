@@ -133,7 +133,7 @@ public class DbSnpImportTask extends PipelineJob.Task<DbSnpImportTask.Factory>
     private void deleteAllFromTable(String batchId, String tableName)
     {
         String sql = "DELETE FROM " + VariantDBSchema.NAME + "." + tableName + " WHERE batchId = ?";
-        try (Connection connection = DbScope.getLabkeyScope().getConnection();PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = DbScope.getLabKeyScope().getConnection();PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, batchId);
             ps.execute();
@@ -215,7 +215,7 @@ public class DbSnpImportTask extends PipelineJob.Task<DbSnpImportTask.Factory>
                     " (objectid, dbSnpAccession, referencePosition, reference, allele, status) " +
                     " values (?, ?, ?, ?, ?, ?);";
 
-            try (Connection connection = DbScope.getLabkeyScope().getConnection();
+            try (Connection connection = DbScope.getLabKeyScope().getConnection();
                  PreparedStatement variantPs = connection.prepareStatement(variantSql);
                  PreparedStatement refVariantPs = connection.prepareStatement(refVariantSql);
                  PreparedStatement refVariantAllelePs = connection.prepareStatement(refVariantAlleleSql)
@@ -474,7 +474,7 @@ public class DbSnpImportTask extends PipelineJob.Task<DbSnpImportTask.Factory>
                     " (objectid, dbSnpAccession, allele, attributeName, attributeValue) " +
                     " values (?, ?, ?, ?, ?);";
 
-            try (Connection connection = DbScope.getLabkeyScope().getConnection();PreparedStatement ps = connection.prepareStatement(sql))
+            try (Connection connection = DbScope.getLabKeyScope().getConnection();PreparedStatement ps = connection.prepareStatement(sql))
             {
                 final int batchSize = 10000;
                 int count = 0;

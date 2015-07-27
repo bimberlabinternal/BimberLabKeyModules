@@ -20,9 +20,7 @@ import htsjdk.samtools.liftover.LiftOver;
 import htsjdk.samtools.util.Interval;
 import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.FeatureReader;
-import htsjdk.variant.vcf.VCF3Codec;
 import htsjdk.variant.vcf.VCFCodec;
-import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
@@ -52,7 +50,6 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +140,7 @@ public class VariantDBManager
                     " (variantid, sequenceid, startPosition, endPosition, reference, allele, referenceVariantId, referenceAlleleId, batchId, chainFile, created, createdBy, modified, modifiedBy) " +
                     " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
-            try (Connection connection = DbScope.getLabkeyScope().getConnection();
+            try (Connection connection = DbScope.getLabKeyScope().getConnection();
                  final PreparedStatement deletePs = connection.prepareStatement(deleteSql);
                  final PreparedStatement insertPs = connection.prepareStatement(insertSql);
             )
@@ -283,7 +280,7 @@ public class VariantDBManager
             {
                 _cachedReferences = new HashMap<>();
 
-                SqlSelector ss = new SqlSelector(DbScope.getLabkeyScope(), new SQLFragment("SELECT r.rowid, r.name FROM sequenceanalysis.ref_nt_sequences r WHERE r.rowid IN (SELECT ref_nt_id FROM sequenceanalysis.reference_library_members m WHERE m.library_id = ?) ", _targetGenomeId));
+                SqlSelector ss = new SqlSelector(DbScope.getLabKeyScope(), new SQLFragment("SELECT r.rowid, r.name FROM sequenceanalysis.ref_nt_sequences r WHERE r.rowid IN (SELECT ref_nt_id FROM sequenceanalysis.reference_library_members m WHERE m.library_id = ?) ", _targetGenomeId));
                 ss.forEach(new Selector.ForEachBlock<ResultSet>()
                 {
                     @Override

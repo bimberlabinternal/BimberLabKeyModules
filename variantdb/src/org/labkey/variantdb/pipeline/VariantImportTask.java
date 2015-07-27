@@ -126,7 +126,7 @@ public class VariantImportTask extends PipelineJob.Task<VariantImportTask.Factor
     private void deleteAllFromTable(String batchId, String tableName)
     {
         String sql = "DELETE FROM " + VariantDBSchema.NAME + "." + tableName + " WHERE batchId = ?";
-        try (Connection connection = DbScope.getLabkeyScope().getConnection();PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = DbScope.getLabKeyScope().getConnection();PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, batchId);
             ps.execute();
@@ -195,7 +195,7 @@ public class VariantImportTask extends PipelineJob.Task<VariantImportTask.Factor
                     " (objectid, sequenceid, startPosition, endPosition, reference, allele, status, dbSnpAccession, provisionalId) " +
                     " values (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
-            try (Connection connection = DbScope.getLabkeyScope().getConnection();PreparedStatement variantPs = connection.prepareStatement(variantSql))
+            try (Connection connection = DbScope.getLabKeyScope().getConnection();PreparedStatement variantPs = connection.prepareStatement(variantSql))
             {
                 final int batchSize = 5000;
                 int count = 0;
