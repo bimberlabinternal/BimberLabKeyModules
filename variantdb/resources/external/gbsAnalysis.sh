@@ -7,10 +7,11 @@ set -x
 VCF=
 MASK=
 CUT_SITES=
+REF=
 LK_DIR=
 HISTOGRAM_SCRIPT=/usr/local/labkey/modules/SequenceAnalysis/external/basicHistogram.r
 
-while getopts "v:i:m:c:l:h:" arg;
+while getopts "v:i:m:c:l:h:r:" arg;
 do
   case $arg in
     v)
@@ -24,6 +25,10 @@ do
     m)
        MASK=$OPTARG
        echo "MASK = ${MASK}"
+       ;;
+    r)
+       REF=$OPTARG
+       echo "REF = ${REF}"
        ;;
     c)
        CUT_SITES=$OPTARG
@@ -50,7 +55,7 @@ echo "Starting: "$BASENAME >> coverage_summary.txt
 if [ ! -e "${BASENAME}_insertSize.pdf" ];
 then
 	echo "calculating insert size"
-	java -jar ${LK_DIR}/picard-tools/CollectInsertSizeMetrics.jar O=${BASENAME}_insertSize.txt H=${BASENAME}_insertSize.pdf I="${INPUT}"
+	java -jar ${LK_DIR}/picard.jar CollectInsertSizeMetrics O=${BASENAME}_insertSize.txt H=${BASENAME}_insertSize.pdf I="${INPUT}"
 fi
 
 if [ ! -e "${BASENAME}_coverage.bed"  ];
@@ -83,7 +88,13 @@ do
             echo "calculating VCF overlap: "$DEPTH"X"
             ${LK_DIR}/bedtools intersect -a ${BASENAME}_coverage_${DEPTH}.bed -b "${VCF}" -sorted > ${BASENAME}_vcfOverlap_${DEPTH}.bed
             echo "VcfOverlap"$DEPTH"X "$(grep -v '^#' ${BASENAME}_vcfOverlap_${DEPTH}.bed | wc -l)" "$BASENAME >> coverage_summary.txt
-            rm ${BASENAME}_vcfOverlap_${DEPTH}.bed
+
+            echo "calculating reference sites that overlap GBS coverage: "$DEPTH"X"
+            java -jar ${LK_DIR}/GenomeAnalysisTK.jar -T VariantFiltration -V "${VCF}" -mask "${BASENAME}_vcfOverlap_${DEPTH}.bed" -maskName "NoGBSCoverage" --filterNotInMask -R "${REF}" -o "${BASENAME}_masked_${DEPTH}.vcf.gz"
+            java -jar ${LK_DIR}/GenomeAnalysisTK.jar -T SelectVariants -R "${REF}" -V "${BASENAME}_masked_${DEPTH}.vcf.gz" -ef -env -trimAlternates -o "${BASENAME}_covered_${DEPTH}.vcf.gz"
+
+            rm "${BASENAME}_vcfOverlap_${DEPTH}.bed"
+            rm "${BASENAME}_masked_${DEPTH}.vcf.gz"
         fi
 
         if [ ! -z $CUT_SITES ]; then

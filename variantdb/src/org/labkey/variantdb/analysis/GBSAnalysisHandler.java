@@ -14,8 +14,10 @@ import org.labkey.api.pipeline.PipelineJobService;
 import org.labkey.api.pipeline.RecordedAction;
 import org.labkey.api.resource.FileResource;
 import org.labkey.api.resource.Resource;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
+import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
@@ -96,6 +98,14 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                     }
                 }
             }
+
+            for (SequenceOutputFile f : inputFiles)
+            {
+                if (f.getLibrary_id() != null)
+                {
+                    support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(f.getLibrary_id(), job.getUser()));
+                }
+            }
         }
 
         @Override
@@ -126,6 +136,13 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
 
                 arguments.add("-i");
                 arguments.add(o.getFile().getPath());
+
+                ReferenceGenome g = support.getCachedGenome(o.getLibrary_id());
+                if (g != null)
+                {
+                    arguments.add("-r");
+                    arguments.add(g.getWorkingFastaFile().getPath());
+                }
 
                 if (params.containsKey("vcfFile") && !StringUtils.isEmpty(params.getString("vcfFile")))
                 {
