@@ -120,8 +120,11 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
             String scriptFile = getScriptPath(VariantDBModule.NAME, "/external/gbsAnalysis.sh");
             String histogramScript = getScriptPath("sequenceanalysis", "/external/basicHistogram.r");
 
+            int i = 0;
             for (SequenceOutputFile o : inputFiles)
             {
+                i++;
+                job.getLogger().info("processing: " + o.getName() + ", " + i + " of " + inputFiles.size());
                 RecordedAction action = new RecordedAction("GBS Analysis");
                 //action.addParameter(new RecordedAction.ParameterType("", PropertyType.STRING), "f");
                 action.setStartTime(new Date());

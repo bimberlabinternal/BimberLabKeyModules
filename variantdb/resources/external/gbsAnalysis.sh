@@ -75,7 +75,7 @@ do
     then
         echo "calculating "$DEPTH"X coverage"
         awk -v d=$DEPTH ' $4 >= d ' ${BASENAME}_coverage.bed > ${BASENAME}_coverage_${DEPTH}.bed
-        echo "Coverage"$DEPTH"X "$(wc -l ${BASENAME}_coverage_"$DEPTH".bed) >> coverage_summary.txt
+        echo "Coverage1X"$DEPTH"X "$(wc -l ${BASENAME}_coverage_"$DEPTH".bed) >> coverage_summary.txt
 
         if [ ! -z $MASK ]; then
             echo "calculating repeat overlap: "$DEPTH"X"
@@ -89,12 +89,12 @@ do
             ${LK_DIR}/bedtools intersect -a ${BASENAME}_coverage_${DEPTH}.bed -b "${VCF}" -sorted > ${BASENAME}_vcfOverlap_${DEPTH}.bed
             echo "VcfOverlap"$DEPTH"X "$(grep -v '^#' ${BASENAME}_vcfOverlap_${DEPTH}.bed | wc -l)" "$BASENAME >> coverage_summary.txt
 
-            echo "calculating reference sites that overlap GBS coverage: "$DEPTH"X"
-            java -jar ${LK_DIR}/GenomeAnalysisTK.jar -T VariantFiltration -V "${VCF}" -mask "${BASENAME}_vcfOverlap_${DEPTH}.bed" -maskName "NoGBSCoverage" --filterNotInMask -R "${REF}" -o "${BASENAME}_masked_${DEPTH}.vcf.gz"
-            java -jar ${LK_DIR}/GenomeAnalysisTK.jar -T SelectVariants -R "${REF}" -V "${BASENAME}_masked_${DEPTH}.vcf.gz" -ef -env -trimAlternates -o "${BASENAME}_covered_${DEPTH}.vcf.gz"
+            #echo "calculating reference sites that overlap GBS coverage: "$DEPTH"X"
+            #java -jar ${LK_DIR}/GenomeAnalysisTK.jar -T VariantFiltration -V "${VCF}" -mask "${BASENAME}_vcfOverlap_${DEPTH}.bed" -maskName "NoGBSCoverage" --filterNotInMask -R "${REF}" -o "${BASENAME}_masked_${DEPTH}.vcf.gz"
+            #java -jar ${LK_DIR}/GenomeAnalysisTK.jar -T SelectVariants -R "${REF}" -V "${BASENAME}_masked_${DEPTH}.vcf.gz" -ef -o "${BASENAME}_covered_${DEPTH}.vcf.gz"
+            #rm "${BASENAME}_masked_${DEPTH}.vcf.gz"
 
             rm "${BASENAME}_vcfOverlap_${DEPTH}.bed"
-            rm "${BASENAME}_masked_${DEPTH}.vcf.gz"
         fi
 
         if [ ! -z $CUT_SITES ]; then
@@ -107,20 +107,20 @@ do
         echo "joining contiguous covered positions: "$DEPTH"X, allowing a 10 NT gap"
         ${LK_DIR}/bedtools merge -i "${BASENAME}_coverage_${DEPTH}.bed" -d 10 > "${BASENAME}_coverage_merged_${DEPTH}.bed"
         echo "MergedIntervals"$DEPTH"X "$(grep -v '^#' ${BASENAME}_coverage_merged_${DEPTH}.bed | wc -l)" "$BASENAME >> coverage_summary.txt
-        
+
         awk -v OFS='\t' '{ print ($3 - $2) }' "${BASENAME}_coverage_merged_${DEPTH}.bed" > "${BASENAME}_coverage_merged_lengths_${DEPTH}.txt"
         Rscript ${HISTOGRAM_SCRIPT} -i "${BASENAME}_coverage_merged_lengths_${DEPTH}.txt" -o "${BASENAME}_fragment_length_${DEPTH}.png" -t "GBS Fragment Length: ${DEPTH}X" -c 1 --binWidth 1 -h FALSE
         rm -Rf "${BASENAME}_coverage_merged_lengths_${DEPTH}.txt"
-        
+
         echo "calculating distance between GBS sites: "$DEPTH"X"
         ${LK_DIR}/bedtools closest -a "${BASENAME}_coverage_merged_${DEPTH}.bed" -b "${BASENAME}_coverage_merged_${DEPTH}.bed" -io -d > "${BASENAME}_coverage_merged_${DEPTH}.txt"
         Rscript ${HISTOGRAM_SCRIPT} -i "${BASENAME}_coverage_merged_${DEPTH}.txt" -o "${BASENAME}_coverage_merged_distance_${DEPTH}.png" -t "Distance From Next GBS Fragment: ${DEPTH}X" -c 7 --binWidth 100 --maxValue 250000 -h FALSE
         Rscript ${HISTOGRAM_SCRIPT} -i "${BASENAME}_coverage_merged_${DEPTH}.txt" -o "${BASENAME}_coverage_merged_per_chromosome_${DEPTH}.png" -t "GBS Fragments Per Chromosome: ${DEPTH}X" -c 1 --binWidth 1 -h FALSE
 
         rm ${BASENAME}_coverage_${DEPTH}.bed
-        rm ${BASENAME}_coverage_merged_${DEPTH}.bed
+        gzip ${BASENAME}_coverage_merged_${DEPTH}.bed
         gzip -f ${BASENAME}_coverage_merged_${DEPTH}.txt
     fi
 done
 
-rm ${BASENAME}_coverage.bed
+gzip ${BASENAME}_coverage.bed

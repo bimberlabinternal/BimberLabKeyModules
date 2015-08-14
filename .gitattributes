@@ -82,6 +82,7 @@ DISCVR/variantdb/src/org/labkey/variantdb/query/NeighboringVariantsDisplayColumn
 DISCVR/variantdb/src/org/labkey/variantdb/query/Variant.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/query/VariantDBUserSchema.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/BedtoolsRunner.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/CombineVariantsWrapper.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/GLAutoRunner.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/GigiRunner.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/ImputationRunner.java -text
