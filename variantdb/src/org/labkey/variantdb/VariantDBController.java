@@ -28,7 +28,7 @@ import org.labkey.api.pipeline.PipeRoot;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.CSRF;
-import org.labkey.api.security.RequiresPermissionClass;
+import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.view.NotFoundException;
@@ -58,7 +58,7 @@ public class VariantDBController extends SpringActionController
         setActionResolver(_actionResolver);
     }
 
-    @RequiresPermissionClass(InsertPermission.class)
+    @RequiresPermission(InsertPermission.class)
     @CSRF
     public class LoadDbSnpDataAction extends ApiAction<LoadDbSnpForm>
     {
@@ -133,7 +133,7 @@ public class VariantDBController extends SpringActionController
         }
     }
 
-    @RequiresPermissionClass(InsertPermission.class)
+    @RequiresPermission(InsertPermission.class)
     @CSRF
     public class VariantImportAction extends ApiAction<VariantImportForm>
     {
@@ -199,7 +199,7 @@ public class VariantDBController extends SpringActionController
         }
     }
 
-    @RequiresPermissionClass(InsertPermission.class)
+    @RequiresPermission(InsertPermission.class)
     @CSRF
     public class LiftOverVariantsAction extends ApiAction<LiftOverVariantsForm>
     {
@@ -259,7 +259,7 @@ public class VariantDBController extends SpringActionController
         }
     }
 
-    @RequiresPermissionClass(InsertPermission.class)
+    @RequiresPermission(InsertPermission.class)
     @CSRF
     public class GetSamplesFromVcfAction extends ApiAction<GetSamplesFromVcfForm>
     {
