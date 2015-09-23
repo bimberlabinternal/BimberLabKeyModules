@@ -68,6 +68,7 @@ DISCVR/variantdb/src/org/labkey/variantdb/VariantDBModule.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/VariantDBSchema.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/GBSAnalysisHandler.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/ImputationAnalysis.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/analysis/MendelianAnalysisHandler.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/VariantImportHandler.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/button/DbSnpLoadButton.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/ClinVarVCFRecord.java -text
@@ -86,6 +87,7 @@ DISCVR/variantdb/src/org/labkey/variantdb/run/CombineVariantsWrapper.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/GLAutoRunner.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/GigiRunner.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/ImputationRunner.java -text
+DISCVR/variantdb/src/org/labkey/variantdb/run/MendelianEvaluator.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/run/SelectVariantsWrapper.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerPermission.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerRole.java -text
@@ -857,6 +859,7 @@ onprcEHRModules/sla/resources/schemas/dbscripts/postgresql/sla-13.22-13.23.sql -
 onprcEHRModules/sla/resources/schemas/dbscripts/postgresql/sla-13.23-13.24.sql -text
 onprcEHRModules/sla/resources/schemas/dbscripts/postgresql/sla-13.24-13.25.sql -text
 onprcEHRModules/sla/resources/schemas/dbscripts/postgresql/sla-13.25-13.26.sql -text
+onprcEHRModules/sla/resources/schemas/dbscripts/postgresql/sla-13.27-13.28.sql -text
 onprcEHRModules/sla/resources/schemas/dbscripts/sqlserver/sla-0.00-13.21.sql -text
 onprcEHRModules/sla/resources/schemas/dbscripts/sqlserver/sla-13.21-13.22.sql -text
 onprcEHRModules/sla/resources/schemas/dbscripts/sqlserver/sla-13.22-13.23.sql -text

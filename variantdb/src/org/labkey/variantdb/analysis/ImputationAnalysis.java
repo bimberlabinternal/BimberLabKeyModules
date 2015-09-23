@@ -6,6 +6,7 @@ import htsjdk.samtools.util.Interval;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
@@ -40,7 +41,9 @@ import org.labkey.api.util.Pair;
 import org.labkey.api.view.ActionURL;
 import org.labkey.variantdb.VariantDBModule;
 import org.labkey.variantdb.run.BedtoolsRunner;
+import org.labkey.variantdb.run.CombineVariantsWrapper;
 import org.labkey.variantdb.run.ImputationRunner;
+import org.labkey.variantdb.run.MendelianEvaluator;
 import org.labkey.variantdb.run.SelectVariantsWrapper;
 
 import java.io.BufferedReader;
@@ -184,113 +187,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
             support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(ids.iterator().next(), job.getUser()));
 
             //make ped file
-            Set<String> sampleNames = new HashSet<>();
-            if (params.containsKey("sampleSets"))
-            {
-                for (Object o : params.getJSONArray("sampleSets").toArray())
-                {
-                    JSONArray arr = (JSONArray)o;
-                    for (int i=0;i<arr.length();i++)
-                    {
-                        JSONArray set = arr.getJSONArray(i);
-                        for (int j=0;j<set.length();j++)
-                        {
-                            sampleNames.add(set.getString(0));
-                        }
-                    }
-                }
-            }
-
-            final List<PedigreeRecord> pedigreeRecords = new ArrayList<>();
-            TableSelector ts = new TableSelector(getSubjectTable(job.getUser(), job.getContainer()), PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), sampleNames, CompareType.IN), null);
-            ts.forEach(new Selector.ForEachBlock<ResultSet>()
-            {
-                @Override
-                public void exec(ResultSet rs) throws SQLException
-                {
-                    PedigreeRecord pedigree = new PedigreeRecord();
-                    pedigree.subjectName = rs.getString("subjectname");
-                    pedigree.father = rs.getString("father");
-                    pedigree.mother = rs.getString("mother");
-                    pedigree.gender = rs.getString("gender");
-                    if (!StringUtils.isEmpty(pedigree.subjectName))
-                        pedigreeRecords.add(pedigree);
-                }
-            });
-
-            //insert record for any missing parents:
-            Set<String> subjects = new HashSet<>();
-            for (PedigreeRecord p : pedigreeRecords)
-            {
-                subjects.add(p.subjectName);
-            }
-
-            job.getLogger().info("initial subjects: " + pedigreeRecords.size());
-            if (params.optBoolean("includeAncestors", false))
-            {
-                job.getLogger().info("will attempt to include all ancestors");
-            }
-
-            Set<String> distinctSubjects = new HashSet<>();
-            for (PedigreeRecord p : pedigreeRecords)
-            {
-                distinctSubjects.add(p.subjectName);
-            }
-
-            List<PedigreeRecord> newRecords = new ArrayList<>();
-            for (PedigreeRecord p : pedigreeRecords)
-            {
-                appendParents(job.getUser(), job.getContainer(), distinctSubjects, p, newRecords, params.optBoolean("includeAncestors", false));
-            }
-            pedigreeRecords.addAll(newRecords);
-
-            Collections.sort(pedigreeRecords, new Comparator<PedigreeRecord>()
-            {
-                @Override
-                public int compare(PedigreeRecord o1, PedigreeRecord o2)
-                {
-                    if (o1.subjectName.equals(o2.father) || o1.subjectName.equals(o2.mother))
-                        return -1;
-                    else if (o2.subjectName.equals(o1.father) || o2.subjectName.equals(o1.mother))
-                        return 1;
-                    else if (o1.mother == null && o1.father == null)
-                        return -1;
-                    else if (o2.mother == null && o2.father == null)
-                        return 1;
-
-                    return o1.subjectName.compareTo(o2.subjectName);
-                }
-            });
-
-            //morgan doesnt allow IDs with only one parent, so add a dummy ID
-            List<PedigreeRecord> toAdd = new ArrayList<>();
-            for (PedigreeRecord pd : pedigreeRecords)
-            {
-                if (StringUtils.isEmpty(pd.father) && !StringUtils.isEmpty(pd.mother))
-                {
-                    pd.father = "xf" + pd.subjectName;
-                    PedigreeRecord pr = new PedigreeRecord();
-                    pr.subjectName = pd.father;
-                    pr.gender = "m";
-                    toAdd.add(pr);
-                }
-                else if (!StringUtils.isEmpty(pd.father) && StringUtils.isEmpty(pd.mother))
-                {
-                    pd.mother = "xm" + pd.subjectName;
-                    PedigreeRecord pr = new PedigreeRecord();
-                    pr.subjectName = pd.mother;
-                    pr.gender = "f";
-                    toAdd.add(pr);
-                }
-            }
-
-            if (!toAdd.isEmpty())
-            {
-                job.getLogger().info("adding " + toAdd.size() + " subjects to handle IDs with only one parent known");
-                pedigreeRecords.addAll(toAdd);
-            }
-
-            job.getLogger().info("total subjects: " + pedigreeRecords.size());
+            List<PedigreeRecord> pedigreeRecords = generatePedigree(job, params);
 
             File gatkPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "gatkPed.ped");
             File morganPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "morgan.ped");
@@ -327,6 +224,19 @@ public class ImputationAnalysis implements SequenceOutputHandler
             }
             job.getLogger().info("using dense markers file: " + denseMarkers.getFile().getPath());
             support.cacheExpData(denseMarkers);
+
+            ExpData alleleFrequencyFile = ExperimentService.get().getExpData(params.getInt("alleleFrequencyFile"));
+            if (alleleFrequencyFile == null || !alleleFrequencyFile.getFile().exists())
+            {
+                throw new PipelineJobException("Unable to find allele frequency file: " + params.getInt("alleleFrequencyFile"));
+            }
+            job.getLogger().info("using allele frequency file: " + alleleFrequencyFile.getFile().getPath());
+            support.cacheExpData(alleleFrequencyFile);
+        }
+
+        private String potentiallyWriteAliasedName(String subjectId, Map<String, String> aliasMap)
+        {
+            return aliasMap.containsKey(subjectId) ? aliasMap.get(subjectId) : subjectId;
         }
 
         @Override
@@ -350,280 +260,252 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
             File gatkPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "gatkPed.ped");
             FileType gz = new FileType(".gz");
-            for (SequenceOutputFile f : inputFiles)
+            List<SampleSet> sets = getSampleSets(params);
+            RecordedAction action = new RecordedAction(getName());
+            actions.add(action);
+            action.addInput(gatkPed, "Pedigree File");
+            File denseMarkers = support.getCachedData(params.getInt("denseFile"));
+            action.addInput(denseMarkers, "Dense Markers");
+            File frameworkMarkers = support.getCachedData(params.getInt("frameworkFile"));
+            action.addInput(frameworkMarkers, "Framework Markers");
+            File alleleFreqVcf = support.getCachedData(params.getInt("alleleFrequencyFile"));
+            action.addInput(alleleFreqVcf, "Allele Frequency File");
+
+
+            ImputationRunner runner = new ImputationRunner(denseMarkers, frameworkMarkers, job.getLogger());
+            File rawDataDir = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "rawData");
+            rawDataDir.mkdirs();
+
+            //write allele frequency data and make map of marker/NT
+            runner.prepareFrequencyFiles(alleleFreqVcf, rawDataDir, job.getLogger());
+
+            File summary = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "summary.txt");
+            action.addOutput(summary, "Summary Table", false);
+
+            File errorSummary = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "errorSummary.txt");
+            action.addOutput(errorSummary, "Error Summary Table", false);
+
+            try (CSVWriter writer = new CSVWriter(new FileWriter(summary), '\t', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter errorWriter = new CSVWriter(new FileWriter(errorSummary), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                String basename = FileUtil.getBaseName(f.getFile());
-                if (gz.isType(f.getFile()))
+                writer.writeNext(new String[]{"SetName", "TotalFramework", "TotalDense", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "Chr", "TotalMarkers", "TotalMatching", "TotalMissing", "TotalNonCalledRef", "TotalIncorrectNonCalledRef", "PctMatching", "PctMissing", "PctMatchingWithoutNonCalled", "PctMissingWithoutNonCalled", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalImputed"});
+                errorWriter.writeNext(new String[]{"SetName", "CompleteGenotypes", "ImputedSubjects", "TotalImputed", "Subject", "MarkerNumber", "Chr", "Position", "ImputedGenotype", "ActualGenotype", "PreviousFramework", "DistanceFromPreviousFramework", "NextFramework", "DistanceFromNextFramework", "DistanceFromNearestMarker", "NumNearbyMarkers", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent"});
+
+                Integer idx = 0;
+                for (SampleSet ss : sets)
                 {
-                    basename = FileUtil.getBaseName(basename);
-                }
+                    idx++;
+                    job.getLogger().info("Starting set " + idx + " of " + sets.size());
+                    job.setStatus("Set " + idx + " of " + sets.size());
 
-                RecordedAction action = new RecordedAction(getName());
-                actions.add(action);
-                action.addInput(gatkPed, "Pedigree File");
-
-                File baseDir = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), SequencePipelineService.get().getUnzippedBaseName(f.getFile().getName()));
-                baseDir.mkdirs();
-
-                File inputVcf = f.getFile();
-                File vcfFiltered = null;
-
-                //essentially allows resume on failed jobs
-                File postBedtools = new File(baseDir, basename + ".mendelianPass.vcf");
-                if (params.optBoolean("skipMendelianCheck", false))
-                {
-
-                }
-                else if (postBedtools.exists())
-                {
-                    inputVcf = postBedtools;
-                }
-                else
-                {
-                    //identify non-mendelian SNPs
-                    job.getLogger().info("identifying non-mendelian SNPs");
-                    ReferenceGenome genome = support.getCachedGenome(f.getLibrary_id());
-                    SelectVariantsWrapper selectVariantsWrapper = new SelectVariantsWrapper(job.getLogger());
-                    File nonMendelianVcf = new File(baseDir, basename + ".mendelianViolations.vcf.gz");
-                    selectVariantsWrapper.execute(genome.getSourceFastaFile(), f.getFile(), nonMendelianVcf, Arrays.asList("-mv", "-mvq", "50", "-pedValidationType", "SILENT", "-ped", gatkPed.getPath()));
-                    action.addOutput(nonMendelianVcf, "Mendelian Violation SNPs", false, true);
-                    int nonMendelian = 0;
-
-                    job.getLogger().info("counting non-mendelian SNPs");
-                    try (VCFFileReader reader = new VCFFileReader(nonMendelianVcf, false))
+                    File baseDir = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "Set-" + idx.toString());
+                    if (!baseDir.exists())
                     {
-                        try (CloseableIterator<VariantContext> it = reader.iterator())
-                        {
-                            while (it.hasNext())
-                            {
-                                it.next();
-                                nonMendelian++;
-                            }
-                        }
+                        baseDir.mkdirs();
                     }
-                    job.getLogger().info("total non-mendelian SNPs: " + nonMendelian);
 
-                    //then use bedtools to remove violations
-                    if (nonMendelian > 0)
+                    buildCombinedVcf(runner, ss, inputFiles, support, job.getLogger(), baseDir, params, action, gatkPed);
+
+                    runner.prepareResources(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, ImputationRunner.MarkerType.framework, runner.getFrameworkIntervalMap());
+                    runner.prepareResources(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, ImputationRunner.MarkerType.dense, runner.getDenseIntervalMap());
+
+                    Map<String, PedigreeRecord> pedigreeRecordMap = parsePedigree(gatkPed);
+                    job.getLogger().debug("pedigree size: " + pedigreeRecordMap.size());
+
+                    //now actually perform imputation
+                    String callMethod = params.get("callMethod") != null ? params.getString("callMethod") : "1";
+                    runner.processSet(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, callMethod);
+
+                    //calculate relatives present in WGS per subject:
+                    Map<String, Set<String>> relativesPresent = new TreeMap<>();
+                    Map<String, Set<String>> wgsRelativesPresent = new TreeMap<>();
+                    Set<PedigreeRecord> wgsSubjects = new HashSet<>();
+                    Set<PedigreeRecord> allSubjects = new HashSet<>();
+                    for (Pair<Integer, String> id : ss.wgsSampleIds)
                     {
-                        job.getLogger().info("removing non-mendelian SNPs");
-                        vcfFiltered = postBedtools;
-                        action.addOutput(nonMendelianVcf, "Mendelian SNPs", true, true);
-                        BedtoolsRunner bt = new BedtoolsRunner(job.getLogger());
-                        bt.execute(Arrays.asList(bt.getExe().getPath(), "intersect", "-v", "-header", "-sorted", "-a", f.getFile().getPath(), "-b", nonMendelianVcf.getPath()), vcfFiltered);
-
-                        inputVcf = vcfFiltered;
+                        wgsSubjects.add(pedigreeRecordMap.get(id.second));
+                        allSubjects.add(pedigreeRecordMap.get(id.second));
                     }
-                }
 
-                File denseMarkers = support.getCachedData(params.getInt("denseFile"));
-                action.addInput(denseMarkers, "Dense Markers");
-                File frameworkMarkers = support.getCachedData(params.getInt("frameworkFile"));
-                action.addInput(frameworkMarkers, "Framework Markers");
-
-                action.addInput(f.getFile(), "Variant Data");
-
-                job.getLogger().info("starting imputation:");
-                File summary = new File(baseDir, "summary.txt");
-                action.addOutput(summary, "Summary Table", false, true);
-
-                File errorSummary = new File(baseDir, "errorSummary.txt");
-                action.addOutput(errorSummary, "Error Summary Table", false, true);
-
-                Map<String, PedigreeRecord> pedigreeRecordMap = parsePedigree(gatkPed);
-                job.getLogger().debug("pedigree size: " + pedigreeRecordMap.size());
-
-                try (CSVWriter writer = new CSVWriter(new FileWriter(summary), '\t', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter errorWriter = new CSVWriter(new FileWriter(errorSummary), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-                {
-                    writer.writeNext(new String[]{"SetName", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "Chr", "TotalMarkers", "TotalMatching", "TotalMissing", "PctMatching", "PctMissing", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalImputed"});
-                    errorWriter.writeNext(new String[]{"SetName", "CompleteGenotypes", "ImputedSubjects", "TotalImputed", "Subject", "MarkerNumber", "Chr", "Position", "ImputedGenotype", "ActualGenotype", "PreviousFramework", "DistanceFromPreviousFramework", "NextFramework", "DistanceFromNextFramework", "DistanceFromNearestMarker", "NumNearbyMarkers", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent"});
-
-                    List<Pair<List<String>, List<String>>> sets = getSampleSets(params);
-                    Integer idx = 0;
-                    for (Pair<List<String>, List<String>> samples : sets)
+                    for (Pair<Integer, String> id : ss.imputedSampleIds)
                     {
-                        idx++;
-                        job.getLogger().info("imputing set " + idx + " of " + sets.size());
-                        job.setStatus("Imputing set " + idx + " of " + sets.size());
+                        allSubjects.add(pedigreeRecordMap.get(id.second));
+                    }
 
-                        File dir = new File(baseDir, idx.toString());
-                        dir.mkdirs();
-
-                        ImputationRunner converter = new ImputationRunner(denseMarkers, frameworkMarkers, job.getLogger());
-                        String callMethod = params.get("callMethod") != null ? params.getString("callMethod") : "1";
-                        converter.processSet(inputVcf, dir, "Set" + idx.toString(), job.getLogger(), samples.first, samples.second, callMethod);
-
-                        //calculate relatives present in WGS per subject:
-                        Map<String, Set<String>> relativesPresent = new TreeMap<>();
-                        Map<String, Set<String>> wgsRelativesPresent = new TreeMap<>();
-                        Set<PedigreeRecord> wgsSubjects = new HashSet<>();
-                        Set<PedigreeRecord> allSubjects = new HashSet<>();
-                        for (String id : samples.first)
+                    for (Pair<Integer, String> imputedSubj : ss.imputedSampleIds)
+                    {
+                        PedigreeRecord pr = pedigreeRecordMap.get(imputedSubj.second);
+                        if (pr == null)
                         {
-                            wgsSubjects.add(pedigreeRecordMap.get(id));
-                            allSubjects.add(pedigreeRecordMap.get(id));
+                            throw new PipelineJobException("unable to find pedigree record for id: [" + imputedSubj.second + "]");
                         }
 
-                        for (String id : samples.second)
-                        {
-                            allSubjects.add(pedigreeRecordMap.get(id));
-                        }
+                        relativesPresent.put(imputedSubj.second, pr.getRelativesPresent(allSubjects));
+                        wgsRelativesPresent.put(imputedSubj.second, pr.getRelativesPresent(wgsSubjects));
+                    }
 
-                        for (String imputedSubj : samples.second)
+                    for (String chr : runner.getDenseChrs())
+                    {
+                        File imputed = new File(baseDir, chr + "/impute.geno");
+                        List<Interval> frameworkIntervals = runner.getFrameworkIntervals(chr);
+                        try (BufferedReader imputedReader = new BufferedReader(new FileReader(imputed)))
                         {
-                            PedigreeRecord pr = pedigreeRecordMap.get(imputedSubj);
-                            if (pr == null)
+                            String imputedLine;
+                            OUTER: while ((imputedLine = imputedReader.readLine()) != null)
                             {
-                                throw new PipelineJobException("unable to find pedigree record for id: [" + imputedSubj + "]");
-                            }
-
-                            relativesPresent.put(imputedSubj, pr.getRelativesPresent(allSubjects));
-                            wgsRelativesPresent.put(imputedSubj, pr.getRelativesPresent(wgsSubjects));
-                        }
-
-                        for (String chr : converter.getDenseChrs())
-                        {
-                            File imputed = new File(dir, chr + "/impute.geno");
-                            List<Interval> frameworkIntervals = converter.getFrameworkIntervals(chr);
-                            try (BufferedReader imputedReader = new BufferedReader(new FileReader(imputed)))
-                            {
-                                String imputedLine;
-                                OUTER: while ((imputedLine = imputedReader.readLine()) != null)
+                                String[] imputedData = imputedLine.split("( )+");
+                                if (!ss.imputedSampleIdStrings.contains(imputedData[0]))
                                 {
-                                    String[] imputedData = imputedLine.split("( )+");
-                                    String[] trueGenotypesData = null;
-                                    File trueGenotypes = new File(dir, chr + "/denseComplete.geno");
-                                    try (BufferedReader trueGenotypereader = new BufferedReader(new FileReader(trueGenotypes)))
+                                    job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
+                                    continue OUTER;
+                                }
+
+                                String[] trueGenotypesData = null;
+
+                                Integer fileId = ss.sampleFileMap.get(imputedData[0]);
+                                if (fileId == null)
+                                {
+                                    throw new PipelineJobException("unable to find file matching sample: " + imputedData[0]);
+                                }
+
+                                Pair<Integer, String> refPair = ss.getReferenceForImputedSample(imputedData[0]);
+                                if (refPair == null)
+                                {
+                                    job.getLogger().info("no reference available for sample: " + imputedData[0] + ", skipping");
+                                    continue;
+                                }
+
+                                if (!refPair.first.equals(fileId))
+                                {
+                                    job.getLogger().info("using alternate reference data for sample: " + imputedData[0]);
+                                }
+
+                                File trueGenotypes = runner.getGiGiReferenceGenotypeFile(ImputationRunner.MarkerType.dense, baseDir, chr, imputedData[0]);
+                                if (trueGenotypes == null || !trueGenotypes.exists())
+                                {
+                                    job.getLogger().warn("unable to find reference genotype file, skipping: " + imputedData[0]);
+                                    continue;
+                                }
+
+                                try (BufferedReader trueGenotypereader = new BufferedReader(new FileReader(trueGenotypes)))
+                                {
+                                    String trueGenotypesLine;
+                                    INNER: while ((trueGenotypesLine = trueGenotypereader.readLine()) != null)
                                     {
-                                        String trueGenotypesLine;
-                                        INNER: while ((trueGenotypesLine = trueGenotypereader.readLine()) != null)
+                                        String[] lineData = trueGenotypesLine.split("( )+");
+                                        trueGenotypesData = lineData;
+                                        break INNER;
+                                    }
+                                }
+
+                                if (!ss.imputedSampleIdStrings.contains(imputedData[0]))
+                                {
+                                    job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
+                                    continue OUTER;
+                                }
+
+                                if (trueGenotypesData == null)
+                                {
+                                    //throw new PipelineJobException("Unable to find reference genotypes for subject: " + imputedData[0]);
+                                    //NOTE: GIGI will infer genotypes for parents and other subjects not in our set
+                                    job.getLogger().warn("Unable to find reference genotypes for subject: " + imputedData[0]);
+                                    continue OUTER;
+                                }
+
+                                if (trueGenotypesData.length != imputedData.length)
+                                {
+                                    throw new IOException("reference and imputed genotypes files do not have the same number of markers: " + imputed.getPath());
+                                }
+
+                                job.getLogger().info("validating imputed subject: " + imputedData[0]);
+
+                                int totalMarkers = 0;
+                                int totalMatching = 0;
+                                int totalMissing = 0;
+                                int nonCalledRef = 0;
+                                int incorrectNonCalledRef = 0;
+                                final int WINDOW_SIZE = 800000;  //~4X the avg distance
+                                for (int i = 1; i < trueGenotypesData.length; i++)
+                                {
+                                    totalMarkers++;
+                                    totalMarkers++; //we are cycling through 2 positions
+                                    List<String> imputedGenos = new ArrayList<>(Arrays.asList(imputedData[i], imputedData[i + 1]));
+                                    Collections.sort(imputedGenos);
+                                    List<String> trueGenos = new ArrayList<>(Arrays.asList(trueGenotypesData[i], trueGenotypesData[i + 1]));
+                                    Collections.sort(trueGenos);
+
+                                    i++; //additional increment for 2nd marker
+
+                                    if (imputedGenos.get(0).equals("0"))
+                                    {
+                                        totalMissing++;
+                                        if (trueGenos.get(0).equals("-1"))
                                         {
-                                            String[] lineData = trueGenotypesLine.split("( )+");
-                                            if (lineData[0].equals(imputedData[0]))
+                                            nonCalledRef++;
+                                        }
+                                    }
+                                    else if (trueGenos.get(0).equals(imputedGenos.get(0)))
+                                    {
+                                        totalMatching++;
+                                    }
+                                    else if (trueGenos.get(0).equals("-1"))
+                                    {
+                                        nonCalledRef++;
+                                        incorrectNonCalledRef++;
+                                    }
+
+                                    if (imputedGenos.get(1).equals("0"))
+                                    {
+                                        totalMissing++;
+                                        if (trueGenos.get(1).equals("-1"))
+                                        {
+                                            nonCalledRef++;
+                                        }
+                                    }
+                                    else if (trueGenos.get(1).equals(imputedGenos.get(1)))
+                                    {
+                                        totalMatching++;
+                                    }
+                                    else if (trueGenos.get(1).equals("-1"))
+                                    {
+                                        nonCalledRef++;
+                                        incorrectNonCalledRef++;
+                                    }
+
+                                    if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!imputedGenos.get(0).equals("0") || !imputedGenos.get(1).equals("0")))
+                                    {
+                                        int intervalIdx = i / 2;  //there are 2 markers per genome position.  this is 1-based
+                                        Interval errorIv = runner.getDensePositionByIndex(chr, intervalIdx);
+                                        if (errorIv == null)
+                                        {
+                                            job.getLogger().error("Unable to find dense interval for idx: " + i);
+                                        }
+                                        else
+                                        {
+                                            //find markers near to this position
+                                            int nearbyMarkers = 0;
+                                            for (Interval iv : frameworkIntervals)
                                             {
-                                                trueGenotypesData = lineData;
-                                                break INNER;
-                                            }
-                                        }
-                                    }
-
-                                    if (!samples.second.contains(imputedData[0]))
-                                    {
-                                        job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
-                                        continue OUTER;
-                                    }
-
-                                    if (trueGenotypesData == null)
-                                    {
-                                        //throw new PipelineJobException("Unable to find reference genotypes for subject: " + imputedData[0]);
-                                        //NOTE: GIGI will infer genotypes for parents and other subjects not in our set
-                                        job.getLogger().warn("Unable to find reference genotypes for subject: " + imputedData[0]);
-                                        continue OUTER;
-                                    }
-
-                                    if (trueGenotypesData.length != imputedData.length)
-                                    {
-                                        throw new IOException("reference and imputed genotypes files do not have the same number of markers: " + imputed.getPath());
-                                    }
-
-                                    int totalMarkers = 0;
-                                    int totalMatching = 0;
-                                    int totalMissing = 0;
-                                    final int WINDOW_SIZE = 800000;  //~4X the avg distance
-                                    for (int i = 1; i < trueGenotypesData.length; i++)
-                                    {
-                                        totalMarkers++;
-                                        totalMarkers++; //we are cycling through 2 positions
-                                        List<String> imputedGenos = new ArrayList<>(Arrays.asList(imputedData[i], imputedData[i + 1]));
-                                        Collections.sort(imputedGenos);
-                                        List<String> trueGenos = new ArrayList<>(Arrays.asList(trueGenotypesData[i], trueGenotypesData[i + 1]));
-                                        Collections.sort(trueGenos);
-
-                                        i++; //additional increment for 2nd marker
-
-                                        if (imputedGenos.get(0).equals("0"))
-                                        {
-                                            totalMissing++;
-                                        }
-                                        else if (trueGenos.get(0).equals(imputedGenos.get(0)))
-                                        {
-                                            totalMatching++;
-                                        }
-
-                                        if (imputedGenos.get(1).equals("0"))
-                                        {
-                                            totalMissing++;
-                                        }
-                                        else if (trueGenos.get(1).equals(imputedGenos.get(1)))
-                                        {
-                                            totalMatching++;
-                                        }
-
-                                        if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!imputedGenos.get(0).equals("0") || !imputedGenos.get(1).equals("0")))
-                                        {
-                                            int intervalIdx = i / 2;  //there are 2 markers per genome position.  this is 1-based
-                                            Interval errorIv = converter.getDensePositionByIndex(chr, intervalIdx);
-                                            if (errorIv == null)
-                                            {
-                                                job.getLogger().error("Unable to find dense interval for idx: " + i);
-                                            }
-                                            else
-                                            {
-                                                //find markers near to this position
-                                                int nearbyMarkers = 0;
-                                                for (Interval iv : frameworkIntervals)
+                                                int d1 = Math.abs(iv.getStart() - errorIv.getStart());
+                                                if (d1 < WINDOW_SIZE)
                                                 {
-                                                    int d1 = Math.abs(iv.getStart() - errorIv.getStart());
-                                                    if (d1 < WINDOW_SIZE)
-                                                    {
-                                                        nearbyMarkers++;
-                                                    }
+                                                    nearbyMarkers++;
                                                 }
+                                            }
 
-                                                boolean found = false;
-                                                Interval previous = null;
-                                                for (Interval iv : frameworkIntervals)
+                                            boolean found = false;
+                                            Interval previous = null;
+                                            for (Interval iv : frameworkIntervals)
+                                            {
+                                                if (iv.getStart() > errorIv.getStart())
                                                 {
-                                                    if (iv.getStart() > errorIv.getStart())
-                                                    {
-                                                        Integer d1 = previous == null ? null : errorIv.getStart() - previous.getStart();
-                                                        Integer d2 = iv.getStart() - errorIv.getStart();
+                                                    Integer d1 = previous == null ? null : errorIv.getStart() - previous.getStart();
+                                                    Integer d2 = iv.getStart() - errorIv.getStart();
 
-                                                        errorWriter.writeNext(new String[]{
-                                                                idx.toString(),
-                                                                StringUtils.join(samples.first, ";"),
-                                                                StringUtils.join(samples.second, ";"),
-                                                                String.valueOf(samples.second.size()),
-                                                                imputedData[0],
-                                                                String.valueOf(intervalIdx),
-                                                                chr,
-                                                                String.valueOf(errorIv.getStart()),
-                                                                StringUtils.join(imputedGenos, ";"),
-                                                                StringUtils.join(trueGenos, ";"),
-                                                                (previous != null ? String.valueOf(previous.getStart()) : "no marker"),
-                                                                (previous != null ? String.valueOf(d1) : "no marker"),
-                                                                String.valueOf(iv.getStart()),
-                                                                String.valueOf(d2),
-                                                                String.valueOf(d1 == null ? d2 : Math.min(d1, d2)),
-                                                                String.valueOf(nearbyMarkers),
-                                                                String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
-                                                                String.valueOf(relativesPresent.get(imputedData[0]).size())
-                                                        });
-
-                                                        found = true;
-                                                        break;
-                                                    }
-
-                                                    previous = iv;
-                                                }
-
-                                                if (!found)
-                                                {
                                                     errorWriter.writeNext(new String[]{
                                                             idx.toString(),
-                                                            StringUtils.join(samples.first, ";"),
-                                                            StringUtils.join(samples.second, ";"),
-                                                            String.valueOf(samples.second.size()),
+                                                            StringUtils.join(ss.wgsSampleIdStrings, ";"),
+                                                            StringUtils.join(ss.imputedSampleIdStrings, ";"),
+                                                            String.valueOf(ss.imputedSampleIdStrings.size()),
                                                             imputedData[0],
                                                             String.valueOf(intervalIdx),
                                                             chr,
@@ -631,143 +513,389 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                                             StringUtils.join(imputedGenos, ";"),
                                                             StringUtils.join(trueGenos, ";"),
                                                             (previous != null ? String.valueOf(previous.getStart()) : "no marker"),
-                                                            (previous != null ? String.valueOf(errorIv.getStart() - previous.getStart()) : "No marker"),
-                                                            "No marker",
-                                                            "No marker",
-                                                            String.valueOf(previous == null ? "" : errorIv.getStart() - previous.getStart()),
+                                                            (previous != null ? String.valueOf(d1) : "no marker"),
+                                                            String.valueOf(iv.getStart()),
+                                                            String.valueOf(d2),
+                                                            String.valueOf(d1 == null ? d2 : Math.min(d1, d2)),
                                                             String.valueOf(nearbyMarkers),
                                                             String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
                                                             String.valueOf(relativesPresent.get(imputedData[0]).size())
                                                     });
+
+                                                    found = true;
+                                                    break;
                                                 }
+
+                                                previous = iv;
+                                            }
+
+                                            if (!found)
+                                            {
+                                                errorWriter.writeNext(new String[]{
+                                                        idx.toString(),
+                                                        StringUtils.join(ss.wgsSampleIdStrings, ";"),
+                                                        StringUtils.join(ss.imputedSampleIdStrings, ";"),
+                                                        String.valueOf(ss.imputedSampleIdStrings.size()),
+                                                        imputedData[0],
+                                                        String.valueOf(intervalIdx),
+                                                        chr,
+                                                        String.valueOf(errorIv.getStart()),
+                                                        StringUtils.join(imputedGenos, ";"),
+                                                        StringUtils.join(trueGenos, ";"),
+                                                        (previous != null ? String.valueOf(previous.getStart()) : "no marker"),
+                                                        (previous != null ? String.valueOf(errorIv.getStart() - previous.getStart()) : "No marker"),
+                                                        "No marker",
+                                                        "No marker",
+                                                        String.valueOf(previous == null ? "" : errorIv.getStart() - previous.getStart()),
+                                                        String.valueOf(nearbyMarkers),
+                                                        String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
+                                                        String.valueOf(relativesPresent.get(imputedData[0]).size())
+                                                });
                                             }
                                         }
                                     }
-
-                                    writer.writeNext(new String[]{
-                                            idx.toString(),
-                                            StringUtils.join(samples.first, ";"),
-                                            StringUtils.join(samples.second, ";"),
-                                            imputedData[0],
-                                            callMethod,
-                                            chr,
-                                            String.valueOf(totalMarkers),
-                                            String.valueOf(totalMatching),
-                                            String.valueOf(totalMissing),
-                                            String.valueOf((double) totalMatching / (totalMarkers - totalMissing)),
-                                            String.valueOf((double) totalMissing / totalMarkers),
-                                            String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
-                                            String.valueOf(relativesPresent.get(imputedData[0]).size()),
-                                            StringUtils.join(wgsRelativesPresent.get(imputedData[0]), ";"),
-                                            StringUtils.join(relativesPresent.get(imputedData[0]), ";"),
-                                            String.valueOf(samples.second.size())
-                                    });
                                 }
+
+                                writer.writeNext(new String[]{
+                                        idx.toString(),
+                                        String.valueOf(runner.getFrameworkIntervalMap().get(chr).size()),
+                                        String.valueOf(runner.getDenseIntervalMap().get(chr).size()),
+                                        StringUtils.join(ss.wgsSampleIdStrings, ";"),
+                                        StringUtils.join(ss.imputedSampleIdStrings, ";"),
+                                        imputedData[0],
+                                        callMethod,
+                                        chr,
+                                        String.valueOf(totalMarkers),
+                                        String.valueOf(totalMatching),
+                                        String.valueOf(totalMissing),
+                                        String.valueOf(nonCalledRef),
+                                        String.valueOf(incorrectNonCalledRef),
+                                        String.valueOf((double) totalMatching / (totalMarkers - totalMissing)),
+                                        String.valueOf((double) totalMissing / totalMarkers),
+                                        String.valueOf((double) totalMatching / (totalMarkers - totalMissing - incorrectNonCalledRef)),
+                                        String.valueOf((double) totalMissing / (totalMarkers - incorrectNonCalledRef)),
+                                        String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
+                                        String.valueOf(relativesPresent.get(imputedData[0]).size()),
+                                        StringUtils.join(wgsRelativesPresent.get(imputedData[0]), ";"),
+                                        StringUtils.join(relativesPresent.get(imputedData[0]), ";"),
+                                        String.valueOf(ss.imputedSampleIds.size())
+                                });
                             }
                         }
                     }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+
+        private File buildCombinedVcf(ImputationRunner runner, SampleSet ss, List<SequenceOutputFile> inputFiles, SequenceAnalysisJobSupport support, Logger log, File setBaseDir, JSONObject params, RecordedAction action, File gatkPed) throws PipelineJobException
+        {
+            File genotypeDir = new File(setBaseDir, "genotypes");
+            if (!genotypeDir.exists())
+            {
+                genotypeDir.mkdirs();
+            }
+
+            Set<File> toDelete = new HashSet<>();
+
+            Set<Integer> genomeIds = new HashSet<>();
+            for (SequenceOutputFile o : inputFiles)
+            {
+                genomeIds.add(o.getLibrary_id());
+            }
+            ReferenceGenome genome = support.getCachedGenome(genomeIds.iterator().next());
+
+            //this essentially allows resume mid-job
+            File mergedVcf = new File(genotypeDir, "merged.vcf.gz");
+            File refMergedVcf = new File(genotypeDir, "ref_merged.vcf.gz");
+            if (!mergedVcf.exists())
+            {
+                //subset input VCFs taking only samples needed per
+                Map<Integer, Set<String>> samplesNeeded = new HashMap<>();
+                Map<Integer, Set<String>> refSamplesNeeded = new HashMap<>();
+                for (Pair<Integer, String> pair : ss.wgsSampleIds)
+                {
+                    Set<String> samples = samplesNeeded.get(pair.first);
+                    if (samples == null)
+                    {
+                        samples = new HashSet<>();
+                    }
+
+                    samples.add(pair.second);
+                    samplesNeeded.put(pair.first, samples);
+                }
+
+                for (Pair<Integer, String> pair : ss.imputedSampleIds)
+                {
+                    Set<String> samples = samplesNeeded.get(pair.first);
+                    if (samples == null)
+                    {
+                        samples = new HashSet<>();
+                    }
+
+                    samples.add(pair.second);
+                    samplesNeeded.put(pair.first, samples);
+                }
+
+                for (Pair<Integer, String> pair : ss.referenceSamples)
+                {
+                    Set<String> samples = refSamplesNeeded.get(pair.first);
+                    if (samples == null)
+                    {
+                        samples = new HashSet<>();
+                    }
+
+                    samples.add(pair.second);
+                    refSamplesNeeded.put(pair.first, samples);
+                }
+
+                createMergedVcfForSamples(samplesNeeded, genome, inputFiles, support, genotypeDir, toDelete, params, log, mergedVcf, null);
+                if (!refSamplesNeeded.isEmpty())
+                    createMergedVcfForSamples(refSamplesNeeded, genome, inputFiles, support, genotypeDir, toDelete, params, log, refMergedVcf, "ref");
+            }
+            else
+            {
+                log.info("reusing existing file: " + mergedVcf.getName());
+            }
+
+            //then perform mendelian check
+            File ret;
+            if (params.optBoolean("skipMendelianCheck", false))
+            {
+                ret = mergedVcf;
+            }
+            else
+            {
+                try
+                {
+                    MendelianEvaluator me = new MendelianEvaluator(gatkPed);
+                    File mendelianPass = new File(mergedVcf.getParentFile(), "merged.mendelianPass.vcf.gz");
+                    File nonMendelianVcf = new File(mergedVcf.getParentFile(), "merged.mendelianViolations.vcf.gz");
+
+                    //essentially allows resume on failed jobs
+                    if (!mendelianPass.exists())
+                    {
+                        log.info("identifying non-mendelian SNPs");
+                        me.checkVcf(mergedVcf, mendelianPass, nonMendelianVcf, log);
+                    }
+                    else
+                    {
+                        log.info("reusing existing file: " + mendelianPass.getName());
+                    }
+
+                    ret = mendelianPass;
                 }
                 catch (IOException e)
                 {
                     throw new PipelineJobException(e);
                 }
+            }
 
-                if (vcfFiltered != null)
+            prepareGenotypeData(runner, ss, setBaseDir, log, ret, refMergedVcf, gatkPed);
+
+//            for (File vcf : toDelete)
+//            {
+//                if (vcf != null)
+//                {
+//                    File index = new File(vcf.getPath() + ".idx");
+//                    if (index.exists())
+//                    {
+//                        index.delete();
+//                    }
+//
+//                    index = new File(vcf.getPath() + ".tbi");
+//                    if (index.exists())
+//                    {
+//                        index.delete();
+//                    }
+//
+//                    log.info("deleting temporary file: " + vcf.getPath());
+//                    vcf.delete();
+//                }
+//            }
+
+            return ret;
+        }
+
+        private void createMergedVcfForSamples(Map<Integer, Set<String>> samplesNeeded, ReferenceGenome genome, List<SequenceOutputFile> inputFiles, SequenceAnalysisJobSupport support, File outputDir, Set<File> toDelete, JSONObject params, Logger log, File mergedVcf, String suffix) throws PipelineJobException
+        {
+            List<File> subsetVcfs = new ArrayList<>();
+            log.info("creating merged vcf: " + suffix);
+            for (Integer i : samplesNeeded.keySet())
+            {
+                log.info("\tfile id: " + i);
+                for (String sample : samplesNeeded.get(i))
                 {
-                    File index = new File(vcfFiltered.getPath() + ".idx");
-                    if (index.exists())
-                    {
-                        index.delete();
-                    }
-
-                    vcfFiltered.delete();
-
+                    log.info("\t\tsample name: " + sample);
                 }
+            }
+
+            if (samplesNeeded.isEmpty())
+            {
+                log.warn("no samples found, cannot make merged vcf: " + suffix);
+                return;
+            }
+
+            for (Integer rowId : samplesNeeded.keySet())
+            {
+                File inputVcf = null;
+                for (SequenceOutputFile o : inputFiles)
+                {
+                    if (o.getRowid().equals(rowId))
+                    {
+                        inputVcf = o.getFile();
+                        break;
+                    }
+                }
+
+                if (inputVcf == null)
+                {
+                    throw new PipelineJobException("unable to find output file: " + rowId);
+                }
+
+                SelectVariantsWrapper sv = new SelectVariantsWrapper(log);
+                File output = new File(outputDir, rowId + ".subset" + (suffix == null ? "" : "." + suffix) + ".vcf.gz");
+                subsetVcfs.add(output);
+                //todo
+                //toDelete.add(output);
+                List<String> args = new ArrayList<>();
+                File denseMarkers = support.getCachedData(params.getInt("denseFile"));
+                File frameworkMarkers = support.getCachedData(params.getInt("frameworkFile"));
+                args.add("-L");
+                args.add(denseMarkers.getPath());
+                args.add("-L");
+                args.add(frameworkMarkers.getPath());
+
+                args.add("--selectTypeToExclude");
+                args.add("INDEL");
+                args.add("-trimAlternates");
+
+                for (String sn : samplesNeeded.get(rowId))
+                {
+                    args.add("-sn");
+                    args.add(sn);
+                }
+                sv.execute(genome.getWorkingFastaFile(), inputVcf, output, args);
+            }
+
+            //then merge
+            List<String> args = new ArrayList<>();
+            //args.add("-genotypeMergeOptions");
+            //args.add("UNIQUIFY");
+
+            CombineVariantsWrapper wrapper = new CombineVariantsWrapper(log);
+            wrapper.execute(genome.getWorkingFastaFile(), subsetVcfs, mergedVcf, args);
+        }
+
+        private void prepareGenotypeData(ImputationRunner runner, SampleSet ss, File setBaseDir, Logger log, File mergedVcf, File refVcf, File gatkPed) throws PipelineJobException
+        {
+            //create any resources needed per sample:
+            List<String> wgs = new ArrayList<>();
+            List<String> imputed = new ArrayList<>();
+            for (Pair<Integer, String> pair : ss.wgsSampleIds)
+            {
+                wgs.add(pair.second);
+            }
+
+            for (Pair<Integer, String> pair : ss.imputedSampleIds)
+            {
+                imputed.add(pair.second);
+            }
+
+            //write individual genotype data
+            runner.prepareGenotypeFiles(mergedVcf, ImputationRunner.GiGiType.experimental, setBaseDir, log, imputed, ImputationRunner.MarkerType.dense, runner.getDenseIntervalMap(), gatkPed);
+            runner.prepareGenotypeFiles(mergedVcf, ImputationRunner.GiGiType.experimental, setBaseDir, log, imputed, ImputationRunner.MarkerType.framework, runner.getFrameworkIntervalMap(), gatkPed);
+
+            if (refVcf != null && refVcf.exists())
+            {
+                runner.prepareGenotypeFiles(refVcf, ImputationRunner.GiGiType.reference, setBaseDir, log, Collections.<String>emptyList(), ImputationRunner.MarkerType.dense, runner.getDenseIntervalMap(), gatkPed);
+                runner.prepareGenotypeFiles(refVcf, ImputationRunner.GiGiType.reference, setBaseDir, log, Collections.<String>emptyList(), ImputationRunner.MarkerType.framework, runner.getFrameworkIntervalMap(), gatkPed);
             }
         }
 
-        private void appendParents(User u, Container c, Set<String> distinctSubjects, PedigreeRecord p, List<PedigreeRecord> newRecords, boolean includeAncestors)
+        private class SampleSet
         {
-            if (p.father != null && !distinctSubjects.contains(p.father))
+            List<String> wgsSampleIdStrings;
+            List<String> imputedSampleIdStrings;
+            Map<String, Integer> sampleFileMap;
+            List<Pair<Integer, String>> wgsSampleIds;
+            List<Pair<Integer, String>> imputedSampleIds;
+            List<Pair<Integer, String>> referenceSamples;
+
+            public SampleSet(JSONArray arr)
             {
-                //lookup ancestors
-                PedigreeRecord pr = null;
-                if (includeAncestors)
+                sampleFileMap = new HashMap<>();
+                wgsSampleIds = new ArrayList<>();
+                wgsSampleIdStrings = new ArrayList<>();
+                JSONArray completeSet = arr.getJSONArray(0);
+                for (int j=0;j<completeSet.length();j++)
                 {
-                    TableSelector ts = new TableSelector(getSubjectTable(u, c), PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.father), null);
-                    pr = ts.getObject(PedigreeRecord.class);
-                    if (pr.gender == null)
+                    String[] s = completeSet.getString(j).split("\\|\\|");
+                    wgsSampleIds.add(Pair.of(Integer.parseInt(s[0]), s[1]));
+                    wgsSampleIdStrings.add(s[1]);
+                    sampleFileMap.put(s[1], Integer.parseInt(s[0]));
+                }
+
+                referenceSamples = new ArrayList<>();
+                imputedSampleIds = new ArrayList<>();
+                imputedSampleIdStrings = new ArrayList<>();
+                JSONArray imputeSet = arr.getJSONArray(1);
+
+                for (int j=0;j<imputeSet.length();j++)
+                {
+                    String[] s = imputeSet.getString(j).split("\\|\\|");
+                    imputedSampleIds.add(Pair.of(Integer.parseInt(s[0]), s[1]));
+                    imputedSampleIdStrings.add(s[1]);
+                    sampleFileMap.put(s[1], Integer.parseInt(s[0]));
+                }
+
+                JSONArray refSet = arr.length() > 2 ? arr.getJSONArray(2) : null;
+                if (refSet != null)
+                {
+                    for (int j=0;j<refSet.length();j++)
                     {
-                        pr.gender = "m";
+                        String[] i = refSet.getString(j).split("\\|\\|");
+                        referenceSamples.add(Pair.of(Integer.parseInt(i[0]), i[1]));
                     }
                 }
 
-                if (pr == null)
-                {
-                    pr = new PedigreeRecord();
-                    pr.subjectName = p.father;
-                    pr.gender = "m";
-                }
-
-                newRecords.add(pr);
-                distinctSubjects.add(p.father);
-                appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
+                wgsSampleIdStrings.removeAll(imputedSampleIdStrings);
             }
 
-            if (p.mother != null && !distinctSubjects.contains(p.mother))
+            public Pair<Integer, String> getReferenceForImputedSample(String sampleName) throws PipelineJobException
             {
-                //lookup ancestors
-                PedigreeRecord pr = null;
-                if (includeAncestors)
+                for (Pair<Integer, String> p : referenceSamples)
                 {
-                    TableSelector ts = new TableSelector(getSubjectTable(u, c), PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.mother), null);
-                    pr = ts.getObject(PedigreeRecord.class);
-                    if (pr.gender == null)
+                    if (p.second.equals(sampleName))
                     {
-                        pr.gender = "f";
+                        return p;
                     }
                 }
 
-                if (pr == null)
+                for (Pair<Integer, String> p : wgsSampleIds)
                 {
-                    pr = new PedigreeRecord();
-                    pr.subjectName = p.mother;
-                    pr.gender = "f";
+                    if (p.second.equals(sampleName))
+                    {
+                        return p;
+                    }
                 }
 
-                newRecords.add(pr);
-                distinctSubjects.add(p.mother);
-                appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
+                return null;
             }
         }
 
-        private List<Pair<List<String>, List<String>>> getSampleSets(JSONObject params)
+        private List<SampleSet> getSampleSets(JSONObject params)
         {
-            List<Pair<List<String>, List<String>>> ret = new ArrayList<>();
+            List<SampleSet> ret = new ArrayList<>();
 
             if (params.containsKey("sampleSets"))
             {
                 for (Object o : params.getJSONArray("sampleSets").toArray())
                 {
-                    JSONArray arr = (JSONArray)o;
-                    List<String> complete = new ArrayList<>();
-                    JSONArray completeSet = arr.getJSONArray(0);
-                    for (int j=0;j<completeSet.length();j++)
-                    {
-                        complete.add(completeSet.getString(j));
-                    }
-
-                    List<String> impute = new ArrayList<>();
-                    JSONArray imputeSet = arr.getJSONArray(1);
-                    for (int j=0;j<imputeSet.length();j++)
-                    {
-                        impute.add(imputeSet.getString(j));
-                    }
-
-                    Collections.sort(complete);
-                    Collections.sort(impute);
-
-                    ret.add(Pair.of(complete, impute));
+                    ret.add(new SampleSet((JSONArray) o));
                 }
             }
 
@@ -891,6 +1019,201 @@ public class ImputationAnalysis implements SequenceOutputHandler
         public void setGender(String gender)
         {
             this.gender = gender;
+        }
+    }
+
+    public static List<PedigreeRecord> generatePedigree(PipelineJob job, JSONObject params)
+    {
+        Set<String> sampleNames = new HashSet<>();
+        Map<String, String> subjectToReadsetNameMap = new HashMap<>();
+        TableInfo subjectTable = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), "laboratory").getTable("subjects");
+        TableInfo readsetTable = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), "sequenceanalysis").getTable("sequence_readsets");
+        if (params.containsKey("sampleSets"))
+        {
+            for (Object o : params.getJSONArray("sampleSets").toArray())
+            {
+                JSONArray arr = (JSONArray)o;
+                for (int i=0;i<arr.length();i++)
+                {
+                    JSONArray set = arr.getJSONArray(i);
+                    for (int j=0;j<set.length();j++)
+                    {
+                        //try to find this in the subjects table
+                        String[] tokens = set.getString(j).split("\\|\\|");
+                        if (new TableSelector(subjectTable, new SimpleFilter(FieldKey.fromString("subjectname"), tokens[1]), null).exists())
+                        {
+                            sampleNames.add(tokens[1]);
+                        }
+                        else
+                        {
+                            //if not, see if it matches a readset and resolve subject from there
+                            TableSelector ts = new TableSelector(readsetTable, PageFlowUtil.set("subjectId"), new SimpleFilter(FieldKey.fromString("name"), tokens[1]), null);
+                            String subjectId = ts.getObject(String.class);
+                            if (subjectId != null)
+                            {
+                                job.getLogger().info("resolving readset: " + set.getString(0) + " to subject: " + subjectId);
+                                sampleNames.add(subjectId);
+                                if (subjectToReadsetNameMap.containsKey(subjectId) && !subjectToReadsetNameMap.get(subjectId).equals(set.getString(0)))
+                                {
+                                    job.getLogger().error("more than one readset present using the same subject ID.  this will cause an inaccurate or incomplete pedigree.");
+                                }
+
+                                subjectToReadsetNameMap.put(subjectId, set.getString(0));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        final List<PedigreeRecord> pedigreeRecords = new ArrayList<>();
+        TableSelector ts = new TableSelector(subjectTable, PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), sampleNames, CompareType.IN), null);
+        ts.forEach(new Selector.ForEachBlock<ResultSet>()
+        {
+            @Override
+            public void exec(ResultSet rs) throws SQLException
+            {
+                PedigreeRecord pedigree = new PedigreeRecord();
+                pedigree.subjectName = rs.getString("subjectname");
+                pedigree.father = rs.getString("father");
+                pedigree.mother = rs.getString("mother");
+                pedigree.gender = rs.getString("gender");
+                if (!StringUtils.isEmpty(pedigree.subjectName))
+                    pedigreeRecords.add(pedigree);
+            }
+        });
+
+        //insert record for any missing parents:
+        Set<String> subjects = new HashSet<>();
+        for (PedigreeRecord p : pedigreeRecords)
+        {
+            subjects.add(p.subjectName);
+        }
+
+        job.getLogger().info("initial subjects: " + pedigreeRecords.size());
+        if (params.optBoolean("includeAncestors", false))
+        {
+            job.getLogger().info("will attempt to include all ancestors");
+        }
+
+        Set<String> distinctSubjects = new HashSet<>();
+        for (PedigreeRecord p : pedigreeRecords)
+        {
+            distinctSubjects.add(p.subjectName);
+        }
+
+        List<PedigreeRecord> newRecords = new ArrayList<>();
+        for (PedigreeRecord p : pedigreeRecords)
+        {
+            appendParents(job.getUser(), job.getContainer(), distinctSubjects, p, newRecords, params.optBoolean("includeAncestors", false));
+        }
+        pedigreeRecords.addAll(newRecords);
+
+        Collections.sort(pedigreeRecords, new Comparator<PedigreeRecord>()
+        {
+            @Override
+            public int compare(PedigreeRecord o1, PedigreeRecord o2)
+            {
+                if (o1.subjectName.equals(o2.father) || o1.subjectName.equals(o2.mother))
+                    return -1;
+                else if (o2.subjectName.equals(o1.father) || o2.subjectName.equals(o1.mother))
+                    return 1;
+                else if (o1.mother == null && o1.father == null)
+                    return -1;
+                else if (o2.mother == null && o2.father == null)
+                    return 1;
+
+                return o1.subjectName.compareTo(o2.subjectName);
+            }
+        });
+
+        //morgan doesnt allow IDs with only one parent, so add a dummy ID
+        List<PedigreeRecord> toAdd = new ArrayList<>();
+        for (PedigreeRecord pd : pedigreeRecords)
+        {
+            if (StringUtils.isEmpty(pd.father) && !StringUtils.isEmpty(pd.mother))
+            {
+                pd.father = "xf" + pd.subjectName;
+                PedigreeRecord pr = new PedigreeRecord();
+                pr.subjectName = pd.father;
+                pr.gender = "m";
+                toAdd.add(pr);
+            }
+            else if (!StringUtils.isEmpty(pd.father) && StringUtils.isEmpty(pd.mother))
+            {
+                pd.mother = "xm" + pd.subjectName;
+                PedigreeRecord pr = new PedigreeRecord();
+                pr.subjectName = pd.mother;
+                pr.gender = "f";
+                toAdd.add(pr);
+            }
+        }
+
+        if (!toAdd.isEmpty())
+        {
+            job.getLogger().info("adding " + toAdd.size() + " subjects to handle IDs with only one parent known");
+            pedigreeRecords.addAll(toAdd);
+        }
+
+        job.getLogger().info("total subjects: " + pedigreeRecords.size());
+
+        return pedigreeRecords;
+    }
+
+    private static void appendParents(User u, Container c, Set<String> distinctSubjects, PedigreeRecord p, List<PedigreeRecord> newRecords, boolean includeAncestors)
+    {
+        if (p.father != null && !distinctSubjects.contains(p.father))
+        {
+            //lookup ancestors
+            PedigreeRecord pr = null;
+            if (includeAncestors)
+            {
+                TableInfo subjectTable = QueryService.get().getUserSchema(u, (c.isWorkbook() ? c.getParent() : c), "laboratory").getTable("subjects");
+                TableSelector ts = new TableSelector(subjectTable, PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.father), null);
+                pr = ts.getObject(PedigreeRecord.class);
+                if (pr.gender == null)
+                {
+                    pr.gender = "m";
+                }
+            }
+
+            if (pr == null)
+            {
+                pr = new PedigreeRecord();
+                pr.subjectName = p.father;
+                pr.gender = "m";
+            }
+
+            newRecords.add(pr);
+            distinctSubjects.add(p.father);
+            appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
+        }
+
+        if (p.mother != null && !distinctSubjects.contains(p.mother))
+        {
+            //lookup ancestors
+            PedigreeRecord pr = null;
+            if (includeAncestors)
+            {
+                TableInfo subjectTable = QueryService.get().getUserSchema(u, (c.isWorkbook() ? c.getParent() : c), "laboratory").getTable("subjects");
+                TableSelector ts = new TableSelector(subjectTable, PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.mother), null);
+                pr = ts.getObject(PedigreeRecord.class);
+                if (pr.gender == null)
+                {
+                    pr.gender = "f";
+                }
+            }
+
+            if (pr == null)
+            {
+                pr = new PedigreeRecord();
+                pr.subjectName = p.mother;
+                pr.gender = "f";
+            }
+
+            newRecords.add(pr);
+            distinctSubjects.add(p.mother);
+            appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
         }
     }
 }

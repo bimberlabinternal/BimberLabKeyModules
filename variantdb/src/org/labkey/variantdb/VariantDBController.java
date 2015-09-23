@@ -30,13 +30,17 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.CSRF;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.InsertPermission;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.variantdb.pipeline.DbSnpImportPipelineJob;
 import org.labkey.variantdb.pipeline.DbSnpImportPipelineProvider;
 import org.labkey.variantdb.pipeline.VariantImportPipelineJob;
+import org.labkey.variantdb.run.MendelianEvaluator;
 import org.springframework.validation.BindException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -308,4 +312,69 @@ public class VariantDBController extends SpringActionController
             _outputFileIds = outputFileIds;
         }
     }
+
+    @RequiresPermission(InsertPermission.class)
+    @CSRF
+    public class MendelianCheckAction extends ApiAction<MendelianCheckForm>
+    {
+        public ApiResponse execute(MendelianCheckForm form, BindException errors) throws Exception
+        {
+            if (form.getVcfFile() == null || form.getPedigreeFile() == null)
+            {
+                errors.reject(ERROR_MSG, "Must provide the VCF and pedigree files");
+                return null;
+            }
+
+            File vcf = new File(form.getVcfFile());
+            if (!vcf.exists())
+            {
+                errors.reject(ERROR_MSG, "Unable to find VCF file: " + vcf.getPath());
+                return null;
+            }
+
+            File ped = new File(form.getPedigreeFile());
+            if (!ped.exists())
+            {
+                errors.reject(ERROR_MSG, "Unable to find pedigree file: " + ped.getPath());
+                return null;
+            }
+
+            SequenceAnalysisService.get().ensureVcfIndex(vcf, _log);
+            String basename = vcf.getPath().endsWith(".gz") ? FileUtil.getBaseName(FileUtil.getBaseName(vcf)) : FileUtil.getBaseName(vcf);
+            File mendelianPass = new File(vcf.getParentFile(), basename + ".mendelianPass.vcf.gz");
+            File mendelianFail = new File(vcf.getParentFile(), basename + ".mendelianViolations.vcf.gz");
+
+            MendelianEvaluator me = new MendelianEvaluator(ped);
+            me.checkVcf(vcf, mendelianPass, mendelianFail, _log);
+
+            return new ApiSimpleResponse("success", true);
+        }
+    }
+
+    public static class MendelianCheckForm
+    {
+        private String _vcfFile;
+        private String _pedigreeFile;
+
+        public String getVcfFile()
+        {
+            return _vcfFile;
+        }
+
+        public void setVcfFile(String vcfFile)
+        {
+            _vcfFile = vcfFile;
+        }
+
+        public String getPedigreeFile()
+        {
+            return _pedigreeFile;
+        }
+
+        public void setPedigreeFile(String pedigreeFile)
+        {
+            _pedigreeFile = pedigreeFile;
+        }
+    }
+
 }

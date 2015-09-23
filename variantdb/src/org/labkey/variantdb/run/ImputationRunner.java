@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
+import org.labkey.api.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,6 +30,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +43,10 @@ public class ImputationRunner
 {
     private Map<String, List<Interval>> _denseIntervalMap;
     private Map<String, List<Interval>> _frameworkIntervalMap;
+    private Map<String, List<List<String>>> _denseMarkerAlleles;
+    private Map<String, List<List<String>>> _frameworkMarkerAlleles;
     private List<String> _frameworkMarkerNames;
+    private int _minGenotypeQual = 5;
 
     public ImputationRunner(File denseBedFile, File frameworkBedFile, Logger log) throws PipelineJobException
     {
@@ -102,12 +108,15 @@ public class ImputationRunner
         for  (String chr : _denseIntervalMap.keySet())
         {
             double totalDist = 0.0;
+            double denseTotalDist = 0.0;
+            Interval previousDense = null;
             List<Interval> framework = _frameworkIntervalMap.get(chr);
             for (Interval dense : _denseIntervalMap.get(chr))
             {
                 Interval previous = null;
                 for (Interval f : framework)
                 {
+                    //track for dense
                     if (f.getStart() >= dense.getStart())
                     {
                         if (previous == null)
@@ -124,25 +133,54 @@ public class ImputationRunner
 
                     previous = f;
                 }
+
+                if (previousDense != null)
+                {
+                    denseTotalDist += dense.getStart() - previousDense.getStart();
+                }
+                else
+                {
+                    denseTotalDist += dense.getStart();
+                }
+
+                previousDense = dense;
+            }
+
+            //and framework spacing
+            Interval previous = null;
+            double frameworkTotalDist = 0.0;
+            for (Interval f : framework)
+            {
+                if (previous != null)
+                {
+                    frameworkTotalDist += f.getStart() - previous.getStart();
+                }
+                else
+                {
+                    frameworkTotalDist += f.getStart();
+                }
+
+                previous = f;
             }
 
             log.info("chr: " + chr + ", avg dense marker distance from framework: " + (totalDist / _denseIntervalMap.get(chr).size()));
+            log.info("chr: " + chr + ", total framework markers: " + _frameworkIntervalMap.get(chr).size());
+            log.info("chr: " + chr + ", total dense markers: " + _denseIntervalMap.get(chr).size());
+            log.info("chr: " + chr + ", avg framework marker spacing: " + (frameworkTotalDist/ _frameworkIntervalMap.get(chr).size()));
+            log.info("chr: " + chr + ", avg dense marker spacing: " + (denseTotalDist/ _denseIntervalMap.get(chr).size()));
         }
     }
 
-    public void processSet(File vcf, File outDir, String outPrefix, Logger log, List<String> completeGenotypes, List<String> imputed, String callMethod) throws PipelineJobException, IOException
+    public void processSet(File outDir, File rawDataDir, Logger log, List<Pair<Integer, String>> completeGenotypes, List<Pair<Integer, String>> imputed, String callMethod) throws PipelineJobException, IOException
     {
         log.info("processing set: " + StringUtils.join(completeGenotypes, ", "));
         log.info("imputing: " + StringUtils.join(imputed, ", "));
-
-        prepareResources(vcf, outDir, outPrefix, log, completeGenotypes, imputed, "dense", _denseIntervalMap);
-        prepareResources(vcf, outDir, outPrefix, log, completeGenotypes, imputed, "framework", _frameworkIntervalMap);
 
         for (String chr : _frameworkIntervalMap.keySet())
         {
             log.info("processing chromosome: " + chr + " for gl_auto");
             File basedir = new File(outDir, chr);
-            runGlAuto(basedir, new File(basedir, "framework.geno"), log);
+            runGlAuto(basedir, new File(basedir, "framework.glauto.geno"), log);
             log.info("processing chromosome: " + chr + " with GIGI");
             GigiRunner gigi = new GigiRunner(log);
             File gigiParams = new File(basedir, "gigi.par");
@@ -157,14 +195,15 @@ public class ImputationRunner
                 }
                 else
                 {
-                    paramWriter.write(new File(basedir, "../../../morgan.ped").getPath() + '\n');
+                    paramWriter.write(new File(basedir, "../../morgan.ped").getPath() + '\n');
                 }
                 paramWriter.write(new File(basedir, "framework.IVs").getPath() + '\n');
                 paramWriter.write("1000\n");
-                paramWriter.write(new File(basedir, "framework_map.txt").getPath() + '\n');
-                paramWriter.write(new File(basedir, "dense_map.txt").getPath() + '\n');
-                paramWriter.write(new File(basedir, "dense.gigi.geno").getPath() + '\n');
-                paramWriter.write(new File(basedir, "dense.afreq").getPath() + '\n');
+                paramWriter.write(new File(basedir, MarkerType.framework.name() + "_map.txt").getPath() + '\n');
+                paramWriter.write(new File(basedir, MarkerType.dense.name() + "_map.txt").getPath() + '\n');
+                paramWriter.write(new File(basedir, MarkerType.dense.name() + ".gigi.geno").getPath() + '\n');
+                File afreq = getAlleleFreqFile(rawDataDir, MarkerType.dense, chr);
+                paramWriter.write(afreq.getPath() + '\n');
                 paramWriter.write(callMethod);
             }
             gigi.execute(gigiParams, gigiParams.getParentFile());
@@ -220,7 +259,7 @@ public class ImputationRunner
         File glAutoParams = new File(basedir, "glauto.par");
         try (BufferedWriter glautoWriter = new BufferedWriter(new FileWriter(glAutoParams)))
         {
-            glautoWriter.write("input pedigree file '../../../morgan.ped'\n");
+            glautoWriter.write("input pedigree file '../../morgan.ped'\n");
             glautoWriter.write("input marker data file '" + markerFile.getName() + "'\n");
             glautoWriter.write("input seed file 'sampler.seed'\n\n");
 
@@ -272,153 +311,334 @@ public class ImputationRunner
         runner.execute(glAutoParams);
     }
 
-    private void prepareResources(File vcf, File outDir, String outPrefix, Logger log, List<String> completeGenotypes, List<String> imputed, String markerType, Map<String, List<Interval>> intervalMap) throws PipelineJobException
-    {        
+    public Map<String, List<Interval>> getDenseIntervalMap()
+    {
+        return _denseIntervalMap;
+    }
+
+    public Map<String, List<Interval>> getFrameworkIntervalMap()
+    {
+        return _frameworkIntervalMap;
+    }
+
+    private File getAlleleFreqFile(File basedir, MarkerType markerType, String chr)
+    {
+        return new File(basedir, markerType.name() + "." +  chr + ".markerFreq.txt");
+    }
+
+    private File getAlleleFreqGenotypesFile(File basedir, MarkerType markerType, String chr)
+    {
+        return new File(basedir, markerType.name() + "." + chr + ".afreq");
+    }
+
+    public void prepareFrequencyFiles(File alleleFreqVcf, File rawDataDir, Logger log) throws PipelineJobException
+    {
+        //first dense
+        _denseMarkerAlleles = new HashMap<>();
+        for (String chr : _denseIntervalMap.keySet())
+        {
+            List<List<String>> markerAlleleList = new ArrayList<>();
+            _denseMarkerAlleles.put(chr, markerAlleleList);
+
+            prepareFrequencyFilesForChr(alleleFreqVcf, MarkerType.dense, chr, rawDataDir, _denseIntervalMap, markerAlleleList, log);
+        }
+
+        //then framework
+        _frameworkMarkerAlleles = new HashMap<>();
+        for (String chr : _frameworkIntervalMap.keySet())
+        {
+            List<List<String>> markerAlleleList = new ArrayList<>();
+            _frameworkMarkerAlleles.put(chr, markerAlleleList);
+
+            prepareFrequencyFilesForChr(alleleFreqVcf, MarkerType.framework, chr, rawDataDir, _frameworkIntervalMap, markerAlleleList, log);
+        }
+    }
+
+    private void prepareFrequencyFilesForChr(File alleleFreqVcf, MarkerType markerType, String chr, File rawDataDir, Map<String, List<Interval>> intervalMap, List<List<String>> markerList, Logger log) throws PipelineJobException
+    {
+        log.info("preparing " + markerType.name() + " frequency files for: " + chr);
+        File frequencyFile = getAlleleFreqGenotypesFile(rawDataDir, markerType, chr);
+        File alleleFrequencyFile = getAlleleFreqFile(rawDataDir, markerType, chr);
+
+        try (BufferedWriter frequencyWriter = new BufferedWriter(new FileWriter(frequencyFile)); BufferedWriter frequencyWriter2 = new BufferedWriter(new FileWriter(alleleFrequencyFile)))
+        {
+            int idx = 0;
+            for (Interval i : intervalMap.get(chr))
+            {
+                idx++;
+                if (idx % 1000 == 0)
+                {
+                    log.info("processed " + idx + " loci");
+                }
+
+                File vcfIdx = SequenceAnalysisService.get().ensureVcfIndex(alleleFreqVcf, log);
+                try (VCFFileReader reader = new VCFFileReader(alleleFreqVcf, vcfIdx, true))
+                {
+                    try (CloseableIterator<VariantContext> it = reader.query(chr, i.getStart(), i.getEnd()))
+                    {
+                        String markerName = i.getSequence() + "_" + i.getStart();
+                        if (!it.hasNext())
+                        {
+                            throw new PipelineJobException("position not found: " + markerName + " for allele frequencies in file: "+ alleleFreqVcf.getName());
+                        }
+
+                        while (it.hasNext())
+                        {
+                            VariantContext ctx = it.next();
+
+                            //TODO: smarter plan?
+                            if (ctx.getAttribute("AF") == null)
+                            {
+                                throw new PipelineJobException("No allele frequency found for marker: " + ctx.getChr() + " " + ctx.getStart());
+                            }
+
+                            List<String> afs;
+                            if (ctx.getAttribute("AF") instanceof List)
+                            {
+                                afs = (List) ctx.getAttribute("AF");
+                            }
+                            else
+                            {
+                                afs = Arrays.asList(ctx.getAttributeAsString("AF", null).split(";"));
+                            }
+
+                            DecimalFormat fmt = new DecimalFormat("0.000");
+                            fmt.setRoundingMode(RoundingMode.HALF_UP);
+
+                            Double totalNonRef = 0.0;
+                            List<String> nonRefs = new ArrayList<>();
+                            for (String d : afs)
+                            {
+                                Double dd = Double.parseDouble(d);
+                                if (dd == 1.0)
+                                {
+                                    dd = 0.999;
+                                }
+
+                                totalNonRef += dd;
+                                nonRefs.add(fmt.format(dd));
+                            }
+
+                            String roundedTotalRef = fmt.format(1 - totalNonRef);
+                            frequencyWriter.append("set markers " + idx + " allele freqs " + roundedTotalRef);
+                            frequencyWriter2.append(roundedTotalRef);
+                            for (String af : nonRefs)
+                            {
+                                frequencyWriter.append(" ").append(af);
+                                frequencyWriter2.append(" ").append(af);
+                            }
+                            frequencyWriter.append("\n");
+                            frequencyWriter2.append("\n");
+
+                            List<String> alleles = new ArrayList<>();
+                            for (Allele a : ctx.getAlleles())
+                            {
+                                alleles.add(a.getBaseString());
+                            }
+                            if (!alleles.contains(ctx.getReference().getBaseString()))
+                            {
+                                log.warn("adding reference: " + markerName);
+                                alleles.add(0, ctx.getReference().getBaseString());
+                            }
+
+                            if (!alleles.get(0).equals(ctx.getReference().getBaseString()))
+                            {
+                                throw new PipelineJobException("first allele is non-reference: " + markerName + "/" + ctx.getReference().getBaseString() + "/" + StringUtils.join(alleles, ";"));
+                            }
+
+                            markerList.add(alleles);
+                        }
+                    }
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+    }
+
+    public void prepareGenotypeFiles(File vcf, GiGiType giGiType, File outputDir, Logger log, List<String> imputed, MarkerType markerType, Map<String, List<Interval>> intervalMap, File gatkPed) throws PipelineJobException
+    {
+        Map<String, List<List<String>>> alleleNameMap = markerType == MarkerType.dense ? _denseMarkerAlleles : _frameworkMarkerAlleles;
         for (String chr : intervalMap.keySet())
         {
-            log.info("processing chromosome: " + chr + ".  for marker set: " + markerType + ".  total intervals: " + intervalMap.get(chr).size());
-            File basedir = new File(outDir, chr);
-            if (!basedir.exists())
-                basedir.mkdirs();
+            log.info("processing chromosome: " + chr + ".  for marker set: " + markerType.name() + ".  to build data of type: " + giGiType.name() + ".  total intervals: " + intervalMap.get(chr).size());
+            List<List<String>> alleleNameList = alleleNameMap.get(chr);
+            File subDir = new File(outputDir, chr);
+            if (!subDir.exists())
+            {
+                subDir.mkdirs();
+            }
 
             //write the output to a set of files we wil later merge
-            File markerFile = new File(basedir, outPrefix + "_markers.tmp1");
-            File markerPosFile = new File(basedir, outPrefix + "_markers.tmp2");
-            File frequencyFile = new File(basedir, outPrefix + "_markers.tmp3");
-            File alleleFrequencyFile = new File(basedir, markerType + ".afreq");
-            File mapFile = new File(basedir, markerType + "_map.txt");
-
-            int idx = 1;
             try
             {
+                int idx = 1;
                 Map<String, File> genoFileMap = new HashMap<>();
-                Map<String, File> completeGenoFileMap = new HashMap<>();
-
                 Map<String, BufferedWriter> genoWriterMap = new HashMap<>();
-                Map<String, BufferedWriter> completeGenoWriterMap = new HashMap<>();
-                try (
-                        BufferedWriter markerLineWriter = new BufferedWriter(new FileWriter(markerFile));
-                        BufferedWriter markerPosLineWriter = new BufferedWriter(new FileWriter(markerPosFile));
-                        BufferedWriter frequencyWriter = new BufferedWriter(new FileWriter(frequencyFile));
-                        BufferedWriter frequencyWriter2 = new BufferedWriter(new FileWriter(alleleFrequencyFile));
-                        BufferedWriter mapWriter = new BufferedWriter(new FileWriter(mapFile))
-                )
-                {
-                    markerLineWriter.write("set marker names");
-                    markerPosLineWriter.write("map marker positions");
 
                     File vcfIdx = SequenceAnalysisService.get().ensureVcfIndex(vcf, log);
                     try (VCFFileReader reader = new VCFFileReader(vcf, vcfIdx, true))
                     {
                         try
                         {
-                            for (String name : reader.getFileHeader().getSampleNamesInOrder())
+                            List<String> sampleNames = reader.getFileHeader().getSampleNamesInOrder();
+                            for (String name : sampleNames)
                             {
-                                File tmp = new File(basedir, "geno_" + name + ".tmp");
+                                File tmp = getGiGiGenotypeFile(markerType, outputDir, chr, name, giGiType);
                                 genoFileMap.put(name, tmp);
 
-                                File tmp2 = new File(basedir, "genoComplete_" + name + ".tmp");
-                                completeGenoFileMap.put(name, tmp2);
-
                                 genoWriterMap.put(name, new BufferedWriter(new FileWriter(tmp)));
-                                completeGenoWriterMap.put(name, new BufferedWriter(new FileWriter(tmp2)));
                             }
 
                             for (Interval i : intervalMap.get(chr))
                             {
+                                List<String> knownAlleles = alleleNameList.get(idx - 1);  //idx is 1-based
+                                idx++;
+                                if (idx % 1000 == 0)
+                                {
+                                    log.info("processed " + idx + " loci");
+                                }
+
                                 try (CloseableIterator<VariantContext> it = reader.query(chr, i.getStart(), i.getEnd()))
                                 {
+                                    String markerName = i.getSequence() + "_" + i.getStart();
+                                    if (!it.hasNext())
+                                    {
+                                        log.debug("position not found: " + markerName + " in sample: " + vcf.getName());
+                                        for (String name : sampleNames)
+                                        {
+                                            //if not found, treat as no call.  this isnt ideal
+                                            BufferedWriter writer = genoWriterMap.get(name);
+                                            if (GiGiType.reference == giGiType)
+                                            {
+                                                writer.append(" ").append("-1");
+                                                writer.append(" ").append("-1");
+                                            }
+                                            else
+                                            {
+                                                writer.append(" ").append("0");
+                                                writer.append(" ").append("0");
+                                            }
+                                        }
+                                    }
+
+                                    MendelianEvaluator me = new MendelianEvaluator(gatkPed);
+                                    me.setMinGenotypeQuality(0); //reject all
                                     while (it.hasNext())
                                     {
                                         VariantContext ctx = it.next();
-                                        String markerName = ctx.getChr() + "_" + ctx.getStart();
-
-                                        mapWriter.write((ctx.getStart() / 1000000.0) + "\n");
-                                        markerLineWriter.append(" ").append(markerName);
-                                        markerPosLineWriter.append(" " + ctx.getStart() / 1000000.0);
-
-                                        //TODO: smarter plan?
-                                        if (ctx.getAttribute("AF") == null)
-                                        {
-                                            throw new PipelineJobException("No allele frequency found for marker: " + ctx.getChr() + " " + ctx.getStart());
-                                        }
-
-                                        List<String> afs;
-                                        if (ctx.getAttribute("AF") instanceof List)
-                                        {
-                                            afs = (List) ctx.getAttribute("AF");
-                                        }
-                                        else
-                                        {
-                                            afs = Arrays.asList(ctx.getAttributeAsString("AF", null).split(";"));
-                                        }
-
-                                        Double total = 0.0;
-                                        for (String d : afs)
-                                        {
-                                            total += Double.parseDouble(d);
-                                        }
-
-                                        DecimalFormat fmt = new DecimalFormat("0.000");
-                                        fmt.setRoundingMode(RoundingMode.HALF_UP);
-
-                                        String roundedTotal = fmt.format(1 - total);
-                                        frequencyWriter.append("set markers " + idx + " allele freqs " + roundedTotal);
-                                        frequencyWriter2.append(roundedTotal);
-                                        for (String af : afs)
-                                        {
-                                            frequencyWriter.append(" ").append(af);
-                                            frequencyWriter2.append(" ").append(af);
-                                        }
-                                        frequencyWriter.append("\n");
-                                        frequencyWriter2.append("\n");
-
-                                        idx++;
-                                        if (idx % 1000000 == 0)
-                                        {
-                                            log.info("processed " + idx + " loci");
-                                        }
 
                                         for (String name : ctx.getSampleNames())
                                         {
-                                            BufferedWriter genoWriter = genoWriterMap.get(name);
-                                            BufferedWriter completeGenoWriter = completeGenoWriterMap.get(name);
+                                            BufferedWriter writer = genoWriterMap.get(name);
                                             Genotype g = ctx.getGenotype(name);
                                             if (g.getAlleles().size() != 2)
                                             {
-                                                throw new PipelineJobException("More than 2 genotypes found for marker: " + ctx.getChr() + " " + ctx.getStart());
+                                                log.debug("More than 2 genotypes found for marker: " + ctx.getChr() + " " + ctx.getStart());
+                                            }
+                                            else if (ctx.getReference().getDisplayString().length() > 1)
+                                            {
+                                                log.error("complex reference allele, skipping: " + markerName + "/" + ctx.getReference().getDisplayString());
+                                                continue;
                                             }
 
+                                            if (g.isNoCall() || me.isViolation(g.getSampleName(), ctx))
+                                            {
+                                                if (GiGiType.reference == giGiType)
+                                                {
+                                                    writer.append(" ").append("-1");
+                                                    writer.append(" ").append("-1");
+                                                }
+                                                else
+                                                {
+                                                    writer.append(" ").append("0");
+                                                    writer.append(" ").append("0");
+                                                }
+                                                continue;
+                                            }
+
+                                            if (g.getPhredScaledQual() < _minGenotypeQual)
+                                            {
+                                                log.debug("low quality genotype, skipping position: " + (idx-1) + "/" + ctx.getStart() + ". for sample: " + name + ". qual: " + g.getPhredScaledQual() + "/" + g.getGenotypeString());
+                                                if (GiGiType.reference == giGiType)
+                                                {
+                                                    writer.append(" ").append("-1");
+                                                    writer.append(" ").append("-1");
+                                                }
+                                                else
+                                                {
+                                                    writer.append(" ").append("0");
+                                                    writer.append(" ").append("0");
+                                                }
+                                                continue;
+                                            }
+
+                                            List<String> toAppend = new ArrayList<>();
                                             for (Allele a : g.getAlleles())
                                             {
                                                 if (a.isCalled())
                                                 {
-                                                    Integer ai = ctx.getAlleleIndex(a) + 1;
+                                                    if (!knownAlleles.contains(a.getBaseString()))
+                                                    {
+                                                        //TODO: this should throw an exception?
+                                                        log.warn("encountered allele in VCF (" + giGiType.name() + ") not found in allele frequency VCF: " + (idx - 1) + "/" + markerName + ", [" + a.getBaseString() + "]. sample: " + name + ". known alleles are: " + StringUtils.join(knownAlleles, ";") + ".  this will be reported as no call");
+                                                        toAppend.add("0");
+                                                        continue;
+                                                    }
+                                                    Integer ai = knownAlleles.indexOf(a.getBaseString()) + 1;
+
                                                     if (ai == 1 && !a.isReference())
                                                     {
-                                                        throw new PipelineJobException(ai + "/" + ctx.getStart() + "/" + a.getBaseString());
+                                                        throw new PipelineJobException("first allele is non-reference: " + ai + "/" + ctx.getStart() + "/" + a.getBaseString() + "/" + StringUtils.join(knownAlleles, ";"));
                                                     }
                                                     else if (ai > 2)
                                                     {
-                                                        log.error(ai + "/" + ctx.getStart() + "/" + a.getBaseString());
+                                                        log.debug("more than 2 alleles: " + (idx - 1) + "/" + ctx.getStart() + "/" + ai + "/" + a.getBaseString() + "/" + StringUtils.join(knownAlleles, ";"));
                                                     }
 
-                                                    completeGenoWriter.append(" ").append(a.isReference() ? "1" : ai.toString());
-
-                                                    if (_frameworkMarkerNames.contains(markerName) || completeGenotypes.contains(g.getSampleName()))
+                                                    if (GiGiType.reference == giGiType || _frameworkMarkerNames.contains(markerName) || !imputed.contains(g.getSampleName()))
                                                     {
-                                                        genoWriter.append(" ").append(a.isReference() ? "1" : ai.toString());
+                                                        toAppend.add(a.isReference() ? "1" : ai.toString());
                                                     }
                                                     else
                                                     {
-                                                        genoWriter.append(" ").append("0");
+                                                        toAppend.add("0");
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    genoWriter.append(" ").append("0");
-                                                    completeGenoWriter.append(" ").append("0");
+                                                    toAppend.add("0");
                                                 }
+                                            }
+
+                                            if (toAppend.size() > 2)
+                                            {
+                                                //todo: not supported right now
+                                                log.error("sample: " + name + ", more than 2 alleles at " + markerName + "/" + StringUtils.join(toAppend, ";"));
+                                                writer.append(" ").append("0");
+                                                writer.append(" ").append("0");
+                                            }
+                                            else if ((toAppend.contains("0") && new HashSet<>(toAppend).size() > 1))
+                                            {
+                                                //gl_auto does not support mix of known/unknown genotypes
+                                                log.warn("sample: " + name + ", mix of known/unknown genotypes at " + markerName + "/" + StringUtils.join(toAppend, ";"));
+                                                if (GiGiType.reference == giGiType)
+                                                {
+                                                    writer.append(" ").append("-1");
+                                                    writer.append(" ").append("-1");
+                                                }
+                                                else
+                                                {
+                                                    writer.append(" ").append("0");
+                                                    writer.append(" ").append("0");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                writer.append(" ").append(toAppend.get(0));
+                                                writer.append(" ").append(toAppend.get(1));
                                             }
                                         }
                                     }
@@ -434,75 +654,8 @@ public class ImputationRunner
                                     CloserUtil.close(w);
                                 }
                             }
-
-                            for (BufferedWriter w : completeGenoWriterMap.values())
-                            {
-                                if (w != null)
-                                {
-                                    CloserUtil.close(w);
-                                }
-                            }
                         }
                     }
-                }
-
-                //now write each version of the marker files for GIGI runs
-                File finalMarkerFile = new File(basedir, markerType + ".geno");
-                File gigiGenoFile = new File(basedir, markerType + ".gigi.geno");
-                try (BufferedWriter markerWriter = new BufferedWriter(new FileWriter(finalMarkerFile));BufferedWriter gigiGenoWriter = new BufferedWriter(new FileWriter(gigiGenoFile)))
-                {
-                    for (File file : Arrays.asList(markerFile, markerPosFile, frequencyFile))
-                    {
-                        try (BufferedReader reader = new BufferedReader(new FileReader(file)))
-                        {
-                            IOUtils.copy(reader, markerWriter);
-                            markerWriter.write("\n\n");
-                        }
-
-                        file.delete();
-                    }
-
-                    markerWriter.write("set marker " + (idx - 1) + " data\n");
-                    for (String name : genoFileMap.keySet())
-                    {
-                        File file = genoFileMap.get(name);
-                        if (completeGenotypes.contains(name) || imputed.contains(name))
-                        {
-                            try (BufferedReader reader = new BufferedReader(new FileReader(file)))
-                            {
-                                markerWriter.write(name + " ");
-                                IOUtils.copy(reader, markerWriter);
-                                markerWriter.write("\n");
-                            }
-
-                            try (BufferedReader reader = new BufferedReader(new FileReader(file)))
-                            {
-                                gigiGenoWriter.write(name + " ");
-                                IOUtils.copy(reader, gigiGenoWriter);
-                                gigiGenoWriter.write("\n");
-                            }
-                        }
-
-                        file.delete();
-                    }
-                }
-
-                File completeGenoFile = new File(basedir, markerType + "Complete.geno");
-                try (BufferedWriter completeGenoWriter = new BufferedWriter(new FileWriter(completeGenoFile)))
-                {
-                    for (String name : completeGenoFileMap.keySet())
-                    {
-                        File file = completeGenoFileMap.get(name);
-                        try (BufferedReader reader = new BufferedReader(new FileReader(file)))
-                        {
-                            completeGenoWriter.write(name + " ");
-                            IOUtils.copy(reader, completeGenoWriter);
-                            completeGenoWriter.write("\n");
-                        }
-
-                        file.delete();
-                    }
-                }
             }
             catch (IOException e)
             {
@@ -511,9 +664,140 @@ public class ImputationRunner
         }
     }
 
-    private double round(double a)
+    public void prepareResources(File setBaseDir, File rawDataDir, Logger log, List<Pair<Integer, String>> completeGenotypes, List<Pair<Integer, String>> imputed, MarkerType markerType, Map<String, List<Interval>> intervalMap) throws PipelineJobException
     {
-        return Math.round(a * 1000) / 1000.f;
+        try
+        {
+            log.info("preparing resources for GIGI");
+            for (String chr : intervalMap.keySet())
+            {
+                File basedir = new File(setBaseDir, chr);
+                if (!basedir.exists())
+                {
+                    basedir.mkdir();
+                }
+
+                File markerFile = new File(basedir, "markers.tmp");
+                File markerPosFile = new File(basedir, "markerPositions.tmp");
+                File mapFile = new File(basedir, markerType.name() + "_map.txt");
+                try (
+                        BufferedWriter markerLineWriter = new BufferedWriter(new FileWriter(markerFile));
+                        BufferedWriter markerPosLineWriter = new BufferedWriter(new FileWriter(markerPosFile));
+                        BufferedWriter mapWriter = new BufferedWriter(new FileWriter(mapFile))
+                )
+                {
+                    markerLineWriter.write("set marker names");
+                    markerPosLineWriter.write("map marker positions");
+
+                    for (Interval i : intervalMap.get(chr))
+                    {
+                        String markerName = i.getSequence() + "_" + i.getStart();
+
+                        mapWriter.write((i.getStart() / 1000000.0) + "\n");
+                        markerLineWriter.append(" ").append(markerName);
+                        markerPosLineWriter.append(" " + i.getStart() / 1000000.0);
+
+                    }
+                }
+
+                File frequencyFile = getAlleleFreqGenotypesFile(rawDataDir, markerType, chr);
+
+                //now write each version of the marker files for GIGI or GL_AUTO.  These are basically the same file, except the GL_AUTO version includes frequency info
+                log.info("writing " + markerType.name() + " genotype files for: " + chr);
+                log.debug("using basedir: " + basedir.getPath());
+                File gigiGenoFile = new File(basedir, markerType.name() + ".gigi.geno");
+                File glautoGenoFile = new File(basedir, markerType.name() + ".glauto.geno");
+
+                try (BufferedWriter gigiGenoWriter = new BufferedWriter(new FileWriter(gigiGenoFile));BufferedWriter glautoGenoWriter = new BufferedWriter(new FileWriter(glautoGenoFile)))
+                {
+                    for (File file : Arrays.asList(markerFile, markerPosFile, frequencyFile))
+                    {
+                        try (BufferedReader reader = new BufferedReader(new FileReader(file)))
+                        {
+                            IOUtils.copy(reader, glautoGenoWriter);
+                            glautoGenoWriter.write("\n\n");
+                        }
+
+                        //file.delete();
+                    }
+
+                    glautoGenoWriter.write("set marker " + intervalMap.get(chr).size() + " data\n");
+
+                    Set<String> distinctImputed = new HashSet<>();
+                    for (Pair<Integer, String> pair : imputed)
+                    {
+                        File file = getGiGiExperimentalGenotypeFile(markerType, setBaseDir, chr, pair.second);
+                        appendGenotypeLine(file, pair.second, glautoGenoWriter);
+                        distinctImputed.add(pair.second);
+
+                        appendGenotypeLine(file, pair.second, gigiGenoWriter);
+                    }
+
+                    for (Pair<Integer, String> pair : completeGenotypes)
+                    {
+                        if (distinctImputed.contains(pair.second))
+                        {
+                            log.warn("this set already has an imputed sample for: " + pair.second + ", skipping repeat of complete genome data (sampleId: " + pair.first + "|" + pair.second + ")");
+                            continue;
+                        }
+
+                        File file = getGiGiExperimentalGenotypeFile(markerType, setBaseDir, chr, pair.second);
+                        appendGenotypeLine(file, pair.second, glautoGenoWriter);
+
+                        appendGenotypeLine(file, pair.second, gigiGenoWriter);
+                    }
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+    }
+
+    private void appendGenotypeLine(File file, String sampleName, BufferedWriter writer) throws IOException
+    {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file)))
+        {
+            writer.write(sampleName + " ");
+            IOUtils.copy(reader, writer);
+            writer.write("\n");
+        }
+    }
+
+    public static enum MarkerType
+    {
+        framework(),
+        dense()
+    }
+
+    public enum GiGiType
+    {
+        experimental(),
+        reference();
+    }
+
+    private File getGiGiGenotypeFile(MarkerType type, File setBaseDir, String chr, String sampleName, GiGiType gigiType)
+    {
+        setBaseDir = new File(setBaseDir, chr);
+        setBaseDir = new File(setBaseDir, "genotypes");
+        if (!setBaseDir.exists())
+        {
+            setBaseDir.mkdirs();
+        }
+        return new File(setBaseDir, type.name() + "_" + sampleName + "." + gigiType.name() + ".geno");
+    }
+
+    //this is the file holding the genotypes we expect to give to GIGI.  depending on the sample type, this might be
+    private File getGiGiExperimentalGenotypeFile(MarkerType type, File setBaseDir, String chr, String sampleName)
+    {
+        return getGiGiGenotypeFile(type, setBaseDir, chr, sampleName, GiGiType.experimental);
+    }
+
+    //this is the file holding reference genotypes available for that sample.  this will not necessarily come from the same VCF as the original data.  often GBS data will have WGS performed in a different experiment/VCF used as the reference
+    public File getGiGiReferenceGenotypeFile(MarkerType type, File setBaseDir, String chr, String sampleName)
+    {
+        return getGiGiGenotypeFile(type, setBaseDir, chr, sampleName, GiGiType.reference);
     }
 
     public Set<String> getDenseChrs()
