@@ -561,7 +561,7 @@ public class ImputationRunner
 
                                             if (g.getPhredScaledQual() < _minGenotypeQual)
                                             {
-                                                log.debug("low quality genotype, skipping position: " + (idx-1) + "/" + ctx.getStart() + ". for sample: " + name + ". qual: " + g.getPhredScaledQual() + "/" + g.getGenotypeString());
+                                                log.debug("low quality genotype (min: " + _minGenotypeQual + "), skipping position: " + (idx-1) + "/" + ctx.getStart() + ". for sample: " + name + ". qual: " + g.getPhredScaledQual() + "/" + g.getGenotypeString());
                                                 if (GiGiType.reference == giGiType)
                                                 {
                                                     writer.append(" ").append("-1");
