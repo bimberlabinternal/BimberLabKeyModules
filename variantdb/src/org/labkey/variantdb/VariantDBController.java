@@ -16,6 +16,7 @@
 
 package org.labkey.variantdb;
 
+import htsjdk.tribble.TribbleException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
@@ -279,8 +280,16 @@ public class VariantDBController extends SpringActionController
                 {
                     fileMap.put(f.getRowid(), f.toJSON());
 
-                    List<String> samples = VariantDBManager.get().getSamplesForVcf(f.getFile());
-                    resp.put(f.getRowid().toString(), samples);
+                    try
+                    {
+                        List<String> samples = VariantDBManager.get().getSamplesForVcf(f.getFile());
+                        resp.put(f.getRowid().toString(), samples);
+                    }
+                    catch (TribbleException e)
+                    {
+                        _log.error(e.getMessage(), e);
+                        errors.reject(ERROR_MSG, e.getMessage());
+                    }
                 }
                 else
                 {
