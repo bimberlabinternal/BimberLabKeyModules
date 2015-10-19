@@ -20,7 +20,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.laboratory.AbstractDataProvider;
 import org.labkey.api.laboratory.SummaryNavItem;
-import org.labkey.api.ldk.NavItem;
+import org.labkey.api.laboratory.NavItem;
 import org.labkey.api.laboratory.SimpleSettingsItem;
 import org.labkey.api.module.Module;
 import org.labkey.api.security.User;

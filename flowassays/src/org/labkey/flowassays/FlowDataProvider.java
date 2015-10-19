@@ -10,14 +10,12 @@ import org.labkey.api.laboratory.TabbedReportItem;
 import org.labkey.api.laboratory.assay.AbstractAssayDataProvider;
 import org.labkey.api.laboratory.assay.AssayImportMethod;
 import org.labkey.api.laboratory.assay.AssayNavItem;
-import org.labkey.api.ldk.NavItem;
+import org.labkey.api.laboratory.NavItem;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
-import org.labkey.flowassays.assay.DefaultFlowImportMethod;
 import org.labkey.flowassays.assay.FlowNavItem;
-import org.labkey.flowassays.assay.FlowPivotingImportMethod;
 
 import java.util.ArrayList;
 import java.util.Collections;
