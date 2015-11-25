@@ -112,8 +112,21 @@
             addItems: function(){
                 this.removeAll();
                 this.add([{
-                    title: 'Instructions',
-                    html: 'This allows you to perform genotype imputation on the selected VCF files.  This is not currently designed to be a very end-user friendly UI.  It will capture parameters, most of which are passed directly to the tools that are run.  For each field, hover over the question mark for more information.  You will need to provide 2 VCF files, one with the framework marker genotypes and one with dense markers.  You can then choose any number of combinations of samples to run, choosing which animals to select from each VCF.'
+                    xtype: 'panel',
+                    defaults: {
+                        border: false
+                    },
+                    items: [{
+                        title: 'Instructions',
+                        html: 'This allows you to perform genotype imputation on the selected VCF files.  This is not currently designed to be a very end-user friendly UI.  It will capture parameters, most of which are passed directly to the tools that are run.  For each field, hover over the question mark for more information.  You will need to provide 2 VCF files, one with the framework marker genotypes and one with dense markers.  You can then choose any number of combinations of samples to run, choosing which animals to select from each VCF.',
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        xtype: 'textfield',
+                        fieldLabel: 'Job Name',
+                        itemId: 'jobName',
+                        width: 400,
+                        value: null
+                    }]
                 },{
                     title: 'Samples',
                     items: [{
@@ -134,7 +147,7 @@
                     }]
                 },{
                     title: 'Step 1: Markers',
-                    minHeight: 150,
+                    minHeight: 200,
                     xtype: 'form',
                     defaults: {
                         border: false
@@ -154,17 +167,19 @@
                         name: 'denseFile',
                         value: LABKEY.ActionURL.getParameter('denseFile')
                     },{
-                        xtype: 'combo',
+                        xtype: 'ldk-expdatafield',
                         fieldLabel: 'Allele Frequency File',
                         allowBlank: false,
                         helpPopup: 'This should be the file used for allele frequencies.  This VCF does not need to contain your sample data.  This will be parsed from the AF tag',
                         name: 'alleleFrequencyFile',
-                        value: LABKEY.ActionURL.getParameter('alleleFrequencyFile') ? this.fileStore.findRecord('dataId', Number(LABKEY.ActionURL.getParameter('alleleFrequencyFile')), null, false) : null,
-                        queryMode: 'local',
-                        valueField: 'dataId',
-                        displayField: 'fileName',
-                        store: this.fileStore,
-                        forceSelection: true
+                        value: LABKEY.ActionURL.getParameter('alleleFrequencyFile')
+                    },{
+                        xtype: 'ldk-expdatafield',
+                        fieldLabel: 'Interval Blacklist File',
+                        allowBlank: false,
+                        helpPopup: 'This should be a BED file containing a list of intervals to blacklist.  For each, the genotypes will be set to no call; however, these markers will be retained in the output.',
+                        name: 'blacklistFile',
+                        value: LABKEY.ActionURL.getParameter('blacklistFile')
                     }]
                 },{
                     title: 'Step 2: Pedigree',
@@ -206,41 +221,17 @@
                         xtype: 'textfield',
                         fieldLabel: 'Call Method',
                         name: 'callMethod',
-                        value: '2 0.8 0.9'
+                        value: LABKEY.ActionURL.getParameter('callMethod') || '2 0.8 0.9'
                     },{
-                        xtype: 'checkcombo',
-                        fieldLabel: 'Chromosome(s)',
-                        multiSelect: true,
-                        allowBlank: false,
-                        helpPopup: 'If provided, we will only consider markers on this chromosome.  This is primarily for debugging purposes.',
-                        name: 'chromosome',
-                        store: {
-                            type: 'labkey-store',
-                            containerPath: Laboratory.Utils.getQueryContainerPath(),
-                            schemaName: 'sequenceanalysis',
-                            queryName: 'reference_library_members',
-                            filterArray: [LABKEY.Filter.create('library_id', this.genomeId)],
-                            columns: 'ref_nt_id/name',
-                            sort: 'ref_nt_id/name',
-                            autoLoad: true,
-                            listeners: {
-                                scope: this,
-                                load: function(s){
-                                    var field = this.down('field[name=chromosome]');
-                                    var names = [];
-                                    s.each(function(r){
-                                        names.push(r.get('ref_nt_id/name'));
-                                    }, this);
-
-                                    if (!field.getValue()){
-                                        field.setValue(names);
-                                    }
-                                }
-                            }
-                        },
-                        valueField: 'ref_nt_id/name',
-                        displayField: 'ref_nt_id/name',
-                        value: LABKEY.ActionURL.getParameter('chromosome')
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Min Genotype Quality',
+                        name: 'minGenotypeQual',
+                        value: LABKEY.ActionURL.getParameter('minGenotypeQual') || '5'
+                    },{
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Min Genotype Depth',
+                        name: 'minGenotypeDepth',
+                        value: LABKEY.ActionURL.getParameter('minGenotypeDepth') || '5'
                     },{
                         xtype: 'button',
                         border: true,
@@ -362,6 +353,98 @@
                             }).show();
                         }
                     },{
+                        text: 'Test All Combinations 2',
+                        scope: this,
+                        handler: function(btn){
+                            var win = btn.up('window');
+
+                            Ext4.create('Ext.window.Window', {
+                                width: 600,
+                                title: 'Enter Sample Names',
+                                bodyStyle: 'padding: 5px;',
+                                items: [{
+                                    html: 'This helper is designed to test all combinations of WGS data, using the IDs listed below.  It produces a table w/ each set of WGS IDs, fills in the remaining samples using GBS, and then chooses the right reference data.  It will preferentially use WGS as reference data, but select GBS is not available.',
+                                    border: false,
+                                    style: 'padding-bottom: 10px;'
+                                },{
+                                    xtype: 'textarea',
+                                    itemId: 'wgs',
+                                    fieldLabel: 'Enter a list of samples with WGS',
+                                    height: 100,
+                                    width: 300
+                                },{
+                                    xtype: 'textarea',
+                                    itemId: 'allSamples',
+                                    fieldLabel: 'Enter all the samples',
+                                    height: 100,
+                                    width: 300
+                                },{
+                                    xtype: 'ldk-integerfield',
+                                    itemId: 'wgsVcf',
+                                    fieldLabel: 'Enter the VCF ID with WGS data',
+                                    width: 300
+                                },{
+                                    xtype: 'ldk-integerfield',
+                                    itemId: 'gbsVcf',
+                                    fieldLabel: 'Enter the VCF ID with GBS data',
+                                    width: 300
+                                }],
+                                buttons: [{
+                                    text: 'Submit',
+                                    scope: this,
+                                    handler: function(btn){
+                                        var wgs = btn.up('window').down('#wgs').getValue();
+                                        var allSamples = btn.up('window').down('#allSamples').getValue();
+                                        var wgsVcf = btn.up('window').down('#wgsVcf').getValue();
+                                        var gbsVcf = btn.up('window').down('#gbsVcf').getValue();
+
+                                        if (!wgs || !allSamples || !wgsVcf || !gbsVcf){
+                                            Ext4.Msg.alert('Error', 'Missing required fields');
+                                            return;
+                                        }
+
+                                        wgs = win.textToArray(wgs);
+                                        allSamples = win.textToArray(allSamples);
+
+                                        var ret = [];
+                                        for (var r=0;r<wgs.length;r++){
+                                            win.getAllCombinations(wgs, new Array(r), 0, 0, (r + 1), ret);
+                                        }
+
+                                        var toAdd = [];
+                                        Ext4.Array.forEach(ret, function(a){
+                                            toAdd.push([a, Ext4.Array.difference(allSamples, a)]);
+                                        }, this);
+
+                                        var finalData = [];
+                                        Ext4.Array.forEach(toAdd, function(row){
+                                            var newRow = [[], [], []];
+
+                                            Ext4.Array.forEach(row[0], function(r){
+                                                newRow[0].push(wgsVcf + '||' + r);
+                                            }, this);
+
+                                            Ext4.Array.forEach(row[1], function(r){
+                                                newRow[1].push(gbsVcf + '||' + r);
+                                                newRow[2].push((wgs.indexOf(r) == -1 ? gbsVcf : wgsVcf ) + '||' + r);
+                                            }, this);
+
+                                            finalData.push(newRow);
+                                        }, this);
+
+                                        btn.up('window').close();
+                                        win.addSamples(finalData);
+                                    }
+
+                                },{
+                                    text: 'Cancel',
+                                    handler: function(btn){
+                                        btn.up('window').close();
+                                    }
+                                }]
+                            }).show();
+                        }
+                    },{
                         text: 'Close',
                         handler: function(btn){
                             btn.up('window').close();
@@ -453,6 +536,7 @@
                 var vals = this.getForm().getFieldValues();
                 vals.sampleSets = this.down('#imputationSets').rawData;
 
+                var jobName = this.down('#jobName').getValue();
                 console.log(vals);
 
                 var errors = [];
@@ -468,9 +552,6 @@
                 if (!vals.callMethod)
                     errors.push('Missing value for GIGI call method');
 
-                if (!vals.chromosome || Ext4.isEmpty(vals.chromosome))
-                    errors.push('No chromosomes selected');
-
                 if (errors.length){
                     Ext4.Msg.alert('Error', errors.join('<br>'));
                     return;
@@ -482,7 +563,8 @@
                     jsonData: {
                         handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
                         outputFileIds: this.outputFileIds,
-                        params: Ext4.encode(vals)
+                        params: Ext4.encode(vals),
+                        jobName: jobName
                     },
                     scope: this,
                     success: function(){

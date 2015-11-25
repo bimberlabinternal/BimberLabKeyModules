@@ -60,7 +60,7 @@ public class VariantDBUserSchema extends SimpleUserSchema
             ExprColumn newCol = new ExprColumn(ret, "displayName", sql, JdbcType.VARCHAR, ret.getColumn("rowid"), ret.getColumn("dbSnpAccession"));
             newCol.setLabel("Variant Id");
 
-            SQLFragment sql2 = new SQLFragment("(SELECT " + ret.getSqlDialect().getGroupConcat(new SQLFragment("allele"), true, true) + " AS expr FROM " + VariantDBSchema.NAME + "." + VariantDBSchema.TABLE_REFERENCE_VARIANT_ALLELES + " t WHERE t.referenceVariantId = " + ExprColumn.STR_TABLE_ALIAS + ".objectid)");
+            SQLFragment sql2 = new SQLFragment("(SELECT ").append(ret.getSqlDialect().getGroupConcat(new SQLFragment("allele"), true, true)).append(" AS expr FROM " + VariantDBSchema.NAME + "." + VariantDBSchema.TABLE_REFERENCE_VARIANT_ALLELES + " t WHERE t.referenceVariantId = " + ExprColumn.STR_TABLE_ALIAS + ".objectid)");
             ExprColumn newCol2 = new ExprColumn(ret, "alleles", sql2, JdbcType.VARCHAR, ret.getColumn("objectid"));
             newCol2.setLabel("Alleles");
 

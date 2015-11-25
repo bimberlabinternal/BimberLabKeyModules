@@ -100,6 +100,12 @@ public class VariantImportHandler implements SequenceOutputHandler
         return new Processor();
     }
 
+    @Override
+    public boolean doSplitJobs()
+    {
+        return false;
+    }
+
     public class Processor implements OutputProcessor
     {
         @Override

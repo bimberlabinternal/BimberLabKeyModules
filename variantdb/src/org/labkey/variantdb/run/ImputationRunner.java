@@ -1,8 +1,10 @@
 package org.labkey.variantdb.run;
 
+import com.drew.lang.annotations.Nullable;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.CloserUtil;
 import htsjdk.samtools.util.Interval;
+import htsjdk.samtools.util.IntervalUtil;
 import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.CloseableTribbleIterator;
 import htsjdk.tribble.bed.BEDCodec;
@@ -29,6 +31,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -45,10 +48,13 @@ public class ImputationRunner
     private Map<String, List<Interval>> _frameworkIntervalMap;
     private Map<String, List<List<String>>> _denseMarkerAlleles;
     private Map<String, List<List<String>>> _frameworkMarkerAlleles;
+    private Map<String, List<Interval>> _genotypeBlacklist;
+
     private List<String> _frameworkMarkerNames;
     private int _minGenotypeQual = 5;
+    private int _minGenotypeDepth = 0;
 
-    public ImputationRunner(File denseBedFile, File frameworkBedFile, Logger log) throws PipelineJobException
+    public ImputationRunner(File denseBedFile, File frameworkBedFile, @Nullable File genotypeBlacklist, Logger log) throws PipelineJobException
     {
         //first build list of dense intervals by chromosome
         _denseIntervalMap = new HashMap<>();
@@ -102,6 +108,38 @@ public class ImputationRunner
         catch (IOException e)
         {
             throw new PipelineJobException(e);
+        }
+
+        //blacklist
+        _genotypeBlacklist = new HashMap<>();
+        if (genotypeBlacklist != null)
+        {
+            try (AbstractFeatureReader reader = AbstractFeatureReader.getFeatureReader(genotypeBlacklist.getPath(), new BEDCodec(), false))
+            {
+                try (CloseableTribbleIterator<BEDFeature> it = reader.iterator())
+                {
+                    while (it.hasNext())
+                    {
+                        BEDFeature f = it.next();
+                        if (!_genotypeBlacklist.containsKey(f.getChr()))
+                        {
+                            _genotypeBlacklist.put(f.getChr(), new LinkedList<Interval>());
+                        }
+
+                        _genotypeBlacklist.get(f.getChr()).add(new Interval(f.getChr(), f.getStart(), f.getEnd()));
+                    }
+                }
+
+                //NOTE: convert this to an ArrayList, since we are going to access specific positions downstream:
+                for (String chr : _genotypeBlacklist.keySet())
+                {
+                    _genotypeBlacklist.put(chr, new ArrayList<>(_genotypeBlacklist.get(chr)));
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
 
         //summarize distances
@@ -461,7 +499,7 @@ public class ImputationRunner
     public void prepareGenotypeFiles(File vcf, GiGiType giGiType, File outputDir, Logger log, List<String> imputed, MarkerType markerType, Map<String, List<Interval>> intervalMap, File gatkPed) throws PipelineJobException
     {
         Map<String, List<List<String>>> alleleNameMap = markerType == MarkerType.dense ? _denseMarkerAlleles : _frameworkMarkerAlleles;
-        for (String chr : intervalMap.keySet())
+        CHR: for (String chr : intervalMap.keySet())
         {
             log.info("processing chromosome: " + chr + ".  for marker set: " + markerType.name() + ".  to build data of type: " + giGiType.name() + ".  total intervals: " + intervalMap.get(chr).size());
             List<List<String>> alleleNameList = alleleNameMap.get(chr);
@@ -469,6 +507,17 @@ public class ImputationRunner
             if (!subDir.exists())
             {
                 subDir.mkdirs();
+            }
+
+            List<Interval> genotypeBlacklist;
+            if (_genotypeBlacklist != null && _genotypeBlacklist.containsKey(chr))
+            {
+                log.info("total blacklist genotype intervals: " + _genotypeBlacklist.get(chr).size());
+                genotypeBlacklist = _genotypeBlacklist.get(chr);
+            }
+            else
+            {
+                genotypeBlacklist = Collections.emptyList();
             }
 
             //write the output to a set of files we wil later merge
@@ -484,6 +533,23 @@ public class ImputationRunner
                         try
                         {
                             List<String> sampleNames = reader.getFileHeader().getSampleNamesInOrder();
+
+                            //first check if files exist
+                            int existingFiles = 0;
+                            for (String name : sampleNames)
+                            {
+                                if (getGiGiGenotypeFile(markerType, outputDir, chr, name, giGiType).exists())
+                                {
+                                    existingFiles++;
+                                }
+                            }
+
+                            if (existingFiles == sampleNames.size())
+                            {
+                                log.info("all genotype files exist for chr: " + chr + ", will not recreate");
+                                continue CHR;
+                            }
+
                             for (String name : sampleNames)
                             {
                                 File tmp = getGiGiGenotypeFile(markerType, outputDir, chr, name, giGiType);
@@ -492,13 +558,39 @@ public class ImputationRunner
                                 genoWriterMap.put(name, new BufferedWriter(new FileWriter(tmp)));
                             }
 
-                            for (Interval i : intervalMap.get(chr))
+                            INTERVAL: for (Interval i : intervalMap.get(chr))
                             {
                                 List<String> knownAlleles = alleleNameList.get(idx - 1);  //idx is 1-based
                                 idx++;
                                 if (idx % 1000 == 0)
                                 {
                                     log.info("processed " + idx + " loci");
+                                }
+
+                                //if this is a blacklist interval, write zeros for all samples
+                                for (Interval other : genotypeBlacklist)
+                                {
+                                    if (other.intersects(i))
+                                    {
+                                        log.info("interval is within blacklist, setting genotypes to zeros: " + other.getStart());
+                                        for (String name : sampleNames)
+                                        {
+                                            //if not found, treat as no call.
+                                            BufferedWriter writer = genoWriterMap.get(name);
+                                            if (GiGiType.reference == giGiType)
+                                            {
+                                                writer.append(" ").append("-1");
+                                                writer.append(" ").append("-1");
+                                            }
+                                            else
+                                            {
+                                                writer.append(" ").append("0");
+                                                writer.append(" ").append("0");
+                                            }
+                                        }
+
+                                        continue INTERVAL;
+                                    }
                                 }
 
                                 try (CloseableIterator<VariantContext> it = reader.query(chr, i.getStart(), i.getEnd()))
@@ -526,9 +618,30 @@ public class ImputationRunner
 
                                     MendelianEvaluator me = new MendelianEvaluator(gatkPed);
                                     me.setMinGenotypeQuality(0); //reject all
-                                    while (it.hasNext())
+                                    ITERATOR: while (it.hasNext())
                                     {
                                         VariantContext ctx = it.next();
+
+                                        if (ctx.getReference().getDisplayString().length() > 1)
+                                        {
+                                            log.warn("complex reference allele, marking as no call: " + markerName + "/" + ctx.getReference().getDisplayString());
+                                            for (String name : sampleNames)
+                                            {
+                                                BufferedWriter writer = genoWriterMap.get(name);
+                                                if (GiGiType.reference == giGiType)
+                                                {
+                                                    writer.append(" ").append("-1");
+                                                    writer.append(" ").append("-1");
+                                                }
+                                                else
+                                                {
+                                                    writer.append(" ").append("0");
+                                                    writer.append(" ").append("0");
+                                                }
+                                            }
+
+                                            continue ITERATOR;
+                                        }
 
                                         for (String name : ctx.getSampleNames())
                                         {
@@ -537,11 +650,6 @@ public class ImputationRunner
                                             if (g.getAlleles().size() != 2)
                                             {
                                                 log.debug("More than 2 genotypes found for marker: " + ctx.getChr() + " " + ctx.getStart());
-                                            }
-                                            else if (ctx.getReference().getDisplayString().length() > 1)
-                                            {
-                                                log.error("complex reference allele, skipping: " + markerName + "/" + ctx.getReference().getDisplayString());
-                                                continue;
                                             }
 
                                             if (g.isNoCall() || me.isViolation(g.getSampleName(), ctx))
@@ -561,7 +669,23 @@ public class ImputationRunner
 
                                             if (g.getPhredScaledQual() < _minGenotypeQual)
                                             {
-                                                log.debug("low quality genotype (min: " + _minGenotypeQual + "), skipping position: " + (idx-1) + "/" + ctx.getStart() + ". for sample: " + name + ". qual: " + g.getPhredScaledQual() + "/" + g.getGenotypeString());
+                                                log.debug("low quality genotype (min: " + _minGenotypeQual + "), skipping position: " + (idx - 1) + "/" + ctx.getStart() + ". for sample: " + name + ". qual: " + g.getPhredScaledQual() + "/" + g.getGenotypeString());
+                                                if (GiGiType.reference == giGiType)
+                                                {
+                                                    writer.append(" ").append("-1");
+                                                    writer.append(" ").append("-1");
+                                                }
+                                                else
+                                                {
+                                                    writer.append(" ").append("0");
+                                                    writer.append(" ").append("0");
+                                                }
+                                                continue;
+                                            }
+
+                                            if (g.getDP() < _minGenotypeDepth)
+                                            {
+                                                log.debug("genotype DP below " + _minGenotypeDepth + ", skipping position: " + (idx - 1) + "/" + ctx.getStart() + ". for sample: " + name + ". DP: " + g.getDP() + "/" + g.getGenotypeString());
                                                 if (GiGiType.reference == giGiType)
                                                 {
                                                     writer.append(" ").append("-1");
@@ -680,6 +804,15 @@ public class ImputationRunner
                 File markerFile = new File(basedir, "markers.tmp");
                 File markerPosFile = new File(basedir, "markerPositions.tmp");
                 File mapFile = new File(basedir, markerType.name() + "_map.txt");
+                File gigiGenoFile = new File(basedir, markerType.name() + ".gigi.geno");
+                File glautoGenoFile = new File(basedir, markerType.name() + ".glauto.geno");
+
+                if (markerFile.exists() && markerPosFile.exists() && mapFile.exists() && gigiGenoFile.exists() && glautoGenoFile.exists())
+                {
+                    log.info("all resources exist for chr: " + chr + ", re-using");
+                    continue;
+                }
+
                 try (
                         BufferedWriter markerLineWriter = new BufferedWriter(new FileWriter(markerFile));
                         BufferedWriter markerPosLineWriter = new BufferedWriter(new FileWriter(markerPosFile));
@@ -705,8 +838,6 @@ public class ImputationRunner
                 //now write each version of the marker files for GIGI or GL_AUTO.  These are basically the same file, except the GL_AUTO version includes frequency info
                 log.info("writing " + markerType.name() + " genotype files for: " + chr);
                 log.debug("using basedir: " + basedir.getPath());
-                File gigiGenoFile = new File(basedir, markerType.name() + ".gigi.geno");
-                File glautoGenoFile = new File(basedir, markerType.name() + ".glauto.geno");
 
                 try (BufferedWriter gigiGenoWriter = new BufferedWriter(new FileWriter(gigiGenoFile));BufferedWriter glautoGenoWriter = new BufferedWriter(new FileWriter(glautoGenoFile)))
                 {
@@ -814,5 +945,25 @@ public class ImputationRunner
     public Interval getDensePositionByIndex(String chr, int idx)
     {
         return _denseIntervalMap.get(chr).get(idx - 1);
+    }
+
+    public int getMinGenotypeQual()
+    {
+        return _minGenotypeQual;
+    }
+
+    public void setMinGenotypeQual(int minGenotypeQual)
+    {
+        _minGenotypeQual = minGenotypeQual;
+    }
+
+    public int getMinGenotypeDepth()
+    {
+        return _minGenotypeDepth;
+    }
+
+    public void setMinGenotypeDepth(int minGenotypeDepth)
+    {
+        _minGenotypeDepth = minGenotypeDepth;
     }
 }

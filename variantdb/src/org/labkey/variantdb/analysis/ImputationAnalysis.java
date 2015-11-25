@@ -1,10 +1,8 @@
 package org.labkey.variantdb.analysis;
 
 import au.com.bytecode.opencsv.CSVWriter;
-import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
-import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.vcf.VCFFileReader;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -33,18 +31,16 @@ import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
-import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
+import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
+import org.labkey.api.util.Compress;
 import org.labkey.api.util.FileType;
-import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.Pair;
 import org.labkey.api.view.ActionURL;
 import org.labkey.variantdb.VariantDBModule;
-import org.labkey.variantdb.run.BedtoolsRunner;
 import org.labkey.variantdb.run.CombineVariantsWrapper;
 import org.labkey.variantdb.run.ImputationRunner;
 import org.labkey.variantdb.run.MendelianEvaluator;
-import org.labkey.variantdb.run.SelectVariantsWrapper;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -145,6 +141,12 @@ public class ImputationAnalysis implements SequenceOutputHandler
         return new Processor();
     }
 
+    @Override
+    public boolean doSplitJobs()
+    {
+        return false;
+    }
+
     public class Processor implements OutputProcessor
     {
         private TableInfo _subjectTable = null;
@@ -232,6 +234,17 @@ public class ImputationAnalysis implements SequenceOutputHandler
             }
             job.getLogger().info("using allele frequency file: " + alleleFrequencyFile.getFile().getPath());
             support.cacheExpData(alleleFrequencyFile);
+
+            if (params.get("blacklistFile") != null)
+            {
+                ExpData blacklist = ExperimentService.get().getExpData(params.getInt("blacklistFile"));
+                if (blacklist == null || !blacklist.getFile().exists())
+                {
+                    throw new PipelineJobException("Unable to find blacklist file: " + params.getInt("blacklistFile"));
+                }
+                job.getLogger().info("using blacklist: " + blacklist.getFile().getPath());
+                support.cacheExpData(blacklist);
+            }
         }
 
         private String potentiallyWriteAliasedName(String subjectId, Map<String, String> aliasMap)
@@ -271,10 +284,51 @@ public class ImputationAnalysis implements SequenceOutputHandler
             File alleleFreqVcf = support.getCachedData(params.getInt("alleleFrequencyFile"));
             action.addInput(alleleFreqVcf, "Allele Frequency File");
 
+            File blackList = null;
+            if (params.get("blacklistFile") != null)
+            {
+                blackList = support.getCachedData(params.getInt("blacklistFile"));
+                action.addInput(blackList, "Genotype Blacklist");
+            }
 
-            ImputationRunner runner = new ImputationRunner(denseMarkers, frameworkMarkers, job.getLogger());
+            //copy locally to retain a record.  we expect these files to be of reasonable size
+            File copiedBlackList = null;
+            try
+            {
+                FileUtils.copyFile(denseMarkers, new File(outputDir, denseMarkers.getName()));
+                FileUtils.copyFile(frameworkMarkers, new File(outputDir, frameworkMarkers.getName()));
+
+                if (blackList != null)
+                {
+                    copiedBlackList = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "genotypeBlacklist.bed");
+                    FileUtils.copyFile(blackList, copiedBlackList);
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            if (copiedBlackList != null)
+            {
+                job.getLogger().info("genotype blacklist found, using: " + copiedBlackList.getName());
+            }
+
+            ImputationRunner runner = new ImputationRunner(denseMarkers, frameworkMarkers, copiedBlackList, job.getLogger());
             File rawDataDir = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "rawData");
             rawDataDir.mkdirs();
+
+            if (params.get("minGenotypeQual") != null)
+            {
+                job.getLogger().info("setting minGenotypeQual: " + params.get("minGenotypeQual"));
+                runner.setMinGenotypeQual(params.getInt("minGenotypeQual"));
+            }
+
+            if (params.get("minGenotypeDepth") != null)
+            {
+                job.getLogger().info("setting minGenotypeDepth: " + params.get("minGenotypeDepth"));
+                runner.setMinGenotypeDepth(params.getInt("minGenotypeDepth"));
+            }
 
             //write allele frequency data and make map of marker/NT
             runner.prepareFrequencyFiles(alleleFreqVcf, rawDataDir, job.getLogger());
@@ -283,11 +337,10 @@ public class ImputationAnalysis implements SequenceOutputHandler
             action.addOutput(summary, "Summary Table", false);
 
             File errorSummary = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "errorSummary.txt");
-            action.addOutput(errorSummary, "Error Summary Table", false);
 
             try (CSVWriter writer = new CSVWriter(new FileWriter(summary), '\t', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter errorWriter = new CSVWriter(new FileWriter(errorSummary), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                writer.writeNext(new String[]{"SetName", "TotalFramework", "TotalDense", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "Chr", "TotalMarkers", "TotalMatching", "TotalMissing", "TotalNonCalledRef", "TotalIncorrectNonCalledRef", "PctMatching", "PctMissing", "PctMatchingWithoutNonCalled", "PctMissingWithoutNonCalled", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalImputed"});
+                writer.writeNext(new String[]{"SetName", "TotalFramework", "TotalDense", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "MinGenotypeQual", "MinGenotypeDepth", "Chr", "TotalMarkers", "TotalMatching", "TotalErrors", "TotalMissing", "TotalNonCalledRef", "TotalIncorrectNonCalledRef", "PctMatching", "PctMissing", "PctMatchingWithoutNonCalled", "PctMissingWithoutNonCalled", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalImputed"});
                 errorWriter.writeNext(new String[]{"SetName", "CompleteGenotypes", "ImputedSubjects", "TotalImputed", "Subject", "MarkerNumber", "Chr", "Position", "ImputedGenotype", "ActualGenotype", "PreviousFramework", "DistanceFromPreviousFramework", "NextFramework", "DistanceFromNextFramework", "DistanceFromNearestMarker", "NumNearbyMarkers", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent"});
 
                 Integer idx = 0;
@@ -420,6 +473,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
                                 int totalMarkers = 0;
                                 int totalMatching = 0;
+                                int totalErrors = 0;
                                 int totalMissing = 0;
                                 int nonCalledRef = 0;
                                 int incorrectNonCalledRef = 0;
@@ -452,6 +506,10 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                         nonCalledRef++;
                                         incorrectNonCalledRef++;
                                     }
+                                    else
+                                    {
+                                        totalErrors++;
+                                    }
 
                                     if (imputedGenos.get(1).equals("0"))
                                     {
@@ -469,6 +527,10 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                     {
                                         nonCalledRef++;
                                         incorrectNonCalledRef++;
+                                    }
+                                    else
+                                    {
+                                        totalErrors++;
                                     }
 
                                     if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!imputedGenos.get(0).equals("0") || !imputedGenos.get(1).equals("0")))
@@ -564,9 +626,12 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                         StringUtils.join(ss.imputedSampleIdStrings, ";"),
                                         imputedData[0],
                                         callMethod,
+                                        String.valueOf(runner.getMinGenotypeQual()),
+                                        String.valueOf(runner.getMinGenotypeDepth()),
                                         chr,
                                         String.valueOf(totalMarkers),
                                         String.valueOf(totalMatching),
+                                        String.valueOf(totalErrors),
                                         String.valueOf(totalMissing),
                                         String.valueOf(nonCalledRef),
                                         String.valueOf(incorrectNonCalledRef),
@@ -589,6 +654,11 @@ public class ImputationAnalysis implements SequenceOutputHandler
             {
                 throw new PipelineJobException(e);
             }
+
+            Compress.compressGzip(errorSummary);
+            errorSummary.delete();
+
+            action.addOutput(new File(errorSummary.getPath() + ".gz"), "Error Summary Table", false);
         }
 
         private File buildCombinedVcf(ImputationRunner runner, SampleSet ss, List<SequenceOutputFile> inputFiles, SequenceAnalysisJobSupport support, Logger log, File setBaseDir, JSONObject params, RecordedAction action, File gatkPed) throws PipelineJobException
@@ -722,6 +792,12 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
         private void createMergedVcfForSamples(Map<Integer, Set<String>> samplesNeeded, ReferenceGenome genome, List<SequenceOutputFile> inputFiles, SequenceAnalysisJobSupport support, File outputDir, Set<File> toDelete, JSONObject params, Logger log, File mergedVcf, String suffix) throws PipelineJobException
         {
+            if (mergedVcf.exists())
+            {
+                log.info("using existing merged VCF: " + mergedVcf.getPath());
+                return;
+            }
+
             List<File> subsetVcfs = new ArrayList<>();
             log.info("creating merged vcf: " + suffix);
             for (Integer i : samplesNeeded.keySet())

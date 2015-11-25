@@ -1,4 +1,7 @@
 <ap:provider xmlns:ap="http://labkey.org/study/assay/xml">
     <ap:name>ELISPOT_Assay</ap:name>
     <ap:description>An assay to store ELISPOT data, including the management of peptides and ELISPOT-specific visualizations</ap:description>
+    <ap:requiredModules>
+        <ap:moduleName>ELISPOT_Assay</ap:moduleName>
+    </ap:requiredModules>
 </ap:provider>
