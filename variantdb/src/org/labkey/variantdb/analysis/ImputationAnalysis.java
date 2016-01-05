@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
@@ -235,7 +236,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
             job.getLogger().info("using allele frequency file: " + alleleFrequencyFile.getFile().getPath());
             support.cacheExpData(alleleFrequencyFile);
 
-            if (params.get("blacklistFile") != null)
+            if (StringUtils.trimToNull(params.getString("blacklistFile")) != null)
             {
                 ExpData blacklist = ExperimentService.get().getExpData(params.getInt("blacklistFile"));
                 if (blacklist == null || !blacklist.getFile().exists())
@@ -285,7 +286,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
             action.addInput(alleleFreqVcf, "Allele Frequency File");
 
             File blackList = null;
-            if (params.get("blacklistFile") != null)
+            if (StringUtils.trimToNull(params.getString("blacklistFile")) != null)
             {
                 blackList = support.getCachedData(params.getInt("blacklistFile"));
                 action.addInput(blackList, "Genotype Blacklist");
@@ -337,11 +338,10 @@ public class ImputationAnalysis implements SequenceOutputHandler
             action.addOutput(summary, "Summary Table", false);
 
             File errorSummary = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "errorSummary.txt");
-
             try (CSVWriter writer = new CSVWriter(new FileWriter(summary), '\t', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter errorWriter = new CSVWriter(new FileWriter(errorSummary), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                writer.writeNext(new String[]{"SetName", "TotalFramework", "TotalDense", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "MinGenotypeQual", "MinGenotypeDepth", "Chr", "TotalMarkers", "TotalMatching", "TotalErrors", "TotalMissing", "TotalNonCalledRef", "TotalIncorrectNonCalledRef", "PctMatching", "PctMissing", "PctMatchingWithoutNonCalled", "PctMissingWithoutNonCalled", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalImputed"});
-                errorWriter.writeNext(new String[]{"SetName", "CompleteGenotypes", "ImputedSubjects", "TotalImputed", "Subject", "MarkerNumber", "Chr", "Position", "ImputedGenotype", "ActualGenotype", "PreviousFramework", "DistanceFromPreviousFramework", "NextFramework", "DistanceFromNextFramework", "DistanceFromNearestMarker", "NumNearbyMarkers", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent"});
+                writer.writeNext(new String[]{"SetName", "TotalFramework", "TotalDense", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "MinGenotypeQual", "MinGenotypeDepth", "Chr", "TotalMarkers", "TotalMatching", "TotalErrors", "TotalMissing", "TotalNonCalledRef", "TotalIncorrectNonCalledRef", "PctMatching", "PctMissing", "PctMatchingWithoutNonCalled", "PctMissingWithoutNonCalled", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalImputed", "TotalLowFreqHetMatching", "TotalLowFreqHetErrors"});
+                errorWriter.writeNext(new String[]{"SetName", "CompleteGenotypes", "ImputedSubjects", "TotalImputed", "Subject", "MarkerNumber", "Chr", "Position", "ImputedGenotype", "ActualGenotype", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent"});
 
                 Integer idx = 0;
                 for (SampleSet ss : sets)
@@ -358,8 +358,8 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
                     buildCombinedVcf(runner, ss, inputFiles, support, job.getLogger(), baseDir, params, action, gatkPed);
 
-                    runner.prepareResources(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, ImputationRunner.MarkerType.framework, runner.getFrameworkIntervalMap());
-                    runner.prepareResources(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, ImputationRunner.MarkerType.dense, runner.getDenseIntervalMap());
+                    runner.prepareFrameworkResources(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds);
+                    runner.prepareDenseResources(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds);
 
                     Map<String, PedigreeRecord> pedigreeRecordMap = parsePedigree(gatkPed);
                     job.getLogger().debug("pedigree size: " + pedigreeRecordMap.size());
@@ -367,6 +367,12 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     //now actually perform imputation
                     String callMethod = params.get("callMethod") != null ? params.getString("callMethod") : "1";
                     runner.processSet(baseDir, rawDataDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, callMethod);
+
+                    if (StringUtils.trimToNull(params.getString("denseMarkerBatchSize")) != null)
+                    {
+                        job.getLogger().info("using batch size of: " + params.getInt("denseMarkerBatchSize"));
+                        runner.setDenseMarkerBatchSize(params.getInt("denseMarkerBatchSize"));
+                    }
 
                     //calculate relatives present in WGS per subject:
                     Map<String, Set<String>> relativesPresent = new TreeMap<>();
@@ -396,202 +402,230 @@ public class ImputationAnalysis implements SequenceOutputHandler
                         wgsRelativesPresent.put(imputedSubj.second, pr.getRelativesPresent(wgsSubjects));
                     }
 
+                    final double lowFreqThreshold = 0.05;
+
                     for (String chr : runner.getDenseChrs())
                     {
-                        File imputed = new File(baseDir, chr + "/impute.geno");
-                        List<Interval> frameworkIntervals = runner.getFrameworkIntervals(chr);
-                        try (BufferedReader imputedReader = new BufferedReader(new FileReader(imputed)))
+                        job.getLogger().info("calculating accuracy for chromosome: " + chr);
+                        Set<Integer> distinctLowAfMarkers = new HashSet<>();
+
+                        int denseIntervalIdx = -1;
+                        Map<String, SubjectCounter> counterMap = new HashMap<>();
+
+                        for (List<Interval> denseIntervalList : runner.getDenseIntervalMapBatched().get(chr))
                         {
-                            String imputedLine;
-                            OUTER: while ((imputedLine = imputedReader.readLine()) != null)
+                            denseIntervalIdx++;
+                            job.getLogger().info("processing dense marker batch " + denseIntervalIdx + " of " + runner.getDenseIntervalMapBatched().get(chr).size());
+
+                            File imputed = new File(baseDir, chr + "/impute-" + denseIntervalIdx + ".geno");
+                            if (!imputed.exists())
                             {
-                                String[] imputedData = imputedLine.split("( )+");
-                                if (!ss.imputedSampleIdStrings.contains(imputedData[0]))
-                                {
-                                    job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
-                                    continue OUTER;
-                                }
+                                job.getLogger().error("Unable to find imputed genotypes for batch: " + denseIntervalIdx + ", skipping");
+                                job.getLogger().error("start: " + runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).get(0).getStart());
+                                job.getLogger().error("end: " + runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).get(runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).size() - 1).getStart());
+                                continue;
+                            }
 
-                                String[] trueGenotypesData = null;
+                            //gather allele freqs
+                            File freqs = runner.getAlleleFreqFile(rawDataDir, ImputationRunner.MarkerType.dense, chr, denseIntervalIdx);
+                            if (!freqs.exists())
+                            {
+                                throw new PipelineJobException("Unable to find frequency file: " + freqs.getPath());
+                            }
 
-                                Integer fileId = ss.sampleFileMap.get(imputedData[0]);
-                                if (fileId == null)
+                            List<List<Double>> alleleFreqs = new ArrayList<>();
+                            try (BufferedReader freqReader = new BufferedReader(new FileReader(freqs)))
+                            {
+                                String line;
+                                while ((line = freqReader.readLine()) != null)
                                 {
-                                    throw new PipelineJobException("unable to find file matching sample: " + imputedData[0]);
-                                }
-
-                                Pair<Integer, String> refPair = ss.getReferenceForImputedSample(imputedData[0]);
-                                if (refPair == null)
-                                {
-                                    job.getLogger().info("no reference available for sample: " + imputedData[0] + ", skipping");
-                                    continue;
-                                }
-
-                                if (!refPair.first.equals(fileId))
-                                {
-                                    job.getLogger().info("using alternate reference data for sample: " + imputedData[0]);
-                                }
-
-                                File trueGenotypes = runner.getGiGiReferenceGenotypeFile(ImputationRunner.MarkerType.dense, baseDir, chr, imputedData[0]);
-                                if (trueGenotypes == null || !trueGenotypes.exists())
-                                {
-                                    job.getLogger().warn("unable to find reference genotype file, skipping: " + imputedData[0]);
-                                    continue;
-                                }
-
-                                try (BufferedReader trueGenotypereader = new BufferedReader(new FileReader(trueGenotypes)))
-                                {
-                                    String trueGenotypesLine;
-                                    INNER: while ((trueGenotypesLine = trueGenotypereader.readLine()) != null)
+                                    String[] split = line.split(" ");
+                                    List<Double> list = new ArrayList<>();
+                                    for (String token : split)
                                     {
-                                        String[] lineData = trueGenotypesLine.split("( )+");
-                                        trueGenotypesData = lineData;
-                                        break INNER;
+                                        list.add(ConvertHelper.convert(token, Double.class));
                                     }
+
+                                    alleleFreqs.add(list);
                                 }
+                            }
 
-                                if (!ss.imputedSampleIdStrings.contains(imputedData[0]))
+                            try (BufferedReader imputedReader = new BufferedReader(new FileReader(imputed)))
+                            {
+                                String imputedLine;
+                                OUTER: while ((imputedLine = imputedReader.readLine()) != null)
                                 {
-                                    job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
-                                    continue OUTER;
-                                }
-
-                                if (trueGenotypesData == null)
-                                {
-                                    //throw new PipelineJobException("Unable to find reference genotypes for subject: " + imputedData[0]);
-                                    //NOTE: GIGI will infer genotypes for parents and other subjects not in our set
-                                    job.getLogger().warn("Unable to find reference genotypes for subject: " + imputedData[0]);
-                                    continue OUTER;
-                                }
-
-                                if (trueGenotypesData.length != imputedData.length)
-                                {
-                                    throw new IOException("reference and imputed genotypes files do not have the same number of markers: " + imputed.getPath());
-                                }
-
-                                job.getLogger().info("validating imputed subject: " + imputedData[0]);
-
-                                int totalMarkers = 0;
-                                int totalMatching = 0;
-                                int totalErrors = 0;
-                                int totalMissing = 0;
-                                int nonCalledRef = 0;
-                                int incorrectNonCalledRef = 0;
-                                final int WINDOW_SIZE = 800000;  //~4X the avg distance
-                                for (int i = 1; i < trueGenotypesData.length; i++)
-                                {
-                                    totalMarkers++;
-                                    totalMarkers++; //we are cycling through 2 positions
-                                    List<String> imputedGenos = new ArrayList<>(Arrays.asList(imputedData[i], imputedData[i + 1]));
-                                    Collections.sort(imputedGenos);
-                                    List<String> trueGenos = new ArrayList<>(Arrays.asList(trueGenotypesData[i], trueGenotypesData[i + 1]));
-                                    Collections.sort(trueGenos);
-
-                                    i++; //additional increment for 2nd marker
-
-                                    if (imputedGenos.get(0).equals("0"))
+                                    String[] imputedData = imputedLine.split("( )+");
+                                    if (!ss.imputedSampleIdStrings.contains(imputedData[0]))
                                     {
-                                        totalMissing++;
-                                        if (trueGenos.get(0).equals("-1"))
+                                        job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
+                                        continue OUTER;
+                                    }
+
+                                    String[] trueGenotypesData = null;
+
+                                    Integer fileId = ss.sampleFileMap.get(imputedData[0]);
+                                    if (fileId == null)
+                                    {
+                                        throw new PipelineJobException("unable to find file matching sample: " + imputedData[0]);
+                                    }
+
+                                    Pair<Integer, String> refPair = ss.getReferenceForImputedSample(imputedData[0]);
+                                    if (refPair == null)
+                                    {
+                                        job.getLogger().info("no reference available for sample: " + imputedData[0] + ", skipping");
+                                        continue;
+                                    }
+
+                                    if (!refPair.first.equals(fileId))
+                                    {
+                                        job.getLogger().info("using alternate reference data for sample: " + imputedData[0]);
+                                    }
+
+                                    File trueGenotypes = runner.getGiGiReferenceGenotypeFile(ImputationRunner.MarkerType.dense, baseDir, chr, imputedData[0], denseIntervalIdx);
+                                    if (trueGenotypes == null || !trueGenotypes.exists())
+                                    {
+                                        job.getLogger().warn("unable to find reference genotype file, skipping: " + imputedData[0]);
+                                        continue;
+                                    }
+
+                                    try (BufferedReader trueGenotypereader = new BufferedReader(new FileReader(trueGenotypes)))
+                                    {
+                                        String trueGenotypesLine;
+                                        INNER: while ((trueGenotypesLine = trueGenotypereader.readLine()) != null)
                                         {
-                                            nonCalledRef++;
+                                            String[] lineData = trueGenotypesLine.split("( )+");
+                                            trueGenotypesData = lineData;
+                                            break INNER;
                                         }
                                     }
-                                    else if (trueGenos.get(0).equals(imputedGenos.get(0)))
+
+                                    if (!ss.imputedSampleIdStrings.contains(imputedData[0]))
                                     {
-                                        totalMatching++;
-                                    }
-                                    else if (trueGenos.get(0).equals("-1"))
-                                    {
-                                        nonCalledRef++;
-                                        incorrectNonCalledRef++;
-                                    }
-                                    else
-                                    {
-                                        totalErrors++;
+                                        job.getLogger().info("skipping non-imputed subject: " + imputedData[0]);
+                                        continue OUTER;
                                     }
 
-                                    if (imputedGenos.get(1).equals("0"))
+                                    if (trueGenotypesData == null)
                                     {
-                                        totalMissing++;
-                                        if (trueGenos.get(1).equals("-1"))
+                                        //throw new PipelineJobException("Unable to find reference genotypes for subject: " + imputedData[0]);
+                                        //NOTE: GIGI will infer genotypes for parents and other subjects not in our set
+                                        job.getLogger().warn("Unable to find reference genotypes for subject: " + imputedData[0]);
+                                        continue OUTER;
+                                    }
+
+                                    if (trueGenotypesData.length != imputedData.length)
+                                    {
+                                        job.getLogger().error("reference and imputed genotypes files do not have the same number of markers, skipping: " + trueGenotypesData.length + ", " + imputedData.length + ", " + imputed.getPath());
+                                        continue;
+                                    }
+
+                                    job.getLogger().info("validating imputed subject: " + imputedData[0]);
+
+                                    if (!counterMap.containsKey(imputedData[0]))
+                                    {
+                                        counterMap.put(imputedData[0], new SubjectCounter());
+                                    }
+
+                                    SubjectCounter counter = counterMap.get(imputedData[0]);
+                                    for (int i = 1; i < trueGenotypesData.length; i++)
+                                    {
+                                        counter.totalMarkers++;
+                                        counter.totalMarkers++; //we are cycling through 2 positions
+                                        List<String> imputedGenos = new ArrayList<>(Arrays.asList(imputedData[i], imputedData[i + 1]));
+                                        Collections.sort(imputedGenos);
+                                        List<String> trueGenos = new ArrayList<>(Arrays.asList(trueGenotypesData[i], trueGenotypesData[i + 1]));
+                                        Collections.sort(trueGenos);
+
+                                        i++; //additional increment for 2nd marker
+
+                                        int markerNumber = i / 2;  //there are 2 markers per genome position.  this is 1-based.  this is marker#
+
+                                        //no value imputed
+                                        if (imputedGenos.get(0).equals("0"))
                                         {
-                                            nonCalledRef++;
+                                            counter.totalMissing++;
+                                            if (trueGenos.get(0).equals("-1"))
+                                            {
+                                                counter.nonCalledRef++;
+                                            }
                                         }
-                                    }
-                                    else if (trueGenos.get(1).equals(imputedGenos.get(1)))
-                                    {
-                                        totalMatching++;
-                                    }
-                                    else if (trueGenos.get(1).equals("-1"))
-                                    {
-                                        nonCalledRef++;
-                                        incorrectNonCalledRef++;
-                                    }
-                                    else
-                                    {
-                                        totalErrors++;
-                                    }
-
-                                    if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!imputedGenos.get(0).equals("0") || !imputedGenos.get(1).equals("0")))
-                                    {
-                                        int intervalIdx = i / 2;  //there are 2 markers per genome position.  this is 1-based
-                                        Interval errorIv = runner.getDensePositionByIndex(chr, intervalIdx);
-                                        if (errorIv == null)
+                                        //match
+                                        else if (trueGenos.get(0).equals(imputedGenos.get(0)))
                                         {
-                                            job.getLogger().error("Unable to find dense interval for idx: " + i);
+                                            counter.totalMatching++;
+
+                                            Integer geno = Integer.parseInt(imputedGenos.get(0));
+                                            Double maf = geno > 0 ? alleleFreqs.get(markerNumber - 1).get(geno - 1) : null;
+                                            if (maf != null && maf <= lowFreqThreshold && !imputedGenos.get(0).equals(imputedGenos.get(1)))
+                                            {
+                                                counter.totalLowFreqHetMatching++;
+                                                distinctLowAfMarkers.add(markerNumber);
+                                            }
+                                        }
+                                        //reference is no call
+                                        else if (trueGenos.get(0).equals("-1"))
+                                        {
+                                            counter.nonCalledRef++;
+                                            counter.incorrectNonCalledRef++;
                                         }
                                         else
                                         {
-                                            //find markers near to this position
-                                            int nearbyMarkers = 0;
-                                            for (Interval iv : frameworkIntervals)
+                                            counter.totalErrors++;
+                                            Integer geno = Integer.parseInt(imputedGenos.get(0));
+                                            Double maf = geno > 0 ? alleleFreqs.get(markerNumber - 1).get(geno - 1) : null;
+                                            if (maf != null && maf <= lowFreqThreshold && !imputedGenos.get(0).equals(imputedGenos.get(1)))
                                             {
-                                                int d1 = Math.abs(iv.getStart() - errorIv.getStart());
-                                                if (d1 < WINDOW_SIZE)
-                                                {
-                                                    nearbyMarkers++;
-                                                }
+                                                counter.totalLowFreqHetErrors++;
+                                                distinctLowAfMarkers.add(markerNumber);
                                             }
+                                        }
 
-                                            boolean found = false;
-                                            Interval previous = null;
-                                            for (Interval iv : frameworkIntervals)
+                                        //second geno
+                                        if (imputedGenos.get(1).equals("0"))
+                                        {
+                                            counter.totalMissing++;
+                                            if (trueGenos.get(1).equals("-1"))
                                             {
-                                                if (iv.getStart() > errorIv.getStart())
-                                                {
-                                                    Integer d1 = previous == null ? null : errorIv.getStart() - previous.getStart();
-                                                    Integer d2 = iv.getStart() - errorIv.getStart();
-
-                                                    errorWriter.writeNext(new String[]{
-                                                            idx.toString(),
-                                                            StringUtils.join(ss.wgsSampleIdStrings, ";"),
-                                                            StringUtils.join(ss.imputedSampleIdStrings, ";"),
-                                                            String.valueOf(ss.imputedSampleIdStrings.size()),
-                                                            imputedData[0],
-                                                            String.valueOf(intervalIdx),
-                                                            chr,
-                                                            String.valueOf(errorIv.getStart()),
-                                                            StringUtils.join(imputedGenos, ";"),
-                                                            StringUtils.join(trueGenos, ";"),
-                                                            (previous != null ? String.valueOf(previous.getStart()) : "no marker"),
-                                                            (previous != null ? String.valueOf(d1) : "no marker"),
-                                                            String.valueOf(iv.getStart()),
-                                                            String.valueOf(d2),
-                                                            String.valueOf(d1 == null ? d2 : Math.min(d1, d2)),
-                                                            String.valueOf(nearbyMarkers),
-                                                            String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
-                                                            String.valueOf(relativesPresent.get(imputedData[0]).size())
-                                                    });
-
-                                                    found = true;
-                                                    break;
-                                                }
-
-                                                previous = iv;
+                                                counter.nonCalledRef++;
                                             }
+                                        }
+                                        else if (trueGenos.get(1).equals(imputedGenos.get(1)))
+                                        {
+                                            counter.totalMatching++;
+                                            Integer geno = Integer.parseInt(imputedGenos.get(1));
+                                            Double maf = geno > 0 ? alleleFreqs.get(markerNumber - 1).get(geno - 1) : null;
+                                            if (maf != null && maf <= lowFreqThreshold && !imputedGenos.get(0).equals(imputedGenos.get(1)))
+                                            {
+                                                counter.totalLowFreqHetMatching++;
+                                                distinctLowAfMarkers.add(markerNumber);
+                                            }
+                                        }
+                                        else if (trueGenos.get(1).equals("-1"))
+                                        {
+                                            counter.nonCalledRef++;
+                                            counter.incorrectNonCalledRef++;
+                                        }
+                                        else
+                                        {
+                                            counter.totalErrors++;
+                                            Integer geno = Integer.parseInt(imputedGenos.get(1));
+                                            Double maf = geno > 0 ? alleleFreqs.get(markerNumber - 1).get(geno - 1) : null;
+                                            if (maf != null && maf <= lowFreqThreshold && !imputedGenos.get(0).equals(imputedGenos.get(1)))
+                                            {
+                                                counter.totalLowFreqHetErrors++;
+                                                distinctLowAfMarkers.add(markerNumber);
+                                            }
+                                        }
 
-                                            if (!found)
+                                        if ((!trueGenos.get(0).equals(imputedGenos.get(0)) || !trueGenos.get(1).equals(imputedGenos.get(1))) || (!imputedGenos.get(0).equals("0") || !imputedGenos.get(1).equals("0")))
+                                        {
+                                            Interval errorIv = runner.getDensePositionByIndex(chr, denseIntervalIdx, markerNumber);
+                                            if (errorIv == null)
+                                            {
+                                                job.getLogger().error("Unable to find dense interval for idx: " + i);
+                                            }
+                                            else
                                             {
                                                 errorWriter.writeNext(new String[]{
                                                         idx.toString(),
@@ -599,17 +633,11 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                                         StringUtils.join(ss.imputedSampleIdStrings, ";"),
                                                         String.valueOf(ss.imputedSampleIdStrings.size()),
                                                         imputedData[0],
-                                                        String.valueOf(intervalIdx),
+                                                        String.valueOf(markerNumber),
                                                         chr,
                                                         String.valueOf(errorIv.getStart()),
                                                         StringUtils.join(imputedGenos, ";"),
                                                         StringUtils.join(trueGenos, ";"),
-                                                        (previous != null ? String.valueOf(previous.getStart()) : "no marker"),
-                                                        (previous != null ? String.valueOf(errorIv.getStart() - previous.getStart()) : "No marker"),
-                                                        "No marker",
-                                                        "No marker",
-                                                        String.valueOf(previous == null ? "" : errorIv.getStart() - previous.getStart()),
-                                                        String.valueOf(nearbyMarkers),
                                                         String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
                                                         String.valueOf(relativesPresent.get(imputedData[0]).size())
                                                 });
@@ -617,36 +645,58 @@ public class ImputationAnalysis implements SequenceOutputHandler
                                         }
                                     }
                                 }
-
-                                writer.writeNext(new String[]{
-                                        idx.toString(),
-                                        String.valueOf(runner.getFrameworkIntervalMap().get(chr).size()),
-                                        String.valueOf(runner.getDenseIntervalMap().get(chr).size()),
-                                        StringUtils.join(ss.wgsSampleIdStrings, ";"),
-                                        StringUtils.join(ss.imputedSampleIdStrings, ";"),
-                                        imputedData[0],
-                                        callMethod,
-                                        String.valueOf(runner.getMinGenotypeQual()),
-                                        String.valueOf(runner.getMinGenotypeDepth()),
-                                        chr,
-                                        String.valueOf(totalMarkers),
-                                        String.valueOf(totalMatching),
-                                        String.valueOf(totalErrors),
-                                        String.valueOf(totalMissing),
-                                        String.valueOf(nonCalledRef),
-                                        String.valueOf(incorrectNonCalledRef),
-                                        String.valueOf((double) totalMatching / (totalMarkers - totalMissing)),
-                                        String.valueOf((double) totalMissing / totalMarkers),
-                                        String.valueOf((double) totalMatching / (totalMarkers - totalMissing - incorrectNonCalledRef)),
-                                        String.valueOf((double) totalMissing / (totalMarkers - incorrectNonCalledRef)),
-                                        String.valueOf(wgsRelativesPresent.get(imputedData[0]).size()),
-                                        String.valueOf(relativesPresent.get(imputedData[0]).size()),
-                                        StringUtils.join(wgsRelativesPresent.get(imputedData[0]), ";"),
-                                        StringUtils.join(relativesPresent.get(imputedData[0]), ";"),
-                                        String.valueOf(ss.imputedSampleIds.size())
-                                });
                             }
                         }
+
+                        for (String subject : counterMap.keySet())
+                        {
+                            SubjectCounter counter = counterMap.get(subject);
+                            writer.writeNext(new String[]{
+                                    idx.toString(),
+                                    String.valueOf(runner.getFrameworkIntervalMap().get(chr).size()),
+                                    String.valueOf(runner.getDenseIntervalMap().get(chr).size()),
+                                    StringUtils.join(ss.wgsSampleIdStrings, ";"),
+                                    StringUtils.join(ss.imputedSampleIdStrings, ";"),
+                                    subject,
+                                    callMethod,
+                                    String.valueOf(runner.getMinGenotypeQual()),
+                                    String.valueOf(runner.getMinGenotypeDepth()),
+                                    chr,
+                                    String.valueOf(counter.totalMarkers),
+                                    String.valueOf(counter.totalMatching),
+                                    String.valueOf(counter.totalErrors),
+                                    String.valueOf(counter.totalMissing),
+                                    String.valueOf(counter.nonCalledRef),
+                                    String.valueOf(counter.incorrectNonCalledRef),
+                                    String.valueOf((double) counter.totalMatching / (counter.totalMarkers - counter.totalMissing)),
+                                    String.valueOf((double) counter.totalMissing / counter.totalMarkers),
+                                    String.valueOf((double) counter.totalMatching / (counter.totalMarkers - counter.totalMissing - counter.incorrectNonCalledRef)),
+                                    String.valueOf((double) counter.totalMissing / (counter.totalMarkers - counter.incorrectNonCalledRef)),
+                                    String.valueOf(wgsRelativesPresent.get(subject).size()),
+                                    String.valueOf(relativesPresent.get(subject).size()),
+                                    StringUtils.join(wgsRelativesPresent.get(subject), ";"),
+                                    StringUtils.join(relativesPresent.get(subject), ";"),
+                                    String.valueOf(ss.imputedSampleIds.size()),
+                                    String.valueOf(counter.totalLowFreqHetMatching),
+                                    String.valueOf(counter.totalLowFreqHetErrors)
+                            });
+                        }
+
+                        job.getLogger().info("distinct low AF het markers with data for " + chr + ": " + distinctLowAfMarkers.size());
+                    }
+
+                    runner.doCleanup(job.getLogger(), baseDir);
+                }
+
+                job.getLogger().info("cleaning up rawData dir");
+                File[] rawData = rawDataDir.listFiles();
+                if (rawData != null && rawData.length > 0)
+                {
+                    for (int i=0;i<rawData.length;i++)
+                    {
+                        File f = rawData[i];
+                        Compress.compressGzip(f);
+                        f.delete();
                     }
                 }
             }
@@ -659,6 +709,19 @@ public class ImputationAnalysis implements SequenceOutputHandler
             errorSummary.delete();
 
             action.addOutput(new File(errorSummary.getPath() + ".gz"), "Error Summary Table", false);
+        }
+
+        private class SubjectCounter
+        {
+            int totalMarkers = 0;
+            int totalMatching = 0;
+            int totalErrors = 0;
+            int totalMissing = 0;
+            int nonCalledRef = 0;
+            int incorrectNonCalledRef = 0;
+
+            int totalLowFreqHetMatching = 0;
+            int totalLowFreqHetErrors = 0;
         }
 
         private File buildCombinedVcf(ImputationRunner runner, SampleSet ss, List<SequenceOutputFile> inputFiles, SequenceAnalysisJobSupport support, Logger log, File setBaseDir, JSONObject params, RecordedAction action, File gatkPed) throws PipelineJobException
@@ -799,7 +862,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
             }
 
             List<File> subsetVcfs = new ArrayList<>();
-            log.info("creating merged vcf: " + suffix);
+            log.info("creating merged vcf: " + (suffix == null ? "" : suffix));
             for (Integer i : samplesNeeded.keySet())
             {
                 log.info("\tfile id: " + i);
@@ -882,13 +945,13 @@ public class ImputationAnalysis implements SequenceOutputHandler
             }
 
             //write individual genotype data
-            runner.prepareGenotypeFiles(mergedVcf, ImputationRunner.GiGiType.experimental, setBaseDir, log, imputed, ImputationRunner.MarkerType.dense, runner.getDenseIntervalMap(), gatkPed);
-            runner.prepareGenotypeFiles(mergedVcf, ImputationRunner.GiGiType.experimental, setBaseDir, log, imputed, ImputationRunner.MarkerType.framework, runner.getFrameworkIntervalMap(), gatkPed);
+            runner.prepareDenseGenotypeFiles(mergedVcf, ImputationRunner.GiGiType.experimental, setBaseDir, log, imputed, gatkPed);
+            runner.prepareFrameworkGenotypeFiles(mergedVcf, ImputationRunner.GiGiType.experimental, setBaseDir, log, imputed, gatkPed);
 
             if (refVcf != null && refVcf.exists())
             {
-                runner.prepareGenotypeFiles(refVcf, ImputationRunner.GiGiType.reference, setBaseDir, log, Collections.<String>emptyList(), ImputationRunner.MarkerType.dense, runner.getDenseIntervalMap(), gatkPed);
-                runner.prepareGenotypeFiles(refVcf, ImputationRunner.GiGiType.reference, setBaseDir, log, Collections.<String>emptyList(), ImputationRunner.MarkerType.framework, runner.getFrameworkIntervalMap(), gatkPed);
+                runner.prepareDenseGenotypeFiles(refVcf, ImputationRunner.GiGiType.reference, setBaseDir, log, Collections.<String>emptyList(), gatkPed);
+                runner.prepareFrameworkGenotypeFiles(refVcf, ImputationRunner.GiGiType.reference, setBaseDir, log, Collections.<String>emptyList(), gatkPed);
             }
         }
 

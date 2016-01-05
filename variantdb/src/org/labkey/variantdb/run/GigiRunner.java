@@ -27,6 +27,10 @@ public class GigiRunner extends AbstractCommandWrapper
         args.add("-outD=" + outDir.getPath());
         args.add("-verbose");
 
+        //TODO: consider whitelisting specific codes?  134 seems permissible?  currently we'll just fail one step downstream
+        setWarnNonZeroExits(true);
+        setThrowNonZeroExits(false);
+
         execute(args);
     }
 

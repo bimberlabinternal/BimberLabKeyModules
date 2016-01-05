@@ -218,6 +218,11 @@
                         fieldLabel: 'Include Ancestors',
                         name: 'includeAncestors'
                     },{
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Dense Marker Batch Size',
+                        name: 'denseMarkerBatchSize',
+                        value: LABKEY.ActionURL.getParameter('denseMarkerBatchSize') || 5000
+                    },{
                         xtype: 'textfield',
                         fieldLabel: 'Call Method',
                         name: 'callMethod',
