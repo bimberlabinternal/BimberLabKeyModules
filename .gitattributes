@@ -24,7 +24,10 @@ DISCVR/galaxyintegration/src/org/labkey/galaxyintegration/GalaxyServiceImpl.java
 DISCVR/galaxyintegration/src/org/labkey/galaxyintegration/api/GalaxyService.java -text
 DISCVR/galaxyintegration/src/org/labkey/galaxyintegration/pipeline/ExpRunCreator.java -text
 DISCVR/galaxyintegration/src/org/labkey/galaxyintegration/pipeline/GalaxyProvenanceImporterTask.java -text
+DISCVR/htcondorconnector/HTCondorConnector-API.iml -text
 DISCVR/htcondorconnector/HTCondorConnector.iml -text
+DISCVR/htcondorconnector/api-src/org/labkey/api/htcondorconnector/HTCondorJobResourceAllocator.java -text
+DISCVR/htcondorconnector/api-src/org/labkey/api/htcondorconnector/HTCondorService.java -text
 DISCVR/htcondorconnector/module.properties -text
 DISCVR/htcondorconnector/resources/schemas/dbscripts/postgresql/htcondorconnector-15.20-15.21.sql -text
 DISCVR/htcondorconnector/resources/schemas/dbscripts/postgresql/htcondorconnector-15.21-15.22.sql -text
@@ -39,6 +42,7 @@ DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/HTCondorConnectorContr
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/HTCondorConnectorManager.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/HTCondorConnectorModule.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/HTCondorConnectorSchema.java -text
+DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/HTCondorServiceImpl.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/DockerHTCondorExecutionEngineConfig.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/HTCondorExecutionEngine.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/HTCondorExecutionEngineConfig.java -text
