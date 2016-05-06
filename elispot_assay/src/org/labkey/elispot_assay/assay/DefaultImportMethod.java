@@ -131,7 +131,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
             String negCtlKey = negSb.toString();
             sampleKeyToNegCtlKey.put(key, negCtlKey);
 
-            if (TYPE.NEG.getText().equals(((String)row.get(CATEGORY_FIELD))))
+            if (TYPE.NEG.getText().equals(row.get(CATEGORY_FIELD)))
             {
                 Integer spots = (Integer)row.get(SPOTS_FIELD);
                 List<Double> negCtls = negWellMap.get(negCtlKey);
