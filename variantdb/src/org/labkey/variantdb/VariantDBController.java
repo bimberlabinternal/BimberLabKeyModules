@@ -352,9 +352,10 @@ public class VariantDBController extends SpringActionController
             String basename = vcf.getPath().endsWith(".gz") ? FileUtil.getBaseName(FileUtil.getBaseName(vcf)) : FileUtil.getBaseName(vcf);
             File mendelianPass = new File(vcf.getParentFile(), basename + ".mendelianPass.vcf.gz");
             File mendelianFail = new File(vcf.getParentFile(), basename + ".mendelianViolations.vcf.gz");
+            File mendelianFailBed = new File(vcf.getParentFile(), basename + ".mendelianViolations.bed");
 
             MendelianEvaluator me = new MendelianEvaluator(ped);
-            me.checkVcf(vcf, mendelianPass, mendelianFail, _log);
+            me.checkVcf(vcf, mendelianPass, mendelianFail, mendelianFailBed, _log);
 
             return new ApiSimpleResponse("success", true);
         }

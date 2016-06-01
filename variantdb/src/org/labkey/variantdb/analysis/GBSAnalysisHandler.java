@@ -23,12 +23,14 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
+import org.labkey.api.writer.PrintWriters;
 import org.labkey.variantdb.VariantDBModule;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -194,7 +196,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
 
                 String basename = FileUtil.getBaseName(o.getFile());
                 File html = new File(outputDir, basename + ".summary.html");
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(html)))
+                try (PrintWriter writer = PrintWriters.getPrintWriter(html))
                 {
                     //find outputs
                     File insertSize = new File(outputDir, basename + "_insertSize.pdf");
@@ -253,7 +255,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
             }
         }
 
-        private void appendImage(File image, BufferedWriter writer) throws IOException
+        private void appendImage(File image, PrintWriter writer) throws IOException
         {
             String encoded = Base64.encodeBase64String(FileUtils.readFileToByteArray(image));
             writer.write("<img src=\"data:image/png;base64," + encoded + "\"/>");

@@ -221,7 +221,7 @@
                         xtype: 'ldk-integerfield',
                         fieldLabel: 'Dense Marker Batch Size',
                         name: 'denseMarkerBatchSize',
-                        value: LABKEY.ActionURL.getParameter('denseMarkerBatchSize') || 5000
+                        value: LABKEY.ActionURL.getParameter('denseMarkerBatchSize') || 2500
                     },{
                         xtype: 'textfield',
                         fieldLabel: 'Call Method',
@@ -231,12 +231,18 @@
                         xtype: 'ldk-integerfield',
                         fieldLabel: 'Min Genotype Quality',
                         name: 'minGenotypeQual',
-                        value: LABKEY.ActionURL.getParameter('minGenotypeQual') || '5'
+                        value: LABKEY.ActionURL.getParameter('minGenotypeQual') || '20'
                     },{
                         xtype: 'ldk-integerfield',
                         fieldLabel: 'Min Genotype Depth',
                         name: 'minGenotypeDepth',
-                        value: LABKEY.ActionURL.getParameter('minGenotypeDepth') || '5'
+                        value: LABKEY.ActionURL.getParameter('minGenotypeDepth') || '10'
+                    },{
+                        xtype: 'checkbox',
+                        fieldLabel: 'Split Each Set Into Separate Jobs',
+                        itemId: 'splitSampleSets',
+                        inputValue: true,
+                        checked: !!LABKEY.ActionURL.getParameter('splitSampleSets') || true
                     },{
                         xtype: 'button',
                         border: true,
@@ -309,80 +315,23 @@
                             win.addSamples(toAdd);
                         }
                     },{
-                        text: 'Test All Combinations',
+                        text: 'Sample Helper',
                         scope: this,
                         handler: function(btn){
                             var win = btn.up('window');
 
                             Ext4.create('Ext.window.Window', {
+                                width: 800,
                                 title: 'Enter Sample Names',
                                 bodyStyle: 'padding: 5px;',
                                 items: [{
-                                    xtype: 'textarea',
-                                    fieldLabel: 'Enter a list of samples',
-                                    height: 100,
-                                    width: 300
-                                }],
-                                buttons: [{
-                                    text: 'Submit',
-                                    scope: this,
-                                    handler: function(btn){
-                                        var val = btn.up('window').down('textarea').getValue();
-                                        if (!val){
-                                            Ext4.Msg.alert('Error', 'Must enter a value');
-                                            return;
-                                        }
-
-                                        val = win.textToArray(val);
-
-                                        var ret = [];
-                                        for (var r=0;r<val.length;r++){
-                                            win.getAllCombinations(val, new Array(r), 0, 0, (r + 1), ret);
-                                        }
-
-                                        var toAdd = [];
-                                        Ext4.Array.forEach(ret, function(a){
-                                            toAdd.push([a, Ext4.Array.difference(val, a)]);
-                                        }, this);
-
-                                        btn.up('window').close();
-                                        win.addSamples(toAdd);
-                                    }
-
-                                },{
-                                    text: 'Cancel',
-                                    handler: function(btn){
-                                        btn.up('window').close();
-                                    }
-                                }]
-                            }).show();
-                        }
-                    },{
-                        text: 'Test All Combinations 2',
-                        scope: this,
-                        handler: function(btn){
-                            var win = btn.up('window');
-
-                            Ext4.create('Ext.window.Window', {
-                                width: 600,
-                                title: 'Enter Sample Names',
-                                bodyStyle: 'padding: 5px;',
-                                items: [{
-                                    html: 'This helper is designed to test all combinations of WGS data, using the IDs listed below.  It produces a table w/ each set of WGS IDs, fills in the remaining samples using GBS, and then chooses the right reference data.  It will preferentially use WGS as reference data, but select GBS is not available.',
+                                    html: 'This helper is designed to facilitate testing different combinations of WGS data, using the IDs listed below.  It produces a table w/ each set of WGS or GBS IDs, chosen from the appropriate VCF.  As reference data, it will preferentially use WGS as reference data, but select GBS if not available.  At minimum you need to provide the columns: SetName, GBS, and WGS.  You can optionally also provide the following columns, which will supercede the corresponding options above: frameworkFile, denseFile, alleleFrequencyFile, blacklistFile, callMethod.',
                                     border: false,
                                     style: 'padding-bottom: 10px;'
                                 },{
                                     xtype: 'textarea',
-                                    itemId: 'wgs',
-                                    fieldLabel: 'Enter a list of samples with WGS',
-                                    height: 100,
-                                    width: 300
-                                },{
-                                    xtype: 'textarea',
-                                    itemId: 'allSamples',
-                                    fieldLabel: 'Enter all the samples',
-                                    height: 100,
-                                    width: 300
+                                    height: 300,
+                                    width: 780
                                 },{
                                     xtype: 'ldk-integerfield',
                                     itemId: 'wgsVcf',
@@ -394,53 +343,79 @@
                                     fieldLabel: 'Enter the VCF ID with GBS data',
                                     width: 300
                                 }],
+                                addData: function(btn){
+                                    var data = btn.up('window').down('textarea').getValue();
+                                    data = Ext4.String.trim(data);
+
+                                    var wgsVcf = btn.up('window').down('#wgsVcf').getValue();
+                                    var gbsVcf = btn.up('window').down('#gbsVcf').getValue();
+
+                                    if (!data || !wgsVcf || !gbsVcf){
+                                        Ext4.Msg.alert('Error', 'Missing required fields');
+                                        return false;
+                                    }
+
+                                    data = LDK.Utils.CSVToArray(data, '\t');
+
+                                    var header = data.shift();
+
+                                    //iterate rows
+                                    var rows = [];
+                                    Ext4.Array.forEach(data, function(row){
+                                        var newRow = [];
+                                        Ext4.Array.forEach(header, function(field, idx){
+                                            var val = row[idx];
+                                            if (field.toLowerCase() == 'wgs'){
+                                                val = win.textToArray(val);
+                                                Ext4.Array.forEach(val, function(r, i){
+                                                    val[i] = wgsVcf + '||' + r;
+                                                }, this);
+
+                                                newRow[0] = val;
+                                            }
+                                            else if (field.toLowerCase() == 'gbs'){
+                                                val = win.textToArray(val);
+
+                                                newRow[1] = [];
+                                                newRow[2] = [];
+                                                Ext4.Array.forEach(val, function(r, i){
+                                                    newRow[1].push(gbsVcf + '||' + r);
+
+                                                    //determine if WGS VCF has this sample
+                                                    if (win.variantPanel.sampleStore.findExact('sampleId', wgsVcf + '||' + r) > -1){
+                                                        newRow[2].push(wgsVcf + '||' + r);
+                                                    }
+                                                    else {
+                                                        newRow[2].push(gbsVcf + '||' + r);
+                                                    }
+                                                }, this);
+                                            }
+                                            else {
+                                                if (!newRow[3]){
+                                                    newRow[3] = {};
+                                                }
+
+                                                if (Ext4.isDefined(val)) {
+                                                    newRow[3][field] = val;
+                                                }
+                                            }
+                                        }, this);
+
+                                        rows.push(newRow);
+                                    }, this);
+
+                                    win.addSamples(rows);
+
+                                    return true;
+                                },
                                 buttons: [{
                                     text: 'Submit',
                                     scope: this,
                                     handler: function(btn){
-                                        var wgs = btn.up('window').down('#wgs').getValue();
-                                        var allSamples = btn.up('window').down('#allSamples').getValue();
-                                        var wgsVcf = btn.up('window').down('#wgsVcf').getValue();
-                                        var gbsVcf = btn.up('window').down('#gbsVcf').getValue();
-
-                                        if (!wgs || !allSamples || !wgsVcf || !gbsVcf){
-                                            Ext4.Msg.alert('Error', 'Missing required fields');
-                                            return;
+                                        if (btn.up('window').addData(btn)) {
+                                            btn.up('window').close();
                                         }
-
-                                        wgs = win.textToArray(wgs);
-                                        allSamples = win.textToArray(allSamples);
-
-                                        var ret = [];
-                                        for (var r=0;r<wgs.length;r++){
-                                            win.getAllCombinations(wgs, new Array(r), 0, 0, (r + 1), ret);
-                                        }
-
-                                        var toAdd = [];
-                                        Ext4.Array.forEach(ret, function(a){
-                                            toAdd.push([a, Ext4.Array.difference(allSamples, a)]);
-                                        }, this);
-
-                                        var finalData = [];
-                                        Ext4.Array.forEach(toAdd, function(row){
-                                            var newRow = [[], [], []];
-
-                                            Ext4.Array.forEach(row[0], function(r){
-                                                newRow[0].push(wgsVcf + '||' + r);
-                                            }, this);
-
-                                            Ext4.Array.forEach(row[1], function(r){
-                                                newRow[1].push(gbsVcf + '||' + r);
-                                                newRow[2].push((wgs.indexOf(r) == -1 ? gbsVcf : wgsVcf ) + '||' + r);
-                                            }, this);
-
-                                            finalData.push(newRow);
-                                        }, this);
-
-                                        btn.up('window').close();
-                                        win.addSamples(finalData);
                                     }
-
                                 },{
                                     text: 'Cancel',
                                     handler: function(btn){
@@ -486,8 +461,22 @@
 
                         return val;
                     },
+
+                    getPropDisplay: function(obj){
+                        var ret = [];
+                        Ext4.Object.each(obj, function(key, value){
+                            if (Ext4.isDefined(value)) {
+                                ret.push(key + ': ' + value);
+                            }
+                        }, this);
+
+                        return ret.join('<br>');
+                    },
+
                     addSamples: function(toAdd){
                         this.close();
+
+                        var target = this.variantPanel.down('#imputationSets');
 
                         var items = [];
                         Ext4.Array.forEach(toAdd, function(r){
@@ -505,16 +494,20 @@
                                 html: r[2] ? r[2].join(';<br>') : '',
                                 maxWidth: 300
                             });
-                        });
 
-                        var target = this.variantPanel.down('#imputationSets');
+                            items.push({
+                                html: r[3] ? this.getPropDisplay(r[3]) : '',
+                                maxWidth: 300
+                            });
+                        }, this);
+
                         target.rawData = toAdd;
                         target.removeAll();
                         if (items.length) {
                             target.add({
                                 layout: {
                                     type: 'table',
-                                    columns: 3
+                                    columns: 4
                                 },
                                 defaults: {
                                     bodyStyle: 'padding: 5px;',
@@ -530,6 +523,9 @@
                                 },{
                                     html: 'Reference',
                                     maxWidth: 300
+                                },{
+                                    html: 'Other Fields',
+                                    maxWidth: 600
                                 }].concat(items)
                             });
                         }
@@ -539,10 +535,9 @@
 
             onSubmit: function(){
                 var vals = this.getForm().getFieldValues();
-                vals.sampleSets = this.down('#imputationSets').rawData;
+                var sampleSets = Ext4.Array.clone(this.down('#imputationSets').rawData);
 
                 var jobName = this.down('#jobName').getValue();
-                console.log(vals);
 
                 var errors = [];
                 if (!vals.frameworkFile)
@@ -551,7 +546,7 @@
                 if (!vals.denseFile)
                     errors.push('Missing value for dense marker file');
 
-                if (!vals.sampleSets || Ext4.isEmpty(vals.sampleSets))
+                if (!sampleSets || Ext4.isEmpty(sampleSets))
                     errors.push('No sample sets provided');
 
                 if (!vals.callMethod)
@@ -563,22 +558,89 @@
                 }
 
                 Ext4.Msg.wait('Saving...');
-                LABKEY.Ajax.request({
-                    url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'runSequenceHandler'),
-                    jsonData: {
-                        handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
-                        outputFileIds: this.outputFileIds,
-                        params: Ext4.encode(vals),
-                        jobName: jobName
-                    },
-                    scope: this,
-                    success: function(){
-                        Ext4.Msg.hide();
+                if (!this.down('#splitSampleSets').getValue()){
+                    vals.sampleSets = [];
 
-                        window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
-                    },
-                    failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback())
-                });
+                    Ext4.Array.forEach(sampleSets, function(ss){
+                        while (ss.length > 3){
+                            ss.pop();
+                        }
+
+                        vals.sampleSets.push(ss);
+                    }, this);
+
+                    if (!jobName){
+                        Ext4.Msg.hide();
+                        Ext4.Msg.alert('Error', 'Must provide a job name');
+                        return;
+                    }
+
+                    LABKEY.Ajax.request({
+                        url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'runSequenceHandler'),
+                        jsonData: {
+                            handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
+                            outputFileIds: this.outputFileIds,
+                            params: Ext4.encode(vals),
+                            jobName: jobName
+                        },
+                        scope: this,
+                        failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback()),
+                        success: function() {
+                            Ext4.Msg.hide();
+
+                            window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
+                        }
+                    });
+                }
+                else {
+                    var multi = new LABKEY.MultiRequest();
+                    var success = true;
+                    Ext4.Array.forEach(sampleSets, function(ss, idx){
+                        var paramCopy = Ext4.apply({}, vals);
+                        var jn = jobName;
+                        if (ss.length > 3){
+                            ss = Ext4.Array.clone(ss);
+                            Ext4.Object.each(ss[3], function(key, value){
+                                paramCopy[key] = value;
+
+                                if (key.toLowerCase() == 'setname'){
+                                    jn = value;
+                                }
+                            }, this);
+
+                            ss.pop();
+                        }
+                        paramCopy.sampleSets = [ss];
+                        console.log(paramCopy);
+
+                        if (!jn){
+                            Ext4.Msg.hide();
+                            Ext4.Msg.alert('Error', 'Must provide a job name');
+                            success = false;
+                            return false;
+                        }
+
+                        multi.add(LABKEY.Ajax.request, {
+                            url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'runSequenceHandler'),
+                            jsonData: {
+                                handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
+                                outputFileIds: this.outputFileIds,
+                                params: Ext4.encode(paramCopy),
+                                jobName: jn
+                            },
+                            scope: this,
+                            failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback())
+                        });
+                    }, this);
+
+                    if (success) {
+                        multi.send(function () {
+                            Ext4.Msg.hide();
+
+                            window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
+                        }, this);
+                    }
+                }
             }
         });
 

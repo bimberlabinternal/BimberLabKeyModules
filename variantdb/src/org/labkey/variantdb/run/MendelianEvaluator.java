@@ -1,24 +1,28 @@
 package org.labkey.variantdb.run;
 
-import au.com.bytecode.opencsv.CSVReader;
 import htsjdk.samtools.util.CloseableIterator;
-import htsjdk.samtools.util.IOUtil;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.variantcontext.VariantContextBuilder;
 import htsjdk.variant.variantcontext.writer.Options;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import htsjdk.variant.variantcontext.writer.VariantContextWriterBuilder;
 import htsjdk.variant.vcf.VCFFileReader;
+import htsjdk.variant.vcf.VCFHeader;
+import htsjdk.variant.vcf.VCFHeaderLineType;
+import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.apache.log4j.Logger;
+import org.labkey.api.gwt.client.util.StringUtils;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.reader.Readers;
 import org.labkey.api.util.Pair;
+import org.labkey.api.writer.PrintWriters;
 
-import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +41,7 @@ public class MendelianEvaluator
         _pedigree = parsePedigree(gatkPedigree);
     }
 
-    public void checkVcf(File input, File outputPass, File outputFail, Logger log) throws PipelineJobException
+    public void checkVcf(File input, File outputPass, File outputFail, File outputBed, Logger log) throws PipelineJobException
     {
         int violations = 0;
         Map<String, Integer> violationsById = new HashMap<>();
@@ -51,7 +55,7 @@ public class MendelianEvaluator
         build2.setOption(Options.INDEX_ON_THE_FLY);
         build2.setOutputFile(outputFail);
 
-        try (VariantContextWriter writerPass = build1.build(); VariantContextWriter writerFail = build2.build())
+        try (VariantContextWriter writerPass = build1.build(); VariantContextWriter writerFail = build2.build(); PrintWriter bedWriter = PrintWriters.getPrintWriter(outputBed))
         {
             File idx = new File(input.getPath() + ".tbi");
             if (!idx.exists())
@@ -61,8 +65,11 @@ public class MendelianEvaluator
 
             try (VCFFileReader reader = new VCFFileReader(input, idx))
             {
-                writerPass.writeHeader(reader.getFileHeader());
-                writerFail.writeHeader(reader.getFileHeader());
+                String MV_ID = "MV_ID";
+                VCFHeader header = new VCFHeader(reader.getFileHeader());
+                header.addMetaDataLine(new VCFInfoHeaderLine(MV_ID, 1, VCFHeaderLineType.Character, "IDs showing mendelian violations"));
+                writerPass.writeHeader(header);
+                writerFail.writeHeader(header);
 
                 try (CloseableIterator<VariantContext> it = reader.iterator())
                 {
@@ -74,7 +81,7 @@ public class MendelianEvaluator
 
                         if (totalSnps % 10000 == 0)
                         {
-                            log.info("processed " + totalSnps + " loci");
+                            log.info("processed " + totalSnps + " loci for mendelian violations");
                         }
 
                         for (String name : vc.getSampleNames())
@@ -87,7 +94,14 @@ public class MendelianEvaluator
 
                             if (isViolation(_pedigree.get(name).second, _pedigree.get(name).first, name, vc))
                             {
-                                writerFail.add(vc);
+                                VariantContextBuilder vcb = new VariantContextBuilder(vc);
+                                vcb.attribute(MV_ID, name);
+
+                                writerFail.add(vcb.make());
+
+                                bedWriter.write(StringUtils.join(Arrays.asList(vc.getChr(), vc.getStart() -1, vc.getEnd(), name), "\t"));
+                                bedWriter.write("\n");
+
                                 violations++;
                                 Integer i = violationsById.containsKey(name) ? violationsById.get(name) : 0;
                                 i++;
@@ -108,12 +122,30 @@ public class MendelianEvaluator
                 log.info(id + ": " + violationsById.get(id));
             }
         }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+    }
+
+    private int countAllelesShared(Genotype g1, Genotype g2)
+    {
+        int shared = 0;
+        for (Allele a : g1.getAlleles())
+        {
+            if (a.isCalled() && !a.isSymbolic() && g2.getAlleles().contains(a))
+            {
+                shared++;
+            }
+        }
+
+        return shared;
     }
 
     private Map<String, Pair<String, String>> parsePedigree(File pedigree) throws IOException
     {
         Map<String, Pair<String, String>> ret = new HashMap<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(pedigree)))
+        try (BufferedReader reader = Readers.getReader(pedigree))
         {
             String line;
             while ((line = reader.readLine()) != null)
@@ -126,7 +158,7 @@ public class MendelianEvaluator
 
                 if (ret.containsKey(tokens[1]))
                 {
-                    throw new IOException("error in pedigree, ID: " + tokens[1] + " present multple times");
+                    throw new IOException("error in pedigree, ID: " + tokens[1] + " present multiple times");
                 }
                 ret.put(tokens[1], Pair.of(tokens[2], tokens[3]));
             }
@@ -164,7 +196,7 @@ public class MendelianEvaluator
         }
 
         Genotype gChild = vc.getGenotype(childId);
-        if (gChild == null){
+        if (gChild == null || gChild.isNoCall()){
             return false;  //cant make call
         }
 
@@ -198,7 +230,7 @@ public class MendelianEvaluator
                 return false;
             }
 
-            if ((gDad.isHomRef() && gChild.isHomVar()) || (gDad.isHomVar() && gChild.isHomRef()) || (gChild.isHomVar() && !gDad.getAlleles().contains(gChild.getAllele(0))))
+            if ((gDad.isHomRef() && gChild.isHomVar()) || (gDad.isHomVar() && gChild.isHomRef()) || (countAllelesShared(gChild, gDad) == 0))
             {
                 return true;
             }
@@ -211,7 +243,7 @@ public class MendelianEvaluator
                 return false;
             }
 
-            if ((gMom.isHomRef() && gChild.isHomVar()) || (gMom.isHomVar() && gChild.isHomRef()) || (gChild.isHomVar() && !gMom.getAlleles().contains(gChild.getAllele(0))))
+            if ((gMom.isHomRef() && gChild.isHomVar()) || (gMom.isHomVar() && gChild.isHomRef()) || (countAllelesShared(gChild, gMom) == 0))
             {
                 return true;
             }
