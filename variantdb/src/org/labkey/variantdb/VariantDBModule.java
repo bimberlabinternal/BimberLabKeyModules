@@ -118,7 +118,7 @@ public class VariantDBModule extends ExtendedSimpleModule
         {
             if (_hasRegistered)
             {
-                _log.warn("SequenceAnalysis resources have already been registered, skipping");
+                _log.warn("VariantDB resources have already been registered, skipping");
             }
             else
             {

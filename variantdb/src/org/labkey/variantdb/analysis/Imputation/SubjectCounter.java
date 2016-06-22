@@ -95,8 +95,8 @@ public class SubjectCounter
         }
 
         SiteSummary ss = new SiteSummary();
-        addGeno(ss, imputedGenos.get(0), trueGenosToTest, markerNumber, lowFreqThreshold, distinctLowAfMarkers, isHeterozygous, alleleFreqs, overlapsFramework, imputationInputGenotype, markerName, subject, log, alleleToBase);
-        addGeno(ss, imputedGenos.get(1), trueGenosToTest, markerNumber, lowFreqThreshold, distinctLowAfMarkers, isHeterozygous, alleleFreqs, overlapsFramework, imputationInputGenotype, markerName, subject, log, alleleToBase);
+        addGeno(ss, imputedGenos.get(0), trueGenosToTest, markerNumber, lowFreqThreshold, distinctLowAfMarkers, isHeterozygous, alleleFreqs, overlapsFramework, imputationInputGenotype, markerName, subject, log, alleleToBase, 1);
+        addGeno(ss, imputedGenos.get(1), trueGenosToTest, markerNumber, lowFreqThreshold, distinctLowAfMarkers, isHeterozygous, alleleFreqs, overlapsFramework, imputationInputGenotype, markerName, subject, log, alleleToBase, 2);
 
         return ss;
     }
@@ -129,7 +129,7 @@ public class SubjectCounter
         return true;
     }
 
-    private void addGeno(SiteSummary ss, String imputedGeno, List<String> trueGenos, int markerNumber, double lowFreqThreshold, Set<Integer> distinctLowAfMarkers, Boolean isHeterozygous, List<List<Double>> alleleFreqs, boolean overlapsFramework, Genotype imputationInputGenotype, String markerName, String subject, Logger log, List<String> alleleToBase)
+    private void addGeno(SiteSummary ss, String imputedGeno, List<String> trueGenos, int markerNumber, double lowFreqThreshold, Set<Integer> distinctLowAfMarkers, Boolean isHeterozygous, List<List<Double>> alleleFreqs, boolean overlapsFramework, Genotype imputationInputGenotype, String markerName, String subject, Logger log, List<String> alleleToBase, int genotypeNum)
     {
         totalGenotypesInspected++;
 
@@ -190,7 +190,13 @@ public class SubjectCounter
             }
         }
 
-        writeAfLine(markerName, trueGenos, imputedGeno, af, isMatch, isError, isMissing, isUncalledRef, isHeterozygous);
+        //non-called imputed genotypes dont have an AF, so use the reference allele's
+        if (imputedGeno.equals("0") && af == null)
+        {
+            af = alleleFreqs.get(markerNumber - 1).get(genotypeNum - 1);
+        }
+
+        writeAfLine(markerName, trueGenos, imputedGeno, af, isMatch, isError, isMissing, isUncalledRef, isHeterozygous, genotypeNum);
     }
     
     public void writeSummary(CSVWriter writer, ImputationRunner runner, ImputationAnalysis.Processor.SampleSet ss, String chr, String subject, Integer idx, String callMethod, Map<String, Set<String>> relativesPresent, Map<String, Set<String>> wgsRelativesPresent, String jobDescription)
@@ -241,7 +247,7 @@ public class SubjectCounter
         return (double) this.genotypesMatchingRef / (this.totalGenotypesInspected - this.unverifiableGenotypes - this.genotypeWithRefNotImputed);
     }
 
-    private void writeAfLine(String markerName, List<String> trueGenos, String imputedGeno, Double af, boolean isMatch, boolean isError, boolean isMissing, boolean isUncalledRef, Boolean isHeterozygous)
+    private void writeAfLine(String markerName, List<String> trueGenos, String imputedGeno, Double af, boolean isMatch, boolean isError, boolean isMissing, boolean isUncalledRef, Boolean isHeterozygous, Integer genotypeNum)
     {
         _afWriter.writeNext(new String[]{
                 _subject,
@@ -253,7 +259,8 @@ public class SubjectCounter
                 String.valueOf(isMissing),
                 String.valueOf(isUncalledRef),
                 String.valueOf(af),
-                String.valueOf(isHeterozygous)
+                String.valueOf(isHeterozygous),
+                String.valueOf(genotypeNum)
         });
     }
 }

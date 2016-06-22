@@ -353,7 +353,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(summary), '\t', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter afWriter = new CSVWriter(PrintWriters.getPrintWriter(afSummary), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 writer.writeNext(new String[]{"SetName", "JobName", "TotalFramework", "TotalDense", "CompleteGenotypes", "ImputedSubjects", "Subject", "CallMethod", "MinGenotypeQual", "MinGenotypeDepth", "Chr", "GenotypesInspected", "WithReferenceData", "GenotypesMatchingRef", "Errors", "GenotypesWithReferenceNotImputed", "UnverifiableGenotypes", "UnverifiableGenotypesNotImputed", "PctMatching", "PctNotImputedOfVerifiable", "PctNotImputedOfTotal", "GenotypesOverlappingFrameworkWithImputationInput", "GenotypesOverlappingFrameworkWithoutImputationInput", "NumFirstOrderRelativesWithWGS", "NumFirstOrderRelativesPresent", "FirstOrderRelativesWithWGS", "FirstOrderRelativesPresent", "TotalSubjectsImputed", "TotalLowFreqHetMatching", "TotalLowFreqHetErrors", "RefGenotypeNotFound", "SitesHalfImputed"});
-                afWriter.writeNext(new String[]{"Subject", "MarkerName", "TrueGenos", "ImputedGeno", "IsMatch", "IsError", "IsMissing", "IsNonCalledRef", "AF", "IsHet"});
+                afWriter.writeNext(new String[]{"Subject", "MarkerName", "TrueGenos", "ImputedGeno", "IsMatch", "IsError", "IsMissing", "IsNonCalledRef", "AF", "IsHet", "GenotypeNumber"});
 
                 Integer idx = 0;
                 for (SampleSet ss : sets)

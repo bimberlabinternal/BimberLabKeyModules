@@ -1,0 +1,7 @@
+<ap:provider xmlns:ap="http://labkey.org/study/assay/xml">
+    <ap:name>TCRdb</ap:name>
+    <ap:description>A module designed to store and manage TCR sequence data</ap:description>
+    <ap:requiredModules>
+        <ap:moduleName>tcrdb</ap:moduleName>
+    </ap:requiredModules>
+</ap:provider>

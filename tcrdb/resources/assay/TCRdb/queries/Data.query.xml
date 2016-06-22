@@ -1,0 +1,85 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="Data" tableDbType="TABLE" useColumnOrder="true">
+                <javaCustomizer>org.labkey.laboratory.query.DefaultAssayCustomizer</javaCustomizer>
+                <columns>
+                    <column columnName="subjectId">
+                    </column>
+                    <column columnName="date">
+                        <description>The date the sample was collected</description>
+                    </column>
+                    <column columnName="sampleType">
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>sample_type</fkTable>
+                            <fkColumnName>type</fkColumnName>
+                        </fk>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="dataId">
+                        <fk>
+                            <fkDbSchema>exp</fkDbSchema>
+                            <fkTable>data</fkTable>
+                            <fkColumnName>RowId</fkColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="stimulation">
+                        <!--<fk>-->
+                            <!--<fkDbSchema>laboratories</fkDbSchema>-->
+                            <!--<fkTable>sample_type</fkTable>-->
+                            <!--<fkColumnName>types</fkColumnName>-->
+                        <!--</fk>-->
+                        <measure>false</measure>
+                        <dimension>true</dimension>
+                    </column>
+                    <column columnName="analysisId">
+                        <fk>
+                            <fkDbSchema>sequenceanalysis</fkDbSchema>
+                            <fkTable>sequence_analyses</fkTable>
+                            <fkColumnName>rowid</fkColumnName>
+                            <fkDisplayColumnName>rowid</fkDisplayColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="comment">
+                        <inputType>textarea</inputType>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="qcflag">
+                        <columnTitle>QC Flags</columnTitle>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
+                    <column columnName="well96" wrappedColumnName="well">
+                        <isUnselectable>true</isUnselectable>
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <columnTitle>Well Position in 96-well Plate</columnTitle>
+                        <fk>
+                            <fkDbSchema>laboratory</fkDbSchema>
+                            <fkTable>96well_plate</fkTable>
+                            <fkColumnName>well</fkColumnName>
+                        </fk>
+                    </column>
+                </columns>
+                <buttonBarOptions position="both" includeStandardButtons="true">
+                    <includeScript>/laboratory/assayButtons.js</includeScript>
+                    <!--<onRender>Laboratory.onAssayLoad</onRender>-->
+                    <item text="More Actions" insertAfter="last">
+                        <item text="View Batches">
+                            <onClick>Laboratory.Assay.viewBatchesBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                        <item text="View Runs">
+                            <onClick>Laboratory.Assay.viewRunsBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                        <item text="Manage Assay">
+                            <onClick>Laboratory.Assay.manageAssayBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                    </item>
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>
