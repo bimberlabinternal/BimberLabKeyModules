@@ -23,3 +23,12 @@ $JAVA -jar $PICARD SamToFastq \
     SECOND_END_FASTQ=$FASTQ_R
 
 rm -Rf $ALIGNED
+
+# determine if either FASTQ is empty; delete if true
+if LC_ALL=C gzip -l $FASTQ_F | awk 'NR==2 {exit($2!=0)}'; then
+  rm -Rf $FASTQ_F
+fi
+
+if LC_ALL=C gzip -l $FASTQ_R | awk 'NR==2 {exit($2!=0)}'; then
+  rm -Rf $FASTQ_R
+fi

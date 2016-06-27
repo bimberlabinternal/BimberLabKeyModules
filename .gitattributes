@@ -58,6 +58,7 @@ DISCVR/tcrdb/resources/assay/TCRdb/domains/run.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Batches.query.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Data.query.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Data/.qview.xml -text
+DISCVR/tcrdb/resources/assay/TCRdb/queries/Data/Detailed.qview.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Results[!!-~]Pivoted.query.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Results[!!-~]Pivoted.sql -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Runs.query.xml -text

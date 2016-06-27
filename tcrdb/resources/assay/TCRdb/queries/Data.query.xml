@@ -9,6 +9,15 @@
                     <column columnName="date">
                         <description>The date the sample was collected</description>
                     </column>
+                    <column columnName="libraryId">
+                        <fk>
+                            <fkDbSchema>tcrdb</fkDbSchema>
+                            <fkTable>mixcr_libraries</fkTable>
+                            <fkColumnName>rowid</fkColumnName>
+                        </fk>
+                        <measure>false</measure>
+                        <dimension>false</dimension>
+                    </column>
                     <column columnName="sampleType">
                         <fk>
                             <fkDbSchema>laboratory</fkDbSchema>
@@ -18,7 +27,7 @@
                         <measure>false</measure>
                         <dimension>false</dimension>
                     </column>
-                    <column columnName="dataId">
+                    <column columnName="alignmentId">
                         <fk>
                             <fkDbSchema>exp</fkDbSchema>
                             <fkTable>data</fkTable>

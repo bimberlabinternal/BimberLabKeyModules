@@ -1,7 +1,7 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
    <columns>
        <column name="analysisId" />
-       <column name="sampleName" />
+       <column name="sampleName"/>
        <column name="subjectId" />
        <column name="libraryId/species"/>
        <column name="locus" />
@@ -10,10 +10,25 @@
        <column name="jHit"/>
        <column name="cHit"/>
        <column name="CDR3"/>
-
+       <column name="length"/>
+       <column name="count"/>
+       <column name="fraction"/>
+       <column name="vHits" />
+       <column name="dHits"/>
+       <column name="jHits"/>
+       <column name="cHits"/>
        <column name="vFamily" />
        <column name="dFamily"/>
        <column name="jFamily"/>
+       <column name="cFamily"/>
+       <column name="vFamilies" />
+       <column name="dFamilies"/>
+       <column name="jFamilies"/>
+       <column name="cFamilies"/>
+       <column name="vBestIdentityPercent" />
+       <column name="dBestIdentityPercent"/>
+       <column name="jBestIdentityPercent"/>
+       <!--<column name="cBestIdentityPercent"/>-->
 
        <column name="comment" />
        <column name="workbook" />

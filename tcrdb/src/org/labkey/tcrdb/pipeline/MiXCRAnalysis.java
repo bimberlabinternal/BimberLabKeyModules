@@ -1,14 +1,19 @@
 package org.labkey.tcrdb.pipeline;
 
+import au.com.bytecode.opencsv.CSVReader;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.exp.api.ExperimentService;
+import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.ValidationException;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.FileResource;
-import org.labkey.api.resource.MergedDirectoryResource;
-import org.labkey.api.resource.Resource;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractAnalysisStepProvider;
@@ -22,10 +27,13 @@ import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.PicardWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
+import org.labkey.api.study.assay.AssayService;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.Pair;
 import org.labkey.api.util.Path;
 import org.labkey.api.util.StringUtilsLabKey;
+import org.labkey.api.view.ViewBackgroundInfo;
+import org.labkey.api.view.ViewContext;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.tcrdb.TCRdbModule;
 
@@ -37,7 +45,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -71,11 +82,11 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("minValue", 0);
                         put("maxValue", 1);
-                    }}, 0.2),
+                    }}, 0.25),
                     ToolParameterDescriptor.create(MIN_CLONE_READS, "Min Reads Per Clone", "Any CDR3 sequences will be reported if the they represent at least this many reads.", "ldk-integerfield", new JSONObject()
                     {{
                         put("minValue", 0);
-                    }}, 4),
+                    }}, 2),
                     ToolParameterDescriptor.create(EXPORT_ALIGNMENTS, "Export Alignments", "If checked, MiXCR will also output a text file with the actual alignments produced.  This can be helpful to debug or double check results", "checkbox", new JSONObject()
                     {{
 
@@ -88,7 +99,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("checked", true);
                     }}, true),
-                    ToolParameterDescriptor.create(TARGET_ASSAY, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
+                    ToolParameterDescriptor.create(LOCI, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
                     {{
                         put("value", "TRA;TRB");
                     }}, true)
@@ -121,7 +132,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         File forwardFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R1.fastq.gz");
         output.addIntermediateFile(forwardFq, "FASTQ Data");
         File reverseFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R2.fastq.gz");
-        output.addIntermediateFile(reverseFq, "FASTQ Data");
 
         wrapper.addToEnvironment("JAVA", SequencePipelineService.get().getJavaFilepath());
         wrapper.addToEnvironment("SAMTOOLS", SequencePipelineService.get().getExeForPackage("SAMTOOLSPATH", "samtools").getPath());
@@ -130,10 +140,34 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         wrapper.execute(Arrays.asList("bash", bamScript.getPath(), inputBam.getPath(), forwardFq.getPath(), reverseFq.getPath()));
 
         //abort if no reads present
-        if (!hasLines(forwardFq))
+        if (!forwardFq.exists() || !hasLines(forwardFq))
         {
             getPipelineCtx().getLogger().info("no mapped reads found, aborting: " + inputBam.getName());
+            if (forwardFq.exists())
+            {
+                forwardFq.delete();
+            }
             return output;
+        }
+
+        //only add if has reads
+        if (reverseFq.exists() && hasLines(reverseFq))
+        {
+            output.addIntermediateFile(reverseFq, "FASTQ Data");
+        }
+        else
+        {
+            if (reverseFq.exists())
+            {
+                getPipelineCtx().getLogger().info("deleting empty file: " + reverseFq.getName());
+                reverseFq.delete();
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("no reverse reads found");
+            }
+
+            reverseFq = null;
         }
 
         String locusString = getProvider().getParameterByName(LOCI).extractValue(getPipelineCtx().getJob(), getProvider(), String.class);
@@ -151,13 +185,12 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         //iterate selected species/loci:
-        List<Pair<String, File>> tables = new ArrayList<>();
+        Map<Integer, Map<String, List<File>>> tables = new HashMap<>();
         JSONArray libraries = new JSONArray(tcrDBJSON);
         for (JSONObject library : libraries.toJSONObjectArray())
         {
             String species = library.getString("species");
-            //String locus = library.getString("locus");
-            String rowid = String.valueOf(library.get("rowid"));
+            Integer rowid = library.optInt("rowid");
 
             MiXCRWrapper mixcr = new MiXCRWrapper(getPipelineCtx().getLogger());
             mixcr.setOutputDir(outputDir);
@@ -231,7 +264,17 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 }
 
                 mixcr.doExportClones(clones, table, locus, exportParams);
-                tables.add(Pair.of(locus, table));
+                if (!tables.containsKey(rowid))
+                {
+                    tables.put(rowid, new HashMap<>());
+                }
+
+                if (!tables.get(rowid).containsKey(locus))
+                {
+                    tables.get(rowid).put(locus, new ArrayList<>());
+                }
+
+                tables.get(rowid).get(locus).add(table);
             }
         }
 
@@ -239,37 +282,41 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         try (PrintWriter writer = PrintWriters.getPrintWriter(combinedTable))
         {
             boolean hasHeader = false;
-            for (Pair<String, File> pair : tables)
+            for (Integer libraryId : tables.keySet())
             {
-                String locus = pair.first;
-                File f = pair.second;
-                try (BufferedReader reader = Readers.getReader(f))
+                Map<String, List<File>> tablesForLocus = tables.get(libraryId);
+                for (String locus : tablesForLocus.keySet())
                 {
-                    String line;
-                    int idx = 0;
-                    while ((line = reader.readLine()) != null)
+                    for (File f : tablesForLocus.get(locus))
                     {
-                        idx++;
-                        if (idx == 1)
+                        try (BufferedReader reader = Readers.getReader(f))
                         {
-                            if (!hasHeader)
+                            String line;
+                            int idx = 0;
+                            while ((line = reader.readLine()) != null)
                             {
-                                writer.write("Locus\t" + line);
-                                writer.write('\n');
-                                hasHeader = true;
+                                idx++;
+                                if (idx == 1)
+                                {
+                                    if (!hasHeader)
+                                    {
+                                        writer.write("LibraryId\tLocus\t" + line);
+                                        writer.write('\n');
+                                        hasHeader = true;
+                                    }
+                                }
+                                else
+                                {
+                                    writer.write(libraryId + '\t' + locus + '\t' + line);
+                                    writer.write('\n');
+                                }
                             }
                         }
-                        else
-                        {
-                            writer.write(locus + '\t' + line);
-                            writer.write('\n');
-                        }
+
+                        f.delete();
                     }
                 }
-
-                f.delete();
             }
-
             output.addOutput(combinedTable, "MiXCR CDR3 Data");
         }
         catch (IOException e)
@@ -285,6 +332,35 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         return new File(outputDir, "mixcr.txt");
     }
 
+    private List<String> FIELDS = Arrays.asList(
+        "libraryId",
+        "locus",
+        "vHit",
+        "dHit",
+        "jHit",
+        "cHit",
+        "CDR3",
+        "length",
+        "count",
+        "fraction",
+        "targets",
+        "vHits",
+        "dHits",
+        "jHits",
+        "cHits",
+        "vFamily",
+        "vFamilies",
+        "dFamily",
+        "dFamilies",
+        "jFamily",
+        "jFamilies",
+        "vBestIdentityPercent",
+        "dBestIdentityPercent",
+        "jBestIdentityPercent",
+        "cdr3_nt",
+        "cdr3_qual"
+    );
+
     @Override
     public Output performAnalysisPerSampleLocal(AnalysisModel model, File inputBam, File referenceFasta, File outDir) throws PipelineJobException
     {
@@ -296,10 +372,105 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         else
         {
             getPipelineCtx().getLogger().info("importing results");
-
         }
 
-        //LaboratoryService.get().saveAssayBatch();
+        Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), Integer.class);
+        if (assayId == null)
+        {
+            getPipelineCtx().getLogger().info("No assay selected, will not import");
+            return null;
+        }
+
+        ExpProtocol protocol = ExperimentService.get().getExpProtocol(assayId);
+        if (protocol == null)
+        {
+            throw new PipelineJobException("Unable to find protocol: " + assayId);
+        }
+
+        ViewBackgroundInfo info = getPipelineCtx().getJob().getInfo();
+        ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try (CSVReader reader = new CSVReader(Readers.getReader(table), '\t'))
+        {
+            int lineNo = 0;
+            String[] line;
+            while ((line = reader.readNext()) != null)
+            {
+                lineNo++;
+                if (lineNo == 1)
+                {
+
+                }
+                else
+                {
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                    if (model.getReadset() != null)
+                    {
+                        Readset rs = SequenceAnalysisService.get().getReadset(model.getReadset(), getPipelineCtx().getJob().getUser());
+                        if (rs != null)
+                        {
+                            row.put("sampleName", rs.getName());
+                            row.put("subjectid", rs.getSubjectId());
+                        }
+                        else
+                        {
+                            throw new PipelineJobException("Unable to find readset: " + model.getReadset());
+                        }
+                    }
+                    else
+                    {
+                        row.put("sampleName", "Analysis Id: " + model.getRowId());
+                    }
+
+                    row.put("date", new Date());
+                    row.put("sampleType", null);
+                    row.put("category", null);
+                    row.put("stimulation", null);
+
+                    if (line.length != FIELDS.size())
+                    {
+                        getPipelineCtx().getLogger().warn("line length not " + FIELDS.size() + ".  was: " + line.length);
+                    }
+
+                    for (int i=0;i<FIELDS.size();i++)
+                    {
+                        row.put(FIELDS.get(i), line[i]);
+                    }
+
+                    row.put("alignmentId", model.getAlignmentFile());
+                    row.put("analysisId", model.getRowId());
+
+                    rows.add(row);
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+
+        try
+        {
+            JSONObject runProps = new JSONObject();
+            runProps.put("performedby", getPipelineCtx().getJob().getUser().getDisplayName(getPipelineCtx().getJob().getUser()));
+            runProps.put("assayName", "MiXCR");
+            runProps.put("Name", "Analysis: " + model.getAnalysisId());
+
+            JSONObject json = new JSONObject();
+            json.put("Run", runProps);
+
+            File assayTmp = new File(table.getParentFile(), "mixcr-assay-upload.txt");
+            if (assayTmp.exists())
+            {
+                assayTmp.delete();
+            }
+            LaboratoryService.get().saveAssayBatch(rows, json, assayTmp, vc, AssayService.get().getProvider(protocol), protocol);
+        }
+        catch (ValidationException e)
+        {
+            throw new PipelineJobException(e);
+        }
 
         return null;
     }

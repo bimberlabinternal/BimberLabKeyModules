@@ -20,7 +20,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         super(log);
     }
 
-    public File doAlignmentAndAssemble(File fq1, File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams) throws PipelineJobException
+    public File doAlignmentAndAssemble(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.add(getExe().getPath());
@@ -38,7 +38,11 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         }
 
         args.add(fq1.getPath());
-        args.add(fq2.getPath());
+        if (fq2 != null)
+        {
+            args.add(fq2.getPath());
+        }
+
         File alignOut = new File(getOutputDir(fq1), outputPrefix + ".mixcr.vdjca");
         args.add(alignOut.getPath());
 
@@ -89,6 +93,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
              args.addAll(extraParams);
          }
 
+         args.add("-s");  //no spaces in header
          args.add("-vHit");
          args.add("-dHit");
          args.add("-jHit");

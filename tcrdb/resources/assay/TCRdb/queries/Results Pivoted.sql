@@ -5,12 +5,11 @@
  */
 --this query provides an overview of the MHC SSP results
 SELECT
-  s.subjectId,
-  s.date,
+  s.readset,
   s.run.rowid as run,
   max(s.result) as Result,
 
 FROM Data s
 
-GROUP BY s.subjectId, s.date, s.run.rowid
-PIVOT result BY population
+GROUP BY s.readset, s.run.rowid
+PIVOT result BY readset
