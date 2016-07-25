@@ -32,6 +32,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("-s");
         args.add(species);
 
+        args.add("-OallowPartialAlignments=true");
+
         if (alignParams != null)
         {
             args.addAll(alignParams);
@@ -67,12 +69,13 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         assembleArgs.add("-f");
         assembleArgs.add("-r");
         assembleArgs.add(outputPrefix + ".log.txt");
-        assembleArgs.add(partialAssembleOut.getPath());
-        assembleArgs.add(assembleOut.getPath());
         if (assembleParams != null)
         {
             assembleArgs.addAll(assembleParams);
         }
+
+        assembleArgs.add(partialAssembleOut.getPath());
+        assembleArgs.add(assembleOut.getPath());
 
         execute(assembleArgs);
 

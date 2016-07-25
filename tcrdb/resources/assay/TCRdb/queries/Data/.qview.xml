@@ -10,6 +10,7 @@
        <column name="jHit"/>
        <column name="cHit"/>
        <column name="CDR3"/>
+       <column name="fraction"/>
 
        <column name="vFamily" />
        <column name="dFamily"/>
@@ -17,14 +18,16 @@
 
        <column name="comment" />
        <column name="workbook" />
-       <column name="analysisId/runid/jobId" />
-       <column name="Run/RowId">
+       <column name="pipelineRunId" />
+       <column name="pipelineRunId/JobId" />
+       <column name="pipelineRunId">
        <properties>
            <property name="columnTitle" value="Run"/>
        </properties>
    </column>
    </columns>
    <sorts>
-       <sort column="subjectId"/>
+       <sort column="sampleName"/>
+       <sort column="locus"/>
    </sorts>
 </customView>

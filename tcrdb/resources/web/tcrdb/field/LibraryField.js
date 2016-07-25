@@ -34,6 +34,10 @@ Ext4.define('TCRDB.field.LibraryField', {
 		if (val && val.length){
 			Ext4.each(val, function(idx){
 				var rec = this.store.getAt(this.store.findExact('rowid', idx));
+				if (!rec){
+					return;
+				}
+
 				ret.push({
 					rowid: rec.get('rowid'),
 					locus: rec.get('locus'),

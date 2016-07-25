@@ -32,14 +32,15 @@
 
        <column name="comment" />
        <column name="workbook" />
-       <column name="analysisId/runid/jobId" />
-       <column name="Run/RowId">
+       <column name="pipelineRunId/jobId" />
+       <column name="pipelineRunId">
        <properties>
            <property name="columnTitle" value="Run"/>
        </properties>
    </column>
    </columns>
-   <sorts>
-       <sort column="subjectId"/>
-   </sorts>
+    <sorts>
+        <sort column="sampleName"/>
+        <sort column="locus"/>
+    </sorts>
 </customView>

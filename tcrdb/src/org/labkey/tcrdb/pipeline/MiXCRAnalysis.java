@@ -1,10 +1,12 @@
 package org.labkey.tcrdb.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.exp.api.ExpRun;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.module.Module;
@@ -233,14 +235,23 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams);
             output.addIntermediateFile(clones);
 
-            File alignOut = new File(outputDir, prefix + ".mixcr.aln");
-            output.addIntermediateFile(alignOut);
+            output.addIntermediateFile(new File(outputDir, prefix + ".mixcr.vdjca"));
+            File alignPartialOutput = new File(outputDir, prefix + ".mixcr.partial.vdjca");
+            output.addIntermediateFile(alignPartialOutput);
 
             if (getProvider().getParameterByName(EXPORT_ALIGNMENTS).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class, Boolean.FALSE))
             {
-                File alignOutput = new File(outputDir, prefix + ".mixcr.alignments");
-                mixcr.doExportAlignments(clones, alignOutput);
-                output.addOutput(alignOutput, "MiXCR Alignments");
+                if (alignPartialOutput.length() >= 20)
+                {
+                    File alignExport = new File(outputDir, prefix + ".mixcr.alignments.txt");
+                    getPipelineCtx().getLogger().debug("output file size: " + alignPartialOutput.length());
+                    mixcr.doExportAlignments(alignPartialOutput, alignExport);
+                    output.addOutput(alignExport, "MiXCR Alignments");
+                }
+                else
+                {
+                    getPipelineCtx().getLogger().info("output too small, skipping export");
+                }
             }
 
             for (String locus : loci)
@@ -307,7 +318,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                 }
                                 else
                                 {
-                                    writer.write(libraryId + '\t' + locus + '\t' + line);
+                                    writer.write(String.valueOf(libraryId) + '\t' + locus + '\t' + line);
                                     writer.write('\n');
                                 }
                             }
@@ -368,10 +379,17 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         if (!table.exists())
         {
             getPipelineCtx().getLogger().warn("output table does not exist: " + table.getPath());
+            return null;
         }
         else
         {
-            getPipelineCtx().getLogger().info("importing results");
+            getPipelineCtx().getLogger().info("importing results from: " + table.getPath());
+        }
+
+        if (!hasLines(table))
+        {
+            getPipelineCtx().getLogger().info("no rows in table, skipping: " + table.getPath());
+            return null;
         }
 
         Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), Integer.class);
@@ -390,6 +408,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         ViewBackgroundInfo info = getPipelineCtx().getJob().getInfo();
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
 
+        getPipelineCtx().getLogger().info("importing from table: " + table.getPath());
+
         List<Map<String, Object>> rows = new ArrayList<>();
         try (CSVReader reader = new CSVReader(Readers.getReader(table), '\t'))
         {
@@ -400,49 +420,52 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 lineNo++;
                 if (lineNo == 1)
                 {
-
+                    continue;
                 }
-                else
+
+                Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                if (model.getReadset() != null)
                 {
-                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
-                    if (model.getReadset() != null)
+                    Readset rs = SequenceAnalysisService.get().getReadset(model.getReadset(), getPipelineCtx().getJob().getUser());
+                    if (rs != null)
                     {
-                        Readset rs = SequenceAnalysisService.get().getReadset(model.getReadset(), getPipelineCtx().getJob().getUser());
-                        if (rs != null)
-                        {
-                            row.put("sampleName", rs.getName());
-                            row.put("subjectid", rs.getSubjectId());
-                        }
-                        else
-                        {
-                            throw new PipelineJobException("Unable to find readset: " + model.getReadset());
-                        }
+                        row.put("sampleName", rs.getName());
+                        row.put("subjectid", rs.getSubjectId());
+                        row.put("date", rs.getSampleDate());
                     }
                     else
                     {
-                        row.put("sampleName", "Analysis Id: " + model.getRowId());
+                        throw new PipelineJobException("Unable to find readset: " + model.getReadset());
                     }
-
-                    row.put("date", new Date());
-                    row.put("sampleType", null);
-                    row.put("category", null);
-                    row.put("stimulation", null);
-
-                    if (line.length != FIELDS.size())
-                    {
-                        getPipelineCtx().getLogger().warn("line length not " + FIELDS.size() + ".  was: " + line.length);
-                    }
-
-                    for (int i=0;i<FIELDS.size();i++)
-                    {
-                        row.put(FIELDS.get(i), line[i]);
-                    }
-
-                    row.put("alignmentId", model.getAlignmentFile());
-                    row.put("analysisId", model.getRowId());
-
-                    rows.add(row);
                 }
+                else
+                {
+                    row.put("sampleName", "Analysis Id: " + model.getRowId());
+                }
+
+                row.put("date", new Date());
+                row.put("sampleType", null);
+                row.put("category", null);
+                row.put("stimulation", null);
+
+                if (line.length != FIELDS.size())
+                {
+                    getPipelineCtx().getLogger().warn(lineNo + ": line length not " + FIELDS.size() + ".  was: " + line.length);
+                    getPipelineCtx().getLogger().warn(StringUtils.join(line, ";"));
+                }
+
+                for (int i=0;i<FIELDS.size();i++)
+                {
+                    row.put(FIELDS.get(i), line[i]);
+                }
+
+                row.put("alignmentId", model.getAlignmentFile());
+                row.put("analysisId", model.getRowId());
+
+                Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+                row.put("pipelineRunId", runId);
+
+                rows.add(row);
             }
         }
         catch (IOException e)
@@ -491,7 +514,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     private boolean hasLines(File f) throws PipelineJobException
     {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(f)), StringUtilsLabKey.DEFAULT_CHARSET));)
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(f.getName().endsWith(".gz") ? new GZIPInputStream(new FileInputStream(f)) : new FileInputStream(f), StringUtilsLabKey.DEFAULT_CHARSET));)
         {
             while (reader.readLine() != null)
             {

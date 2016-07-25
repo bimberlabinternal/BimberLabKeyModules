@@ -8,7 +8,7 @@
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>subjectId</exp:Name>
-        <exp:Required>true</exp:Required>
+        <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
         <exp:ConceptURI>http://cpas.labkey.com/Study#ParticipantId</exp:ConceptURI>
         <exp:Label>Subject Id</exp:Label>
@@ -54,7 +54,7 @@
         <exp:Name>libraryId</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
-        <exp:Label>CDR3 Length</exp:Label>
+        <exp:Label>Library Id</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>locus</exp:Name>
@@ -232,14 +232,20 @@
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>alignmentId</exp:Name>
-        <exp:Required>true</exp:Required>
+        <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
         <exp:Label>Alignment</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>analysisId</exp:Name>
-        <exp:Required>true</exp:Required>
+        <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
         <exp:Label>Analysis Id</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>pipelineRunId</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Run Id</exp:Label>
     </exp:PropertyDescriptor>
 </ap:domain>

@@ -51,6 +51,16 @@
                             <fkDisplayColumnName>rowid</fkDisplayColumnName>
                         </fk>
                     </column>
+                    <column columnName="pipelineRunId">
+                        <columnTitle>Run Id</columnTitle>
+                        <fk>
+                            <fkDbSchema>exp</fkDbSchema>
+                            <fkTable>runs</fkTable>
+                            <fkColumnName>RowId</fkColumnName>
+                            <fkDisplayColumnName>RowId</fkDisplayColumnName>
+                        </fk>
+                        <url>/experiment/showRunGraphDetail.view?rowId=${pipelineRunId}</url>
+                    </column>
                     <column columnName="comment">
                         <inputType>textarea</inputType>
                         <measure>false</measure>
