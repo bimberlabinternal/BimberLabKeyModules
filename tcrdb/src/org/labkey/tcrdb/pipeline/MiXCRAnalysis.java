@@ -443,7 +443,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     row.put("sampleName", "Analysis Id: " + model.getRowId());
                 }
 
-                row.put("date", new Date());
+                row.putIfAbsent("date", new Date());
                 row.put("sampleType", null);
                 row.put("category", null);
                 row.put("stimulation", null);
