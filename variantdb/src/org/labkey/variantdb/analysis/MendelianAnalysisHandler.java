@@ -4,8 +4,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
-import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.module.Module;
@@ -14,7 +12,6 @@ import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineJobService;
 import org.labkey.api.pipeline.RecordedAction;
-import org.labkey.api.query.FieldKey;
 import org.labkey.api.resource.FileResource;
 import org.labkey.api.resource.Resource;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -26,12 +23,13 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
+import org.labkey.api.writer.PrintWriters;
 import org.labkey.variantdb.VariantDBModule;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -115,7 +113,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
         }
 
         @Override
-        public void processFilesRemote(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void processFilesRemote(List<SequenceOutputFile> inputFiles, JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
             String scriptFile = getScriptPath(VariantDBModule.NAME, "/external/gbsAnalysis.sh");
             String histogramScript = getScriptPath("sequenceanalysis", "/external/basicHistogram.r");
@@ -124,7 +122,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
             for (SequenceOutputFile o : inputFiles)
             {
                 i++;
-                job.getLogger().info("processing: " + o.getName() + ", " + i + " of " + inputFiles.size());
+                ctx.getJob().getLogger().info("processing: " + o.getName() + ", " + i + " of " + inputFiles.size());
                 RecordedAction action = new RecordedAction("GBS Analysis");
                 //action.addParameter(new RecordedAction.ParameterType("", PropertyType.STRING), "f");
                 action.setStartTime(new Date());
@@ -140,42 +138,42 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                 arguments.add("-i");
                 arguments.add(o.getFile().getPath());
 
-                ReferenceGenome g = support.getCachedGenome(o.getLibrary_id());
+                ReferenceGenome g = ctx.getSequenceSupport().getCachedGenome(o.getLibrary_id());
                 if (g != null)
                 {
                     arguments.add("-r");
                     arguments.add(g.getWorkingFastaFile().getPath());
                 }
 
-                if (params.containsKey("vcfFile") && !StringUtils.isEmpty(params.getString("vcfFile")))
+                if (ctx.getParams().containsKey("vcfFile") && !StringUtils.isEmpty(ctx.getParams().getString("vcfFile")))
                 {
                     arguments.add("-v");
-                    File f = support.getCachedData(params.getInt("vcfFile"));
+                    File f = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt("vcfFile"));
                     if (f == null)
                     {
-                        throw new PipelineJobException("Unable to find cached file for exp data: " + params.getInt("vcfFile"));
+                        throw new PipelineJobException("Unable to find cached file for exp data: " + ctx.getParams().getInt("vcfFile"));
                     }
                     arguments.add(f.getPath());
                 }
 
-                if (params.containsKey("maskFile") && !StringUtils.isEmpty(params.getString("maskFile")))
+                if (ctx.getParams().containsKey("maskFile") && !StringUtils.isEmpty(ctx.getParams().getString("maskFile")))
                 {
                     arguments.add("-m");
-                    File f = support.getCachedData(params.getInt("maskFile"));
+                    File f = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt("maskFile"));
                     if (f == null)
                     {
-                        throw new PipelineJobException("Unable to find cached file for exp data: " + params.getInt("vcfFile"));
+                        throw new PipelineJobException("Unable to find cached file for exp data: " + ctx.getParams().getInt("vcfFile"));
                     }
                     arguments.add(f.getPath());
                 }
 
-                if (params.containsKey("cutSitesFile") && !StringUtils.isEmpty(params.getString("cutSitesFile")))
+                if (ctx.getParams().containsKey("cutSitesFile") && !StringUtils.isEmpty(ctx.getParams().getString("cutSitesFile")))
                 {
                     arguments.add("-c");
-                    File f = support.getCachedData(params.getInt("cutSitesFile"));
+                    File f = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt("cutSitesFile"));
                     if (f == null)
                     {
-                        throw new PipelineJobException("Unable to find cached file for exp data: " + params.getInt("vcfFile"));
+                        throw new PipelineJobException("Unable to find cached file for exp data: " + ctx.getParams().getInt("vcfFile"));
                     }
                     arguments.add(f.getPath());
                 }
@@ -187,17 +185,17 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                     arguments.add(toolDir);
                 }
 
-                AbstractCommandWrapper wrapper = new AbstractCommandWrapper(job.getLogger()){};
-                wrapper.setOutputDir(outputDir);
-                wrapper.setWorkingDir(outputDir);
+                AbstractCommandWrapper wrapper = new AbstractCommandWrapper(ctx.getJob().getLogger()){};
+                wrapper.setOutputDir(ctx.getOutputDir());
+                wrapper.setWorkingDir(ctx.getOutputDir());
                 wrapper.execute(arguments);
 
                 String basename = FileUtil.getBaseName(o.getFile());
-                File html = new File(outputDir, basename + ".summary.html");
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(html)))
+                File html = new File(ctx.getOutputDir(), basename + ".summary.html");
+                try (PrintWriter writer = PrintWriters.getPrintWriter(html))
                 {
                     //find outputs
-                    File insertSize = new File(outputDir, basename + "_insertSize.pdf");
+                    File insertSize = new File(ctx.getOutputDir(), basename + "_insertSize.pdf");
                     if (insertSize.exists())
                     {
                         action.addOutput(insertSize, "Insert Size Histogram", false);
@@ -210,32 +208,32 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                     {
                         writer.write("<h3>GBS Fragments With >" + depth + "X Coverage:</h3><p>");
 
-                        File cutSites = new File(outputDir, basename + "_cutSites_" + depth + ".png");
+                        File cutSites = new File(ctx.getOutputDir(), basename + "_cutSites_" + depth + ".png");
                         if (cutSites.exists())
                         {
                             appendImage(cutSites, writer);
                         }
 
-                        File merged = new File(outputDir, basename + "_coverage_merged_distance_" + depth + ".png");
+                        File merged = new File(ctx.getOutputDir(), basename + "_coverage_merged_distance_" + depth + ".png");
                         if (merged.exists())
                         {
                             appendImage(merged, writer);
                         }
 
-                        File merged2 = new File(outputDir, basename + "_coverage_merged_per_chromosome_" + depth + ".png");
+                        File merged2 = new File(ctx.getOutputDir(), basename + "_coverage_merged_per_chromosome_" + depth + ".png");
                         if (merged2.exists())
                         {
                             appendImage(merged2, writer);
                         }
 
-                        File merged3 = new File(outputDir, basename + "_fragment_length_" + depth + ".png");
+                        File merged3 = new File(ctx.getOutputDir(), basename + "_fragment_length_" + depth + ".png");
                         if (merged3.exists())
                         {
                             appendImage(merged3, writer);
                         }
                     }
 
-                    File coverageSummary = new File(outputDir, "coverage_summary.txt");
+                    File coverageSummary = new File(ctx.getOutputDir(), "coverage_summary.txt");
                     if (coverageSummary.exists())
                     {
                         action.addOutput(coverageSummary, "GBS Summary", false);
@@ -244,7 +242,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                     action.addOutput(html, "GBS Summary Report", false);
 
                     action.setEndTime(new Date());
-                    actions.add(action);
+                    ctx.addActions(action);
                 }
                 catch (IOException e)
                 {
@@ -253,7 +251,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
             }
         }
 
-        private void appendImage(File image, BufferedWriter writer) throws IOException
+        private void appendImage(File image, Writer writer) throws IOException
         {
             String encoded = Base64.encodeBase64String(FileUtils.readFileToByteArray(image));
             writer.write("<img src=\"data:image/png;base64," + encoded + "\"/>");

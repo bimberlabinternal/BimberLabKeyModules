@@ -26,9 +26,7 @@ import org.labkey.api.util.FileUtil;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.variantdb.VariantDBModule;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -117,7 +115,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
         }
 
         @Override
-        public void processFilesRemote(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void processFilesRemote(List<SequenceOutputFile> inputFiles, JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
             String scriptFile = getScriptPath(VariantDBModule.NAME, "/external/gbsAnalysis.sh");
             String histogramScript = getScriptPath("sequenceanalysis", "/external/basicHistogram.r");
@@ -126,7 +124,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
             for (SequenceOutputFile o : inputFiles)
             {
                 i++;
-                job.getLogger().info("processing: " + o.getName() + ", " + i + " of " + inputFiles.size());
+                ctx.getJob().getLogger().info("processing: " + o.getName() + ", " + i + " of " + inputFiles.size());
                 RecordedAction action = new RecordedAction("GBS Analysis");
                 //action.addParameter(new RecordedAction.ParameterType("", PropertyType.STRING), "f");
                 action.setStartTime(new Date());
@@ -142,42 +140,42 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                 arguments.add("-i");
                 arguments.add(o.getFile().getPath());
 
-                ReferenceGenome g = support.getCachedGenome(o.getLibrary_id());
+                ReferenceGenome g = ctx.getSequenceSupport().getCachedGenome(o.getLibrary_id());
                 if (g != null)
                 {
                     arguments.add("-r");
                     arguments.add(g.getWorkingFastaFile().getPath());
                 }
 
-                if (params.containsKey("vcfFile") && !StringUtils.isEmpty(params.getString("vcfFile")))
+                if (ctx.getParams().containsKey("vcfFile") && !StringUtils.isEmpty(ctx.getParams().getString("vcfFile")))
                 {
                     arguments.add("-v");
-                    File f = support.getCachedData(params.getInt("vcfFile"));
+                    File f = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt("vcfFile"));
                     if (f == null)
                     {
-                        throw new PipelineJobException("Unable to find cached file for exp data: " + params.getInt("vcfFile"));
+                        throw new PipelineJobException("Unable to find cached file for exp data: " + ctx.getParams().getInt("vcfFile"));
                     }
                     arguments.add(f.getPath());
                 }
 
-                if (params.containsKey("maskFile") && !StringUtils.isEmpty(params.getString("maskFile")))
+                if (ctx.getParams().containsKey("maskFile") && !StringUtils.isEmpty(ctx.getParams().getString("maskFile")))
                 {
                     arguments.add("-m");
-                    File f = support.getCachedData(params.getInt("maskFile"));
+                    File f = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt("maskFile"));
                     if (f == null)
                     {
-                        throw new PipelineJobException("Unable to find cached file for exp data: " + params.getInt("vcfFile"));
+                        throw new PipelineJobException("Unable to find cached file for exp data: " + ctx.getParams().getInt("vcfFile"));
                     }
                     arguments.add(f.getPath());
                 }
 
-                if (params.containsKey("cutSitesFile") && !StringUtils.isEmpty(params.getString("cutSitesFile")))
+                if (ctx.getParams().containsKey("cutSitesFile") && !StringUtils.isEmpty(ctx.getParams().getString("cutSitesFile")))
                 {
                     arguments.add("-c");
-                    File f = support.getCachedData(params.getInt("cutSitesFile"));
+                    File f = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt("cutSitesFile"));
                     if (f == null)
                     {
-                        throw new PipelineJobException("Unable to find cached file for exp data: " + params.getInt("vcfFile"));
+                        throw new PipelineJobException("Unable to find cached file for exp data: " + ctx.getParams().getInt("vcfFile"));
                     }
                     arguments.add(f.getPath());
                 }
@@ -189,17 +187,17 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                     arguments.add(toolDir);
                 }
 
-                AbstractCommandWrapper wrapper = new AbstractCommandWrapper(job.getLogger()){};
-                wrapper.setOutputDir(outputDir);
-                wrapper.setWorkingDir(outputDir);
+                AbstractCommandWrapper wrapper = new AbstractCommandWrapper(ctx.getJob().getLogger()){};
+                wrapper.setOutputDir(ctx.getOutputDir());
+                wrapper.setWorkingDir(ctx.getOutputDir());
                 wrapper.execute(arguments);
 
                 String basename = FileUtil.getBaseName(o.getFile());
-                File html = new File(outputDir, basename + ".summary.html");
+                File html = new File(ctx.getOutputDir(), basename + ".summary.html");
                 try (PrintWriter writer = PrintWriters.getPrintWriter(html))
                 {
                     //find outputs
-                    File insertSize = new File(outputDir, basename + "_insertSize.pdf");
+                    File insertSize = new File(ctx.getOutputDir(), basename + "_insertSize.pdf");
                     if (insertSize.exists())
                     {
                         action.addOutput(insertSize, "Insert Size Histogram", false, true);
@@ -212,32 +210,32 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                     {
                         writer.write("<h3>GBS Fragments With >" + depth + "X Coverage:</h3><p>");
 
-                        File cutSites = new File(outputDir, basename + "_cutSites_" + depth + ".png");
+                        File cutSites = new File(ctx.getOutputDir(), basename + "_cutSites_" + depth + ".png");
                         if (cutSites.exists())
                         {
                             appendImage(cutSites, writer);
                         }
 
-                        File merged = new File(outputDir, basename + "_coverage_merged_distance_" + depth + ".png");
+                        File merged = new File(ctx.getOutputDir(), basename + "_coverage_merged_distance_" + depth + ".png");
                         if (merged.exists())
                         {
                             appendImage(merged, writer);
                         }
 
-                        File merged2 = new File(outputDir, basename + "_coverage_merged_per_chromosome_" + depth + ".png");
+                        File merged2 = new File(ctx.getOutputDir(), basename + "_coverage_merged_per_chromosome_" + depth + ".png");
                         if (merged2.exists())
                         {
                             appendImage(merged2, writer);
                         }
 
-                        File merged3 = new File(outputDir, basename + "_fragment_length_" + depth + ".png");
+                        File merged3 = new File(ctx.getOutputDir(), basename + "_fragment_length_" + depth + ".png");
                         if (merged3.exists())
                         {
                             appendImage(merged3, writer);
                         }
                     }
 
-                    File coverageSummary = new File(outputDir, "coverage_summary.txt");
+                    File coverageSummary = new File(ctx.getOutputDir(), "coverage_summary.txt");
                     if (coverageSummary.exists())
                     {
                         action.addOutput(coverageSummary, "GBS Summary", false, true);
@@ -246,7 +244,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                     action.addOutput(html, "GBS Summary Report", false, true);
 
                     action.setEndTime(new Date());
-                    actions.add(action);
+                    ctx.addActions(action);
                 }
                 catch (IOException e)
                 {

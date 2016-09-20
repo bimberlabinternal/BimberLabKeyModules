@@ -33,6 +33,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add(species);
 
         args.add("-OallowPartialAlignments=true");
+        args.add("-g");
 
         if (alignParams != null)
         {
@@ -68,7 +69,9 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         assembleArgs.add("assemble");
         assembleArgs.add("-f");
         assembleArgs.add("-r");
-        assembleArgs.add(outputPrefix + ".log.txt");
+        assembleArgs.add(new File(getOutputDir(fq1), outputPrefix + ".log.txt").getPath());
+        assembleArgs.add("--index");
+        assembleArgs.add(new File(getOutputDir(fq1), outputPrefix + ".index").getPath());
         if (assembleParams != null)
         {
             assembleArgs.addAll(assembleParams);
@@ -97,6 +100,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
          }
 
          args.add("-s");  //no spaces in header
+         args.add("-cloneId");
          args.add("-vHit");
          args.add("-dHit");
          args.add("-jHit");
@@ -125,7 +129,9 @@ public class MiXCRWrapper extends AbstractCommandWrapper
          args.add("CDR3");
          args.add("-qFeature");
          args.add("CDR3");
-         //args.add("-sequence");
+         args.add("-sequence");
+         args.add("-nFeature");
+         args.add("VDJTranscript");
          args.add("-f");
          args.add(clones.getPath());
          args.add(output.getPath());

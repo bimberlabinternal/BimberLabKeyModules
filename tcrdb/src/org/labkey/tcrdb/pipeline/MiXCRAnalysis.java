@@ -97,10 +97,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("checked", true);
                     }}, true),
-                    ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", new JSONObject()
-                    {{
-                        put("checked", true);
-                    }}, true),
+                    ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
                     ToolParameterDescriptor.create(LOCI, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
                     {{
                         put("value", "TRA;TRB");
@@ -113,12 +110,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         {
             return new MiXCRAnalysis(this, ctx);
         }
-    }
-
-    @Override
-    public void init(List<AnalysisModel> models) throws PipelineJobException
-    {
-
     }
 
     @Override
@@ -233,11 +224,14 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             String prefix = FileUtil.getBaseName(inputBam) + "." + rowid + "." + species;
             File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams);
-            output.addIntermediateFile(clones);
+            output.addOutput(clones, "MiXCR Clones File");
 
-            output.addIntermediateFile(new File(outputDir, prefix + ".mixcr.vdjca"));
+            output.addOutput(new File(outputDir, prefix + ".mixcr.vdjca"), "MiXCR VDJ Alignment");
+            output.addOutput(new File(outputDir, prefix + ".mixcr.index"), "MiXCR VDJ Index File 1");
+            output.addOutput(new File(outputDir, prefix + ".mixcr.index.p"), "MiXCR VDJ Index File 2");
+
             File alignPartialOutput = new File(outputDir, prefix + ".mixcr.partial.vdjca");
-            output.addIntermediateFile(alignPartialOutput);
+            output.addOutput(alignPartialOutput, "MiXCR VDJ Alignment Step 2");
 
             if (getProvider().getParameterByName(EXPORT_ALIGNMENTS).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class, Boolean.FALSE))
             {
@@ -346,6 +340,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     private List<String> FIELDS = Arrays.asList(
         "libraryId",
         "locus",
+        "cloneId",
         "vHit",
         "dHit",
         "jHit",

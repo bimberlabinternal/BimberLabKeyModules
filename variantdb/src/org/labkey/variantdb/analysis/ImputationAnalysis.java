@@ -34,7 +34,6 @@ import org.labkey.api.pipeline.file.FileAnalysisJobSupport;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
-import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -259,14 +258,17 @@ public class ImputationAnalysis implements SequenceOutputHandler
         }
 
         @Override
-        public void processFilesRemote(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void processFilesRemote(List<SequenceOutputFile> inputFiles, JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
-            for (Integer i : support.getAllCachedData().keySet())
+            PipelineJob job = ctx.getJob();
+            JSONObject params = ctx.getParams();
+
+            for (Integer i : ctx.getSequenceSupport().getAllCachedData().keySet())
             {
-                job.getLogger().debug("cached data: " + i + "/" + support.getAllCachedData().get(i));
+                job.getLogger().debug("cached data: " + i + "/" + ctx.getSequenceSupport().getAllCachedData().get(i));
             }
 
-            if (support.getAllCachedData().isEmpty())
+            if (ctx.getSequenceSupport().getAllCachedData().isEmpty())
             {
                 job.getLogger().error("there are no cached ExpDatas");
             }
@@ -276,24 +278,24 @@ public class ImputationAnalysis implements SequenceOutputHandler
             {
                 genomeIds.add(o.getLibrary_id());
             }
-            ReferenceGenome genome = support.getCachedGenome(genomeIds.iterator().next());
+            ReferenceGenome genome = ctx.getSequenceSupport().getCachedGenome(genomeIds.iterator().next());
 
             File gatkPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "gatkPed.ped");
             List<SampleSet> sets = getSampleSets(params);
             RecordedAction action = new RecordedAction(getName());
-            actions.add(action);
+            ctx.addActions(action);
             action.addInput(gatkPed, "Pedigree File");
-            File denseMarkers = support.getCachedData(params.getInt("denseFile"));
+            File denseMarkers = ctx.getSequenceSupport().getCachedData(params.getInt("denseFile"));
             action.addInput(denseMarkers, "Dense Markers");
-            File frameworkMarkers = support.getCachedData(params.getInt("frameworkFile"));
+            File frameworkMarkers = ctx.getSequenceSupport().getCachedData(params.getInt("frameworkFile"));
             action.addInput(frameworkMarkers, "Framework Markers");
-            File alleleFreqVcf = support.getCachedData(params.getInt("alleleFrequencyFile"));
+            File alleleFreqVcf = ctx.getSequenceSupport().getCachedData(params.getInt("alleleFrequencyFile"));
             action.addInput(alleleFreqVcf, "Allele Frequency File");
 
             File blackList = null;
             if (StringUtils.trimToNull(params.getString("blacklistFile")) != null)
             {
-                blackList = support.getCachedData(params.getInt("blacklistFile"));
+                blackList = ctx.getSequenceSupport().getCachedData(params.getInt("blacklistFile"));
                 action.addInput(blackList, "Genotype Blacklist");
             }
 
@@ -301,8 +303,8 @@ public class ImputationAnalysis implements SequenceOutputHandler
             File copiedBlackList = null;
             try
             {
-                FileUtils.copyFile(denseMarkers, new File(outputDir, denseMarkers.getName()));
-                FileUtils.copyFile(frameworkMarkers, new File(outputDir, frameworkMarkers.getName()));
+                FileUtils.copyFile(denseMarkers, new File(ctx.getOutputDir(), denseMarkers.getName()));
+                FileUtils.copyFile(frameworkMarkers, new File(ctx.getOutputDir(), frameworkMarkers.getName()));
 
                 if (blackList != null)
                 {
@@ -369,7 +371,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     }
 
                     //TODO: consider skipping this
-                    buildCombinedVcf(runner, ss, inputFiles, support, job.getLogger(), baseDir, params, action, gatkPed);
+                    buildCombinedVcf(runner, ss, inputFiles, ctx.getSequenceSupport(), job.getLogger(), baseDir, params, action, gatkPed);
 
                     job.setStatus(PipelineJob.TaskStatus.running, "Prepare Framework Marker Resources: " + idx + " of " + sets.size());
                     runner.prepareFrameworkResources(baseDir, alleleFreqDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds);
@@ -436,6 +438,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                         imputedIds.add(pair.second);
                     }
 
+                    //TODO: split into one VCF per sample
                     try (VariantContextWriter vcfWriter = ImputedVCFGenerator.getVariantWriter(vcf, genome, imputedIds))
                     {
                         for (String chr : runner.getDenseChrs())
@@ -450,7 +453,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     so.setName(vcf.getName());
                     so.setDescription("Imputed genotypes generated by GIGI, using call method: " + callMethod + ", job: " + job.getDescription());
                     so.setCategory("Imputed VCF");
-                    outputsToCreate.add(so);
+                    ctx.addSequenceOutput(so);
 
                     runner.doCleanup(job.getLogger(), baseDir);
                 }

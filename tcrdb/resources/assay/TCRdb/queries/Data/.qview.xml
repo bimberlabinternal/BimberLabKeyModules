@@ -18,7 +18,6 @@
 
        <column name="comment" />
        <column name="workbook" />
-       <column name="pipelineRunId" />
        <column name="pipelineRunId/JobId" />
        <column name="pipelineRunId">
        <properties>
