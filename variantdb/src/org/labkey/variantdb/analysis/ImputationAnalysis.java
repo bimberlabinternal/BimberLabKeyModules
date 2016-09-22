@@ -79,7 +79,7 @@ import java.util.TreeMap;
  */
 public class ImputationAnalysis implements SequenceOutputHandler
 {
-    private final FileType _vcfType = new FileType(Arrays.asList("vcf"), "vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
+    private final FileType _vcfType = new FileType(Arrays.asList(".vcf"), ".vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
 
     public ImputationAnalysis()
     {
