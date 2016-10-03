@@ -6,7 +6,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.exp.api.ExpProtocol;
-import org.labkey.api.exp.api.ExpRun;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.module.Module;
@@ -31,7 +30,6 @@ import org.labkey.api.sequenceanalysis.run.PicardWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.study.assay.AssayService;
 import org.labkey.api.util.FileUtil;
-import org.labkey.api.util.Pair;
 import org.labkey.api.util.Path;
 import org.labkey.api.util.StringUtilsLabKey;
 import org.labkey.api.view.ViewBackgroundInfo;
@@ -67,6 +65,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     private static String MIN_CLONE_FRACTION = "minCloneFraction";
     private static String MIN_CLONE_READS = "minCloneReads";
     private static String EXPORT_ALIGNMENTS = "exportAlignments";
+    private static String DIFF_LOCI = "diffLoci";
     private static String IS_RNA_SEQ = "isRnaSeq";
     private static String TARGET_ASSAY = "targetAssay";
     private static String LOCI = "loci";
@@ -84,12 +83,16 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("minValue", 0);
                         put("maxValue", 1);
-                    }}, 0.25),
+                    }}, 0.2),
                     ToolParameterDescriptor.create(MIN_CLONE_READS, "Min Reads Per Clone", "Any CDR3 sequences will be reported if the they represent at least this many reads.", "ldk-integerfield", new JSONObject()
                     {{
                         put("minValue", 0);
                     }}, 2),
                     ToolParameterDescriptor.create(EXPORT_ALIGNMENTS, "Export Alignments", "If checked, MiXCR will also output a text file with the actual alignments produced.  This can be helpful to debug or double check results", "checkbox", new JSONObject()
+                    {{
+
+                    }}, false),
+                    ToolParameterDescriptor.create(DIFF_LOCI, "Allow Different V/J Loci", "If checked, MiXCR will accept alignments with different loci of V and J genes.  Otheriwse these are discarded.", "checkbox", new JSONObject()
                     {{
 
                     }}, false),
@@ -100,7 +103,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
                     ToolParameterDescriptor.create(LOCI, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
                     {{
-                        put("value", "TRA;TRB");
+                        put("value", "TRA;TRB;TRD;TRG");
                     }}, true)
             ), Arrays.asList("tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
         }
@@ -142,11 +145,21 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             }
             return output;
         }
+        else
+        {
+            getPipelineCtx().getLogger().info("calculating FASTQ metrics:");
+            Map<String, Object> metricsMap = SequencePipelineService.get().getQualityMetrics(forwardFq, getPipelineCtx().getJob().getLogger());
+            for (String metricName : metricsMap.keySet())
+            {
+                getPipelineCtx().getLogger().debug(metricName + ": " + metricsMap.get(metricName));
+            }
+        }
 
         //only add if has reads
         if (reverseFq.exists() && hasLines(reverseFq))
         {
             output.addIntermediateFile(reverseFq, "FASTQ Data");
+            SequencePipelineService.get().getQualityMetrics(reverseFq, getPipelineCtx().getJob().getLogger());
         }
         else
         {
@@ -212,6 +225,11 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 }
             }
 
+            if (getProvider().getParameterByName(DIFF_LOCI).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class))
+            {
+                alignParams.add("--diff-loci");
+            }
+
             Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getJob());
             if (threads != null)
             {
@@ -230,16 +248,18 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             output.addOutput(new File(outputDir, prefix + ".mixcr.index"), "MiXCR VDJ Index File 1");
             output.addOutput(new File(outputDir, prefix + ".mixcr.index.p"), "MiXCR VDJ Index File 2");
 
-            File alignPartialOutput = new File(outputDir, prefix + ".mixcr.partial.vdjca");
-            output.addOutput(alignPartialOutput, "MiXCR VDJ Alignment Step 2");
+            File alignPartialOutput1 = new File(outputDir, prefix + ".mixcr.partial.1.vdjca");
+            output.addOutput(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
+            File alignPartialOutput2 = new File(outputDir, prefix + ".mixcr.partial.2.vdjca");
+            output.addOutput(alignPartialOutput2, "MiXCR VDJ Alignment, Recovery Step 2");
 
             if (getProvider().getParameterByName(EXPORT_ALIGNMENTS).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class, Boolean.FALSE))
             {
-                if (alignPartialOutput.length() >= 20)
+                if (alignPartialOutput2.length() >= 20)
                 {
                     File alignExport = new File(outputDir, prefix + ".mixcr.alignments.txt");
-                    getPipelineCtx().getLogger().debug("output file size: " + alignPartialOutput.length());
-                    mixcr.doExportAlignments(alignPartialOutput, alignExport);
+                    getPipelineCtx().getLogger().debug("output file size: " + alignPartialOutput2.length());
+                    mixcr.doExportAlignments(alignPartialOutput2, alignExport);
                     output.addOutput(alignExport, "MiXCR Alignments");
                 }
                 else
@@ -346,6 +366,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         "jHit",
         "cHit",
         "CDR3",
+        "CDR3FromLeft",
+        "CDR3FromRight",
         "length",
         "count",
         "fraction",
@@ -365,6 +387,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         "jBestIdentityPercent",
         "cdr3_nt",
         "cdr3_qual"
+        //"cloneSequence",
+        //"nSeqVDJTranscript"
     );
 
     @Override
@@ -443,7 +467,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 row.put("category", null);
                 row.put("stimulation", null);
 
-                if (line.length != FIELDS.size())
+                if (line.length != (FIELDS.size() + 2))  //this includes 2 fields not imported into DB
                 {
                     getPipelineCtx().getLogger().warn(lineNo + ": line length not " + FIELDS.size() + ".  was: " + line.length);
                     getPipelineCtx().getLogger().warn(StringUtils.join(line, ";"));
@@ -452,6 +476,20 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 for (int i=0;i<FIELDS.size();i++)
                 {
                     row.put(FIELDS.get(i), line[i]);
+                }
+
+                //try to reconcile CDR3 translations:
+                if (row.get("CDR3") != null)
+                {
+                    if (row.get("CDR3FromLeft") != null && !row.get("CDR3").equals(row.get("CDR3FromLeft")))
+                    {
+                        getPipelineCtx().getLogger().warn("CDR3 translation (" + row.get("CDR3") +") does not match translation from left: " + row.get("CDR3FromLeft"));
+                    }
+
+                    if (row.get("CDR3FromRight") != null && !row.get("CDR3").equals(row.get("CDR3FromRight")))
+                    {
+                        getPipelineCtx().getLogger().warn("CDR3 translation (" + row.get("CDR3") +") does not match translation from right: " + row.get("CDR3FromRight"));
+                    }
                 }
 
                 row.put("alignmentId", model.getAlignmentFile());
@@ -483,6 +521,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             {
                 assayTmp.delete();
             }
+
+            getPipelineCtx().getLogger().info("total rows imported: " + rows.size());
             LaboratoryService.get().saveAssayBatch(rows, json, assayTmp, vc, AssayService.get().getProvider(protocol), protocol);
         }
         catch (ValidationException e)

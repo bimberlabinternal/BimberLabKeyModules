@@ -18,6 +18,7 @@ $SAMTOOLS view -f 4 -F 8 $INPUT_BAM >> $ALIGNED
 $SAMTOOLS view -F 12 $INPUT_BAM >> $ALIGNED
 
 $JAVA -jar $PICARD SamToFastq \
+    VALIDATION_STRINGENCY=SILENT \
     INPUT=$ALIGNED \
     FASTQ=$FASTQ_F \
     SECOND_END_FASTQ=$FASTQ_R
@@ -31,4 +32,9 @@ fi
 
 if LC_ALL=C gzip -l $FASTQ_R | awk 'NR==2 {exit($2!=0)}'; then
   rm -Rf $FASTQ_R
+fi
+
+if [ -e $FASTQ_F ];then
+    echo 'Total reads:'
+    zcat $FASTQ_F | grep -e '@' | wc -l
 fi

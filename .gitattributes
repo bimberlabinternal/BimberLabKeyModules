@@ -535,7 +535,7 @@ onprcEHRModules/GeneticsCore/build.xml -text
 onprcEHRModules/GeneticsCore/distributions/prime-seq-modules.xml -text
 onprcEHRModules/GeneticsCore/module.properties -text
 onprcEHRModules/GeneticsCore/resources/external/amplicon_standard_curve.R -text
-onprcEHRModules/GeneticsCore/resources/external/run_wilcox.R -text
+onprcEHRModules/GeneticsCore/resources/external/methylationComparison.R -text
 onprcEHRModules/GeneticsCore/resources/module.xml -text
 onprcEHRModules/GeneticsCore/resources/queries/sequenceanalysis/alignment_summary_by_lineage/.qview.xml -text
 onprcEHRModules/GeneticsCore/resources/queries/sequenceanalysis/alignment_summary_by_lineage/With[!!-~]Haplotype[!!-~]Matches.qview.xml -text
@@ -593,6 +593,7 @@ onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/BisSnpIndelRea
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/BisSnpIndelRealignerWrapper.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/BisulfiteGenotyperWrapper.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/BlastPipelineJobResourceAllocator.java -text
+onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/ExacloudResourceSettings.java -text
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/SequenceJobResourceAllocator.java -text
 onprcEHRModules/GeneticsCore/tools/installLabkey.sh -text
 onprcEHRModules/GeneticsCore/tools/javaWrapper.sh -text

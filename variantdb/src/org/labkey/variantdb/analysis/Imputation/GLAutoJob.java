@@ -15,6 +15,9 @@ import java.io.PrintWriter;
  */
 public class GLAutoJob extends Job
 {
+    private int _mcIterations = 300000;
+    private int _mcStoreInterval = 30;
+
     private File _basedir;
     private File _markerFile;
     private Logger _log;
@@ -56,9 +59,9 @@ public class GLAutoJob extends Job
                 glautoWriter.write("check markers consistency\n\n");
 
                 glautoWriter.write("########## other gl_auto program options #############\n");
-                glautoWriter.write("# scoring:  We keep MCMC samples that are less correlated (every 30th).\n");
-                glautoWriter.write("output scores every 30 scored MC iterations   # these are the realized IVs - In this example, we will print 300/30 = 100 IVs to the output file\n");
-                glautoWriter.write("set MC iterations 30000\n");
+                glautoWriter.write("# scoring:  We keep MCMC samples that are less correlated (every " + _mcStoreInterval + "th).\n");
+                glautoWriter.write("output scores every " + _mcStoreInterval + " scored MC iterations   # these are the realized IVs - In this example, we will print 300/30 = 100 IVs to the output file\n");
+                glautoWriter.write("set MC iterations " + _mcIterations + "\n");
                 glautoWriter.write("set burn-in iterations 1000\n");
 
                 glautoWriter.write("select all markers\n");
@@ -104,5 +107,25 @@ public class GLAutoJob extends Job
     {
         if (null != t)
             _log.error("Uncaught exception in GL_AUTO job: " + _chr, t);
+    }
+
+    public int getMcIterations()
+    {
+        return _mcIterations;
+    }
+
+    public void setMcIterations(int mcIterations)
+    {
+        _mcIterations = mcIterations;
+    }
+
+    public int getMcStoreInterval()
+    {
+        return _mcStoreInterval;
+    }
+
+    public void setMcStoreInterval(int mcStoreInterval)
+    {
+        _mcStoreInterval = mcStoreInterval;
     }
 }

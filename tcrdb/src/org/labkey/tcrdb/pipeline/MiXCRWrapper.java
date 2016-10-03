@@ -3,10 +3,13 @@ package org.labkey.tcrdb.pipeline;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +30,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("align");
         args.add("-f");
         args.add("-r");
-        args.add(outputPrefix + ".log.txt");
+        File logFile = new File(getOutputDir(fq1), outputPrefix + ".log.txt");
+        args.add(logFile.getPath());
 
         args.add("-s");
         args.add(species);
@@ -51,16 +55,15 @@ public class MiXCRWrapper extends AbstractCommandWrapper
 
         execute(args);
 
-        getLogger().info("assembling partial reads");
-        File partialAssembleOut = new File(getOutputDir(fq1), outputPrefix + ".mixcr.partial.vdjca");
-        List<String> partialAssembleArgs = new ArrayList<>();
-        partialAssembleArgs.add(getExe().getPath());
-        partialAssembleArgs.add("assemblePartial");
-        partialAssembleArgs.add("-r");
-        partialAssembleArgs.add(outputPrefix + ".log.txt");
-        partialAssembleArgs.add(alignOut.getPath());
-        partialAssembleArgs.add(partialAssembleOut.getPath());
-        execute(partialAssembleArgs);
+        writeLogToLog(logFile);
+
+        getLogger().info("assembling partial reads, round 1");
+        File partialAssembleOut1 = new File(getOutputDir(fq1), outputPrefix + ".mixcr.partial.1.vdjca");
+        doAssemblePartial(alignOut, partialAssembleOut1, logFile);
+
+        getLogger().info("assembling partial reads, round 2");
+        File partialAssembleOut2 = new File(getOutputDir(fq1), outputPrefix + ".mixcr.partial.2.vdjca");
+        doAssemblePartial(partialAssembleOut1, partialAssembleOut2, logFile);
 
         getLogger().info("assembling final reads");
         File assembleOut = new File(getOutputDir(fq1), outputPrefix + ".mixcr.clones");
@@ -72,72 +75,116 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         assembleArgs.add(new File(getOutputDir(fq1), outputPrefix + ".log.txt").getPath());
         assembleArgs.add("--index");
         assembleArgs.add(new File(getOutputDir(fq1), outputPrefix + ".index").getPath());
+        assembleArgs.add("-OaddReadsCountOnClustering=true");
+        assembleArgs.add("-ObadQualityThreshold=15");
+
         if (assembleParams != null)
         {
             assembleArgs.addAll(assembleParams);
         }
 
-        assembleArgs.add(partialAssembleOut.getPath());
+        assembleArgs.add(partialAssembleOut2.getPath());
         assembleArgs.add(assembleOut.getPath());
 
         execute(assembleArgs);
+        writeLogToLog(logFile);
 
         return assembleOut;
     }
 
-     public void doExportClones(File clones, File output, String locus, List<String> extraParams) throws PipelineJobException
-     {
-         List<String> args = new ArrayList<>();
-         args.add(getExe().getPath());
-         args.add("exportClones");
+    private void doAssemblePartial(File alignOut, File output, File logFile) throws PipelineJobException
+    {
+        List<String> partialAssembleArgs = new ArrayList<>();
+        partialAssembleArgs.add(getExe().getPath());
+        partialAssembleArgs.add("assemblePartial");
+        partialAssembleArgs.add("-r");
+        partialAssembleArgs.add(logFile.getPath());
+        partialAssembleArgs.add(alignOut.getPath());
+        partialAssembleArgs.add(output.getPath());
+        execute(partialAssembleArgs);
 
-         args.add("-l");
-         args.add(locus);
+        writeLogToLog(logFile);
+    }
 
-         if (extraParams != null)
-         {
-             args.addAll(extraParams);
-         }
+    private void writeLogToLog(File log) throws PipelineJobException
+    {
+        if (!log.exists())
+        {
+            getLogger().warn("expected log file does not exist: " + log.getPath());
+            return;
+        }
 
-         args.add("-s");  //no spaces in header
-         args.add("-cloneId");
-         args.add("-vHit");
-         args.add("-dHit");
-         args.add("-jHit");
-         args.add("-cHit");
-         args.add("-aaFeature");
-         args.add("CDR3");
-         args.add("-lengthOf");
-         args.add("CDR3");
-         args.add("-count");
-         args.add("-fraction");
-         args.add("-targets");
-         args.add("-vHits");
-         args.add("-dHits");
-         args.add("-jHits");
-         args.add("-cHits");
-         args.add("-vFamily");
-         args.add("-vFamilies");
-         args.add("-dFamily");
-         args.add("-dFamilies");
-         args.add("-jFamily");
-         args.add("-jFamilies");
-         args.add("-vBestIdentityPercent");
-         args.add("-dBestIdentityPercent");
-         args.add("-jBestIdentityPercent");
-         args.add("-nFeature");
-         args.add("CDR3");
-         args.add("-qFeature");
-         args.add("CDR3");
-         args.add("-sequence");
-         args.add("-nFeature");
-         args.add("VDJTranscript");
-         args.add("-f");
-         args.add(clones.getPath());
-         args.add(output.getPath());
+        try (BufferedReader reader = Readers.getReader(log))
+        {
+            String line;
+            while ((line = reader.readLine()) != null)
+            {
+                getLogger().debug(line);
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+    }
 
-         execute(args);
-     }
+    public void doExportClones(File clones, File output, String locus, List<String> extraParams) throws PipelineJobException
+    {
+        List<String> args = new ArrayList<>();
+        args.add(getExe().getPath());
+        args.add("exportClones");
+
+        args.add("-l");
+        args.add(locus);
+
+        if (extraParams != null)
+        {
+            args.addAll(extraParams);
+        }
+
+        args.add("-s");  //no spaces in header
+        args.add("-cloneId");
+        args.add("-vHit");
+        args.add("-dHit");
+        args.add("-jHit");
+        args.add("-cHit");
+        args.add("-aaFeature");
+        args.add("CDR3");
+        args.add("-aaFeatureFromLeft");
+        args.add("CDR3");
+        args.add("-aaFeatureFromRight");
+        args.add("CDR3");
+        args.add("-lengthOf");
+        args.add("CDR3");
+        args.add("-count");
+        args.add("-fraction");
+        args.add("-targets");
+        args.add("-vHits");
+        args.add("-dHits");
+        args.add("-jHits");
+        args.add("-cHits");
+        args.add("-vFamily");
+        args.add("-vFamilies");
+        args.add("-dFamily");
+        args.add("-dFamilies");
+        args.add("-jFamily");
+        args.add("-jFamilies");
+        args.add("-vBestIdentityPercent");
+        args.add("-dBestIdentityPercent");
+        args.add("-jBestIdentityPercent");
+        args.add("-nFeature");
+        args.add("CDR3");
+        args.add("-qFeature");
+        args.add("CDR3");
+        args.add("-sequence");
+        args.add("-nFeature");
+        args.add("VDJTranscript");
+        args.add("-f");
+        args.add(clones.getPath());
+        args.add(output.getPath());
+
+        execute(args);
+    }
 
     public void doExportAlignments(File align, File output) throws PipelineJobException
     {
