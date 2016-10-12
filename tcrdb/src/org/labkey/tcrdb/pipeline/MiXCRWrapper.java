@@ -27,6 +27,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
     {
         List<String> args = new ArrayList<>();
         args.add(getExe().getPath());
+        //TODO: args.add("-Dlibrary.path");
+
         args.add("align");
         args.add("-f");
         args.add("-r");
@@ -97,6 +99,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         List<String> partialAssembleArgs = new ArrayList<>();
         partialAssembleArgs.add(getExe().getPath());
         partialAssembleArgs.add("assemblePartial");
+        partialAssembleArgs.add("-p");
+        partialAssembleArgs.add("-f");
         partialAssembleArgs.add("-r");
         partialAssembleArgs.add(logFile.getPath());
         partialAssembleArgs.add(alignOut.getPath());
@@ -134,6 +138,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add(getExe().getPath());
         args.add("exportClones");
 
+        //TODO: v2.0:
+        //args.add("-c");
         args.add("-l");
         args.add(locus);
 

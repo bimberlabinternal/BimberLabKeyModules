@@ -10,6 +10,7 @@
        <column name="jHit"/>
        <column name="cHit"/>
        <column name="CDR3"/>
+       <column name="count"/>
        <column name="fraction"/>
 
        <column name="vFamily" />

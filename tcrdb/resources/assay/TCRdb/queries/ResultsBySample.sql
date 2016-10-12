@@ -4,6 +4,7 @@ SELECT
   d.analysisId,
   d.date,
   group_concat(distinct d.locus, '/') as loci,
+  count(distinct d.locus) as numLoci,
 
   group_concat(distinct CASE WHEN d.locus = 'TRA' THEN d.cdr3 ELSE null END, chr(10)) as TRA_CDR3,
   group_concat(distinct CASE WHEN d.locus = 'TRA' THEN d.vFamily ELSE null END, chr(10)) as TRA_V,

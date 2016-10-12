@@ -200,6 +200,16 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             MiXCRWrapper mixcr = new MiXCRWrapper(getPipelineCtx().getLogger());
             mixcr.setOutputDir(outputDir);
+            String javaDir = StringUtils.trimToNull(System.getenv("JAVA_HOME"));
+            if (javaDir != null)
+            {
+                getPipelineCtx().getLogger().debug("setting JAVA_HOME: " + javaDir);
+                mixcr.addToEnvironment("JAVA_HOME", javaDir);
+            }
+            else
+            {
+                getPipelineCtx().getLogger().debug("JAVA_HOME not set");
+            }
 
             List<String> alignParams = new ArrayList<>();
             List<String> assembleParams = new ArrayList<>();
@@ -227,6 +237,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             if (getProvider().getParameterByName(DIFF_LOCI).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class))
             {
+                //TODO: v2.0:
+                //alignParams.add("-OallowChimeras=true");
                 alignParams.add("--diff-loci");
             }
 
