@@ -128,7 +128,7 @@ public class GBSAnalysisHandler extends AbstractParameterizedOutputHandler
                 RecordedAction action = new RecordedAction("GBS Analysis");
                 //action.addParameter(new RecordedAction.ParameterType("", PropertyType.STRING), "f");
                 action.setStartTime(new Date());
-                action.addInput(o.getFile(), "Input BAM");
+                action.addInputIfNotPresent(o.getFile(), "Input BAM");
 
                 List<String> arguments = new ArrayList<>();
                 arguments.add("bash");

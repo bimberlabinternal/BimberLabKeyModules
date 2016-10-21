@@ -44,6 +44,7 @@ public class ImputedVCFGenerator
     public static String TRUE_GENOTYPE_SOURCE = "TGS";
     public static String TRUE_GENOTYPE_BASES = "TGB";
     public static String TRUE_GENOTYPE_QUAL = "TGQ";
+    public static String CONSISTENT_IVs = "CIV";
 
     public static String INCORECT_IMPUTATION = "IncorrectImputation";
 
@@ -144,6 +145,7 @@ public class ImputedVCFGenerator
         metaLines.add(new VCFInfoHeaderLine(TOTAL_NON_CALLED_REF, 1, VCFHeaderLineType.Integer, "The number of subjects with non-called reference for imputation"));
 
         metaLines.add(new VCFFormatHeaderLine(INCORECT_IMPUTATION, 1, VCFHeaderLineType.Character, "Marks incorrectly imputed genotypes"));
+        metaLines.add(new VCFInfoHeaderLine(CONSISTENT_IVs, 1, VCFHeaderLineType.Integer, "The total number of IVs consistent with the observed genotypes.   A number that is low compared to the number of IVs used may indicate incompatibility between observed genotypes and the sampled IVs."));
 
         VCFHeader header = new VCFHeader(metaLines, sampleNames);
 

@@ -78,7 +78,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(TCR_DBs, "TCR DB(s)", "The sequence DB(s), usually species, to be used for alignment.", "tcr-libraryfield", new JSONObject()
                     {{
                         put("allowBlank", false);
-                    }}, 17),
+                    }}, null),
                     ToolParameterDescriptor.create(MIN_CLONE_FRACTION, "Min Clone Fraction", "Any CDR3 sequences will be reported if the they represent at least this fraction of total reads for that sample.", "ldk-numberfield", new JSONObject()
                     {{
                         put("minValue", 0);

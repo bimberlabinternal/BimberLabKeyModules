@@ -126,7 +126,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                 RecordedAction action = new RecordedAction("GBS Analysis");
                 //action.addParameter(new RecordedAction.ParameterType("", PropertyType.STRING), "f");
                 action.setStartTime(new Date());
-                action.addInput(o.getFile(), "Input BAM");
+                action.addInputIfNotPresent(o.getFile(), "Input BAM");
 
                 List<String> arguments = new ArrayList<>();
                 arguments.add("bash");
@@ -198,7 +198,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                     File insertSize = new File(ctx.getOutputDir(), basename + "_insertSize.pdf");
                     if (insertSize.exists())
                     {
-                        action.addOutput(insertSize, "Insert Size Histogram", false);
+                        action.addOutputIfNotPresent(insertSize, "Insert Size Histogram", false);
                     }
 
                     writer.write("<html><body><h2>" + o.getName() + ":</h2>");
@@ -236,10 +236,10 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
                     File coverageSummary = new File(ctx.getOutputDir(), "coverage_summary.txt");
                     if (coverageSummary.exists())
                     {
-                        action.addOutput(coverageSummary, "GBS Summary", false);
+                        action.addOutputIfNotPresent(coverageSummary, "GBS Summary", false);
                     }
 
-                    action.addOutput(html, "GBS Summary Report", false);
+                    action.addOutputIfNotPresent(html, "GBS Summary Report", false);
 
                     action.setEndTime(new Date());
                     ctx.addActions(action);

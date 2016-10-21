@@ -63,6 +63,7 @@ public class GLAutoJob extends Job
                 glautoWriter.write("output scores every " + _mcStoreInterval + " scored MC iterations   # these are the realized IVs - In this example, we will print 300/30 = 100 IVs to the output file\n");
                 glautoWriter.write("set MC iterations " + _mcIterations + "\n");
                 glautoWriter.write("set burn-in iterations 1000\n");
+                glautoWriter.write("check progress 1000 MC iterations\n");
 
                 glautoWriter.write("select all markers\n");
                 glautoWriter.write("select trait 1\n");

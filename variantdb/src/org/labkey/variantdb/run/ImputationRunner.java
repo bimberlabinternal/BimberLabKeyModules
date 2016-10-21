@@ -343,6 +343,8 @@ public class ImputationRunner
         }
         log.info(sb.toString());
 
+        int mcIteractions = 300000;
+        int mcScoreInterval = 30;
         JobRunner jobRunner = null;
         _job.setStatus(PipelineJob.TaskStatus.running, "Running GL_AUTO");
         try
@@ -356,7 +358,10 @@ public class ImputationRunner
                 File ivFile = new File(basedir, "framework.IVs");
                 if (!ivFile.exists())
                 {
-                    jobRunner.execute(new GLAutoJob(basedir, new File(basedir, "framework.glauto.geno"), log, chr));
+                    GLAutoJob job = new GLAutoJob(basedir, new File(basedir, "framework.glauto.geno"), log, chr);
+                    job.setMcIterations(mcIteractions);
+                    job.setMcStoreInterval(mcScoreInterval);
+                    jobRunner.execute(job);
                 }
                 else
                 {
@@ -408,7 +413,7 @@ public class ImputationRunner
                         continue;
                     }
 
-                    jobRunner.execute(new GiGiJob(log, chr, denseMarkerIdx, gigiOutDir, alleleFreqDir, callMethod, ivFile, glAutoBaseDir));
+                    jobRunner.execute(new GiGiJob(log, chr, denseMarkerIdx, gigiOutDir, alleleFreqDir, callMethod, ivFile, glAutoBaseDir, (mcIteractions / mcScoreInterval)));
                 }
             }
 
@@ -642,7 +647,7 @@ public class ImputationRunner
         //TODO: convert to runnable
         try
         {
-            log.info("preparing resources for GIGI");
+            log.info("preparing resources for GIGI: " + chr);
             File basedir = new File(setBaseDir, chr);
             if (!basedir.exists())
             {
@@ -684,7 +689,7 @@ public class ImputationRunner
             File frequencyFile = ImputationFileUtil.getAlleleFreqGenotypesFile(alleleFreqDir, markerType, chr, denseMarkerBatchIdx);
 
             //now write each version of the marker files for GIGI or GL_AUTO.  These are basically the same file, except the GL_AUTO version includes frequency info
-            log.info("writing " + markerType.name() + " genotype files for: " + chr);
+            log.info("writing " + markerType.name() + " genotype files for: " + chr + (denseMarkerBatchIdx == null ? "" : ", batch: " + denseMarkerBatchIdx));
             log.debug("using basedir: " + basedir.getPath());
 
             //first gl_auto, which uses the wide format
@@ -895,7 +900,7 @@ public class ImputationRunner
                 for (int i=0;i<files.length;i++)
                 {
                     File f = files[i];
-                    if (f.getName().endsWith(".tmp"))
+                    if (f.getName().endsWith(".tmp") || f.getName().endsWith("_map.txt") || f.getName().endsWith(".gigi.geno"))
                     {
                         f.delete();
                     }
@@ -918,6 +923,7 @@ public class ImputationRunner
                 for (int i=0;i<genoFiles.length;i++)
                 {
                     File f = genoFiles[i];
+                    //TODO: consider deleting VCFs too
                     if (f.getName().endsWith(".geno"))
                     {
                         f.delete();

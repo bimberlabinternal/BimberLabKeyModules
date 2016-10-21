@@ -48,7 +48,7 @@
                             <fkDbSchema>elispot_assay</fkDbSchema>
                             <fkTable>elispot_targets</fkTable>
                             <fkColumnName>target</fkColumnName>
-                            <fkDisplayColumnName>target</fkDisplayColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                         <measure>false</measure>
                         <dimension>true</dimension>

@@ -124,7 +124,7 @@ public class PrepareGenotypeFilesForChrRunner extends Job
                 {
                     List<String> knownAlleles = _alleleNameList.get(idx - 1);  //idx is 1-based
                     idx++;
-                    if (idx % 1000 == 0)
+                    if (idx % 5000 == 0)
                     {
                         _log.info("processed " + idx + " loci for sample: " + _sampleName + ": " + _chr + (_denseMarkerBatchIdx == null ? "" : " / batch " + _denseMarkerBatchIdx));
                     }

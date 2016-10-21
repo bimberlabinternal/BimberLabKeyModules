@@ -284,19 +284,19 @@ public class ImputationAnalysis implements SequenceOutputHandler
             List<SampleSet> sets = getSampleSets(params);
             RecordedAction action = new RecordedAction(getName());
             ctx.addActions(action);
-            action.addInput(gatkPed, "Pedigree File");
+            action.addInputIfNotPresent(gatkPed, "Pedigree File");
             File denseMarkers = ctx.getSequenceSupport().getCachedData(params.getInt("denseFile"));
-            action.addInput(denseMarkers, "Dense Markers");
+            action.addInputIfNotPresent(denseMarkers, "Dense Markers");
             File frameworkMarkers = ctx.getSequenceSupport().getCachedData(params.getInt("frameworkFile"));
-            action.addInput(frameworkMarkers, "Framework Markers");
+            action.addInputIfNotPresent(frameworkMarkers, "Framework Markers");
             File alleleFreqVcf = ctx.getSequenceSupport().getCachedData(params.getInt("alleleFrequencyFile"));
-            action.addInput(alleleFreqVcf, "Allele Frequency File");
+            action.addInputIfNotPresent(alleleFreqVcf, "Allele Frequency File");
 
             File blackList = null;
             if (StringUtils.trimToNull(params.getString("blacklistFile")) != null)
             {
                 blackList = ctx.getSequenceSupport().getCachedData(params.getInt("blacklistFile"));
-                action.addInput(blackList, "Genotype Blacklist");
+                action.addInputIfNotPresent(blackList, "Genotype Blacklist");
             }
 
             //copy locally to retain a record.  we expect these files to be of reasonable size
@@ -350,7 +350,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
             File summary = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "summary.txt");
             File afSummary = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "afSummary.txt");
-            action.addOutput(summary, "Summary Table", false);
+            action.addOutputIfNotPresent(summary, "Summary Table", false);
 
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(summary), '\t', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter afWriter = new CSVWriter(PrintWriters.getPrintWriter(afSummary), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
@@ -446,7 +446,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                             appendToVCF(inputFiles, vcfWriter, job, runner, baseDir, ss, alleleFreqDir, lowFreqThreshold, idx, callMethod, relativesPresent, wgsRelativesPresent, writer, afWriter, chr);
                         }
                     }
-                    action.addOutput(vcf, "VCF File", false);
+                    action.addOutputIfNotPresent(vcf, "VCF File", false);
 
                     SequenceOutputFile so = new SequenceOutputFile();
                     so.setFile(vcf);
@@ -544,7 +544,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     File mendelianPass = new File(mergedVcf.getParentFile(), "merged.mendelianPass.vcf.gz");
                     File nonMendelianVcf = new File(mergedVcf.getParentFile(), "merged.mendelianViolations.vcf.gz");
                     File nonMendelianBed = new File(mergedVcf.getParentFile(), "merged.mendelianViolations.bed");
-                    action.addOutput(nonMendelianBed, "Mendelian Violations", false);
+                    action.addOutputIfNotPresent(nonMendelianBed, "Mendelian Violations", false);
 
                     //essentially allows resume on failed jobs
                     if (!mendelianPass.exists())
@@ -883,7 +883,16 @@ public class ImputationAnalysis implements SequenceOutputHandler
                 File imputedProbabilities = new File(gigiOutDir, "impute-" + denseIntervalIdx + ".prob");
                 if (!imputedProbabilities.exists())
                 {
-                    job.getLogger().error("Unable to find imputed probabilities for batch: " + denseIntervalIdx + ", skipping.  expected: " + imputedProbabilities.exists());
+                    job.getLogger().error("Unable to find imputed probabilities for batch: " + denseIntervalIdx + ", skipping.  expected: " + imputedProbabilities.getPath());
+                    job.getLogger().error("start: " + runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).get(0).getStart());
+                    job.getLogger().error("end: " + runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).get(runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).size() - 1).getStart());
+                    continue;
+                }
+
+                File consistentIV = new File(gigiOutDir, "impute-" + denseIntervalIdx + ".consistentIV");
+                if (!consistentIV.exists())
+                {
+                    job.getLogger().error("Unable to find imputed consistentIV for batch: " + denseIntervalIdx + ", skipping.  expected: " + consistentIV.getPath());
                     job.getLogger().error("start: " + runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).get(0).getStart());
                     job.getLogger().error("end: " + runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).get(runner.getDenseIntervalMapBatched().get(chr).get(denseIntervalIdx).size() - 1).getStart());
                     continue;
@@ -913,10 +922,11 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     }
                 }
 
-                try (BufferedReader imputedReader = new BufferedReader(Readers.getReader(imputed)); BufferedReader probabilityReader = Readers.getReader(imputedProbabilities))
+                try (BufferedReader imputedReader = new BufferedReader(Readers.getReader(imputed)); BufferedReader probabilityReader = Readers.getReader(imputedProbabilities); BufferedReader consistentIVReader = Readers.getReader(consistentIV))
                 {
                     String imputedLine;
                     String probabilityLine;
+                    String consistentIVLine;
                     int markerNumber1Based = -1;  //1-based
                     List<String> subjectOrder = new ArrayList<>();
 
@@ -949,6 +959,12 @@ public class ImputationAnalysis implements SequenceOutputHandler
                             if (probabilityLine == null)
                             {
                                 throw new PipelineJobException("Too few lines in probability file: " + imputedProbabilities.getPath());
+                            }
+
+                            consistentIVLine = consistentIVReader.readLine();
+                            if (consistentIVLine == null)
+                            {
+                                throw new PipelineJobException("Too few lines in consistentIV file: " + consistentIV.getPath());
                             }
 
                             if (markerNumber1Based == 0)
@@ -1025,6 +1041,12 @@ public class ImputationAnalysis implements SequenceOutputHandler
                             int correctImputations = 0;
                             int totalNonCallRef = 0;
                             int subjectNumber = 0;
+                            int consistentIVs = Integer.parseInt(consistentIVLine);
+                            double ivPct = (double)consistentIVs / 10000.0;
+                            if (ivPct < 0.75)
+                            {
+                                job.getLogger().warn("low fraction of consistent IVs: " + ivPct + " at " + chr + " " + markerName);
+                            }
 
                             for (String subject : subjectOrder)
                             {
@@ -1174,6 +1196,8 @@ public class ImputationAnalysis implements SequenceOutputHandler
                             vcb.attribute(ImputedVCFGenerator.CORRECT_IMPUTATION_GENOTYPES, correctImputations);
                             vcb.attribute(ImputedVCFGenerator.TOTAL_NON_CALLED_REF, totalNonCallRef);
 
+                            vcb.attribute(ImputedVCFGenerator.CONSISTENT_IVs, consistentIVs);
+
                             for (Genotype g : genotypes)
                             {
                                 for (Allele a : g.getAlleles())
@@ -1189,7 +1213,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
 
                             vcfWriter.add(vcb.make());
 
-                            if (markerNumber1Based % 1000 == 0)
+                            if (markerNumber1Based % 5000 == 0)
                             {
                                 job.getLogger().info("processed " + markerNumber1Based + " markers");
                             }
@@ -1203,6 +1227,9 @@ public class ImputationAnalysis implements SequenceOutputHandler
                         }
                     }
                 }
+
+                imputed.delete();
+                imputedProbabilities.delete();
             }
 
             job.getLogger().info("Accuracies:");

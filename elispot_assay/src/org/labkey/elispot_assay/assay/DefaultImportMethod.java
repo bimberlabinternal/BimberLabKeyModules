@@ -81,6 +81,10 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
         assayJson.put("defaultValue", 1);
         runMeta.put("assayName", assayJson);
 
+        JSONObject spotsJson = getJsonObject(runMeta, "minspots");
+        spotsJson.put("defaultValue", 2);
+        runMeta.put("minspots", spotsJson);
+
         meta.put("Run", runMeta);
 
 
@@ -247,7 +251,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
                 alpha = null;
 
             Integer qualResult;
-            if (alpha != null && alpha > 0 && alpha <= threshold && avgSpots > negCtlSummary.getMean())
+            if (alpha != null && alpha >= 0 && alpha <= threshold && avgSpots > negCtlSummary.getMean() && avgSpots >= minspots)
                 qualResult = QUAL_RESULT.POS.getRowId();
             else
                 qualResult = QUAL_RESULT.NEG.getRowId();

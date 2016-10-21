@@ -64,7 +64,7 @@ public class PrepareAlleleFreqFilesForChrRunner extends Job
             for (Interval i : _intervalList)
             {
                 idx++;
-                if (idx % 1000 == 0)
+                if (idx % 5000 == 0)
                 {
                     _log.info("processed " + idx + " allele freq loci for: " + _chr + (_denseMarkerBatchIdx == null ? "" : " / batch " + _denseMarkerBatchIdx));
                 }
@@ -119,9 +119,11 @@ public class PrepareAlleleFreqFilesForChrRunner extends Job
                             {
                                 Double dd = Double.parseDouble(d);
                                 dd = Math.round(dd * 1000d) / 1000d;  //round to 3 decimals
+
+                                //if the non-ref AF is 1.0, we need to adjust to add something for the ref
                                 if (dd == 1.0)
                                 {
-                                    dd = 0.999;
+                                    dd = 0.99;
                                 }
 
                                 totalNonRef += dd;
@@ -130,7 +132,7 @@ public class PrepareAlleleFreqFilesForChrRunner extends Job
 
                             if (totalNonRef >= 1.0)
                             {
-                                _log.info(_chr + " " + markerName + ", " + idx + ": total non-ref AF is " + totalNonRef + " (alternates: " + nonRefs.size() + ").  Lowering all values by 0.001 so MORGAN/GIGI will run.");
+                                _log.error(_chr + " " + markerName + ", " + idx + ": total non-ref AF is " + totalNonRef + " (alternates: " + nonRefs.size() + ").  Lowering all values by 0.001 so MORGAN/GIGI will run.");
                                 List<Double> adjustedVals = new ArrayList<>();
                                 totalNonRef = 0.0;
                                 for (Double d : nonRefs)

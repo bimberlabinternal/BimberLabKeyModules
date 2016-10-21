@@ -27,8 +27,9 @@ public class GiGiJob extends Job
     private String _callMethod;
     private File _ivFile;
     private File _glAutoBaseDir;
+    private int _sampledIVs;
 
-    public GiGiJob(Logger log, String chr, Integer denseMarkerIdx, File outputDir, File alleleFreqDir, String callMethod, File ivFile, File glAutoBaseDir)
+    public GiGiJob(Logger log, String chr, Integer denseMarkerIdx, File outputDir, File alleleFreqDir, String callMethod, File ivFile, File glAutoBaseDir, int sampledIVs)
     {
         _log = log;
         _chr = chr;
@@ -38,6 +39,7 @@ public class GiGiJob extends Job
         _alleleFreqDir = alleleFreqDir;
         _callMethod = callMethod;
         _ivFile = ivFile;
+        _sampledIVs = sampledIVs;
     }
 
     @Override
@@ -67,7 +69,7 @@ public class GiGiJob extends Job
                     paramWriter.write(morganPed.getPath() + '\n');
                 }
                 paramWriter.write(_ivFile.getPath() + '\n');
-                paramWriter.write("1000\n");
+                paramWriter.write(_sampledIVs + "\n");
                 paramWriter.write(new File(_glAutoBaseDir, ImputationFileUtil.MarkerType.framework.name() + "_map.txt").getPath() + '\n');
                 paramWriter.write(new File(_glAutoBaseDir, ImputationFileUtil.MarkerType.dense.name() + "-" + _denseMarkerIdx + "_map.txt").getPath() + '\n');
                 paramWriter.write(new File(_glAutoBaseDir, ImputationFileUtil.MarkerType.dense.name() + "-" + _denseMarkerIdx + ".gigi.geno").getPath() + '\n');
