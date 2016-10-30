@@ -612,12 +612,6 @@ onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/ExacloudResour
 onprcEHRModules/GeneticsCore/src/org/labkey/GeneticsCore/pipeline/SequenceJobResourceAllocator.java -text
 onprcEHRModules/GeneticsCore/tools/installLabkey.sh -text
 onprcEHRModules/GeneticsCore/tools/javaWrapper.sh -text
-onprcEHRModules/GeneticsCore/tools/pipelineConfig/fergie2/pipelineConfig.xml -text
-onprcEHRModules/GeneticsCore/tools/pipelineConfig/fergie2/remoteMuleConfig.xml -text
-onprcEHRModules/GeneticsCore/tools/pipelineConfig/hoolock/pipelineConfig.xml -text
-onprcEHRModules/GeneticsCore/tools/pipelineConfig/hoolock/remoteMuleConfig.xml -text
-onprcEHRModules/GeneticsCore/tools/pipelineConfig/prcLabkey4/pipelineConfig.xml -text
-onprcEHRModules/GeneticsCore/tools/pipelineConfig/prcLabkey4/remoteMuleConfig.xml -text
 onprcEHRModules/GeneticsCore/webapp/WEB-INF/geneticscoreContext.xml -text
 onprcEHRModules/README.txt -text
 onprcEHRModules/mergesync/MergeSync.iml -text

@@ -242,7 +242,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 alignParams.add("--diff-loci");
             }
 
-            Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getJob());
+            Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getJob().getLogger());
             if (threads != null)
             {
                 alignParams.add("-t");

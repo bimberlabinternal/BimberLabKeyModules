@@ -53,24 +53,28 @@ Ext4.define('TCRDB.field.LibraryField', {
 
 	setValue: function(val){
 		if (this.store && this.store.isLoading()){
-			var me = this, args = arguments;
-			me.store.on('load', function(){
-				me.setValue.apply(me, args);
-			}, this, {defer: 100});
+			var args = arguments;
+			this.store.on('load', function(){
+				this.setValue.apply(this, args);
+			}, this, {defer: 100, single: true});
 
 			return;
 		}
 
 		if (val){
 			try {
-				//this is kinda hacky
-				var json = eval(arguments[0]);
-				if (Ext4.isArray(json)){
-					var rowIds = [];
-					Ext4.Array.forEach(json, function(row){
-						rowIds.push(row.rowid);
-					}, this);
-					arguments[0] = rowIds;
+				// this is kinda hacky.  the purpose is to enable saved templates to apply their saved value, but we
+				// need to be compatible with the regular setValue() code paths
+				if (Ext4.isString(arguments[0])) {
+					var json = eval(arguments[0]);
+					if (Ext4.isArray(json)) {
+						var rowIds = [];
+						Ext4.Array.forEach(json, function (row)
+						{
+							rowIds.push(row.rowid);
+						}, this);
+						arguments[0] = rowIds;
+					}
 				}
 			} catch (e) {
 				//ignore
