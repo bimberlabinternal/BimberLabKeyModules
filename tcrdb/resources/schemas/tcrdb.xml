@@ -16,63 +16,63 @@
  * limitations under the License.
 
  -->
-<ns:tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\schemas\tableInfo.xsd" xmlns:ns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <ns:table tableName="mixcr_libraries" tableDbType="TABLE" useColumnOrder="true">
-        <ns:javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</ns:javaCustomizer>
-        <ns:tableTitle>MiXCR Libraries</ns:tableTitle>
-        <ns:columns>
-            <ns:column columnName="rowid">
-                <ns:columnTitle>Row Id</ns:columnTitle>
-            </ns:column>
-            <ns:column columnName="species">
+<tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\schemas\tableInfo.xsd" xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <table tableName="mixcr_libraries" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <tableTitle>MiXCR Libraries</tableTitle>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="species">
 
-            </ns:column>
-            <ns:column columnName="label">
+            </column>
+            <column columnName="label">
 
-            </ns:column>
-            <ns:column columnName="local">
-                <ns:columnTitle>Is Local?</ns:columnTitle>
-            </ns:column>
-            <ns:column columnName="additionalParams">
-                <ns:columnTitle>Additional Params</ns:columnTitle>
-                <ns:description>A semi-colon delimited list of additional command line arguments to pass to mixcr align</ns:description>
-            </ns:column>
-            <ns:column columnName="container">
-                <ns:isHidden>true</ns:isHidden>
-            </ns:column>
-            <ns:column columnName="createdby">
-                <ns:isHidden>true</ns:isHidden>
-            </ns:column>
-            <ns:column columnName="created">
-                <ns:isUserEditable>false</ns:isUserEditable>
-                <ns:shownInInsertView>false</ns:shownInInsertView>
-                <ns:shownInUpdateView>false</ns:shownInUpdateView>
-                <ns:nullable>true</ns:nullable>
-                <ns:scale>29</ns:scale>
-                <ns:isHidden>true</ns:isHidden>
-            </ns:column>
-            <ns:column columnName="modifiedby">
-                <ns:isHidden>true</ns:isHidden>
-            </ns:column>
-            <ns:column columnName="modified">
-                <ns:isUserEditable>false</ns:isUserEditable>
-                <ns:shownInInsertView>false</ns:shownInInsertView>
-                <ns:shownInUpdateView>false</ns:shownInUpdateView>
-                <ns:nullable>true</ns:nullable>
-                <ns:scale>29</ns:scale>
-                <ns:isHidden>true</ns:isHidden>
-            </ns:column>
-        </ns:columns>
-    </ns:table>
-    <ns:table tableName="loci" tableDbType="TABLE" useColumnOrder="true">
-        <ns:javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</ns:javaCustomizer>
-        <ns:insertUrl></ns:insertUrl>
-        <ns:importUrl></ns:importUrl>
-        <ns:updateUrl></ns:updateUrl>
-        <ns:columns>
-            <ns:column columnName="locus">
+            </column>
+            <column columnName="local">
+                <columnTitle>Is Local?</columnTitle>
+            </column>
+            <column columnName="additionalParams">
+                <columnTitle>Additional Params</columnTitle>
+                <description>A semi-colon delimited list of additional command line arguments to pass to mixcr align</description>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="loci" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <insertUrl></insertUrl>
+        <importUrl></importUrl>
+        <updateUrl></updateUrl>
+        <columns>
+            <column columnName="locus">
 
-            </ns:column>
-        </ns:columns>
-    </ns:table>
-</ns:tables>
+            </column>
+        </columns>
+    </table>
+</tables>
