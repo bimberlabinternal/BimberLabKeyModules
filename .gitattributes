@@ -15,6 +15,7 @@ DISCVR/CancerStudies/src/org/labkey/cancerstudies/CancerStudiesController.java -
 DISCVR/CancerStudies/src/org/labkey/cancerstudies/CancerStudiesManager.java -text
 DISCVR/CancerStudies/src/org/labkey/cancerstudies/CancerStudiesModule.java -text
 DISCVR/CancerStudies/src/org/labkey/cancerstudies/CancerStudiesSchema.java -text
+DISCVR/build.gradle -text
 DISCVR/galaxyintegration/GalaxyIntegration.iml -text
 DISCVR/galaxyintegration/build.gradle -text
 DISCVR/galaxyintegration/lib/blend4j-0.2.0.jar -text
@@ -256,6 +257,7 @@ DISCVR/variantdb/src/org/labkey/variantdb/run/MendelianEvaluator.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerPermission.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerRole.java -text
 DISCVR/variantdb/webapp/WEB-INF/variantdb/variantdbContext.xml -text
+cnprcEHRModules/build.gradle -text
 cnprcEHRModules/cnprc_billing/cnprc_billing.iml -text
 cnprcEHRModules/cnprc_billing/module.properties -text
 cnprcEHRModules/cnprc_billing/resources/etls/account.xml -text
@@ -633,6 +635,7 @@ labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/SSPImportHelper.ja
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/SSPPivotingImportMethod.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/UCDavisSTRImportMethod.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/buttons/CacheAnalysesButton.java -text
+labModules/build.gradle -text
 labModules/elispot_assay/ELISPOT_Assay.iml -text
 labModules/elispot_assay/build.gradle -text
 labModules/elispot_assay/module.properties -text
@@ -813,6 +816,7 @@ onprcEHRModules/GeneticsCore/tools/installLabkey.sh -text
 onprcEHRModules/GeneticsCore/tools/javaWrapper.sh -text
 onprcEHRModules/GeneticsCore/webapp/WEB-INF/geneticscoreContext.xml -text
 onprcEHRModules/README.txt -text
+onprcEHRModules/build.gradle -text
 onprcEHRModules/extscheduler/build.gradle -text
 onprcEHRModules/extscheduler/extscheduler.iml -text
 onprcEHRModules/extscheduler/module.properties -text
@@ -1425,6 +1429,7 @@ onprcEHRModules/treatmentETL/resources/etls/TreatmentToDrug.xml -text
 onprcEHRModules/treatmentETL/resources/queries/study/dateRangedata.sql -text
 onprcEHRModules/treatmentETL/resources/queries/study/treatmentScheduleUpdate.sql -text
 onprcEHRModules/treatmentETL/resources/queries/study/treatmenttodrug.sql -text
+snprcEHRModules/build.gradle -text
 snprcEHRModules/snprc_genetics/SNPRC_Genetics.iml -text
 snprcEHRModules/snprc_genetics/module.properties -text
 snprcEHRModules/snprc_genetics/resources/queries/assay/General/Gene[!!-~]Expression/Data.query.xml -text

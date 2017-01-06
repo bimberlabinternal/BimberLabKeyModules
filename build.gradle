@@ -1,0 +1,7 @@
+subprojects.each  {
+    Project p -> if (!p.name.toLowerCase().contains("test")) 
+    {
+        p.apply plugin: 'java'
+        p.apply plugin: 'org.labkey.module'
+    }
+}
