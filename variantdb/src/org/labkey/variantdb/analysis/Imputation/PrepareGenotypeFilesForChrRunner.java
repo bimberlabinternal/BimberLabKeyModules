@@ -1,7 +1,6 @@
 package org.labkey.variantdb.analysis.Imputation;
 
 import au.com.bytecode.opencsv.CSVWriter;
-import com.drew.lang.annotations.Nullable;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
 import htsjdk.variant.variantcontext.Allele;
@@ -10,6 +9,7 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.util.Job;

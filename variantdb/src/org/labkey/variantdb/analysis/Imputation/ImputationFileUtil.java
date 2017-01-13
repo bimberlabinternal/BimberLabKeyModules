@@ -1,8 +1,8 @@
 package org.labkey.variantdb.analysis.Imputation;
 
-import com.drew.lang.annotations.Nullable;
 import htsjdk.samtools.util.Interval;
 import htsjdk.tribble.Feature;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 

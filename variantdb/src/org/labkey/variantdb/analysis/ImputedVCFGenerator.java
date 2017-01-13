@@ -1,6 +1,5 @@
 package org.labkey.variantdb.analysis;
 
-import com.drew.lang.annotations.Nullable;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
 import htsjdk.variant.variantcontext.Allele;
@@ -16,6 +15,7 @@ import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import htsjdk.variant.vcf.VCFStandardHeaderLines;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.util.FileUtil;
 

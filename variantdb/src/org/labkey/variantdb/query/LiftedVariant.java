@@ -1,8 +1,7 @@
 package org.labkey.variantdb.query;
 
-import com.drew.lang.annotations.Nullable;
 import htsjdk.samtools.util.Interval;
-import org.apache.commons.validator.Var;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.util.GUID;
 
 /**
