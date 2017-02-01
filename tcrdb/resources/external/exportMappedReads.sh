@@ -17,6 +17,9 @@ $SAMTOOLS view -f 4 -F 8 $INPUT_BAM >> $ALIGNED
 # exactly two ends mapped
 $SAMTOOLS view -F 12 $INPUT_BAM >> $ALIGNED
 
+# counts by reference
+$SAMTOOLS view $ALIGNED | cut -f3 | sort | uniq -c | sort -k1nr | awk 'OFS=": " {print $2,$1}'
+
 $JAVA -jar $PICARD SamToFastq \
     VALIDATION_STRINGENCY=SILENT \
     INPUT=$ALIGNED \

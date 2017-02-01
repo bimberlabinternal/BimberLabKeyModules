@@ -79,22 +79,52 @@ if [[ ! -e ${LKTOOLS_DIR}/mixcr || ! -z $FORCE_REINSTALL ]];
 then
     rm -Rf mixcr*
     rm -Rf $LKTOOLS_DIR/mixcr*
+    rm -Rf $LKTOOLS_DIR/libraries
     rm -Rf $LKTOOLS_DIR/importFromIMGT.sh
 
-    wget $WGET_OPTS https://github.com/milaboratory/mixcr/releases/download/v2.0/mixcr-2.0.zip
-    unzip mixcr-2.0.zip
+    wget $WGET_OPTS https://github.com/milaboratory/mixcr/releases/download/v2.0.2/mixcr-2.0.2.zip
+    unzip mixcr-2.0.2.zip
 
-    install ./mixcr-2.0/mixcr $LKTOOLS_DIR/mixcr
-    install ./mixcr-2.0/mixcr.jar $LKTOOLS_DIR/mixcr.jar
-    install ./mixcr-2.0/mixcr.jar $LKTOOLS_DIR/libraries
+    install ./mixcr-2.0.2/mixcr $LKTOOLS_DIR/mixcr
+    install ./mixcr-2.0.2/mixcr.jar $LKTOOLS_DIR/mixcr.jar
+    cp -R ./mixcr-2.0.2/libraries $LKTOOLS_DIR
 
 else
     echo "Already installed"
 fi
 
-#example command to load IMGT libraries:
-#yum install go
-#mkdir ~/gopath
-#export GOPATH=~/gopath/
-#go get github.com/ericchiang/pup
-#export PATH=$PATH:~/gopath/bin:/usr/local/labkey/bin
+#repseqio:
+apt-get update
+apt-get install -y build-essential curl git python-setuptools ruby groovy jq golang
+
+echo 'export GOPATH=~/.go' >> ~/.profile
+echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.profile
+source ~/.profile
+
+if [ ! -e $GOPATH ];then
+	mkdir -p $GOPATH
+fi
+
+go get github.com/ericchiang/pup
+
+#based on: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-linuxbrew-on-a-linux-vps
+if [ ! -e ~/.linuxbrew ];then
+	git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew
+fi
+
+# Until LinuxBrew is fixed, the following is required.
+# See: https://github.com/Homebrew/linuxbrew/issues/47
+echo 'export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH' >> ~/.profile
+
+## Setup linux brew
+echo 'export LINUXBREWHOME=$HOME/.linuxbrew' >> ~/.profile
+echo 'export PATH=$LINUXBREWHOME/bin:$PATH' >> ~/.profile
+echo 'export MANPATH=$LINUXBREWHOME/man:$MANPATH' >> ~/.profile
+echo 'export PKG_CONFIG_PATH=$LINUXBREWHOME/lib64/pkgconfig:$LINUXBREWHOME/lib/pkgconfig:$PKG_CONFIG_PATH' >> ~/.profile
+echo 'export LD_LIBRARY_PATH=$LINUXBREWHOME/lib64:$LINUXBREWHOME/lib:$LD_LIBRARY_PATH' >> ~/.profile
+
+source ~/.profile
+
+brew install repseqio/all/repseqio
+#brew update
+#brew upgrade repseqio

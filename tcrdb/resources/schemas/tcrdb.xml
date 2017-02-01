@@ -24,18 +24,21 @@
             <column columnName="rowid">
                 <columnTitle>Row Id</columnTitle>
             </column>
-            <column columnName="species">
-
-            </column>
             <column columnName="label">
 
             </column>
-            <column columnName="local">
-                <columnTitle>Is Local?</columnTitle>
+            <column columnName="libraryName">
+                <columnTitle>Library Name</columnTitle>
+            </column>
+            <column columnName="species">
+
             </column>
             <column columnName="additionalParams">
                 <columnTitle>Additional Params</columnTitle>
                 <description>A semi-colon delimited list of additional command line arguments to pass to mixcr align</description>
+            </column>
+            <column columnName="dateDisabled">
+                <columnTitle>Date Disabled</columnTitle>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>

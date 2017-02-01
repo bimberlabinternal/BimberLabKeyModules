@@ -1,0 +1,19 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+   <columns>
+       <column name="subjectId" />
+       <column name="date" />
+       <column name="TRB_CDR3" />
+       <column name="TRB_CDR3_WithFraction" />
+       <column name="totalSamples"/>
+       <column name="totalClones" />
+       <column name="totalClonesWithTRB_CDR3" />
+       <column name="percent"/>
+       <column name="totalClonesFromSubject"/>
+       <column name="TRA_CDR3"/>
+       <column name="folder"/>
+   </columns>
+   <sorts>
+       <sort column="subjectId"/>
+       <sort column="percent" descending="true"/>
+   </sorts>
+</customView>

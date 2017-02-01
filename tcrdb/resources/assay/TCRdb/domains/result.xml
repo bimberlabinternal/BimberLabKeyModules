@@ -141,52 +141,52 @@
         <exp:Label>All C-Hits</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>vFamily</exp:Name>
+        <exp:Name>vGene</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>V-Family</exp:Label>
+        <exp:Label>V-Gene</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>dFamily</exp:Name>
+        <exp:Name>dGene</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>D-Family</exp:Label>
+        <exp:Label>D-Gene</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>jFamily</exp:Name>
+        <exp:Name>jGene</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>J-Family</exp:Label>
+        <exp:Label>J-Gene</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>cFamily</exp:Name>
+        <exp:Name>cGene</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>C-Family</exp:Label>
+        <exp:Label>C-Gene</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>vFamilies</exp:Name>
+        <exp:Name>vGenes</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>V-Families</exp:Label>
+        <exp:Label>V-Genes</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>dFamilies</exp:Name>
+        <exp:Name>dGenes</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>D-Families</exp:Label>
+        <exp:Label>D-Genes</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>jFamilies</exp:Name>
+        <exp:Name>jGenes</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>J-Families</exp:Label>
+        <exp:Label>J-Genes</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>cFamilies</exp:Name>
+        <exp:Name>cGenes</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>C-Families</exp:Label>
+        <exp:Label>C-Genes</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>vBestIdentityPercent</exp:Name>
@@ -225,6 +225,18 @@
         <exp:Label>Clone ID</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
+        <exp:Name>clonesFile</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Clone File</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>vdjFile</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>VDJ File</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
         <exp:Name>comment</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#multiLine</exp:RangeURI>
@@ -253,5 +265,11 @@
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
         <exp:Label>Run Id</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>disabled</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#boolean</exp:RangeURI>
+        <exp:Label>Disabled?</exp:Label>
     </exp:PropertyDescriptor>
 </ap:domain>

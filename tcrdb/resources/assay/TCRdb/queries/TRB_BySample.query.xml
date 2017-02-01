@@ -1,0 +1,37 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="" tableDbType="NOT_IN_DB">
+                <tableTitle>TRB CDR3 Results By Sample</tableTitle>
+                <columns>
+                    <column columnName="TRA_CDR3">
+                        <columnTitle>TRA CDR3(s)</columnTitle>
+                        <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=ResultsBySample&amp;query.subjectId~eq=${subjectId}&amp;query.folder~eq=${folder}&amp;query.TRA_CDR3~in=${TRA_CDR3_URL}</url>
+                    </column>
+                    <column columnName="TRA_CDR3_URL">
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="TRB_CDR3">
+                        <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=Data&amp;query.subjectId~eq=${subjectId}&amp;query.folder~eq=${folder}&amp;query.CDR3~in=${TRB_CDR3}</url>
+                    </column>
+                    <column columnName="totalTRB_CDR3">
+                        <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=ResultsBySample&amp;query.subjectId~eq=${subjectId}&amp;query.folder~eq=${folder}&amp;query.TRB_CDR3~isnonblank</url>
+                    </column>
+                    <column columnName="totalClones">
+                        <columnTitle># Clones With This TRB_CDR3</columnTitle>
+                        <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=ResultsBySample&amp;query.subjectId~eq=${subjectId}&amp;query.folder~eq=${folder}</url>
+                    </column>
+                    <column columnName="totalSamples">
+                        <columnTitle># Distinct Samples</columnTitle>
+                    </column>
+                    <column columnName="percent">
+                        <formatString>##.##%</formatString>
+                    </column>
+                    <column columnName="totalClonesWithTRB_CDR3">
+                        <columnTitle># Clones With A TRB_CDR3</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

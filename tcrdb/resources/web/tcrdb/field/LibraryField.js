@@ -9,12 +9,14 @@ Ext4.define('TCRDB.field.LibraryField', {
 				containerPath: Laboratory.Utils.getQueryContainerPath(),
 				schemaName: 'tcrdb',
 				queryName: 'mixcr_libraries',
-				columns: 'rowid,species,locus,local,additionalParams',
+				columns: 'rowid,label,libraryName,species,locus,additionalParams',
+				sort: 'label,libraryName',
+				filterArray: [LABKEY.Filter.create('dateDisabled', null, LABKEY.Filter.Types.ISBLANK)],
 				autoLoad: true,
 				listeners: {
 					load: function(s){
 						s.each(function(r){
-							r.set('displayField', r.get('label') || r.get('species'));
+							r.set('displayField', r.get('label') || r.get('libraryName'));
 						})
 					}
 				}
@@ -42,7 +44,7 @@ Ext4.define('TCRDB.field.LibraryField', {
 					rowid: rec.get('rowid'),
 					locus: rec.get('locus'),
 					species: rec.get('species'),
-					local: rec.get('local'),
+					libraryName: rec.get('libraryName'),
 					additionalParams: rec.get('additionalParams')
 				});
 			}, this);

@@ -1,0 +1,42 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+   <columns>
+       <column name="analysisId" />
+       <column name="sampleName" />
+       <column name="subjectId" />
+       <column name="libraryId/species"/>
+       <column name="locus" />
+       <column name="vHit" />
+       <column name="dHit"/>
+       <column name="jHit"/>
+       <column name="cHit"/>
+
+       <column name="CDR3"/>
+       <column name="count"/>
+       <column name="fraction"/>
+
+       <column name="vGene" />
+       <column name="dGene"/>
+       <column name="jGene"/>
+
+       <column name="vBestIdentityPercent" />
+       <column name="dBestIdentityPercent"/>
+       <column name="jBestIdentityPercent"/>
+
+       <column name="cdr3_nt"/>
+       <column name="cloneId"/>
+       <column name="alignmentId"/>
+
+       <column name="comment" />
+       <column name="workbook" />
+       <column name="pipelineRunId/JobId" />
+       <column name="pipelineRunId">
+       <properties>
+           <property name="columnTitle" value="Run"/>
+       </properties>
+   </column>
+   </columns>
+   <sorts>
+       <sort column="sampleName"/>
+       <sort column="locus"/>
+   </sorts>
+</customView>

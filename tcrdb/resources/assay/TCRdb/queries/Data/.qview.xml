@@ -3,7 +3,7 @@
        <column name="analysisId" />
        <column name="sampleName" />
        <column name="subjectId" />
-       <column name="libraryId/species"/>
+       <column name="libraryId/label"/>
        <column name="locus" />
        <column name="vHit" />
        <column name="dHit"/>
@@ -13,18 +13,19 @@
        <column name="count"/>
        <column name="fraction"/>
 
-       <column name="vFamily" />
-       <column name="dFamily"/>
-       <column name="jFamily"/>
+       <column name="vGene" />
+       <column name="dGene"/>
+       <column name="jGene"/>
 
        <column name="comment" />
        <column name="workbook" />
        <column name="pipelineRunId/JobId" />
        <column name="pipelineRunId">
-       <properties>
-           <property name="columnTitle" value="Run"/>
-       </properties>
-   </column>
+           <properties>
+               <property name="columnTitle" value="Run"/>
+           </properties>
+       </column>
+       <column name="disabled"/>
    </columns>
    <sorts>
        <sort column="sampleName"/>

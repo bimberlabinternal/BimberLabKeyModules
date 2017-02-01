@@ -20,8 +20,8 @@ import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.data.Container;
 import org.labkey.api.laboratory.LaboratoryService;
+import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
-import org.labkey.api.module.SimpleModule;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.tcrdb.pipeline.MiXCRAnalysis;
@@ -29,7 +29,7 @@ import org.labkey.tcrdb.pipeline.MiXCRAnalysis;
 import java.util.Collection;
 import java.util.Collections;
 
-public class TCRdbModule extends SimpleModule
+public class TCRdbModule extends ExtendedSimpleModule
 {
     public static final String NAME = "tcrdb";
 
@@ -42,7 +42,7 @@ public class TCRdbModule extends SimpleModule
     @Override
     public double getVersion()
     {
-        return 15.33;
+        return 15.35;
     }
 
     @Override
@@ -58,9 +58,9 @@ public class TCRdbModule extends SimpleModule
     }
 
     @Override
-    protected void startupAfterSpringConfig(ModuleContext moduleContext)
+    protected void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
-        super.startupAfterSpringConfig(moduleContext);
+        super.doStartupAfterSpringConfig(moduleContext);
 
         LaboratoryService.get().registerDataProvider(new TCRdbProvider(this));
         SequenceAnalysisService.get().registerDataProvider(new TCRdbProvider(this));

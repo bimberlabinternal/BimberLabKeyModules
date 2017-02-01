@@ -2,10 +2,13 @@ package org.labkey.tcrdb.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.exp.api.ExpRun;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.module.Module;
@@ -45,6 +48,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -61,14 +65,16 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         super(provider, ctx);
     }
 
-    private static String TCR_DBs = "tcrDB";
-    private static String MIN_CLONE_FRACTION = "minCloneFraction";
-    private static String MIN_CLONE_READS = "minCloneReads";
-    private static String EXPORT_ALIGNMENTS = "exportAlignments";
-    private static String DIFF_LOCI = "diffLoci";
-    private static String IS_RNA_SEQ = "isRnaSeq";
-    private static String TARGET_ASSAY = "targetAssay";
-    private static String LOCI = "loci";
+    private static final String TCR_DBs = "tcrDB";
+    private static final String MIN_CLONE_FRACTION = "minCloneFraction";
+    private static final String MIN_CLONE_READS = "minCloneReads";
+    private static final String EXPORT_ALIGNMENTS = "exportAlignments";
+    private static final String CLONES_FILE = "MiXCR Clones File";
+    private static final String FINAL_VDJ_FILE = "MiXCR VDJ Alignment";
+    private static final String DIFF_LOCI = "diffLoci";
+    private static final String IS_RNA_SEQ = "isRnaSeq";
+    private static final String TARGET_ASSAY = "targetAssay";
+    private static final String LOCI = "loci";
 
     public static class Provider extends AbstractAnalysisStepProvider<MiXCRAnalysis>
     {
@@ -191,7 +197,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         //iterate selected species/loci:
-        Map<Integer, Map<String, List<File>>> tables = new HashMap<>();
+        Map<Integer, Map<String, Map<String, List<File>>>> tables = new HashMap<>();
         JSONArray libraries = new JSONArray(tcrDBJSON);
         for (JSONObject library : libraries.toJSONObjectArray())
         {
@@ -219,11 +225,11 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 alignParams.add("rna-seq");
             }
 
-            boolean local = library.optBoolean("local", false);
-            if (local)
+            String libraryName = StringUtils.trimToNull(library.optString("libraryName"));
+            if (libraryName != null)
             {
                 alignParams.add("--library");
-                alignParams.add("local");
+                alignParams.add(libraryName);
             }
 
             if (library.optString("additionalParams") != null)
@@ -237,9 +243,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             if (getProvider().getParameterByName(DIFF_LOCI).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class))
             {
-                //TODO: v2.0:
-                //alignParams.add("-OallowChimeras=true");
-                alignParams.add("--diff-loci");
+                alignParams.add("-OallowChimeras=true");
             }
 
             Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getJob().getLogger());
@@ -252,26 +256,26 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 assembleParams.add(threads.toString());
             }
 
-            String prefix = FileUtil.getBaseName(inputBam) + "." + rowid + "." + species;
+            String prefix = getOutputPrefix(FileUtil.getBaseName(inputBam), String.valueOf(rowid), species);
             File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams);
-            output.addOutput(clones, "MiXCR Clones File");
+            output.addOutput(clones, CLONES_FILE);
 
-            output.addOutput(new File(outputDir, prefix + ".mixcr.vdjca"), "MiXCR VDJ Alignment");
-            output.addOutput(new File(outputDir, prefix + ".mixcr.index"), "MiXCR VDJ Index File 1");
-            output.addOutput(new File(outputDir, prefix + ".mixcr.index.p"), "MiXCR VDJ Index File 2");
+            output.addIntermediateFile(new File(outputDir, prefix + ".align.vdjca.gz"), "MiXCR VDJ Alignment");
 
-            File alignPartialOutput1 = new File(outputDir, prefix + ".mixcr.partial.1.vdjca");
-            output.addOutput(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
-            File alignPartialOutput2 = new File(outputDir, prefix + ".mixcr.partial.2.vdjca");
-            output.addOutput(alignPartialOutput2, "MiXCR VDJ Alignment, Recovery Step 2");
+            File alignPartialOutput1 = new File(outputDir, prefix + ".assemblePartial_1.vdjca.gz");
+            output.addIntermediateFile(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
+            File alignPartialOutput2 = new File(outputDir, getVDJFileName(prefix));
+            output.addOutput(alignPartialOutput2, FINAL_VDJ_FILE);
+            output.addOutput(new File(outputDir, prefix + ".assemblePartial_2.index"), "MiXCR VDJ Index File 1");
+            output.addOutput(new File(outputDir, prefix + ".assemblePartial_2.index.p"), "MiXCR VDJ Index File 2");
 
             if (getProvider().getParameterByName(EXPORT_ALIGNMENTS).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class, Boolean.FALSE))
             {
                 if (alignPartialOutput2.length() >= 20)
                 {
-                    File alignExport = new File(outputDir, prefix + ".mixcr.alignments.txt");
+                    File alignExport = new File(outputDir, prefix + ".alignments.txt");
                     getPipelineCtx().getLogger().debug("output file size: " + alignPartialOutput2.length());
-                    mixcr.doExportAlignments(alignPartialOutput2, alignExport);
+                    mixcr.doExportAlignments(alignPartialOutput2, alignExport, null);
                     output.addOutput(alignExport, "MiXCR Alignments");
                 }
                 else
@@ -306,12 +310,17 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     tables.put(rowid, new HashMap<>());
                 }
 
-                if (!tables.get(rowid).containsKey(locus))
+                if (!tables.get(rowid).containsKey(species))
                 {
-                    tables.get(rowid).put(locus, new ArrayList<>());
+                    tables.get(rowid).put(species, new HashMap<>());
                 }
 
-                tables.get(rowid).get(locus).add(table);
+                if (!tables.get(rowid).get(species).containsKey(locus))
+                {
+                    tables.get(rowid).get(species).put(locus, new ArrayList<>());
+                }
+
+                tables.get(rowid).get(species).get(locus).add(table);
             }
         }
 
@@ -321,36 +330,40 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             boolean hasHeader = false;
             for (Integer libraryId : tables.keySet())
             {
-                Map<String, List<File>> tablesForLocus = tables.get(libraryId);
-                for (String locus : tablesForLocus.keySet())
+                Map<String, Map<String, List<File>>> tablesForSpecies = tables.get(libraryId);
+                for (String species : tablesForSpecies.keySet())
                 {
-                    for (File f : tablesForLocus.get(locus))
+                    Map<String, List<File>> tablesForLocus = tablesForSpecies.get(species);
+                    for (String locus : tablesForLocus.keySet())
                     {
-                        try (BufferedReader reader = Readers.getReader(f))
+                        for (File f : tablesForLocus.get(locus))
                         {
-                            String line;
-                            int idx = 0;
-                            while ((line = reader.readLine()) != null)
+                            try (BufferedReader reader = Readers.getReader(f))
                             {
-                                idx++;
-                                if (idx == 1)
+                                String line;
+                                int idx = 0;
+                                while ((line = reader.readLine()) != null)
                                 {
-                                    if (!hasHeader)
+                                    idx++;
+                                    if (idx == 1)
                                     {
-                                        writer.write("LibraryId\tLocus\t" + line);
+                                        if (!hasHeader)
+                                        {
+                                            writer.write("LibraryId\tSpecies\tLocus\t" + line);
+                                            writer.write('\n');
+                                            hasHeader = true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        writer.write(String.valueOf(libraryId) + '\t' + species + '\t' + locus + '\t' + line);
                                         writer.write('\n');
-                                        hasHeader = true;
                                     }
                                 }
-                                else
-                                {
-                                    writer.write(String.valueOf(libraryId) + '\t' + locus + '\t' + line);
-                                    writer.write('\n');
-                                }
                             }
-                        }
 
-                        f.delete();
+                            f.delete();
+                        }
                     }
                 }
             }
@@ -371,6 +384,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     private List<String> FIELDS = Arrays.asList(
         "libraryId",
+        "species",
         "locus",
         "cloneId",
         "vHit",
@@ -388,12 +402,12 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         "dHits",
         "jHits",
         "cHits",
-        "vFamily",
-        "vFamilies",
-        "dFamily",
-        "dFamilies",
-        "jFamily",
-        "jFamilies",
+        "vGene",
+        "vGenes",
+        "dGene",
+        "dGenes",
+        "jGene",
+        "jGenes",
         "vBestIdentityPercent",
         "dBestIdentityPercent",
         "jBestIdentityPercent",
@@ -406,10 +420,21 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     @Override
     public Output performAnalysisPerSampleLocal(AnalysisModel model, File inputBam, File referenceFasta, File outDir) throws PipelineJobException
     {
+        Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+        ExpRun run = ExperimentService.get().getExpRun(runId);
+
+        List<? extends ExpData> cloneDatas = run.getInputDatas(CLONES_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
+        List<? extends ExpData> vdjDatas = run.getInputDatas(FINAL_VDJ_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
+
         File table = getCombinedTable(outDir);
         if (!table.exists())
         {
             getPipelineCtx().getLogger().warn("output table does not exist: " + table.getPath());
+            return null;
+        }
+        else if (!SequencePipelineService.get().hasMinLineCount(table, 2))
+        {
+            getPipelineCtx().getLogger().warn("insufficient lines in output table, skipping: " + table.getPath());
             return null;
         }
         else
@@ -475,6 +500,9 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 }
 
                 row.putIfAbsent("date", new Date());
+                //round to day
+                row.put("date", DateUtils.truncate(row.get("date"), Calendar.DATE));
+
                 row.put("sampleType", null);
                 row.put("category", null);
                 row.put("stimulation", null);
@@ -490,24 +518,69 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     row.put(FIELDS.get(i), line[i]);
                 }
 
+                String cloneFileName = getClonesFileName(getOutputPrefix(FileUtil.getBaseName(inputBam), line[FIELDS.indexOf("libraryId")], line[FIELDS.indexOf("species")]));
+                ExpData clonesFile = null;
+                for (ExpData d : cloneDatas)
+                {
+                    if (cloneFileName.equals(d.getFile().getName()))
+                    {
+                        clonesFile = d;
+                        break;
+                    }
+                }
+
+                if (clonesFile == null)
+                {
+                    getPipelineCtx().getLogger().warn("unable to find clones file, expected: " + cloneFileName);
+                }
+                else
+                {
+                    row.put("clonesFile", clonesFile.getRowId());
+                }
+
+                String vdjFileName = getVDJFileName(getOutputPrefix(FileUtil.getBaseName(inputBam), line[FIELDS.indexOf("libraryId")], line[FIELDS.indexOf("species")]));
+                ExpData vdjFile = null;
+                for (ExpData d : vdjDatas)
+                {
+                    if (vdjFileName.equals(d.getFile().getName()))
+                    {
+                        vdjFile = d;
+                        break;
+                    }
+                }
+
+                if (vdjFile == null)
+                {
+                    getPipelineCtx().getLogger().warn("unable to find VDJ file, expected: " + vdjFileName);
+                }
+                else
+                {
+                    row.put("vdjFile", vdjFile.getRowId());
+                }
+
                 //try to reconcile CDR3 translations:
+                List<String> comments = new ArrayList<>();
                 if (row.get("CDR3") != null)
                 {
                     if (row.get("CDR3FromLeft") != null && !row.get("CDR3").equals(row.get("CDR3FromLeft")))
                     {
-                        getPipelineCtx().getLogger().warn("CDR3 translation (" + row.get("CDR3") +") does not match translation from left: " + row.get("CDR3FromLeft"));
+                        String msg = "CDR3 translation (" + row.get("CDR3") +") does not match translation from left: " + row.get("CDR3FromLeft");
+                        getPipelineCtx().getLogger().warn(msg);
+                        comments.add(msg);
                     }
 
                     if (row.get("CDR3FromRight") != null && !row.get("CDR3").equals(row.get("CDR3FromRight")))
                     {
-                        getPipelineCtx().getLogger().warn("CDR3 translation (" + row.get("CDR3") +") does not match translation from right: " + row.get("CDR3FromRight"));
+                        String msg = "CDR3 translation (" + row.get("CDR3") +") does not match translation from right: " + row.get("CDR3FromRight");
+                        getPipelineCtx().getLogger().warn(msg);
+                        comments.add(msg);
                     }
                 }
+                row.put("comment", comments.isEmpty() ? null : StringUtils.join(comments, "; "));
 
                 row.put("alignmentId", model.getAlignmentFile());
                 row.put("analysisId", model.getRowId());
 
-                Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
                 row.put("pipelineRunId", runId);
 
                 rows.add(row);
@@ -579,5 +652,20 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     private static class MiXCROutput extends DefaultPipelineStepOutput implements AnalysisStep.Output
     {
 
+    }
+
+    public static String getClonesFileName(String outputPrefix)
+    {
+        return outputPrefix + ".clones";
+    }
+
+    public static String getVDJFileName(String outputPrefix)
+    {
+        return outputPrefix + ".assemblePartial_2.vdjca.gz";
+    }
+
+    private String getOutputPrefix(String basename, String libraryId, String species)
+    {
+        return basename + "." + libraryId + "." + species;
     }
 }

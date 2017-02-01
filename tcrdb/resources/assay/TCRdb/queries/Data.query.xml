@@ -34,6 +34,22 @@
                             <fkColumnName>RowId</fkColumnName>
                         </fk>
                     </column>
+                    <column columnName="clonesFile">
+                        <columnTitle>Clones File</columnTitle>
+                        <fk>
+                            <fkDbSchema>exp</fkDbSchema>
+                            <fkTable>data</fkTable>
+                            <fkColumnName>RowId</fkColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="vdjFile">
+                        <columnTitle>VDJ File</columnTitle>
+                        <fk>
+                            <fkDbSchema>exp</fkDbSchema>
+                            <fkTable>data</fkTable>
+                            <fkColumnName>RowId</fkColumnName>
+                        </fk>
+                    </column>
                     <column columnName="stimulation">
                         <!--<fk>-->
                             <!--<fkDbSchema>laboratories</fkDbSchema>-->
@@ -82,19 +98,34 @@
                             <fkColumnName>well</fkColumnName>
                         </fk>
                     </column>
+                    <column columnName="disabled">
+                        <conditionalFormats>
+                            <conditionalFormat>
+                                <backgroundColor>FF0000</backgroundColor>
+                                <filters>
+                                    <filter operator="eq" value="true"/>
+                                </filters>
+                            </conditionalFormat>
+                        </conditionalFormats>
+                    </column>
                 </columns>
                 <buttonBarOptions position="both" includeStandardButtons="true">
+                    <includeScript>laboratory.context</includeScript>
                     <includeScript>/laboratory/assayButtons.js</includeScript>
-                    <!--<onRender>Laboratory.onAssayLoad</onRender>-->
+                    <includeScript>/tcrdb/window/ChangeStatusWindow.js</includeScript>
+                    <includeScript>/tcrdb/window/ExportDataWindow.js</includeScript>
                     <item text="More Actions" insertAfter="last">
-                        <item text="View Batches">
-                            <onClick>Laboratory.Assay.viewBatchesBtn(dataRegion, 'Data')</onClick>
-                        </item>
                         <item text="View Runs">
                             <onClick>Laboratory.Assay.viewRunsBtn(dataRegion, 'Data')</onClick>
                         </item>
                         <item text="Manage Assay">
                             <onClick>Laboratory.Assay.manageAssayBtn(dataRegion, 'Data')</onClick>
+                        </item>
+                        <item text="Change Status">
+                            <onClick>TCRdb.window.ChangeStatusWindow.buttonHandler(dataRegionName);</onClick>
+                        </item>
+                        <item text="View Alignments">
+                            <onClick>TCRdb.window.ExportDataWindow.viewAlignmentHandler(dataRegionName, arguments[0] ? arguments[0].ownerCt : null);</onClick>
                         </item>
                     </item>
                 </buttonBarOptions>

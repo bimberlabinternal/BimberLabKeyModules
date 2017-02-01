@@ -4,8 +4,48 @@
           <table tableName="" tableDbType="NOT_IN_DB">
               <tableTitle>Results By Sample</tableTitle>
               <columns>
-
+                  <column columnName="pks">
+                      <columnTitle>Primary Keys</columnTitle>
+                      <isHidden>true</isHidden>
+                      <isKeyField>true</isKeyField>
+                  </column>
+                  <column columnName="TRA_CDR3">
+                      <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=Data&amp;query.analysisId/rowid~eq=${analysisId}&amp;query.CDR3~in=${TRA_CDR3_URL}</url>
+                  </column>
+                  <column columnName="TRA_CDR3_URL">
+                      <isHidden>true</isHidden>
+                  </column>
+                  <column columnName="TRB_CDR3">
+                      <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=Data&amp;query.analysisId/rowid~eq=${analysisId}&amp;query.CDR3~in=${TRB_CDR3_URL}</url>
+                  </column>
+                  <column columnName="TRB_CDR3_URL">
+                      <isHidden>true</isHidden>
+                  </column>
+                  <column columnName="TRD_CDR3">
+                      <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=Data&amp;query.analysisId/rowid~eq=${analysisId}&amp;query.CDR3~in=${TRD_CDR3_URL}</url>
+                  </column>
+                  <column columnName="TRD_CDR3_URL">
+                      <isHidden>true</isHidden>
+                  </column>
+                  <column columnName="TRG_CDR3">
+                      <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=Data&amp;query.analysisId/rowid~eq=${analysisId}&amp;query.CDR3~in=${TRG_CDR3_URL}</url>
+                  </column>
+                  <column columnName="TRG_CDR3_URL">
+                      <isHidden>true</isHidden>
+                  </column>
               </columns>
+              <buttonBarOptions alwaysShowRecordSelectors="true" includeStandardButtons="true">
+                  <includeScript>/ldk/LDK.context</includeScript>
+                  <includeScript>/tcrdb/window/ExportDataWindow.js</includeScript>
+                  <item insertPosition="end" text="More Actions">
+                      <item text="View Alignments">
+                          <onClick>TCRdb.window.ExportDataWindow.viewAlignmentHandler(dataRegionName, arguments[0] ? arguments[0].ownerCt : null);</onClick>
+                      </item>
+                      <!--<item text="Export Supporting Reads">-->
+                          <!--<onClick>TCRdb.window.ExportDataWindow.exportReadsHandler(dataRegionName, arguments[0] ? arguments[0].ownerCt : null);</onClick>-->
+                      <!--</item>-->
+                  </item>
+              </buttonBarOptions>
           </table>
       </tables>
   </metadata>
