@@ -268,6 +268,7 @@ DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerPermission.java
 DISCVR/variantdb/src/org/labkey/variantdb/security/VariantManagerRole.java -text
 DISCVR/variantdb/webapp/WEB-INF/variantdb/variantdbContext.xml -text
 cnprcEHRModules/build.gradle -text
+cnprcEHRModules/cnprc_billing/build.gradle -text
 cnprcEHRModules/cnprc_billing/cnprc_billing.iml -text
 cnprcEHRModules/cnprc_billing/module.properties -text
 cnprcEHRModules/cnprc_billing/resources/etls/account.xml -text
@@ -472,6 +473,7 @@ cnprcEHRModules/cnprc_billing/src/org/labkey/cnprc_billing/CNPRC_BillingControll
 cnprcEHRModules/cnprc_billing/src/org/labkey/cnprc_billing/CNPRC_BillingModule.java -text
 cnprcEHRModules/cnprc_billing/src/org/labkey/cnprc_billing/CNPRC_BillingSchema.java -text
 cnprcEHRModules/cnprc_complianceAndTraining/CNPRC_ComplianceAndTraining.iml -text
+cnprcEHRModules/cnprc_complianceAndTraining/build.gradle -text
 cnprcEHRModules/cnprc_complianceAndTraining/module.properties -text
 cnprcEHRModules/cnprc_complianceAndTraining/resources/etls/completion_dates.xml -text
 cnprcEHRModules/cnprc_complianceAndTraining/resources/etls/employees.xml -text
@@ -504,6 +506,7 @@ cnprcEHRModules/cnprc_complianceAndTraining/src/org/labkey/cnprc_complianceandtr
 cnprcEHRModules/cnprc_complianceAndTraining/src/org/labkey/cnprc_complianceandtraining/CNPRC_ComplianceAndTrainingModule.java -text
 cnprcEHRModules/cnprc_complianceAndTraining/src/org/labkey/cnprc_complianceandtraining/CNPRC_ComplianceAndTrainingSchema.java -text
 cnprcEHRModules/cnprc_genetics/CNPRC_Genetics.iml -text
+cnprcEHRModules/cnprc_genetics/build.gradle -text
 cnprcEHRModules/cnprc_genetics/build.xml -text
 cnprcEHRModules/cnprc_genetics/module.properties -text
 cnprcEHRModules/cnprc_genetics/resources/queries/assay/General/Genetics/Data.query.xml -text
@@ -518,6 +521,7 @@ cnprcEHRModules/cnprc_genetics/src/org/labkey/cnprc_genetics/CNPRC_GeneticsContr
 cnprcEHRModules/cnprc_genetics/src/org/labkey/cnprc_genetics/CNPRC_GeneticsModule.java -text
 cnprcEHRModules/cnprc_pdl/CNPRC_PDL-API.iml -text
 cnprcEHRModules/cnprc_pdl/CNPRC_PDL.iml -text
+cnprcEHRModules/cnprc_pdl/build.gradle -text
 cnprcEHRModules/cnprc_pdl/module.properties -text
 cnprcEHRModules/cnprc_pdl/resources/etls/SRL_Billing_Contact.xml -text
 cnprcEHRModules/cnprc_pdl/resources/etls/SRL_Clients.xml -text
@@ -1451,6 +1455,7 @@ onprcEHRModules/treatmentETL/resources/queries/study/treatmentScheduleUpdate.sql
 onprcEHRModules/treatmentETL/resources/queries/study/treatmenttodrug.sql -text
 snprcEHRModules/build.gradle -text
 snprcEHRModules/snprc_genetics/SNPRC_Genetics.iml -text
+snprcEHRModules/snprc_genetics/build.gradle -text
 snprcEHRModules/snprc_genetics/module.properties -text
 snprcEHRModules/snprc_genetics/resources/queries/assay/General/Gene[!!-~]Expression/Data.query.xml -text
 snprcEHRModules/snprc_genetics/resources/queries/assay/General/Gene[!!-~]Expression/Data/.qview.xml -text
