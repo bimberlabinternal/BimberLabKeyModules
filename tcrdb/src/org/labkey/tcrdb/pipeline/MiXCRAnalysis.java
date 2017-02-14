@@ -1,6 +1,9 @@
 package org.labkey.tcrdb.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
+import htsjdk.samtools.fastq.FastqReader;
+import htsjdk.samtools.fastq.FastqWriter;
+import htsjdk.samtools.fastq.FastqWriterFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.json.JSONArray;
@@ -19,6 +22,7 @@ import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.FileResource;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
+import org.labkey.api.sequenceanalysis.model.ReadData;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractAnalysisStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractPipelineStep;
@@ -128,60 +132,120 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         output.addInput(inputBam, "Input BAM");
 
         getPipelineCtx().getLogger().info("creating FASTQs from BAM: " + inputBam.getName());
-        SimpleScriptWrapper wrapper = new SimpleScriptWrapper(getPipelineCtx().getLogger());
-
-        File bamScript = getScript("external/exportMappedReads.sh");
-        File forwardFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R1.fastq.gz");
-        output.addIntermediateFile(forwardFq, "FASTQ Data");
-        File reverseFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R2.fastq.gz");
-
-        wrapper.addToEnvironment("JAVA", SequencePipelineService.get().getJavaFilepath());
-        wrapper.addToEnvironment("SAMTOOLS", SequencePipelineService.get().getExeForPackage("SAMTOOLSPATH", "samtools").getPath());
-        wrapper.addToEnvironment("PICARD", PicardWrapper.getPicardJar().getPath());
-        wrapper.setWorkingDir(outputDir);
-        wrapper.execute(Arrays.asList("bash", bamScript.getPath(), inputBam.getPath(), forwardFq.getPath(), reverseFq.getPath()));
-
-        //abort if no reads present
-        if (!forwardFq.exists() || !hasLines(forwardFq))
+        File forwardFq;
+        File reverseFq;
+        if (rs.getReadData() != null)
         {
-            getPipelineCtx().getLogger().info("no mapped reads found, aborting: " + inputBam.getName());
-            if (forwardFq.exists())
+            getPipelineCtx().getLogger().debug("using raw readset data instead of BAM");
+            if (rs.getReadData().size() == 1)
             {
-                forwardFq.delete();
-            }
-            return output;
-        }
-        else
-        {
-            getPipelineCtx().getLogger().info("calculating FASTQ metrics:");
-            Map<String, Object> metricsMap = SequencePipelineService.get().getQualityMetrics(forwardFq, getPipelineCtx().getJob().getLogger());
-            for (String metricName : metricsMap.keySet())
-            {
-                getPipelineCtx().getLogger().debug(metricName + ": " + metricsMap.get(metricName));
-            }
-        }
-
-        //only add if has reads
-        if (reverseFq.exists() && hasLines(reverseFq))
-        {
-            output.addIntermediateFile(reverseFq, "FASTQ Data");
-            SequencePipelineService.get().getQualityMetrics(reverseFq, getPipelineCtx().getJob().getLogger());
-        }
-        else
-        {
-            if (reverseFq.exists())
-            {
-                getPipelineCtx().getLogger().info("deleting empty file: " + reverseFq.getName());
-                reverseFq.delete();
+                ReadData rd = rs.getReadData().get(0);
+                forwardFq = rd.getFile1();
+                reverseFq = rd.getFile2();
             }
             else
             {
-                getPipelineCtx().getLogger().info("no reverse reads found");
+                getPipelineCtx().getLogger().debug("concatenating multiple ReadData together into single FASTQ");
+
+                forwardFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R1.fastq.gz");
+                output.addIntermediateFile(forwardFq, "FASTQ Data");
+
+                reverseFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R2.fastq.gz");
+                output.addIntermediateFile(reverseFq, "FASTQ Data");
+
+                FastqWriterFactory fact = new FastqWriterFactory();
+                fact.setUseAsyncIo(true);
+                try (FastqWriter w1 = fact.newWriter(forwardFq);FastqWriter w2 = fact.newWriter(reverseFq))
+                {
+                    for (ReadData rd : rs.getReadData())
+                    {
+                        try (FastqReader reader = new FastqReader(rd.getFile1()))
+                        {
+                            while (reader.hasNext())
+                            {
+                                w1.write(reader.next());
+                            }
+                        }
+
+                        if (rd.getFile2() != null)
+                        {
+                            try (FastqReader reader = new FastqReader(rd.getFile2()))
+                            {
+                                while (reader.hasNext())
+                                {
+                                    w2.write(reader.next());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!hasLines(reverseFq))
+                {
+                    getPipelineCtx().getLogger().debug("deleting empty file: " + reverseFq.getPath());
+                    reverseFq.delete();
+                    reverseFq = null;
+                }
+            }
+        }
+        else
+        {
+            SimpleScriptWrapper wrapper = new SimpleScriptWrapper(getPipelineCtx().getLogger());
+
+            File bamScript = getScript("external/exportMappedReads.sh");
+            forwardFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R1.fastq.gz");
+            output.addIntermediateFile(forwardFq, "FASTQ Data");
+            reverseFq = new File(outputDir, FileUtil.getBaseName(inputBam) + "-R2.fastq.gz");
+
+            wrapper.addToEnvironment("JAVA", SequencePipelineService.get().getJavaFilepath());
+            wrapper.addToEnvironment("SAMTOOLS", SequencePipelineService.get().getExeForPackage("SAMTOOLSPATH", "samtools").getPath());
+            wrapper.addToEnvironment("PICARD", PicardWrapper.getPicardJar().getPath());
+            wrapper.setWorkingDir(outputDir);
+            wrapper.execute(Arrays.asList("bash", bamScript.getPath(), inputBam.getPath(), forwardFq.getPath(), reverseFq.getPath()));
+
+            //abort if no reads present
+            if (!forwardFq.exists() || !hasLines(forwardFq))
+            {
+                getPipelineCtx().getLogger().info("no mapped reads found, aborting: " + inputBam.getName());
+                if (forwardFq.exists())
+                {
+                    forwardFq.delete();
+                }
+                return output;
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("calculating FASTQ metrics:");
+                Map<String, Object> metricsMap = SequencePipelineService.get().getQualityMetrics(forwardFq, getPipelineCtx().getJob().getLogger());
+                for (String metricName : metricsMap.keySet())
+                {
+                    getPipelineCtx().getLogger().debug(metricName + ": " + metricsMap.get(metricName));
+                }
             }
 
-            reverseFq = null;
+            //only add if has reads
+            if (reverseFq.exists() && hasLines(reverseFq))
+            {
+                output.addIntermediateFile(reverseFq, "FASTQ Data");
+                SequencePipelineService.get().getQualityMetrics(reverseFq, getPipelineCtx().getJob().getLogger());
+            }
+            else
+            {
+                if (reverseFq.exists())
+                {
+                    getPipelineCtx().getLogger().info("deleting empty file: " + reverseFq.getName());
+                    reverseFq.delete();
+                }
+                else
+                {
+                    getPipelineCtx().getLogger().info("no reverse reads found");
+                }
+
+                reverseFq = null;
+            }
         }
 
+        //now run mixcr
         String locusString = getProvider().getParameterByName(LOCI).extractValue(getPipelineCtx().getJob(), getProvider(), String.class);
         if (locusString == null)
         {
