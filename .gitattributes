@@ -769,6 +769,7 @@ onprcEHRModules/GeneticsCore/GeneticsCore.iml -text
 onprcEHRModules/GeneticsCore/build.gradle -text
 onprcEHRModules/GeneticsCore/build.xml -text
 onprcEHRModules/GeneticsCore/distributions/prime-seq-modules.xml -text
+onprcEHRModules/GeneticsCore/distributions/prime-seq-modules/build.gradle -text
 onprcEHRModules/GeneticsCore/module.properties -text
 onprcEHRModules/GeneticsCore/resources/external/amplicon_standard_curve.R -text
 onprcEHRModules/GeneticsCore/resources/external/comb-p/Dockerfile -text
