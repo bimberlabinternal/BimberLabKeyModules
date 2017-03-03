@@ -3,6 +3,7 @@
        <column name="analysisId" />
        <column name="sampleName" />
        <column name="subjectId" />
+       <column name="date" />
        <column name="libraryId/label"/>
        <column name="locus" />
        <column name="vHit" />

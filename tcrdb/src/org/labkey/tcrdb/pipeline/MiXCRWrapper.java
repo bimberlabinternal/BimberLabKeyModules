@@ -69,8 +69,12 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         doAssemblePartial(alignOut, partialAssembleOut1, logFile);
 
         getLogger().info("assembling partial reads, round 2");
-        File partialAssembleOut2 = new File(getOutputDir(fq1), MiXCRAnalysis.getVDJFileName(outputPrefix));
+        File partialAssembleOut2 = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix));
         doAssemblePartial(partialAssembleOut1, partialAssembleOut2, logFile);
+
+        //getLogger().info("extend alignments");
+        //File extendAlignmentsOut = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix));
+        //doExtendAlignments(partialAssembleOut2, extendAlignmentsOut, logFile);
 
         getLogger().info("assembling final reads");
         File assembleOut = new File(getOutputDir(fq1), MiXCRAnalysis.getClonesFileName(outputPrefix));
@@ -81,16 +85,9 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         assembleArgs.add("-r");
         assembleArgs.add(logFile.getPath());
 
-        File indexFile = new File(getOutputDir(fq1), outputPrefix + ".assemblePartial_2.index");
-        if (indexFile.exists())
-        {
-            assembleArgs.add("--index");
-            assembleArgs.add(indexFile.getPath());
-        }
-        else
-        {
-            getLogger().debug("index file not found, omitting argument, expected: " + indexFile.getPath());
-        }
+        File indexFile = new File(getOutputDir(fq1), MiXCRAnalysis.getClonesFileName(outputPrefix) + ".index");
+        assembleArgs.add("--index");
+        assembleArgs.add(indexFile.getPath());
 
         assembleArgs.add("-OaddReadsCountOnClustering=true");
         assembleArgs.add("-ObadQualityThreshold=10");
