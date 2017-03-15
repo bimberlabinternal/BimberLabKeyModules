@@ -4,5 +4,5 @@ dependencies {
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:SequenceAnalysis", depProjectConfig: "apiCompile")
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:laboratory", depProjectConfig: "apiCompile")
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:LDK", depProjectConfig: "apiCompile")
-    external files(project.file("lib/mixcr.jar"))
+   external "com.milaboratory:mixcr:2.0.3"
 }
