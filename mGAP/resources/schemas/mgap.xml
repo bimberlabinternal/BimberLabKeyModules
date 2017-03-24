@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+
+ * Copyright (c) 2015 LabKey Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+
+ -->
+<tables xmlns="http://labkey.org/data/xml">
+    <table tableName="animalMapping" tableDbType="TABLE" useColumnOrder="true">
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Animal ID Mapping</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="subjectname">
+                <columnTitle>Subject Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="externalAlias">
+                <columnTitle>External Alias</columnTitle>
+                <!--<nullable>false</nullable>-->
+                <isUserEditable>false</isUserEditable>
+            </column>
+            <column columnName="container">
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+</tables>

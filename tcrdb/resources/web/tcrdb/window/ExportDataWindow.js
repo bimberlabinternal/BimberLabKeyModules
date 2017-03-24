@@ -115,7 +115,7 @@ Ext4.define('TCRdb.window.ExportDataWindow', {
                 newForm.appendChild(newElement);
             }
 
-            if (cdr3Equals){
+            if (readContains){
                 var newElement = document.createElement('input');
                 newElement.setAttribute('name', 'readContains');
                 newElement.setAttribute('type', 'hidden');
@@ -130,8 +130,10 @@ Ext4.define('TCRdb.window.ExportDataWindow', {
             var dataRegion = LABKEY.DataRegions[this.dataRegionName];
             params.schemaName = dataRegion.schemaName;
             params[this.searchKey] = this.selected;
-            params.cdr3Equals = cdr3Equals;
-            params.readContains = readContains;
+            if (cdr3Equals)
+                params.cdr3Equals = cdr3Equals;
+            if (readContains)
+                params.readContains = readContains;
 
             window.open(LABKEY.ActionURL.buildURL('tcrdb', this.actionName, null, params));
         }

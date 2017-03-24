@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>Demographics</name>
+    <description>EHR Demographics Data</description>
+    <transforms>
+        <transform id="step1" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="study" queryName="Demographics" remoteSource="EHR"/>
+            <destination schemaName="laboratory" queryName="subjects" targetOption="merge">
+                <columnTransforms>
+                    <column source="Id" target="subjectname"/>
+                </columnTransforms>
+                <alternateKeys>
+                    <column name="subjectname"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+    </transforms>
+    <schedule>
+        <poll interval="12h"/>
+    </schedule>
+</etl>

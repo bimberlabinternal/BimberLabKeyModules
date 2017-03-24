@@ -1,0 +1,57 @@
+<folderType xmlns="http://labkey.org/data/xml/folderType">
+    <name>mGAP</name>
+    <description>The default folder layout for mGAP</description>
+    <folderTabs>
+        <folderTab>
+            <name>overview</name>
+            <caption>Overview</caption>
+            <selectors>
+                <selector>
+                    <controller>sequenceanalysis</controller>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>SequenceAnalysis</name>
+                    <location>body</location>
+                </webPart>
+                <webPart>
+                    <name>Lab Tools</name>
+                    <location>right</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>dataBrowser</name>
+            <caption>Data Browser</caption>
+            <selectors>
+                <selector>
+                    <view>dataBrowser</view>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>Laboratory Data Browser</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+    </folderTabs>
+    <modules>
+        <moduleName>mGAP</moduleName>
+        <moduleName>JBrowse</moduleName>
+        <moduleName>SequenceAnalysis</moduleName>
+        <moduleName>Laboratory</moduleName>
+        <moduleName>Query</moduleName>
+        <moduleName>Pipeline</moduleName>
+        <moduleName>Core</moduleName>
+    </modules>
+    <defaultModule>Core</defaultModule>
+    <forceAssayUploadIntoWorkbooks>true</forceAssayUploadIntoWorkbooks>
+    <folderIconPath>/sequenceanalysis/icons/dna_folder.png</folderIconPath>
+</folderType>

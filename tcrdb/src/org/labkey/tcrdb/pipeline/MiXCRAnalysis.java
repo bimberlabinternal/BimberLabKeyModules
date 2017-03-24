@@ -57,8 +57,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -595,7 +597,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 row.put("category", null);
                 row.put("stimulation", null);
 
-                if (line.length != (FIELDS.size() + 2))  //this includes 2 fields not imported into DB
+                if (line.length != (FIELDS.size() + 3))  //this includes 3 fields not imported into DB
                 {
                     getPipelineCtx().getLogger().warn(lineNo + ": line length not " + FIELDS.size() + ".  was: " + line.length);
                     getPipelineCtx().getLogger().warn(StringUtils.join(line, ";"));
@@ -677,6 +679,45 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         catch (IOException e)
         {
             throw new PipelineJobException(e);
+        }
+
+        //inspect for TRD, redundant w/ TRA:
+        {
+            getPipelineCtx().getLogger().info("inspecting for redundant TRA/TRD calls");
+            Map<String, Set<String>> resultsByLocus = new HashMap<>();
+            for (Map<String, Object> row : rows)
+            {
+                String key = row.get("libraryId") + "-" + row.get("locus");
+                if (!resultsByLocus.containsKey(key))
+                {
+                    resultsByLocus.put(key, new HashSet<>());
+                }
+
+                resultsByLocus.get(key).add(String.valueOf(row.get("CDR3")));
+            }
+
+            List<Map<String, Object>> newRows = new ArrayList<>();
+            for (Map<String, Object> row : rows)
+            {
+                if ("TRD".equals(row.get("locus")))
+                {
+                    String key = row.get("libraryId") + "-TRA";
+                    if (resultsByLocus.containsKey(key) && resultsByLocus.get(key).contains(row.get("CRD3")))
+                    {
+                        getPipelineCtx().getLogger().debug("skipping redundant TRD: " + row.get("CDR3"));
+                    }
+                    else
+                    {
+                        newRows.add(row);
+                    }
+                }
+                else
+                {
+                    newRows.add(row);
+                }
+            }
+
+            rows = newRows;
         }
 
         if (getProvider().getParameterByName(FLAG_MISSENSE).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class, false))

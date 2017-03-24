@@ -16,10 +16,8 @@ import org.apache.commons.math3.stat.StatUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ConvertHelper;
-import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
@@ -36,6 +34,7 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.security.User;
+import org.labkey.api.sequenceanalysis.PedigreeRecord;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
@@ -59,13 +58,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -205,7 +200,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
                 morganWriter.write("*****" + '\n');
                 for (PedigreeRecord pd : pedigreeRecords)
                 {
-                    List<String> vals = Arrays.asList(pd.subjectName, (StringUtils.isEmpty(pd.father) ? "0" : pd.father), (StringUtils.isEmpty(pd.mother) ? "0" : pd.mother), ("m".equals(pd.gender) ? "1" : "f".equals(pd.gender) ? "2" : "0"), "0");
+                    List<String> vals = Arrays.asList(pd.getSubjectName(), (StringUtils.isEmpty(pd.getFather()) ? "0" : pd.getFather()), (StringUtils.isEmpty(pd.getMother()) ? "0" : pd.getMother()), ("m".equals(pd.getGender()) ? "1" : "f".equals(pd.getGender()) ? "2" : "0"), "0");
                     morganWriter.write(StringUtils.join(vals, " ") + '\n');
                     gatkWriter.write("FAM01 " + StringUtils.join(vals, " ") + '\n');
                 }
@@ -805,11 +800,11 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     }
 
                     PedigreeRecord r = new PedigreeRecord();
-                    r.subjectName = tokens[1];
-                    r.father = "0".equals(tokens[2]) ? null : tokens[2];
-                    r.mother = "0".equals(tokens[3]) ? null : tokens[3];
+                    r.setSubjectName(tokens[1]);
+                    r.setFather("0".equals(tokens[2]) ? null : tokens[2]);
+                    r.setMother("0".equals(tokens[3]) ? null : tokens[3]);
 
-                    ret.put(r.subjectName, r);
+                    ret.put(r.getSubjectName(), r);
                 }
 
                 return ret;
@@ -1253,96 +1248,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
         }
     }
 
-    public static class PedigreeRecord
-    {
-        String subjectName;
-        String father;
-        String mother;
-        String gender;
-
-        public PedigreeRecord()
-        {
-
-        }
-
-        /**
-         * returns the first order relatives present in the passed list.
-         */
-        public Set<String> getRelativesPresent(Collection<PedigreeRecord> animals)
-        {
-            Set<String> ret = new HashSet<>();
-            for (PedigreeRecord potentialRelative : animals)
-            {
-                if (isParentOf(potentialRelative) || isChildOf(potentialRelative))
-                {
-                    ret.add(potentialRelative.subjectName);
-                }
-            }
-
-            return ret;
-        }
-
-        public boolean isParentOf(PedigreeRecord potentialOffspring)
-        {
-            return subjectName.equals(potentialOffspring.father) || subjectName.equals(potentialOffspring.mother);
-        }
-
-        public boolean isChildOf(PedigreeRecord potentialParent)
-        {
-            if (father != null && father.equals(potentialParent.subjectName))
-            {
-                return true;
-            }
-            else if (mother != null && mother.equals(potentialParent.subjectName))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public String getSubjectName()
-        {
-            return subjectName;
-        }
-
-        public void setSubjectName(String subjectName)
-        {
-            this.subjectName = subjectName;
-        }
-
-        public String getFather()
-        {
-            return father;
-        }
-
-        public void setFather(String father)
-        {
-            this.father = father;
-        }
-
-        public String getMother()
-        {
-            return mother;
-        }
-
-        public void setMother(String mother)
-        {
-            this.mother = mother;
-        }
-
-        public String getGender()
-        {
-            return gender;
-        }
-
-        public void setGender(String gender)
-        {
-            this.gender = gender;
-        }
-    }
-
-    public static List<PedigreeRecord> generatePedigree(PipelineJob job, JSONObject params)
+    private static List<PedigreeRecord> generatePedigree(PipelineJob job, JSONObject params)
     {
         Set<String> sampleNames = new HashSet<>();
         Map<String, String> subjectToReadsetNameMap = new HashMap<>();
@@ -1360,180 +1266,51 @@ public class ImputationAnalysis implements SequenceOutputHandler
                     {
                         //try to find this in the subjects table
                         String[] tokens = set.getString(j).split("\\|\\|");
-                        if (new TableSelector(subjectTable, new SimpleFilter(FieldKey.fromString("subjectname"), tokens[1]), null).exists())
-                        {
-                            sampleNames.add(tokens[1]);
-                        }
-                        else
-                        {
-                            //if not, see if it matches a readset and resolve subject from there
-                            TableSelector ts = new TableSelector(readsetTable, PageFlowUtil.set("subjectId"), new SimpleFilter(FieldKey.fromString("name"), tokens[1]), null);
-                            String subjectId = ts.getObject(String.class);
-                            if (subjectId != null)
-                            {
-                                job.getLogger().info("resolving readset: " + set.getString(0) + " to subject: " + subjectId);
-                                sampleNames.add(subjectId);
-                                if (subjectToReadsetNameMap.containsKey(subjectId) && !subjectToReadsetNameMap.get(subjectId).equals(set.getString(0)))
-                                {
-                                    job.getLogger().error("more than one readset present using the same subject ID.  this will cause an inaccurate or ineference genotype base not foucomplete pedigree.");
-                                }
-
-                                subjectToReadsetNameMap.put(subjectId, set.getString(0));
-                            }
-                        }
+                        resolveSubject(tokens[0], set.getString(j), sampleNames, subjectToReadsetNameMap, subjectTable, readsetTable, job);
                     }
                 }
             }
         }
 
-        final List<PedigreeRecord> pedigreeRecords = new ArrayList<>();
-        TableSelector ts = new TableSelector(subjectTable, PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), sampleNames, CompareType.IN), null);
-        ts.forEach(new Selector.ForEachBlock<ResultSet>()
+        String additionalSubjects = StringUtils.trimToNull(params.optString("additionalSubjects"));
+        if (additionalSubjects != null)
         {
-            @Override
-            public void exec(ResultSet rs) throws SQLException
+            job.getLogger().info("will attempt to include the following additional IDs in the pedigree: " + additionalSubjects);
+            String[] subjects = additionalSubjects.split(",");
+            for (String s : subjects)
             {
-                PedigreeRecord pedigree = new PedigreeRecord();
-                pedigree.subjectName = rs.getString("subjectname");
-                pedigree.father = rs.getString("father");
-                pedigree.mother = rs.getString("mother");
-                pedigree.gender = rs.getString("gender");
-                if (!StringUtils.isEmpty(pedigree.subjectName))
-                    pedigreeRecords.add(pedigree);
-            }
-        });
-
-        //insert record for any missing parents:
-        Set<String> subjects = new HashSet<>();
-        for (PedigreeRecord p : pedigreeRecords)
-        {
-            subjects.add(p.subjectName);
-        }
-
-        job.getLogger().info("initial subjects: " + pedigreeRecords.size());
-        if (params.optBoolean("includeAncestors", false))
-        {
-            job.getLogger().info("will attempt to include all ancestors");
-        }
-
-        Set<String> distinctSubjects = new HashSet<>();
-        for (PedigreeRecord p : pedigreeRecords)
-        {
-            distinctSubjects.add(p.subjectName);
-        }
-
-        List<PedigreeRecord> newRecords = new ArrayList<>();
-        for (PedigreeRecord p : pedigreeRecords)
-        {
-            appendParents(job.getUser(), job.getContainer(), distinctSubjects, p, newRecords, params.optBoolean("includeAncestors", false));
-        }
-        pedigreeRecords.addAll(newRecords);
-
-        Collections.sort(pedigreeRecords, new Comparator<PedigreeRecord>()
-        {
-            @Override
-            public int compare(PedigreeRecord o1, PedigreeRecord o2)
-            {
-                if (o1.subjectName.equals(o2.father) || o1.subjectName.equals(o2.mother))
-                    return -1;
-                else if (o2.subjectName.equals(o1.father) || o2.subjectName.equals(o1.mother))
-                    return 1;
-                else if (o1.mother == null && o1.father == null)
-                    return -1;
-                else if (o2.mother == null && o2.father == null)
-                    return 1;
-
-                return o1.subjectName.compareTo(o2.subjectName);
-            }
-        });
-
-        //morgan doesnt allow IDs with only one parent, so add a dummy ID
-        List<PedigreeRecord> toAdd = new ArrayList<>();
-        for (PedigreeRecord pd : pedigreeRecords)
-        {
-            if (StringUtils.isEmpty(pd.father) && !StringUtils.isEmpty(pd.mother))
-            {
-                pd.father = "xf" + pd.subjectName;
-                PedigreeRecord pr = new PedigreeRecord();
-                pr.subjectName = pd.father;
-                pr.gender = "m";
-                toAdd.add(pr);
-            }
-            else if (!StringUtils.isEmpty(pd.father) && StringUtils.isEmpty(pd.mother))
-            {
-                pd.mother = "xm" + pd.subjectName;
-                PedigreeRecord pr = new PedigreeRecord();
-                pr.subjectName = pd.mother;
-                pr.gender = "f";
-                toAdd.add(pr);
+                resolveSubject(s, s, sampleNames, subjectToReadsetNameMap, subjectTable, readsetTable, job);
             }
         }
 
-        if (!toAdd.isEmpty())
-        {
-            job.getLogger().info("adding " + toAdd.size() + " subjects to handle IDs with only one parent known");
-            pedigreeRecords.addAll(toAdd);
-        }
+        List<PedigreeRecord> ret = SequenceAnalysisService.get().generatePedigree(sampleNames, job.getContainer(), job.getUser());
+        job.getLogger().info("total subjects: " + ret.size());
 
-        job.getLogger().info("total subjects: " + pedigreeRecords.size());
-
-        return pedigreeRecords;
+        return ret;
     }
 
-    private static void appendParents(User u, Container c, Set<String> distinctSubjects, PedigreeRecord p, List<PedigreeRecord> newRecords, boolean includeAncestors)
+    private static void resolveSubject(String id, String setName, Set<String> sampleNames, Map<String, String> subjectToReadsetNameMap, TableInfo subjectTable, TableInfo readsetTable, PipelineJob job)
     {
-        if (p.father != null && !distinctSubjects.contains(p.father))
+        if (new TableSelector(subjectTable, new SimpleFilter(FieldKey.fromString("subjectname"), id), null).exists())
         {
-            //lookup ancestors
-            PedigreeRecord pr = null;
-            if (includeAncestors)
-            {
-                TableInfo subjectTable = QueryService.get().getUserSchema(u, (c.isWorkbook() ? c.getParent() : c), "laboratory").getTable("subjects");
-                TableSelector ts = new TableSelector(subjectTable, PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.father), null);
-                pr = ts.getObject(PedigreeRecord.class);
-                if (pr.gender == null)
-                {
-                    pr.gender = "m";
-                }
-            }
-
-            if (pr == null)
-            {
-                pr = new PedigreeRecord();
-                pr.subjectName = p.father;
-                pr.gender = "m";
-            }
-
-            newRecords.add(pr);
-            distinctSubjects.add(p.father);
-            appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
+            sampleNames.add(id);
         }
-
-        if (p.mother != null && !distinctSubjects.contains(p.mother))
+        else
         {
-            //lookup ancestors
-            PedigreeRecord pr = null;
-            if (includeAncestors)
+            //if not, see if it matches a readset and resolve subject from there
+            TableSelector ts = new TableSelector(readsetTable, PageFlowUtil.set("subjectId"), new SimpleFilter(FieldKey.fromString("name"), id), null);
+            String subjectId = ts.getObject(String.class);
+            if (subjectId != null)
             {
-                TableInfo subjectTable = QueryService.get().getUserSchema(u, (c.isWorkbook() ? c.getParent() : c), "laboratory").getTable("subjects");
-                TableSelector ts = new TableSelector(subjectTable, PageFlowUtil.set("subjectname", "mother", "father", "gender"), new SimpleFilter(FieldKey.fromString("subjectname"), p.mother), null);
-                pr = ts.getObject(PedigreeRecord.class);
-                if (pr.gender == null)
+                job.getLogger().info("resolving readset: " + setName + " to subject: " + subjectId);
+                sampleNames.add(subjectId);
+                if (subjectToReadsetNameMap.containsKey(subjectId) && !subjectToReadsetNameMap.get(subjectId).equals(setName))
                 {
-                    pr.gender = "f";
+                    job.getLogger().error("more than one readset present using the same subject ID.  this will cause an inaccurate or ineference genotype base not foucomplete pedigree.");
                 }
-            }
 
-            if (pr == null)
-            {
-                pr = new PedigreeRecord();
-                pr.subjectName = p.mother;
-                pr.gender = "f";
+                subjectToReadsetNameMap.put(subjectId, setName);
             }
-
-            newRecords.add(pr);
-            distinctSubjects.add(p.mother);
-            appendParents(u, c, distinctSubjects, pr, newRecords, includeAncestors);
         }
     }
 }

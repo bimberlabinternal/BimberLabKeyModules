@@ -135,6 +135,12 @@ public class TCRdbController extends SpringActionController
                 }
             }, AssayRecord.class);
 
+            if (VDJMap.isEmpty())
+            {
+                errors.reject(ERROR_MSG, "No matching rows found for IDs: " + StringUtils.join(rowIds, ","));
+                return new SpringErrorView(errors);
+            }
+
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
             for (File f : VDJMap.keySet())
             {

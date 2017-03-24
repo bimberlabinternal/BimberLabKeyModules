@@ -18,7 +18,7 @@
                         style: 'padding-bottom: 10px;',
                         fieldDefaults: {
                             width: 400,
-                            labelWidth: 180
+                            labelWidth: 200
                         }
                     },
                     items: [{
@@ -116,10 +116,12 @@
                     defaults: {
                         border: false
                     },
+                    title: 'Instructions',
                     items: [{
-                        title: 'Instructions',
-                        html: 'This allows you to perform genotype imputation on the selected VCF files.  This is not currently designed to be a very end-user friendly UI.  It will capture parameters, most of which are passed directly to the tools that are run.  For each field, hover over the question mark for more information.  You will need to provide 2 VCF files, one with the framework marker genotypes and one with dense markers.  You can then choose any number of combinations of samples to run, choosing which animals to select from each VCF.',
-                        style: 'padding-bottom: 10px;'
+                        html: 'This allows you to perform genotype imputation on the selected VCF files.  There are two ways to use this form.  If running a single imputation scenario (typical for production), fill out the fields below.  If your goal is to compare many permutations of different markers or sample combinations you can also upload an excel template of iterations using the bottom section.',
+                        style: 'padding-bottom: 10px;',
+                        width: 1000,
+                        border: false
                     },{
                         xtype: 'textfield',
                         fieldLabel: 'Job Name',
@@ -146,13 +148,68 @@
                         ]
                     }]
                 },{
-                    title: 'Step 1: Markers',
-                    minHeight: 200,
+                    title: 'Imputation Parameters',
+                    minHeight: 500,
                     xtype: 'form',
                     defaults: {
                         border: false
                     },
+                    fieldDefaults: {
+                        width: 400,
+                        labelWidth: 200
+                    },
                     items: [{
+                        html: 'For imputation, some of the samples should have comprehensive genotypes, while some should have sparse genotyping.  Use the grid below to separate which samples are complete.  Note: this step is largely added for the purposes of testing.  Once complete, each target will be compared against the original file.  If that original VCF contained complete genotypes, this will be used to calculate accuracy.',
+                        style: 'padding-bottom: 10px;',
+                        width: 1000
+                    }, {
+                        xtype: 'checkbox',
+                        fieldLabel: 'Skip Mendelian Check',
+                        name: 'skipMendelianCheck'
+                    }, {
+                        xtype: 'radiogroup',
+                        fieldLabel: 'Map Type',
+                        name: 'mapType',
+                        defaults: {
+                            name: 'mapType',
+                            xtype: 'radio'
+                        },
+                        items: [{
+                            inputValue: 'physical',
+                            boxLabel: 'Physical Map',
+                            checked: true
+                        }]
+                    }, {
+                        xtype: 'textarea',
+                        fieldLabel: 'Additional Ids For Pedigree',
+                        helpPopup: 'If provided, these IDs (and parents) will be included in the pedigree files generated',
+                        name: 'additionalSubjects',
+                        height: 200
+                    }, {
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Dense Marker Batch Size',
+                        name: 'denseMarkerBatchSize',
+                        value: LABKEY.ActionURL.getParameter('denseMarkerBatchSize') || 2500
+                    }, {
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Min Genotype Quality',
+                        name: 'minGenotypeQual',
+                        value: LABKEY.ActionURL.getParameter('minGenotypeQual') || '20'
+                    }, {
+                        xtype: 'ldk-integerfield',
+                        fieldLabel: 'Min Genotype Depth',
+                        name: 'minGenotypeDepth',
+                        value: LABKEY.ActionURL.getParameter('minGenotypeDepth') || '10'
+                    }, {
+                        html: 'The following parameters can be overridden per sample set.  If the set does not explicitly set a value, these will be used.  Markers are supplied as BED files.  Each BED file must have been previously uploaded as a sequence output into the system.  You can enter the Data ID (field from the table that globally identifies this file) into the box below.',
+                        style: 'padding-bottom: 20px;padding-top: 20px;',
+                        width: 1000
+                    }, {
+                        xtype: 'textfield',
+                        fieldLabel: 'Call Method',
+                        name: 'callMethod',
+                        value: LABKEY.ActionURL.getParameter('callMethod') || '2 0.8 0.9'
+                    },{
                         xtype: 'ldk-expdatafield',
                         fieldLabel: 'Framework Markers File',
                         allowBlank: false,
@@ -182,13 +239,14 @@
                         value: LABKEY.ActionURL.getParameter('blacklistFile')
                     }]
                 },{
-                    title: 'Step 2: Pedigree',
+                    title: 'Pedigree',
                     defaults: {
                         border: false
                     },
                     items: [{
-                        html: 'This step uses pedigree information stored in the Laboratory module\'s subjects table.  Please review the information below.  If it is not correct, imputation will not work properly.',
-                        style: 'padding-bottom: 10px;'
+                        html: 'This tool uses pedigree information stored in the Laboratory module\'s subjects table.  Please review the information below.  If it is not correct, imputation will not work properly.',
+                        style: 'padding-bottom: 10px;',
+                        width: 1000
                     },{
                         xtype: 'ldk-querypanel',
                         border: true,
@@ -200,56 +258,38 @@
                         }
                     }]
                 },{
-                    title: 'Step 3: Imputation Configuration',
-                    minHeight: 500,
+                    title: 'Step 3: Imputation Scenarios',
+                    minHeight: 100,
                     defaults: {
                         border: false
                     },
                     items: [{
-                        html: 'For imputation, some of the samples should have comprehensive genotypes, while some should have sparse genotyping.  Use the grid below to separate which samples are complete.  Note: this step is largely added for the purposes of testing.  Once complete, each target will be compared against the original file.  If that original VCF contained complete genotypes, this will be used to calculate accuracy.',
+                        html: 'You can enter one or more scenarios for imputation.  This page was originally designed to test many combinations in parallel (i.e. different combinations of WGS/GBS data, different marker sets, etc.); however, it can also be used for single sets.  At minimum, you must supply the IDs to combine into this run, and which should be used to supply dense data.  Because samples can be supplied from different input VCF files, each sample must be identified using both VCF file ID and sample name (i.e. 23291||25645).  The table at the top of the page shows all available sample identifiers.',
                         style: 'padding-bottom: 10px;',
                         width: 1000
                     },{
-                        xtype: 'checkbox',
-                        fieldLabel: 'Skip Mendelian Check',
-                        name: 'skipMendelianCheck'
-                    },{
-                        xtype: 'checkbox',
-                        fieldLabel: 'Include Ancestors',
-                        name: 'includeAncestors'
-                    },{
-                        xtype: 'ldk-integerfield',
-                        fieldLabel: 'Dense Marker Batch Size',
-                        name: 'denseMarkerBatchSize',
-                        value: LABKEY.ActionURL.getParameter('denseMarkerBatchSize') || 2500
-                    },{
-                        xtype: 'textfield',
-                        fieldLabel: 'Call Method',
-                        name: 'callMethod',
-                        value: LABKEY.ActionURL.getParameter('callMethod') || '2 0.8 0.9'
-                    },{
-                        xtype: 'ldk-integerfield',
-                        fieldLabel: 'Min Genotype Quality',
-                        name: 'minGenotypeQual',
-                        value: LABKEY.ActionURL.getParameter('minGenotypeQual') || '20'
-                    },{
-                        xtype: 'ldk-integerfield',
-                        fieldLabel: 'Min Genotype Depth',
-                        name: 'minGenotypeDepth',
-                        value: LABKEY.ActionURL.getParameter('minGenotypeDepth') || '10'
-                    },{
-                        xtype: 'checkbox',
-                        fieldLabel: 'Split Each Set Into Separate Jobs',
-                        itemId: 'splitSampleSets',
-                        inputValue: true,
-                        checked: !!LABKEY.ActionURL.getParameter('splitSampleSets') || true
-                    },{
-                        xtype: 'button',
-                        border: true,
-                        text: 'Add/Modify Groups',
-                        handler: this.addSet,
-                        scope: this
-                    },{
+                        layout: 'hbox',
+                        defaults: {
+                            style: 'margin-right: 10px;'
+                        },
+                        items: [{
+                            xtype: 'button',
+                            border: true,
+                            text: 'Add Sets',
+                            handler: this.addSets,
+                            scope: this
+                        },{
+                            xtype: 'button',
+                            text: 'Clear All',
+                            scope: this,
+                            handler: function(btn){
+                                var target = this.down('#imputationSets');
+                                target.removeAll();
+                                target.rawData = null;
+
+                            }
+                        }]
+                    }, {
                         xtype: 'panel',
                         style: 'padding-top: 5px;',
                         itemId: 'imputationSets'
@@ -257,300 +297,65 @@
                 }]);
             },
 
-            addSet: function(btn){
-                Ext4.create('Ext.window.Window', {
-                    title: 'Add Set of Animals',
-                    bodyStyle: 'padding: 5px;',
-                    variantPanel: this,
-                    border: false,
-                    defaults: {
-                        border: false
-                    },
-                    width: 800,
-                    items: [{
-                        html: 'In the box below you can paste sample Ids in 2 columns.  The first column contains a commas separated list of sample Ids where we should generate complete genotypes.  The second contains a list of sample Ids where we should generate only those matching the framework markers.  For example:<br><br>' +
-                        '<pre>Sample1,Sample2\tSample3,Sample4</pre>',
-                        style: 'padding-bottom: 10px;'
-                    },{
-                        xtype: 'textarea',
-                        height: 300,
-                        width: 780,
-                        listeners: {
-                            afterrender: function(field){
-                                Ext4.defer(field.focus, 100, field);
-                            }
-                        }
-                    }],
-                    buttons: [{
-                        text: 'Submit',
-                        scope: this,
-                        handler: function(btn){
-                            var text = btn.up('window').down('textarea').getValue();
-                            if (!text){
-                                Ext4.Msg.alert('Error', 'Must enter a list of samples');
-                                return;
-                            }
-
-                            text = Ext4.String.trim(text);
-                            text = LDK.Utils.CSVToArray(text, '\t');
-
-                            var win = btn.up('window');
-
-                            var toAdd = [];
-                            var errors = [];
-                            Ext4.Array.forEach(text, function(line, idx){
-                                if (line.length < 1){
-                                    errors.push('Line ' + (idx+1) + ' does not have at least 2 elements');
-                                    return;
-                                }
-
-                                toAdd.push([win.textToArray(line[0]), win.textToArray(line[1]), (line[2] ? win.textToArray(line[2]) : [])]);
-                            }, this);
-
-                            if (errors.length){
-                                Ext4.Msg.alert('Error', errors.join('<br>'));
-                                return;
-                            }
-
-                            win.addSamples(toAdd);
-                        }
-                    },{
-                        text: 'Sample Helper',
-                        scope: this,
-                        handler: function(btn){
-                            var win = btn.up('window');
-
-                            Ext4.create('Ext.window.Window', {
-                                width: 800,
-                                title: 'Enter Sample Names',
-                                bodyStyle: 'padding: 5px;',
-                                items: [{
-                                    html: 'This helper is designed to facilitate testing different combinations of WGS data, using the IDs listed below.  It produces a table w/ each set of WGS or GBS IDs, chosen from the appropriate VCF.  As reference data, it will preferentially use WGS as reference data, but select GBS if not available.  At minimum you need to provide the columns: SetName, GBS, and WGS.  You can optionally also provide the following columns, which will supercede the corresponding options above: frameworkFile, denseFile, alleleFrequencyFile, blacklistFile, callMethod.',
-                                    border: false,
-                                    style: 'padding-bottom: 10px;'
-                                },{
-                                    xtype: 'textarea',
-                                    height: 300,
-                                    width: 780
-                                },{
-                                    xtype: 'ldk-integerfield',
-                                    itemId: 'wgsVcf',
-                                    fieldLabel: 'Enter the VCF ID with WGS data',
-                                    width: 300
-                                },{
-                                    xtype: 'ldk-integerfield',
-                                    itemId: 'gbsVcf',
-                                    fieldLabel: 'Enter the VCF ID with GBS data',
-                                    width: 300
-                                }],
-                                addData: function(btn){
-                                    var data = btn.up('window').down('textarea').getValue();
-                                    data = Ext4.String.trim(data);
-
-                                    var wgsVcf = btn.up('window').down('#wgsVcf').getValue();
-                                    var gbsVcf = btn.up('window').down('#gbsVcf').getValue();
-
-                                    if (!data || !wgsVcf || !gbsVcf){
-                                        Ext4.Msg.alert('Error', 'Missing required fields');
-                                        return false;
-                                    }
-
-                                    data = LDK.Utils.CSVToArray(data, '\t');
-
-                                    var header = data.shift();
-
-                                    //iterate rows
-                                    var rows = [];
-                                    Ext4.Array.forEach(data, function(row){
-                                        var newRow = [];
-                                        Ext4.Array.forEach(header, function(field, idx){
-                                            var val = row[idx];
-                                            if (field.toLowerCase() == 'wgs'){
-                                                val = win.textToArray(val);
-                                                Ext4.Array.forEach(val, function(r, i){
-                                                    val[i] = wgsVcf + '||' + r;
-                                                }, this);
-
-                                                newRow[0] = val;
-                                            }
-                                            else if (field.toLowerCase() == 'gbs'){
-                                                val = win.textToArray(val);
-
-                                                newRow[1] = [];
-                                                newRow[2] = [];
-                                                Ext4.Array.forEach(val, function(r, i){
-                                                    newRow[1].push(gbsVcf + '||' + r);
-
-                                                    //determine if WGS VCF has this sample
-                                                    if (win.variantPanel.sampleStore.findExact('sampleId', wgsVcf + '||' + r) > -1){
-                                                        newRow[2].push(wgsVcf + '||' + r);
-                                                    }
-                                                    else {
-                                                        newRow[2].push(gbsVcf + '||' + r);
-                                                    }
-                                                }, this);
-                                            }
-                                            else {
-                                                if (!newRow[3]){
-                                                    newRow[3] = {};
-                                                }
-
-                                                if (Ext4.isDefined(val)) {
-                                                    newRow[3][field] = val;
-                                                }
-                                            }
-                                        }, this);
-
-                                        rows.push(newRow);
-                                    }, this);
-
-                                    win.addSamples(rows);
-
-                                    return true;
-                                },
-                                buttons: [{
-                                    text: 'Submit',
-                                    scope: this,
-                                    handler: function(btn){
-                                        if (btn.up('window').addData(btn)) {
-                                            btn.up('window').close();
-                                        }
-                                    }
-                                },{
-                                    text: 'Cancel',
-                                    handler: function(btn){
-                                        btn.up('window').close();
-                                    }
-                                }]
-                            }).show();
-                        }
-                    },{
-                        text: 'Close',
-                        handler: function(btn){
-                            btn.up('window').close();
-                        }
-                    }],
-                    getAllCombinations: function (arr, reordered, currentIdx, level, size, ret){
-                        if (level == size){
-                            ret.push(Ext4.Array.clone(reordered));
-                            return;
-                        }
-
-                        var arrays = [];
-                        for (var i = currentIdx; i < arr.length; i++) {
-                            reordered[level] = arr[i];
-                            this.getAllCombinations(arr, reordered, i + 1, level + 1, size, ret);
-                            if (i < arr.length-1 && arr[i] == arr[i+1]){
-                                i++;
-                            }
-                        }
-                    },
-                    textToArray: function(val){
-                        if (Ext4.isEmpty(val)){
-                            return new Array();
-                        }
-
-                        val = val.replace(/[\s,;]+/g, ';');
-                        val = val.replace(/(^;|;$)/g, '');
-                        val = val.toLowerCase();
-
-                        if(val)
-                            val = val.split(';');
-                        else
-                            val = new Array();
-
-                        return val;
-                    },
-
-                    getPropDisplay: function(obj){
-                        var ret = [];
-                        Ext4.Object.each(obj, function(key, value){
-                            if (Ext4.isDefined(value)) {
-                                ret.push(key + ': ' + value);
-                            }
-                        }, this);
-
-                        return ret.join('<br>');
-                    },
-
-                    addSamples: function(toAdd){
-                        this.close();
-
-                        var target = this.variantPanel.down('#imputationSets');
-
-                        var items = [];
-                        Ext4.Array.forEach(toAdd, function(r){
-                            items.push({
-                                html: r[0].join(';<br>'),
-                                maxWidth: 300
-                            });
-
-                            items.push({
-                                html: r[1].join(';<br>'),
-                                maxWidth: 300
-                            });
-
-                            items.push({
-                                html: r[2] ? r[2].join(';<br>') : '',
-                                maxWidth: 300
-                            });
-
-                            items.push({
-                                html: r[3] ? this.getPropDisplay(r[3]) : '',
-                                maxWidth: 300
-                            });
-                        }, this);
-
-                        target.rawData = toAdd;
-                        target.removeAll();
-                        if (items.length) {
-                            target.add({
-                                layout: {
-                                    type: 'table',
-                                    columns: 4
-                                },
-                                defaults: {
-                                    bodyStyle: 'padding: 5px;',
-                                    border: 4,
-                                    style: 'vertical-align:text-top;'
-                                },
-                                items: [{
-                                    html: 'Complete Genotypes',
-                                    maxWidth: 300
-                                },{
-                                    html: 'Imputed',
-                                    maxWidth: 300
-                                },{
-                                    html: 'Reference',
-                                    maxWidth: 300
-                                },{
-                                    html: 'Other Fields',
-                                    maxWidth: 600
-                                }].concat(items)
-                            });
-                        }
-                    }
-                }).show(btn);
-            },
-
             onSubmit: function(){
+                if (Ext4.isEmpty(this.down('#imputationSets').rawData)){
+                    Ext4.Msg.alert('Error', 'No sample sets entered');
+                    return;
+                }
+
                 var vals = this.getForm().getFieldValues();
-                var sampleSets = Ext4.Array.clone(this.down('#imputationSets').rawData);
+                if (vals.additionalSubjects){
+                    vals.additionalSubjects = LDK.Utils.textToArray(vals.additionalSubjects).join(',');
+                }
 
                 var jobName = this.down('#jobName').getValue();
 
                 var errors = [];
-                if (!vals.frameworkFile)
-                    errors.push('Missing value for framework marker file');
+                var paramArray = [];
+                var sampleSets = Ext4.Array.clone(this.down('#imputationSets').rawData);
+                Ext4.Array.forEach(sampleSets, function(ss, idx) {
+                    var paramCopy = Ext4.apply({}, vals);
+                    var rowErrors = [];
 
-                if (!vals.denseFile)
-                    errors.push('Missing value for dense marker file');
+                    var setIdx = idx + 1;
+                    paramCopy.jobName = ss[0] || jobName + '_' + setIdx;
+                    ss.shift();
 
-                if (!sampleSets || Ext4.isEmpty(sampleSets))
-                    errors.push('No sample sets provided');
+                    if (ss.length > 3) {
+                        ss = Ext4.Array.clone(ss);
+                        Ext4.Object.each(ss[3], function (key, value) {
+                            paramCopy[key] = value;
+                        }, this);
 
-                if (!vals.callMethod)
-                    errors.push('Missing value for GIGI call method');
+                        ss.pop();
+                    }
+                    paramCopy.sampleSets = [ss];
+
+                    if (!paramCopy.frameworkFile)
+                        rowErrors.push('Row ' + setIdx + ': Missing value for framework marker file');
+
+                    if (!paramCopy.denseFile)
+                        rowErrors.push('Row ' + setIdx + ': Missing value for dense marker file');
+
+                    if (!paramCopy.callMethod)
+                        rowErrors.push('Row ' + setIdx + ': Missing value for GIGI call method');
+
+                    if (!paramCopy.jobName)
+                        rowErrors.push('Row ' + setIdx + ': Missing value for set name');
+
+                    if (!ss[0])
+                        rowErrors.push('Row ' + setIdx + ': No WGS data provided');
+
+                    if (!ss[1])
+                        rowErrors.push('Row ' + setIdx + ': No GBS data provided');
+
+                    if (!rowErrors.length) {
+                        paramArray.push(paramCopy);
+                    }
+                    else {
+                        errors = errors.concat(rowErrors);
+                    }
+                }, this);
 
                 if (errors.length){
                     Ext4.Msg.alert('Error', errors.join('<br>'));
@@ -558,89 +363,321 @@
                 }
 
                 Ext4.Msg.wait('Saving...');
-                if (!this.down('#splitSampleSets').getValue()){
-                    vals.sampleSets = [];
 
-                    Ext4.Array.forEach(sampleSets, function(ss){
-                        while (ss.length > 3){
-                            ss.pop();
-                        }
-
-                        vals.sampleSets.push(ss);
-                    }, this);
-
-                    if (!jobName){
-                        Ext4.Msg.hide();
-                        Ext4.Msg.alert('Error', 'Must provide a job name');
-                        return;
-                    }
-
-                    LABKEY.Ajax.request({
+                var multi = new LABKEY.MultiRequest();
+                var success = true;
+                Ext4.Array.forEach(paramArray, function(params){
+                    multi.add(LABKEY.Ajax.request, {
                         url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'runSequenceHandler'),
                         jsonData: {
                             handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
                             outputFileIds: this.outputFileIds,
-                            params: Ext4.encode(vals),
-                            jobName: jobName
+                            params: Ext4.encode(params),
+                            jobName: params.jobName
                         },
                         scope: this,
-                        failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback()),
-                        success: function() {
-                            Ext4.Msg.hide();
-
-                            window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
-                        }
+                        failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback())
                     });
+                }, this);
+
+                if (success) {
+                    multi.send(function () {
+                        Ext4.Msg.hide();
+
+                        window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
+                    }, this);
                 }
-                else {
-                    var multi = new LABKEY.MultiRequest();
-                    var success = true;
-                    Ext4.Array.forEach(sampleSets, function(ss, idx){
-                        var paramCopy = Ext4.apply({}, vals);
-                        var jn = jobName;
-                        if (ss.length > 3){
-                            ss = Ext4.Array.clone(ss);
-                            Ext4.Object.each(ss[3], function(key, value){
-                                paramCopy[key] = value;
+            },
 
-                                if (key.toLowerCase() == 'setname'){
-                                    jn = value;
+            getAllCombinations: function (arr, reordered, currentIdx, level, size, ret){
+                if (level == size){
+                    ret.push(Ext4.Array.clone(reordered));
+                    return;
+                }
+
+                var arrays = [];
+                for (var i = currentIdx; i < arr.length; i++) {
+                    reordered[level] = arr[i];
+                    this.getAllCombinations(arr, reordered, i + 1, level + 1, size, ret);
+                    if (i < arr.length-1 && arr[i] == arr[i+1]){
+                        i++;
+                    }
+                }
+            },
+
+            addSets: function(btn){
+                Ext4.create('Ext.window.Window', {
+                    variantPanel: this,
+                    width: 1000,
+                    title: 'Enter Sample Names',
+                    bodyStyle: 'padding: 5px;',
+                    items: [{
+                        html: 'This helper is designed to facilitate testing different combinations of WGS data, using the IDs listed below.  You can use this in two different ways.  Because samples can be combined from different VCFs, they are identified using the VCF file ID and the sample name (i.e. 283827||24645).  Because this can be difficult to enter, you can provide the VCF ID of a file to use for all WGS data and a file for all GBS, which will be prepended to all sample names.  If left blank, you must provide this yourself.  ' +
+                            'As reference data, it will preferentially use WGS as reference data, but select GBS if not available.  The link below allows you to download an excel template.  At minimum you need to provide the columns: SetName, GBS, and WGS.  You can leave the other columns blank, in which case the defaults from the main form will be used.  Note: very little validation is performed on your inputs.',
+                        border: false,
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        xtype: 'radiogroup',
+                        columns: 1,
+                        fieldLabel: 'Import Type',
+                        itemId: 'importMode',
+                        defaults: {
+                            xtype: 'radio',
+                            name: 'mode'
+                        },
+                        items: [{
+                            boxLabel: 'Provide Fully Qualified VCF/Sample',
+                            inputValue: 'full'
+                        },{
+                            boxLabel: 'Draw GBS/WGS From Consistent VCFs',
+                            inputValue: 'incomplete',
+                            checked: true
+                        }],
+                        listeners: {
+                            change: function(field, val, oldVal){
+                                var disable = (val.mode && val.mode == 'full');
+
+                                var win = field.up('window');
+                                win.down('#wgsVcf').setDisabled(disable);
+                                win.down('#gbsVcf').setDisabled(disable);
+
+                                if (disable){
+                                    win.down('#wgsVcf').setValue(null);
+                                    win.down('#gbsVcf').setValue(null);
                                 }
-                            }, this);
-
-                            ss.pop();
+                            }
                         }
-                        paramCopy.sampleSets = [ss];
-                        console.log(paramCopy);
+                    },{
+                        xtype: 'ldk-linkbutton',
+                        text: 'Download Template',
+                        linkPrefix: '[',
+                        linkSuffix: ']',
+                        style: 'padding-bottom: 10px;',
+                        handler: function(btn){
+                            var mode = btn.up('window').down('#importMode').getValue().mode;
 
-                        if (!jn){
-                            Ext4.Msg.hide();
-                            Ext4.Msg.alert('Error', 'Must provide a job name');
-                            success = false;
+                            var fields = ['SetName', 'GBS', 'WGS'];
+                            if (mode == 'incomplete'){
+                                fields.push('Reference');
+                            }
+
+                            fields = fields.concat(['frameworkFile', 'denseFile', 'alleleFrequencyFile', 'blacklistFile', 'callMethod']);
+
+                            LABKEY.Utils.convertToExcel({
+                                fileName : 'ImputationTemplate' + '.xls',
+                                sheets : [{
+                                    name: 'data',
+                                    data: [fields]
+                                }]
+                            });
+                        }
+                    },{
+                        xtype: 'textarea',
+                        height: 300,
+                        width: 780
+                    },{
+                        xtype: 'ldk-integerfield',
+                        itemId: 'wgsVcf',
+                        fieldLabel: 'Enter the VCF ID with WGS data',
+                        labelWidth: 250,
+                        width: 400
+                    },{
+                        xtype: 'ldk-integerfield',
+                        itemId: 'gbsVcf',
+                        fieldLabel: 'Enter the VCF ID with GBS data',
+                        labelWidth: 250,
+                        width: 400
+                    }],
+                    addData: function(btn){
+                        var data = btn.up('window').down('textarea').getValue();
+                        data = Ext4.String.trim(data);
+
+                        var wgsVcf = btn.up('window').down('#wgsVcf').getValue();
+                        var gbsVcf = btn.up('window').down('#gbsVcf').getValue();
+
+                        if (!data){
+                            Ext4.Msg.alert('Error', 'Must enter data');
                             return false;
                         }
 
-                        multi.add(LABKEY.Ajax.request, {
-                            url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'runSequenceHandler'),
-                            jsonData: {
-                                handlerClass: 'org.labkey.variantdb.analysis.ImputationAnalysis',
-                                outputFileIds: this.outputFileIds,
-                                params: Ext4.encode(paramCopy),
-                                jobName: jn
-                            },
-                            scope: this,
-                            failure: LABKEY.Utils.getCallbackWrapper(LDK.Utils.getErrorCallback())
-                        });
-                    }, this);
+                        var autoComplete = btn.up('window').down('#importMode').getValue().mode == 'incomplete';
+                        if (autoComplete && !(wgsVcf || gbsVcf)){
+                            Ext4.Msg.alert('Error', 'Must enter the GBS and WGS VCF IDs in order to auto-complete the sample IDs');
+                            return false;
+                        }
 
-                    if (success) {
-                        multi.send(function () {
-                            Ext4.Msg.hide();
+                        data = LDK.Utils.CSVToArray(data, '\t');
 
-                            window.location = LABKEY.ActionURL.buildURL('pipeline-status', 'showList');
+                        var header = data.shift();
+
+                        //iterate rows
+                        var rows = [];
+                        Ext4.Array.forEach(data, function(row){
+                            var newRow = [];
+                            Ext4.Array.forEach(header, function(field, idx){
+                                var val = row[idx];
+                                if (field.toLowerCase() == 'setname'){
+                                    newRow[0] = val;
+                                }
+                                else if (field.toLowerCase() == 'wgs'){
+                                    val = this.variantPanel.textToArray(val);
+                                    Ext4.Array.forEach(val, function(r, i){
+                                        val[i] = autoComplete ? wgsVcf + '||' + r : r;
+                                    }, this);
+
+                                    newRow[1] = val;
+                                }
+                                else if (field.toLowerCase() == 'gbs'){
+                                    val = this.variantPanel.textToArray(val);
+
+                                    newRow[2] = [];
+                                    newRow[3] = newRow[3] || [];
+                                    Ext4.Array.forEach(val, function(r, i){
+                                        newRow[2].push(autoComplete ? gbsVcf + '||' + r : r);
+
+                                        //determine if WGS VCF has this sample
+                                        if (autoComplete) {
+                                            if (this.variantPanel.sampleStore.findExact('sampleId', wgsVcf + '||' + r) > -1) {
+                                                newRow[3].push(wgsVcf + '||' + r);
+                                            }
+                                            else {
+                                                newRow[3].push(gbsVcf + '||' + r);
+                                            }
+                                        }
+                                    }, this);
+                                }
+                                else if (field.toLowerCase() == 'reference') {
+                                    if (autoComplete) {
+                                        //TODO: error
+                                    }
+
+                                    newRow[3] = this.variantPanel.textToArray(val);
+                                }
+                                else {
+                                    if (!newRow[4]){
+                                        newRow[4] = {};
+                                    }
+
+                                    if (Ext4.isDefined(val)) {
+                                        newRow[4][field] = val;
+                                    }
+                                }
+                            }, this);
+
+                            rows.push(newRow);
                         }, this);
-                    }
+
+                        this.variantPanel.addSamples(rows);
+
+                        return true;
+                    },
+                    buttons: [{
+                        text: 'Submit',
+                        scope: this,
+                        handler: function(btn){
+                            if (btn.up('window').addData(btn)) {
+                                btn.up('window').close();
+                            }
+                        }
+                    },{
+                        text: 'Cancel',
+                        handler: function(btn){
+                            btn.up('window').close();
+                        }
+                    }]
+                }).show();
+            },
+
+            textToArray: function(val){
+                if (Ext4.isEmpty(val)){
+                    return new Array();
                 }
+
+                val = val.replace(/[\s,;]+/g, ';');
+                val = val.replace(/(^;|;$)/g, '');
+                val = val.toLowerCase();
+
+                if(val)
+                    val = val.split(';');
+                else
+                    val = new Array();
+
+                return val;
+            },
+
+            addSamples: function(toAdd){
+                var target = this.down('#imputationSets');
+
+                var items = [];
+                Ext4.Array.forEach(toAdd, function(r){
+                    items.push({
+                        html: r[0] || 'Unknown',
+                        maxWidth: 300
+                    });
+
+                    items.push({
+                        html: r[1].join(';<br>'),
+                        maxWidth: 300
+                    });
+
+                    items.push({
+                        html: r[2].join(';<br>'),
+                        maxWidth: 300
+                    });
+
+                    items.push({
+                        html: r[3] ? r[3].join(';<br>') : '',
+                        maxWidth: 300
+                    });
+
+                    items.push({
+                        html: r[4] ? this.getPropDisplay(r[4]) : '',
+                        maxWidth: 300
+                    });
+                }, this);
+
+                target.rawData = toAdd;
+                target.removeAll();
+                if (items.length) {
+                    target.add({
+                        layout: {
+                            type: 'table',
+                            columns: 5
+                        },
+                        defaults: {
+                            bodyStyle: 'padding: 5px;',
+                            border: 4,
+                            style: 'vertical-align:text-top;'
+                        },
+                        items: [{
+                            html: 'Job Name',
+                            maxWidth: 300
+                        },{
+                            html: 'Complete Samples',
+                            maxWidth: 300
+                        },{
+                            html: 'Imputed Samples',
+                            maxWidth: 300
+                        },{
+                            html: 'Reference Samples',
+                            maxWidth: 300
+                        },{
+                            html: 'Other Fields',
+                            maxWidth: 600
+                        }].concat(items)
+                    });
+                }
+            },
+
+            getPropDisplay: function(obj){
+                var ret = [];
+                Ext4.Object.each(obj, function(key, value){
+                    if (Ext4.isDefined(value)) {
+                        ret.push(key + ': ' + value);
+                    }
+                }, this);
+
+                return ret.join('<br>');
             }
         });
 
