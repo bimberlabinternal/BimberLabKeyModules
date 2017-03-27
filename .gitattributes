@@ -69,6 +69,7 @@ DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/DockerHTCondo
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/HTCondorExecutionEngine.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/HTCondorExecutionEngineConfig.java -text
 DISCVR/htcondorconnector/src/org/labkey/htcondorconnector/pipeline/HTCondorJob.java -text
+DISCVR/mGAP/build.gradle -text
 DISCVR/mGAP/mGAP.iml -text
 DISCVR/mGAP/module.properties -text
 DISCVR/mGAP/resources/etls/demographics.xml -text
