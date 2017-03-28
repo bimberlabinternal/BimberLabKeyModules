@@ -75,6 +75,8 @@ DISCVR/mGAP/module.properties -text
 DISCVR/mGAP/resources/etls/demographics.xml -text
 DISCVR/mGAP/resources/etls/samples.xml -text
 DISCVR/mGAP/resources/folderTypes/mGAP.folderType.xml -text
+DISCVR/mGAP/resources/queries/mGAP/animalMapping.js -text
+DISCVR/mGAP/resources/queries/mGAP/animalMapping.query.xml -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-15.30-15.31.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.31-16.32.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-15.30-15.31.sql -text
@@ -84,6 +86,8 @@ DISCVR/mGAP/src/org/labkey/mgap/mGAPController.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPManager.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPModule.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPSchema.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/TriggerHelper.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/mGAPUserSchema.java -text
 DISCVR/mGAP/test/test_mgap.iml -text
 DISCVR/su2c/build.gradle -text
 DISCVR/su2c/module.properties -text

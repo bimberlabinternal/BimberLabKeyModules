@@ -24,6 +24,7 @@ public class mGAPSchema
 {
     private static final mGAPSchema _instance = new mGAPSchema();
     public static final String NAME = "mgap";
+    public static final String TABLE_ANIMAL_MAPPING = "animalMapping";
 
     public static mGAPSchema getInstance()
     {

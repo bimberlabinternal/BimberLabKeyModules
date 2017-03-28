@@ -16,17 +16,9 @@
 
 package org.labkey.mgap;
 
-import org.jetbrains.annotations.NotNull;
-import org.labkey.api.data.Container;
-import org.labkey.api.data.ContainerManager;
 import org.labkey.api.ldk.ExtendedSimpleModule;
-import org.labkey.api.module.DefaultModule;
 import org.labkey.api.module.ModuleContext;
-import org.labkey.api.view.WebPartFactory;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import org.labkey.mgap.query.mGAPUserSchema;
 
 public class mGAPModule extends ExtendedSimpleModule
 {
@@ -54,5 +46,11 @@ public class mGAPModule extends ExtendedSimpleModule
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
 
+    }
+
+    @Override
+    protected void registerSchemas()
+    {
+        mGAPUserSchema.register(this);
     }
 }

@@ -18,6 +18,7 @@
  -->
 <tables xmlns="http://labkey.org/data/xml">
     <table tableName="animalMapping" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
         <pkColumnName>rowid</pkColumnName>
         <tableTitle>Animal ID Mapping</tableTitle>
         <auditLogging>DETAILED</auditLogging>
@@ -35,8 +36,9 @@
             </column>
             <column columnName="externalAlias">
                 <columnTitle>External Alias</columnTitle>
-                <!--<nullable>false</nullable>-->
-                <isUserEditable>false</isUserEditable>
+                <nullable>false</nullable>
+                <isUserEditable>true</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
             </column>
             <column columnName="container">
             </column>
