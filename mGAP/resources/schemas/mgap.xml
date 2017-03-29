@@ -35,7 +35,7 @@
                 <nullable>false</nullable>
             </column>
             <column columnName="externalAlias">
-                <columnTitle>External Alias</columnTitle>
+                <columnTitle>mGAP Alias</columnTitle>
                 <nullable>false</nullable>
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>

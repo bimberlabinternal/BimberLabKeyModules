@@ -38,6 +38,6 @@ public class TriggerHelper
     {
         DbSequence sequence = DbSequenceManager.get(_container, SEQUENCE_NAME);
 
-        return "MGAP" + StringUtils.leftPad(String.valueOf(sequence.next()), 5, "0");
+        return "m" + StringUtils.leftPad(String.valueOf(sequence.next()), 5, "0");
     }
 }

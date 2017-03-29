@@ -4,7 +4,7 @@
             <table tableName="" tableDbType="TABLE">
                 <columns>
                     <column columnName="externalAlias">
-                        <isUserEditable>false</isUserEditable>
+
                     </column>
                 </columns>
             </table>

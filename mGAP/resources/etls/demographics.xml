@@ -5,10 +5,22 @@
     <transforms>
         <transform id="step1" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
-            <source schemaName="study" queryName="Demographics" remoteSource="EHR"/>
+            <source schemaName="study" queryName="Demographics" remoteSource="EHR">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>Id/parents/sire</column>
+                    <column>Id/parents/dam</column>
+                    <column>gender</column>
+                    <column>geographic_origin</column>
+                    <column>birth</column>
+                    <column>death</column>
+                </sourceColumns>
+            </source>
             <destination schemaName="laboratory" queryName="subjects" targetOption="merge">
                 <columnTransforms>
                     <column source="Id" target="subjectname"/>
+                    <column source="Id/parents/sire" target="father"/>
+                    <column source="Id/parents/dam" target="mother"/>
                 </columnTransforms>
                 <alternateKeys>
                     <column name="subjectname"/>
@@ -17,6 +29,7 @@
         </transform>
     </transforms>
     <schedule>
-        <poll interval="12h"/>
+        <!--11PM-->
+        <cron expression="0 0 23 * * ?"/>
     </schedule>
 </etl>

@@ -12,6 +12,7 @@
         </transform>
     </transforms>
     <schedule>
-        <poll interval="12h"/>
+        <!--11:20PM-->
+        <cron expression="0 20 23 * * ?"/>
     </schedule>
 </etl>
