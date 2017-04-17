@@ -2,14 +2,21 @@ package org.labkey.tcrdb.pipeline;
 
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.reader.Readers;
+import org.labkey.api.resource.FileResource;
+import org.labkey.api.resource.MergedDirectoryResource;
+import org.labkey.api.resource.Resource;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
+import org.labkey.api.util.Path;
+import org.labkey.tcrdb.TCRdbModule;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -219,41 +226,75 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         execute(args);
     }
 
-    private List<String> getBaseArgs()
+    private List<String> getBaseArgs() throws PipelineJobException
     {
-        List<String> args = new ArrayList<>();
-        args.add(SequencePipelineService.get().getJavaFilepath());
-        //args.addAll(SequencePipelineService.get().getJavaOpts());
-        File jar = new File(getJAR().getPath());
-        args.add("-Dmixcr.path=" + jar.getParentFile().getPath());
-        args.add("-Dmixcr.command=mixcr");
-        args.add("-XX:+AggressiveOpts");
-
-        if (_libraryPath != null)
+        try
         {
-            args.add("-Dlibrary.path=" + _libraryPath.getPath());
+            List<String> args = new ArrayList<>();
+            args.add(SequencePipelineService.get().getJavaFilepath());
+            //args.addAll(SequencePipelineService.get().getJavaOpts());
+            File jar = new File(getJAR().getPath());
+            args.add("-Dmixcr.path=" + jar.getParentFile().getPath());
+            args.add("-Dmixcr.command=mixcr");
+            args.add("-XX:+AggressiveOpts");
+
+            if (_libraryPath != null)
+            {
+                args.add("-Dlibrary.path=" + _libraryPath.getPath());
+            }
+
+            args.add("-jar");
+            args.add(jar.getPath());
+
+            return args;
         }
-
-        args.add("-jar");
-        args.add(jar.getPath());
-
-        return args;
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
     }
 
-    private File getJAR()
+    private File getJAR() throws IOException
     {
-        File jar = new File(ModuleLoader.getInstance().getWebappDir(), "WEB-INF/lib");
-        jar = new File(jar, "mixcr.jar");
+        //preferentially use copy in pipeline tools dir
+        File jar = SequencePipelineService.get().getExeForPackage("mixcr", "mixcr.jar");
         if (jar.exists())
         {
             return jar;
         }
 
-        return SequencePipelineService.get().getExeForPackage("mixcr", "mixcr.jar");
+        //otherwise use checked in copy
+        jar = lookupFile("external");
+        return new File(jar, "mixcr.jar");
     }
 
     public void setLibraryPath(File libraryPath)
     {
         _libraryPath = libraryPath;
+    }
+
+    private File lookupFile(String path) throws IOException
+    {
+        Module module = ModuleLoader.getInstance().getModule(TCRdbModule.class);
+        MergedDirectoryResource resource = (MergedDirectoryResource)module.getModuleResolver().lookup(Path.parse(path));
+        assert resource != null : "Unable to find resource with path: " + path;
+
+        File file = null;
+        for (Resource r : resource.list())
+        {
+            if (r instanceof FileResource)
+            {
+                file = ((FileResource) r).getFile().getParentFile();
+                break;
+            }
+        }
+
+        if (file == null)
+            throw new FileNotFoundException("Not found: " + path);
+
+        if (!file.exists())
+            throw new FileNotFoundException("Not found: " + file.getPath());
+
+        return file;
     }
 }

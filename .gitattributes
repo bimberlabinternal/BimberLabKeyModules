@@ -164,7 +164,6 @@ DISCVR/su2c/src/org/labkey/su2c/Su2cSchema.java -text
 DISCVR/su2c/su2c.iml -text
 DISCVR/su2c/tools/installLabKey.sh -text
 DISCVR/tcrdb/build.gradle -text
-DISCVR/tcrdb/lib/mixcr.jar -text
 DISCVR/tcrdb/module.properties -text
 DISCVR/tcrdb/resources/assay/TCRdb/config.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/domains/batch.xml -text
@@ -187,6 +186,7 @@ DISCVR/tcrdb/resources/assay/TCRdb/views/upload.view.xml -text
 DISCVR/tcrdb/resources/credits/jars.txt -text
 DISCVR/tcrdb/resources/external/exportMappedReads.sh -text
 DISCVR/tcrdb/resources/external/installMixcr.sh -text
+DISCVR/tcrdb/resources/external/mixcr.jar -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.30-15.31.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.31-15.32.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.32-15.33.sql -text
