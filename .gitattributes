@@ -91,12 +91,14 @@ DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.32-16.33.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.33-16.34.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.34-16.35.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.35-16.36.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.36-16.37.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-15.30-15.31.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.31-16.32.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.32-16.33.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.33-16.34.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.34-16.35.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.35-16.36.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.36-16.37.sql -text
 DISCVR/mGAP/resources/schemas/mgap.xml -text
 DISCVR/mGAP/resources/views/_footer.html -text
 DISCVR/mGAP/resources/views/data.html -text
