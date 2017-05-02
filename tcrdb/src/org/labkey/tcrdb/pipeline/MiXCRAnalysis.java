@@ -9,6 +9,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.exp.api.ExpRun;
@@ -118,13 +119,13 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
                     ToolParameterDescriptor.create(LOCI, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
                     {{
-                        put("value", "TRA;TRB;TRD;TRG");
+                        put("value", "ALL");
                     }}, true),
                     ToolParameterDescriptor.create(FLAG_MISSENSE, "Flag Missense CDR3", "If checked, if a sample has duplicate CDR3 clones from the same locus, and and one of these is missense, that clone will be flagged and excluded from many reports.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
                     }}, true)
-                    ), Arrays.asList("tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
+            ), Arrays.asList("tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
         }
 
         @Override
@@ -269,7 +270,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         String locusString = getProvider().getParameterByName(LOCI).extractValue(getPipelineCtx().getJob(), getProvider(), String.class);
         if (locusString == null)
         {
-            throw new PipelineJobException("No loci selected");
+            locusString = "ALL";
         }
 
         String[] loci = locusString.split(";");
@@ -279,6 +280,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         {
             throw new PipelineJobException("No TCR DBs selected");
         }
+
+        String version = new MiXCRWrapper(getPipelineCtx().getLogger()).getVersionString();
 
         //iterate selected species/loci:
         Map<Integer, Map<String, Map<String, List<File>>>> tables = new HashMap<>();
@@ -439,14 +442,47 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                     {
                                         if (!hasHeader)
                                         {
-                                            writer.write("LibraryId\tSpecies\tLocus\t" + line);
+                                            writer.write("LibraryId\tMiXCR_Version\tSpecies\tLocus\t" + line);
                                             writer.write('\n');
                                             hasHeader = true;
                                         }
                                     }
                                     else
                                     {
-                                        writer.write(String.valueOf(libraryId) + '\t' + species + '\t' + locus + '\t' + line);
+                                        //attempt to infer locus based on the gene hits
+                                        String[] fields = line.split("\t");
+                                        Set<String> chains = new HashSet<>();
+                                        for (String fn : Arrays.asList("vHit", "dHit", "jHit", "cHit"))
+                                        {
+                                            String val = StringUtils.trimToNull(fields[FIELDS.indexOf(fn)]);
+                                            if (val == null)
+                                            {
+                                                continue;
+                                            }
+
+                                            for (String chain : Arrays.asList("TRA", "TRB", "TRD", "TRG"))
+                                            {
+                                                if (val.startsWith(chain))
+                                                {
+                                                    chains.add(chain);
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        String inferredLocus = StringUtils.join(chains, ";");
+
+                                        String rowLocus = locus;
+                                        if ("ALL".equals(locus) || "TCR".equals(locus))
+                                        {
+                                            rowLocus = inferredLocus;
+                                        }
+                                        else if (!locus.equals(inferredLocus))
+                                        {
+                                            getPipelineCtx().getLogger().warn("Exported locus does not match the locus inferred by the gene hits.  exported: " + locus + ", inferred: " + inferredLocus);
+                                        }
+
+                                        writer.write(String.valueOf(libraryId) + '\t' + species + '\t' + rowLocus + '\t' + version + '\t' + line);
                                         writer.write('\n');
                                     }
                                 }
@@ -473,38 +509,39 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     }
 
     private List<String> FIELDS = Arrays.asList(
-        "libraryId",
-        "species",
-        "locus",
-        "cloneId",
-        "vHit",
-        "dHit",
-        "jHit",
-        "cHit",
-        "CDR3",
-        "CDR3FromLeft",
-        "CDR3FromRight",
-        "length",
-        "count",
-        "fraction",
-        "targets",
-        "vHits",
-        "dHits",
-        "jHits",
-        "cHits",
-        "vGene",
-        "vGenes",
-        "dGene",
-        "dGenes",
-        "jGene",
-        "jGenes",
-        "vBestIdentityPercent",
-        "dBestIdentityPercent",
-        "jBestIdentityPercent",
-        "cdr3_nt",
-        "cdr3_qual",
-        "cloneSequence"
-        //"nSeqVDJTranscript"
+            "libraryId",
+            "species",
+            "locus",
+            "mixcrVersion",
+            "cloneId",
+            "vHit",
+            "dHit",
+            "jHit",
+            "cHit",
+            "CDR3",
+            "length",
+            "count",
+            "fraction",
+            "targets",
+            "vHits",
+            "dHits",
+            "jHits",
+            "cHits",
+            "vGene",
+            "vGenes",
+            "dGene",
+            "dGenes",
+            "jGene",
+            "jGenes",
+            "cGene",
+            "cGenes",
+            "vBestIdentityPercent",
+            "dBestIdentityPercent",
+            "jBestIdentityPercent",
+            "cdr3_nt",
+            "cdr3_qual",
+            "cloneSequence"
+            //"nSeqVDJTranscript"
     );
 
     @Override
@@ -554,9 +591,10 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         ViewBackgroundInfo info = getPipelineCtx().getJob().getInfo();
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
 
-        getPipelineCtx().getLogger().info("importing from table: " + table.getPath());
+        getPipelineCtx().getLogger().info("importing assay results from table: " + table.getPath());
 
         List<Map<String, Object>> rows = new ArrayList<>();
+        Set<String> mixcrVersions = new HashSet<>();
         try (CSVReader reader = new CSVReader(Readers.getReader(table), '\t'))
         {
             int lineNo = 0;
@@ -597,15 +635,20 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 row.put("category", null);
                 row.put("stimulation", null);
 
-                if (line.length != (FIELDS.size() + 3))  //this includes 3 fields not imported into DB
+                if (line.length != (FIELDS.size() + 1))  //this includes one additional field appended to the end
                 {
-                    getPipelineCtx().getLogger().warn(lineNo + ": line length not " + FIELDS.size() + ".  was: " + line.length);
+                    getPipelineCtx().getLogger().warn(lineNo + ": line length not " + (FIELDS.size() + 1) + ".  was: " + line.length);
                     getPipelineCtx().getLogger().warn(StringUtils.join(line, ";"));
                 }
 
                 for (int i = 0; i < FIELDS.size(); i++)
                 {
                     row.put(FIELDS.get(i), line[i]);
+                }
+
+                if (row.get("mixcrVersion") != null)
+                {
+                    mixcrVersions.add(row.get("mixcrVersion").toString());
                 }
 
                 String cloneFileName = getClonesFileName(getOutputPrefix(FileUtil.getBaseName(inputBam), line[FIELDS.indexOf("libraryId")], line[FIELDS.indexOf("species")]));
@@ -648,25 +691,12 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     row.put("vdjFile", vdjFile.getRowId());
                 }
 
-                //try to reconcile CDR3 translations:
-                List<String> comments = new ArrayList<>();
-                if (row.get("CDR3") != null)
+                if (row.get("CDR3") != null && row.get("CDR3").toString().contains("_") || row.get("CDR3").toString().contains("*"))
                 {
-                    if (row.get("CDR3FromLeft") != null && !row.get("CDR3").equals(row.get("CDR3FromLeft")))
-                    {
-                        String msg = "CDR3 translation (" + row.get("CDR3") + ") does not match translation from left: " + row.get("CDR3FromLeft");
-                        getPipelineCtx().getLogger().warn(msg);
-                        comments.add(msg);
-                    }
-
-                    if (row.get("CDR3FromRight") != null && !row.get("CDR3").equals(row.get("CDR3FromRight")))
-                    {
-                        String msg = "CDR3 translation (" + row.get("CDR3") + ") does not match translation from right: " + row.get("CDR3FromRight");
-                        getPipelineCtx().getLogger().warn(msg);
-                        comments.add(msg);
-                    }
+                    String msg = "Frameshift or stop codon";
+                    getPipelineCtx().getLogger().warn(msg);
+                    row.put("comment", msg);
                 }
-                row.put("comment", comments.isEmpty() ? null : StringUtils.join(comments, "; "));
 
                 row.put("alignmentId", model.getAlignmentFile());
                 row.put("analysisId", model.getRowId());
@@ -682,43 +712,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         //inspect for TRD, redundant w/ TRA:
-        {
-            getPipelineCtx().getLogger().info("inspecting for redundant TRA/TRD calls");
-            Map<String, Set<String>> resultsByLocus = new HashMap<>();
-            for (Map<String, Object> row : rows)
-            {
-                String key = row.get("libraryId") + "-" + row.get("locus");
-                if (!resultsByLocus.containsKey(key))
-                {
-                    resultsByLocus.put(key, new HashSet<>());
-                }
-
-                resultsByLocus.get(key).add(String.valueOf(row.get("CDR3")));
-            }
-
-            List<Map<String, Object>> newRows = new ArrayList<>();
-            for (Map<String, Object> row : rows)
-            {
-                if ("TRD".equals(row.get("locus")))
-                {
-                    String key = row.get("libraryId") + "-TRA";
-                    if (resultsByLocus.containsKey(key) && resultsByLocus.get(key).contains(row.get("CRD3")))
-                    {
-                        getPipelineCtx().getLogger().debug("skipping redundant TRD: " + row.get("CDR3"));
-                    }
-                    else
-                    {
-                        newRows.add(row);
-                    }
-                }
-                else
-                {
-                    newRows.add(row);
-                }
-            }
-
-            rows = newRows;
-        }
+        List<String> runComments = new ArrayList<>();
+        rows = inspectAndRemoveDuplicateTRD(rows, runComments);
 
         if (getProvider().getParameterByName(FLAG_MISSENSE).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class, false))
         {
@@ -769,8 +764,12 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         {
             JSONObject runProps = new JSONObject();
             runProps.put("performedby", getPipelineCtx().getJob().getUser().getDisplayName(getPipelineCtx().getJob().getUser()));
-            runProps.put("assayName", "MiXCR");
+            runProps.put("assayName", (mixcrVersions.isEmpty() ? "MiXCR" : mixcrVersions.iterator().next()));
             runProps.put("Name", "Analysis: " + model.getAnalysisId());
+            if (!runComments.isEmpty())
+            {
+                runProps.put("runComments", StringUtils.join(runComments, ", "));
+            }
 
             JSONObject json = new JSONObject();
             json.put("Run", runProps);
@@ -790,6 +789,52 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         return null;
+    }
+
+    private List<Map<String, Object>> inspectAndRemoveDuplicateTRD(List<Map<String, Object>> rows, List<String> runComments)
+    {
+        getPipelineCtx().getLogger().info("inspecting for redundant TRA/TRD calls");
+        Map<String, Set<String>> resultsByLocus = new HashMap<>();
+        for (Map<String, Object> row : rows)
+        {
+            String key = row.get("libraryId") + "-" + row.get("locus");
+            if (!resultsByLocus.containsKey(key))
+            {
+                resultsByLocus.put(key, new CaseInsensitiveHashSet());
+            }
+
+            resultsByLocus.get(key).add(String.valueOf(row.get("CDR3")));
+        }
+
+        List<Map<String, Object>> newRows = new ArrayList<>();
+        int trdSkipped = 0;
+        for (Map<String, Object> row : rows)
+        {
+            if ("TRD".equals(row.get("locus")))
+            {
+                String key = row.get("libraryId") + "-TRA";
+                if (resultsByLocus.containsKey(key) && resultsByLocus.get(key).contains(String.valueOf(row.get("CDR3"))))
+                {
+                    getPipelineCtx().getLogger().debug("skipping redundant TRD: " + row.get("CDR3"));
+                    trdSkipped++;
+                }
+                else
+                {
+                    newRows.add(row);
+                }
+            }
+            else
+            {
+                newRows.add(row);
+            }
+        }
+
+        if (trdSkipped > 0)
+        {
+            runComments.add("TRD records skipped due to redundancy with TRA: " + trdSkipped);
+        }
+
+        return newRows;
     }
 
     private File getScript(String path) throws PipelineJobException

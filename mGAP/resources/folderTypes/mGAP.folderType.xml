@@ -7,7 +7,7 @@
             <caption>Overview</caption>
             <selectors>
                 <selector>
-                    <controller>sequenceanalysis</controller>
+                    <controller>mgap</controller>
                 </selector>
             </selectors>
             <requiredWebParts>
@@ -15,28 +15,41 @@
             </requiredWebParts>
             <preferredWebParts>
                 <webPart>
-                    <name>SequenceAnalysis</name>
+                    <name>mGAP Overview</name>
                     <location>body</location>
-                </webPart>
-                <webPart>
-                    <name>Lab Tools</name>
-                    <location>right</location>
                 </webPart>
             </preferredWebParts>
         </folderTab>
         <folderTab>
-            <name>dataBrowser</name>
-            <caption>Data Browser</caption>
+            <name>variants</name>
+            <caption>Variant Catalog</caption>
             <selectors>
                 <selector>
-                    <view>dataBrowser</view>
+                    <view>variants</view>
                 </selector>
             </selectors>
             <requiredWebParts>
             </requiredWebParts>
             <preferredWebParts>
                 <webPart>
-                    <name>Laboratory Data Browser</name>
+                    <name>mGAP Variant Releases</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>datasets</name>
+            <caption>Raw Data</caption>
+            <selectors>
+                <selector>
+                    <view>data</view>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>mGAP Raw Data</name>
                     <location>body</location>
                 </webPart>
             </preferredWebParts>

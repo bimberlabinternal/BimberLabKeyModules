@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>Project Usage</name>
+    <description>Project Usage Data</description>
+    <transforms>
+        <transform id="step1" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="laboratory" queryName="project_usage" remoteSource="PRIME_DNA_Bank">
+                <sourceColumns>
+                    <column>subjectId</column>
+                    <column>project</column>
+                    <column>groupname</column>
+                    <column>startdate</column>
+                    <column>enddate</column>
+                    <column>comment</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="laboratory" queryName="project_usage" targetOption="truncate">
+
+            </destination>
+        </transform>
+    </transforms>
+    <schedule>
+        <!--11:20PM-->
+        <cron expression="0 30 23 * * ?"/>
+    </schedule>
+</etl>

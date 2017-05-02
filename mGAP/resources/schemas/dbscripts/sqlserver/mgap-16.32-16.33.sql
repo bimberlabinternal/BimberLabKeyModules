@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.animalMapping ADD biosample_accession VARCHAR(100);

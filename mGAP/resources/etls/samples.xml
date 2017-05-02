@@ -5,7 +5,44 @@
     <transforms>
         <transform id="step1" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
-            <source schemaName="laboratory" queryName="samples" remoteSource="PRIME_DNA_Bank"/>
+            <source schemaName="laboratory" queryName="samples" remoteSource="PRIME_DNA_Bank">
+                <sourceColumns>
+                    <column>samplename</column>
+                    <column>subjectid</column>
+                    <column>sampledate</column>
+                    <column>sampletype</column>
+                    <column>samplesubtype</column>
+                    <column>samplesource</column>
+                    <column>location</column>
+                    <column>freezer</column>
+                    <column>cane</column>
+                    <column>rack</column>
+                    <column>box</column>
+                    <column>box_row</column>
+                    <column>box_column</column>
+                    <column>samplespecies</column>
+                    <column>preparationmethod</column>
+                    <column>processdate</column>
+                    <column>additive</column>
+                    <column>concentration</column>
+                    <column>concentration_units</column>
+                    <column>quantity</column>
+                    <column>quantity_units</column>
+                    <column>quantity_string</column>
+                    <column>passage_number</column>
+                    <column>ratio</column>
+                    <column>molecule_type</column>
+                    <column>dna_vector</column>
+                    <column>dna_insert</column>
+                    <column>sequence</column>
+                    <column>initials</column>
+                    <column>labwareIdentifier</column>
+                    <column>comment</column>
+                    <column>dateremoved</column>
+                    <column>removedby</column>
+                    <column>remove_comment</column>
+                </sourceColumns>
+            </source>
             <destination schemaName="laboratory" queryName="samples" targetOption="truncate">
 
             </destination>

@@ -1,0 +1,24 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var childId = '<%=wrapperDivId%>-wp';
+
+        LDK.Utils.getReadOnlyQWP({
+            frame: 'none',
+            title: 'mGAP Datasets',
+            schemaName: 'mgap',
+            queryName: 'sequenceDatasets',
+            maxRows: 50,
+            buttonBarConfig: {
+
+            }
+        }).render(childId);
+    });
+
+</script>
+
+All sequence and variant data generated through mGAP are publically available.  Due to the large file size, we upload data to the public NCBI
+<a href="https://www.ncbi.nlm.nih.gov/sra/">SRA</a> and/or <a href="https://www.ncbi.nlm.nih.gov/projects/SNP/">dbSNP</a> sites and provide accession numbers through mGAP.  <a href="https://www.ncbi.nlm.nih.gov/books/NBK242621/">Click here to view instructions on downloading data from SRA</a>.  The table below displays a list of all datasets currently available through mGAP, with basic animal information and SRA accessions.  Note: you can hit the 'export' button to export this to excel, or click any of the column headers to filter the data.
+<p/>
+<div id="<%=wrapperDivId%>-wp"></div>

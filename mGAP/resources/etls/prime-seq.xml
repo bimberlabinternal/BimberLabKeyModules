@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>PRIMe-Seq ETLs</name>
+    <description>Syncs Anonymized Data PRIMe-Seq to mGAP</description>
+    <transforms>
+        <!--<transform id="step0" type="RemoteQueryTransformStep">-->
+            <!--<description>Copy to local table</description>-->
+            <!--<source schemaName="mGAP" queryName="genomeSource" remoteSource="PRIMESEQ">-->
+                <!--<sourceColumns>-->
+                    <!--<column>subjectname</column>-->
+                    <!--<column>gender</column>-->
+                    <!--<column>species</column>-->
+                    <!--<column>geographic_origin</column>-->
+                <!--</sourceColumns>-->
+            <!--</source>-->
+            <!--<destination schemaName="sequenceanalysis" queryName="reference_libraries" targetOption="truncate">-->
+                <!--<columnTransforms>-->
+
+                <!--</columnTransforms>-->
+            <!--</destination>-->
+        <!--</transform>-->
+        <transform id="step1" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="subjectsSource" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>subjectname</column>
+                    <column>gender</column>
+                    <column>species</column>
+                    <column>geographic_origin</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="laboratory" queryName="subjects" targetOption="truncate">
+                <columnTransforms>
+
+                </columnTransforms>
+                <!--<alternateKeys>-->
+                    <!--<column name=""/>-->
+                <!--</alternateKeys>-->
+            </destination>
+        </transform>
+        <transform id="step2" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="sequenceDatasetsSource" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>mgapId</column>
+                    <column>sequenceType</column>
+                    <column>totalReads</column>
+                    <column>sraAccession</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mGAP" queryName="sequenceDatasets" targetOption="truncate">
+
+            </destination>
+        </transform>
+        <transform id="step3" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="variantCatalogReleases" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>version</column>
+                    <column>releaseDate</column>
+                    <column>vcfId</column>
+                    <column>genomeId/name</column>
+                    <column>totalSubjects</column>
+                    <column>totalVariants</column>
+                    <column>dbSnpId</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mGAP" queryName="variantCatalogReleases" targetOption="truncate">
+                <columnTransforms>
+                    <column source="genomeId/name" target="genomeId" transformClass="org.labkey.mgap.columnTransforms.GenomeTransform" />
+                    <column source="vcfId" target="vcfId" transformClass="org.labkey.mgap.columnTransforms.ExpDataTransform" />
+                </columnTransforms>
+            </destination>
+        </transform>
+    </transforms>
+    <schedule>
+        <cron expression="0 0 0 * * ?"/>
+    </schedule>
+</etl>

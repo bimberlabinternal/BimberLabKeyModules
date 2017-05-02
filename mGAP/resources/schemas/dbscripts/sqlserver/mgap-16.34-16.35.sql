@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.variantCatalogReleases ADD genomeId int;

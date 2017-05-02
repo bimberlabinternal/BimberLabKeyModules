@@ -1,0 +1,14 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="mgapId"/>
+        <column name="mgapId/species"/>
+        <column name="mgapId/geographic_origin"/>
+        <column name="mgapId/gender"/>
+        <column name="sequenceType"/>
+        <column name="totalReads"/>
+        <column name="sraAccession"/>
+    </columns>
+    <sorts>
+        <sort column="mgapId" descending="false"/>
+    </sorts>
+</customView>

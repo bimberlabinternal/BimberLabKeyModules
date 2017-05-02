@@ -11,6 +11,7 @@
                     <column>Id/parents/sire</column>
                     <column>Id/parents/dam</column>
                     <column>gender</column>
+                    <column>species</column>
                     <column>geographic_origin</column>
                     <column>birth</column>
                     <column>death</column>

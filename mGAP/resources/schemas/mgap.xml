@@ -40,7 +40,12 @@
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>
             </column>
+            <column columnName="biosample_accession">
+                <columnTitle>BioSample Accession</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="container">
+                <isHidden>true</isHidden>
             </column>
             <column columnName="createdby">
                 <isHidden>true</isHidden>
@@ -63,5 +68,165 @@
                 <isHidden>true</isHidden>
             </column>
         </columns>
+    </table>
+    <table tableName="variantCatalogReleases" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <tableUrl />
+        <insertUrl />
+        <updateUrl />
+        <importUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Variant Catalog Releases</tableTitle>
+        <auditLogging>SUMMARY</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>true</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="version">
+                <columnTitle>Version</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="releaseDate">
+                <columnTitle>Release Date</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="vcfId">
+                <columnTitle>VCF File</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>exp</fkDbSchema>
+                    <fkTable>data</fkTable>
+                    <fkColumnName>RowId</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="genomeId">
+                <columnTitle>Genome</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>reference_libraries</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="totalSubjects">
+                <columnTitle>Total Subjects</columnTitle>
+            </column>
+            <column columnName="totalVariants">
+                <columnTitle>Total Variants</columnTitle>
+            </column>
+            <column columnName="dbSnpId">
+                <columnTitle>dbSNP Batch Id</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="false">
+            <item>
+                <originalText>Export</originalText>
+            </item>
+            <item text="Page Size">
+                <originalText>Paging</originalText>
+            </item>
+        </buttonBarOptions>
+    </table>
+    <table tableName="sequenceDatasets" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <tableUrl />
+        <insertUrl />
+        <updateUrl />
+        <importUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Sequence Datasets</tableTitle>
+        <auditLogging>SUMMARY</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>true</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="mgapId">
+                <columnTitle>Subject Id</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>subjects</fkTable>
+                    <fkColumnName>subjectname</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="sequenceType">
+                <columnTitle>Type</columnTitle>
+            </column>
+            <column columnName="totalReads">
+                <columnTitle>Total Reads</columnTitle>
+                <nullable>false</nullable>
+                <formatString>#,###</formatString>
+            </column>
+            <column columnName="sraAccession">
+                <columnTitle>SRA Accession</columnTitle>
+                <nullable>false</nullable>
+                <url>https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=${sraAccession}</url>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="false">
+            <item>
+                <originalText>Export</originalText>
+            </item>
+            <item text="Page Size">
+                <originalText>Paging</originalText>
+            </item>
+        </buttonBarOptions>
     </table>
 </tables>

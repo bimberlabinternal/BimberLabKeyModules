@@ -36,7 +36,7 @@ public class TriggerHelper
 
     public String getNextAlias()
     {
-        DbSequence sequence = DbSequenceManager.get(_container, SEQUENCE_NAME);
+        DbSequence sequence = DbSequenceManager.get((_container.isWorkbookOrTab() ? _container.getParent() : _container), SEQUENCE_NAME);
 
         return "m" + StringUtils.leftPad(String.valueOf(sequence.next()), 5, "0");
     }

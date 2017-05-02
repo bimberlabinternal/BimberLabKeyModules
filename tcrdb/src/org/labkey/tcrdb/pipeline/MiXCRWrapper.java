@@ -113,12 +113,16 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         return assembleOut;
     }
 
+    //public void exportReadsForClones(File vdjca, File index, File outDir, String basename)
+    //{
+    //    //mixcr exportReadsForClones index_file alignments.vdjca.gz 0 reads.fastq.gz
+    //}
+
     private void doAssemblePartial(File alignOut, File output, File logFile) throws PipelineJobException
     {
         List<String> partialAssembleArgs = new ArrayList<>();
         partialAssembleArgs.addAll(getBaseArgs());
         partialAssembleArgs.add("assemblePartial");
-        partialAssembleArgs.add("-p");
         partialAssembleArgs.add("-f");
         partialAssembleArgs.add("-r");
         partialAssembleArgs.add(logFile.getPath());
@@ -153,14 +157,17 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         log.delete();
     }
 
-    public void doExportClones(File clones, File output, String locus, List<String> extraParams) throws PipelineJobException
+    public void doExportClones(File clones, File output, @Nullable String locus, List<String> extraParams) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
         args.add("exportClones");
 
-        args.add("-c");
-        args.add(locus);
+        if (locus != null)
+        {
+            args.add("-c");
+            args.add(locus);
+        }
 
         if (extraParams != null)
         {
@@ -174,10 +181,6 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("-jHit");
         args.add("-cHit");
         args.add("-aaFeature");
-        args.add("CDR3");
-        args.add("-aaFeatureFromLeft");
-        args.add("CDR3");
-        args.add("-aaFeatureFromRight");
         args.add("CDR3");
         args.add("-lengthOf");
         args.add("CDR3");
@@ -194,6 +197,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("-dGenes");
         args.add("-jGene");
         args.add("-jGenes");
+        args.add("-cGene");
+        args.add("-cGenes");
         args.add("-vBestIdentityPercent");
         args.add("-dBestIdentityPercent");
         args.add("-jBestIdentityPercent");
@@ -266,6 +271,23 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         //otherwise use checked in copy
         jar = lookupFile("external");
         return new File(jar, "mixcr.jar");
+    }
+
+    public String getVersionString() throws PipelineJobException
+    {
+        List<String> args = getBaseArgs();
+        args.add("-v");
+
+        String ret = executeWithOutput(args);
+        String[] lines = ret.split("\\n");
+        if (lines.length == 0)
+        {
+            return "Unknown";
+        }
+
+        String[] tokens = lines[0].split(" \\(");
+
+        return tokens.length > 0 ? tokens[0] : "Unable to determine";
     }
 
     public void setLibraryPath(File libraryPath)

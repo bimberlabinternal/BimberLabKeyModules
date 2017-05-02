@@ -31,6 +31,7 @@
        <!--<column name="cBestIdentityPercent"/>-->
 
        <column name="comment" />
+       <column name="Run/assayName" />
        <column name="workbook" />
        <column name="pipelineRunId/jobId" />
        <column name="pipelineRunId">

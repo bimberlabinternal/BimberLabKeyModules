@@ -27,6 +27,7 @@
        <column name="alignmentId"/>
 
        <column name="comment" />
+       <column name="Run/assayName" />
        <column name="workbook" />
        <column name="pipelineRunId/JobId" />
        <column name="pipelineRunId">

@@ -1,0 +1,11 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="subjectname"/>
+        <column name="species"/>
+        <column name="geographic_origin"/>
+        <column name="gender"/>
+    </columns>
+    <sorts>
+        <sort column="subjectname" descending="false"/>
+    </sorts>
+</customView>

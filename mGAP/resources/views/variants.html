@@ -1,0 +1,20 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var childId = '<%=wrapperDivId%>-wp';
+
+        LDK.Utils.getReadOnlyQWP({
+            frame: 'none',
+            title: 'Variant Catalog Releases',
+            schemaName: 'mgap',
+            queryName: 'variantCatalogReleases',
+            maxRows: 50
+        }).render(childId);
+    });
+
+</script>
+
+This project involves high depth whole-genome sequencing of a large cohort of Rhesus macaques.  Using a modified version of the GATK Best Practice Variant Discovery Pipeline, we have generated a catalog of macaque SNVs.  Each release is available either as a direct download (comparable to the dbSNP human resource bundles), or these data can be explored through the genome browser of this site.  The table below displays all releases to date.
+<p/>
+<div id="<%=wrapperDivId%>-wp" style="min-height: 50px;min-width: 200px;"></div>

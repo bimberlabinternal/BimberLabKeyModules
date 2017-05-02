@@ -5,6 +5,7 @@
         <column name="assayName"/>
         <column name="runDate"/>
         <column name="instrument"/>
+        <column name="runComments"/>
         <column name="workbook"/>
     </columns>
     <sorts>
