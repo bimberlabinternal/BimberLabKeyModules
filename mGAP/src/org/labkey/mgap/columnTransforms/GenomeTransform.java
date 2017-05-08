@@ -5,7 +5,7 @@ import org.labkey.api.data.Selector;
 import org.labkey.api.data.StopIteratingException;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
-import org.labkey.api.di.columnTransform.AbstractColumnTransform;
+import org.labkey.api.di.columnTransform.ColumnTransform;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.util.PageFlowUtil;
 
@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Created by bimber on 4/27/2017.
  */
-public class GenomeTransform extends AbstractColumnTransform
+public class GenomeTransform extends ColumnTransform
 {
     private Map<String, Integer> _genomeIdMap = null;
 

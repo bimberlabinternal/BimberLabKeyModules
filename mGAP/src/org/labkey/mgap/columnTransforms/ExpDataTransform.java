@@ -8,7 +8,7 @@ import org.labkey.api.data.Selector;
 import org.labkey.api.data.StopIteratingException;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
-import org.labkey.api.di.columnTransform.AbstractColumnTransform;
+import org.labkey.api.di.columnTransform.ColumnTransform;
 import org.labkey.api.exp.api.DataType;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * Created by bimber on 5/1/2017.
  */
-public class ExpDataTransform extends AbstractColumnTransform
+public class ExpDataTransform extends ColumnTransform
 {
     private static final Logger _log = Logger.getLogger(ExpDataTransform.class);
 
