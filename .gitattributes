@@ -627,7 +627,6 @@ cnprcEHRModules/cnprc_pdl/src/org/labkey/cnprc_pdl/CNPRC_PDLContainerListener.ja
 cnprcEHRModules/cnprc_pdl/src/org/labkey/cnprc_pdl/CNPRC_PDLController.java -text
 cnprcEHRModules/cnprc_pdl/src/org/labkey/cnprc_pdl/CNPRC_PDLModule.java -text
 cnprcEHRModules/cnprc_pdl/src/org/labkey/cnprc_pdl/CNPRC_PDLSchema.java -text
-/externalModules.iml -text
 labModules/GenotypeAssays/GenotypeAssays.iml -text
 labModules/GenotypeAssays/build.gradle -text
 labModules/GenotypeAssays/module.properties -text
@@ -1527,7 +1526,6 @@ onprcEHRModules/treatmentETL/resources/queries/study/dateRangedata.sql -text
 onprcEHRModules/treatmentETL/resources/queries/study/treatmentScheduleUpdate.sql -text
 onprcEHRModules/treatmentETL/resources/queries/study/treatmenttodrug.sql -text
 snprcEHRModules/build.gradle -text
-snprcEHRModules/snprc_genetics/SNPRC_Genetics.iml -text
 snprcEHRModules/snprc_genetics/build.gradle -text
 snprcEHRModules/snprc_genetics/module.properties -text
 snprcEHRModules/snprc_genetics/resources/queries/assay/General/Gene[!!-~]Expression/Data.query.xml -text
