@@ -39,7 +39,7 @@
         </folderTab>
         <folderTab>
             <name>datasets</name>
-            <caption>Raw Data</caption>
+            <caption>Sequence Data</caption>
             <selectors>
                 <selector>
                     <view>data</view>
@@ -49,7 +49,28 @@
             </requiredWebParts>
             <preferredWebParts>
                 <webPart>
-                    <name>mGAP Raw Data</name>
+                    <name>mGAP Sequence Data</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>admin</name>
+            <caption>Admin</caption>
+            <permissions>
+                <permission name="ADMIN"/>
+            </permissions>
+            <selectors>
+                <selector>
+
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>mGAP Admin</name>
                     <location>body</location>
                 </webPart>
             </preferredWebParts>

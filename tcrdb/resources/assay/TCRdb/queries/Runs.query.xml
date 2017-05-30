@@ -21,19 +21,17 @@
                     <column columnName="assayName">
                         <columnTitle>Assay Type</columnTitle>
                         <nullable>false</nullable>
+                    </column>
+                    <column columnName="analysisId">
                         <fk>
-                            <fkDbSchema>flowassays</fkDbSchema>
-                            <fkTable>assay_types</fkTable>
+                            <fkDbSchema>sequenceanalysis</fkDbSchema>
+                            <fkTable>sequence_analyses</fkTable>
                             <fkColumnName>rowid</fkColumnName>
+                            <fkDisplayColumnName>rowid</fkDisplayColumnName>
                         </fk>
                     </column>
                     <column columnName="instrument">
                         <description>The instrument used to perform this assay</description>
-                        <fk>
-                            <fkDbSchema>flowassays</fkDbSchema>
-                            <fkTable>instruments</fkTable>
-                            <fkColumnName>instrument</fkColumnName>
-                        </fk>
                     </column>
                     <column columnName="Flag">
                         <shownInInsertView>false</shownInInsertView>

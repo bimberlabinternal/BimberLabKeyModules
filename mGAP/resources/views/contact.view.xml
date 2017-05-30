@@ -1,0 +1,8 @@
+<view xmlns="http://labkey.org/data/xml/view" template="dialog" title="Help/Contact" frame="none">
+    <permissions>
+        <permission name="none"/>
+    </permissions>
+    <dependencies>
+        <dependency path="ldk.context"/>
+    </dependencies>
+</view>

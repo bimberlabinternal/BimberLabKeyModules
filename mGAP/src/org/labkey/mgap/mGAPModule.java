@@ -16,8 +16,11 @@
 
 package org.labkey.mgap;
 
+import org.apache.log4j.Logger;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.labkey.mgap.query.mGAPUserSchema;
 
 public class mGAPModule extends ExtendedSimpleModule
@@ -33,7 +36,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.37;
+        return 16.39;
     }
 
     @Override
@@ -45,12 +48,32 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
-
+        new PipelineStartup();
     }
 
     @Override
     protected void registerSchemas()
     {
         mGAPUserSchema.register(this);
+    }
+
+    public static class PipelineStartup
+    {
+        private static final Logger _log = Logger.getLogger(mGAPModule.PipelineStartup.class);
+        private static boolean _hasRegistered = false;
+
+        public PipelineStartup()
+        {
+            if (_hasRegistered)
+            {
+                _log.warn("mGAP resources have already been registered, skipping");
+            }
+            else
+            {
+                SequenceAnalysisService.get().registerFileHandler(new PublicReleaseHandler());
+
+                _hasRegistered = true;
+            }
+        }
     }
 }

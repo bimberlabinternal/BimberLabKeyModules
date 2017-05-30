@@ -454,7 +454,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                         Set<String> chains = new HashSet<>();
                                         for (String fn : Arrays.asList("vHit", "dHit", "jHit", "cHit"))
                                         {
-                                            String val = StringUtils.trimToNull(fields[FIELDS.indexOf(fn)]);
+                                            String val = StringUtils.trimToNull(fields[FIELDS.indexOf(fn) - TOTAL_ADDED_FIELDS]);
                                             if (val == null)
                                             {
                                                 continue;
@@ -476,6 +476,10 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                         if ("ALL".equals(locus) || "TCR".equals(locus))
                                         {
                                             rowLocus = inferredLocus;
+                                            if (inferredLocus.isEmpty())
+                                            {
+                                                getPipelineCtx().getLogger().warn("unable to infer locus for row: " + line);
+                                            }
                                         }
                                         else if (!locus.equals(inferredLocus))
                                         {
@@ -508,6 +512,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         return new File(outputDir, "mixcr.txt");
     }
 
+    private final int TOTAL_ADDED_FIELDS = 4;
+    private final int TOTAL_EXPORTED_FIELDS_NOT_IN_DB = 1;
     private List<String> FIELDS = Arrays.asList(
             "libraryId",
             "species",
@@ -635,9 +641,9 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 row.put("category", null);
                 row.put("stimulation", null);
 
-                if (line.length != (FIELDS.size() + 1))  //this includes one additional field appended to the end
+                if (line.length != (FIELDS.size() + TOTAL_EXPORTED_FIELDS_NOT_IN_DB))  //this includes one additional field appended to the end
                 {
-                    getPipelineCtx().getLogger().warn(lineNo + ": line length not " + (FIELDS.size() + 1) + ".  was: " + line.length);
+                    getPipelineCtx().getLogger().warn(lineNo + ": line length not " + (FIELDS.size() + TOTAL_EXPORTED_FIELDS_NOT_IN_DB) + ".  was: " + line.length);
                     getPipelineCtx().getLogger().warn(StringUtils.join(line, ";"));
                 }
 
@@ -766,6 +772,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             runProps.put("performedby", getPipelineCtx().getJob().getUser().getDisplayName(getPipelineCtx().getJob().getUser()));
             runProps.put("assayName", (mixcrVersions.isEmpty() ? "MiXCR" : mixcrVersions.iterator().next()));
             runProps.put("Name", "Analysis: " + model.getAnalysisId());
+            runProps.put("analysisId", model.getAnalysisId());
             if (!runComments.isEmpty())
             {
                 runProps.put("runComments", StringUtils.join(runComments, ", "));

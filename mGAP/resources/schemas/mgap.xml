@@ -94,15 +94,16 @@
             </column>
             <column columnName="releaseDate">
                 <columnTitle>Release Date</columnTitle>
+                <formatString>Date</formatString>
                 <nullable>false</nullable>
             </column>
             <column columnName="vcfId">
                 <columnTitle>VCF File</columnTitle>
                 <nullable>false</nullable>
                 <fk>
-                    <fkDbSchema>exp</fkDbSchema>
-                    <fkTable>data</fkTable>
-                    <fkColumnName>RowId</fkColumnName>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
             <column columnName="genomeId">
@@ -113,11 +114,22 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="jbrowseId">
+                <columnTitle>Genome Browser</columnTitle>
+                <nullable>true</nullable>
+                <isUserEditable>false</isUserEditable>
+                <fk>
+                    <fkDbSchema>jbrowse</fkDbSchema>
+                    <fkTable>databases</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="totalSubjects">
                 <columnTitle>Total Subjects</columnTitle>
             </column>
             <column columnName="totalVariants">
                 <columnTitle>Total Variants</columnTitle>
+                <formatString>#,##0.##</formatString>
             </column>
             <column columnName="dbSnpId">
                 <columnTitle>dbSNP Batch Id</columnTitle>
@@ -145,23 +157,30 @@
                 <nullable>true</nullable>
                 <isHidden>true</isHidden>
             </column>
+            <column columnName="download" wrappedColumnName="rowid">
+                <isUserEditable>false</isUserEditable>
+                <columnTitle></columnTitle>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.VariantReleaseDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
         </columns>
-        <buttonBarOptions includeStandardButtons="false">
-            <item>
-                <originalText>Export</originalText>
-            </item>
-            <item text="Page Size">
-                <originalText>Paging</originalText>
-            </item>
+        <buttonBarOptions includeStandardButtons="false" alwaysShowRecordSelectors="false">
+            <!--<item>-->
+                <!--<originalText>Export</originalText>-->
+            <!--</item>-->
+            <!--<item text="Page Size">-->
+                <!--<originalText>Paging</originalText>-->
+            <!--</item>-->
         </buttonBarOptions>
     </table>
     <table tableName="sequenceDatasets" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
-        <tableUrl />
-        <insertUrl />
-        <updateUrl />
-        <importUrl />
-        <deleteUrl />
+        <tableUrl></tableUrl>
+        <insertUrl></insertUrl>
+        <updateUrl></updateUrl>
+        <importUrl></importUrl>
+        <deleteUrl></deleteUrl>
         <pkColumnName>rowid</pkColumnName>
         <tableTitle>Sequence Datasets</tableTitle>
         <auditLogging>SUMMARY</auditLogging>
@@ -221,11 +240,105 @@
             </column>
         </columns>
         <buttonBarOptions includeStandardButtons="false">
+            <includeScript>ldk.context</includeScript>
+            <includeScript>/mgap/window/SequenceDownloadWindow.js</includeScript>
+            <item text="Download From SRA" requiresSelection="true">
+                <onClick>mGAP.window.SequenceDownloadWindow.buttonHandler(dataRegionName, arguments[0] ? arguments[0].ownerCt : null);</onClick>
+            </item>
             <item>
                 <originalText>Export</originalText>
             </item>
             <item text="Page Size">
                 <originalText>Paging</originalText>
+            </item>
+        </buttonBarOptions>
+    </table>
+    <table tableName="userRequests" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <tableUrl />
+        <insertUrl />
+        <updateUrl />
+        <importUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Requests For Logins</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>false</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Request Id</columnTitle>
+            </column>
+            <column columnName="email">
+                <columnTitle>Email</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="firstName">
+                <columnTitle>First Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="lastName">
+                <columnTitle>Last Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="title">
+                <columnTitle>Title</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="institution">
+                <columnTitle>Institution</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="reason">
+                <columnTitle>Reason For Request</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="userId">
+                <isUnselectable>false</isUnselectable>
+                <fk>
+                    <fkDbSchema>core</fkDbSchema>
+                    <fkTable>Users</fkTable>
+                    <fkColumnName>UserId</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <includeScript>/mgap/Security.js</includeScript>
+            <item permission="ADMIN" requiresSelection="true" text="Approve Requests">
+                <onClick>mGAP.Security.approveUserRequests(dataRegionName);</onClick>
+            </item>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Reports</originalText>
             </item>
         </buttonBarOptions>
     </table>

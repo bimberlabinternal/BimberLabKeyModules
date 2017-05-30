@@ -1,0 +1,13 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="version"/>
+        <column name="releaseDate"/>
+        <column name="totalSubjects"/>
+        <column name="totalVariants"/>
+        <column name="genomeId"/>
+        <column name="download"/>
+    </columns>
+    <sorts>
+        <sort column="version" descending="true"/>
+    </sorts>
+</customView>

@@ -6,3 +6,4 @@ SELECT
 
 FROM sequenceanalysis.sequence_readsets r
 WHERE r.mGAPAliases.externalAlias IS NOT NULL AND r.sraRuns IS NOT NULL
+AND (r.status IS NULL OR r.status NOT IN ('Duplicate', 'Failed'))

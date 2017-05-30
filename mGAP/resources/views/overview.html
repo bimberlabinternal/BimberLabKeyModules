@@ -1,54 +1,15 @@
-<script type="text/javascript">
-    Ext4.onReady(function(){
-        LABKEY.Query.selectRows({
-            schemaName: 'mgap',
-            queryName: 'variantCatalogReleases',
-            columns: '*',
-            scope: this,
-            failure: LDK.Utils.getErrorCallback(),
-            success: function(results){
-                var datasets = ['Variants', 'Images', 'Patients'];
-
-                var aggregate = {};
-                Ext4.each(results.rows, function(row){
-                    var cohort = row.study || 'Unknown';
-                    if (!aggregate[cohort]){
-                        aggregate[cohort] = {
-                            y: datasets,
-                            x: [0,0,0],
-                            //marker: {
-                            //    color: colors.shift()
-                            //},
-                            name: cohort,
-                            type: 'bar',
-                            orientation: 'h'
-                        };
-                    }
-
-                    aggregate[cohort].x[0] += (row['Variants_count'] ? 1 : 0);
-                    aggregate[cohort].x[1] += (row['IHC_Images_count'] ? 1 : 0);
-                    aggregate[cohort].x[2] += 1;
-                }, this);
-
-                var data = [];
-                for (var cohort in aggregate){
-                    data.push(aggregate[cohort]);
-                }
-
-                var layout = {barmode: 'stack', height: 500};
-
-                //var webpart = <%=webpartContext%>;
-                Plotly.newPlot('su2c_overview_graph', data, layout);
-
-            }
-        });
-    });
-</script>
-Welcome to mGAP, the <span style="text-decoration: underline">M</span>acaque <span style="text-decoration: underline">G</span>enotype <span style="text-decoration: underline">a</span>nd <span style="text-decoration: underline">P</span>henotype Database!
+The Macaque Genotype and Phenotype Database (mGAP) provides access to genotype data collected on a large, pedigreed, rhesus macaque colony housed at the Oregon National Primate Research Center (ONPRC), ultimately including data from thousands of animals.
+The initial data release of mGAP includes a catalog of DNA sequence variants generated from whole genome sequencing (WGS) of 54 rhesus macaques.
+The genotype data set, along with clinical and phenotypic measures on the same animals, will be updated periodically.
 <p/>
-mGAP is an NIH funded project to generate a genome wide sequencing and phenotypic data on a large cohort of rhesus macaques.
+<h4 style="text-decoration: none">Resources provided by mGAP:</h4>
 
+<ul>
+    <li><a style="font-weight: normal;text-decoration: underline" href="<%=contextPath%><%=containerPath%>/project-begin.view?pageId=variants">Rhesus Macaque Variant Catalog</a>: mGAP provides a curated and annotated list of macaque SNVs, generated from our cohort</li>
+    <li><a style="font-weight: normal;text-decoration: underline" href="<%=contextPath%><%=containerPath%>/project-begin.view?pageId=datasets">Raw Sequence Data</a>: whole genome and genotyping-by-sequencing (GBS) data are available for all animals</li>
+    <li><span style="font-weight: normal;" >Genotype Data</span>: genotypes will be available for all animals in Fall 2017</li>
+    <li><span style="font-weight: normal;" >Phenotypic and Clinical Data</span>: will be available in 2018</li>
+</ul>
 
-Link to funders.
-
-Graph showing total variants, total animals, etc.
+<br>
+mGAP is supported by NIH R24OD021324.  Please remember to cite this funding source in all publications that make use of mGAP data.

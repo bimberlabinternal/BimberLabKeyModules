@@ -1,0 +1,18 @@
+<module xmlns="http://labkey.org/moduleProperties/xml/">
+    <properties>
+        <propertyDescriptor name="MGAPContainer">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is the path to the container holding the mGAP Project.  Use of slashes is very important - it should be in the format '/myProject/mGap'</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
+        <propertyDescriptor name="MGAPContactUsers">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is a comma separated list of LabKey user names of users that should be notified by email when requests are submitted through mGAP.</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
+    </properties>
+</module>

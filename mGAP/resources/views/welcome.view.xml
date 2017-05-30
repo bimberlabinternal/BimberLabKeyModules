@@ -1,8 +1,15 @@
-<view xmlns="http://labkey.org/data/xml/view" template="app" frame="none">
+<view xmlns="http://labkey.org/data/xml/view" template="app" frame="none" title="mGAP">
     <permissions>
         <permission name="none"/>
     </permissions>
     <dependencies>
         <dependency path="ldk.context"/>
+        <dependency path="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"/>
+        <dependency path="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"/>
+        <dependency path="mGAP/welcome/css/bootstrap.min.css"/>
+        <dependency path="mGAP/welcome/css/welcome.css"/>
+        <dependency path="https://code.jquery.com/jquery-3.2.1.min.js"/>
+        <dependency path="mGAP/welcome/js/jquery.cycle.all.js"/>
+        <dependency path="mGAP/welcome/js/bootstrap.min.js"/>
     </dependencies>
 </view>

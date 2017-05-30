@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view">
+<view xmlns="http://labkey.org/data/xml/view" title="Welcome">
     <permissions>
         <permission name="read"/>
     </permissions>

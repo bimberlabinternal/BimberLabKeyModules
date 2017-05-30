@@ -1,0 +1,114 @@
+<script type="text/javascript">
+    Ext4.onReady(function(){
+        var panel = Ext4.create('Ext.form.Panel', {
+            border: false,
+            style: 'padding: 5px;',
+            defaults: {
+                border: false
+            },
+            items: [{
+                html: 'mGAP is available to all researchers; however, we ask that you provide basic information so that we can track usage and control access.  Please fill out the fields below, hit submit, and you should receive a confirmation email shortly:',
+                style: 'padding-bottom: 20px;'
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'Email',
+                name: 'email',
+                vtype: 'email',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'Re-enter Email',
+                name: 'emailConfirmation',
+                vtype: 'email',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'First Name',
+                name: 'firstName',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'Last Name',
+                name: 'lastName',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'Title',
+                name: 'title',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'Institution',
+                name: 'institution',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textarea',
+                labelAlign: 'top',
+                width: 500,
+                height: 200,
+                fieldLabel: 'Please briefly describe your reason for requesting access',
+                name: 'reason',
+                style: 'margin-top: 20px;',
+                allowBlank: false
+            }],
+            width: 800,
+            buttonAlign: 'left',
+            buttons: [{
+                text: 'Submit',
+                handler: function(btn){
+                    var form = btn.up('form');
+                    if (!form.isValid()){
+                        Ext4.Msg.alert('Error', 'One or more fields is missing data or invalid');
+                        return;
+                    }
+
+                    var values = form.getValues();
+                    if (values.email != values.emailConfirmation){
+                        Ext4.Msg.alert('Error', 'Emails do not match');
+                        return;
+                    }
+
+                    LABKEY.Ajax.request({
+                        method: 'POST',
+                        url: LABKEY.ActionURL.buildURL('mgap', 'requestUser', '/'),
+                        jsonData: values,
+                        scope: this,
+                        success: function(response){
+                            console.log(response);
+
+                            Ext4.Msg.alert('Success', 'An account has been requested.  You should receive a reply shortly.', function(){
+                                window.location = LABKEY.ActionURL.getContextPath() + '/';
+                            });
+                        },
+                        failure: LDK.Utils.getErrorCallback({
+                            logToServer: false,
+                            showAlertOnError: false,
+                            scope: this,
+                            callback: function(responseObj){
+                                if (responseObj.errorMsg){
+                                    Ext4.Msg.alert('Error', responseObj.errorMsg);
+                                }
+                            }
+                        })
+                    });
+                }
+            }]
+        });
+
+        var webpart = <%=webpartContext%>;
+        panel.render(webpart.wrapperDivId);
+    });
+
+</script>

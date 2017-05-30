@@ -50,6 +50,6 @@
     </transforms>
     <schedule>
         <!--11:20PM-->
-        <cron expression="0 20 23 * * ?"/>
+        <cron expression="0 40 23 * * ?"/>
     </schedule>
 </etl>

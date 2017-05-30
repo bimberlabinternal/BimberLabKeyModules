@@ -2,19 +2,24 @@
 
     Ext4.onReady(function(){
         var webpart = <%=webpartContext%>;
-        var childId = '<%=wrapperDivId%>-wp';
-
+        var childEl = jQuery('#' + webpart.wrapperDivId + ' > div.wp');
+        childEl.attr('id', webpart.wrapperDivId + '-wp');
         LDK.Utils.getReadOnlyQWP({
             frame: 'none',
             title: 'Variant Catalog Releases',
             schemaName: 'mgap',
             queryName: 'variantCatalogReleases',
-            maxRows: 50
-        }).render(childId);
+            maxRows: 50,
+            showRecordSelectors: false,
+            showDetailsColumn: false,
+            buttonBar: {position: 'none', includeStandardButtons: false, items: []}
+        }).render(childEl.attr('id'));
     });
 
 </script>
 
-This project involves high depth whole-genome sequencing of a large cohort of Rhesus macaques.  Using a modified version of the GATK Best Practice Variant Discovery Pipeline, we have generated a catalog of macaque SNVs.  Each release is available either as a direct download (comparable to the dbSNP human resource bundles), or these data can be explored through the genome browser of this site.  The table below displays all releases to date.
+One aim of this project is to generate high quality catalogs of reference variants for rhesus macaques.  The variant catalogs below are generated from joint genotyping of our cohort of high-depth whole-genome sequencing data, using a modified version of the GATK Best Practice Variant Discovery Pipeline.  Each release is available either as a direct download (comparable to the dbSNP human resource bundles), or these data can be explored through our genome browser.
 <p/>
-<div id="<%=wrapperDivId%>-wp" style="min-height: 50px;min-width: 200px;"></div>
+<a onclick="JBrowse.window.GenomeBrowserHelpWindow.buttonHandler(event);">**Click here for instructions on using the genome browser</a>
+<p/>
+<div class="wp" style="min-height: 50px;min-width: 200px;"></div>

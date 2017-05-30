@@ -1,0 +1,28 @@
+<script type="text/javascript">
+    Ext4.onReady(function(){
+        var panel = Ext4.create('Ext.panel.Panel', {
+            border: false,
+            style: 'padding: 5px;',
+            defaults: {
+                border: false
+            },
+            items: [{
+                xtype: 'ldk-linkbutton',
+                text: 'Manage User Requests',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mGap', queryName: 'userRequests'})
+            },{
+                xtype: 'ldk-linkbutton',
+                text: 'Manage JBrowse Sessions',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'jbrowse', queryName: 'databases'})
+            },{
+                xtype: 'ldk-linkbutton',
+                text: 'Manage Genomes',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'sequenceanalysis', queryName: 'reference_libraries'})
+            }]
+        });
+
+        var webpart = <%=webpartContext%>;
+        panel.render(webpart.wrapperDivId);
+    });
+
+</script>

@@ -1,4 +1,4 @@
-<webpart xmlns="http://labkey.org/data/xml/webpart" title="mGAP Raw Data">
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="mGAP Sequence Data">
     <view name="data"/>
     <locations>
         <location name="body"/>
