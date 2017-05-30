@@ -1,4 +1,4 @@
 {table}
 Filename|Component|Version|Source|License|LabKey Dev|Purpose
-mixcr.jar|MiXCR|2.0.3|{link:MiXCR|https://github.com/milaboratory/mixcr}|{link:MIT|http://www.opensource.org/licenses/mit-license.php}|bbimber|TCR Analysis
+mixcr-2.0.3.jar|MiXCR|2.0.3|{link:MiXCR|https://github.com/milaboratory/mixcr}|{link:MIT|http://www.opensource.org/licenses/mit-license.php}|bbimber|TCR Analysis
 {table}

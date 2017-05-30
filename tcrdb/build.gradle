@@ -1,7 +1,24 @@
 import org.labkey.gradle.util.BuildUtils;
 
+configurations {
+    mixcr { transitive = false }
+}
+
 dependencies {
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:SequenceAnalysis", depProjectConfig: "apiCompile")
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:laboratory", depProjectConfig: "apiCompile")
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:LDK", depProjectConfig: "apiCompile")
+   mixcr "com.milaboratory:mixcr:${mixcrVersion}"
 }
+
+project.task("copyMixcr",
+        type: Copy,
+        group: "Build",
+        description: "Copy MiXCR JAR into separate directory",
+        { CopySpec copy ->
+           copy.from project.configurations.mixcr
+           copy.into new File(project.buildDir, "explodedModule/external")
+        }
+)
+
+project.tasks.module.dependsOn(project.tasks.copyMixcr)

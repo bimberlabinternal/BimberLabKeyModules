@@ -270,7 +270,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
 
         //otherwise use checked in copy
         jar = lookupFile("external");
-        return new File(jar, "mixcr.jar");
+        return new File(jar, "mixcr-2.0.3.jar");
     }
 
     public String getVersionString() throws PipelineJobException
