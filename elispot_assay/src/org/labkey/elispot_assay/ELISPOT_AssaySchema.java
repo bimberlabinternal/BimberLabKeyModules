@@ -17,6 +17,7 @@
 package org.labkey.elispot_assay;
 
 import org.labkey.api.data.DbSchema;
+import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.dialect.SqlDialect;
 
 public class ELISPOT_AssaySchema
@@ -38,11 +39,6 @@ public class ELISPOT_AssaySchema
 
     public DbSchema getSchema()
     {
-        return DbSchema.get(SCHEMA_NAME);
-    }
-
-    public SqlDialect getSqlDialect()
-    {
-        return getSchema().getSqlDialect();
+        return DbSchema.get(SCHEMA_NAME, DbSchemaType.Module);
     }
 }

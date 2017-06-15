@@ -17,6 +17,7 @@
 package org.labkey.variantdb;
 
 import org.labkey.api.data.DbSchema;
+import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.dialect.SqlDialect;
 
 public class VariantDBSchema
@@ -40,11 +41,10 @@ public class VariantDBSchema
 
     private VariantDBSchema()
     {
-
     }
 
     public DbSchema getSchema()
     {
-        return DbSchema.get(NAME);
+        return DbSchema.get(NAME, DbSchemaType.Module);
     }
 }

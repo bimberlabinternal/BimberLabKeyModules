@@ -38,7 +38,7 @@ public class VariantDBUserSchema extends SimpleUserSchema
 
     public static void register(final Module m)
     {
-        final DbSchema dbSchema = DbSchema.get(VariantDBSchema.NAME);
+        final DbSchema dbSchema = VariantDBSchema.getInstance().getSchema();
 
         DefaultSchema.registerProvider(VariantDBSchema.NAME, new DefaultSchema.SchemaProvider(m)
         {

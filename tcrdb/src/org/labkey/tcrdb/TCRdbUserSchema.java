@@ -24,7 +24,7 @@ public class TCRdbUserSchema extends SimpleUserSchema
 
     public static void register(final Module m)
     {
-        final DbSchema dbSchema = DbSchema.get(TCRdbSchema.NAME);
+        final DbSchema dbSchema = TCRdbSchema.getInstance().getSchema();
 
         DefaultSchema.registerProvider(TCRdbSchema.NAME, new DefaultSchema.SchemaProvider(m)
         {
