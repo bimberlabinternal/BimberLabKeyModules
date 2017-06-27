@@ -135,6 +135,7 @@ DISCVR/mGAP/src/org/labkey/mgap/mGAPController.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPManager.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPModule.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPSchema.java -text
+DISCVR/mGAP/src/org/labkey/mgap/mGapAuditTypeProvider.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/PublicReleaseHandler.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TriggerHelper.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/VariantReleaseDisplayColumnFactory.java -text

@@ -33,7 +33,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         super(log);
     }
 
-    public File doAlignmentAndAssemble(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams) throws PipelineJobException
+    public File doAlignmentAndAssemble(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams, boolean doAssemblePartial) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
@@ -71,13 +71,24 @@ public class MiXCRWrapper extends AbstractCommandWrapper
 
         writeLogToLog(logFile);
 
-        getLogger().info("assembling partial reads, round 1");
-        File partialAssembleOut1 = new File(getOutputDir(fq1), outputPrefix + ".assemblePartial_1.vdjca.gz");
-        doAssemblePartial(alignOut, partialAssembleOut1, logFile);
+        File inputForFinalAlignment;
+        if (doAssemblePartial)
+        {
+            getLogger().info("assembling partial reads, round 1");
+            File partialAssembleOut1 = new File(getOutputDir(fq1), outputPrefix + ".assemblePartial_1.vdjca.gz");
+            doAssemblePartial(alignOut, partialAssembleOut1, logFile);
 
-        getLogger().info("assembling partial reads, round 2");
-        File partialAssembleOut2 = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix));
-        doAssemblePartial(partialAssembleOut1, partialAssembleOut2, logFile);
+            getLogger().info("assembling partial reads, round 2");
+            File partialAssembleOut2 = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix, doAssemblePartial));
+            doAssemblePartial(partialAssembleOut1, partialAssembleOut2, logFile);
+
+            inputForFinalAlignment = partialAssembleOut2;
+        }
+        else
+        {
+            getLogger().info("assemble partial will not be used");
+            inputForFinalAlignment = alignOut;
+        }
 
         //getLogger().info("extend alignments");
         //File extendAlignmentsOut = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix));
@@ -104,7 +115,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
             assembleArgs.addAll(assembleParams);
         }
 
-        assembleArgs.add(partialAssembleOut2.getPath());
+        assembleArgs.add(inputForFinalAlignment.getPath());
         assembleArgs.add(assembleOut.getPath());
 
         execute(assembleArgs);

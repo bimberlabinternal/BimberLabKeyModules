@@ -203,11 +203,25 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                     }
                 }
 
+                if (totalSubjects == 0)
+                {
+                    boolean sitesOnly = Boolean.parseBoolean(job.getParameters().get("sitesOnly"));
+                    if (sitesOnly)
+                    {
+                        job.getLogger().info("attempting to infer total subject from original VCF");
+                        File originalVCF = inputs.get(0).getFile();
+                        try (VCFFileReader reader = new VCFFileReader(originalVCF))
+                        {
+                            totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
+                        }
+                    }
+                }
+
                 //actually create outputfile
                 Map<String, Object> row = new CaseInsensitiveHashMap<>();
-                row.put("version", job.getParameters().get("version"));
+                row.put("version", job.getParameters().get("releaseVersion"));
                 row.put("releaseDate", new Date());
-                row.put("vcfId", so.getDataId());
+                row.put("vcfId", so.getRowid());
                 row.put("genomeId", so.getLibrary_id());
                 row.put("totalSubjects", totalSubjects);
                 row.put("totalVariants", totalVariants);

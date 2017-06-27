@@ -84,6 +84,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     private static final String DIFF_LOCI = "diffLoci";
     private static final String IS_RNA_SEQ = "isRnaSeq";
     private static final String TARGET_ASSAY = "targetAssay";
+    private static final String DO_ASSEMBLE_PARTIAL = "doAssemblePartial";
     private static final String LOCI = "loci";
 
     public static class Provider extends AbstractAnalysisStepProvider<MiXCRAnalysis>
@@ -122,6 +123,10 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                         put("value", "ALL");
                     }}, true),
                     ToolParameterDescriptor.create(FLAG_MISSENSE, "Flag Missense CDR3", "If checked, if a sample has duplicate CDR3 clones from the same locus, and and one of these is missense, that clone will be flagged and excluded from many reports.", "checkbox", new JSONObject()
+                    {{
+                        put("checked", true);
+                    }}, true),
+                    ToolParameterDescriptor.create(DO_ASSEMBLE_PARTIAL, "Attempt to Align Partial Hits", "If checked, the MiXCR assemblePartial command will be used.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
                     }}, true)
@@ -343,18 +348,21 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 assembleParams.add(threads.toString());
             }
 
+            boolean doAssemblePartial = getProvider().getParameterByName(DO_ASSEMBLE_PARTIAL).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class);
+
             String prefix = getOutputPrefix(FileUtil.getBaseName(inputBam), String.valueOf(rowid), species);
-            File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams);
+            File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams, doAssemblePartial);
             output.addOutput(clones, CLONES_FILE);
 
             output.addIntermediateFile(new File(outputDir, prefix + ".align.vdjca.gz"), "MiXCR VDJ Alignment");
 
             File alignPartialOutput1 = new File(outputDir, prefix + ".assemblePartial_1.vdjca.gz");
-            output.addIntermediateFile(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
-            File alignPartialOutput2 = new File(outputDir, getFinalVDJFileName(prefix));
-            //output.addIntermediateFile(alignPartialOutput2, "MiXCR VDJ Alignment, Recovery Step 2");
+            if (alignPartialOutput1.exists())
+            {
+                output.addIntermediateFile(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
+            }
 
-            File finalVDJ = alignPartialOutput2;
+            File finalVDJ = new File(outputDir, getFinalVDJFileName(prefix, doAssemblePartial));
             output.addOutput(finalVDJ, FINAL_VDJ_FILE);
 
             output.addOutput(new File(outputDir, MiXCRAnalysis.getClonesFileName(prefix) + ".index"), "MiXCR VDJ Index File 1");
@@ -598,6 +606,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
 
         getPipelineCtx().getLogger().info("importing assay results from table: " + table.getPath());
+        boolean doAssemblePartial = getProvider().getParameterByName(DO_ASSEMBLE_PARTIAL).extractValue(getPipelineCtx().getJob(), getProvider(), Boolean.class);
 
         List<Map<String, Object>> rows = new ArrayList<>();
         Set<String> mixcrVersions = new HashSet<>();
@@ -677,7 +686,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     row.put("clonesFile", clonesFile.getRowId());
                 }
 
-                String vdjFileName = getFinalVDJFileName(getOutputPrefix(FileUtil.getBaseName(inputBam), line[FIELDS.indexOf("libraryId")], line[FIELDS.indexOf("species")]));
+                String vdjFileName = getFinalVDJFileName(getOutputPrefix(FileUtil.getBaseName(inputBam), line[FIELDS.indexOf("libraryId")], line[FIELDS.indexOf("species")]), doAssemblePartial);
                 ExpData vdjFile = null;
                 for (ExpData d : vdjDatas)
                 {
@@ -770,7 +779,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         {
             JSONObject runProps = new JSONObject();
             runProps.put("performedby", getPipelineCtx().getJob().getUser().getDisplayName(getPipelineCtx().getJob().getUser()));
-            runProps.put("assayName", (mixcrVersions.isEmpty() ? "MiXCR" : mixcrVersions.iterator().next()));
+            runProps.put("assayName", (mixcrVersions.isEmpty() ? "MiXCR" : mixcrVersions.iterator().next()) + (doAssemblePartial ? "" : "-NoAssemblePartial"));
             runProps.put("Name", "Analysis: " + model.getAnalysisId());
             runProps.put("analysisId", model.getAnalysisId());
             if (!runComments.isEmpty())
@@ -885,9 +894,9 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         return outputPrefix + ".clones";
     }
 
-    public static String getFinalVDJFileName(String outputPrefix)
+    public static String getFinalVDJFileName(String outputPrefix, boolean doAssemblePartial)
     {
-        return outputPrefix + ".assemblePartial_2.vdjca.gz";
+        return doAssemblePartial ? outputPrefix + ".assemblePartial_2.vdjca.gz" : outputPrefix + ".align.vdjca.gz";
     }
 
     private String getOutputPrefix(String basename, String libraryId, String species)

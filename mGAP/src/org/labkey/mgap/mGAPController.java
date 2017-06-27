@@ -175,13 +175,19 @@ public class mGAPController extends SpringActionController
                         }
 
                         MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
-                        ActionURL url = QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, "mGap", "userRequests");
+                        Container c = mGAPManager.get().getMGapContainer();
+                        if (c == null)
+                        {
+                            c = getContainer();
+                        }
+
+                        ActionURL url = QueryService.get().urlFor(getUser(), c, QueryAction.executeQuery, "mGap", "userRequests");
                         mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + url .getURIString(true)+ "\">Click here to view/approve this request</a>");
                         mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
                         mail.setSubject("mGap Account Request");
                         mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
 
-                        MailHelper.send(mail, getUser(), getContainer());
+                        MailHelper.send(mail, getUser(), c);
                     }
                     catch (Exception e)
                     {
@@ -454,6 +460,8 @@ public class mGAPController extends SpringActionController
                     }
                 }
             }
+
+            mGapAuditTypeProvider.addAuditEntry(getContainer(), getUser(), zipName, "Variant Catalog", (Double)row.get("version"));
         }
     }
 

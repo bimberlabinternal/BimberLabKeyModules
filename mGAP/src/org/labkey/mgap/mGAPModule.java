@@ -17,6 +17,7 @@
 package org.labkey.mgap;
 
 import org.apache.log4j.Logger;
+import org.labkey.api.audit.AuditLogService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -48,6 +49,8 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
+        AuditLogService.get().registerAuditType(new mGapAuditTypeProvider());
+
         new PipelineStartup();
     }
 
