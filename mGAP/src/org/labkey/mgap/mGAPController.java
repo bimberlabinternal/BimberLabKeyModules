@@ -178,10 +178,12 @@ public class mGAPController extends SpringActionController
                         Container c = mGAPManager.get().getMGapContainer();
                         if (c == null)
                         {
+                            _log.warn("mGAP container was not set, using: " + c.getPath());
                             c = getContainer();
                         }
 
                         ActionURL url = QueryService.get().urlFor(getUser(), c, QueryAction.executeQuery, "mGap", "userRequests");
+                        url.setContainer(c);
                         mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + url .getURIString(true)+ "\">Click here to view/approve this request</a>");
                         mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
                         mail.setSubject("mGap Account Request");

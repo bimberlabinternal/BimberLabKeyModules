@@ -2,21 +2,14 @@ package org.labkey.tcrdb.pipeline;
 
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.reader.Readers;
-import org.labkey.api.resource.FileResource;
-import org.labkey.api.resource.MergedDirectoryResource;
-import org.labkey.api.resource.Resource;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
-import org.labkey.api.util.Path;
-import org.labkey.tcrdb.TCRdbModule;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +26,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         super(log);
     }
 
-    public File doAlignmentAndAssemble(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams, boolean doAssemblePartial) throws PipelineJobException
+    public File doAlignmentAndAssemble(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams, boolean doAssemblePartial, boolean forNovels) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
@@ -58,16 +51,28 @@ public class MiXCRWrapper extends AbstractCommandWrapper
             args.addAll(alignParams);
         }
 
+        if (forNovels)
+        {
+            getLogger().info("creating alignment file for purpose of identifying novel genes");
+            args.add("-OvParameters.geneFeatureToAlign='{FR1Begin:VEnd(100)}'");
+            args.add("-OjParameters.geneFeatureToAlign='{JBegin(-100):FR4End}'");
+        }
+
         args.add(fq1.getPath());
         if (fq2 != null)
         {
             args.add(fq2.getPath());
         }
 
-        File alignOut = new File(getOutputDir(fq1), outputPrefix + ".align.vdjca.gz");
+        File alignOut = getAlignOutputFile(getOutputDir(fq1), outputPrefix);
         args.add(alignOut.getPath());
 
         execute(args);
+
+        if (forNovels)
+        {
+            return alignOut;
+        }
 
         writeLogToLog(logFile);
 
@@ -157,7 +162,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
             String line;
             while ((line = reader.readLine()) != null)
             {
-                getLogger().debug(line);
+                getLogger().info(line);
             }
         }
         catch (IOException e)
@@ -218,8 +223,16 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("-qFeature");
         args.add("CDR3");
         args.add("-sequence");
-        args.add("-nFeature");
-        args.add("VDJTranscript");
+        //args.add("-nFeature");
+        //args.add("VDJTranscript");
+        args.add("-nMutations");
+        args.add("VRegion");
+        args.add("-nMutations");
+        args.add("DRegion");
+        args.add("-nMutations");
+        args.add("JRegion");
+        args.add("-nMutations");
+        args.add("CExon1");
         args.add("-f");
         args.add(clones.getPath());
         args.add(output.getPath());
@@ -227,7 +240,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         execute(args);
     }
 
-    public void doExportAlignments(File align, File output, List<String> extraArgs) throws PipelineJobException
+    public void doExportAlignmentsPretty(File align, File output, List<String> extraArgs) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
@@ -242,46 +255,85 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         execute(args);
     }
 
-    private List<String> getBaseArgs() throws PipelineJobException
+    public void doExportAlignments(File align, File output, List<String> extraArgs) throws PipelineJobException
     {
-        try
+        List<String> args = new ArrayList<>();
+        args.addAll(getBaseArgs());
+        args.add("exportAlignments");
+        args.add("-f");
+        args.add("-vGene");
+        args.add("-dGene");
+        args.add("-jGene");
+        args.add("-cGene");
+
+        args.add("-vHit");
+        args.add("-dHit");
+        args.add("-jHit");
+        args.add("-cHit");
+
+        args.add("-vHitScore");
+        args.add("-dHitScore");
+        args.add("-jHitScore");
+        args.add("-cHitScore");
+
+        args.add("-readId");
+        args.add("-sequence");
+        args.add("-positionOf");
+        args.add("VEndTrimmed");
+        args.add("-positionOf");
+        args.add("JBeginTrimmed");
+        args.add("-positionOf");
+        args.add("CBegin");
+        args.add("-descrR1");
+        args.add("-descrR2");
+
+        args.add("-nFeature");
+        args.add("{JBegin(-25):JBegin(-5)}");
+
+        args.add("-nFeature");
+        args.add("{VEnd(5):VEnd(25)}");
+
+        if (extraArgs != null)
         {
-            List<String> args = new ArrayList<>();
-            args.add(SequencePipelineService.get().getJavaFilepath());
-            //args.addAll(SequencePipelineService.get().getJavaOpts());
-            File jar = new File(getJAR().getPath());
-            args.add("-Dmixcr.path=" + jar.getParentFile().getPath());
-            args.add("-Dmixcr.command=mixcr");
-            args.add("-XX:+AggressiveOpts");
-
-            if (_libraryPath != null)
-            {
-                args.add("-Dlibrary.path=" + _libraryPath.getPath());
-            }
-
-            args.add("-jar");
-            args.add(jar.getPath());
-
-            return args;
+            args.addAll(extraArgs);
         }
-        catch (IOException e)
-        {
-            throw new PipelineJobException(e);
-        }
+        args.add(align.getPath());
+        args.add(output.getPath());
+
+        execute(args);
     }
 
-    private File getJAR() throws IOException
+    private List<String> getBaseArgs()
     {
-        //preferentially use copy in pipeline tools dir
-        File jar = SequencePipelineService.get().getExeForPackage("mixcr", "mixcr.jar");
+        List<String> args = new ArrayList<>();
+        args.add(SequencePipelineService.get().getJavaFilepath());
+        //args.addAll(SequencePipelineService.get().getJavaOpts());
+        File jar = new File(getJAR().getPath());
+        args.add("-Dmixcr.path=" + jar.getParentFile().getPath());
+        args.add("-Dmixcr.command=mixcr");
+        args.add("-XX:+AggressiveOpts");
+
+        if (_libraryPath != null)
+        {
+            args.add("-Dlibrary.path=" + _libraryPath.getPath());
+        }
+
+        args.add("-jar");
+        args.add(jar.getPath());
+
+        return args;
+    }
+
+    private File getJAR()
+    {
+        File jar = new File(ModuleLoader.getInstance().getWebappDir(), "WEB-INF/lib");
+        jar = new File(jar, "mixcr.jar");
         if (jar.exists())
         {
             return jar;
         }
 
-        //otherwise use checked in copy
-        jar = lookupFile("external");
-        return new File(jar, "mixcr-2.0.3.jar");
+        return SequencePipelineService.get().getExeForPackage("mixcr", "mixcr.jar");
     }
 
     public String getVersionString() throws PipelineJobException
@@ -306,28 +358,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         _libraryPath = libraryPath;
     }
 
-    private File lookupFile(String path) throws IOException
+    public File getAlignOutputFile(File outDir, String outputPrefix)
     {
-        Module module = ModuleLoader.getInstance().getModule(TCRdbModule.class);
-        MergedDirectoryResource resource = (MergedDirectoryResource)module.getModuleResolver().lookup(Path.parse(path));
-        assert resource != null : "Unable to find resource with path: " + path;
-
-        File file = null;
-        for (Resource r : resource.list())
-        {
-            if (r instanceof FileResource)
-            {
-                file = ((FileResource) r).getFile().getParentFile();
-                break;
-            }
-        }
-
-        if (file == null)
-            throw new FileNotFoundException("Not found: " + path);
-
-        if (!file.exists())
-            throw new FileNotFoundException("Not found: " + file.getPath());
-
-        return file;
+        return new File(outDir, outputPrefix + ".align.vdjca.gz");
     }
 }

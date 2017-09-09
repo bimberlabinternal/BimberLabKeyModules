@@ -60,6 +60,6 @@
         </transform>
     </transforms>
     <schedule>
-        <cron expression="0 0 0 * * ?"/>
+        <cron expression="0 0 1 * * ?"/>
     </schedule>
 </etl>

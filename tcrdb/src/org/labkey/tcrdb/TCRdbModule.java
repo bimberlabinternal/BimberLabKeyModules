@@ -65,6 +65,9 @@ public class TCRdbModule extends ExtendedSimpleModule
         LaboratoryService.get().registerDataProvider(new TCRdbProvider(this));
         SequenceAnalysisService.get().registerDataProvider(new TCRdbProvider(this));
 
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, "sequenceanalysis", "sequence_readsets");
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, "sequenceanalysis", "sequence_analyses");
+
         //register resources
         new PipelineStartup();
     }

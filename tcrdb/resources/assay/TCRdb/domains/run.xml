@@ -27,12 +27,85 @@
         <exp:Name>assayId</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
-        <exp:Label>Comments</exp:Label>
+        <exp:Label>Assay Id</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>performedBy</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
         <exp:Label>Performed By</exp:Label>
+    </exp:PropertyDescriptor>
+
+    <exp:PropertyDescriptor>
+        <exp:Name>totalAlignments</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Total Alignments</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>totalReadsInClones</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Total Reads In Exported Clones</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRAAlignments</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>TRA Alignments</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRBAlignments</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>TRB Alignments</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRDAlignments</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>TRD Alignments</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRGAlignments</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>TRG Alignments</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRAClonePercent</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Fraction of Clones Reads From TRA</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRBClonePercent</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Fraction of Clones Reads From TRB</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRDClonePercent</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Fraction of Clones Reads From TRD</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>TRGClonePercent</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#double</exp:RangeURI>
+        <exp:Label>Fraction of Clones Reads From TRG</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>analysisId</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Analysis Id</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>pipelineRunId</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>Run Id</exp:Label>
     </exp:PropertyDescriptor>
 </ap:domain>

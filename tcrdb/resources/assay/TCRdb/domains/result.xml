@@ -278,4 +278,28 @@
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#boolean</exp:RangeURI>
         <exp:Label>Disabled?</exp:Label>
     </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>vMismatches</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>VRegion Mismatches</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>dMismatches</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>DRegion Mismatches</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>jMismatches</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>JRegion Mismatches</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
+        <exp:Name>cMismatches</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
+        <exp:Label>CExon1 Mismatches</exp:Label>
+    </exp:PropertyDescriptor>
 </ap:domain>
