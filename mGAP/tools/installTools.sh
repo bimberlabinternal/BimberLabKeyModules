@@ -82,6 +82,9 @@ then
     perl annotate_variation.pl --buildver hg19 -downdb refGene humandb/
     perl annotate_variation.pl --buildver hg19 -downdb knownGene humandb/
     perl annotate_variation.pl --buildver hg19 -downdb ensGene humandb/
+    perl annotate_variation.pl --buildver hg19 -downdb -webfrom annovar clinvar_20170130 humandb/
+
+    perl annotate_variation.pl --buildver hg38 -downdb -webfrom annovar clinvar_20170130 humandb/
 
     cd ../
     mv annovar ${LKTOOLS_DIR}/annovar
