@@ -110,7 +110,7 @@
                     </column>
                 </columns>
                 <buttonBarOptions position="both" includeStandardButtons="true">
-                    <includeScript>laboratory.context</includeScript>
+                    <includeScript>/laboratory.context</includeScript>
                     <includeScript>/laboratory/assayButtons.js</includeScript>
                     <includeScript>/tcrdb/window/ChangeStatusWindow.js</includeScript>
                     <includeScript>/tcrdb/window/ExportDataWindow.js</includeScript>
