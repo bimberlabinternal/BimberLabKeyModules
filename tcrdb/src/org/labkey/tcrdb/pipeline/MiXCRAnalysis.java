@@ -10,7 +10,6 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
-import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.exp.api.ExpRun;
@@ -1043,7 +1042,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     private int addRowsOfLocus(List<Map<String, Object>> cloneRows, String locus, List<Map<String, Object>> newRows)
     {
-        int rowsSkipped = 0;
+        boolean found = false;
         for (Map<String, Object> row : cloneRows)
         {
             String rowLocus = row.get("locus") == null ? null : StringUtils.trimToNull(row.get("locus").toString());
@@ -1055,15 +1054,17 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             if (locus.equals(rowLocus))
             {
                 newRows.add(row);
-            }
-            else
-            {
-                getPipelineCtx().getLogger().info("skipping redundant row export: " + rowLocus);
-                rowsSkipped++;
+                found = true;
+                break;
             }
         }
 
-        return rowsSkipped;
+        if (!found)
+        {
+            getPipelineCtx().getLogger().error("row not found for locus: " + locus);
+        }
+
+        return cloneRows.size()-1;
     }
 
     private File getScript(String path) throws PipelineJobException
