@@ -7,7 +7,7 @@
             <caption>Overview</caption>
             <selectors>
                 <selector>
-                    <controller>mgap</controller>
+                    <regex>overview</regex>
                 </selector>
             </selectors>
             <requiredWebParts>
@@ -18,12 +18,27 @@
                     <name>mGAP Overview</name>
                     <location>body</location>
                 </webPart>
+                <webPart>
+                    <name>mGAP Gene Search</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>Quick Links</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>About mGAP</name>
+                    <location>right</location>
+                </webPart>
             </preferredWebParts>
         </folderTab>
         <folderTab>
             <name>variants</name>
             <caption>Variant Catalog</caption>
             <selectors>
+                <selector>
+                    <view>mgap-variants</view>
+                </selector>
                 <selector>
                     <view>variants</view>
                 </selector>
@@ -34,6 +49,18 @@
                 <webPart>
                     <name>mGAP Variant Releases</name>
                     <location>body</location>
+                </webPart>
+                <webPart>
+                    <name>mGAP Gene Search</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>Quick Links</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>About mGAP</name>
+                    <location>right</location>
                 </webPart>
             </preferredWebParts>
         </folderTab>
@@ -52,18 +79,25 @@
                     <name>mGAP Sequence Data</name>
                     <location>body</location>
                 </webPart>
+                <webPart>
+                    <name>mGAP Gene Search</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>Quick Links</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>About mGAP</name>
+                    <location>right</location>
+                </webPart>
             </preferredWebParts>
         </folderTab>
         <folderTab>
             <name>admin</name>
             <caption>Admin</caption>
-            <permissions>
-                <permission name="ADMIN"/>
-            </permissions>
             <selectors>
-                <selector>
 
-                </selector>
             </selectors>
             <requiredWebParts>
 
@@ -73,7 +107,22 @@
                     <name>mGAP Admin</name>
                     <location>body</location>
                 </webPart>
+                <webPart>
+                    <name>mGAP Gene Search</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>Quick Links</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>About mGAP</name>
+                    <location>right</location>
+                </webPart>
             </preferredWebParts>
+            <permissions>
+                <permission name="org.labkey.api.security.permissions.AdminPermission"/>
+            </permissions>
         </folderTab>
     </folderTabs>
     <modules>

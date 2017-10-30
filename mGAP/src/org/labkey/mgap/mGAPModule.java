@@ -17,10 +17,18 @@
 package org.labkey.mgap;
 
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONObject;
 import org.labkey.api.audit.AuditLogService;
+import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Sort;
+import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.view.ViewContext;
 import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.labkey.mgap.query.mGAPUserSchema;
 
@@ -78,5 +86,22 @@ public class mGAPModule extends ExtendedSimpleModule
                 _hasRegistered = true;
             }
         }
+    }
+
+    @NotNull
+    @Override
+    public JSONObject getPageContextJson(ViewContext context)
+    {
+        JSONObject ret = super.getPageContextJson(context);
+
+        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("jbrowseId"), new SimpleFilter(FieldKey.fromString("container"), context.getContainer().getId()), new Sort("-releaseDate"));
+        ts.setMaxRows(1);
+        String id = ts.getObject(String.class);
+        if (id != null)
+        {
+            ret.put("mgapJBrowse", id);
+        }
+
+        return ret;
     }
 }

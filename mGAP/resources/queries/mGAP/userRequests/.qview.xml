@@ -1,0 +1,16 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="email"/>
+        <column name="firstName"/>
+        <column name="lastName"/>
+        <column name="title"/>
+        <column name="institution"/>
+        <column name="reason"/>
+        <column name="userId"/>
+        <column name="hasAccess"/>
+        <column name="created"/>
+    </columns>
+    <sorts>
+        <sort column="created" descending="true"/>
+    </sorts>
+</customView>

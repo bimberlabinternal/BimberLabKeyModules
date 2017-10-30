@@ -9,7 +9,7 @@
             items: [{
                 xtype: 'ldk-linkbutton',
                 text: 'Manage User Requests',
-                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mGap', queryName: 'userRequests'})
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mGap', queryName: 'userRequests', 'query.viewName': 'Pending Requests'})
             },{
                 xtype: 'ldk-linkbutton',
                 text: 'Manage JBrowse Sessions',

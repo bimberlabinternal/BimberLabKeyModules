@@ -1,10 +1,12 @@
-<view xmlns="http://labkey.org/data/xml/view" title="The Macaque Genotype and Phenotype Database (mGAP)">
+<view xmlns="http://labkey.org/data/xml/view" title="Gene Search">
     <permissions>
         <permission name="read"/>
     </permissions>
     <dependencies>
-        <dependency path="ldk.context"/>
+        <dependency path="LDK.context"/>
+        <dependency path="jbrowseApp/css/genome.css" />
         <dependency path="internal/jQuery"/>
         <dependency path="https://cdn.plot.ly/plotly-latest.min.js"/>
+        <dependency path="mgap/Utils.js" />
     </dependencies>
 </view>

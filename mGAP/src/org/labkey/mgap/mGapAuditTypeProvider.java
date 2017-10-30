@@ -25,7 +25,7 @@ public class mGapAuditTypeProvider extends AbstractAuditTypeProvider implements 
     public static final String AUDIT_EVENT_TYPE = "MGapAuditEvent";
 
     public static final String COLUMN_NAME_TYPE = "Type";
-    public static final String COLUMN_NAME_VERSION = "Version";
+    public static final String COLUMN_NAME_VERSION = "ReleaseVersion";
 
     public mGapAuditTypeProvider()
     {
@@ -61,7 +61,9 @@ public class mGapAuditTypeProvider extends AbstractAuditTypeProvider implements 
     {
         return Arrays.asList(
             FieldKey.fromString(COLUMN_NAME_TYPE),
-            FieldKey.fromString(COLUMN_NAME_VERSION)
+            FieldKey.fromString(COLUMN_NAME_VERSION),
+            FieldKey.fromString("Comment"),
+            FieldKey.fromString("Created")
         );
     }
 
@@ -71,12 +73,12 @@ public class mGapAuditTypeProvider extends AbstractAuditTypeProvider implements 
         return (Class<K>)mGapAuditTypeProvider.AuditEvent.class;
     }
 
-    public static void addAuditEntry(Container container, User user, String comment, String type, double version)
+    public static void addAuditEntry(Container container, User user, String comment, String type, String releaseVersion)
     {
         mGapAuditTypeProvider.AuditEvent event = new mGapAuditTypeProvider.AuditEvent(container.getId(), comment);
 
         event.setType(type);
-        event.setVersion(version);
+        event.setReleaseVersion(releaseVersion);
 
         AuditLogService.get().addEvent(user, event);
     }
@@ -84,7 +86,7 @@ public class mGapAuditTypeProvider extends AbstractAuditTypeProvider implements 
     public static class AuditEvent extends AuditTypeEvent
     {
         private String _type;
-        private double _version;
+        private String _releaseVersion;
 
         public AuditEvent()
         {
@@ -106,14 +108,14 @@ public class mGapAuditTypeProvider extends AbstractAuditTypeProvider implements 
             _type = type;
         }
 
-        public double getVersion()
+        public String getReleaseVersion()
         {
-            return _version;
+            return _releaseVersion;
         }
 
-        public void setVersion(double version)
+        public void setReleaseVersion(String releaseVersion)
         {
-            _version = version;
+            _releaseVersion = releaseVersion;
         }
     }
 

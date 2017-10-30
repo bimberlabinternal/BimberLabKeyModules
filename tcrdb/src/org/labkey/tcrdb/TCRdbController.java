@@ -28,6 +28,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
+import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
@@ -161,41 +162,49 @@ public class TCRdbController extends SpringActionController
                     args.add(form.getReadContains());
                 }
 
-                wrapper.doExportAlignments(f, tmp, args);
+                try
+                {
+                    wrapper.doExportAlignmentsPretty(f, tmp, args);
 
-                writer.write("File: " + f.getName() + '\n');
-                writer.write("Result Rows From This File: " + '\n');
-                for (AssayRecord r : VDJMap.get(f))
-                {
-                    writer.write("Sample: " + r.getSampleName() + '\n');
-                    writer.write("Sample Date: " + (r.getDate() == null ? "" : fmt.format(r.getDate())) + '\n');
-                    writer.write("CDR3: " + coalesce(r.getCDR3()) + '\n');
-                    writer.write("vHit: " + coalesce(r.getvHit()) + '\n');
-                    writer.write("dHit: " + coalesce(r.getdHit()) + '\n');
-                    writer.write("jHit: " + coalesce(r.getjHit()) + '\n');
-                    writer.write("cHit: " + coalesce(r.getcHit()) + '\n');
-                    writer.write("Read Count: " + coalesce(r.getCount()) + '\n');
-                    writer.write("Fraction: " + coalesce(r.getFraction()) + '\n');
-                    writer.write("Comments: " + coalesce(r.getComment()) + '\n');
-                    writer.write('\n');
-                }
-                writer.write('\n');
-                try (BufferedReader reader = Readers.getReader(new FileInputStream(tmp)))
-                {
-                    String line;
-                    while ((line = reader.readLine()) != null)
+                    writer.write("File: " + f.getName() + '\n');
+                    writer.write("Result Rows From This File: " + '\n');
+                    for (AssayRecord r : VDJMap.get(f))
                     {
-
-                        writer.write(line + '\n');
+                        writer.write("Sample: " + r.getSampleName() + '\n');
+                        writer.write("Sample Date: " + (r.getDate() == null ? "" : fmt.format(r.getDate())) + '\n');
+                        writer.write("CDR3: " + coalesce(r.getCDR3()) + '\n');
+                        writer.write("vHit: " + coalesce(r.getvHit()) + '\n');
+                        writer.write("dHit: " + coalesce(r.getdHit()) + '\n');
+                        writer.write("jHit: " + coalesce(r.getjHit()) + '\n');
+                        writer.write("cHit: " + coalesce(r.getcHit()) + '\n');
+                        writer.write("Read Count: " + coalesce(r.getCount()) + '\n');
+                        writer.write("Fraction: " + coalesce(r.getFraction()) + '\n');
+                        writer.write("Comments: " + coalesce(r.getComment()) + '\n');
+                        writer.write('\n');
                     }
+                    writer.write('\n');
+                    try (BufferedReader reader = Readers.getReader(new FileInputStream(tmp)))
+                    {
+                        String line;
+                        while ((line = reader.readLine()) != null)
+                        {
+
+                            writer.write(line + '\n');
+                        }
+                    }
+
+                    writer.write('\n');
+                    writer.write("&lt;hr&gt;");
+                    writer.write('\n');
+                    writer.write('\n');
+
+                    tmp.delete();
                 }
+                catch (PipelineJobException e){
+                    writer.write("Unable to run export alignments\n");
 
-                writer.write('\n');
-                writer.write("&lt;hr&gt;");
-                writer.write('\n');
-                writer.write('\n');
-
-                tmp.delete();
+                    _log.error("Unable to run exportAlignments:\n" + StringUtils.join(wrapper.getCommandsExecuted(), "\n"), e);
+                }
             }
 
             //mixcr exportReadsForClones index_file alignments.vdjca.gz 0 1 2 33 54 reads.fastq.gz

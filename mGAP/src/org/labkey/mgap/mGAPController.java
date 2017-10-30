@@ -33,9 +33,8 @@ import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.AllowedDuringUpgrade;
+import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
-import org.labkey.api.query.QueryAction;
-import org.labkey.api.query.QueryService;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
@@ -122,10 +121,6 @@ public class mGAPController extends SpringActionController
                     {
                         errors.reject(ERROR_MSG, "The email addresses you have entered do not match.  Please verify your email addresses below.");
                     }
-                    else if (UserManager.userExists(email))
-                    {
-                        errors.reject(ERROR_MSG, "The email address you have entered is already associated with an account.  If you have forgotten your password, you can <a href=\"login-resetPassword.view?\">reset your password</a>.  Otherwise, please contact your administrator.");
-                    }
 
                     TableInfo ti = mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_USER_REQUESTS);
 
@@ -182,9 +177,8 @@ public class mGAPController extends SpringActionController
                             c = getContainer();
                         }
 
-                        ActionURL url = QueryService.get().urlFor(getUser(), c, QueryAction.executeQuery, "mGap", "userRequests");
-                        url.setContainer(c);
-                        mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + url .getURIString(true)+ "\">Click here to view/approve this request</a>");
+                        DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=userRequests&query.viewName=Pending Requests", c);
+                        mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
                         mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
                         mail.setSubject("mGap Account Request");
                         mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
@@ -322,12 +316,13 @@ public class mGAPController extends SpringActionController
                     break;
                 }
 
-                Integer userId = ts.getObject(Integer.class);
-                if (userId != null)
-                {
-                    errors.reject(ERROR_MSG, "A user already exists for the request: " + requestId);
-                    break;
-                }
+                //Note: if using LDAP, users will potentially get created automatically
+                //Integer userId = ts.getObject(Integer.class);
+                //if (userId != null)
+                //{
+                //    errors.reject(ERROR_MSG, "A user already exists for the request: " + requestId);
+                //    break;
+                //}
             }
         }
 
@@ -337,6 +332,7 @@ public class mGAPController extends SpringActionController
             ApiSimpleResponse response = new ApiSimpleResponse();
             MutableSecurityPolicy policy = new MutableSecurityPolicy(mGAPManager.get().getMGapContainer().getPolicy());
             List<SecurityManager.NewUserStatus> newUserStatusList = new ArrayList<>();
+            List<User> existingUsersGivenAccess = new ArrayList<>();
             try (DbScope.Transaction transaction = CoreSchema.getInstance().getScope().ensureTransaction())
             {
                 TableInfo ti = mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_USER_REQUESTS);
@@ -345,20 +341,53 @@ public class mGAPController extends SpringActionController
                     TableSelector ts = new TableSelector(ti, new SimpleFilter(FieldKey.fromString("rowId"), requestId), null);
                     Map<String, Object> map = ts.getMap(requestId);
 
-                    SecurityManager.NewUserStatus st = SecurityManager.addUser(new ValidEmail((String)map.get("email")), getUser());
-                    newUserStatusList.add(st);
+                    User u;
+                    if (map.get("userId") != null)
+                    {
+                        Integer userId = (Integer)map.get("userId");
+                        u = UserManager.getUser(userId);
+                        existingUsersGivenAccess.add(u);
+                    }
+                    else
+                    {
+                        ValidEmail ve = new ValidEmail((String)map.get("email"));
+                        u = UserManager.getUser(ve);
+                        if (u != null)
+                        {
+                            existingUsersGivenAccess.add(u);
+                        }
+                        else
+                        {
+                            SecurityManager.NewUserStatus st = SecurityManager.addUser(ve, getUser());
+                            u = st.getUser();
+                            u.setFirstName((String)map.get("firstName"));
+                            u.setLastName((String)map.get("lastName"));
+                            UserManager.updateUser(getUser(), u);
 
-                    User u = st.getUser();
-                    u.setFirstName((String)map.get("firstName"));
-                    u.setLastName((String)map.get("lastName"));
-                    UserManager.updateUser(getUser(), u);
+                            if (st.isLdapEmail())
+                            {
+                                existingUsersGivenAccess.add(st.getUser());
+                            }
+                            else
+                            {
+                                newUserStatusList.add(st);
+                            }
+                        }
+                    }
 
                     Map<String, Object> row = new HashMap<>();
                     row.put("rowId", requestId);
                     row.put("userId", u.getUserId());
                     Table.update(getUser(), ti, row, requestId);
 
-                    policy.addRoleAssignment(u, ReaderRole.class);
+                    if (!policy.hasPermission(u, ReadPermission.class))
+                    {
+                        policy.addRoleAssignment(u, ReaderRole.class);
+                    }
+                    else
+                    {
+                        _log.info("user already has read permission on mGAP container: " + u.getDisplayName(getUser()));
+                    }
                 }
 
                 SecurityPolicyManager.savePolicy(policy);
@@ -370,6 +399,19 @@ public class mGAPController extends SpringActionController
             for (SecurityManager.NewUserStatus st : newUserStatusList)
             {
                 SecurityManager.sendRegistrationEmail(getViewContext(), st.getEmail(), null, st, null);
+            }
+
+            for (User u : existingUsersGivenAccess)
+            {
+                Container mGapContainer = mGAPManager.get().getMGapContainer();
+
+                MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
+                mail.setEncodedHtmlContent("Your account request has been approved for mGAP!  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + mGapContainer.getStartURL(getUser()).toString() + "\">Click here to access the site</a>");
+                mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
+                mail.setSubject("mGap Account Request");
+                mail.addRecipients(Message.RecipientType.TO, u.getEmail());
+
+                MailHelper.send(mail, getUser(), getContainer());
             }
 
             response.put("success", !errors.hasErrors());
@@ -463,7 +505,7 @@ public class mGAPController extends SpringActionController
                 }
             }
 
-            mGapAuditTypeProvider.addAuditEntry(getContainer(), getUser(), zipName, "Variant Catalog", (Double)row.get("version"));
+            mGapAuditTypeProvider.addAuditEntry(getContainer(), getUser(), zipName, "Variant Catalog", row.get("version") == null ? null : row.get("version").toString());
         }
     }
 
@@ -528,7 +570,6 @@ public class mGAPController extends SpringActionController
         @Override
         public Object execute(RequestHelpForm form, BindException errors) throws Exception
         {
-            ValidEmail email = new ValidEmail(form.getEmail());
             Set<User> users = mGAPManager.get().getNotificationUsers();
             if (users != null && !users.isEmpty())
             {

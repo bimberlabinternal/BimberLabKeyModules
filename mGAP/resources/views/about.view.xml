@@ -1,0 +1,8 @@
+<view xmlns="http://labkey.org/data/xml/view" title="About mGAP">
+    <permissions>
+        <permission name="read"/>
+    </permissions>
+    <dependencies>
+        <dependency path="ldk.context"/>
+    </dependencies>
+</view>

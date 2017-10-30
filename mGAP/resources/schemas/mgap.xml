@@ -165,7 +165,7 @@
                 </displayColumnFactory>
             </column>
         </columns>
-        <buttonBarOptions includeStandardButtons="false" alwaysShowRecordSelectors="false">
+        <buttonBarOptions includeStandardButtons="true" alwaysShowRecordSelectors="false">
             <!--<item>-->
                 <!--<originalText>Export</originalText>-->
             <!--</item>-->
@@ -254,7 +254,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="userRequests" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer>org.labkey.mgap.query.UserRequestCustomizer</javaCustomizer>
         <tableUrl />
         <insertUrl />
         <updateUrl />

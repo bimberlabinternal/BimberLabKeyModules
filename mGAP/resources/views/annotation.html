@@ -1,0 +1,11 @@
+<div style="float: left; border: 1px; width:33%; text-align: justify" >
+    Assigning significance to genetics variants is often a challenge, and this is particularly problematic for model organisms like macaques, 
+    which has far less developed annotation resources than human.
+    To overcome this, we developed a multi-part process to annotate our data. <br><br>Rhesus macaque data are aligned to the latest NCBI macaque genome build (MMul8).
+    Data are lifted to human (GRCh37), with ~65% of variants typically being lifted. These variants are annotated using a variety of human data sources, including
+    annotation of regulatory elements (ENCODE, RegulomeDB), overlap with known disease- or phenotype-associated variants (ClinVar, GRASP), predicted impact (SIFT, PolyPhen2), conservation (Phylop, PhastCons), and others.
+    These annotated variants are translated back to macaque coordinates and all data sources merged. In addition to human annotations, SnpEff is used to annotate predicted impact on protein coding (run using the Ensembl macaque gene annotations).
+</div>
+<div style="float: left;margin-left: 30px;">
+    <img width="450" src="<%=contextPath%>/mgap/images/annotation.png" alt="Annotation Strategy">
+</div>

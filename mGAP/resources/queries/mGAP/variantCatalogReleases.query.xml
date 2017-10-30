@@ -3,6 +3,9 @@
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="" tableDbType="TABLE">
                 <tableUrl></tableUrl>
+                <buttonBarOptions includeStandardButtons="true" alwaysShowRecordSelectors="false">
+
+                </buttonBarOptions>
             </table>
         </tables>
     </metadata>

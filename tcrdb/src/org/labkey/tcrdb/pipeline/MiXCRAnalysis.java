@@ -145,7 +145,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         MiXCROutput output = new MiXCROutput();
         output.addInput(inputBam, "Input BAM");
 
-        getPipelineCtx().getLogger().info("creating FASTQs from BAM: " + inputBam.getName());
+        getPipelineCtx().getLogger().debug("creating FASTQs from BAM: " + inputBam.getName());
         File forwardFq;
         File reverseFq;
         if (rs.getReadData() != null)
