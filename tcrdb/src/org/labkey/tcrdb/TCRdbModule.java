@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.labkey.api.data.Container;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
@@ -42,7 +43,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 15.35;
+        return 15.38;
     }
 
     @Override
@@ -67,6 +68,11 @@ public class TCRdbModule extends ExtendedSimpleModule
 
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, "sequenceanalysis", "sequence_readsets");
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, "sequenceanalysis", "sequence_analyses");
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIMS);
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_SORTS);
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS);
+
+        LDKService.get().registerQueryButton(new ChangeStatusButton(), "tcrdb", "stims");
 
         //register resources
         new PipelineStartup();

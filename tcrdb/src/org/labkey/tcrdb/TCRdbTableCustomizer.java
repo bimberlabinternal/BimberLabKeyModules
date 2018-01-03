@@ -36,6 +36,50 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             {
                 addAssayFieldsToReadsets(ti);
             }
+            else if (matches(ti, "tcrdb", "stims"))
+            {
+                customizeStims(ti);
+            }
+            else if (matches(ti, "tcrdb", "sorts"))
+            {
+                customizeSorts(ti);
+            }
+        }
+    }
+
+    private void customizeSorts(AbstractTableInfo ti)
+    {
+        //TODO:
+        // summarize clonotype
+        // # loci
+        // # reads
+        // make a saved view with this info
+
+        String name = "numLibraries";
+        if (ti.getColumn(name) == null)
+        {
+            DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=cdnas&query.sortId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
+
+            SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " s WHERE s.sortId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
+            ExprColumn newCol = new ExprColumn(ti, "numLibraries", sql, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newCol.setLabel("# cDNA Libraries");
+            newCol.setURL(details);
+            ti.addColumn(newCol);
+        }
+    }
+
+    private void customizeStims(AbstractTableInfo ti)
+    {
+        String name = "numSorts";
+        if (ti.getColumn(name) == null)
+        {
+            DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=sorts&query.stimId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
+
+            SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " s WHERE s.stimId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
+            ExprColumn newCol = new ExprColumn(ti, "numSorts", sql, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newCol.setLabel("# Sorts");
+            newCol.setURL(details);
+            ti.addColumn(newCol);
         }
     }
 

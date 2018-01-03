@@ -26,6 +26,9 @@ public class TCRdbSchema
     public static final String NAME = "tcrdb";
 
     public static String TABLE_LIBRARIES = "mixcr_libraries";
+    public static String TABLE_SORTS = "sorts";
+    public static String TABLE_STIMS = "stims";
+    public static String TABLE_CDNAS = "cdnas";
 
     public static TCRdbSchema getInstance()
     {

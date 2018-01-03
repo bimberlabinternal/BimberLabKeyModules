@@ -37,6 +37,8 @@ public class mGAPManager
     private static final mGAPManager _instance = new mGAPManager();
     public static final String ContainerPropName = "MGAPContainer";
     public static final String NotifyPropName = "MGAPContactUsers";
+    public static final String MailChimpApiKeyPropName = "MGAPMailChimpApiKey";
+    public static final String MailChimpListIdPropName = "MGAPMailChimpList";
 
     private mGAPManager()
     {

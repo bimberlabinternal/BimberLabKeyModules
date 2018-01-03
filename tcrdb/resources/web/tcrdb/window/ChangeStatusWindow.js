@@ -4,6 +4,8 @@
 Ext4.define('TCRdb.window.ChangeStatusWindow', {
     extend: 'Ext.window.Window',
 
+    fieldName: 'disabled',
+
     statics: {
         buttonHandler: function(dataRegionName){
             var dataRegion = LABKEY.DataRegions[dataRegionName];
@@ -14,6 +16,30 @@ Ext4.define('TCRdb.window.ChangeStatusWindow', {
 
             Ext4.create('TCRdb.window.ChangeStatusWindow', {
                 dataRegionName: dataRegionName
+            }).show();
+        },
+
+        buttonHandlerForStims: function(dataRegionName){
+            var dataRegion = LABKEY.DataRegions[dataRegionName];
+            if (!dataRegion || !dataRegion.getChecked() || !dataRegion.getChecked().length){
+                Ext4.Msg.alert('Error', 'Unable to find DataRegion');
+                return;
+            }
+
+            Ext4.create('TCRdb.window.ChangeStatusWindow', {
+                dataRegionName: dataRegionName,
+                fieldName: 'status',
+                getStatusField: function(){
+                    return [{
+                        xtype: 'ldk-simplecombo',
+                        forceSelection: true,
+                        editable: false,
+                        fieldLabel: 'Status',
+                        storeValues: ['Failed'],
+                        width: 350,
+                        itemId: 'statusField'
+                    }]
+                }
             }).show();
         }
     },
@@ -26,12 +52,7 @@ Ext4.define('TCRdb.window.ChangeStatusWindow', {
             width: 380,
             items: [{
                 bodyStyle: 'padding: 5px;',
-                items: [{
-                    xtype: 'checkbox',
-                    fieldLabel: 'Disabled?',
-                    width: 350,
-                    itemId: 'statusField'
-                }]
+                items: this.getStatusField()
             }],
             buttons: [{
                 text:'Submit',
@@ -47,6 +68,15 @@ Ext4.define('TCRdb.window.ChangeStatusWindow', {
         });
 
         this.callParent(arguments);
+    },
+
+    getStatusField: function(){
+        return [{
+            xtype: 'checkbox',
+            fieldLabel: 'Disabled?',
+            width: 350,
+            itemId: 'statusField'
+        }];
     },
 
     onSubmit: function(btn){
@@ -65,6 +95,7 @@ Ext4.define('TCRdb.window.ChangeStatusWindow', {
             method: 'POST',
             schemaName: dataRegion.schemaName,
             queryName: dataRegion.queryName,
+            columns: this.fieldName + ',container,' + keyField,
             filterArray: [
                 LABKEY.Filter.create(keyField, checked.join(';'), LABKEY.Filter.Types.EQUALS_ONE_OF)
             ],
@@ -81,8 +112,11 @@ Ext4.define('TCRdb.window.ChangeStatusWindow', {
                 }
 
                 Ext4.Array.forEach(data.rows, function(row){
-                    var obj = {disabled: status};
+                    var obj = {};
+                    obj[this.fieldName] = status;
+                    obj.container = row.container;
                     obj[keyField] = row[keyField];
+                    console.log(obj);
                     toUpdate.push(obj);
                 }, this);
 

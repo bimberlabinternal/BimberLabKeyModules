@@ -88,6 +88,10 @@
                     <location>right</location>
                 </webPart>
                 <webPart>
+                    <name>mGAP Help</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
                     <name>About mGAP</name>
                     <location>right</location>
                 </webPart>

@@ -78,4 +78,326 @@
             </column>
         </columns>
     </table>
+
+    <table tableName="stims" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <tableTitle>TCR Stims</tableTitle>
+        <titleColumn>rowid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Stim Id</columnTitle>
+            </column>
+            <column columnName="tubeNum">
+                <columnTitle>Tube #</columnTitle>
+            </column>
+            <column columnName="animalId">
+                <columnTitle>Animal/Cell</columnTitle>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="effector">
+                <columnTitle>Effectors</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="numEffectors">
+                <columnTitle># Effectors</columnTitle>
+            </column>
+            <column columnName="date">
+                <columnTitle>Sample Date</columnTitle>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+                <nullable>false</nullable>
+                <formatString>Date</formatString>
+            </column>
+            <column columnName="stim">
+                <columnTitle>Peptide/Stim</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>peptides</fkTable>
+                    <fkColumnName>stim</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="treatment">
+
+            </column>
+            <column columnName="costim">
+                <columnTitle>Co-stim</columnTitle>
+            </column>
+            <column columnName="background">
+                <columnTitle>Background Freq</columnTitle>
+            </column>
+            <column columnName="activated">
+                <columnTitle>Activated Freq</columnTitle>
+            </column>
+            <column columnName="comment">
+
+            </column>
+            <column columnName="status">
+
+            </column>
+            <column columnName="lsid">
+                <datatype>lsidtype</datatype>
+                <isReadOnly>true</isReadOnly>
+                <isHidden>true</isHidden>
+                <isUserEditable>false</isUserEditable>
+                <isUnselectable>true</isUnselectable>
+                <fk>
+                    <fkColumnName>ObjectUri</fkColumnName>
+                    <fkTable>Object</fkTable>
+                    <fkDbSchema>exp</fkDbSchema>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="sorts" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <tableTitle>TCR Sorts</tableTitle>
+        <titleColumn>rowid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Sort Id</columnTitle>
+                <isHidden>false</isHidden>
+            </column>
+            <column columnName="stimId">
+                <columnTitle>Stim Id</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>stims</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="population">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="replicate">
+
+            </column>
+            <column columnName="cells">
+                <columnTitle># Cells</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="plateId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="well">
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>96well_plate</fkTable>
+                    <fkColumnName>well</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="readsetId">
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>sequence_readsets</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="enrichedReadsetId">
+                <columnTitle>Readset (TCR Enriched)</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>sequence_readsets</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="comment">
+
+            </column>
+            <column columnName="lsid">
+                <datatype>lsidtype</datatype>
+                <isReadOnly>true</isReadOnly>
+                <isHidden>true</isHidden>
+                <isUserEditable>false</isUserEditable>
+                <isUnselectable>true</isUnselectable>
+                <fk>
+                    <fkColumnName>ObjectUri</fkColumnName>
+                    <fkTable>Object</fkTable>
+                    <fkDbSchema>exp</fkDbSchema>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="cdnas" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <tableTitle>TCR cDNA Libraries</tableTitle>
+        <titleColumn>rowid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Library Id</columnTitle>
+                <isHidden>false</isHidden>
+            </column>
+            <column columnName="sortId">
+                <columnTitle>Sort Id</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>sorts</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="chemistry">
+
+            </column>
+            <column columnName="concentration">
+
+            </column>
+            <column columnName="plateId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="well">
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>96well_plate</fkTable>
+                    <fkColumnName>well</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="readsetId">
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>sequence_readsets</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="enrichedReadsetId">
+                <columnTitle>Readset (TCR Enriched)</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>sequence_readsets</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="comment">
+
+            </column>
+            <column columnName="status">
+
+            </column>
+            <column columnName="lsid">
+                <datatype>lsidtype</datatype>
+                <isReadOnly>true</isReadOnly>
+                <isHidden>true</isHidden>
+                <isUserEditable>false</isUserEditable>
+                <isUnselectable>true</isUnselectable>
+                <fk>
+                    <fkColumnName>ObjectUri</fkColumnName>
+                    <fkTable>Object</fkTable>
+                    <fkDbSchema>exp</fkDbSchema>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="peptides" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <tableTitle>Peptides/Stims</tableTitle>
+        <columns>
+            <column columnName="stim">
+                <columnTitle>Peptide/Stim</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
 </tables>

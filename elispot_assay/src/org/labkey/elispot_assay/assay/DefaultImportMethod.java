@@ -67,7 +67,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
     @Override
     public String getTemplateInstructions()
     {
-        return "This assay will perform several calculations on import.  Samples are grouped into replicates based on subjectId, date and peptide.  For each subjectId/date, negative controls are required.  Positivity is calculated using a homoscedastic t-test, comparing the spot counts from each sample replicate against the correspoinding negative control wells.  A pvalue is reported for each well, and wells with be flagged as either positive for negative based on the threshold set above (which defaults to 0.05).  The imported results will report both the raw spot count and the spots above background, which is the raw count count minus the average of the negative controls.";
+        return "This assay will perform several calculations on import.  Samples are grouped into replicates based on subjectId, date and peptide.  For each subjectId/date, negative controls are required.  Positivity is calculated using a homoscedastic t-test, comparing the spot counts from each sample replicate against the corresponding negative control wells.  A pvalue is reported for each well, and wells with be flagged as either positive for negative based on the threshold set above (which defaults to 0.05).  The imported results will report both the raw spot count and the spots above background, which is the raw count count minus the average of the negative controls.";
     }
 
     @Override

@@ -1011,13 +1011,13 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 {
                     String cLocus = cHitGenes.iterator().next().substring(0, 3);
                     getPipelineCtx().getLogger().info("single CHit found, will use this locus: " + cLocus);
-                    rowsSkipped += addRowsOfLocus(cloneRows, cLocus, newRows);
+                    rowsSkipped += addRowsOfLocus(cloneRows, cLocus, newRows, cloneId);
                 }
                 else if (jHitGenes.size() == 1)
                 {
                     getPipelineCtx().getLogger().info("no CHits found, using JRegion");
                     String jLocus = jHitGenes.iterator().next().substring(0, 3);
-                    rowsSkipped += addRowsOfLocus(cloneRows, jLocus, newRows);
+                    rowsSkipped += addRowsOfLocus(cloneRows, jLocus, newRows, cloneId);
                 }
                 else
                 {
@@ -1040,7 +1040,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         rd.rows = newRows;
     }
 
-    private int addRowsOfLocus(List<Map<String, Object>> cloneRows, String locus, List<Map<String, Object>> newRows)
+    private int addRowsOfLocus(List<Map<String, Object>> cloneRows, String locus, List<Map<String, Object>> newRows, String cloneId)
     {
         boolean found = false;
         for (Map<String, Object> row : cloneRows)
@@ -1061,7 +1061,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
         if (!found)
         {
-            getPipelineCtx().getLogger().error("row not found for locus: " + locus);
+            getPipelineCtx().getLogger().error("row not found for locus: " + locus + " for clone: " + cloneId);
         }
 
         return cloneRows.size()-1;

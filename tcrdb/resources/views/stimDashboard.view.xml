@@ -1,0 +1,7 @@
+<view xmlns="http://labkey.org/data/xml/view" title="TCR Stim/Sequence Management">
+    <dependencies>
+        <dependency path="laboratory.context" />
+        <dependency path="extWidgets/ExcelUploadPanel.js"/>
+        <dependency path="tcrdb/panel/StimPanel.js"/>
+    </dependencies>
+</view>
