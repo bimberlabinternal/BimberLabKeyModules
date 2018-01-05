@@ -3,7 +3,7 @@
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="FCSAnalyses" tableDbType="TABLE" useColumnOrder="true">
                 <tableTitle>FCS Analyses</tableTitle>
-                <javaCustomizer>org.labkey.laboratory.query.DefaultAssayCustomizer</javaCustomizer>
+                <javaCustomizer class="org.labkey.laboratory.query.DefaultAssayCustomizer" />
                 <columns>
 
                 </columns>

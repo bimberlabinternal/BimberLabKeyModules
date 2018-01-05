@@ -264,7 +264,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                 defaults: {
                     border: false
                 },
-                title: 'Step 1: Stims',
+                title: 'Step 1: Stims/Blood Draws',
                 layout: {
                     type: 'table',
                     columns: 2

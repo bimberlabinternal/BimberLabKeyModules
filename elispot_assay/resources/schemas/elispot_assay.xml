@@ -1,7 +1,7 @@
 <tables xmlns="http://labkey.org/data/xml">
     <table tableName="peptide_pools" tableDbType="TABLE">
         <tableTitle>Peptide Pools</tableTitle>
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <titleColumn>pool_name</titleColumn>
         <columns>
             <column columnName="rowid"/>
@@ -17,7 +17,7 @@
     </table>
     <table tableName="assay_types" tableDbType="TABLE">
         <tableTitle>ELISPOT Assay Types</tableTitle>
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <columns>
             <column columnName="rowid"/>
             <column columnName="name"/>
@@ -31,7 +31,7 @@
     </table>
     <table tableName="peptide_pool_members" tableDbType="TABLE">
         <tableTitle>Peptide Pool Members</tableTitle>
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <titleColumn>sequence</titleColumn>
         <columns>
             <column columnName="rowid"/>
@@ -53,7 +53,7 @@
     </table>
     <table tableName="instruments" tableDbType="TABLE">
         <tableTitle>ELISPOT Assay Instruments</tableTitle>
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>instrument</pkColumnName>
         <columns>
             <column columnName="instrument">

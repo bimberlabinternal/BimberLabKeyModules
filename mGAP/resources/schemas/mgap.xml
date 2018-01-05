@@ -18,7 +18,7 @@
  -->
 <tables xmlns="http://labkey.org/data/xml">
     <table tableName="animalMapping" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>rowid</pkColumnName>
         <tableTitle>Animal ID Mapping</tableTitle>
         <auditLogging>DETAILED</auditLogging>
@@ -70,7 +70,7 @@
         </columns>
     </table>
     <table tableName="variantCatalogReleases" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <tableUrl />
         <insertUrl />
         <updateUrl />
@@ -175,7 +175,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="sequenceDatasets" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <tableUrl></tableUrl>
         <insertUrl></insertUrl>
         <updateUrl></updateUrl>
@@ -254,7 +254,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="userRequests" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.mgap.query.UserRequestCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.mgap.query.UserRequestCustomizer" />
         <tableUrl />
         <insertUrl />
         <updateUrl />

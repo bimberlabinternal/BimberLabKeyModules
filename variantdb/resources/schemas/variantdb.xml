@@ -18,7 +18,7 @@
  -->
 <tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\..\..\schemas\tableInfo.xsd" xmlns="http://labkey.org/data/xml" xmlxsi="http://www.w3.org/2001/XMLSchema-instance">
     <table tableName="Variants" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Variants</tableTitle>
         <tableUrl>/variantdb/variantDetails.view?variantId=${objectid}</tableUrl>
         <titleColumn>rowid</titleColumn>
@@ -100,7 +100,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="ReferenceVariants" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Reference Variants</tableTitle>
         <tableUrl>/variantdb/referenceVariantDetails.view?variantId=${objectid}</tableUrl>
         <titleColumn>rowid</titleColumn>
@@ -144,7 +144,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="ReferenceVariantAlleles" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Reference Variant Alleles</tableTitle>
         <tableUrl>/variantdb/referenceAlleleDetails.view?variantId=${objectid}</tableUrl>
         <titleColumn>rowid</titleColumn>
@@ -201,7 +201,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="variantattributetypes" tableDbType="TABLE">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Variant Attribute Types</tableTitle>
         <columns>
             <column columnName="rowid">
@@ -217,7 +217,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="variantsamplemapping" tableDbType="TABLE">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Variant/Sample Mapping</tableTitle>
         <columns>
             <column columnName="rowid">
@@ -257,7 +257,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="uploadbatches" tableDbType="TABLE">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Upload Batches</tableTitle>
         <columns>
             <column columnName="batchid"/>
@@ -290,7 +290,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="variantattributes" tableDbType="TABLE">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Variant Attributes</tableTitle>
         <columns>
             <column columnName="rowid">
@@ -345,7 +345,7 @@
         </buttonBarOptions>
     </table>
     <table tableName="VariantLiftover" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.sequenceanalysis.query.SequenceAnalysisCustomizer" />
         <tableTitle>Liftover of Variants</tableTitle>
         <pkColumnName>rowid</pkColumnName>
         <columns>

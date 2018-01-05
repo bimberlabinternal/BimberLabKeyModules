@@ -18,7 +18,7 @@
  -->
 <tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\schemas\tableInfo.xsd" xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <table tableName="mixcr_libraries" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <tableTitle>MiXCR Libraries</tableTitle>
         <columns>
             <column columnName="rowid">
@@ -68,7 +68,7 @@
         </columns>
     </table>
     <table tableName="loci" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <insertUrl></insertUrl>
         <importUrl></importUrl>
         <updateUrl></updateUrl>
@@ -80,7 +80,7 @@
     </table>
 
     <table tableName="stims" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
         <tableTitle>TCR Stims</tableTitle>
         <titleColumn>rowid</titleColumn>
         <columns>
@@ -175,7 +175,11 @@
         </columns>
     </table>
     <table tableName="sorts" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer">
+            <properties>
+                <property name="setEditLinkOverrides">true</property>
+            </properties>
+        </javaCustomizer>
         <tableTitle>TCR Sorts</tableTitle>
         <titleColumn>rowid</titleColumn>
         <columns>
@@ -271,7 +275,7 @@
         </columns>
     </table>
     <table tableName="cdnas" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
         <tableTitle>TCR cDNA Libraries</tableTitle>
         <titleColumn>rowid</titleColumn>
         <columns>
@@ -366,7 +370,7 @@
         </columns>
     </table>
     <table tableName="peptides" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <tableTitle>Peptides/Stims</tableTitle>
         <columns>
             <column columnName="stim">

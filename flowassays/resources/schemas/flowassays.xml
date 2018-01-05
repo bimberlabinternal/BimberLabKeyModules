@@ -1,7 +1,7 @@
 <tables xmlns="http://labkey.org/data/xml">
     <table tableName="populations" tableDbType="TABLE">
         <tableTitle>Population Names</tableTitle>
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>name</pkColumnName>
         <columns>
             <column columnName="name">
@@ -38,7 +38,7 @@
         </columns>
     </table>
     <table tableName="units" tableDbType="TABLE">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>unit</pkColumnName>
         <columns>
             <column columnName="unit">
@@ -46,7 +46,7 @@
         </columns>
     </table>
     <table tableName="instruments" tableDbType="TABLE">
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>instrument</pkColumnName>
         <columns>
             <column columnName="instrument">
@@ -55,7 +55,7 @@
     </table>
     <table tableName="assay_types" tableDbType="TABLE">
         <tableTitle>Flow Assay Types</tableTitle>
-        <javaCustomizer>org.labkey.ldk.query.DefaultTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <columns>
             <column columnName="rowid"/>
             <column columnName="name"/>
@@ -64,7 +64,7 @@
     </table>
     <table tableName="fcsfilemetadata" tableDbType="TABLE">
         <tableTitle>FCS Files</tableTitle>
-        <javaCustomizer>org.labkey.laboratory.query.LaboratoryTableCustomizer</javaCustomizer>
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
