@@ -239,6 +239,9 @@ DISCVR/tcrdb/resources/credits/jars.txt -text
 DISCVR/tcrdb/resources/external/exportMappedReads.sh -text
 DISCVR/tcrdb/resources/external/installMixcr.sh -text
 DISCVR/tcrdb/resources/queries/tcrdb/cdnas/.qview.xml -text
+DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate.query.xml -text
+DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate.sql -text
+DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate/.qview.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/sorts.js -text
 DISCVR/tcrdb/resources/queries/tcrdb/sorts.query.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/sorts/.qview.xml -text
@@ -251,6 +254,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.34-15.35.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.35-15.36.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.36-15.37.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.37-15.38.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.38-15.39.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.30-15.31.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.31-15.32.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.32-15.33.sql -text
@@ -259,6 +263,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.34-15.35.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.35-15.36.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.36-15.37.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.37-15.38.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.38-15.39.sql -text
 DISCVR/tcrdb/resources/schemas/tcrdb.xml -text
 DISCVR/tcrdb/resources/views/stimDashboard.html -text
 DISCVR/tcrdb/resources/views/stimDashboard.view.xml -text
@@ -270,6 +275,7 @@ DISCVR/tcrdb/resources/web/tcrdb/window/ChangeStatusWindow.js -text
 DISCVR/tcrdb/resources/web/tcrdb/window/ExportDataWindow.js -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/ChangeStatusButton.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbController.java -text
+DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbImportNavItem.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbManager.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbModule.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbProvider.java -text

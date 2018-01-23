@@ -169,9 +169,6 @@
             <!--<item>-->
                 <!--<originalText>Export</originalText>-->
             <!--</item>-->
-            <!--<item text="Page Size">-->
-                <!--<originalText>Paging</originalText>-->
-            <!--</item>-->
         </buttonBarOptions>
     </table>
     <table tableName="sequenceDatasets" tableDbType="TABLE" useColumnOrder="true">
@@ -247,9 +244,6 @@
             </item>
             <item>
                 <originalText>Export</originalText>
-            </item>
-            <item text="Page Size">
-                <originalText>Paging</originalText>
             </item>
         </buttonBarOptions>
     </table>
@@ -336,9 +330,6 @@
             </item>
             <item hidden="true">
                 <originalText>Charts</originalText>
-            </item>
-            <item hidden="true">
-                <originalText>Reports</originalText>
             </item>
         </buttonBarOptions>
     </table>

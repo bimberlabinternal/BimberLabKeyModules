@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
@@ -72,16 +73,16 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                     put("checked", true);
                 }}, null),
                 ToolParameterDescriptor.create("sitesOnly", "Omit Genotypes", "If selected, genotypes will be omitted and a VCF with only the first 8 columns will be produced.", "checkbox", new JSONObject(){{
-                    put("checked", true);
+                    put("checked", false);
                 }}, null),
                 ToolParameterDescriptor.create("snvOnly", "Limit To SNVs", "If selected, only variants of the type SNV will be included.", "checkbox", new JSONObject()
                 {{
                     put("checked", true);
-                }}, true)
-//                    ToolParameterDescriptor.create("highImpact", "Create High-Impact VCF", "If selected, as a final step variants annotated as high impact (requires SNPEff anotation of the input) will be written to a second VCF.", "checkbox", new JSONObject()
-//                    {{
-//                        put("checked", true);
-//                    }}, true)
+                }}, true),
+                ToolParameterDescriptor.create("testOnly", "Test Only", "If selected, the various files will be created, but a record will not be created in the relases table, meaning it will not be synced to mGAP.", "checkbox", new JSONObject()
+                {{
+                    put("checked", false);
+                }}, false)
         ));
     }
 
@@ -134,7 +135,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                 try (VCFFileReader reader = new VCFFileReader(so.getFile()))
                 {
                     VCFHeader header = reader.getFileHeader();
-                    TableInfo ti = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
+                    TableInfo ti = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
                     TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), header.getSampleNamesInOrder(), CompareType.IN), null);
                     ts.forEachResults(new Selector.ForEachBlock<Results>()
                     {
@@ -147,6 +148,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                 }
             }
 
+            job.getLogger().info("total sample names to alias: " + sampleNameMap.size());
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(outputFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 for (String name : sampleNameMap.keySet())
@@ -158,7 +160,6 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
             {
                 throw new PipelineJobException(e);
             }
-
         }
 
         private File getSampleNameFile(File outputDir)
@@ -182,7 +183,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                 }
 
                 //find basic stats:
-                job.getLogger().info("processing file: " + so.getName());
+                job.getLogger().info("inspecting file: " + so.getName());
                 int totalSubjects;
                 long totalVariants = 0;
                 try (VCFFileReader reader = new VCFFileReader(so.getFile()))
@@ -199,6 +200,10 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                             }
 
                             totalVariants++;
+                            if (totalVariants % 100000 == 0)
+                            {
+                                job.getLogger().info("processed " + totalVariants + " sites");
+                            }
                         }
                     }
                 }
@@ -228,14 +233,21 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
 
                 try
                 {
-                    job.getLogger().info("Publishing release to variant catalog table");
-                    TableInfo variants = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
-                    BatchValidationException errors = new BatchValidationException();
-                    variants.getUpdateService().insertRows(job.getUser(), job.getContainer(), Arrays.asList(row), errors, null, new HashMap<>());
+                    boolean testOnly = ConvertHelper.convert(job.getParameters().get("testOnly"), boolean.class);
+                    if (!testOnly){
+                        job.getLogger().info("Publishing release to variant catalog table");
+                        TableInfo variants = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
+                        BatchValidationException errors = new BatchValidationException();
+                        variants.getUpdateService().insertRows(job.getUser(), job.getContainer(), Arrays.asList(row), errors, null, new HashMap<>());
 
-                    if (errors.hasErrors())
+                        if (errors.hasErrors())
+                        {
+                            throw errors;
+                        }
+                    }
+                    else
                     {
-                        throw errors;
+                        job.getLogger().info("This was selected as a test-only run, so skipping creation of release record");
                     }
                 }
                 catch (Exception e)
@@ -265,7 +277,6 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                 boolean removeAnnotations = ctx.getParams().optBoolean("removeAnnotations", false);
                 boolean sitesOnly = ctx.getParams().optBoolean("sitesOnly", false);
                 boolean snvOnly = ctx.getParams().optBoolean("snvOnly", false);
-                boolean highImpact = ctx.getParams().optBoolean("highImpact", false);
                 String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
 
                 File currentVCF = so.getFile();
@@ -283,7 +294,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                             args.addAll(SequencePipelineService.get().getJavaOpts());
                             args.add("-jar");
                             File gatkJar = getJAR();
-                            gatkJar = new File(getJAR().getParentFile(), FileUtil.getBaseName(gatkJar) + "-dev.jar");
+                            gatkJar = new File(getJAR().getParentFile(), FileUtil.getBaseName(gatkJar) + "-discvr.jar");
                             args.add(gatkJar.getPath());
                             args.add("-T");
                             args.add("RemoveAnnotations");
@@ -347,31 +358,60 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                     currentVCF = renameSamples(currentVCF, genome, ctx);
                 }
 
-                if (highImpact)
-                {
-                    //TODO
-                }
-
                 //rename output
                 File renamed = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion) + ".vcf.gz");
                 try
                 {
-                    ctx.getLogger().info("Moving final vcf to: " + renamed.getPath());
+                    ctx.getLogger().info("Moving final vcf from: " + currentVCF.getPath());
+                    ctx.getLogger().info("to: " + renamed.getPath());
                     FileUtils.moveFile(currentVCF, renamed);
                     FileUtils.moveFile(new File(currentVCF.getPath() + ".tbi"), new File(renamed.getPath() + ".tbi"));
                     currentVCF = renamed;
-                    ctx.getFileManager().addIntermediateFile(renamed);
-                    ctx.getFileManager().addIntermediateFile(new File(renamed.getPath() + ".tbi"));
                 }
                 catch (IOException e)
                 {
                     throw new PipelineJobException(e);
                 }
 
+                //TODO: create VCFs/tables with:
+                // high impact only
+                // clinvar only
+//                try (VCFFileReader reader = new VCFFileReader(currentVCF);CloseableIterator<VariantContext> it = reader.iterator())
+//                {
+//                    while (it.hasNext())
+//                    {
+//                        VariantContext vc = it.next();
+//                        if (vc.isFiltered())
+//                        {
+//                            continue;
+//                        }
+//
+//                        if (vc.getAttribute("ANN") != null)
+//                        {
+//                            List<String> anns = vc.getAttributeAsStringList("ANN", "");
+//                            for (String ann : anns)
+//                            {
+//
+//                            }
+//                        }
+//
+//                        if (vc.getAttribute("CLN_ALLELE") != null)
+//                        {
+//                            List<String> clns = vc.getAttributeAsStringList("CLN_ALLELE", "");
+//                            for (String cln : clns)
+//                            {
+//
+//                            }
+//                        }
+//                    }
+//                }
+
+                boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
+
                 SequenceOutputFile output = new SequenceOutputFile();
                 output.setFile(currentVCF);
                 output.setName("mGAP Release: " + releaseVersion);
-                output.setCategory("mGAP Release");
+                output.setCategory((testOnly ? "Test " : "") + "mGAP Release");
                 output.setLibrary_id(genome.getGenomeId());
                 ctx.getFileManager().addSequenceOutput(output);
             }
@@ -401,7 +441,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
             ctx.getLogger().info("renaming samples in VCF");
             File outputFile = new File(currentVCF.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".renamed.vcf.gz");
 
-            Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(ctx.getOutputDir()));
+            Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(ctx.getSourceDirectory()));
 
             VariantContextWriterBuilder builder = new VariantContextWriterBuilder();
             builder.setReferenceDictionary(SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary()));
@@ -424,8 +464,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler
                     {
                         throw new PipelineJobException("No alternate name provided for sample: " + sample);
                     }
+                }
 
-                    remappedSamples.add(sample);
+                if (remappedSamples.size() != samples.size())
+                {
+                    throw new PipelineJobException("The number of renamed samples does not equal starting samples: " + samples.size() + " / " + remappedSamples.size());
                 }
 
                 writer.writeHeader(new VCFHeader(header.getMetaDataInInputOrder(), remappedSamples));

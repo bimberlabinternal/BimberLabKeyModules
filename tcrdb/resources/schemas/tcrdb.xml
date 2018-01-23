@@ -217,7 +217,11 @@
                     <fkColumnName>well</fkColumnName>
                 </fk>
             </column>
+            <column columnName="buffer">
+
+            </column>
             <column columnName="readsetId">
+                <isHidden>true</isHidden>
                 <fk>
                     <fkDbSchema>sequenceanalysis</fkDbSchema>
                     <fkTable>sequence_readsets</fkTable>
@@ -225,6 +229,7 @@
                 </fk>
             </column>
             <column columnName="enrichedReadsetId">
+                <isHidden>true</isHidden>
                 <columnTitle>Readset (TCR Enriched)</columnTitle>
                 <fk>
                     <fkDbSchema>sequenceanalysis</fkDbSchema>

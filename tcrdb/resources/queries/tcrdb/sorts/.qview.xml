@@ -11,6 +11,7 @@
         <column name="cells" />
         <column name="plateId" />
         <column name="well" />
+        <column name="buffer" />
         <column name="comment" />
         <column name="status" />
         <column name="workbook" />
