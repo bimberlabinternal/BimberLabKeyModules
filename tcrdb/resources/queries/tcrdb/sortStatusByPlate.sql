@@ -4,7 +4,10 @@ SELECT
   t2.totalSorts,
   t2.totalBulkSorts,
   t2.totalSingleCells,
-  CASE WHEN t2.totalSorts - t2.totalLibraries = 0 THEN true ELSE false END as isComplete,
+  t2.totalLibraries,
+  t2.totalLibrariesWithData,
+  CASE WHEN t2.totalSorts - t2.totalLibraries = 0 THEN true ELSE false END as librariesComplete,
+  CASE WHEN t2.totalSorts - t2.totalLibrariesWithData = 0 THEN true ELSE false END as isComplete,
   CASE
     WHEN (t2.totalBulkSorts > 0 AND t2.totalSingleCells > 0) THEN 'MIXED'
     WHEN (t2.totalBulkSorts > 0) THEN 'BULK'
