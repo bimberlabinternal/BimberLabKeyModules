@@ -25,10 +25,11 @@ public class TCRdbSchema
     private static final TCRdbSchema _instance = new TCRdbSchema();
     public static final String NAME = "tcrdb";
 
-    public static String TABLE_LIBRARIES = "mixcr_libraries";
-    public static String TABLE_SORTS = "sorts";
-    public static String TABLE_STIMS = "stims";
-    public static String TABLE_CDNAS = "cdnas";
+    public static final String TABLE_LIBRARIES = "mixcr_libraries";
+    public static final String TABLE_SORTS = "sorts";
+    public static final String TABLE_STIMS = "stims";
+    public static final String TABLE_CDNAS = "cdnas";
+    public static final String TABLE_PROCESSING = "plate_processing";
 
     public static TCRdbSchema getInstance()
     {

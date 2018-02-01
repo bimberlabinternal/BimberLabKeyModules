@@ -443,7 +443,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                     {
                                         if (!hasHeader)
                                         {
-                                            writer.write("LibraryId\tMiXCR_Version\tSpecies\tLocus\t" + line);
+                                            writer.write("LibraryId\tSpecies\tLocus\tMiXCR_Version\t" + line);
                                             writer.write('\n');
                                             hasHeader = true;
                                         }
@@ -1046,12 +1046,21 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         for (Map<String, Object> row : cloneRows)
         {
             String rowLocus = row.get("locus") == null ? null : StringUtils.trimToNull(row.get("locus").toString());
+            Set<String> rowLoci = new HashSet<>();
             if (rowLocus != null)
             {
-                rowLocus = rowLocus.substring(0, 3);
+                String[] tokens = rowLocus.split(",");
+                for (String t : tokens)
+                {
+                    if (t.length() != 3)
+                    {
+                        getPipelineCtx().getLogger().warn("long locus name found: " + t + ", " + rowLocus);
+                    }
+                    rowLoci.add(t.substring(0, 3));
+                }
             }
 
-            if (locus.equals(rowLocus))
+            if (rowLoci.contains(locus))
             {
                 newRows.add(row);
                 found = true;

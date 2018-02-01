@@ -77,7 +77,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=cdnas&query.sortId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
 
             SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " s WHERE s.sortId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
-            ExprColumn newCol = new ExprColumn(ti, "numLibraries", sql, JdbcType.INTEGER, ti.getColumn("rowid"));
+            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
             newCol.setLabel("# cDNA Libraries");
             newCol.setURL(details);
             ti.addColumn(newCol);
@@ -87,8 +87,17 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         if (ti.getColumn(name) == null)
         {
             SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " s WHERE s.plateId = " + ExprColumn.STR_TABLE_ALIAS + ".plateId AND s.container = " + ExprColumn.STR_TABLE_ALIAS + ".container)");
-            ExprColumn newCol = new ExprColumn(ti, "maxCellsForPlate", sql, JdbcType.INTEGER, ti.getColumn("plateId"), ti.getColumn("container"));
+            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.INTEGER, ti.getColumn("plateId"), ti.getColumn("container"));
             newCol.setLabel("Max Cells/Well In Plate");
+            ti.addColumn(newCol);
+        }
+
+        name = "processingRequested";
+        if (ti.getColumn(name) == null)
+        {
+            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("p.type"), true, true)).append(new SQLFragment(" as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_PROCESSING + " p WHERE p.plateId = " + ExprColumn.STR_TABLE_ALIAS + ".plateId AND p.container = " + ExprColumn.STR_TABLE_ALIAS + ".container)"));
+            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.VARCHAR, ti.getColumn("plateId"), ti.getColumn("container"));
+            newCol.setLabel("Processing Requested");
             ti.addColumn(newCol);
         }
     }

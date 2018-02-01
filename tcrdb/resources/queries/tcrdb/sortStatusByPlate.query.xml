@@ -1,10 +1,19 @@
 <query xmlns="http://labkey.org/data/xml/query">
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
-            <table tableName="" useColumnOrder="true" tableDbType="TABLE">
+            <table tableName="" useColumnOrder="false" tableDbType="TABLE">
                 <tableTitle>TCR Status By Plate</tableTitle>
                 <columns>
-
+                    <column columnName="plateId">
+                        <isKeyField>true</isKeyField>
+                        <url>/query/executeQuery.view?schemaName=tcrdb&amp;query.queryName=sort&amp;query.plateId~eq=${plateId}</url>
+                    </column>
+                    <column columnName="container">
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="isComplete">
+                        <columnTitle>Has Sequence Data</columnTitle>
+                    </column>
                 </columns>
             </table>
         </tables>

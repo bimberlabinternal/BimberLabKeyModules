@@ -142,7 +142,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
         multi.add(LABKEY.Query.selectRows, {
             schemaName: 'tcrdb',
             queryName: 'sorts',
-            columns: 'rowid,stimId,stimId/animalId,stimId/effector,stimId/date,stimId/treatment,population,replicate,cells,plateId,well,well/addressByColumn,numLibraries,maxCellsForPlate',
+            columns: 'rowid,stimId,stimId/animalId,stimId/effector,stimId/date,stimId/treatment,population,replicate,cells,plateId,well,well/addressByColumn,numLibraries,maxCellsForPlate,container',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results){
@@ -301,7 +301,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                 },{
                     html: 'Lacking Sorts:'
                 },{
-                    html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'tcrdb', queryName: 'stims', 'query.numSorts~eq': 0}) + '">' + this.stimStats.lackingSort + '</a>'
+                    html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'tcrdb', queryName: 'stims', 'query.numSorts~eq': 0, 'query.status~isblank': null}) + '">' + this.stimStats.lackingSort + '</a>'
                 },{
                     html: 'Non-passing Status:'
                 },{
@@ -452,63 +452,68 @@ Ext4.define('TCRdb.panel.StimPanel', {
                 }]
             },{
                 title: 'Step 2: Sorts',
-                layout: {
-                    type: 'table',
-                    columns: 3,
-                    tdAttrs: { style: 'padding-right: 10px;' }
-                },
                 defaults: {
                     border: false
                 },
                 items: [{
-                    html: 'Total Sorts:'
-                },{
-                    html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
-                        schemaName: 'tcrdb',
-                        queryName: 'sorts'
-                    }) + '">' + this.sortStats.totalSorts + '</a>'
-                },{
-                    xtype: 'ldk-linkbutton',
-                    text: '(' + this.sortStats.totalPlates.length + ' plates)',
-                    href: 'javascript:void(0);',
-                    handler: this.getPlateCallback(this.sortStats.totalPlates)
-                },{
-                    html: 'Lacking cDNA Libraries (All):'
-                },{
-                    html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
-                        schemaName: 'tcrdb',
-                        queryName: 'sorts',
-                        'query.numLibraries~eq': 0
-                    }) + '">' + this.sortStats.lackingLibraries + '</a>'
-                },{
-                    xtype: 'ldk-linkbutton',
-                    text: '(' + this.sortStats.totalPlatesLackingLibraries.length + ' plates)',
-                    href: 'javascript:void(0);',
-                    handler: this.getPlateCallback(this.sortStats.totalPlatesLackingLibraries)
-                },{
-                    html: 'Lacking cDNA Libraries (Bulk):'
-                },{
-                    html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
-                        schemaName: 'tcrdb',
-                        queryName: 'sorts',
-                        'query.numLibraries~eq': 0,
-                        'query.cells~gt': 1
-                    }) + '">' + this.sortStats.bulkLackingLibraries + '</a>'
-                },{
-                    xtype: 'ldk-linkbutton',
-                    text: '(' + this.sortStats.totalBulkPlatesLackingLibraries.length + ' plates)',
-                    href: 'javascript:void(0);',
-                    handler: this.getPlateCallback(this.sortStats.totalBulkPlatesLackingLibraries)
+                    layout: {
+                        type: 'table',
+                        columns: 3,
+                        tdAttrs: {style: 'padding-right: 10px;'}
+                    },
+                    defaults: {
+                        border: false
+                    },
+                    items: [{
+                        html: 'Total Sorts:'
+                    }, {
+                        html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
+                            schemaName: 'tcrdb',
+                            queryName: 'sorts'
+                        }) + '">' + this.sortStats.totalSorts + '</a>'
+                    }, {
+                        xtype: 'ldk-linkbutton',
+                        text: '(' + this.sortStats.totalPlates.length + ' plates)',
+                        href: 'javascript:void(0);',
+                        handler: this.getPlateCallback(this.sortStats.totalPlates)
+                    }, {
+                        html: 'Lacking cDNA Libraries (All):'
+                    }, {
+                        html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
+                            schemaName: 'tcrdb',
+                            queryName: 'sorts',
+                            'query.numLibraries~eq': 0
+                        }) + '">' + this.sortStats.lackingLibraries + '</a>'
+                    }, {
+                        xtype: 'ldk-linkbutton',
+                        text: '(' + this.sortStats.totalPlatesLackingLibraries.length + ' plates)',
+                        href: 'javascript:void(0);',
+                        handler: this.getPlateCallback(this.sortStats.totalPlatesLackingLibraries)
+                    }, {
+                        html: 'Lacking cDNA Libraries (Bulk):'
+                    }, {
+                        html: '<a href="' + LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
+                            schemaName: 'tcrdb',
+                            queryName: 'sorts',
+                            'query.numLibraries~eq': 0,
+                            'query.cells~gt': 1
+                        }) + '">' + this.sortStats.bulkLackingLibraries + '</a>'
+                    }, {
+                        xtype: 'ldk-linkbutton',
+                        text: '(' + this.sortStats.totalBulkPlatesLackingLibraries.length + ' plates)',
+                        href: 'javascript:void(0);',
+                        handler: this.getPlateCallback(this.sortStats.totalBulkPlatesLackingLibraries)
+                    }]
                 },{
                     xtype: 'ldk-linkbutton',
                     text: 'Import Sort Data For Stims',
                     href: 'javascript:void(0);',
                     linkCls: 'labkey-text-link',
-                    handler: function(btn){
-                        if (LABKEY.Security.currentContainer.type === 'workbook'){
+                    handler: function (btn) {
+                        if (LABKEY.Security.currentContainer.type === 'workbook') {
                             Ext4.define('TCRdb.window.SortUploadWindow', {
                                 extend: 'Ext.window.Window',
-                                initComponent: function(){
+                                initComponent: function () {
                                     Ext4.apply(this, {
                                         title: 'Import Sorts for Stims',
                                         items: [{
@@ -520,7 +525,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                             containerPath: Laboratory.Utils.getQueryContainerPath(),
                                             schemaName: 'tcrdb',
                                             queryName: 'sorts',
-                                            populateTemplates: function(meta){
+                                            populateTemplates: function (meta) {
                                                 Ext4.Msg.hide();
                                                 var toAdd = [];
 
@@ -567,7 +572,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
 
                                                 this.down('#templateArea').add(toAdd);
                                             },
-                                            generateExcelTemplate: function(){
+                                            generateExcelTemplate: function () {
                                                 var win = this.up('window');
                                                 var rowsPer = win.down('#templateRows').getValue() || 1;
                                                 var skipWithData = win.down('#skipWithData').getValue();
@@ -575,12 +580,12 @@ Ext4.define('TCRdb.panel.StimPanel', {
 
                                                 var data = [];
                                                 data.push(['TubeNum', 'StimId', 'AnimalId', 'SampleDate', 'Peptide/Stim', 'Treatment', 'Buffer', 'Population', 'Replicate', 'Cells', 'PlateId', 'Well', 'Comment']);
-                                                Ext4.Array.forEach(win.stimRows, function(r){
-                                                    if (skipWithData && r.numSorts){
+                                                Ext4.Array.forEach(win.stimRows, function (r) {
+                                                    if (skipWithData && r.numSorts) {
                                                         return;
                                                     }
 
-                                                    for (var i=0;i<rowsPer;i++){
+                                                    for (var i = 0; i < rowsPer; i++) {
                                                         data.push([r.tubeNum, r.rowid, r.animalId, r.date, r.stim, r.treatment, buffer, null, null, null, null, null, null, null]);
                                                     }
                                                 }, this);
@@ -594,8 +599,8 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 });
                                             },
                                             listeners: {
-                                                uploadcomplete: function(panel, response){
-                                                    Ext4.Msg.alert('Success', 'Upload Complete!', function(btn){
+                                                uploadcomplete: function (panel, response) {
+                                                    Ext4.Msg.alert('Success', 'Upload Complete!', function (btn) {
                                                         this.up('window').close();
                                                         location.reload();
                                                     }, this);
@@ -609,16 +614,16 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 buttons: [{
                                     text: 'Upload',
                                     width: 50,
-                                    handler: function(btn){
+                                    handler: function (btn) {
                                         var form = btn.up('window').down('#theForm');
                                         form.formSubmit.call(form, btn);
                                     },
                                     scope: this,
                                     formBind: true
-                                },{
+                                }, {
                                     text: 'Close',
                                     width: 50,
-                                    handler: function(btn){
+                                    handler: function (btn) {
                                         btn.up('window').close();
                                     }
                                 }]
@@ -631,6 +636,104 @@ Ext4.define('TCRdb.panel.StimPanel', {
                         else {
                             Ext4.Msg.alert('Error', 'This is only allowed when in a specific workbook.  Please enter the workbook into the box at the top of the page and hit \'Go\'');
                         }
+                    }
+                },{
+                    xtype: 'ldk-linkbutton',
+                    linkCls: 'labkey-text-link',
+                    text: 'Update Requested Processing',
+                    width: 600,
+                    scope: this,
+                    handler: function(){
+                        var plates = [];
+                        Ext4.Array.forEach(this.sortStats.totalPlates, function(p){
+                            plates.push([p]);
+                        }, this);
+
+                        Ext4.create('Ext.window.Window', {
+                            title: 'Update Requested Processing For Plates',
+                            bodyStyle: 'padding: 5px;',
+                            items: [{
+                                xtype: 'combo',
+                                width: 500,
+                                fieldLabel: 'Processing',
+                                itemId: 'processing',
+                                multiSelect: true,
+                                displayField: 'value',
+                                valueField: 'value',
+                                forceSelection: true,
+                                store: {
+                                    type: 'array',
+                                    fields: ['value'],
+                                    data: [['Whole Transcriptome RNA-Seq'], ['TCR Enrichment'], ['Archive Only']]
+                                }
+                            },{
+                                xtype: 'combo',
+                                width: 500,
+                                multiSelect: true,
+                                fieldLabel: 'Plates',
+                                itemId: 'plates',
+                                displayField: 'value',
+                                valueField: 'value',
+                                forceSelection: true,
+                                store: {
+                                    type: 'array',
+                                    fields: ['value'],
+                                    data: plates
+                                }
+                            }],
+                            buttons: [{
+                                text: 'Submit',
+                                scope: this,
+                                handler: function(btn){
+                                    var processing = btn.up('window').down('#processing').getValue();
+                                    var plates = btn.up('window').down('#plates').getValue();
+                                    if (Ext4.isEmpty(processing) || Ext4.isEmpty(plates)){
+                                        Ext4.Msg.alert('Error', 'Must provide the plate and processing needed');
+                                        return;
+                                    }
+
+                                    var toInsert = [];
+                                    Ext4.Array.forEach(plates, function(plate){
+                                        Ext4.Array.forEach(processing, function(type){
+                                            toInsert.push({
+                                                container: '',
+                                                plateId: plate,
+                                                type: type
+                                            });
+                                        }, this);
+                                    }, this);
+
+                                    Ext4.Array.forEach(toInsert, function(row){
+                                        Ext4.Array.forEach(this.sortRows, function(sr){
+                                            if (sr.plateId == row.plateId){
+                                                row.container = sr.container;
+                                                return false;
+                                            }
+                                        }, this);
+                                    }, this);
+
+                                    btn.up('window').close();
+                                    Ext4.Msg.wait('Saving...');
+                                    LABKEY.Query.insertRows({
+                                        schemaName: 'tcrdb',
+                                        queryName: 'plate_processing',
+                                        rows: toInsert,
+                                        failure: LDK.Utils.getErrorCallback(),
+                                        success: function(){
+                                            Ext4.Msg.hide();
+                                            Ext4.Msg.alert('Success', 'Rows inserted');
+                                        },
+                                        scope: this
+                                    })
+
+                                }
+                            },{
+                                text: 'Cancel',
+                                handler: function(btn){
+                                    btn.up('window').close();
+                                }
+                            }]
+                        }).show();
                     }
                 }]
             },{
@@ -1079,7 +1182,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                     }
 
                                     var data = [];
-                                    data.push(['LibraryId', 'Name', 'Subject Id', 'Sample Date', '5-Barcode', '3-Barcode', 'Sample Type', 'Sequencing Platform', 'Application', 'Chemistry', 'Comments']);
+                                    data.push(['LibraryId', 'PlateId', 'Source Well', 'Name', 'Subject Id', 'Sample Date', '5-Barcode', '3-Barcode', 'Sample Type', 'Sequencing Platform', 'Application', 'Chemistry', 'Comments']);
                                     Ext4.Array.forEach(win.libraryRows, function(r){
                                         Ext4.Array.forEach(applications, function(application){
                                             if (plates.indexOf(r.plateId) > -1) {
@@ -1089,11 +1192,16 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                     }
 
                                                     var name = TCRdb.panel.StimPanel.getNameFromCDNAs(r);
-                                                    data.push([r.rowid, name, r['sortId/stimId/animalId'], r['sortId/stimId/date'], null, null, 'mRNA', 'ILLUMINA', application, chemistry, null]);
+                                                    data.push([r.rowid, r.plateId, r.well, name, r['sortId/stimId/animalId'], r['sortId/stimId/date'], null, null, 'mRNA', 'ILLUMINA', application, chemistry, null]);
                                                 }
                                             }
                                         }, this);
                                     }, this);
+
+                                    if (data.length == 1){
+                                        Ext4.Msg.alert('Error', 'No matching rows found');
+                                        return;
+                                    }
 
                                     LABKEY.Utils.convertToExcel({
                                         fileName: 'ReadsetImport_' + Ext4.Date.format(new Date(), 'Y-m-d H_i_s') + '.xls',
@@ -1253,258 +1361,275 @@ Ext4.define('TCRdb.panel.StimPanel', {
                     linkCls: 'labkey-text-link',
                     scope: this,
                     handler: function(){
-                        if (LABKEY.Security.currentContainer.type === 'workbook'){
-                            Ext4.create('Ext.window.Window', {
-                                bodyStyle: 'padding: 5px;',
-                                items: [{
-                                    xtype: 'ldk-simplecombo',
-                                    itemId: 'instrument',
-                                    fieldLabel: 'Instrument/Core',
-                                    forceSelection: true,
-                                    editable: false,
-                                    labelWidth: 160,
-                                    storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)']
-                                },{
-                                    xtype: 'labkey-combo',
-                                    forceSelection: true,
-                                    displayField: 'plateId',
-                                    valueField: 'plateId',
-                                    itemId: 'sourcePlate',
-                                    fieldLabel: 'Source Plate Id',
-                                    store: {
-                                        type: 'labkey-store',
-                                        schemaName: 'tcrdb',
-                                        sql: 'SELECT distinct plateId as plateId from tcrdb.cdnas',
-                                        autoLoad: true
-                                    },
-                                    labelWidth: 160
-                                },{
-                                    xtype: 'textfield',
-                                    itemId: 'adapter',
-                                    fieldLabel: 'Adapter',
-                                    labelWidth: 160,
-                                    value: 'CTGTCTCTTATACACATCT'
-                                },{
-                                    xtype: 'labkey-combo',
-                                    itemId: 'barcodes',
-                                    fieldLabel: 'Barcode Series',
-                                    labelWidth: 160,
-                                    store: {
-                                        type: 'labkey-store',
-                                        schemaName: 'sequenceanalysis',
-                                        queryName: 'barcode_groups',
-                                        autoLoad: true
-                                    },
-                                    displayField: 'group_name',
-                                    valueField: 'group_name',
-                                    value: 'Illumina',
-                                    forceSelection: true
-                                },{
-                                    xtype: 'textarea',
-                                    fieldLabel: 'Names/Barcodes',
-                                    labelAlign: 'top',
-                                    width: 600,
-                                    height: 300
-                                }],
-                                doReverseComplement: function(seq){
-                                    var match={'a': 'T', 'A': 'T', 't': 'A', 'T': 'A', 'g': 'C', 'G': 'C', 'c': 'G', 'C': 'G'};
-                                    var o = '';
-                                    for (var i = seq.length - 1; i >= 0; i--) {
-                                        if (match[seq[i]] === undefined) break;
-                                        o += match[seq[i]];
+                        Ext4.create('Ext.window.Window', {
+                            bodyStyle: 'padding: 5px;',
+                            items: [{
+                                xtype: 'ldk-simplecombo',
+                                itemId: 'instrument',
+                                fieldLabel: 'Instrument/Core',
+                                forceSelection: true,
+                                editable: false,
+                                labelWidth: 160,
+                                storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List']
+                            },{
+                                xtype: 'labkey-combo',
+                                forceSelection: true,
+                                multiSelect: true,
+                                displayField: 'plateId',
+                                valueField: 'plateId',
+                                itemId: 'sourcePlates',
+                                fieldLabel: 'Source Plate Id',
+                                store: {
+                                    type: 'labkey-store',
+                                    schemaName: 'tcrdb',
+                                    sql: 'SELECT distinct plateId as plateId from tcrdb.cdnas c WHERE c.hasReadsetWithData = false',
+                                    autoLoad: true
+                                },
+                                labelWidth: 160
+                            },{
+                                xtype: 'textfield',
+                                itemId: 'adapter',
+                                fieldLabel: 'Adapter',
+                                labelWidth: 160,
+                                value: 'CTGTCTCTTATACACATCT'
+                            },{
+                                xtype: 'labkey-combo',
+                                itemId: 'barcodes',
+                                fieldLabel: 'Barcode Series',
+                                labelWidth: 160,
+                                store: {
+                                    type: 'labkey-store',
+                                    schemaName: 'sequenceanalysis',
+                                    queryName: 'barcode_groups',
+                                    autoLoad: true
+                                },
+                                displayField: 'group_name',
+                                valueField: 'group_name',
+                                value: 'Illumina',
+                                forceSelection: true
+                            },{
+                                xtype: 'textarea',
+                                fieldLabel: 'Names/Barcodes',
+                                labelAlign: 'top',
+                                width: 600,
+                                height: 300
+                            },{
+                                xtype: 'checkbox',
+                                fieldLabel: 'Include Libraries With Data',
+                                checked: false,
+                                itemId: 'includeWithData',
+                                listeners: {
+                                    change: function(field, val){
+                                        var target = field.up('window').down('#sourcePlates');
+                                        var sql = 'SELECT distinct plateId as plateId from tcrdb.cdnas ' + (val ? '' : 'c WHERE c.hasReadsetWithData = false');
+                                        target.store.sql = sql;
+                                        target.store.removeAll();
+                                        target.store.load(function(){
+                                            if (target.getPicker()){
+                                                target.getPicker().refresh();
+                                            }
+                                        }, this);
+                                    }
+                                }
+                            }],
+                            doReverseComplement: function(seq){
+                                var match={'a': 'T', 'A': 'T', 't': 'A', 'T': 'A', 'g': 'C', 'G': 'C', 'c': 'G', 'C': 'G'};
+                                var o = '';
+                                for (var i = seq.length - 1; i >= 0; i--) {
+                                    if (match[seq[i]] === undefined) break;
+                                    o += match[seq[i]];
+                                }
+
+                                return o;
+                            },
+                            buttons: [{
+                                text: 'Submit',
+                                scope: this,
+                                handler: function(btn){
+                                    var barcodes = btn.up('window').down('#barcodes').getValue();
+                                    var plateIds = btn.up('window').down('#sourcePlates').getValue();
+                                    if (!plateIds || !plateIds.length){
+                                        Ext4.Msg.alert('Error', 'Must provide the plate Id(s)');
+                                        return;
                                     }
 
-                                    return o;
-                                },
-                                buttons: [{
-                                    text: 'Submit',
-                                    scope: this,
-                                    handler: function(btn){
-                                        var barcodes = btn.up('window').down('#barcodes').getValue();
-                                        var plateId = btn.up('window').down('#sourcePlate').getValue();
-                                        if (!plateId){
-                                            Ext4.Msg.alert('Error', 'Must provide the plate Id');
-                                            return;
-                                        }
+                                    var instrument = btn.up('window').down('#instrument').getValue();
+                                    var adapter = btn.up('window').down('#adapter').getValue();
+                                    var includeWithData = btn.up('window').down('#includeWithData').getValue();
+                                    var doReverseComplement = btn.up('window').doReverseComplement;
 
-                                        var instrument = btn.up('window').down('#instrument').getValue();
-                                        var adapter = btn.up('window').down('#adapter').getValue();
-                                        var doReverseComplement = btn.up('window').doReverseComplement;
+                                    LABKEY.Query.selectRows({
+                                        containerPath: Laboratory.Utils.getQueryContainerPath(),
+                                        schemaName: 'tcrdb',
+                                        queryName: 'cdnas',
+                                        sort: 'well/addressByColumn,plateId',
+                                        columns: 'rowid,readsetId,readsetId/name,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
+                                        scope: this,
+                                        filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
+                                        failure: LDK.Utils.getErrorCallback(),
+                                        success: function (results) {
+                                            Ext4.Msg.hide();
 
-                                        LABKEY.Query.selectRows({
-                                            containerPath: Laboratory.Utils.getQueryContainerPath(),
-                                            schemaName: 'tcrdb',
-                                            queryName: 'cdnas',
-                                            sort: 'plateId,well/addressByColumn',
-                                            columns: 'rowid,readsetId,readsetId/name,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
-                                            scope: this,
-                                            filterArray: [LABKEY.Filter.create('plateId', plateId, LABKEY.Filter.Types.EQUALS)],
-                                            failure: LDK.Utils.getErrorCallback(),
-                                            success: function (results) {
-                                                Ext4.Msg.hide();
+                                            if (!results || !results.rows || !results.rows.length) {
+                                                Ext4.Msg.alert('Error', 'No libraries found for the selected plates');
+                                                return;
+                                            }
 
-                                                if (!results || !results.rows || !results.rows.length) {
-                                                    Ext4.Msg.alert('Error', 'No libraries found for the selected plates');
-                                                    return;
-                                                }
+                                            var barcodeCombosUsed = [];
+                                            if (instrument == 'NextSeq (MPSSR)' || instrument == 'Basic List') {
+                                                var rc5 = (instrument == 'NextSeq (MPSSR)');
+                                                var rc3 = (instrument == 'NextSeq (MPSSR)');
 
-                                                var barcodeCombosUsed = [];
-                                                if (instrument == 'NextSeq (MPSSR)') {
-                                                    var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
-                                                    Ext4.Array.forEach(results.rows, function (r) {
-                                                        //only include readsets without existing data
-                                                        if (r.readsetId && r['readsetId/totalFiles'] == 0) {
-                                                            //reverse complement both barcodes:
-                                                            var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
-                                                            var barcode3 = doReverseComplement(r['readsetId/barcode3/sequence']);
-                                                            barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                                                            rows.push([r.readsetId + '_' + r['readsetId/name'], adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
-                                                        }
-
-                                                        if (r.enrichedReadsetId && r['enrichedReadsetId/totalFiles'] == 0) {
-                                                            var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
-                                                            var barcode3 = doReverseComplement(r['readsetId/barcode3/sequence']);
-                                                            barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                                                            rows.push([r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'], adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
-                                                        }
-                                                    }, this);
-
-                                                    //add missing barcodes:
-                                                    var blankIdx = 0;
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function(barcode5){
-                                                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function(barcode3){
-                                                            var combo = barcode5 + '/' + barcode3;
-                                                            if (barcodeCombosUsed.indexOf(combo) == -1){
-                                                                blankIdx++;
-                                                                var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
-                                                                var barcode3Seq = doReverseComplement(this.barcodeMap[barcodes][barcode3]);
-                                                                rows.push(['Blank' + blankIdx, adapter, barcode5, barcode5Seq, barcode3, barcode3Seq].join('\t'));
-                                                            }
-                                                        }, this);
-                                                    }, this);
-                                                }
-                                                else {
-                                                    var rows = [];
-                                                    rows.push('[Header]');
-                                                    rows.push('IEMFileVersion,4');
-                                                    rows.push('Investigator Name,Bimber');
-                                                    rows.push('Experiment Name,' + plateId);
-                                                    rows.push('Date,11/16/2017');
-                                                    rows.push('Workflow,GenerateFASTQ');
-                                                    rows.push('Application,FASTQ Only');
-                                                    rows.push('Assay,Nextera XT');
-                                                    rows.push('Description,');
-                                                    rows.push('Chemistry,Amplicon');
-                                                    rows.push('');
-                                                    rows.push('[Reads]');
-                                                    rows.push('251');
-                                                    rows.push('251');
-                                                    rows.push('');
-                                                    rows.push('[Settings]');
-                                                    rows.push('ReverseComplement,0');
-                                                    rows.push('Adapter,' + adapter);
-                                                    rows.push('');
-                                                    rows.push('[Data]');
-                                                    rows.push('Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description');
-
-                                                    Ext4.Array.forEach(results.rows, function (r) {
-                                                        //only include readsets without existing data
-                                                        if (r.readsetId && r['readsetId/totalFiles'] == 0) {
-                                                            //reverse complement both barcodes:
-                                                            var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
-                                                            var barcode3 = r['readsetId/barcode3/sequence'];
-                                                            var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
-                                                            cleanedName = cleanedName.replace(/\//g, '-');
-
-                                                            barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                                                            rows.push([r.readsetId, cleanedName, '', '', r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join(','));
-                                                        }
-
-                                                        if (r.enrichedReadsetId && r['enrichedReadsetId/totalFiles'] == 0) {
-                                                            var barcode5 = doReverseComplement(r['enrichedReadsetId/barcode5/sequence']);
-                                                            var barcode3 = r['enrichedReadsetId/barcode3/sequence'];
-                                                            var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
-                                                            cleanedName = cleanedName.replace(/\//g, '-');
-
-                                                            barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
-                                                            rows.push([r.enrichedReadsetId, cleanedName, '', '', r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join(','))
-                                                        }
-                                                    }, this);
-
-                                                    //add missing barcodes:
-                                                    var blankIdx = 0;
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function(barcode5){
-                                                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function(barcode3){
-                                                            var combo = barcode5 + '/' + barcode3;
-                                                            if (barcodeCombosUsed.indexOf(combo) == -1){
-                                                                blankIdx++;
-                                                                var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
-                                                                var barcode3Seq = this.barcodeMap[barcodes][barcode3];
-                                                                rows.push(['Blank' + blankIdx, null, null, null, barcode5, barcode5Seq, barcode3, barcode3Seq].join(','));
-                                                            }
-                                                        }, this);
-                                                    }, this);
-                                                }
-
-                                                //check for unique barcodes
-                                                var sorted = barcodeCombosUsed.slice().sort();
-                                                var duplicates = [];
-                                                for (var i = 0; i < sorted.length - 1; i++) {
-                                                    if (sorted[i + 1] == sorted[i]) {
-                                                        duplicates.push(sorted[i]);
+                                                var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
+                                                Ext4.Array.forEach(results.rows, function (r) {
+                                                    //only include readsets without existing data
+                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0)) {
+                                                        //reverse complement both barcodes:
+                                                        var barcode5 = rc5 ? doReverseComplement(r['readsetId/barcode5/sequence']) : r['readsetId/barcode5/sequence'];
+                                                        var barcode3 = rc3 ? doReverseComplement(r['readsetId/barcode3/sequence']) : r['readsetId/barcode3/sequence'];
+                                                        barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
+                                                        rows.push([r.readsetId + '_' + r['readsetId/name'], adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
                                                     }
-                                                }
 
-                                                duplicates = Ext4.unique(duplicates);
-                                                duplicates = [];
-                                                if (duplicates.length){
-                                                    Ext4.Msg.alert('Error', 'Duplicate barcodes: ' + duplicates.join(', '));
-                                                    btn.up('window').down('textarea').setValue(null);
-                                                    btn.up('window').down('#downloadData').setDisabled(true);
-                                                }
-                                                else {
-                                                    btn.up('window').down('textarea').setValue(rows.join('\n'));
-                                                    btn.up('window').down('#downloadData').setDisabled(false);
+                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0)) {
+                                                        var barcode5 = rc5 ? doReverseComplement(r['enrichedReadsetId/barcode5/sequence']) : r['enrichedReadsetId/barcode5/sequence'];
+                                                        var barcode3 = rc3 ? doReverseComplement(r['enrichedReadsetId/barcode3/sequence']) : r['enrichedReadsetId/barcode3/sequence'];
+                                                        barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
+                                                        rows.push([r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'], adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
+                                                    }
+                                                }, this);
+
+                                                //add missing barcodes:
+                                                var blankIdx = 0;
+                                                Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function(barcode5){
+                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function(barcode3){
+                                                        var combo = barcode5 + '/' + barcode3;
+                                                        if (barcodeCombosUsed.indexOf(combo) == -1){
+                                                            blankIdx++;
+                                                            var barcode5Seq = rc5 ? doReverseComplement(this.barcodeMap[barcodes][barcode5]) : this.barcodeMap[barcodes][barcode5];
+                                                            var barcode3Seq = rc3 ? doReverseComplement(this.barcodeMap[barcodes][barcode3]) : this.barcodeMap[barcodes][barcode3];
+                                                            rows.push(['Blank' + blankIdx, adapter, barcode5, barcode5Seq, barcode3, barcode3Seq].join('\t'));
+                                                        }
+                                                    }, this);
+                                                }, this);
+                                            }
+                                            else {
+                                                var rows = [];
+                                                rows.push('[Header]');
+                                                rows.push('IEMFileVersion,4');
+                                                rows.push('Investigator Name,Bimber');
+                                                rows.push('Experiment Name,' + plateId);
+                                                rows.push('Date,11/16/2017');
+                                                rows.push('Workflow,GenerateFASTQ');
+                                                rows.push('Application,FASTQ Only');
+                                                rows.push('Assay,Nextera XT');
+                                                rows.push('Description,');
+                                                rows.push('Chemistry,Amplicon');
+                                                rows.push('');
+                                                rows.push('[Reads]');
+                                                rows.push('251');
+                                                rows.push('251');
+                                                rows.push('');
+                                                rows.push('[Settings]');
+                                                rows.push('ReverseComplement,0');
+                                                rows.push('Adapter,' + adapter);
+                                                rows.push('');
+                                                rows.push('[Data]');
+                                                rows.push('Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description');
+
+                                                Ext4.Array.forEach(results.rows, function (r) {
+                                                    //only include readsets without existing data
+                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0)) {
+                                                        //reverse complement both barcodes:
+                                                        var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
+                                                        var barcode3 = r['readsetId/barcode3/sequence'];
+                                                        var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
+                                                        cleanedName = cleanedName.replace(/\//g, '-');
+
+                                                        barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
+                                                        rows.push([r.readsetId, cleanedName, '', '', r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join(','));
+                                                    }
+
+                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0)) {
+                                                        var barcode5 = doReverseComplement(r['enrichedReadsetId/barcode5/sequence']);
+                                                        var barcode3 = r['enrichedReadsetId/barcode3/sequence'];
+                                                        var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
+                                                        cleanedName = cleanedName.replace(/\//g, '-');
+
+                                                        barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
+                                                        rows.push([r.enrichedReadsetId, cleanedName, '', '', r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join(','))
+                                                    }
+                                                }, this);
+
+                                                //add missing barcodes:
+                                                var blankIdx = 0;
+                                                Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function(barcode5){
+                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function(barcode3){
+                                                        var combo = barcode5 + '/' + barcode3;
+                                                        if (barcodeCombosUsed.indexOf(combo) == -1){
+                                                            blankIdx++;
+                                                            var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
+                                                            var barcode3Seq = this.barcodeMap[barcodes][barcode3];
+                                                            rows.push(['Blank' + blankIdx, null, null, null, barcode5, barcode5Seq, barcode3, barcode3Seq].join(','));
+                                                        }
+                                                    }, this);
+                                                }, this);
+                                            }
+
+                                            //check for unique barcodes
+                                            var sorted = barcodeCombosUsed.slice().sort();
+                                            var duplicates = [];
+                                            for (var i = 0; i < sorted.length - 1; i++) {
+                                                if (sorted[i + 1] == sorted[i]) {
+                                                    duplicates.push(sorted[i]);
                                                 }
                                             }
-                                        });
-                                    }
-                                },{
-                                    text: 'Download Data',
-                                    itemId: 'downloadData',
-                                    disabled: true,
-                                    handler: function(btn){
-                                        var instrument = btn.up('window').down('#instrument').getValue();
-                                        var plateId = btn.up('window').down('#sourcePlate').getValue();
-                                        var delim = 'TAB';
-                                        var extention = 'txt';
-                                        var split = '\t';
-                                        if (instrument != 'NextSeq (MPSSR)'){
-                                            delim = 'COMMA';
-                                            extention = 'csv';
-                                            split = ',';
+
+                                            duplicates = Ext4.unique(duplicates);
+                                            if (duplicates.length){
+                                                Ext4.Msg.alert('Error', 'Duplicate barcodes: ' + duplicates.join(', '));
+                                                btn.up('window').down('textarea').setValue(null);
+                                                btn.up('window').down('#downloadData').setDisabled(true);
+                                            }
+                                            else {
+                                                btn.up('window').down('textarea').setValue(rows.join('\n'));
+                                                btn.up('window').down('#downloadData').setDisabled(false);
+                                            }
                                         }
-
-                                        var val = btn.up('window').down('textarea').getValue();
-                                        var rows = LDK.Utils.CSVToArray(Ext4.String.trim(val), split);
-
-                                        LABKEY.Utils.convertToTable({
-                                            fileName: plateId + '.' + extention,
-                                            rows: rows,
-                                            delim: delim
-                                        });
+                                    });
+                                }
+                            },{
+                                text: 'Download Data',
+                                itemId: 'downloadData',
+                                disabled: true,
+                                handler: function(btn){
+                                    var instrument = btn.up('window').down('#instrument').getValue();
+                                    var plateId = btn.up('window').down('#sourcePlate').getValue();
+                                    var delim = 'TAB';
+                                    var extention = 'txt';
+                                    var split = '\t';
+                                    if (instrument != 'NextSeq (MPSSR)'){
+                                        delim = 'COMMA';
+                                        extention = 'csv';
+                                        split = ',';
                                     }
-                                },{
-                                    text: 'Close',
-                                    handler: function(btn){
-                                        btn.up('window').close();
-                                    }
-                                }]
-                            }).show();
-                        }
-                        else {
-                            Ext4.Msg.alert('Error', 'This is only allowed when in a specific workbook.  Please enter the workbook into the box at the top of the page and hit \'Go\'');
-                        }
+
+                                    var val = btn.up('window').down('textarea').getValue();
+                                    var rows = LDK.Utils.CSVToArray(Ext4.String.trim(val), split);
+
+                                    LABKEY.Utils.convertToTable({
+                                        fileName: plateId + '.' + extention,
+                                        rows: rows,
+                                        delim: delim
+                                    });
+                                }
+                            },{
+                                text: 'Close',
+                                handler: function(btn){
+                                    btn.up('window').close();
+                                }
+                            }]
+                        }).show();
                     }
                 }]
             },{
@@ -1514,9 +1639,16 @@ Ext4.define('TCRdb.panel.StimPanel', {
                 },
                 items: [{
                     xtype: 'ldk-linkbutton',
-                    text: 'View Summary of Sorts By Plate',
+                    text: 'View Summary of Sorts By Plate (this workbook)',
                     linkCls: 'labkey-text-link',
+                    hidden: LABKEY.Security.currentContainer.type != 'workbook',
                     href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'tcrdb', queryName: 'sortStatusByPlate', 'query.isComplete~eq': false})
+                },{
+                    xtype: 'ldk-linkbutton',
+                    text: 'View Summary of Sorts By Plate (entire folder)',
+                    linkCls: 'labkey-text-link',
+                    href: LABKEY.ActionURL.buildURL('query', 'executeQuery', Laboratory.Utils.getQueryContainerPath(), {schemaName: 'tcrdb', queryName: 'sortStatusByPlate', 'query.isComplete~eq': false})
+
                 }]
             }]
         }

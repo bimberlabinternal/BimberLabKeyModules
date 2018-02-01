@@ -255,6 +255,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.35-15.36.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.36-15.37.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.37-15.38.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.38-15.39.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.39-15.40.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.30-15.31.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.31-15.32.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.32-15.33.sql -text
@@ -264,6 +265,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.35-15.36.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.36-15.37.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.37-15.38.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.38-15.39.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.39-15.40.sql -text
 DISCVR/tcrdb/resources/schemas/tcrdb.xml -text
 DISCVR/tcrdb/resources/views/stimDashboard.html -text
 DISCVR/tcrdb/resources/views/stimDashboard.view.xml -text

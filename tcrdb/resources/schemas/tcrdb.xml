@@ -381,6 +381,12 @@
             <column columnName="stim">
                 <columnTitle>Peptide/Stim</columnTitle>
             </column>
+            <column columnName="category">
+                <columnTitle>Category</columnTitle>
+            </column>
+            <column columnName="type">
+                <columnTitle>Type</columnTitle>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>
@@ -408,5 +414,44 @@
             </column>
         </columns>
     </table>
-
+    <table tableName="plate_processing" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Processing Needed/Plate</tableTitle>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="plateId">
+                <columnTitle>Plate Id</columnTitle>
+            </column>
+            <column columnName="type">
+                <columnTitle>Processing Needed</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
 </tables>
