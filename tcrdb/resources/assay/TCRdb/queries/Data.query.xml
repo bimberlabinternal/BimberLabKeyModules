@@ -114,7 +114,7 @@
                     <includeScript>/laboratory/assayButtons.js</includeScript>
                     <includeScript>/tcrdb/window/ChangeStatusWindow.js</includeScript>
                     <includeScript>/tcrdb/window/ExportDataWindow.js</includeScript>
-                    <item text="More Actions" insertAfter="last">
+                    <item text="More Actions" insertAfter="last" iconCls="ellipsis-h">
                         <item text="View Runs">
                             <onClick>Laboratory.Assay.viewRunsBtn(dataRegion, 'Data')</onClick>
                         </item>

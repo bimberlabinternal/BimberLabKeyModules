@@ -406,6 +406,11 @@
             },
 
             addSets: function(btn){
+                var data = [];
+                Ext4.Array.forEach(this.outputFileIds, function(id){
+                    data.push([id]);
+                }, this);
+
                 Ext4.create('Ext.window.Window', {
                     variantPanel: this,
                     width: 1000,
@@ -457,7 +462,7 @@
                             var mode = btn.up('window').down('#importMode').getValue().mode;
 
                             var fields = ['SetName', 'GBS', 'WGS'];
-                            if (mode == 'incomplete'){
+                            if (mode != 'incomplete'){
                                 fields.push('Reference');
                             }
 
@@ -476,17 +481,35 @@
                         height: 300,
                         width: 780
                     },{
-                        xtype: 'ldk-integerfield',
+                        xtype: 'combo',
                         itemId: 'wgsVcf',
+                        forceSelection: true,
+                        valueField: 'value',
+                        displayField: 'value',
+                        allowBlank: false,
                         fieldLabel: 'Enter the VCF ID with WGS data',
                         labelWidth: 250,
-                        width: 400
+                        width: 400,
+                        store: {
+                            type: 'array',
+                            fields: ['value'],
+                            data: data
+                        }
                     },{
-                        xtype: 'ldk-integerfield',
+                        xtype: 'combo',
                         itemId: 'gbsVcf',
+                        forceSelection: true,
+                        valueField: 'value',
+                        displayField: 'value',
+                        allowBlank: false,
                         fieldLabel: 'Enter the VCF ID with GBS data',
                         labelWidth: 250,
-                        width: 400
+                        width: 400,
+                        store: {
+                            type: 'array',
+                            fields: ['value'],
+                            data: data
+                        }
                     }],
                     addData: function(btn){
                         var data = btn.up('window').down('textarea').getValue();
@@ -512,6 +535,7 @@
 
                         //iterate rows
                         var rows = [];
+                        var errors = [];
                         Ext4.Array.forEach(data, function(row){
                             var newRow = [];
                             Ext4.Array.forEach(header, function(field, idx){
@@ -522,7 +546,12 @@
                                 else if (field.toLowerCase() == 'wgs'){
                                     val = this.variantPanel.textToArray(val);
                                     Ext4.Array.forEach(val, function(r, i){
-                                        val[i] = autoComplete ? wgsVcf + '||' + r : r;
+                                        var id = autoComplete ? wgsVcf + '||' + r : r;
+                                        if (this.variantPanel.sampleStore.findExact('sampleId', id) == -1){
+                                            errors.push('Unknown WGS ID: ' + id);
+                                        }
+
+                                        val[i] = id;
                                     }, this);
 
                                     newRow[1] = val;
@@ -533,9 +562,14 @@
                                     newRow[2] = [];
                                     newRow[3] = newRow[3] || [];
                                     Ext4.Array.forEach(val, function(r, i){
-                                        newRow[2].push(autoComplete ? gbsVcf + '||' + r : r);
+                                        var id = autoComplete ? gbsVcf + '||' + r : r;
+                                        if (this.variantPanel.sampleStore.findExact('sampleId', id) == -1){
+                                            errors.push('Unknown GBS ID: ' + id);
+                                        }
 
-                                        //determine if WGS VCF has this sample
+                                        newRow[2].push(id);
+
+                                        //determine if WGS VCF has this sample.  if true, automatically select this as reference, otherwise defer to GBS in which case non-framework sites will be used
                                         if (autoComplete) {
                                             if (this.variantPanel.sampleStore.findExact('sampleId', wgsVcf + '||' + r) > -1) {
                                                 newRow[3].push(wgsVcf + '||' + r);
@@ -547,11 +581,12 @@
                                     }, this);
                                 }
                                 else if (field.toLowerCase() == 'reference') {
-                                    if (autoComplete) {
-                                        //TODO: error
+                                    if (!autoComplete) {
+                                        newRow[3] = this.variantPanel.textToArray(val);
                                     }
-
-                                    newRow[3] = this.variantPanel.textToArray(val);
+                                    else {
+                                        errors.push('You cannot provide a reference column with this import type');
+                                    }
                                 }
                                 else {
                                     if (!newRow[4]){
@@ -566,6 +601,10 @@
 
                             rows.push(newRow);
                         }, this);
+
+                        if (errors.length){
+                            Ext4.Msg.alert('Error', Ext4.unique(errors).join('<br>'));
+                        }
 
                         this.variantPanel.addSamples(rows);
 

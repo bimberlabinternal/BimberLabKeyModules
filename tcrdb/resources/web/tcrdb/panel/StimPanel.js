@@ -885,10 +885,11 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                     return;
                                                 }
 
-                                                plates = plates.replace(/[\s,;]+/g, ';');
-                                                plates = plates.replace(/(^;|;$)/g, '');
+                                                plates = plates.replace(/[\r\n]+/g, '\n');
+                                                plates = plates.replace(/[\n]+/g, '\n');
+                                                plates = Ext4.String.trim(plates);
                                                 if (plates){
-                                                    plates = plates.split(';');
+                                                    plates = plates.split('\n');
                                                 }
 
                                                 Ext4.Msg.wait('Loading...');
@@ -1157,10 +1158,11 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                         return;
                                     }
 
-                                    plates = plates.replace(/[\s,;]+/g, ';');
-                                    plates = plates.replace(/(^;|;$)/g, '');
+                                    plates = plates.replace(/[\r\n]+/g, '\n');
+                                    plates = plates.replace(/[\n]+/g, '\n');
+                                    plates = Ext4.String.trim(plates);
                                     if (plates){
-                                        plates = plates.split(';');
+                                        plates = plates.split('\n');
                                     }
 
                                     if (!type){
@@ -1372,6 +1374,15 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 labelWidth: 160,
                                 storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List']
                             },{
+                                xtype: 'ldk-simplecombo',
+                                itemId: 'application',
+                                fieldLabel: 'Application/Type',
+                                forceSelection: true,
+                                editable: true,
+                                labelWidth: 160,
+                                allowBlank: true,
+                                storeValues: ['Whole Transcriptome RNA-Seq', 'TCR Enriched']
+                            },{
                                 xtype: 'labkey-combo',
                                 forceSelection: true,
                                 multiSelect: true,
@@ -1431,6 +1442,11 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                         }, this);
                                     }
                                 }
+                            },{
+                                xtype: 'checkbox',
+                                fieldLabel: 'Allow Duplicate Barcodes',
+                                checked: false,
+                                itemId: 'allowDuplicates'
                             }],
                             doReverseComplement: function(seq){
                                 var match={'a': 'T', 'A': 'T', 't': 'A', 'T': 'A', 'g': 'C', 'G': 'C', 'c': 'G', 'C': 'G'};
@@ -1454,16 +1470,30 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                     }
 
                                     var instrument = btn.up('window').down('#instrument').getValue();
+                                    var application = btn.up('window').down('#application').getValue();
                                     var adapter = btn.up('window').down('#adapter').getValue();
                                     var includeWithData = btn.up('window').down('#includeWithData').getValue();
+                                    var allowDuplicates = btn.up('window').down('#allowDuplicates').getValue();
                                     var doReverseComplement = btn.up('window').doReverseComplement;
+                                    var isMatchingApplication = function(application, readsetApplication){
+                                        if (!application){
+                                            return true;
+                                        }
+
+                                        if (application == 'Whole Transcriptome RNA-Seq'){
+                                            return readsetApplication === 'RNA-seq' || readsetApplication === 'RNA-seq, Single Cell';
+                                        }
+                                        else if (application == 'TCR Enriched'){
+                                            return readsetApplication === 'RNA-seq + Enrichment';
+                                        }
+                                    };
 
                                     LABKEY.Query.selectRows({
                                         containerPath: Laboratory.Utils.getQueryContainerPath(),
                                         schemaName: 'tcrdb',
                                         queryName: 'cdnas',
                                         sort: 'well/addressByColumn,plateId',
-                                        columns: 'rowid,readsetId,readsetId/name,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
+                                        columns: 'rowid,readsetId,readsetId/name,readsetId/application,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
                                         scope: this,
                                         filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
                                         failure: LDK.Utils.getErrorCallback(),
@@ -1483,7 +1513,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
                                                 Ext4.Array.forEach(results.rows, function (r) {
                                                     //only include readsets without existing data
-                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0)) {
+                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/application'])) {
                                                         //reverse complement both barcodes:
                                                         var barcode5 = rc5 ? doReverseComplement(r['readsetId/barcode5/sequence']) : r['readsetId/barcode5/sequence'];
                                                         var barcode3 = rc3 ? doReverseComplement(r['readsetId/barcode3/sequence']) : r['readsetId/barcode3/sequence'];
@@ -1491,7 +1521,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                         rows.push([r.readsetId + '_' + r['readsetId/name'], adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
                                                     }
 
-                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0)) {
+                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/application'])) {
                                                         var barcode5 = rc5 ? doReverseComplement(r['enrichedReadsetId/barcode5/sequence']) : r['enrichedReadsetId/barcode5/sequence'];
                                                         var barcode3 = rc3 ? doReverseComplement(r['enrichedReadsetId/barcode3/sequence']) : r['enrichedReadsetId/barcode3/sequence'];
                                                         barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
@@ -1518,7 +1548,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 rows.push('[Header]');
                                                 rows.push('IEMFileVersion,4');
                                                 rows.push('Investigator Name,Bimber');
-                                                rows.push('Experiment Name,' + plateId);
+                                                rows.push('Experiment Name,' + plateIds.join(';'));
                                                 rows.push('Date,11/16/2017');
                                                 rows.push('Workflow,GenerateFASTQ');
                                                 rows.push('Application,FASTQ Only');
@@ -1539,7 +1569,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
 
                                                 Ext4.Array.forEach(results.rows, function (r) {
                                                     //only include readsets without existing data
-                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0)) {
+                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/application'])) {
                                                         //reverse complement both barcodes:
                                                         var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
                                                         var barcode3 = r['readsetId/barcode3/sequence'];
@@ -1550,7 +1580,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                         rows.push([r.readsetId, cleanedName, '', '', r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join(','));
                                                     }
 
-                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0)) {
+                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/application'])) {
                                                         var barcode5 = doReverseComplement(r['enrichedReadsetId/barcode5/sequence']);
                                                         var barcode3 = r['enrichedReadsetId/barcode3/sequence'];
                                                         var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
@@ -1586,7 +1616,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                             }
 
                                             duplicates = Ext4.unique(duplicates);
-                                            if (duplicates.length){
+                                            if (!allowDuplicates && duplicates.length){
                                                 Ext4.Msg.alert('Error', 'Duplicate barcodes: ' + duplicates.join(', '));
                                                 btn.up('window').down('textarea').setValue(null);
                                                 btn.up('window').down('#downloadData').setDisabled(true);
@@ -1648,7 +1678,6 @@ Ext4.define('TCRdb.panel.StimPanel', {
                     text: 'View Summary of Sorts By Plate (entire folder)',
                     linkCls: 'labkey-text-link',
                     href: LABKEY.ActionURL.buildURL('query', 'executeQuery', Laboratory.Utils.getQueryContainerPath(), {schemaName: 'tcrdb', queryName: 'sortStatusByPlate', 'query.isComplete~eq': false})
-
                 }]
             }]
         }
@@ -1696,7 +1725,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                 r['sortId/stimId/animalId'],
                 r['sortId/stimId/stim'],
                 r['sortId/stimId/treatment'],
-                r['sortId/population'] + (r['sortId/replicate'] ? '_' + r['sortId/replicate'] : '')
+                r['sortId/population'] + (r['sortId/cells'] === 1 ? '_Clone' : '') + (r['sortId/replicate'] ? '_' + r['sortId/replicate'] : '')
             ].join('_');
         },
 

@@ -59,7 +59,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                     row.put("outputFile", outputFileId);
                     row.put("relPath", "tracks/data-" + outputFileId);
                     row.put("container", getContainerUser().getContainer().getId());
-                    row.put("trackJson", "{\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
+                    row.put("trackJson", "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
                     row.put("created", new Date());
                     row.put("createdby", getContainerUser().getUser().getUserId());
                     row.put("modified", new Date());
