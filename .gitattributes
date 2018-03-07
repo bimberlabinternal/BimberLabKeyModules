@@ -853,7 +853,6 @@ labModules/flowassays/src/org/labkey/flowassays/assay/FlowPivotingImportMethod.j
 labModules/flowassays/src/org/labkey/flowassays/assay/ICSDataProvider.java -text
 labModules/flowassays/src/org/labkey/flowassays/assay/ImmunophenotypingDataProvider.java -text
 onprcEHRModules/GeneticsCore/build.gradle -text
-onprcEHRModules/GeneticsCore/distributions/prime-seq-modules/build.gradle -text
 onprcEHRModules/GeneticsCore/module.properties -text
 onprcEHRModules/GeneticsCore/resources/external/amplicon_standard_curve.R -text
 onprcEHRModules/GeneticsCore/resources/external/comb-p/Dockerfile -text
