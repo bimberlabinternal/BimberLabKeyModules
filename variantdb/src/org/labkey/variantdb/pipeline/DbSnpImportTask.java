@@ -721,7 +721,7 @@ public class DbSnpImportTask extends PipelineJob.Task<DbSnpImportTask.Factory>
         String delim = "\n";
         for (ColumnInfo col : columnInfos)
         {
-            sql += delim + col.getName() + " " + tt.getSqlDialect().sqlTypeNameFromJdbcType(col.getJdbcType()) + (JdbcType.VARCHAR == col.getJdbcType() ? "(1000)" : "");
+            sql += delim + col.getName() + " " + tt.getSqlDialect().getSqlTypeName(col.getJdbcType()) + (JdbcType.VARCHAR == col.getJdbcType() ? "(1000)" : "");
             delim = ",\n";
         }
         sql += ");";

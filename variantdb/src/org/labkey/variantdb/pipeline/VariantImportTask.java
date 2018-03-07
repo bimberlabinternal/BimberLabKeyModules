@@ -287,7 +287,7 @@ public class VariantImportTask extends PipelineJob.Task<VariantImportTask.Factor
         String delim = "\n";
         for (ColumnInfo col : columnInfos)
         {
-            sql += delim + col.getName() + " " + tt.getSqlDialect().sqlTypeNameFromJdbcType(col.getJdbcType()) + (JdbcType.VARCHAR == col.getJdbcType() ? "(1000)" : "");
+            sql += delim + col.getName() + " " + tt.getSqlDialect().getSqlTypeName(col.getJdbcType()) + (JdbcType.VARCHAR == col.getJdbcType() ? "(1000)" : "");
             delim = ",\n";
         }
         sql += ");";
