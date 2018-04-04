@@ -41,7 +41,7 @@ public class TCRdbUserSchema extends SimpleUserSchema
     {
         if (TCRdbSchema.TABLE_LIBRARIES.equalsIgnoreCase(name))
         {
-            return new SharedDataTable(this, sourceTable, true).init();
+            return new SharedDataTable(this, sourceTable).init();
         }
 
         return super.createWrappedTable(name, sourceTable);
