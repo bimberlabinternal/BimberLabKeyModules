@@ -195,7 +195,7 @@ public class mGAPController extends SpringActionController
 
                         DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=userRequests&query.viewName=Pending Requests", c);
                         mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
-                        mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
+                        mail.setFrom(AppProps.getInstance().getAdministratorContactEmail(true));
                         mail.setSubject("mGap Account Request");
                         mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
 
@@ -425,7 +425,7 @@ public class mGAPController extends SpringActionController
 
                 MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                 mail.setEncodedHtmlContent("Your account request has been approved for mGAP!  " + (isLDAP ? "Your institutional email/password should give access.  " : "") + "<a href=\"" + AppProps.getInstance().getBaseServerUrl() + mGapContainer.getStartURL(getUser()).toString() + "\">Click here to access the site</a>");
-                mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
+                mail.setFrom(AppProps.getInstance().getAdministratorContactEmail(true));
                 mail.setSubject("mGap Account Request");
                 mail.addRecipients(Message.RecipientType.TO, u.getEmail());
 
@@ -679,7 +679,7 @@ public class mGAPController extends SpringActionController
 
                     MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                     mail.setEncodedHtmlContent("A support request was submitted from mGap by:" + form.getEmail() + "<br><br>Message:<br>" + form.getComment());
-                    mail.setFrom(AppProps.getInstance().getAdministratorContactEmail());
+                    mail.setFrom(AppProps.getInstance().getAdministratorContactEmail(true));
                     mail.setSubject("mGap Help Request");
                     mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
 
