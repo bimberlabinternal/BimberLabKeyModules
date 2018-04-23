@@ -29,6 +29,7 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.ViewContext;
+import org.labkey.api.writer.ContainerUser;
 import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.labkey.mgap.query.mGAPUserSchema;
 
@@ -90,7 +91,7 @@ public class mGAPModule extends ExtendedSimpleModule
 
     @NotNull
     @Override
-    public JSONObject getPageContextJson(ViewContext context)
+    public JSONObject getPageContextJson(ContainerUser context)
     {
         JSONObject ret = super.getPageContextJson(context);
 
