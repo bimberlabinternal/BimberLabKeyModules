@@ -72,7 +72,7 @@ import java.util.TreeMap;
 /**
  * Created by bimber on 2/22/2015.
  */
-public class ImputationAnalysis implements SequenceOutputHandler
+public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private final FileType _vcfType = new FileType(Arrays.asList(".vcf"), ".vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
 
@@ -148,7 +148,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
     }
 
     @Override
-    public OutputProcessor getProcessor()
+    public SequenceOutputProcessor getProcessor()
     {
         return new Processor();
     }
@@ -159,7 +159,7 @@ public class ImputationAnalysis implements SequenceOutputHandler
         return false;
     }
 
-    public class Processor implements OutputProcessor
+    public class Processor implements SequenceOutputProcessor
     {
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException

@@ -38,7 +38,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
     @Override
     protected Object doTransform(Object inputValue)
     {
-        Integer outputFileId = getOrCreateOutputFile(getInputValue("vcfId/dataid/DataFileUrl"));
+        Integer outputFileId = getOrCreateOutputFile(getInputValue("vcfId/dataid/DataFileUrl"), getInputValue("objectId"));
         if (outputFileId != null)
         {
             //determine if there is already a JSONfile

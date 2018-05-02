@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datasets metaDataFile="datasets_metadata.xml" xmlns="http://labkey.org/study/xml">
+    <categories>
+        <category>Behavior</category>
+        <category>ClinPath</category>
+        <category>Colony Management</category>
+        <category>Clinical</category>
+        <category>Pathology</category>
+    </categories>
+    <datasets>
+        <dataset name="demographics" category="Clinical" demographicData="true" type="Standard" id="1000">
+            <tags/>
+        </dataset>
+        <dataset name="clinpathRuns" category="Clinical" type="Standard" showByDefault="true" id="1001">
+            <tags/>
+        </dataset>
+        <dataset name="microbiology" category="Clinical" type="Standard" showByDefault="true" id="1002">
+            <tags/>
+        </dataset>
+        <dataset name="weight" category="Clinical" type="Standard" showByDefault="true" id="1003">
+            <tags/>
+        </dataset>
+        <dataset name="hematologyResults" category="Clinical" type="Standard" showByDefault="true" id="1004">
+            <tags/>
+        </dataset>
+        <dataset name="chemistryResults" category="Clinical" type="Standard"  showByDefault="true" id="1005">
+            <tags/>
+        </dataset>
+        <dataset name="pathologyDiagnoses" category="Clinical" type="Standard" showByDefault="false" id="1006">
+            <tags/>
+        </dataset>
+        <dataset name="histology" category="Clinical" type="Standard" showByDefault="false" id="1007">
+            <tags/>
+        </dataset>
+    </datasets>
+</datasets>

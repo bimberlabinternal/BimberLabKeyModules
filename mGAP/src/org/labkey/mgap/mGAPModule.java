@@ -30,6 +30,7 @@ import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.ViewContext;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mgap.pipeline.AnnotationHandler;
 import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.labkey.mgap.query.mGAPUserSchema;
 
@@ -46,7 +47,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.39;
+        return 16.40;
     }
 
     @Override
@@ -83,6 +84,7 @@ public class mGAPModule extends ExtendedSimpleModule
             else
             {
                 SequenceAnalysisService.get().registerFileHandler(new PublicReleaseHandler());
+                SequenceAnalysisService.get().registerFileHandler(new AnnotationHandler());
 
                 _hasRegistered = true;
             }
@@ -95,13 +97,21 @@ public class mGAPModule extends ExtendedSimpleModule
     {
         JSONObject ret = super.getPageContextJson(context);
 
-        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("jbrowseId"), new SimpleFilter(FieldKey.fromString("container"), context.getContainer().getId()), new Sort("-releaseDate"));
+        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "jbrowseId"), new SimpleFilter(FieldKey.fromString("container"), context.getContainer().getId()), new Sort("-releaseDate"));
         ts.setMaxRows(1);
-        String id = ts.getObject(String.class);
-        if (id != null)
-        {
-            ret.put("mgapJBrowse", id);
-        }
+        ts.forEachResults(rs -> {
+            String jbrowseId = rs.getString(FieldKey.fromString("jbrowseId"));
+            if (jbrowseId != null)
+            {
+                ret.put("mgapJBrowse", jbrowseId);
+            }
+
+            Integer rowId = rs.getInt(FieldKey.fromString("rowid"));
+            if (rowId != null)
+            {
+                ret.put("mgapReleaseId", rowId);
+            }
+        });
 
         return ret;
     }

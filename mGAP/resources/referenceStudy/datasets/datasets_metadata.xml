@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tables xmlns="http://labkey.org/data/xml">
+    <sharedConfig>
+        <columns>
+            <column columnName="objectid">
+                <datatype>entityid</datatype>
+                <isKeyField>true</isKeyField>
+            </column>
+        </columns>
+    </sharedConfig>
+    <table tableName="microbiology" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="tissue">
+                <columnTitle>Tissue</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="organism">
+                <columnTitle>Organism</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="quantity">
+                <columnTitle>Quantity</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="runid">
+                <isHidden>true</isHidden>
+                <columnTitle>Run Id</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Microbiology Results</tableTitle>
+    </table>
+    <table tableName="weight" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="weight">
+                <columnTitle>Weight</columnTitle>
+                <datatype>double</datatype>
+            </column>
+        </columns>
+        <tableTitle>Weight</tableTitle>
+    </table>
+    <table tableName="chemistryResults" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="testid">
+                <columnTitle>Test Id</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="result">
+                <columnTitle>Result</columnTitle>
+                <datatype>double</datatype>
+            </column>
+            <column columnName="resultOORIndicator">
+                <isHidden>true</isHidden>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="resultNumber">
+                <isHidden>true</isHidden>
+                <datatype>double</datatype>
+            </column>
+            <column columnName="resultInRange">
+                <isHidden>true</isHidden>
+                <datatype>double</datatype>
+            </column>
+            <column columnName="units">
+                <columnTitle>Units</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="qualresult">
+                <columnTitle>Qualitative Result</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="runid">
+                <isHidden>true</isHidden>
+                <columnTitle>Run Id</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Chemistry Results</tableTitle>
+    </table>
+    <table tableName="clinpathRuns" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="type">
+                <columnTitle>Type</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="tissue">
+                <columnTitle>Tissue</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="units">
+                <columnTitle>Units</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="servicerequested">
+                <columnTitle>Service Requested</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="collectionMethod">
+                <columnTitle>Collection Method</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="method">
+                <columnTitle>Run Method</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Labwork</tableTitle>
+    </table>
+    <table tableName="hematologyResults" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="testid">
+                <columnTitle>Test Id</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="result">
+                <columnTitle>Result</columnTitle>
+                <datatype>double</datatype>
+            </column>
+            <column columnName="resultOORIndicator">
+                <isHidden>true</isHidden>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="resultNumber">
+                <isHidden>true</isHidden>
+                <datatype>double</datatype>
+            </column>
+            <column columnName="resultInRange">
+                <isHidden>true</isHidden>
+                <datatype>double</datatype>
+            </column>
+            <column columnName="units">
+                <columnTitle>Units</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="qualresult">
+                <columnTitle>Qualitative Result</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="runid">
+                <isHidden>true</isHidden>
+                <columnTitle>Run Id</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Hematology Results</tableTitle>
+    </table>
+    <table tableName="demographics" tableDbType="TABLE">
+        <pkColumnName>Id</pkColumnName>
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="gender">
+                <columnTitle>Gender</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="geographic_origin">
+                <columnTitle>Geographic Origin</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="birth">
+                <columnTitle>Birth</columnTitle>
+                <datatype>timestamp</datatype>
+            </column>
+            <column columnName="death">
+                <columnTitle>Death</columnTitle>
+                <datatype>timestamp</datatype>
+            </column>
+            <column columnName="species">
+                <columnTitle>Species</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
+                <datatype>entityid</datatype>
+                <isKeyField>false</isKeyField>
+            </column>
+        </columns>
+        <tableTitle>Demographics</tableTitle>
+    </table>
+    <table tableName="pathologyDiagnoses" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="sort_order">
+                <columnTitle>Sort Order</columnTitle>
+                <datatype>integer</datatype>
+            </column>
+            <column columnName="codes">
+                <columnTitle>Diagnoses</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Pathology Diagnoses</tableTitle>
+    </table>
+    <table tableName="histology" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="ageAtTime">
+                <datatype>double</datatype>
+                <columnTitle>Age At Time</columnTitle>
+            </column>
+            <column columnName="sort_order">
+                <columnTitle>Sort Order</columnTitle>
+                <datatype>integer</datatype>
+            </column>
+            <column columnName="tissue">
+                <columnTitle>Tissue</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="codes">
+                <columnTitle>Diagnoses</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Histology</tableTitle>
+    </table>
+</tables>

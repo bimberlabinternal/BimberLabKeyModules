@@ -62,7 +62,20 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
                 " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END");
 
             ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.BOOLEAN, ti.getColumn("readsetId"), ti.getColumn("enrichedReadsetId"));
-            newCol.setLabel("Has Readsets With Data?");
+            newCol.setLabel("Has Any Readset With Data?");
+            ti.addColumn(newCol);
+        }
+
+        String name2 = "allReadsetsHaveData";
+        if (ti.getColumn(name2) == null)
+        {
+            SQLFragment sql = new SQLFragment("CASE " +
+                    " WHEN (" + ExprColumn.STR_TABLE_ALIAS + ".readsetId IS NOT NULL AND (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".readsetId) = 0) THEN " + ti.getSqlDialect().getBooleanFALSE() +
+                    " WHEN (" + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId IS NOT NULL AND (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId) = 0) THEN " + ti.getSqlDialect().getBooleanFALSE() +
+                    " ELSE " + ti.getSqlDialect().getBooleanTRUE() + " END");
+
+            ExprColumn newCol = new ExprColumn(ti, name2, sql, JdbcType.BOOLEAN, ti.getColumn("readsetId"), ti.getColumn("enrichedReadsetId"));
+            newCol.setLabel("All Readsets Have Data?");
             ti.addColumn(newCol);
         }
 

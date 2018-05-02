@@ -3,9 +3,20 @@
     <name>Demographics</name>
     <description>EHR Demographics Data</description>
     <transforms>
+        <!--This will push the desired IDs from the destination server to the source-->
+        <transform id="step0" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mgap.etl.PopulateIdsStep">
+                <settings>
+                    <setting name="remoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="targetSchema" value="lists"/>
+                    <setting name="targetQuery" value="mGAP_Animals"/>
+                    <setting name="targetColumn" value="AnimalId"/>
+                </settings>
+            </taskref>
+        </transform>
         <transform id="step1" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
-            <source schemaName="study" queryName="Demographics" remoteSource="EHR">
+            <source schemaName="study" queryName="Demographics" remoteSource="EHR" sourceTimeout="0">
                 <sourceColumns>
                     <column>Id</column>
                     <column>Id/parents/sire</column>
@@ -17,7 +28,7 @@
                     <column>death</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="laboratory" queryName="subjects" targetOption="merge">
+            <destination schemaName="laboratory" queryName="subjects" targetOption="merge" batchSize="1000">
                 <columnTransforms>
                     <column source="Id" target="subjectname"/>
                     <column source="Id/parents/sire" target="father"/>

@@ -48,6 +48,8 @@
                     <column>totalVariants</column>
                     <column>dbSnpId</column>
                     <column>jbrowseId</column>
+                    <column>variantTable</column>
+                    <column>objectId</column>
                 </sourceColumns>
             </source>
             <destination schemaName="mGAP" queryName="variantCatalogReleases" targetOption="truncate">
@@ -56,6 +58,42 @@
                     <column source="vcfId/dataid/DataFileUrl" target="vcfId" transformClass="org.labkey.mgap.columnTransforms.OutputFileTransform" />
                     <column source="jbrowseId" transformClass="org.labkey.mgap.columnTransforms.JBrowseSessionTransform"/>
                 </columnTransforms>
+            </destination>
+        </transform>
+
+        <transform id="step4" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="releaseStats" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>releaseId</column>
+                    <column>category</column>
+                    <column>metricName</column>
+                    <column>value</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mGAP" queryName="releaseStats" targetOption="merge">
+
+            </destination>
+        </transform>
+        <transform id="step5" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="variantList" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>releaseId</column>
+                    <column>contig</column>
+                    <column>position</column>
+                    <column>reference</column>
+                    <column>allele</column>
+                    <column>source</column>
+                    <column>reason</column>
+                    <column>description</column>
+                    <column>overlappingGenes</column>
+                    <column>objectId</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mGAP" queryName="variantList" targetOption="merge">
+
             </destination>
         </transform>
     </transforms>

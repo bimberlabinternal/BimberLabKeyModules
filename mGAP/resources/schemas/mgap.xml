@@ -76,7 +76,7 @@
         <updateUrl />
         <importUrl />
         <deleteUrl />
-        <pkColumnName>rowid</pkColumnName>
+        <pkColumnName>objectid</pkColumnName>
         <tableTitle>Variant Catalog Releases</tableTitle>
         <auditLogging>SUMMARY</auditLogging>
         <columns>
@@ -99,7 +99,7 @@
             </column>
             <column columnName="vcfId">
                 <columnTitle>VCF File</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
                 <fk>
                     <fkDbSchema>sequenceanalysis</fkDbSchema>
                     <fkTable>outputfiles</fkTable>
@@ -124,6 +124,15 @@
                     <fkColumnName>objectid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="variantTable">
+                <columnTitle>Variant Table</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="totalSubjects">
                 <columnTitle>Total Subjects</columnTitle>
             </column>
@@ -133,6 +142,10 @@
             </column>
             <column columnName="dbSnpId">
                 <columnTitle>dbSNP Batch Id</columnTitle>
+            </column>
+            <column columnName="objectId">
+                <columnTitle>Key</columnTitle>
+                <isHidden>true</isHidden>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
@@ -332,5 +345,161 @@
                 <originalText>Charts</originalText>
             </item>
         </buttonBarOptions>
+    </table>
+    <table tableName="variantList" tableDbType="TABLE" useColumnOrder="true">
+        <tableUrl />
+        <insertUrl />
+        <updateUrl />
+        <importUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Variants of Interest</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>false</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="releaseId">
+                <columnTitle>Release</columnTitle>
+                <fk>
+                    <fkDbSchema>mgap</fkDbSchema>
+                    <fkTable>variantCatalogReleases</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>version</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="contig">
+                <columnTitle>Chromosome/Contig</columnTitle>
+            </column>
+            <column columnName="position">
+
+            </column>
+            <column columnName="reference">
+                <columnTitle>Reference</columnTitle>
+            </column>
+            <column columnName="allele">
+                <columnTitle>Allele</columnTitle>
+            </column>
+            <column columnName="source">
+
+            </column>
+            <column columnName="reason">
+                <columnTitle>Reason</columnTitle>
+            </column>
+            <column columnName="description">
+                <columnTitle>Description</columnTitle>
+            </column>
+            <column columnName="overlappingGenes">
+                <columnTitle>Overlapping Gene(s)</columnTitle>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.OverlappingGenesDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+            <column columnName="jbrowse" wrappedColumnName="rowid">
+                <isUserEditable>false</isUserEditable>
+                <columnTitle></columnTitle>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.VariantListJBrowseDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+            <column columnName="objectId">
+                <columnTitle>Key</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="releaseStats" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableUrl />
+        <insertUrl />
+        <updateUrl />
+        <importUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Variant Release Stats</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>false</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="releaseId">
+                <columnTitle>Release</columnTitle>
+                <fk>
+                    <fkDbSchema>mgap</fkDbSchema>
+                    <fkTable>variantCatalogReleases</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>version</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="category">
+
+            </column>
+            <column columnName="metricName">
+                <columnTitle>Metric Name</columnTitle>
+            </column>
+            <column columnName="value">
+
+            </column>
+            <column columnName="objectId">
+                <columnTitle>Key</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
     </table>
 </tables>

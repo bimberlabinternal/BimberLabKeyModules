@@ -27,6 +27,8 @@ public class mGAPSchema
     public static final String TABLE_ANIMAL_MAPPING = "animalMapping";
     public static final String TABLE_USER_REQUESTS = "userRequests";
     public static final String TABLE_VARIANT_CATALOG_RELEASES = "variantCatalogReleases";
+    public static final String TABLE_RELEASE_STATS = "releaseStats";
+    public static final String TABLE_VARIANT_TABLE = "variantList";
 
     public static mGAPSchema getInstance()
     {

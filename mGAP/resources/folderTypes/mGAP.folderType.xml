@@ -98,6 +98,23 @@
             </preferredWebParts>
         </folderTab>
         <folderTab>
+            <name>clinical</name>
+            <caption>Clinical/Phenotypic Data</caption>
+            <selectors>
+                <selector>
+                    <view>study</view>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>Study Overview</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
             <name>admin</name>
             <caption>Admin</caption>
             <selectors>
@@ -131,6 +148,7 @@
     </folderTabs>
     <modules>
         <moduleName>mGAP</moduleName>
+        <moduleName>Study</moduleName>
         <moduleName>JBrowse</moduleName>
         <moduleName>SequenceAnalysis</moduleName>
         <moduleName>Laboratory</moduleName>

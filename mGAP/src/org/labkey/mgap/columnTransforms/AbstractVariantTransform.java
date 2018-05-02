@@ -1,5 +1,7 @@
 package org.labkey.mgap.columnTransforms;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Results;
@@ -12,6 +14,9 @@ import org.labkey.api.di.columnTransform.ColumnTransform;
 import org.labkey.api.exp.api.DataType;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
+import org.labkey.api.pipeline.PipeRoot;
+import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
@@ -91,7 +96,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         return genomeMap.get(name);
     }
 
-    protected Integer getOrCreateOutputFile(Object dataFileUrl)
+    protected Integer getOrCreateOutputFile(Object dataFileUrl, Object folderName)
     {
         try
         {
@@ -104,12 +109,44 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             }
             else
             {
+                PipeRoot pr = PipelineService.get().getPipelineRootSetting(getContainerUser().getContainer());
+                String folderNameString = StringUtils.trimToNull(String.valueOf(folderName));
+                if (folderNameString == null)
+                {
+                    throw new PipelineJobException("Unable to find folderName");
+                }
+
+                File subdir = new File(pr.getRootPath(), folderNameString);
+                if (!subdir.exists())
+                {
+                    subdir.mkdirs();
+                }
+
+                //Copy file locally, plus index if exists:
+                File localCopy = new File(subdir, f.getName());
+                if (!localCopy.exists())
+                {
+                    _log.info("copying file locally: " + localCopy.getPath());
+                    FileUtils.copyFile(f, localCopy);
+                }
+
+                File index = new File(f.getPath() + ".tbi");
+                if (index.exists())
+                {
+                    File indexLocal = new File(subdir, index.getName());
+                    if (!indexLocal.exists())
+                    {
+                        _log.info("copying index locally: " + indexLocal.getPath());
+                        FileUtils.copyFile(index, indexLocal);
+                    }
+                }
+
                 //first create the ExpData
-                ExpData d = ExperimentService.get().getExpDataByURL(String.valueOf(dataFileUrl), getContainerUser().getContainer());
+                ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
                 if (d == null)
                 {
                     d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
-                    d.setDataFileURI(uri);
+                    d.setDataFileURI(localCopy.toURI());
                     d.setName(f.getName());
                     d.save(getContainerUser().getUser());
                 }

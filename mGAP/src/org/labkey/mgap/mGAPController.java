@@ -538,7 +538,13 @@ public class mGAPController extends SpringActionController
         public void export(DownloadBundleForm form, HttpServletResponse response, BindException errors) throws Exception
         {
             TableInfo ti = DbSchema.get(mGAPSchema.NAME, DbSchemaType.Module).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
-            Map<String, Object> row = new TableSelector(ti).getMap(form.getReleaseId());
+            Map<String, Object> row = new TableSelector(ti, new SimpleFilter(FieldKey.fromString("rowId"), form.getReleaseId()), null).getMap();
+            if (row == null)
+            {
+                errors.reject(ERROR_MSG, "Unknown release: " + form.getReleaseId());
+                return;
+            }
+
             Container rowContainer = ContainerManager.getForId((String)row.get("container"));
             if (rowContainer == null)
             {

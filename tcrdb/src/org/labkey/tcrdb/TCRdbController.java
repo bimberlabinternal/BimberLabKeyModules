@@ -186,15 +186,52 @@ public class TCRdbController extends SpringActionController
                     try (BufferedReader reader = Readers.getReader(new FileInputStream(tmp)))
                     {
                         String line;
+                        boolean inAlignmentBlock = false;
                         while ((line = reader.readLine()) != null)
                         {
+                            line = line.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+                            String trimmed = StringUtils.trimToEmpty(line);
+                            if (StringUtils.isEmpty(trimmed))
+                            {
+                                inAlignmentBlock = false;
+                            }
+
+                            //Highlight mismatches
+                            if (inAlignmentBlock)
+                            {
+                                String[] tokens = trimmed.split("( )+");
+                                String alignmentRaw = tokens[2];
+                                StringBuilder sb = new StringBuilder();
+                                for (int i=0; i<alignmentRaw.length();i++)
+                                {
+                                    char c = alignmentRaw.charAt(i);
+                                    if (Character.isUpperCase(c))
+                                    {
+                                        sb.append("<span style=\"background: yellow;\">");
+                                        sb.append(c);
+                                        sb.append("</span>");
+                                    }
+                                    else
+                                    {
+                                        sb.append(c);
+                                    }
+                                }
+
+                                line = line.replaceAll(alignmentRaw, sb.toString());
+                            }
 
                             writer.write(line + '\n');
+
+                            if (trimmed.startsWith("Target"))
+                            {
+                                inAlignmentBlock = true;
+                            }
                         }
                     }
 
                     writer.write('\n');
-                    writer.write("&lt;hr&gt;");
+                    writer.write("<hr>");
                     writer.write('\n');
                     writer.write('\n');
 
@@ -210,8 +247,7 @@ public class TCRdbController extends SpringActionController
             //mixcr exportReadsForClones index_file alignments.vdjca.gz 0 1 2 33 54 reads.fastq.gz
             //mixcr exportAlignmentsPretty input.vdjca test.txt
 
-            String html = writer.toString().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-            return new HtmlView("MiXCR Alignments", "<div style=\"font-family:courier,Courier New,monospace;white-space:nowrap;padding:5px;\"><pre>" + html + "</pre></div>");
+            return new HtmlView("MiXCR Alignments", "<div style=\"font-family:courier,Courier New,monospace;white-space:nowrap;padding:5px;\"><pre>" + writer.toString() + "</pre></div>");
         }
 
         private String coalesce(Object s)

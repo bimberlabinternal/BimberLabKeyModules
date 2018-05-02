@@ -1,0 +1,6 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <sorts>
+        <sort column="contig" descending="false"/>
+        <sort column="position" descending="false"/>
+    </sorts>
+</customView>

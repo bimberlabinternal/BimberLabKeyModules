@@ -33,6 +33,8 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
                 super.addQueryFieldKeys(keys);
 
                 keys.add(getBoundKey("rowid"));
+                keys.add(getBoundKey("objectId"));
+                keys.add(getBoundKey("version"));
                 keys.add(getBoundKey("jbrowseId"));
                 keys.add(getBoundKey("container"));
             }
@@ -52,10 +54,9 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
                 }
 
                 String jbrowseId = ctx.get(getBoundKey("jbrowseId"), String.class);
+                String containerId = ctx.get(getBoundKey("container"), String.class);
                 if (jbrowseId != null)
                 {
-                    String containerId = ctx.get(getBoundKey("container"), String.class);
-
                     if (rowId != null)
                     {
                         out.write("<br>");
@@ -63,6 +64,15 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
 
                     DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
+                }
+
+                String version = ctx.get(getBoundKey("version"), String.class);
+                if (version != null)
+                {
+                    out.write("<br>");
+
+                    DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&queryName=variantList&query.releaseId/version~eq=" + version, ContainerManager.getForId(containerId));
+                    out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">Significant Variant List</a>");
                 }
             }
 
