@@ -37,6 +37,7 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
                 keys.add(getBoundKey("version"));
                 keys.add(getBoundKey("jbrowseId"));
                 keys.add(getBoundKey("container"));
+                keys.add(getBoundKey("hasSignificantVariants"));
             }
 
             private FieldKey getBoundKey(String colName)
@@ -66,12 +67,12 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
                 }
 
-                String version = ctx.get(getBoundKey("version"), String.class);
-                if (version != null)
+                Boolean showVariantList = ctx.get(getBoundKey("hasSignificantVariants"), Boolean.class);
+                if (showVariantList)
                 {
                     out.write("<br>");
 
-                    DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&queryName=variantList&query.releaseId/version~eq=" + version, ContainerManager.getForId(containerId));
+                    DetailsURL url = DetailsURL.fromString("/mgap/variantList.view?release=" + rowId, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">Significant Variant List</a>");
                 }
             }

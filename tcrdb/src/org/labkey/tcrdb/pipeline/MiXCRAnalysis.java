@@ -129,7 +129,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("checked", true);
                     }}, true)
-            ), Arrays.asList("tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
+            ), Arrays.asList("ux/CheckCombo/CheckCombo.css", "ux/CheckCombo/CheckCombo.js", "tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
         }
 
         @Override

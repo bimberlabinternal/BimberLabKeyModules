@@ -249,6 +249,9 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                     ctx.getFileManager().addIntermediateFile(new File(subset.getPath() + ".tbi"));
 
                     currentVcf = subset;
+
+                    ctx.getJob().getLogger().info("total variants: " + SequenceAnalysisService.get().getVCFLineCount(currentVcf, ctx.getJob().getLogger(), false));
+                    ctx.getJob().getLogger().info("passing variants: " + SequenceAnalysisService.get().getVCFLineCount(currentVcf, ctx.getJob().getLogger(), true));
                 }
                 else
                 {
@@ -303,7 +306,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                     int idx = 0;
                     for (File vcf : files)
                     {
-                        bashCommands.add("zcat " + vcf.getPath() + (idx == 0 ? " > " : " | grep -v '#' >> ") + outputUnzip.getPath());
+                        bashCommands.add("cat " + vcf.getPath() + (idx == 0 ? " > " : " | grep -v '#' >> ") + outputUnzip.getPath());
                         idx++;
                     }
 
@@ -334,6 +337,9 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                         }
 
                         SequenceAnalysisService.get().ensureVcfIndex(cassandraAnnotated, ctx.getLogger());
+
+                        ctx.getJob().getLogger().info("total variants: " + SequenceAnalysisService.get().getVCFLineCount(cassandraAnnotated, ctx.getJob().getLogger(), false));
+                        ctx.getJob().getLogger().info("passing variants: " + SequenceAnalysisService.get().getVCFLineCount(cassandraAnnotated, ctx.getJob().getLogger(), true));
                     }
                     catch (IOException e)
                     {
@@ -347,6 +353,15 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 ctx.getFileManager().addOutput(action, "VCF Annotated With Cassandra", cassandraAnnotated);
                 ctx.getFileManager().addIntermediateFile(cassandraAnnotated);
                 ctx.getFileManager().addIntermediateFile(new File(cassandraAnnotated.getPath() + ".tbi"));
+
+                //re-add per-contig intermediates per chr, in case the job restarted:
+                SAMSequenceDictionary dict = SAMSequenceDictionaryExtractor.extractDictionary(grch37Genome.getSequenceDictionary().toPath());
+                for (SAMSequenceRecord seq : dict.getSequences())
+                {
+                    String basename = SequenceAnalysisService.get().getUnzippedBaseName(cassandraAnnotated.getName());
+                    CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), cassandraAnnotated.getParentFile(), basename, grch37Genome, liftedToGRCh37, ctx.getFileManager(), ctx.getLogger());
+                    job.addIntermediateFiles();
+                }
 
                 //backport ClinVar
                 ctx.getLogger().info("backport ClinVar 2.0 to source genome");
@@ -393,6 +408,9 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                     ctx.getLogger().info("resuming with existing file: " + multiAnnotated.getPath());
                 }
                 ctx.getFileManager().addOutput(action, "VCF Multi-Annotated", multiAnnotated);
+
+                ctx.getJob().getLogger().info("total variants: " + SequenceAnalysisService.get().getVCFLineCount(multiAnnotated, ctx.getJob().getLogger(), false));
+                ctx.getJob().getLogger().info("passing variants: " + SequenceAnalysisService.get().getVCFLineCount(multiAnnotated, ctx.getJob().getLogger(), true));
 
                 //final output
                 SequenceOutputFile output = new SequenceOutputFile();
@@ -445,12 +463,12 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 {
                     if (job._hasVariants)
                     {
-                        if (!job._cassandraOutputVcfGz.exists())
+                        if (!job._cassandraOutputVcf.exists())
                         {
-                            throw new PipelineJobException("Unable to find expected file: " + job._cassandraOutputVcfGz.getPath());
+                            throw new PipelineJobException("Unable to find expected file: " + job._cassandraOutputVcf.getPath());
                         }
 
-                        outputs.add(job._cassandraOutputVcfGz);
+                        outputs.add(job._cassandraOutputVcf);
                     }
                     else
                     {
@@ -474,7 +492,6 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
         private String _chr;
         private File _subsetVcf;
         private File _cassandraOutputVcf;
-        private File _cassandraOutputVcfGz;
         private ReferenceGenome _referenceGenome;
         private File _inputVcf;
         private boolean _hadError = false;
@@ -487,14 +504,11 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
             _chr = chr;
             _subsetVcf = new File(outputDir, outputBasename + "." + _chr + ".subset.vcf");
             _cassandraOutputVcf = new File(outputDir, outputBasename + "." + _chr + ".cassandra.vcf");
-            _cassandraOutputVcfGz = new File(outputDir, outputBasename + "." + _chr + ".cassandra.vcf.gz");
             _inputVcf = inputVcf;
             _referenceGenome = genome;
             _fileManager = fileManager;
             _primaryLog = primaryLog;
-            _logFile = new File(_cassandraOutputVcfGz.getParentFile(), outputBasename + "." + chr + ".log");
-
-            getLog();
+            _logFile = new File(_cassandraOutputVcf.getParentFile(), outputBasename + "." + chr + ".log");
         }
 
         private Logger _logger = null;
@@ -520,6 +534,8 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
         @Override
         public void run()
         {
+            getLog();
+
             try
             {
                 _primaryLog.info("running cassandra for chromosome: " + _chr + ", with log: " + _logFile.getPath());
@@ -532,6 +548,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 }
                 else
                 {
+                    //TODO: limit RAM?
                     SelectVariantsWrapper sv = new SelectVariantsWrapper(getLog());
                     sv.execute(_referenceGenome.getWorkingFastaFile(), _inputVcf, _subsetVcf, Arrays.asList("-L", _chr));
 
@@ -539,9 +556,6 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
 
                     _primaryLog.info("finished subset for chromosome: " + _chr);
                 }
-                _fileManager.addIntermediateFile(subsetDone);
-                _fileManager.addIntermediateFile(_subsetVcf);
-                _fileManager.addIntermediateFile(new File(_subsetVcf.getPath() + ".idx"));
 
                 //verify variant count:
                 _hasVariants = true;
@@ -593,25 +607,8 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
 
                     _primaryLog.info("finished cassandra for chromosome: " + _chr);
                 }
-                _fileManager.addIntermediateFile(cassandraDone);
-                _fileManager.addIntermediateFile(_cassandraOutputVcf);
-                _fileManager.addIntermediateFile(new File(_cassandraOutputVcf.getPath() + ".idx"));
 
-                if (indexExists(_cassandraOutputVcfGz))
-                {
-                    _primaryLog.info("re-using gzipped cassandra vcf, " + _cassandraOutputVcfGz.getPath());
-                }
-                else
-                {
-                    _cassandraOutputVcfGz = SequenceAnalysisService.get().bgzipFile(_cassandraOutputVcf, getLog());
-                    SequenceAnalysisService.get().ensureVcfIndex(_cassandraOutputVcfGz, getLog(), true);
-
-                    _primaryLog.info("finished bgzip cassandra VCF for chromosome: " + _chr);
-                }
-                _fileManager.addIntermediateFile(_cassandraOutputVcfGz);
-                _fileManager.addIntermediateFile(new File(_cassandraOutputVcfGz.getPath() + ".tbi"));
-
-                _primaryLog.info("finished running cassandra for chromosome: " + _chr);
+                addIntermediateFiles();
             }
             catch (PipelineJobException | IOException e)
             {
@@ -620,6 +617,19 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
 
                 getLog().error(e);
             }
+        }
+
+        public void addIntermediateFiles()
+        {
+            File subsetDone = new File(_subsetVcf + ".done");
+            _fileManager.addIntermediateFile(subsetDone);
+            _fileManager.addIntermediateFile(_subsetVcf);
+            _fileManager.addIntermediateFile(new File(_subsetVcf.getPath() + ".idx"));
+
+            File cassandraDone = new File(_cassandraOutputVcf + ".done");
+            _fileManager.addIntermediateFile(cassandraDone);
+            _fileManager.addIntermediateFile(_cassandraOutputVcf);
+            _fileManager.addIntermediateFile(new File(_cassandraOutputVcf.getPath() + ".idx"));
         }
 
         public String getChr()

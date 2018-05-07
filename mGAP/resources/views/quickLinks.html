@@ -1,6 +1,36 @@
-- <a href="<%=contextPath%>/project/<%=containerPath%>/begin.view?pageId=variants" >Variant Catalog Releases</a><br>
-- <a href="<%=contextPath%>/project/<%=containerPath%>/begin.view?pageId=datasets" >Raw Sequence Data</a><br>
-- <a href="<%=contextPath%>/mgap/<%=containerPath%>/dataProcessing.view" >Data Processing Strategy</a><br>
-- <a href="<%=contextPath%>/mgap/<%=containerPath%>/annotation.view" >Annotation Strategy</a><br>
+<style type="text/css">
+    ul.mgapList {
+        padding-left: 20px;
+        padding-top: 5px;
+    }​
+</style>
+
+<script type="text/javascript">
+    Ext4.onReady(function (){
+        var releaseId = mGAP.Utils.getMGapReleaseId();
+        var jbrowseId = mGAP.Utils.getMGapJBrowseSession();
+        if (releaseId){
+            Ext4.fly(Ext4.query('#currentReleaseDiv')[0]).update(
+                '<span>Current Release:</span>' +
+                '<ul class="mgapList">' +
+                    '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'variantList', null, {release: releaseId}) + '">Variants of Interest</a></li>' +
+                    (jbrowseId ? '<li><a href="' + LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: jbrowseId}) + '">Genome Browser</a></li>' : '') +
+                '</ul>'
+            );
+        }
+    });
+
+</script>
+
+<span id="currentReleaseDiv"></span>
+<p></p>
+<span>Other Links:</span><br>
+<ul class="mgapList">
+    <li><a href="<%=contextPath%>/project/<%=containerPath%>/begin.view?pageId=variants" >All Variant Catalog Releases</a></li>
+    <li><a href="<%=contextPath%>/project/<%=containerPath%>/begin.view?pageId=datasets" >Raw Sequence Data</a></li>
+    <li><a href="<%=contextPath%>/mgap/<%=containerPath%>/dataProcessing.view" >Data Processing Strategy</a></li>
+    <li><a href="<%=contextPath%>/mgap/<%=containerPath%>/annotation.view" >Annotation Strategy</a></li>
+</ul>
+
 <br>
 We'd love to hear your feedback!  <a href="<%=contextPath%><%=containerPath%>/mgap-contact.view">Click here</a> to send a help or feature request, or email <a href="mailto:mgap@ohsu.edu">mgap@ohsu.edu</a> for any questions.

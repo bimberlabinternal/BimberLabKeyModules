@@ -1,0 +1,34 @@
+<script type="text/javascript">
+    Ext4.onReady(function (){
+        var rowId = LABKEY.ActionURL.getParameter('release');
+        if (!rowId){
+            alert('Must Provide Readset Release Id');
+            return;
+        }
+
+        var webpart = <%=webpartContext%>;
+
+        Ext4.get(webpart.wrapperDivId).update(
+                '<div>The table below shows a subset of the variants identified in this release.  It is designed to highlight predicted high-impact variants, including:<p/>' +
+                '<ul>' +
+                '<li>ClinVar: Overlapping With ClinVar Allele</li>' +
+                '<li>SnpEff: Predicted as High Impact on Protein Coding</li>' +
+                '<li>PolyPhen2: Predicted as Damaging (human annotations)</li>' +
+                '</ul>' +
+                'Note: you can click the column headers to sort or filter, and the table can be exported to excel using the export button in the button bar.' +
+                '</div>' +
+                '<br>' +
+                '<div id="qwp_'+webpart.wrapperDivId+'"></div>'
+        );
+
+        LDK.Utils.getReadOnlyQWP({
+            schemaName: 'mGAP',
+            queryName: 'variantList',
+            filterArray: [
+                    LABKEY.Filter.create('releaseId/rowid', rowId, LABKEY.Filter.Types.EQUAL)
+            ]
+        }).render('qwp_' + webpart.wrapperDivId);
+
+    });
+
+</script>

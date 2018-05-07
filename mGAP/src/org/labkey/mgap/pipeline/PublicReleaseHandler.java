@@ -614,6 +614,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                 long totalVariants = 0L;
                 long totalPrivateVariants = 0L;
+                Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
+
                 File interestingVariantTable = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".variants.txt");
                 try (VCFFileReader reader = new VCFFileReader(currentVCF); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
                 {
@@ -636,6 +638,15 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                         }
 
                         totalVariants++;
+
+                        //track total by variant type
+                        Long typeCount = typeCounts.get(vc.getType());
+                        if (typeCount == null)
+                        {
+                            typeCount = 0L;
+                        }
+                        typeCount++;
+                        typeCounts.put(vc.getType(), typeCount);
 
                         //count private alleles.  note: this is counting alleles, not sites
                         for (Allele a : vc.getAlleles())
@@ -793,7 +804,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                 boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
 
-                generateSummaries(ctx, currentVCF, genome, totalVariants, totalPrivateVariants, totalSubjects);
+                generateSummaries(ctx, currentVCF, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
 
                 ctx.getFileManager().removeIntermediateFile(currentVCF);
                 ctx.getFileManager().removeIntermediateFile(new File(currentVCF.getPath(), ".tbi"));
@@ -822,7 +833,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             return !(StringUtils.isEmpty(x) || x.toLowerCase().contains("benign") || x.toLowerCase().contains("unknown") || x.toLowerCase().contains("uncertain") || x.contains("not_specified") || x.contains("not_provided"));
         }
 
-        private void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, int totalSubjects) throws PipelineJobException
+        private void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
         {
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
@@ -856,7 +867,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             ctx.getLogger().info("Generating summary stats from: " + variantsToTable.getName());
             File summaryTable = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summary.txt");
             File summaryTableByField = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summaryByField.txt");
-            generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects);
+            generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
         }
 
         private static final List<String> allowedFields = Arrays.asList("CHROM", "ANN", "CLN_SIG", "GRASP_PH", "ENCTFBS_TF", "FE", "NF", "ENCSEG_NM");
@@ -1016,7 +1027,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             Map<String, Integer> countsPerLevel = new HashMap<>(20);
         }
 
-        private void generateSummary(JobContext ctx, File variantsToTable, File output, File outputPerValue, long totalVariants, long totalPrivateVariants, int totalSubjects) throws PipelineJobException
+        private void generateSummary(JobContext ctx, File variantsToTable, File output, File outputPerValue, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
         {
             ctx.getLogger().info("reading variant table");
             int lineNo = 0;
@@ -1076,6 +1087,12 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 valWriter.writeNext(new String[]{"Counts", "TotalVariants", String.valueOf(totalVariants)});
                 valWriter.writeNext(new String[]{"Counts", "TotalPrivateVariants", String.valueOf(totalPrivateVariants)});
                 valWriter.writeNext(new String[]{"Counts", "TotalSamples", String.valueOf(totalSubjects)});
+
+                for (VariantContext.Type type : typeCounts.keySet())
+                {
+                    valWriter.writeNext(new String[]{"VariantType", type.name(), String.valueOf(typeCounts.get(type))});
+                }
+
                 for (String fn : new TreeSet<>(tracker.perField.keySet()))
                 {
                     FieldData data = tracker.perField.get(fn);

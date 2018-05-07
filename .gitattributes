@@ -109,6 +109,8 @@ DISCVR/mGAP/resources/views/quickLinks.view.xml -text
 DISCVR/mGAP/resources/views/quickLinks.webpart.xml -text
 DISCVR/mGAP/resources/views/requestLogin.html -text
 DISCVR/mGAP/resources/views/requestLogin.view.xml -text
+DISCVR/mGAP/resources/views/variantList.html -text
+DISCVR/mGAP/resources/views/variantList.view.xml -text
 DISCVR/mGAP/resources/views/variants.html -text
 DISCVR/mGAP/resources/views/variants.view.xml -text
 DISCVR/mGAP/resources/views/variants.webpart.xml -text
@@ -156,6 +158,7 @@ DISCVR/mGAP/src/org/labkey/mgap/query/OverlappingGenesDisplayColumnFactory.java 
 DISCVR/mGAP/src/org/labkey/mgap/query/TriggerHelper.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/UserRequestCustomizer.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/VariantListJBrowseDisplayColumnFactory.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/VariantReleaseCustomizer.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/VariantReleaseDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/mGAPUserSchema.java -text
 DISCVR/mGAP/tools/installTools.sh -text

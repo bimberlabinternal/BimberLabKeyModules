@@ -1,8 +1,9 @@
-<view xmlns="http://labkey.org/data/xml/view" title="Citing mGAP">
+<view xmlns="http://labkey.org/data/xml/view" title="Variants of Interest">
     <permissions>
         <permission name="read"/>
     </permissions>
     <dependencies>
         <dependency path="ldk.context"/>
+        <dependency path="laboratory.context"/>
     </dependencies>
 </view>

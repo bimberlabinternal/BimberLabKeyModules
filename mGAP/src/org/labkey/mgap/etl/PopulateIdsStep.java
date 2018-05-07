@@ -66,7 +66,7 @@ public class PopulateIdsStep implements TaskRefTask
             localIdToAlias.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
         });
 
-        DataIntegrationService.RemoteConnection rc = DataIntegrationService.get().getRemoteConnection(_settings.get(Settings.remoteSource.name()), _containerUser.getContainer());
+        DataIntegrationService.RemoteConnection rc = DataIntegrationService.get().getRemoteConnection(_settings.get(Settings.remoteSource.name()), _containerUser.getContainer(), job.getLogger());
         if (rc == null)
         {
             throw new PipelineJobException("Unable to find remote connection: " + _settings.get(Settings.remoteSource.name()));
