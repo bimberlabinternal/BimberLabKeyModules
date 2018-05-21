@@ -51,7 +51,7 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
                 Integer rowId = ctx.get(getBoundKey("rowid"), Integer.class);
                 if (rowId != null)
                 {
-                    out.write("<a class=\"labkey-text-link\" onclick=\"mGAP.window.DownloadWindow.buttonHandler(" + PageFlowUtil.jsString(rowId.toString()) + ", this);\">Download</a>");
+                    out.write("<a class=\"labkey-text-link\" href=\"javascript:void(0);\" onclick=\"mGAP.window.DownloadWindow.buttonHandler(" + PageFlowUtil.jsString(rowId.toString()) + ", this);\">Download</a>");
                 }
 
                 String jbrowseId = ctx.get(getBoundKey("jbrowseId"), String.class);
