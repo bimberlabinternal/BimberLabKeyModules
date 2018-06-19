@@ -22,6 +22,7 @@ import org.labkey.api.data.DbSchema;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.security.User;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.flowassays.assay.ICSDataProvider;
@@ -78,7 +79,7 @@ public class FlowAssaysModule extends ExtendedSimpleModule
 
     @Override
     @NotNull
-    public Collection<String> getSummary(Container c)
+    public Collection<String> getSummary(Container c, User user)
     {
         return Collections.emptyList();
     }
