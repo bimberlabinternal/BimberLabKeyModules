@@ -102,6 +102,14 @@
             <column columnName="numEffectors">
                 <columnTitle># Effectors</columnTitle>
             </column>
+            <column columnName="apc">
+                <columnTitle>APCs</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="numAPC">
+                <columnTitle># APCs</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="date">
                 <columnTitle>Sample Date</columnTitle>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
@@ -426,6 +434,164 @@
             </column>
             <column columnName="type">
                 <columnTitle>Processing Needed</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
+    <table tableName="clone_responses" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
+        <tableTitle>TCR Clone Responses</tableTitle>
+        <titleColumn>rowid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="experiment">
+                <columnTitle>Experiment</columnTitle>
+            </column>
+            <column columnName="cloneName">
+                <columnTitle>Clone Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="cellBackground">
+                <columnTitle>Cell Background</columnTitle>
+            </column>
+            <column columnName="date">
+                <columnTitle>Date</columnTitle>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+                <formatString>Date</formatString>
+            </column>
+            <column columnName="numEffectors">
+                <columnTitle># Effectors</columnTitle>
+            </column>
+            <column columnName="pctTransduction">
+                <columnTitle>Pct Transduction</columnTitle>
+            </column>
+            <column columnName="stim">
+                <columnTitle>Peptide/Stim</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="costim">
+                <columnTitle>Co-stim</columnTitle>
+            </column>
+            <column columnName="antigen">
+                <columnTitle>Antigen</columnTitle>
+            </column>
+            <column columnName="activationFrequency">
+                <columnTitle>Activated Freq</columnTitle>
+            </column>
+            <column columnName="backgroundFrequency">
+                <columnTitle>Background Freq</columnTitle>
+            </column>
+            <column columnName="comments">
+
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="clones" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
+        <tableTitle>TCR Clones</tableTitle>
+        <titleColumn>rowid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="cloneName">
+                <columnTitle>Clone Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="chain">
+                <columnTitle>Chain/Locus</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="cdr3">
+                <columnTitle>CDR3</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="vGene">
+                <columnTitle>V-Gene</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>tcr_sequences</fkTable>
+                    <fkColumnName>name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="dGene">
+                <columnTitle>D-Gene</columnTitle>
+            </column>
+            <column columnName="jGene">
+                <columnTitle>J-Gene</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>tcr_sequences</fkTable>
+                    <fkColumnName>name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="cGene">
+                <columnTitle>Constant Gene</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>tcr_sequences</fkTable>
+                    <fkColumnName>name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="comments">
+
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>

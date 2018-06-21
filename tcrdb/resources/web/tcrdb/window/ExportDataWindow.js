@@ -86,6 +86,8 @@ Ext4.define('TCRdb.window.ExportDataWindow', {
             newForm.method = 'post';
             newForm.target = '_blank';
             newForm.action = LABKEY.ActionURL.buildURL('tcrdb', this.actionName);
+            document.body.appendChild(newForm);
+
             var csrfElement = document.createElement('input');
             csrfElement.setAttribute('name', 'X-LABKEY-CSRF');
             csrfElement.setAttribute('type', 'hidden');

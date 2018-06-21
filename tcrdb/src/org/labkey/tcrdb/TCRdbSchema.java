@@ -29,6 +29,7 @@ public class TCRdbSchema
     public static final String TABLE_SORTS = "sorts";
     public static final String TABLE_STIMS = "stims";
     public static final String TABLE_CDNAS = "cdnas";
+    public static final String TABLE_CLONES = "clones";
     public static final String TABLE_PROCESSING = "plate_processing";
 
     public static TCRdbSchema getInstance()

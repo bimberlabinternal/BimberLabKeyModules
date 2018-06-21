@@ -379,6 +379,22 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 });
 
                                                 toAdd.push({
+                                                    xtype: 'textfield',
+                                                    itemId: 'apc',
+                                                    fieldLabel: 'APCs',
+                                                    labelWidth: 120,
+                                                    value: 'PBMC'
+                                                });
+
+                                                toAdd.push({
+                                                    xtype: 'ldk-numberfield',
+                                                    itemId: 'numAPC',
+                                                    fieldLabel: '# APCs',
+                                                    labelWidth: 120,
+                                                    value: null
+                                                });
+
+                                                toAdd.push({
                                                     xtype: 'button',
                                                     style: 'margin-bottom: 10px;',
                                                     text: 'Download Template',
@@ -393,13 +409,15 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 var numRows = win.down('#templateRows').getValue() || 1;
                                                 var effectors = win.down('#effectors').getValue();
                                                 var numEffectors = win.down('#numEffectors').getValue();
+                                                var apc = win.down('#apc').getValue();
+                                                var numAPC = win.down('#numAPC').getValue();
                                                 var treatment = win.down('#treatment').getValue();
                                                 var coStim = win.down('#coStim').getValue();
 
                                                 var data = [];
-                                                data.push(['Tube #', 'Animal/Cell', 'Sample Date', 'Effectors', '# Effectors', 'Treatment', 'Co-stim', 'Peptide/Stim', 'Comment']);
+                                                data.push(['Tube #', 'Animal/Cell', 'Sample Date', 'Effectors', '# Effectors', 'APCs', '# APCs', 'Treatment', 'Co-stim', 'Peptide/Stim', 'Comment']);
                                                 for (var i=0;i<numRows;i++){
-                                                    data.push([i+1, null, null, effectors, numEffectors, treatment, coStim, null]);
+                                                    data.push([i+1, null, null, effectors, numEffectors, apc, numAPC, treatment, coStim, null]);
                                                 }
 
                                                 LABKEY.Utils.convertToExcel({

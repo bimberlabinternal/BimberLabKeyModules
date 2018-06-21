@@ -2,17 +2,21 @@ package org.labkey.tcrdb;
 
 import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.JdbcType;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryForeignKey;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.UserSchema;
 import org.labkey.api.study.assay.AssayProtocolSchema;
 import org.labkey.api.study.assay.AssayProvider;
 import org.labkey.api.study.assay.AssayService;
@@ -34,7 +38,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             }
             else if (matches(ti, "sequenceanalysis", "sequence_readsets"))
             {
-                addAssayFieldsToReadsets(ti);
+                customizeReadsets(ti);
             }
             else if (matches(ti, "tcrdb", "stims"))
             {
@@ -47,6 +51,10 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             else if (matches(ti, "tcrdb", "cdnas"))
             {
                 customizeCdnas(ti);
+            }
+            else if (matches(ti, "tcrdb", "clones"))
+            {
+                customizeClones(ti);
             }
         }
     }
@@ -142,7 +150,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         }
     }
 
-    private void addAssayFieldsToReadsets(AbstractTableInfo ti)
+    private void customizeReadsets(AbstractTableInfo ti)
     {
         addAssayFieldsToTable(ti, "analysisId/readset", "LEFT JOIN sequenceanalysis.sequence_analyses a2 ON (a.analysisId = a2.rowId) WHERE a2.readset = " + ExprColumn.STR_TABLE_ALIAS + ".rowid", "rowid");
 
@@ -152,6 +160,21 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
             ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
             newCol.setLabel("# TCR Libraries");
+            ti.addColumn(newCol);
+        }
+
+        String cDNA = "cDNA";
+        if (ti.getColumn(cDNA) == null)
+        {
+            SQLFragment sql = new SQLFragment("(CASE" +
+                " WHEN ((select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) > 0) " +
+                " THEN (select max(c.rowid) FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) " +
+                " ELSE null " +
+            "END)");
+            ExprColumn newCol = new ExprColumn(ti, cDNA, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newCol.setLabel("cDNA Library");
+            UserSchema us = QueryService.get().getUserSchema(ti.getUserSchema().getUser(), (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()), TCRdbSchema.NAME);
+            newCol.setFk(new QueryForeignKey(us, null, TCRdbSchema.TABLE_CDNAS, "rowid", "rowid"));
             ti.addColumn(newCol);
         }
     }
@@ -195,7 +218,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             SimpleFilter filter = new SimpleFilter(FieldKey.fromString("locus"), "None", CompareType.NEQ_OR_NULL);
             filter.addCondition(FieldKey.fromString("disabled"), true, CompareType.NEQ_OR_NULL);
 
-            SQLFragment selectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("analysisId"), data.getColumn("CDR3"), data.getColumn("locus"), data.getColumn("fraction")), filter, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
+            SQLFragment selectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("analysisId"), data.getColumn("CDR3"), data.getColumn("locus"), data.getColumn("fraction"), data.getColumn("count")), filter, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
             DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=assay." + ap.getName().replaceAll(" ", "") + "." + protocols.get(0).getName() + "&query.queryName=data&query." + urlField + "~eq=${" + urlSourceCol + "}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
 
             SQLFragment sql = new SQLFragment("(select count(*) as expr FROM (").append(selectSql).append(") a " + whereClause + ")");
@@ -232,6 +255,12 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             newCol5.setURL(runDetails);
             ti.addColumn(newCol5);
 
+            SQLFragment sql6 = new SQLFragment("(select sum(a.count) as expr FROM (").append(selectSql).append(") a " + whereClause + " )");
+            ExprColumn newCol6 = new ExprColumn(ti, "totalCDR3Reads" + colNameSuffix, sql6, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newCol6.setLabel("Total CDR3 Reads" + colLabelSuffix);
+            newCol6.setURL(details);
+            ti.addColumn(newCol6);
+
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRA", colNameSuffix, colLabelSuffix);
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRB", colNameSuffix, colLabelSuffix);
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRD", colNameSuffix, colLabelSuffix);
@@ -251,5 +280,26 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         newCol.setDescription("Showing CDR3 clonotypes for " + locus + " with fraction >=0.05");
         newCol.setURL(detailsURL);
         ti.addColumn(newCol);
+    }
+
+    private void customizeClones(AbstractTableInfo ti)
+    {
+        AssayProvider ap = AssayService.get().getProvider("TCRdb");
+        if (ap == null)
+        {
+            return;
+        }
+
+        Container target = ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer();
+        List<ExpProtocol> protocols = AssayService.get().getAssayProtocols(target, ap);
+        if (protocols.size() != 1)
+        {
+            return;
+        }
+
+        AssayProtocolSchema schema = ap.createProtocolSchema(ti.getUserSchema().getUser(), target, protocols.get(0), null);
+        ti.getColumn("cdr3").setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=" + schema.getSchemaName() + "&query.queryName=data&query.viewName=Clonotype Export&query.CDR3~eq=${cdr3}&query.sort=analysisId/readset/cdna/sortId/cells", target));
+
+        LDKService.get().applyNaturalSort(ti, "cloneName");
     }
 }

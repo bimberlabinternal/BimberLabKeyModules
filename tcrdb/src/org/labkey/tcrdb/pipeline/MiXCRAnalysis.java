@@ -7,6 +7,7 @@ import htsjdk.samtools.fastq.FastqWriter;
 import htsjdk.samtools.fastq.FastqWriterFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
@@ -30,6 +31,7 @@ import org.labkey.api.sequenceanalysis.pipeline.AbstractPipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.AnalysisStep;
 import org.labkey.api.sequenceanalysis.pipeline.DefaultPipelineStepOutput;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
+import org.labkey.api.sequenceanalysis.pipeline.PipelineStepOutput;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PreprocessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
@@ -88,6 +90,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     private static final String IS_RNA_SEQ = "isRnaSeq";
     private static final String TARGET_ASSAY = "targetAssay";
     private static final String DO_ASSEMBLE_PARTIAL = "doAssemblePartial";
+    private static final String DO_ALIGN_FOR_NOVELS = "doAlignForNovels";
     private static final String LOCI = "loci";
 
     public static class Provider extends AbstractAnalysisStepProvider<MiXCRAnalysis>
@@ -111,7 +114,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(DIFF_LOCI, "Allow Different V/J Loci", "If checked, MiXCR will accept alignments with different loci of V and J genes.  Otheriwse these are discarded.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
-                    }}, false),
+                    }}, true),
                     ToolParameterDescriptor.create(IS_RNA_SEQ, "RNA-Seq Data", "If checked, MiXCR settings tailored to RNA-Seq (see -p rna-seq) will be used.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
@@ -128,7 +131,11 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(DO_ASSEMBLE_PARTIAL, "Attempt to Align Partial Hits", "If checked, the MiXCR assemblePartial command will be used.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
-                    }}, true)
+                    }}, true),
+                    ToolParameterDescriptor.create(DO_ALIGN_FOR_NOVELS, "Attempt to Identify Novel Segments", "If checked, this will run a separate alignment against genomic regions to potentially identify novel V/J segments (TCR only).", "checkbox", new JSONObject()
+                    {{
+                        put("checked", false);
+                    }}, false)
             ), Arrays.asList("ux/CheckCombo/CheckCombo.css", "ux/CheckCombo/CheckCombo.js", "tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
         }
 
@@ -354,12 +361,22 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             }
 
             boolean doAssemblePartial = getProvider().getParameterByName(DO_ASSEMBLE_PARTIAL).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class);
+            boolean doAlignForNovel = getProvider().getParameterByName(DO_ALIGN_FOR_NOVELS).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
 
             String prefix = getOutputPrefix(FileUtil.getBaseName(inputBam), String.valueOf(rowid), species);
             File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams, doAssemblePartial, false);
-            File alignForNovels = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix + "_novels", species, alignParams, assembleParams, doAssemblePartial, true);
             output.addOutput(clones, CLONES_FILE);
-            output.addIntermediateFile(alignForNovels);
+
+            File alignForNovels = null;
+            if (doAlignForNovel)
+            {
+                alignForNovels = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix + "_novels", species, alignParams, assembleParams, doAssemblePartial, true);
+                output.addIntermediateFile(alignForNovels);
+            }
+            else
+            {
+                getPipelineCtx().getLogger().debug("check for novel/orphan segments will be skipped");
+            }
 
             output.addIntermediateFile(new File(outputDir, prefix + ".align.vdjca.gz"), "MiXCR VDJ Alignment");
 
@@ -491,7 +508,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                         }
 
                                         List<String> chains = Arrays.asList(locus.split(","));
-                                        if (!chains.contains(inferredLocusWithoutV))
+                                        if (!chains.contains(inferredLocusWithoutV) && !"ALL".equals(locus))
                                         {
                                             getPipelineCtx().getLogger().warn("Initial locus does not match the locus inferred by the gene hits.  chains: " + locus + ", inferred without V: " + inferredLocusWithoutV + ", with V: " + inferredLocusWithV);
                                         }
@@ -569,7 +586,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         return new File(outputDir, prefix + ".summary.txt");
     }
 
-    private void writeSummary(File outputDir, String prefix, MiXCRWrapper mixcr, MiXCROutput output, Readset rs, Map<String, Integer> totalReadsInExportedAlignmentsByLocus, File alignForNovels) throws PipelineJobException
+    private void writeSummary(File outputDir, String prefix, MiXCRWrapper mixcr, MiXCROutput output, Readset rs, Map<String, Integer> totalReadsInExportedAlignmentsByLocus, @Nullable File alignForNovels) throws PipelineJobException
     {
         File alignExport = new File(outputDir, prefix + ".alignments.txt");
         File alignOutput = mixcr.getAlignOutputFile(outputDir, prefix);
@@ -670,87 +687,10 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 }
             }
 
-            Set<String> readsWithUpstreamJAlignment = new HashSet<>();
-            Set<String> readsWithDownstreamVAlignment = new HashSet<>();
-            if (!orphans.isEmpty())
+
+            if (alignForNovels != null)
             {
-                getPipelineCtx().getLogger().info("exporting/inspecting potentially orphan alignments");
-
-                File alignExportOrphans = new File(outputDir, prefix + ".alignments.forOrphans.txt");
-                mixcr.doExportAlignments(alignForNovels, alignExportOrphans, null);
-                output.addIntermediateFile(alignExportOrphans);
-
-                try (CSVReader orphanReader = new CSVReader(Readers.getReader(alignExportOrphans), '\t'))
-                {
-                    String[] orphanLine;
-                    while ((orphanLine = orphanReader.readNext()) != null)
-                    {
-                        if (orphanLine[0].startsWith("bestVGene"))
-                        {
-                            continue;
-                        }
-
-                        String readName = orphanLine[READ1_IDX];
-                        if (StringUtils.trimToNull(orphanLine[V_DOWNSTREAM_IDX]) != null)
-                        {
-                            readsWithDownstreamVAlignment.add(readName);
-                        }
-
-                        if (StringUtils.trimToNull(orphanLine[J_UPSTREAM_IDX]) != null)
-                        {
-                            readsWithUpstreamJAlignment.add(readName);
-                        }
-                    }
-                }
-            }
-
-            getPipelineCtx().getLogger().info("total reads with J alignment and upstream sequence: " + readsWithUpstreamJAlignment.size());
-            getPipelineCtx().getLogger().info("total reads with V alignment and downstream sequence: " + readsWithDownstreamVAlignment.size());
-
-            int totalOrphans = 0;
-            int lowFreqOrphans = 0;
-            File orphanFile = new File(outputDir, prefix + ".orphanAlignments.txt");
-            output.addOutput(orphanFile, "MiCXR Possible Novel Segments");
-            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(orphanFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-            {
-                writer.writeNext(new String[]{"Readset", "ReadsetId", "Segment", "Hit", "TotalAlignments", "TotalAlignmentsForHit", "TotalOrphansForHit", "Fraction", "HasVDownstreamSequence", "HasJUpstreamSequence", "ReadName1", "ReadDirection1", "Sequence1", "ReadName2", "ReadDirection2", "Sequence2"});
-                for (String hit : orphans.keySet())
-                {
-                    if (orphans.get(hit).size() > 5)
-                    {
-                        double orphanFraction = orphans.get(hit).size() / (double)hitMap.get(hit);
-                        double orphanFractionOfTotal = orphans.get(hit).size() / (double)totalAlignmentsInspected;
-                        if (orphanFraction < 0.1 || orphanFractionOfTotal < 0.01)
-                        {
-                            lowFreqOrphans++;
-                            continue;
-                        }
-
-                        String totalForHit = String.valueOf(hitMap.get(hit));
-                        for (String[] row : orphans.get(hit))
-                        {
-                            totalOrphans++;
-                            List<String> rowList = new ArrayList<>(Arrays.asList(row));
-                            rowList.add(4, String.valueOf(totalAlignmentsInspected));
-                            rowList.add(5, totalForHit);
-                            rowList.add(6, String.valueOf(orphans.get(hit).size()));
-                            rowList.add(7, String.valueOf(100.0 * orphanFraction));
-                            rowList.add(8, readsWithDownstreamVAlignment.contains(row[4]) ? "true" : "false");
-                            rowList.add(9, readsWithUpstreamJAlignment.contains(row[4]) ? "true" : "false");
-                            writer.writeNext(rowList.toArray(new String[rowList.size()]));
-                        }
-                    }
-                }
-            }
-
-            if (totalOrphans == 0)
-            {
-                orphanFile.delete();
-            }
-            else
-            {
-                getPipelineCtx().getLogger().info("total potential orphan/novel alignments: " + totalOrphans);
-                getPipelineCtx().getLogger().info("low frequency orphans skipped: " + lowFreqOrphans);
+                doOrphanCheck(alignForNovels, orphans, outputDir, prefix, output, hitMap, totalAlignmentsInspected, mixcr);
             }
 
             //write separate list of C-Gene counts, primarily to make it easier to append to RNA-Seq gene count tables
@@ -771,6 +711,92 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         output.addIntermediateFile(alignExport);
+    }
+
+    private void doOrphanCheck(File alignForNovels, Map<String, List<String[]>> orphans, File outputDir, String prefix, MiXCROutput output, Map<String, Integer> hitMap, int totalAlignmentsInspected, MiXCRWrapper mixcr) throws IOException, PipelineJobException
+    {
+        Set<String> readsWithUpstreamJAlignment = new HashSet<>();
+        Set<String> readsWithDownstreamVAlignment = new HashSet<>();
+        if (alignForNovels != null && !orphans.isEmpty())
+        {
+            getPipelineCtx().getLogger().info("exporting/inspecting potentially orphan alignments");
+
+            File alignExportOrphans = new File(outputDir, prefix + ".alignments.forOrphans.txt");
+            mixcr.doExportAlignments(alignForNovels, alignExportOrphans, null);
+            output.addIntermediateFile(alignExportOrphans);
+
+            try (CSVReader orphanReader = new CSVReader(Readers.getReader(alignExportOrphans), '\t'))
+            {
+                String[] orphanLine;
+                while ((orphanLine = orphanReader.readNext()) != null)
+                {
+                    if (orphanLine[0].startsWith("bestVGene"))
+                    {
+                        continue;
+                    }
+
+                    String readName = orphanLine[READ1_IDX];
+                    if (StringUtils.trimToNull(orphanLine[V_DOWNSTREAM_IDX]) != null)
+                    {
+                        readsWithDownstreamVAlignment.add(readName);
+                    }
+
+                    if (StringUtils.trimToNull(orphanLine[J_UPSTREAM_IDX]) != null)
+                    {
+                        readsWithUpstreamJAlignment.add(readName);
+                    }
+                }
+            }
+        }
+
+        getPipelineCtx().getLogger().info("total reads with J alignment and upstream sequence: " + readsWithUpstreamJAlignment.size());
+        getPipelineCtx().getLogger().info("total reads with V alignment and downstream sequence: " + readsWithDownstreamVAlignment.size());
+
+        int totalOrphans = 0;
+        int lowFreqOrphans = 0;
+        File orphanFile = new File(outputDir, prefix + ".orphanAlignments.txt");
+        output.addOutput(orphanFile, "MiCXR Possible Novel Segments");
+        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(orphanFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+        {
+            writer.writeNext(new String[]{"Readset", "ReadsetId", "Segment", "Hit", "TotalAlignments", "TotalAlignmentsForHit", "TotalOrphansForHit", "Fraction", "HasVDownstreamSequence", "HasJUpstreamSequence", "ReadName1", "ReadDirection1", "Sequence1", "ReadName2", "ReadDirection2", "Sequence2"});
+            for (String hit : orphans.keySet())
+            {
+                if (orphans.get(hit).size() > 5)
+                {
+                    double orphanFraction = orphans.get(hit).size() / (double)hitMap.get(hit);
+                    double orphanFractionOfTotal = orphans.get(hit).size() / (double)totalAlignmentsInspected;
+                    if (orphanFraction < 0.1 || orphanFractionOfTotal < 0.01)
+                    {
+                        lowFreqOrphans++;
+                        continue;
+                    }
+
+                    String totalForHit = String.valueOf(hitMap.get(hit));
+                    for (String[] row : orphans.get(hit))
+                    {
+                        totalOrphans++;
+                        List<String> rowList = new ArrayList<>(Arrays.asList(row));
+                        rowList.add(4, String.valueOf(totalAlignmentsInspected));
+                        rowList.add(5, totalForHit);
+                        rowList.add(6, String.valueOf(orphans.get(hit).size()));
+                        rowList.add(7, String.valueOf(100.0 * orphanFraction));
+                        rowList.add(8, readsWithDownstreamVAlignment.contains(row[4]) ? "true" : "false");
+                        rowList.add(9, readsWithUpstreamJAlignment.contains(row[4]) ? "true" : "false");
+                        writer.writeNext(rowList.toArray(new String[rowList.size()]));
+                    }
+                }
+            }
+        }
+
+        if (totalOrphans == 0)
+        {
+            orphanFile.delete();
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("total potential orphan/novel alignments: " + totalOrphans);
+            getPipelineCtx().getLogger().info("low frequency orphans skipped: " + lowFreqOrphans);
+        }
     }
 
     private File getCombinedTable(File outputDir)
@@ -852,6 +878,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     @Override
     public Output performAnalysisPerSampleLocal(AnalysisModel model, File inputBam, File referenceFasta, File outDir) throws PipelineJobException
     {
+        getPipelineCtx().getLogger().debug("output directory: " + outDir.getPath());
+
         Map<String, RunData> runMap = new HashMap<>();
 
         File table = getCombinedTable(outDir);
@@ -1641,7 +1669,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         JSONObject json = new JSONObject();
         json.put("Run", runProps);
 
-        File assayTmp = new File(outDir, "mixcr-assay-upload.txt");
+        File assayTmp = new File(outDir, FileUtil.makeLegalName("mixcr-assay-upload_" + FileUtil.getTimestamp() + ".txt"));
         if (assayTmp.exists())
         {
             assayTmp.delete();
@@ -1657,6 +1685,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             row.put("locus", "None");
             rd.rows.add(row);
         }
+
+        getPipelineCtx().getLogger().debug("saving assay file to: " + assayTmp.getPath());
         LaboratoryService.get().saveAssayBatch(rd.rows, json, assayTmp, vc, AssayService.get().getProvider(protocol), protocol);
     }
 

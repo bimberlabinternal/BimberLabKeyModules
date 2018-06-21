@@ -16,11 +16,14 @@
 
 package org.labkey.tcrdb;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.labkey.api.action.ExportAction;
 import org.labkey.api.action.SimpleViewAction;
 import org.labkey.api.action.SpringActionController;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.StopIteratingException;
@@ -33,8 +36,15 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
+import org.labkey.api.security.CSRF;
+import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.ReadPermission;
+import org.labkey.api.sequenceanalysis.RefNtSequenceModel;
+import org.labkey.api.util.FileType;
+import org.labkey.api.util.FileUtil;
+import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.StringUtilsLabKey;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NavTree;
 import org.labkey.api.view.SpringErrorView;
@@ -42,6 +52,7 @@ import org.labkey.tcrdb.pipeline.MiXCRWrapper;
 import org.springframework.validation.BindException;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,15 +61,22 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class TCRdbController extends SpringActionController
 {
     private static final DefaultActionResolver _actionResolver = new DefaultActionResolver(TCRdbController.class);
     public static final String NAME = "tcrdb";
+
+    private static final FileType FASTA = new FileType("fasta");
 
     private static final Logger _log = Logger.getLogger(TCRdbController.class);
 
@@ -477,6 +495,189 @@ public class TCRdbController extends SpringActionController
         public void setReadContains(String readContains)
         {
             _readContains = readContains;
+        }
+    }
+
+    @RequiresPermission(ReadPermission.class)
+    @IgnoresTermsOfUse
+    @CSRF
+    public static class DownloadCloneMaterials extends ExportAction<DownloadCloneMaterialsForm>
+    {
+        public void export(DownloadCloneMaterialsForm form, HttpServletResponse response, BindException errors) throws Exception
+        {
+            Container target = getContainer().isWorkbook() ? getContainer().getParent() : getContainer();
+            UserSchema us = QueryService.get().getUserSchema(getUser(), target, form.getSchemaName());
+            if (us == null)
+            {
+                errors.reject(ERROR_MSG, "Unable to find schema: " + form.getSchemaName());
+                return;
+            }
+
+            TableInfo assayData = us.getTable(form.getQueryName());
+            if (assayData == null)
+            {
+                errors.reject(ERROR_MSG, "Unable to find table: " + form.getQueryName());
+                return;
+            }
+
+            List<String> rowIds = Arrays.asList(form.getRowId());
+            if (rowIds.isEmpty())
+            {
+                errors.reject(ERROR_MSG, "No rows provided");
+                return;
+            }
+
+            // find distinct analyses for assay rows and primary segments
+            SimpleFilter assayFilter = new SimpleFilter(FieldKey.fromString("rowId"), rowIds, CompareType.IN);
+            TableSelector ts = new TableSelector(assayData, PageFlowUtil.set("analysisId", "vHit", "jHit", "dHit", "cHit"), assayFilter, null);
+            Set<String> primarySegments = new HashSet<>();
+            Set<Integer> analyses = new HashSet<>();
+            final String[] segmentFields = new String[]{"vHit", "jHit", "cHit"};
+            ts.forEachResults(rs -> {
+                for (String fn : segmentFields)
+                {
+                    if (rs.getString(FieldKey.fromString(fn)) != null)
+                    {
+                        primarySegments.add(rs.getString(FieldKey.fromString(fn)));
+                    }
+
+                    if (rs.getObject(FieldKey.fromString("analysisId")) != null)
+                    {
+                        analyses.add(rs.getInt(FieldKey.fromString("analysisId")));
+                    }
+                }
+            });
+
+            if (analyses.isEmpty())
+            {
+                errors.reject(ERROR_MSG, "Unable to find analyses for rows");
+                return;
+            }
+
+            // then find all segments from these analyses
+            Set<String> allSegments = new HashSet<>(primarySegments);
+            SimpleFilter assayFilter2 = new SimpleFilter(FieldKey.fromString("analysisId"), analyses, CompareType.IN);
+            new TableSelector(assayData, PageFlowUtil.set("vHit", "jHit", "dHit", "cHit"), assayFilter2, null).forEachResults(rs -> {
+                for (String fn : segmentFields)
+                {
+                    if (rs.getString(FieldKey.fromString(fn)) != null)
+                    {
+                        allSegments.add(rs.getString(FieldKey.fromString(fn)));
+                    }
+                }
+            });
+
+            // look up segments in NT table
+            StringBuilder fasta = new StringBuilder();
+            SimpleFilter ntFilter = new SimpleFilter(FieldKey.fromString("name"), allSegments, CompareType.IN);
+            Set<Integer> sequenceIds = new HashSet<>();
+            new TableSelector(QueryService.get().getUserSchema(getUser(), target, "sequenceanalysis").getTable("ref_nt_sequences"), PageFlowUtil.set("rowid"), ntFilter, null).forEachResults(rs -> {
+                if (sequenceIds.contains(rs.getInt(FieldKey.fromString("rowid"))))
+                {
+                    return;
+                }
+
+                RefNtSequenceModel nt = RefNtSequenceModel.getForRowId(rs.getInt(FieldKey.fromString("rowid")));
+                fasta.append(">").append(nt.getName() + (nt.getSpecies() != null ? "-" + nt.getSpecies() : "")).append('\n').append(nt.getSequence()).append('\n');
+                sequenceIds.add(nt.getRowid());
+            });
+
+            // then grab actual Overlapping Contigs record(s).  only bother grabbing if FASTA
+            SimpleFilter outputFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analyses, CompareType.IN);
+            outputFilter.addCondition(FieldKey.fromString("category"), "Overlapping Contigs");
+
+            Set<File> files = new HashSet<>();
+            new TableSelector(QueryService.get().getUserSchema(getUser(), target, "sequenceanalysis").getTable("outputfiles"), PageFlowUtil.set("dataid"), outputFilter, null).forEachResults(rs -> {
+                ExpData d = ExperimentService.get().getExpData(rs.getInt(FieldKey.fromString("dataid")));
+                if (d != null && d.getFile().exists())
+                {
+                    if (FASTA.isType(d.getFile()))
+                    {
+                        files.add(d.getFile());
+                    }
+                }
+            });
+
+            PageFlowUtil.prepareResponseForFile(response, Collections.emptyMap(), "Clones.zip", true);
+            Set<String> distinctNames = new HashSet<>();
+            try (ZipOutputStream zOut = new ZipOutputStream(response.getOutputStream()))
+            {
+                ZipEntry fileEntryFasta = new ZipEntry("segments.fasta");
+                distinctNames.add("segments.fasta");
+
+                zOut.putNextEntry(fileEntryFasta);
+                zOut.write(fasta.toString().getBytes(StringUtilsLabKey.DEFAULT_CHARSET));
+                zOut.closeEntry();
+
+                for (File f : files)
+                {
+                    String name = getUnique(f.getName(), distinctNames);
+                    ZipEntry fileEntry = new ZipEntry(name);
+                    zOut.putNextEntry(fileEntry);
+
+                    try (FileInputStream in = new FileInputStream(f))
+                    {
+                        IOUtils.copy(in, zOut);
+                        zOut.closeEntry();
+                    }
+                    catch (Exception e)
+                    {
+                        _log.error(e.getMessage(), e);
+                    }
+                }
+            }
+        }
+
+        private String getUnique(String name, Set<String> distinctNames)
+        {
+            int i = 1;
+            String newName = name;
+            while (distinctNames.contains(newName))
+            {
+                newName = FileUtil.getBaseName(name) + "." + i + "." + FileUtil.getExtension(name);
+                i++;
+            }
+
+            distinctNames.add(newName);
+
+            return newName;
+        }
+    }
+
+    public static class DownloadCloneMaterialsForm
+    {
+        private String[] _rowId;
+        private String _schemaName;
+        private String _queryName;
+
+        public String[] getRowId()
+        {
+            return _rowId;
+        }
+
+        public void setRowId(String[] rowId)
+        {
+            _rowId = rowId;
+        }
+
+        public String getSchemaName()
+        {
+            return _schemaName;
+        }
+
+        public void setSchemaName(String schemaName)
+        {
+            _schemaName = schemaName;
+        }
+
+        public String getQueryName()
+        {
+            return _queryName;
+        }
+
+        public void setQueryName(String queryName)
+        {
+            _queryName = queryName;
         }
     }
 }

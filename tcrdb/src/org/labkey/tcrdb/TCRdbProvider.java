@@ -74,6 +74,8 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
             items.add(item);
         }
 
+        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES, "TCR Clones", LaboratoryService.NavItemCategory.data, "TCRdb", cache));
+
         return Collections.unmodifiableList(items);
     }
 
@@ -125,6 +127,7 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
         items.add(new QueryCountNavItem(this, TCRdbSchema.NAME, "stims", LaboratoryService.NavItemCategory.data, LaboratoryService.NavItemCategory.data.name(),  "TCR Stims"));
         items.add(new QueryCountNavItem(this, TCRdbSchema.NAME, "sorts", LaboratoryService.NavItemCategory.data, LaboratoryService.NavItemCategory.data.name(), "TCR Sorts"));
         items.add(new QueryCountNavItem(this, TCRdbSchema.NAME, "cdnas", LaboratoryService.NavItemCategory.data, LaboratoryService.NavItemCategory.data.name(), "TCR cDNA Libraries"));
+        items.add(new QueryCountNavItem(this, TCRdbSchema.NAME, "clones", LaboratoryService.NavItemCategory.data, LaboratoryService.NavItemCategory.data.name(),  "TCR Clones"));
 
         return Collections.unmodifiableList(items);
     }
@@ -149,21 +152,21 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
         String category = "TCRdb";
         QueryCache cache = new QueryCache();
 
-        TabbedReportItem readsets = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIMS, "TCR Stims/Blood Draws", category);
-        readsets.setOwnerKey(owner.getPropertyManagerKey());
-        items.add(readsets);
+        TabbedReportItem stims = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIMS, "TCR Stims/Blood Draws", category);
+        stims.setOwnerKey(owner.getPropertyManagerKey());
+        items.add(stims);
 
-        TabbedReportItem analyses = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_SORTS, "TCR Sorts", category);
-        analyses.setSubjectIdFieldKey(FieldKey.fromString("stimId/animalId"));
-        analyses.setSampleDateFieldKey(FieldKey.fromString("stimId/date"));
-        analyses.setOwnerKey(owner.getPropertyManagerKey());
-        items.add(analyses);
+        TabbedReportItem sorts = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_SORTS, "TCR Sorts", category);
+        sorts.setSubjectIdFieldKey(FieldKey.fromString("stimId/animalId"));
+        sorts.setSampleDateFieldKey(FieldKey.fromString("stimId/date"));
+        sorts.setOwnerKey(owner.getPropertyManagerKey());
+        items.add(sorts);
 
-        TabbedReportItem outputs = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS, "TCR cDNA Libraries", category);
-        outputs.setSubjectIdFieldKey(FieldKey.fromString("sortId/stimId/animalId"));
-        outputs.setSampleDateFieldKey(FieldKey.fromString("sortId/stimId/date"));
-        outputs.setOwnerKey(owner.getPropertyManagerKey());
-        items.add(outputs);
+        TabbedReportItem cdnas = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS, "TCR cDNA Libraries", category);
+        cdnas.setSubjectIdFieldKey(FieldKey.fromString("sortId/stimId/animalId"));
+        cdnas.setSampleDateFieldKey(FieldKey.fromString("sortId/stimId/date"));
+        cdnas.setOwnerKey(owner.getPropertyManagerKey());
+        items.add(cdnas);
 
         return items;
     }

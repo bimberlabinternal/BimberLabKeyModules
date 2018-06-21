@@ -56,6 +56,10 @@ public class MiXCRWrapper extends AbstractCommandWrapper
             getLogger().info("creating alignment file for purpose of identifying novel genes");
             args.add("-OvParameters.geneFeatureToAlign='{FR1Begin:VEnd(100)}'");
             args.add("-OjParameters.geneFeatureToAlign='{JBegin(-100):FR4End}'");
+
+            //limit to TCR
+            args.add("-c");
+            args.add("TCR");
         }
 
         args.add(fq1.getPath());

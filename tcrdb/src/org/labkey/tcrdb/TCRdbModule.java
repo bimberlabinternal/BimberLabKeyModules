@@ -25,6 +25,7 @@ import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
+import org.labkey.tcrdb.pipeline.CellRangerVDJWrapper;
 import org.labkey.tcrdb.pipeline.MiXCRAnalysis;
 
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 15.40;
+        return 15.42;
     }
 
     @Override
@@ -71,6 +72,7 @@ public class TCRdbModule extends ExtendedSimpleModule
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIMS);
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_SORTS);
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS);
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES);
 
         LDKService.get().registerQueryButton(new ChangeStatusButton(), "tcrdb", "stims");
 
@@ -105,6 +107,7 @@ public class TCRdbModule extends ExtendedSimpleModule
             else
             {
                 SequencePipelineService.get().registerPipelineStep(new MiXCRAnalysis.Provider());
+                SequencePipelineService.get().registerPipelineStep(new CellRangerVDJWrapper.VDJProvider());
 
                 _hasRegistered = true;
             }
