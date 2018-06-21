@@ -27,6 +27,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
             {
                 super.addQueryFieldKeys(keys);
                 keys.add(getBoundKey("releaseId/jbrowseId"));
+                keys.add(getBoundKey("releaseId/vcfId"));
                 keys.add(getBoundKey("container"));
                 keys.add(getBoundKey("contig"));
                 keys.add(getBoundKey("position"));
@@ -48,9 +49,11 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 String jbrowseId = StringUtils.trimToNull(ctx.get(getBoundKey("releaseId/jbrowseId"), String.class));
+                Integer jbrowseTrackId = ctx.get(getBoundKey("releaseId/vcfId"), Integer.class);
                 String containerId = ctx.get(getBoundKey("container"), String.class);
                 String contig = StringUtils.trimToNull(ctx.get(getBoundKey("contig"), String.class));
                 Integer position = ctx.get(getBoundKey("position"), Integer.class);
+                String delim = "";
                 if (jbrowseId != null)
                 {
                     int start = position - 1000;
@@ -58,6 +61,14 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
 
                     DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&loc=" + contig + ":" + start + ".." + stop, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
+                    delim = "<br>";
+                }
+
+                if (jbrowseTrackId != null)
+                {
+                    out.write(delim);
+                    DetailsURL url = DetailsURL.fromString("/jbrowse/genotypeTable.view?trackId=data-" + jbrowseTrackId + "&chr=" + contig + "&start=" + position + "&stop=" + position, ContainerManager.getForId(containerId));
+                    out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View Genotypes At Position</a>");
                 }
             }
         };

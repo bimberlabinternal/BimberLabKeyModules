@@ -93,38 +93,30 @@ else
     echo "Already installed"
 fi
 
-#repseqio:
-apt-get update
-apt-get install -y build-essential curl git python-setuptools ruby groovy jq golang
 
-echo 'export GOPATH=~/.go' >> ~/.profile
-echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.profile
-source ~/.profile
+#
+#vdjtools
+#
 
-if [ ! -e $GOPATH ];then
-	mkdir -p $GOPATH
+echo ""
+echo ""
+echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+echo "Installing vdjtools"
+echo ""
+cd $LKSRC_DIR
+
+if [[ ! -e ${LKTOOLS_DIR}/vdjtools.jar || ! -z $FORCE_REINSTALL ]];
+then
+    rm -Rf vdjtools*
+    rm -Rf $LKTOOLS_DIR/vdjtools*
+
+    wget $WGET_OPTS https://github.com/mikessh/vdjtools/releases/download/1.1.9/vdjtools-1.1.9.zip
+    unzip vdjtools-1.1.9.zip
+
+    install ./vdjtools-1.1.9/vdjtools-1.1.9.jar $LKTOOLS_DIR/vdjtools.jar
+    install ./vdjtools-1.1.9/vdjtools $LKTOOLS_DIR/vdjtools
+
+else
+    echo "Already installed"
 fi
 
-go get github.com/ericchiang/pup
-
-#based on: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-linuxbrew-on-a-linux-vps
-if [ ! -e ~/.linuxbrew ];then
-	git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew
-fi
-
-# Until LinuxBrew is fixed, the following is required.
-# See: https://github.com/Homebrew/linuxbrew/issues/47
-echo 'export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH' >> ~/.profile
-
-## Setup linux brew
-echo 'export LINUXBREWHOME=$HOME/.linuxbrew' >> ~/.profile
-echo 'export PATH=$LINUXBREWHOME/bin:$PATH' >> ~/.profile
-echo 'export MANPATH=$LINUXBREWHOME/man:$MANPATH' >> ~/.profile
-echo 'export PKG_CONFIG_PATH=$LINUXBREWHOME/lib64/pkgconfig:$LINUXBREWHOME/lib/pkgconfig:$PKG_CONFIG_PATH' >> ~/.profile
-echo 'export LD_LIBRARY_PATH=$LINUXBREWHOME/lib64:$LINUXBREWHOME/lib:$LD_LIBRARY_PATH' >> ~/.profile
-
-source ~/.profile
-
-brew install repseqio/all/repseqio
-#brew update
-#brew upgrade repseqio

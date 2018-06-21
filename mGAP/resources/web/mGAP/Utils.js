@@ -5,7 +5,7 @@ mGAP.Utils = (function($){
 
     return {
         renderReleaseGraph: function(outerDiv, width){
-            var targetId1 = 'mgap-release-graph1', targetId2 = 'mgap-release-graph2', tableId = 'mgap-release-table';
+            var targetId1 = 'mgap-release-graph1', targetId2 = 'mgap-release-graph2', tableId = 'mgap-release-table', targetId3 = 'mgap-release-graph3';
 
             if (!mGAP.Utils.getMGapReleaseId()){
                 $(targetId1).html('<span>No release information</span>');
@@ -15,6 +15,7 @@ mGAP.Utils = (function($){
             LABKEY.Query.selectRows({
                 schemaName: 'mgap',
                 queryName: 'releaseStats',
+                filterArray: [LABKEY.Filter.create('releaseId/rowId', mGAP.Utils.getMGapReleaseId(), LABKEY.Filter.Types.EQUAL)],
                 failure: LDK.Utils.getErrorCallback(),
                 scope: this,
                 success: function(results){
@@ -101,16 +102,13 @@ mGAP.Utils = (function($){
                             "autobinx": true,
                             "uid": "13ab10",
                             "name": "B",
-                            //TODO
                             "labels": codingLabels,
                             "values": codingData,
                             "mode": "markers",
-                            "marker": {"colors": ["rgb(255, 255, 204)", "rgb(161, 218, 180)", "rgb(65, 182, 196)", "rgb(44, 127, 184)", "rgb(8, 104, 172)", "rgb(37, 52, 148)"]},
                             "textinfo": "label+percent",
                             "type": "pie",
                             "autobiny": true
                         }], {
-                            //"title": "Breakdown of Coding Potential",
                             "width": width,
                             "height": 200,
                             "margin": {"l": 80, "r": 0, "t": 20, "b": 90},
@@ -152,6 +150,49 @@ mGAP.Utils = (function($){
                         "yaxis": {"tickfont": {"size": 12}, "title": "", "range": [-0.5, 6.5], "titlefont": {"size": 12}, "type": "category", "autorange": true},
                         "xaxis": {"tickfont": {"size": 12}, "title": "# Variants", "range": [0, 149672.63157894736], "titlefont": {"size": 12}, "type": "linear", "autorange": true}},
                     {displayModeBar: false});
+
+                    var data3 = map.VariantType || {};
+                    var variantTypeLabels = ['SNP', 'INDEL', 'MIXED'];
+                    var variantTypeData = [];
+                    var data3Total = 0;
+                    $.each(variantTypeLabels, function(idx, val){
+                        variantTypeData.push(data3[val] || 0);
+                        data3Total += data3[val] || 0;
+                    });
+
+                    var variantTypeDataPct = [];
+                    $.each(variantTypeLabels, function(idx, val){
+                        variantTypeDataPct.push(variantTypeData[idx] / data3Total);
+                    });
+
+                    var dataFinal = [];
+                    $.each(variantTypeLabels, function(idx, val){
+                        dataFinal.push({
+                            type: 'bar',
+                            name: val,
+                            x: [variantTypeDataPct[idx]],
+                            text: [val],
+                            textposition: 'auto',
+                            orientation: 'h',
+                            hoverinfo: 'x+text'
+                        })
+                    });
+
+                    Plotly.newPlot(targetId3, dataFinal, {
+                        "width": width,
+                        "height": 100,
+                        "margin": {"l": 20, "r": 20, "t": 20, "b": 20},
+                        "autosize": false,
+                        "showlegend": false,
+                        "breakpoints": [],
+                        "titlefont": {"size": 14},
+                        "hovermode": "closest",
+                        "font": {"size": 12},
+                        "legend": {"font": {"size": 12}},
+                        "xaxis": {visible: true, hoverformat: ',.1%', tickformat: ',.0%'},
+                        "yaxis": {visible: false},
+                        barmode: 'stack'
+                    }, {displayModeBar: false});
                 }
             })
         },

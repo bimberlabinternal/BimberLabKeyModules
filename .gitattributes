@@ -247,6 +247,7 @@ DISCVR/tcrdb/resources/assay/TCRdb/domains/run.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Batches.query.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Data.query.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Data/.qview.xml -text
+DISCVR/tcrdb/resources/assay/TCRdb/queries/Data/Clonotype[!!-~]Export.qview.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Data/Detailed.qview.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/Data/With[!!-~]NT.qview.xml -text
 DISCVR/tcrdb/resources/assay/TCRdb/queries/ResultsBySample.query.xml -text
@@ -260,9 +261,11 @@ DISCVR/tcrdb/resources/assay/TCRdb/views/upload.html -text
 DISCVR/tcrdb/resources/assay/TCRdb/views/upload.view.xml -text
 DISCVR/tcrdb/resources/credits/jars.txt -text
 DISCVR/tcrdb/resources/external/exportMappedReads.sh -text
+DISCVR/tcrdb/resources/external/install.R -text
 DISCVR/tcrdb/resources/external/installMixcr.sh -text
 DISCVR/tcrdb/resources/queries/tcrdb/cdnas.js -text
 DISCVR/tcrdb/resources/queries/tcrdb/cdnas/.qview.xml -text
+DISCVR/tcrdb/resources/queries/tcrdb/clones/.qview.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate.query.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate.sql -text
 DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate/.qview.xml -text
@@ -273,6 +276,7 @@ DISCVR/tcrdb/resources/queries/tcrdb/sorts.js -text
 DISCVR/tcrdb/resources/queries/tcrdb/sorts.query.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/sorts/.qview.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/stims.js -text
+DISCVR/tcrdb/resources/queries/tcrdb/tcr_sequences.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.30-15.31.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.31-15.32.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.32-15.33.sql -text

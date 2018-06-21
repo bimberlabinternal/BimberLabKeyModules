@@ -1,0 +1,1 @@
+install.packages(c("reshape2", "FField", "reshape", "gplots", "gridExtra", "circlize", "ggplot2", "grid", "VennDiagram", "ape", "MASS", "plotrix", "RColorBrewer", "scales"), dependencies=TRUE, repos='http://cran.rstudio.com')

@@ -9,6 +9,7 @@ dependencies {
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:laboratory", depProjectConfig: "apiCompile")
    BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":externalModules:labModules:LDK", depProjectConfig: "apiCompile")
    mixcr "com.milaboratory:mixcr:${mixcrVersion}"
+   compile "io.repseq:repseqio:${repseqVersion}"
 }
 
 project.task("copyMixcr",
