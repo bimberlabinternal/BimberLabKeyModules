@@ -27,21 +27,32 @@ function beforeUpsert(row, oldRow, errors){
         row.population = 'TNF-Neg';
     }
 
+    if (row.population && row.population.match(/ï/)){
+        row.population = row.population.replace(/ï/g, 'i');
+    }
+
     //check for duplicate plate/well
     oldRow = oldRow || {};
     var rowId = row.rowId || oldRow.rowId || rowIdx;
     rowIdx--;
 
-    var wellArr = [(row.plateId || oldRow.plateId), (row.well || oldRow.well)];
-    var wellKey = wellArr.join('<>').toUpperCase();
-    if (wellMap[wellKey] && wellMap[wellKey] !== rowId){
-        errors.well = 'Duplicate entry for plate/well: ' + wellArr.join('/');
-    }
-    else {
-        wellMap[wellKey] = rowId;
+    var lookupFields = ['stimId'];
+
+    //for 10x-style pooled expts, support 'pool' as a special-case for well name
+    var well = row.well || oldRow.well || '';
+    if ('pool' !== well.toLowerCase()) {
+        var wellArr = [(row.plateId || oldRow.plateId), well];
+        var wellKey = wellArr.join('<>').toUpperCase();
+        if (wellMap[wellKey] && wellMap[wellKey] !== rowId) {
+            errors.well = 'Duplicate entry for plate/well: ' + wellArr.join('/');
+        }
+        else {
+            wellMap[wellKey] = rowId;
+        }
+
+        lookupFields.push('well');
     }
 
-    var lookupFields = ['well', 'stimId'];
     for (var i=0;i<lookupFields.length;i++){
         var f = lookupFields[i];
         var val = row[f];

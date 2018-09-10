@@ -1,19 +1,35 @@
 package org.labkey.tcrdb.pipeline;
 
+import au.com.bytecode.opencsv.CSVReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.ConvertHelper;
+import org.labkey.api.data.DbSchema;
+import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Table;
+import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.exp.api.ExperimentService;
+import org.labkey.api.iterator.CloseableIterator;
+import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
+import org.labkey.api.query.ValidationException;
+import org.labkey.api.reader.FastaDataLoader;
+import org.labkey.api.reader.FastaLoader;
+import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.RefNtSequenceModel;
+import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.ReadData;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractAlignmentStepProvider;
@@ -31,8 +47,11 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
+import org.labkey.api.study.assay.AssayService;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.view.ViewBackgroundInfo;
+import org.labkey.api.view.ViewContext;
 import org.labkey.api.writer.PrintWriters;
 
 import java.io.File;
@@ -41,8 +60,11 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +75,8 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
     {
         super(logger);
     }
+
+    private static final String TARGET_ASSAY = "targetAssay";
 
     public static class VDJProvider extends AbstractAlignmentStepProvider<AlignmentStep>
     {
@@ -66,8 +90,9 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                     }}, null),
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--force-cells"), "force-cells", "Force Cells", "Force pipeline to use this number of cells, bypassing the cell detection algorithm. Use this if the number of cells estimated by Cell Ranger is not consistent with the barcode rank plot.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
-                    }}, null)
-            ), null, "https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger", true, false, ALIGNMENT_MODE.MERGE_THEN_ALIGN);
+                    }}, null),
+                    ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null)
+            ), PageFlowUtil.set("tcrdb/field/AssaySelectorField.js"), "https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger", true, false, false, ALIGNMENT_MODE.MERGE_THEN_ALIGN);
         }
 
         public String getName()
@@ -84,8 +109,6 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
         {
             return new CellRangerVDJAlignmentStep(this, context, new CellRangerVDJWrapper(context.getLogger()));
         }
-
-
     }
 
     public static class CellRangerVDJAlignmentStep extends AbstractCommandPipelineStep<CellRangerVDJWrapper> implements AlignmentStep
@@ -93,6 +116,12 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
         public CellRangerVDJAlignmentStep(PipelineStepProvider provider, PipelineContext ctx, CellRangerVDJWrapper wrapper)
         {
             super(provider, ctx, wrapper);
+        }
+
+        @Override
+        public boolean supportsMetrics()
+        {
+            return false;
         }
 
         @Override
@@ -276,16 +305,6 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 FileUtils.moveFile(outputHtml, outputHtmlRename);
                 output.addSequenceOutput(outputHtmlRename, rs.getName() + " 10x VDJ Summary", "10x Run Summary", rs.getRowId(), null, referenceGenome.getGenomeId(), null);
 
-                File outputFastq = new File(outdir, "all_contig.fastq");
-                if (!outputFastq.exists())
-                {
-                    throw new PipelineJobException("Unable to find file: " + outputFastq.getPath());
-                }
-
-                File outputFastqRename = new File(outdir, prefix + outputFastq.getName());
-                FileUtils.moveFile(outputFastq, outputFastqRename);
-                output.addSequenceOutput(outputFastqRename, rs.getName() + " 10x VDJ Contigs", "10x Contigs", rs.getRowId(), null, referenceGenome.getGenomeId(), null);
-
                 File outputVloupe = new File(outdir, "vloupe.vloupe");
                 if (!outputVloupe.exists())
                 {
@@ -342,6 +361,29 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             return true;
         }
 
+        private String getSymlinkFileName(String fileName)
+        {
+            //NOTE: cellranger is very picky about file name formatting
+            Matcher m = FILE_PATTERN.matcher(fileName);
+            if (m.matches())
+            {
+                if (!StringUtils.isEmpty(m.group(6)))
+                {
+                    return m.group(1) + "_L" + m.group(2) + "_" + m.group(3) + m.group(4) + m.group(5) + ".fastq.gz";
+                }
+                else
+                {
+                    getPipelineCtx().getLogger().info("no additional characters found");
+                }
+            }
+            else
+            {
+                getPipelineCtx().getLogger().warn("filename does not match Illumina formatting: " + fileName);
+            }
+
+            return fileName;
+        }
+
         public Set<String> prepareFastqSymlinks(Readset rs, File localFqDir) throws PipelineJobException
         {
             Set<String> ret = new HashSet<>();
@@ -354,7 +396,9 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             {
                 try
                 {
-                    File target1 = new File(localFqDir, rd.getFile1().getName());
+                    File target1 = new File(localFqDir, getSymlinkFileName(rd.getFile1().getName()));
+                    getPipelineCtx().getLogger().debug("file: " + rd.getFile1().getPath());
+                    getPipelineCtx().getLogger().debug("target: " + target1.getPath());
                     if (target1.exists())
                     {
                         getPipelineCtx().getLogger().debug("deleting existing symlink: " + target1.getName());
@@ -366,7 +410,9 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
 
                     if (rd.getFile2() != null)
                     {
-                        File target2 = new File(localFqDir, rd.getFile2().getName());
+                        File target2 = new File(localFqDir, getSymlinkFileName(rd.getFile2().getName()));
+                        getPipelineCtx().getLogger().debug("file: " + rd.getFile2().getPath());
+                        getPipelineCtx().getLogger().debug("target: " + target2.getPath());
                         if (target2.exists())
                         {
                             getPipelineCtx().getLogger().debug("deleting existing symlink: " + target2.getName());
@@ -401,7 +447,292 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             }
         }
 
-        private static Pattern FILE_PATTERN = Pattern.compile("^(.+)_L(.+)_(R){0,1}([0-9])(_[0-9]+){0,1}(\\.f(ast){0,1}q)(\\.gz)?$");
+        private void importAssayData(AnalysisModel model, File outDir) throws PipelineJobException
+        {
+            Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
+            if (assayId == null)
+            {
+                getPipelineCtx().getLogger().info("No assay selected, will not import");
+                return;
+            }
+
+            ExpProtocol protocol = ExperimentService.get().getExpProtocol(assayId);
+            if (protocol == null)
+            {
+                throw new PipelineJobException("Unable to find protocol: " + assayId);
+            }
+
+            File clonotypeCsv = new File(outDir, "clonotypes.csv");
+            if (!clonotypeCsv .exists())
+            {
+                getPipelineCtx().getLogger().warn("unable to find consensus contigs: " + clonotypeCsv .getPath());
+                return;
+            }
+
+            File consensusCsv = new File(outDir, "consensus_annotations.csv");
+            if (!consensusCsv .exists())
+            {
+                getPipelineCtx().getLogger().warn("unable to find consensus contigs: " + consensusCsv .getPath());
+                return;
+            }
+
+            File consensusFasta = new File(outDir, "consensus.fasta");
+            if (!consensusFasta.exists())
+            {
+                getPipelineCtx().getLogger().warn("unable to find FASTA: " + consensusFasta.getPath());
+                return;
+            }
+
+            getPipelineCtx().getLogger().info("loading results into assay");
+
+            Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+            Readset rs = getPipelineCtx().getSequenceSupport().getCachedReadset(model.getReadset());
+
+            //first build map of distinct FL sequences:
+            getPipelineCtx().getLogger().info("processing FASTA: " + consensusFasta.getPath());
+            Map<String, String> sequenceMap = new HashMap<>();
+            try (FastaDataLoader loader = new FastaDataLoader(consensusFasta, false))
+            {
+                loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
+
+                try (CloseableIterator<Map<String, Object>> i = loader.iterator())
+                {
+                    while (i.hasNext())
+                    {
+                        Map<String, Object> fastaRecord = i.next();
+                        sequenceMap.put((String) fastaRecord.get("header"), (String) fastaRecord.get("sequence"));
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            getPipelineCtx().getLogger().info("total sequences: " + sequenceMap.size());
+
+            Map<String, Integer> countMap = new HashMap<>();
+            Map<String, Double> fractionMap = new HashMap<>();
+            getPipelineCtx().getLogger().info("processing clonotype CSV: " + clonotypeCsv.getPath());
+
+            //header: clonotype_id	frequency	proportion	cdr3s_aa	cdr3s_nt
+            try (CSVReader reader = new CSVReader(Readers.getReader(clonotypeCsv), ','))
+            {
+                String[] line;
+                int idx = 0;
+                while ((line = reader.readNext()) != null)
+                {
+                    idx++;
+                    if (idx == 1)
+                    {
+                        getPipelineCtx().getLogger().debug("skipping header");
+                        continue;
+                    }
+
+                    countMap.put(line[0], Integer.parseInt(line[1]));
+                    fractionMap.put(line[0], Double.parseDouble(line[2]));
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            getPipelineCtx().getLogger().info("total clonotype rows: " + countMap.size());
+
+            //header for consensus_annotations.csv
+            //clonotype_id	consensus_id	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis
+            List<Map<String, Object>> rows = new ArrayList<>();
+            getPipelineCtx().getLogger().info("processing consensus CSV: " + consensusCsv.getPath());
+            try (CSVReader reader = new CSVReader(Readers.getReader(consensusCsv), ','))
+            {
+                String[] line;
+                int idx = 0;
+                while ((line = reader.readNext()) != null)
+                {
+                    idx++;
+                    if (idx == 1)
+                    {
+                        getPipelineCtx().getLogger().debug("skipping header");
+                        continue;
+                    }
+
+                    //this is one row per cell:
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                    row.put("sampleName", rs.getName());
+                    row.put("subjectId", rs.getSubjectId());
+                    row.put("sampleDate", rs.getSampleDate());
+                    row.put("alignmentId", model.getAlignmentFile());
+                    row.put("analysisId", model.getRowId());
+                    row.put("pipelineRunId", runId);
+
+                    row.put("cloneId", line[0]);
+                    row.put("locus", line[3]);
+                    row.put("vHit", removeNone(line[4]));
+                    row.put("dHit", removeNone(line[5]));
+                    row.put("jHit", removeNone(line[6]));
+                    row.put("cHit", removeNone(line[7]));
+
+                    row.put("cdr3", removeNone(line[10]));
+                    row.put("cdr3_nt", removeNone(line[11]));
+
+                    row.put("count", countMap.get(line[0]));
+                    row.put("fraction", fractionMap.get(line[0]));
+
+                    if (!"None".equals(line[1]) && !sequenceMap.containsKey(line[1]))
+                    {
+                        getPipelineCtx().getLogger().warn("Unable to find sequence for: " + line[1]);
+                    }
+                    else
+                    {
+                        row.put("sequence", sequenceMap.get(line[1]));
+                    }
+
+                    rows.add(row);
+                }
+            }
+            catch (Exception e)
+            {
+                getPipelineCtx().getLogger().error(e);
+                throw new PipelineJobException(e);
+            }
+
+            getPipelineCtx().getLogger().info("total assay rows: " + rows.size());
+            saveRun(protocol, model, rows, outDir);
+        }
+
+        private String removeNone(String input)
+        {
+            return "None".equals(input) ? null : input;
+        }
+
+        private void saveRun(ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir) throws PipelineJobException
+        {
+            ViewBackgroundInfo info = getPipelineCtx().getJob().getInfo();
+            ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
+
+            JSONObject runProps = new JSONObject();
+            runProps.put("performedby", getPipelineCtx().getJob().getUser().getDisplayName(getPipelineCtx().getJob().getUser()));
+            runProps.put("assayName", "10x");
+            runProps.put("Name", "Analysis: " + model.getAnalysisId());
+            runProps.put("analysisId", model.getAnalysisId());
+
+            Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+            runProps.put("pipelineRunId", runId);
+
+            JSONObject json = new JSONObject();
+            json.put("Run", runProps);
+
+            File assayTmp = new File(outDir, FileUtil.makeLegalName("10x-assay-upload_" + FileUtil.getTimestamp() + ".txt"));
+            if (assayTmp.exists())
+            {
+                assayTmp.delete();
+            }
+
+            getPipelineCtx().getLogger().info("total rows imported: " + rows.size());
+            if (!rows.isEmpty())
+            {
+                getPipelineCtx().getLogger().debug("saving assay file to: " + assayTmp.getPath());
+                try
+                {
+                    LaboratoryService.get().saveAssayBatch(rows, json, assayTmp, vc, AssayService.get().getProvider(protocol), protocol);
+                }
+                catch (ValidationException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
+        }
+
+        public void addMetrics(AnalysisModel model) throws PipelineJobException
+        {
+            getPipelineCtx().getLogger().debug("adding 10x metrics");
+
+            File metrics = new File(model.getAlignmentFileObject().getParentFile(), "metrics_summary.csv");
+            if (metrics.exists())
+            {
+                try (CSVReader reader = new CSVReader(Readers.getReader(metrics)))
+                {
+                    String[] line;
+                    String[] header = null;
+                    String[] metricValues = null;
+
+                    int i = 0;
+                    while ((line = reader.readNext()) != null)
+                    {
+                        if (i == 0)
+                        {
+                            header = line;
+                        }
+                        else
+                        {
+                            metricValues = line;
+                            break;
+                        }
+
+                        i++;
+                    }
+
+                    int totalAdded = 0;
+                    TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
+                    for (int j = 0; j < header.length; j++)
+                    {
+                        Map<String, Object> toInsert = new CaseInsensitiveHashMap<>();
+                        toInsert.put("container", getPipelineCtx().getJob().getContainer().getId());
+                        toInsert.put("createdby", getPipelineCtx().getJob().getUser().getUserId());
+                        toInsert.put("created", new Date());
+                        toInsert.put("readset", model.getReadset());
+                        toInsert.put("analysis_id", model.getRowId());
+                        toInsert.put("dataid", model.getAlignmentFile());
+
+                        toInsert.put("category", "Cell Ranger VDJ");
+                        toInsert.put("metricname", header[j]);
+
+                        metricValues[j] = metricValues[j].replaceAll(",", "");
+                        Object val = metricValues[j];
+                        if (metricValues[j].contains("%"))
+                        {
+                            metricValues[j] = metricValues[j].replaceAll("%", "");
+                            Double d = ConvertHelper.convert(metricValues[j], Double.class);
+                            d = d / 100.0;
+                            val = d;
+                        }
+
+                        toInsert.put("metricvalue", val);
+
+                        Table.insert(getPipelineCtx().getJob().getUser(), ti, toInsert);
+                        totalAdded++;
+                    }
+
+                    getPipelineCtx().getLogger().info("total metrics added: " + totalAdded);
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
+            else
+            {
+                getPipelineCtx().getLogger().warn("unable to find metrics file: " + metrics.getPath());
+            }
+        }
+
+        public void complete(SequenceAnalysisJobSupport support, AnalysisModel model) throws PipelineJobException
+        {
+            addMetrics(model);
+
+            File bam = model.getAlignmentData().getFile();
+            if (bam.exists())
+            {
+                importAssayData(model, bam.getParentFile());
+            }
+            else
+            {
+                getPipelineCtx().getLogger().warn("BAM not found, expected: " + bam.getPath());
+            }
+        }
+
+        private static Pattern FILE_PATTERN = Pattern.compile("^(.+)_L(.+?)_(R){0,1}([0-9])(_[0-9]+){0,1}(.*?)(\\.f(ast){0,1}q)(\\.gz)?$");
         private static Pattern SAMPLE_PATTERN = Pattern.compile("^(.+)_S[0-9]+(.*)$");
 
         private String getSampleName(String fn)
@@ -421,6 +752,10 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 }
 
                 return ret;
+            }
+            else
+            {
+                getPipelineCtx().getLogger().debug("file does not match illumina pattern: [" + fn + "]");
             }
 
             throw new IllegalArgumentException("Unable to infer Illumina sample name: " + fn);

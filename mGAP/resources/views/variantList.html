@@ -2,6 +2,10 @@
     Ext4.onReady(function (){
         var rowId = LABKEY.ActionURL.getParameter('release');
         if (!rowId){
+            rowId = mGAP.Utils.getMGapReleaseId();
+        }
+
+        if (!rowId){
             alert('Must Provide Readset Release Id');
             return;
         }

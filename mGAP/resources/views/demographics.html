@@ -1,0 +1,20 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var childEl = jQuery('#' + webpart.wrapperDivId + ' > div.wp');
+        childEl.attr('id', webpart.wrapperDivId + '-wp');
+
+        LDK.Utils.getReadOnlyQWP({
+            frame: 'none',
+            title: 'mGAP Demographics',
+            schemaName: 'study',
+            queryName: 'demographics',
+            showRecordSelectors: false,
+            showDetailsColumn: false
+        }).render(childEl.attr('id'));
+    });
+
+</script>
+
+<div class="wp" style="min-height: 50px;min-width: 200px;"></div>

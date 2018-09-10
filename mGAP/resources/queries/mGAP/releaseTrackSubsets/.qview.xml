@@ -1,0 +1,11 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="trackName"/>
+        <column name="subjectId"/>
+        <column name="mgapAlias"/>
+    </columns>
+    <sorts>
+        <sort column="trackName" descending="false"/>
+        <sort column="subjectId" descending="false"/>
+    </sorts>
+</customView>

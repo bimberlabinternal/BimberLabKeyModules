@@ -11,11 +11,15 @@ Ext4.define('mGAP.window.SequenceDownloadWindow', {
                         Ext4.Msg.alert('Error', 'No rows selected');
                         return;
                     }
+
+                    var checked = LABKEY.DataRegions[dataRegionName].getChecked();
+                    LDK.Assert.assertEquality('getChecked and getSelected do not match', results.selected.length, checked.length)
+
                     LABKEY.Query.selectRows({
                         schemaName: 'mGap',
                         queryName: 'sequenceDatasets',
                         columns: 'sraAccession',
-                        filterArray: [LABKEY.Filter.create('rowid', results.selected.join(';'), LABKEY.Filter.Types.IN)],
+                        filterArray: [LABKEY.Filter.create('rowid', checked.join(';'), LABKEY.Filter.Types.IN)],
                         scope: this,
                         success: function(results){
                             var sraIDs = [];

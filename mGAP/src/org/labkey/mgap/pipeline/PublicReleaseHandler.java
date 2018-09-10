@@ -16,9 +16,14 @@ import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
+import org.junit.Assert;
+import org.junit.Test;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.DbScope;
@@ -35,7 +40,7 @@ import org.labkey.api.pipeline.file.FileAnalysisJobSupport;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
-import org.labkey.api.query.QueryUpdateService;
+import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
@@ -58,7 +63,6 @@ import org.labkey.mgap.mGAPSchema;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -73,6 +77,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by bimber on 5/2/2017.
@@ -90,13 +96,10 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 ToolParameterDescriptor.create("removeAnnotations", "Remove Most Annotations", "If selected, most annotations and extraneous information will be removed.  This is both to trim down the size of the public VCF and to shield some information.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, null),
-                ToolParameterDescriptor.create("sitesOnly", "Omit Genotypes", "If selected, genotypes will be omitted and a VCF with only the first 8 columns will be produced.", "checkbox", new JSONObject(){{
-                    put("checked", false);
-                }}, null),
                 ToolParameterDescriptor.create("snvOnly", "Limit To SNVs", "If selected, only variants of the type SNV will be included.", "checkbox", new JSONObject()
                 {{
                     put("checked", false);
-                }}, true),
+                }}, false),
                 ToolParameterDescriptor.createExpDataParam("gtfFile", "GTF File", "The gene file used to create these annotations.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
                 {{
                     put("extensions", Arrays.asList("gtf"));
@@ -154,6 +157,45 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
+            job.getLogger().info("writing track/subset data to file");
+            TableInfo releaseTrackSubsets = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS);
+
+            Set<FieldKey> toSelect = new HashSet<>();
+            toSelect.add(FieldKey.fromString("trackName"));
+            toSelect.add(FieldKey.fromString("subjectId"));
+            toSelect.add(FieldKey.fromString("trackName/isprimarytrack"));
+            toSelect.add(FieldKey.fromString("trackName/vcfId"));
+            Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(releaseTrackSubsets, toSelect);
+
+            Set<String> distinctTracks = new HashSet<>();
+            Set<String> distinctSubjects = new HashSet<>();
+            File trackFile = getTrackFile(outputDir);
+            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(trackFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+            {
+                new TableSelector(releaseTrackSubsets, colMap.values(), null, null).forEachResults(rs -> {
+                    if (rs.getObject(FieldKey.fromString("trackName/vcfId")) != null)
+                    {
+                        job.getLogger().info("skipping row b/c it has a VCF already: " + FieldKey.fromString("trackName"));
+                        return;
+                    }
+
+                    writer.writeNext(new String[]{
+                            rs.getString(FieldKey.fromString("trackName")),
+                            rs.getString(FieldKey.fromString("subjectId")),
+                            String.valueOf(rs.getBoolean(FieldKey.fromString("trackName/isprimarytrack")))
+                    });
+
+                    distinctTracks.add(rs.getString(FieldKey.fromString("trackName")));
+                    distinctSubjects.add(rs.getString(FieldKey.fromString("subjectId")));
+                });
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            job.getLogger().info("total tracks: " + distinctTracks.size());
+
             File outputFile = getSampleNameFile(((FileAnalysisJobSupport)job).getAnalysisDirectory());
             job.getLogger().debug("caching mGAP aliases to file: " + outputFile.getPath());
 
@@ -173,7 +215,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 {
                     VCFHeader header = reader.getFileHeader();
                     TableInfo ti = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
-                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), header.getSampleNamesInOrder(), CompareType.IN), null);
+                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), distinctSubjects, CompareType.IN), null);
                     ts.forEachResults(new Selector.ForEachBlock<Results>()
                     {
                         @Override
@@ -184,10 +226,29 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     });
 
                     Set<String> sampleNames = new HashSet<>(header.getSampleNamesInOrder());
+                    job.getLogger().info("total samples in input VCF: " + sampleNames.size());
+
+                    sampleNames.retainAll(distinctSubjects);
+                    job.getLogger().info("total samples to be written to any track: " + sampleNames.size());
+                    if (sampleNames.size() != distinctSubjects.size())
+                    {
+                        Set<String> samplesMissing = new HashSet<>(distinctSubjects);
+                        samplesMissing.removeAll(header.getSampleNamesInOrder());
+                        job.getLogger().warn("not all samples requested in tracks found in VCF.  missing: " + StringUtils.join(samplesMissing, ","));
+                    }
+
                     sampleNames.removeAll(sampleNameMap.keySet());
                     if (!sampleNames.isEmpty())
                     {
                         throw new PipelineJobException("mGAP Aliases were not found for all IDs.  Missing: " + StringUtils.join(sampleNames, ", "));
+                    }
+
+                    //also list samples in VCF that will not be used:
+                    sampleNames = new HashSet<>(header.getSampleNamesInOrder());
+                    sampleNames.removeAll(distinctSubjects);
+                    if (!sampleNames.isEmpty())
+                    {
+                        job.getLogger().info("the following samples are in the VCF but not selected to use in any track: " + StringUtils.join(sampleNames, ","));
                     }
                 }
             }
@@ -206,6 +267,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
         }
 
+        private File getTrackFile(File outputDir)
+        {
+            return new File(outputDir, "releaseTracks.txt");
+        }
+
         private File getSampleNameFile(File outputDir)
         {
             return new File(outputDir, "sampleMapping.txt");
@@ -221,6 +287,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
             Map<String, SequenceOutputFile> outputVCFMap = new HashMap<>();
             Map<String, SequenceOutputFile> outputTableMap = new HashMap<>();
+            Map<String, SequenceOutputFile> trackVCFMap = new HashMap<>();
+
             for (SequenceOutputFile so : outputsCreated)
             {
                 if (so.getRowid() == null || so.getRowid() == 0)
@@ -228,14 +296,22 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("No rowId found for sequence output");
                 }
 
-                if (so.getName().endsWith("Table"))
+                if (so.getCategory().endsWith("Table"))
                 {
                     String name = so.getName().replaceAll(" Variant Table", "");
                     outputTableMap.put(name, so);
                 }
-                else
+                else if (so.getCategory().endsWith("Release"))
                 {
                     outputVCFMap.put(so.getName(), so);
+                }
+                else if (so.getCategory().endsWith("Release Track"))
+                {
+                    trackVCFMap.put(so.getName(), so);
+                }
+                else
+                {
+                    throw new PipelineJobException("Unexpected output: " + so.getCategory());
                 }
             }
 
@@ -243,6 +319,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             List<Map<String, Object>> variantReleaseRows = new ArrayList<>();
             List<Map<String, Object>> variantTableRows = new ArrayList<>();
             List<Map<String, Object>> releaseStatsRows = new ArrayList<>();
+            List<Map<String, Object>> tracksPerReleaseRows = new ArrayList<>();
+
             boolean testOnly = StringUtils.isEmpty(job.getParameters().get("testOnly")) ? false : ConvertHelper.convert(job.getParameters().get("testOnly"), boolean.class);
 
             for (String release : outputVCFMap.keySet())
@@ -280,21 +358,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     }
                 }
 
-                if (totalSubjects == 0)
-                {
-                    boolean sitesOnly = Boolean.parseBoolean(job.getParameters().get("sitesOnly"));
-                    if (sitesOnly)
-                    {
-                        job.getLogger().info("attempting to infer total subjects from original VCF");
-                        File originalVCF = inputs.get(0).getFile();
-                        try (VCFFileReader reader = new VCFFileReader(originalVCF))
-                        {
-                            totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
-                        }
-                    }
-                }
-
-                //actually create outputfile
+                //actually create release record
                 Map<String, Object> row = new CaseInsensitiveHashMap<>();
                 row.put("version", job.getParameters().get("releaseVersion"));
                 row.put("releaseDate", new Date());
@@ -336,6 +400,9 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     map.put("reason", line[5]);
                                     map.put("description", line[6]);
                                     map.put("overlappingGenes", line[7]);
+                                    map.put("omim", line[8]);
+                                    map.put("omim_phenotype", line[9]);
+                                    map.put("af", line[10]);
                                     map.put("objectId", new GUID().toString());
 
                                     variantTableRows.add(map);
@@ -376,6 +443,36 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                         {
                             job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
                         }
+
+                        //also tracks:
+                        UserSchema us = QueryService.get().getUserSchema(job.getUser(), job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer(), mGAPSchema.NAME);
+                        new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_TRACKS), null, null).forEachResults(rs -> {
+                            SequenceOutputFile so3 = trackVCFMap.get(rs.getString(FieldKey.fromString("trackName")));
+                            if (so3 == null && rs.getBoolean(FieldKey.fromString("isprimarytrack")))
+                            {
+                                //this is the primary track
+                                so3 = so;
+                            }
+
+                            if (so3 == null && rs.getObject("vcfId") == null)
+                            {
+                                job.getLogger().error("unable to find track with name: " + rs.getString(FieldKey.fromString("trackName")));
+                                return;
+                            }
+
+                            Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                            map.put("trackName", rs.getString(FieldKey.fromString("trackName")));
+                            map.put("label", rs.getString(FieldKey.fromString("label")));
+                            map.put("category", rs.getString(FieldKey.fromString("category")));
+                            map.put("description", rs.getString(FieldKey.fromString("description")));
+                            map.put("isprimarytrack", rs.getBoolean(FieldKey.fromString("isprimarytrack")));
+                            map.put("url", rs.getString(FieldKey.fromString("url")));
+                            map.put("releaseId", guid);
+                            map.put("vcfId", so3 == null ? rs.getInt(FieldKey.fromString("vcfId")) : so3.getRowid());
+                            map.put("objectId", new GUID().toString());
+
+                            tracksPerReleaseRows.add(map);
+                        });
                     }
                     else
                     {
@@ -427,6 +524,16 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                     job.getLogger().info("total release stat records: " + releaseStatsRows.size());
 
+                    TableInfo tracksPerReleaseTable = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
+                    BatchValidationException errors4 = new BatchValidationException();
+                    tracksPerReleaseTable.getUpdateService().insertRows(job.getUser(), job.getContainer(), tracksPerReleaseRows, errors4, null, new HashMap<>());
+                    if (errors4.hasErrors())
+                    {
+                        throw errors4;
+                    }
+
+                    job.getLogger().info("total tracks per release records: " + tracksPerReleaseRows.size());
+
                     transaction.commit();
                 }
                 catch (Exception e)
@@ -467,7 +574,6 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 boolean variantTableOnly = ctx.getParams().optBoolean("variantTableOnly", false);
                 //if variantTableOnly is selected, automatically ignore all these.
                 boolean removeAnnotations = !variantTableOnly && ctx.getParams().optBoolean("removeAnnotations", false);
-                boolean sitesOnly = !variantTableOnly && ctx.getParams().optBoolean("sitesOnly", false);
                 boolean snvOnly = !variantTableOnly && ctx.getParams().optBoolean("snvOnly", false);
                 String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
 
@@ -510,7 +616,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                 args.add("-o");
                                 args.add(outputFile.getPath());
 
-                                for (String key : Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR"))
+                                for (String key : Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR", "ReverseComplementedAlleles"))
                                 {
                                     args.add("-A");
                                     args.add(key);
@@ -524,33 +630,12 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                                 args.add("-ef");
                                 args.add("--clearGenotypeFilter");
-                                if (sitesOnly)
-                                {
-                                    args.add("--sites_only");
-                                }
 
                                 super.execute(args);
                             }
                         }.execute(currentVCF, outputFile, genome.getWorkingFastaFile());
                     }
 
-                    currentVCF = outputFile;
-                    ctx.getFileManager().addIntermediateFile(outputFile);
-                    ctx.getFileManager().addIntermediateFile(new File(outputFile.getPath() + ".tbi"));
-                }
-                //NOTE: if removing annotations, this will be accomplished by the step above
-                else if (sitesOnly)
-                {
-                    File outputFile = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".noGenotypes.vcf.gz");
-                    if (indexExists(outputFile))
-                    {
-                        ctx.getLogger().info("re-using existing output: " + outputFile.getPath());
-                    }
-                    else
-                    {
-                        SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
-                        wrapper.execute(genome.getWorkingFastaFile(), currentVCF, outputFile, Arrays.asList("--sites_only"));
-                    }
                     currentVCF = outputFile;
                     ctx.getFileManager().addIntermediateFile(outputFile);
                     ctx.getFileManager().addIntermediateFile(new File(outputFile.getPath() + ".tbi"));
@@ -574,257 +659,333 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     ctx.getFileManager().addIntermediateFile(new File(outputFile.getPath() + ".tbi"));
                 }
 
-                if (!sitesOnly && !variantTableOnly)
+                if (!variantTableOnly)
                 {
                     currentVCF = renameSamples(currentVCF, genome, ctx);
                     ctx.getFileManager().addIntermediateFile(currentVCF);
                     ctx.getFileManager().addIntermediateFile(new File(currentVCF.getPath() + ".tbi"));
                 }
 
-                //rename output
-                File renamed = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion) + ".vcf.gz");
-                try
+                ctx.getLogger().info("splitting VCF by track:");
+                String primaryTrackName = getPrimaryTrackName(getTrackFile(ctx.getSourceDirectory()));
+                Map<String, List<String>> subjectByTrack = parseTrackMap(getTrackFile(ctx.getSourceDirectory()));
+
+                File primaryTrackVcf = null;
+                for (String trackName : subjectByTrack.keySet())
                 {
-                    if (renamed.exists())
+                    ctx.getLogger().info("track: " + trackName + ", total samples: " + subjectByTrack.get(trackName).size());
+                    File outputFile = new File(FileUtil.makeLegalName(trackName).replaceAll(" ", "_") + ".vcf.gz");
+                    boolean isPrimaryTrack = trackName.equals(primaryTrackName);
+                    if (isPrimaryTrack)
                     {
-                        ctx.getLogger().info("deleting existing file: " + renamed.getPath());
-                        renamed.delete();
+                        ctx.getLogger().info("this is the primary track");
+                        outputFile = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
+                        primaryTrackVcf = outputFile;
                     }
 
-                    File renamedIdx = new File(renamed.getPath() + ".tbi");
-                    if (renamedIdx.exists())
+                    if (indexExists(outputFile))
                     {
-                        ctx.getLogger().info("deleting existing file: " + renamedIdx.getPath());
-                        renamedIdx.delete();
+                        ctx.getLogger().info("re-using existing output: " + outputFile.getPath());
+                    }
+                    else
+                    {
+                        if (outputFile.exists())
+                        {
+                            ctx.getLogger().info("deleting existing file: " + outputFile.getPath());
+                            outputFile.delete();
+                        }
+
+                        Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(ctx.getSourceDirectory()));
+                        SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
+                        List<String> args = new ArrayList<>();
+                        args.add("-env");
+                        args.add("-noTrim"); //in order to keep annotations correct
+                        subjectByTrack.get(trackName).forEach(x -> {
+                            args.add("-sn");
+                            args.add(sampleMap.get(x));
+                        });
+                        wrapper.execute(genome.getWorkingFastaFile(), currentVCF, outputFile, args);
+
+                        ctx.getLogger().info("total sites: " + SequenceAnalysisService.get().getVCFLineCount(outputFile, ctx.getLogger(), false));
                     }
 
-                    ctx.getLogger().info("Copying final vcf from: " + currentVCF.getPath());
-                    ctx.getLogger().info("to: " + renamed.getPath());
-                    FileUtils.copyFile(currentVCF, renamed);
-                    FileUtils.copyFile(new File(currentVCF.getPath() + ".tbi"), renamedIdx);
-                    currentVCF = renamed;
-                }
-                catch (IOException e)
-                {
-                    throw new PipelineJobException(e);
-                }
+                    ctx.getFileManager().removeIntermediateFile(outputFile);
+                    ctx.getFileManager().removeIntermediateFile(new File(outputFile.getPath() + ".tbi"));
 
-                ctx.getLogger().info("inspecting VCF and creating summary table");
-                long sitesInspected = 0L;
-
-                long totalVariants = 0L;
-                long totalPrivateVariants = 0L;
-                Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
-
-                File interestingVariantTable = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".variants.txt");
-                try (VCFFileReader reader = new VCFFileReader(currentVCF); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-                {
-                    writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)"});
-                    while (it.hasNext())
+                    //make outputs, summarize:
+                    boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
+                    if (isPrimaryTrack)
                     {
-                        Set<List<String>> queuedLines = new LinkedHashSet<>();
-
-                        sitesInspected++;
-
-                        if (sitesInspected % 1000000 == 0)
+                        ctx.getLogger().info("inspecting primary VCF and creating summary table");
+                        inspectAndSummarizeVcf(ctx, primaryTrackVcf, translator, genome, true);
+                        if (!variantTableOnly)
                         {
-                            ctx.getLogger().info("inspected " + sitesInspected + " variants");
+                            SequenceOutputFile output = new SequenceOutputFile();
+                            output.setFile(primaryTrackVcf);
+                            output.setName("mGAP Release: " + releaseVersion);
+                            output.setCategory((testOnly ? "Test " : "") + "mGAP Release");
+                            output.setLibrary_id(genome.getGenomeId());
+                            ctx.getFileManager().addSequenceOutput(output);
+
+                            File interestingVariantTable = getVariantTableName(ctx, primaryTrackVcf);
+                            SequenceOutputFile output2 = new SequenceOutputFile();
+                            output2.setFile(interestingVariantTable);
+                            output2.setName("mGAP Release: " + releaseVersion + " Variant Table");
+                            output2.setCategory((testOnly ? "Test " : "") + "mGAP Release Variant Table");
+                            output2.setLibrary_id(genome.getGenomeId());
+                            ctx.getFileManager().addSequenceOutput(output2);
                         }
-
-                        VariantContext vc = it.next();
-                        if (vc.isFiltered())
+                    }
+                    else
+                    {
+                        if (!variantTableOnly)
                         {
-                            continue;
-                        }
-
-                        totalVariants++;
-
-                        //track total by variant type
-                        Long typeCount = typeCounts.get(vc.getType());
-                        if (typeCount == null)
-                        {
-                            typeCount = 0L;
-                        }
-                        typeCount++;
-                        typeCounts.put(vc.getType(), typeCount);
-
-                        //count private alleles.  note: this is counting alleles, not sites
-                        for (Allele a : vc.getAlleles())
-                        {
-                            int sampleCount = 0;
-                            for (Genotype g : vc.getGenotypes())
-                            {
-                                if (g.getAlleles().contains(a))
-                                {
-                                    sampleCount++;
-                                    if (sampleCount > 1)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (sampleCount == 1)
-                            {
-                                totalPrivateVariants++;
-                            }
-                        }
-
-                        Set<String> overlappingGenes = new HashSet<>();
-                        if (vc.getAttribute("ANN") != null)
-                        {
-                            List<String> anns = vc.getAttributeAsStringList("ANN", "");
-
-                            //find overlapping genes first
-                            for (String ann : anns)
-                            {
-                                if (StringUtils.isEmpty(ann))
-                                {
-                                    continue;
-                                }
-
-                                String[] tokens = ann.split("\\|");
-                                if (tokens.length < 4)
-                                {
-                                    //intergenic modifiers
-                                    continue;
-                                }
-
-                                if (!StringUtils.isEmpty(tokens[3]))
-                                {
-                                    String geneName = tokens[3];
-                                    if (geneName.startsWith("ENSMMUE"))
-                                    {
-                                        //exons
-                                        continue;
-                                    }
-
-                                    if (geneName.startsWith("gene:"))
-                                    {
-                                        geneName = geneName.replaceAll("gene:", "");
-                                    }
-
-                                    if (translator.getGeneMap().containsKey(geneName) && translator.getGeneMap().get(geneName).get("gene_name") != null)
-                                    {
-                                        geneName = translator.getGeneMap().get(geneName).get("gene_name");
-                                    }
-
-                                    overlappingGenes.add(geneName);
-                                }
-                            }
-
-                            for (String ann : anns)
-                            {
-                                if (StringUtils.isEmpty(ann))
-                                {
-                                    continue;
-                                }
-
-                                String[] tokens = ann.split("\\|");
-
-                                if ("HIGH".equals(tokens[2]))
-                                {
-                                    if (tokens.length < 10)
-                                    {
-                                        ctx.getLogger().error("unexpected ANN line at pos: " + vc.getContig() + " " + vc.getStart() + "[" + tokens + "]");
-                                        continue;
-                                    }
-
-                                    String description = "Type: " + tokens[1] + ", Gene: " + tokens[3];
-                                    if (tokens.length > 10 && !StringUtils.isEmpty(tokens[10]))
-                                    {
-                                        description += ", AA Change: " + tokens[10];
-                                    }
-
-                                    maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes);
-                                }
-                            }
-                        }
-
-                        if (vc.getAttribute("CLN_SIG") != null)
-                        {
-                            List<String> clnAlleles = vc.getAttributeAsStringList("CLN_ALLELE", "");
-                            List<String> clnSigs = vc.getAttributeAsStringList("CLN_SIG", "");
-                            List<String> clnDisease = vc.getAttributeAsStringList("CLN_DN", "");
-                            int i = -1;
-                            for (String sigList : clnSigs)
-                            {
-                                i++;
-
-                                List<String> sigSplit = Arrays.asList(sigList.split("\\|"));
-                                List<String> diseaseSplit = Arrays.asList(clnDisease.get(i).split("\\|"));
-                                int j = 0;
-                                for (String sig : sigSplit)
-                                {
-                                    //TODO: consider disease = not_provided
-                                    if (isAllowableClinVarSig(sig))
-                                    {
-                                        String description = StringUtils.join(new String[]{
-                                                "Significance: " + sig
-                                        }, ",");
-
-                                        String allele = clnAlleles.get(i);
-                                        maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes);
-                                    }
-
-                                    j++;
-                                }
-                            }
-                        }
-
-                        //NE: nsdb Polyphen2_HVAR_score: Polyphen2 score based on HumVar, i.e. hvar_prob. The score ranges from 0 to 1, and the corresponding prediction is 'probably damaging' if it is in [0.909,1], 'possibly damaging' if it is in [0.447,0.908], 'benign' if it is in [0,0.446]. Score cutoff for binary classification is 0.5, i.e. the prediction is 'neutral' if the score is smaller than 0.5 and 'deleterious' if the score is larger than 0.5. Multiple entries separated by
-                        //NF: nsdb Polyphen2_HVAR_pred: Polyphen2 prediction based on HumVar, 'D' ('probably damaging'),'P' ('possibly damaging') and 'B' ('benign'). Multiple entries separated by
-                        if (vc.getAttribute("NF") != null && !".".equals(vc.getAttribute("NF")))
-                        {
-                            Set<String> polyphenPredictions = new HashSet<>(vc.getAttributeAsStringList("NF", null));
-                            polyphenPredictions.remove("B");
-                            polyphenPredictions.remove("P");
-
-                            if (!polyphenPredictions.isEmpty())
-                            {
-                                Double maxScore = Collections.max(vc.getAttributeAsDoubleList("NE", 0.0));
-                                String description = StringUtils.join(new String[]{
-                                        "Score: " + String.valueOf(maxScore)
-                                }, ",");
-
-                                maybeWriteVariantLine(queuedLines, vc, null, "Polyphen2", "Prediction: " + StringUtils.join(polyphenPredictions, ","), description, overlappingGenes);
-                            }
-                        }
-
-                        for (List<String> line : queuedLines)
-                        {
-                            writer.writeNext(line.toArray(new String[line.size()]));
+                            SequenceOutputFile output = new SequenceOutputFile();
+                            output.setFile(outputFile);
+                            output.setName(trackName);
+                            output.setCategory((testOnly ? "Test " : "") + "mGAP Release Track");
+                            output.setLibrary_id(genome.getGenomeId());
+                            ctx.getFileManager().addSequenceOutput(output);
                         }
                     }
                 }
-                catch (IOException e)
+
+                if (primaryTrackVcf == null)
                 {
-                    throw new PipelineJobException(e);
+                    throw new PipelineJobException("No VCF marked as the primary track");
+                }
+            }
+        }
+
+        private File getVariantTableName(JobContext ctx, File vcfInput)
+        {
+            return new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(vcfInput.getName()) + ".variants.txt");
+        }
+
+        private void inspectAndSummarizeVcf(JobContext ctx, File vcfInput, GeneToNameTranslator translator, ReferenceGenome genome, boolean generateSummaries) throws PipelineJobException
+        {
+            long sitesInspected = 0L;
+            long totalVariants = 0L;
+            long totalPrivateVariants = 0L;
+            Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
+
+            File interestingVariantTable = getVariantTableName(ctx, vcfInput);
+            try (VCFFileReader reader = new VCFFileReader(vcfInput); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+            {
+                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF"});
+                while (it.hasNext())
+                {
+                    Set<List<String>> queuedLines = new LinkedHashSet<>();
+
+                    sitesInspected++;
+
+                    if (sitesInspected % 1000000 == 0)
+                    {
+                        ctx.getLogger().info("inspected " + sitesInspected + " variants");
+                    }
+
+                    VariantContext vc = it.next();
+                    if (vc.isFiltered())
+                    {
+                        continue;
+                    }
+
+                    totalVariants++;
+
+                    //track total by variant type
+                    Long typeCount = typeCounts.get(vc.getType());
+                    if (typeCount == null)
+                    {
+                        typeCount = 0L;
+                    }
+                    typeCount++;
+                    typeCounts.put(vc.getType(), typeCount);
+
+                    //count private alleles.  note: this is counting alleles, not sites
+                    for (Allele a : vc.getAlleles())
+                    {
+                        int sampleCount = 0;
+                        for (Genotype g : vc.getGenotypes())
+                        {
+                            if (g.getAlleles().contains(a))
+                            {
+                                sampleCount++;
+                                if (sampleCount > 1)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (sampleCount == 1)
+                        {
+                            totalPrivateVariants++;
+                        }
+                    }
+
+                    Set<String> omims = new LinkedHashSet<>();
+                    Set<String> omimds = new LinkedHashSet<>();
+                    if (vc.getAttribute("OMIMN") != null)
+                    {
+                        omims.add(vc.getAttributeAsString("OMIMN", null));
+                    }
+
+                    if (vc.getAttribute("OMIMD") != null)
+                    {
+                        if (vc.getAttribute("OMIMD") instanceof Collection || vc.getAttribute("OMIMD").getClass().isArray())
+                        {
+                            ctx.getLogger().warn("OMIMD non-string: " + vc.getAttribute("OMIMD").getClass().getName());
+                            ctx.getLogger().warn(vc.getAttribute("OMIMD"));
+                        }
+
+                        Collection<String> vals = parseOmim(vc.getAttributeAsString("OMIMD", null), ctx.getLogger());
+                        if (vals != null)
+                        {
+                            omimds.addAll(vals);
+                        }
+                    }
+
+                    Set<String> overlappingGenes = new HashSet<>();
+                    if (vc.getAttribute("ANN") != null)
+                    {
+                        List<String> anns = vc.getAttributeAsStringList("ANN", "");
+
+                        //find overlapping genes first
+                        for (String ann : anns)
+                        {
+                            if (StringUtils.isEmpty(ann))
+                            {
+                                continue;
+                            }
+
+                            String[] tokens = ann.split("\\|");
+                            if (tokens.length < 4)
+                            {
+                                //intergenic modifiers
+                                continue;
+                            }
+
+                            if (!StringUtils.isEmpty(tokens[3]))
+                            {
+                                String geneName = tokens[3];
+                                if (geneName.startsWith("ENSMMUE"))
+                                {
+                                    //exons
+                                    continue;
+                                }
+
+                                if (geneName.startsWith("gene:"))
+                                {
+                                    geneName = geneName.replaceAll("gene:", "");
+                                }
+
+                                if (translator.getGeneMap().containsKey(geneName) && translator.getGeneMap().get(geneName).get("gene_name") != null)
+                                {
+                                    geneName = translator.getGeneMap().get(geneName).get("gene_name");
+                                }
+
+                                overlappingGenes.add(geneName);
+                            }
+                        }
+
+                        for (String ann : anns)
+                        {
+                            if (StringUtils.isEmpty(ann))
+                            {
+                                continue;
+                            }
+
+                            String[] tokens = ann.split("\\|");
+
+                            if ("HIGH".equals(tokens[2]))
+                            {
+                                if (tokens.length < 10)
+                                {
+                                    ctx.getLogger().error("unexpected ANN line at pos: " + vc.getContig() + " " + vc.getStart() + "[" + tokens + "]");
+                                    continue;
+                                }
+
+                                String description = "Type: " + tokens[1] + ", Gene: " + tokens[3];
+                                if (tokens.length > 10 && !StringUtils.isEmpty(tokens[10]))
+                                {
+                                    description += ", AA Change: " + tokens[10];
+                                }
+
+                                maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger());
+                            }
+                        }
+                    }
+
+                    if (vc.getAttribute("CLN_SIG") != null)
+                    {
+                        List<String> clnAlleles = vc.getAttributeAsStringList("CLN_ALLELE", "");
+                        List<String> clnSigs = vc.getAttributeAsStringList("CLN_SIG", "");
+                        List<String> clnDisease = vc.getAttributeAsStringList("CLN_DN", "");
+                        int i = -1;
+                        for (String sigList : clnSigs)
+                        {
+                            i++;
+
+                            List<String> sigSplit = Arrays.asList(sigList.split("\\|"));
+                            List<String> diseaseSplit = Arrays.asList(clnDisease.get(i).split("\\|"));
+                            int j = 0;
+                            for (String sig : sigSplit)
+                            {
+                                //TODO: consider disease = not_provided
+                                if (isAllowableClinVarSig(sig))
+                                {
+                                    String description = StringUtils.join(new String[]{
+                                            "Significance: " + sig
+                                    }, ",");
+
+                                    String allele = clnAlleles.get(i);
+                                    maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger());
+                                }
+
+                                j++;
+                            }
+                        }
+                    }
+
+                    //NE: nsdb Polyphen2_HVAR_score: Polyphen2 score based on HumVar, i.e. hvar_prob. The score ranges from 0 to 1, and the corresponding prediction is 'probably damaging' if it is in [0.909,1], 'possibly damaging' if it is in [0.447,0.908], 'benign' if it is in [0,0.446]. Score cutoff for binary classification is 0.5, i.e. the prediction is 'neutral' if the score is smaller than 0.5 and 'deleterious' if the score is larger than 0.5. Multiple entries separated by
+                    //NF: nsdb Polyphen2_HVAR_pred: Polyphen2 prediction based on HumVar, 'D' ('probably damaging'),'P' ('possibly damaging') and 'B' ('benign'). Multiple entries separated by
+                    if (vc.getAttribute("NF") != null && !".".equals(vc.getAttribute("NF")))
+                    {
+                        Set<String> polyphenPredictions = new HashSet<>(vc.getAttributeAsStringList("NF", null));
+                        polyphenPredictions.remove("B");
+                        polyphenPredictions.remove("P");
+
+                        if (!polyphenPredictions.isEmpty())
+                        {
+                            Double maxScore = Collections.max(vc.getAttributeAsDoubleList("NE", 0.0));
+                            String description = StringUtils.join(new String[]{
+                                    "Score: " + String.valueOf(maxScore)
+                            }, ",");
+
+                            maybeWriteVariantLine(queuedLines, vc, null, "Polyphen2", "Prediction: " + StringUtils.join(polyphenPredictions, ","), description, overlappingGenes, omims, omimds, ctx.getLogger());
+                        }
+                    }
+
+                    for (List<String> line : queuedLines)
+                    {
+                        writer.writeNext(line.toArray(new String[line.size()]));
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            if (generateSummaries)
+            {
+                int totalSubjects;
+                try (VCFFileReader reader = new VCFFileReader(vcfInput))
+                {
+                    totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
-
-                generateSummaries(ctx, currentVCF, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
-
-                ctx.getFileManager().removeIntermediateFile(currentVCF);
-                ctx.getFileManager().removeIntermediateFile(new File(currentVCF.getPath(), ".tbi"));
-
-                if (!variantTableOnly)
-                {
-                    SequenceOutputFile output = new SequenceOutputFile();
-                    output.setFile(currentVCF);
-                    output.setName("mGAP Release: " + releaseVersion);
-                    output.setCategory((testOnly ? "Test " : "") + "mGAP Release");
-                    output.setLibrary_id(genome.getGenomeId());
-                    ctx.getFileManager().addSequenceOutput(output);
-
-                    SequenceOutputFile output2 = new SequenceOutputFile();
-                    output2.setFile(interestingVariantTable);
-                    output2.setName("mGAP Release: " + releaseVersion + " Variant Table");
-                    output2.setCategory((testOnly ? "Test " : "") + "mGAP Release Variant Table");
-                    output2.setLibrary_id(genome.getGenomeId());
-                    ctx.getFileManager().addSequenceOutput(output2);
-                }
+                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
             }
         }
 
@@ -1108,7 +1269,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
         }
 
-        private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes)
+        private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omims, Collection<String> omimds, Logger log)
         {
             if (allele == null)
             {
@@ -1117,7 +1278,31 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 allele = StringUtils.join(alts, ",");
             }
 
-            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, description, StringUtils.join(overlappingGenes, ";")));
+            Object af = null;
+            if (allele != null && !allele.contains(",") && vc.hasAttribute("AF"))
+            {
+                List<Object> afs = vc.getAttributeAsList("AF");
+                int i = 0;
+                for (Allele a : vc.getAlternateAlleles())
+                {
+                    if (allele.equals(a.getBaseString()))
+                    {
+                        if (i < afs.size())
+                        {
+                            af = afs.get(i);
+                            break;
+                        }
+                        else
+                        {
+                            log.error("alleles and AF values not same length for " + vc.getContig() + " " + vc.getStart() + ". " + vc.getAttributeAsString("AF", ""));
+                        }
+                    }
+
+                    i++;
+                }
+            }
+
+            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, description, StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString()));
         }
 
         private Map<String, String> parseSampleMap(File sampleMapFile) throws PipelineJobException
@@ -1139,9 +1324,66 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             return ret;
         }
 
+        private String getPrimaryTrackName(File trackFile) throws PipelineJobException
+        {
+            Set<String> ret = new HashSet<>();
+            try (CSVReader reader = new CSVReader(Readers.getReader(trackFile), '\t'))
+            {
+                String[] line;
+                while ((line = reader.readNext()) != null)
+                {
+                    boolean isPrimary = ConvertHelper.convert(line[2], Boolean.class);
+                    if (isPrimary)
+                    {
+                        ret.add(line[0]);
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            if (ret.size() != 1)
+            {
+                throw new PipelineJobException("Expected a single track labeled as primary: " + StringUtils.join(ret, ";"));
+            }
+
+            return ret.iterator().next();
+        }
+
+        private Map<String, List<String>> parseTrackMap(File trackFile) throws PipelineJobException
+        {
+            Map<String, List<String>> ret = new HashMap<>();
+            try (CSVReader reader = new CSVReader(Readers.getReader(trackFile), '\t'))
+            {
+                String[] line;
+                while ((line = reader.readNext()) != null)
+                {
+                    if (!ret.containsKey(line[0]))
+                    {
+                        ret.put(line[0], new ArrayList<>());
+                    }
+
+                    ret.get(line[0]).add(line[1]);
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            return ret;
+        }
+
         private File renameSamples(File currentVCF, ReferenceGenome genome, JobContext ctx) throws PipelineJobException
         {
             ctx.getLogger().info("renaming samples in VCF");
+
+            Set<String> allSamples = new HashSet<>();
+            Map<String, List<String>> trackMap = parseTrackMap(getTrackFile(ctx.getSourceDirectory()));
+            trackMap.forEach((k, v) -> allSamples.addAll(v));
+
             File outputFile = new File(currentVCF.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".renamed.vcf.gz");
             if (indexExists(outputFile))
             {
@@ -1167,6 +1409,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                         if (sampleMap.containsKey(sample))
                         {
                             remappedSamples.add(sampleMap.get(sample));
+                        }
+                        else if (!allSamples.contains(sample))
+                        {
+                            ctx.getLogger().info("sample lacks an alias, but will not be included in output: " + sample);
+                            remappedSamples.add(sample);
                         }
                         else
                         {
@@ -1197,6 +1444,106 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
         {
             File idx = new File(vcf.getPath() + ".tbi");
             return idx.exists();
+        }
+
+        protected Set<String> parseOmim(String input, Logger log)
+        {
+            if (input == null)
+            {
+                return Collections.emptySet();
+            }
+
+            Set<String> ret = new LinkedHashSet<>();
+            String[] tokens = input.split("\\)(,){0,1}");
+            for (String token : tokens)
+            {
+                if (StringUtils.isEmpty(token))
+                {
+                    log.warn("OMIMD was empty: " + input + ", " + StringUtils.join(tokens, ";"));
+                    continue;
+                }
+
+                String[] split = token.split("(_){0,1}\\([0-9]+$");
+
+                //can occur if the string completely matches the delimiter
+                if (split.length == 0)
+                {
+                    continue;
+                }
+
+                String id = "";
+                String name = split[0];
+                int lastDigits = lastIndexOfRegex(name, "\\d+$");
+                if (lastDigits > 0)
+                {
+                    id = name.substring(lastDigits);
+                    name = name.substring(0, lastDigits);
+                }
+
+                name = name.replaceAll("\\{", "");
+                name = name.replaceAll("\\}", "");
+                name = name.replaceAll("_", " ");
+                name = StringUtils.trimToEmpty(name);
+                name = name.replaceAll("^,", "");
+                name = name.replaceAll(",$", "");
+                name = name.replaceAll(" +", " ");
+                name = name.replaceAll("\\[", "");
+                name = name.replaceAll("\\]", "");
+                name = StringUtils.trimToEmpty(name);
+
+                if (!StringUtils.isEmpty(name) && !".".equals(name))
+                {
+                    ret.add(name + "<>" + id);
+                }
+            }
+
+            return ret;
+        }
+
+        private int lastIndexOfRegex(String str, String toFind)
+        {
+            Pattern pattern = Pattern.compile(toFind);
+            Matcher matcher = pattern.matcher(str);
+
+            int lastIndex = -1;
+
+            // Search for the given pattern
+            while (matcher.find())
+            {
+                lastIndex = matcher.start();
+            }
+
+            return lastIndex;
+        }
+    }
+
+    public static class TestCase extends Assert
+    {
+        private final Logger _log = Logger.getLogger(TestCase.class);
+
+        @Test
+        public void testOMIMParse() throws Exception
+        {
+            //chr01	9610198
+            //chr01	65358095
+            //chr01	76965588
+            //chr04	32436641
+            //chr01	5611371
+            Set<Pair<String, Set<String>>> toTest = PageFlowUtil.set(
+                    Pair.of("Spinal_muscular_atrophy,_distal,_autosomal_recessive,_4,_611067_(3),Charcot-Marie-Tooth_disease,_recessive_intermediate_C,_615376_(3)",PageFlowUtil.set("Spinal muscular atrophy, distal, autosomal recessive, 4<>611067", "Charcot-Marie-Tooth disease, recessive intermediate C<>615376")),
+                    Pair.of("Charcot-Marie-Tooth_disease,_type_2A1,_118210_(3),_Pheochromocytoma,171300_(3),_{Neuroblastoma,_susceptibility_to,_1},_256700_(3)", PageFlowUtil.set("Charcot-Marie-Tooth disease, type 2A1<>118210","Pheochromocytoma<>171300","Neuroblastoma, susceptibility to, 1<>256700")),
+                    Pair.of("Obesity,_morbid,_due_to_leptin_receptor_deficiency,_614963_(3)", PageFlowUtil.set("Obesity, morbid, due to leptin receptor deficiency<>614963")),
+                    Pair.of("Severe_combined_immunodeficiency_due_to_ADA_deficiency,_102700_(3),Adenosine_deaminase_deficiency,_partial,_102700_(3)", PageFlowUtil.set("Severe combined immunodeficiency due to ADA deficiency<>102700","Adenosine deaminase deficiency, partial<>102700")),
+                    Pair.of("{Malaria,_cerebral,_susceptibility_to},_611162_(3),_{Septic_shock,susceptibility_to}_(3),_{Asthma,_susceptibility_to},_600807_(3),_{Dementia,_vascular,_susceptibility_to}_(3),_{Migraine_without_aura,_susceptibility_to},157300_(3)_157300_(3)", PageFlowUtil.set("Malaria, cerebral, susceptibility to<>611162","Septic shock,susceptibility to<>","Asthma, susceptibility to<>600807","Dementia, vascular, susceptibility to<>","Migraine without aura, susceptibility to<>157300"))
+            );
+
+            PublicReleaseHandler.Processor pr = new PublicReleaseHandler.Processor();
+
+            for (Pair<String, Set<String>> pair : toTest)
+            {
+                Set<String> ret = pr.parseOmim(pair.getLeft(), _log);
+                Assert.assertEquals(pair.getRight(), ret);
+            }
         }
     }
 }

@@ -2,7 +2,15 @@ Ext4.define('TCRdb.window.DownloadCloneWindow', {
     extend: 'Ext.window.Window',
 
     statics: {
-        buttonHandler: function(dataRegionName){
+        buttonHandler: function(dataRegionName) {
+            TCRdb.window.DownloadCloneWindow.showWindow(dataRegionName, 'downloadCloneMaterials', 'The goal of this is to download a ZIP with any extracted clone/read data for the selected sample(s), along with the reference sequence for the segments used.  These files can be imported into Geneious or a similar program to de novo assemble to construct the FL clone.  Note: per sample, it will export all reads overlapping any TCR segments.  This at minimum will tend to include both chains (i.e. 2 different CDR3s), and might include reads that either match a defunct TCR or other noise.');
+        },
+
+        downloadSequenceHandler: function(dataRegionName){
+            TCRdb.window.DownloadCloneWindow.showWindow(dataRegionName, 'downloadSequence', 'This will download the full sequence (if available) for the selected rows, along with the reference segments.');
+        },
+
+        showWindow: function(dataRegionName, actionName, htmlMessage){
             var dataRegion = LABKEY.DataRegions[dataRegionName];
 
             Ext4.Msg.wait('Loading...');
@@ -21,9 +29,15 @@ Ext4.define('TCRdb.window.DownloadCloneWindow', {
                         return;
                     }
 
-                    var win = Ext4.create('TCRdb.window.DownloadCloneWindow', {
+                    var checked = LABKEY.DataRegions[dataRegionName].getChecked();
+                    LDK.Assert.assertEquality('getChecked and getSelected do not match', data.selected.length, checked.length)
+
+                    Ext4.create('TCRdb.window.DownloadCloneWindow', {
                         dataRegionName: dataRegionName,
-                        selected: keys
+                        actionName: actionName,
+                        htmlMessage: htmlMessage,
+                        //NOTE: use getChecked, but leave the above for debugging purposes
+                        selected: checked
                     }).show();
                 },
                 failure: LDK.Utils.getErrorCallback(),
@@ -40,7 +54,7 @@ Ext4.define('TCRdb.window.DownloadCloneWindow', {
             title: 'Export Data For Clones',
             bodyStyle: 'padding: 5px;',
             items: [{
-                html: 'The goal of this is to download a ZIP with any extracted clone/read data for the selected sample(s), along with the reference sequence for the segments used.  These files can be imported into Geneious or a similar program to de novo assemble to construct the FL clone.  Note: per sample, it will export all reads overlapping any TCR segments.  This at minimum will tend to include both chains (i.e. 2 different CDR3s), and might include reads that either match a defunct TCR or other noise.',
+                html: this.selected.length + ' rows were selected.  ' + this.htmlMessage,
                 border: false,
                 style: 'padding-bottom: 10px;'
             }],
@@ -63,7 +77,7 @@ Ext4.define('TCRdb.window.DownloadCloneWindow', {
         var dataRegion = LABKEY.DataRegions[this.dataRegionName];
         var newForm = document.createElement('form');
         newForm.method = 'post';
-        newForm.action = LABKEY.ActionURL.buildURL('tcrdb', 'downloadCloneMaterials');
+        newForm.action = LABKEY.ActionURL.buildURL('tcrdb', this.actionName);
         document.body.appendChild(newForm);
 
         var csrfElement = document.createElement('input');

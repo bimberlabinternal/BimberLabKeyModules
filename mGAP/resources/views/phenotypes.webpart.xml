@@ -1,0 +1,6 @@
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="Macaque Phenotypes">
+    <view name="phenotypes"/>
+    <locations>
+        <location name="body"/>
+    </locations>
+</webpart>

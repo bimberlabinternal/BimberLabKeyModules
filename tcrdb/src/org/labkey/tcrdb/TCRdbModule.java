@@ -44,7 +44,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 15.42;
+        return 15.43;
     }
 
     @Override

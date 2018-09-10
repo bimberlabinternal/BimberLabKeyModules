@@ -284,6 +284,8 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
 
     private void customizeClones(AbstractTableInfo ti)
     {
+        LDKService.get().applyNaturalSort(ti, "cloneName");
+
         AssayProvider ap = AssayService.get().getProvider("TCRdb");
         if (ap == null)
         {
@@ -298,8 +300,20 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         }
 
         AssayProtocolSchema schema = ap.createProtocolSchema(ti.getUserSchema().getUser(), target, protocols.get(0), null);
-        ti.getColumn("cdr3").setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=" + schema.getSchemaName() + "&query.queryName=data&query.viewName=Clonotype Export&query.CDR3~eq=${cdr3}&query.sort=analysisId/readset/cdna/sortId/cells", target));
+        DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=" + schema.getSchemaName() + "&query.queryName=data&query.viewName=Clonotype Export&query.CDR3~eq=${cdr3}&query.sort=analysisId/readset/cdna/sortId/cells", target);
+        ti.getColumn("cdr3").setURL(details);
 
-        LDKService.get().applyNaturalSort(ti, "cloneName");
+        String colName = "distinctAnimals";
+        if (ti.getColumn(colName) == null)
+        {
+            TableInfo data = schema.createDataTable(false);
+            SQLFragment dataSelectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("subjectId"), data.getColumn("cdr3"), data.getColumn("fraction")), null, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
+
+            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("a.subjectId"), true, true, getChr(ti) + "(10)")).append(" as expr FROM (").append(dataSelectSql).append(") a WHERE a.cdr3 = " + ExprColumn.STR_TABLE_ALIAS+ ".cdr3 AND a.fraction >= 0.005)");
+            ExprColumn col = new ExprColumn(ti, colName, sql, JdbcType.VARCHAR, ti.getColumn("cdr3"));
+            col.setLabel("Animals with CDR3");
+            col.setURL(details);
+            ti.addColumn(col);
+        }
     }
 }

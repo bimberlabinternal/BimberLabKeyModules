@@ -28,11 +28,12 @@ import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.util.PageFlowUtil;
-import org.labkey.api.view.ViewContext;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mgap.pipeline.AnnotationHandler;
 import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.labkey.mgap.query.mGAPUserSchema;
+
+import java.util.Set;
 
 public class mGAPModule extends ExtendedSimpleModule
 {
@@ -47,7 +48,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.41;
+        return 16.45;
     }
 
     @Override
@@ -114,5 +115,11 @@ public class mGAPModule extends ExtendedSimpleModule
         });
 
         return ret;
+    }
+
+    @Override
+    public @NotNull Set<Class> getUnitTests()
+    {
+        return PageFlowUtil.set(PublicReleaseHandler.TestCase.class);
     }
 }

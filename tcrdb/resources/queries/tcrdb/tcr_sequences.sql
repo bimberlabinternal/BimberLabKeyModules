@@ -4,4 +4,4 @@ name,
 species
 
 FROM sequenceanalysis.ref_nt_sequences
-WHERE name like 'TR%'
+WHERE name like 'TR%' AND datedisabled IS NOT NULL

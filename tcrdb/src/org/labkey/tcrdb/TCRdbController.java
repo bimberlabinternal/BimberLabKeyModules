@@ -501,6 +501,89 @@ public class TCRdbController extends SpringActionController
     @RequiresPermission(ReadPermission.class)
     @IgnoresTermsOfUse
     @CSRF
+    public static class DownloadSequenceAction extends ExportAction<DownloadCloneMaterialsForm>
+    {
+        public void export(DownloadCloneMaterialsForm form, HttpServletResponse response, BindException errors) throws Exception
+        {
+            Container target = getContainer().isWorkbook() ? getContainer().getParent() : getContainer();
+            UserSchema us = QueryService.get().getUserSchema(getUser(), target, form.getSchemaName());
+            if (us == null)
+            {
+                errors.reject(ERROR_MSG, "Unable to find schema: " + form.getSchemaName());
+                return;
+            }
+
+            TableInfo assayData = us.getTable(form.getQueryName());
+            if (assayData == null)
+            {
+                errors.reject(ERROR_MSG, "Unable to find table: " + form.getQueryName());
+                return;
+            }
+
+            List<String> rowIds = Arrays.asList(form.getRowId());
+            if (rowIds.isEmpty())
+            {
+                errors.reject(ERROR_MSG, "No rows provided");
+                return;
+            }
+
+            StringBuilder fasta = new StringBuilder();
+
+            //find assay records
+            SimpleFilter assayFilter = new SimpleFilter(FieldKey.fromString("rowId"), rowIds, CompareType.IN);
+            TableSelector ts = new TableSelector(assayData, PageFlowUtil.set("samplename", "sequence", "cdr3", "vHit", "jHit", "dHit", "cHit"), assayFilter, null);
+            Set<String> primarySegments = new HashSet<>();
+            final String[] segmentFields = new String[]{"vHit", "jHit", "cHit"};
+            ts.forEachResults(rs -> {
+                for (String fn : segmentFields)
+                {
+                    if (rs.getString(FieldKey.fromString(fn)) != null)
+                    {
+                        primarySegments.add(StringUtils.trimToNull(rs.getString(FieldKey.fromString(fn))));
+                    }
+                }
+
+                fasta.append(">").append(rs.getString("samplename")).append("_").append(rs.getString("cdr3")).append("\n");
+                if (rs.getObject(FieldKey.fromString("sequence")) != null)
+                {
+                    fasta.append(rs.getString("sequence")).append("\n");
+                }
+                else
+                {
+                    fasta.append("No Data").append("\n");
+                }
+            });
+
+            // look up segments in NT table
+            SimpleFilter ntFilter = new SimpleFilter(FieldKey.fromString("name"), primarySegments, CompareType.IN);
+            ntFilter.addCondition(FieldKey.fromString("datedisabled"), null, CompareType.ISBLANK);
+            Set<String> missingSegments = new HashSet<>(primarySegments);
+            new TableSelector(QueryService.get().getUserSchema(getUser(), target, "sequenceanalysis").getTable("ref_nt_sequences"), PageFlowUtil.set("rowid"), ntFilter, null).forEachResults(rs -> {
+                RefNtSequenceModel nt = RefNtSequenceModel.getForRowId(rs.getInt(FieldKey.fromString("rowid")));
+                fasta.append(">").append(nt.getName() + (nt.getSpecies() != null ? "-" + nt.getSpecies() : "")).append('\n').append(nt.getSequence()).append('\n');
+                missingSegments.remove(nt.getName());
+            });
+
+            if (!missingSegments.isEmpty())
+            {
+                logger.error("Unable to find the following NT sequences: [" + StringUtils.join(missingSegments, "],[") + "]");
+            }
+
+            PageFlowUtil.prepareResponseForFile(response, Collections.emptyMap(), "TCR_Data.fasta", true);
+            if (fasta.length() == 0)
+            {
+                response.getOutputStream().write("No data found".getBytes(StringUtilsLabKey.DEFAULT_CHARSET));
+            }
+            else
+            {
+                response.getOutputStream().write(fasta.toString().getBytes(StringUtilsLabKey.DEFAULT_CHARSET));
+            }
+        }
+    }
+
+    @RequiresPermission(ReadPermission.class)
+    @IgnoresTermsOfUse
+    @CSRF
     public static class DownloadCloneMaterials extends ExportAction<DownloadCloneMaterialsForm>
     {
         public void export(DownloadCloneMaterialsForm form, HttpServletResponse response, BindException errors) throws Exception
@@ -540,11 +623,11 @@ public class TCRdbController extends SpringActionController
                     {
                         primarySegments.add(rs.getString(FieldKey.fromString(fn)));
                     }
+                }
 
-                    if (rs.getObject(FieldKey.fromString("analysisId")) != null)
-                    {
-                        analyses.add(rs.getInt(FieldKey.fromString("analysisId")));
-                    }
+                if (rs.getObject(FieldKey.fromString("analysisId")) != null)
+                {
+                    analyses.add(rs.getInt(FieldKey.fromString("analysisId")));
                 }
             });
 
@@ -562,7 +645,7 @@ public class TCRdbController extends SpringActionController
                 {
                     if (rs.getString(FieldKey.fromString(fn)) != null)
                     {
-                        allSegments.add(rs.getString(FieldKey.fromString(fn)));
+                        allSegments.add(StringUtils.trimToNull(rs.getString(FieldKey.fromString(fn))));
                     }
                 }
             });
@@ -570,17 +653,18 @@ public class TCRdbController extends SpringActionController
             // look up segments in NT table
             StringBuilder fasta = new StringBuilder();
             SimpleFilter ntFilter = new SimpleFilter(FieldKey.fromString("name"), allSegments, CompareType.IN);
-            Set<Integer> sequenceIds = new HashSet<>();
+            ntFilter.addCondition(FieldKey.fromString("datedisabled"), null, CompareType.ISBLANK);
+            Set<String> missingSegments = new HashSet<>(allSegments);
             new TableSelector(QueryService.get().getUserSchema(getUser(), target, "sequenceanalysis").getTable("ref_nt_sequences"), PageFlowUtil.set("rowid"), ntFilter, null).forEachResults(rs -> {
-                if (sequenceIds.contains(rs.getInt(FieldKey.fromString("rowid"))))
-                {
-                    return;
-                }
-
                 RefNtSequenceModel nt = RefNtSequenceModel.getForRowId(rs.getInt(FieldKey.fromString("rowid")));
                 fasta.append(">").append(nt.getName() + (nt.getSpecies() != null ? "-" + nt.getSpecies() : "")).append('\n').append(nt.getSequence()).append('\n');
-                sequenceIds.add(nt.getRowid());
+                missingSegments.remove(nt.getName());
             });
+
+            if (!missingSegments.isEmpty())
+            {
+                logger.error("Unable to find the following NT sequences: [" + StringUtils.join(missingSegments, "],[") + "]");
+            }
 
             // then grab actual Overlapping Contigs record(s).  only bother grabbing if FASTA
             SimpleFilter outputFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analyses, CompareType.IN);

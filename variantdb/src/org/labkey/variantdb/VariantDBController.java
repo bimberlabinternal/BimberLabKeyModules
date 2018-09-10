@@ -266,64 +266,6 @@ public class VariantDBController extends SpringActionController
 
     @RequiresPermission(InsertPermission.class)
     @CSRF
-    public class GetSamplesFromVcfAction extends ApiAction<GetSamplesFromVcfForm>
-    {
-        public ApiResponse execute(GetSamplesFromVcfForm form, BindException errors) throws Exception
-        {
-            Map<String, Object> resp = new HashMap<>();
-
-            Map<Integer, JSONObject> fileMap = new HashMap<>();
-            for (Integer rowId : form.getOutputFileIds())
-            {
-                SequenceOutputFile f = SequenceOutputFile.getForId(rowId);
-                if (f != null)
-                {
-                    fileMap.put(f.getRowid(), f.toJSON());
-
-                    try
-                    {
-                        List<String> samples = VariantDBManager.get().getSamplesForVcf(f.getFile());
-                        resp.put(f.getRowid().toString(), samples);
-                    }
-                    catch (TribbleException e)
-                    {
-                        _log.error(e.getMessage(), e);
-                        errors.reject(ERROR_MSG, e.getMessage());
-                    }
-                }
-                else
-                {
-                    errors.reject(ERROR_MSG, "Unable to find output file with ID: " + rowId);
-                    return null;
-                }
-            }
-
-            Map<String, Object> ret = new HashMap<>();
-            ret.put("success", true);
-            ret.put("samples", resp);
-            ret.put("outputFileMap", fileMap);
-
-            return new ApiSimpleResponse(ret);
-        }
-    }
-
-    public static class GetSamplesFromVcfForm
-    {
-        Integer[] _outputFileIds;
-
-        public Integer[] getOutputFileIds()
-        {
-            return _outputFileIds;
-        }
-
-        public void setOutputFileIds(Integer[] outputFileIds)
-        {
-            _outputFileIds = outputFileIds;
-        }
-    }
-
-    @RequiresPermission(InsertPermission.class)
-    @CSRF
     public class MendelianCheckAction extends ApiAction<MendelianCheckForm>
     {
         public ApiResponse execute(MendelianCheckForm form, BindException errors) throws Exception

@@ -593,6 +593,15 @@
             <column columnName="comments">
 
             </column>
+            <column columnName="synthesized">
+                <columnTitle>Synthesized?</columnTitle>
+            </column>
+            <column columnName="animals">
+                <columnTitle>Animals With Clone</columnTitle>
+            </column>
+            <column columnName="responses">
+                <columnTitle>Responses With Clone</columnTitle>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>

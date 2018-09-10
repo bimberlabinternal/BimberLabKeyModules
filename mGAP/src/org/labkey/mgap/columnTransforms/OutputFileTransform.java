@@ -11,6 +11,6 @@ public class OutputFileTransform extends AbstractVariantTransform
         if (null == inputValue)
             return null;
 
-        return getOrCreateOutputFile(inputValue, getInputValue("objectId"));
+        return getOrCreateOutputFile(inputValue, getInputValue("objectId"), null);
     }
 }

@@ -36,8 +36,6 @@ import java.util.Map;
  */
 abstract public class AbstractVariantTransform extends ColumnTransform
 {
-    private static final Logger _log = Logger.getLogger(ColumnTransform.class);
-
     private transient TableInfo _outputFilesTableInfo = null;
     private transient Map<String, Integer> _genomeIdMap = null;
 
@@ -96,7 +94,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         return genomeMap.get(name);
     }
 
-    protected Integer getOrCreateOutputFile(Object dataFileUrl, Object folderName)
+    protected Integer getOrCreateOutputFile(Object dataFileUrl, Object folderName, String name)
     {
         try
         {
@@ -104,7 +102,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File f = new File(uri);
             if (!f.exists())
             {
-                _log.error("File not found: " + uri.toString());
+                getStatusLogger().error("File not found: " + uri.toString());
                 return null;
             }
             else
@@ -126,8 +124,12 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 File localCopy = new File(subdir, f.getName());
                 if (!localCopy.exists())
                 {
-                    _log.info("copying file locally: " + localCopy.getPath());
+                    getStatusLogger().info("copying file locally: " + localCopy.getPath());
                     FileUtils.copyFile(f, localCopy);
+                }
+                else
+                {
+                    getStatusLogger().info("file exists: " + localCopy.getPath());
                 }
 
                 File index = new File(f.getPath() + ".tbi");
@@ -136,7 +138,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     File indexLocal = new File(subdir, index.getName());
                     if (!indexLocal.exists())
                     {
-                        _log.info("copying index locally: " + indexLocal.getPath());
+                        getStatusLogger().info("copying index locally: " + indexLocal.getPath());
                         FileUtils.copyFile(index, indexLocal);
                     }
                 }
@@ -155,6 +157,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 TableSelector ts = new TableSelector(getOutputFilesTableInfo(), PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("dataId"), d.getRowId()), null);
                 if (ts.exists())
                 {
+                    getStatusLogger().info("existing record found for outputfile: " + d.getDataFileUrl());
                     return ts.getObject(Integer.class);
                 }
                 else
@@ -162,7 +165,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     Map<String, Object> row = new CaseInsensitiveHashMap<>();
                     row.put("category", "VCF File");
                     row.put("dataid", d.getRowId());
-                    row.put("name", "Variant Catalog, Version: " + getInputValue("version"));
+                    row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
                     row.put("description", "mGAP Release");
                     row.put("library_id", getLibraryId());
                     row.put("container", getContainerUser().getContainer().getId());
@@ -172,6 +175,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     row.put("modifiedby", getContainerUser().getUser().getUserId());
 
                     List<Map<String, Object>> rows = getOutputFilesTableInfo().getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
+                    getStatusLogger().info("created outputfile: " + rows.get(0).get("rowid"));
 
                     return (Integer)rows.get(0).get("rowid");
                 }
@@ -179,7 +183,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         }
         catch (Exception e)
         {
-            _log.error("Error syncing file: " + String.valueOf(dataFileUrl), e);
+            getStatusLogger().error("Error syncing file: " + String.valueOf(dataFileUrl), e);
         }
 
         return null;

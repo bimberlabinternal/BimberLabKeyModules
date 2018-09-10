@@ -29,6 +29,9 @@ public class mGAPSchema
     public static final String TABLE_VARIANT_CATALOG_RELEASES = "variantCatalogReleases";
     public static final String TABLE_RELEASE_STATS = "releaseStats";
     public static final String TABLE_VARIANT_TABLE = "variantList";
+    public static final String TABLE_RELEASE_TRACKS = "releaseTracks";
+    public static final String TABLE_RELEASE_TRACK_SUBSETS = "releaseTrackSubsets";
+    public static final String TABLE_TRACKS_PER_RELEASE = "tracksPerRelease";
 
     public static mGAPSchema getInstance()
     {

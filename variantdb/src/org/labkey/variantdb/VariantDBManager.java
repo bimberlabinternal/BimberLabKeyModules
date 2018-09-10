@@ -299,14 +299,4 @@ public class VariantDBManager
             return _cachedReferences.get(sequenceName);
         }
     }
-
-    public List<String> getSamplesForVcf(File vcf) throws IOException
-    {
-        try (FeatureReader reader = AbstractFeatureReader.getFeatureReader(vcf.getPath(), new VCFCodec(), false))
-        {
-            VCFHeader header = (VCFHeader)reader.getHeader();
-
-            return header.getSampleNamesInOrder();
-        }
-    }
 }

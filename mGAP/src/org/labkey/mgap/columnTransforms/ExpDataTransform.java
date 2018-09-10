@@ -27,8 +27,6 @@ import java.util.Map;
  */
 public class ExpDataTransform extends ColumnTransform
 {
-    private static final Logger _log = Logger.getLogger(ExpDataTransform.class);
-
     @Override
     protected Object doTransform(Object inputValue)
     {
@@ -41,7 +39,7 @@ public class ExpDataTransform extends ColumnTransform
             File f = new File(uri);
             if (!f.exists())
             {
-                _log.error("File not found: " + uri.toString());
+                getStatusLogger().error("File not found: " + uri.toString());
             }
 
             ExpData d = ExperimentService.get().getExpDataByURL(String.valueOf(inputValue), getContainerUser().getContainer());
@@ -57,7 +55,7 @@ public class ExpDataTransform extends ColumnTransform
         }
         catch (URISyntaxException e)
         {
-            _log.error("Error syncing file: " + String.valueOf(inputValue), e);
+            getStatusLogger().error("Error syncing file: " + String.valueOf(inputValue), e);
         }
 
         return null;

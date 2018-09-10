@@ -838,7 +838,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             "jBestIdentityPercent",
             "cdr3_nt",
             "cdr3_qual",
-            "cloneSequence",
+            "sequence",
             "vMismatches",
             "dMismatches",
             "jMismatches",

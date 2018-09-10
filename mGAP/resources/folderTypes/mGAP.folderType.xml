@@ -33,6 +33,40 @@
             </preferredWebParts>
         </folderTab>
         <folderTab>
+            <name>model</name>
+            <caption>Phenotypes/Models</caption>
+            <selectors>
+                <selector>
+                    <regex>phenotypes</regex>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>Macaque Phenotypes</name>
+                    <location>body</location>
+                </webPart>
+                <webPart>
+                    <name>mGAP Gene Search</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>Quick Links</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>mGAP Help</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>About mGAP</name>
+                    <location>right</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
             <name>variants</name>
             <caption>Variant Catalog</caption>
             <selectors>
@@ -99,7 +133,7 @@
         </folderTab>
         <folderTab>
             <name>clinical</name>
-            <caption>Clinical/Phenotypic Data</caption>
+            <caption>Cohort Data</caption>
             <selectors>
                 <selector>
                     <view>study</view>
@@ -109,8 +143,24 @@
             </requiredWebParts>
             <preferredWebParts>
                 <webPart>
-                    <name>Study Overview</name>
+                    <name>mGAP Demographics</name>
                     <location>body</location>
+                </webPart>
+                <webPart>
+                    <name>mGAP Gene Search</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>Quick Links</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>mGAP Help</name>
+                    <location>right</location>
+                </webPart>
+                <webPart>
+                    <name>About mGAP</name>
+                    <location>right</location>
                 </webPart>
             </preferredWebParts>
         </folderTab>

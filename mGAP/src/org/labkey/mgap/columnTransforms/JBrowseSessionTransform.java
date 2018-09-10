@@ -1,10 +1,15 @@
 package org.labkey.mgap.columnTransforms;
 
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.Results;
+import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.SqlSelector;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.jbrowse.JBrowseService;
@@ -16,7 +21,9 @@ import org.labkey.api.query.UserSchema;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.JobRunner;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.mgap.mGAPSchema;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,8 +35,6 @@ import java.util.Map;
  */
 public class JBrowseSessionTransform extends AbstractVariantTransform
 {
-    private static final Logger _log = Logger.getLogger(JBrowseSessionTransform.class);
-
     private transient TableInfo _jsonFiles;
     private transient TableInfo _databaseMembers;
     private transient TableInfo _databases;
@@ -38,49 +43,24 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
     @Override
     protected Object doTransform(Object inputValue)
     {
-        Integer outputFileId = getOrCreateOutputFile(getInputValue("vcfId/dataid/DataFileUrl"), getInputValue("objectId"));
+        String releaseId = (String)getInputValue("objectId");
+        if (releaseId == null)
+        {
+            getStatusLogger().error("no release ID for variantRelease row");
+        }
+
+        Integer outputFileId = getOrCreateOutputFile(getInputValue("vcfId/dataid/DataFileUrl"), getInputValue("objectId"), null);
         if (outputFileId != null)
         {
-            //determine if there is already a JSONfile
-            String jsonFileId;
-            TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
-            if (ts1.exists())
+            //find database ID, if exists:
+            //determine if there is already a JSONfile for this outputfile
+            UserSchema us = getJbrowseUserSchema();
+            SQLFragment sql = new SQLFragment("SELECT m." + us.getDbSchema().getScope().getSqlDialect().makeLegalIdentifier("database") + " FROM jbrowse.jsonfiles j JOIN jbrowse.database_members m ON (j.objectId = m.jsonfile) WHERE j.outputfile = ?", outputFileId);
+            String databaseId = new SqlSelector(us.getDbSchema().getScope(), sql).getObject(String.class);
+            if (databaseId != null)
             {
-                jsonFileId = ts1.getArrayList(String.class).get(0);
-            }
-            else
-            {
-                try
-                {
-                    //create
-                    TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
-                    CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
-                    row.put("objectid", new GUID().toString());
-                    row.put("outputFile", outputFileId);
-                    row.put("relPath", "tracks/data-" + outputFileId);
-                    row.put("container", getContainerUser().getContainer().getId());
-                    row.put("trackJson", "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
-                    row.put("created", new Date());
-                    row.put("createdby", getContainerUser().getUser().getUserId());
-                    row.put("modified", new Date());
-                    row.put("modifiedby", getContainerUser().getUser().getUserId());
-
-                    List<Map<String, Object>> rows = jsonFiles.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
-                    jsonFileId = (String)rows.get(0).get("objectid");
-                }
-                catch (Exception e)
-                {
-                    _log.error("Error creating jsonfile: " + String.valueOf(inputValue), e);
-                    return null;
-                }
-            }
-
-            //then find if used in database
-            final String databaseId;
-            TableSelector ts2 = new TableSelector(getDatabaseMembers(), PageFlowUtil.set("database"), new SimpleFilter(FieldKey.fromString("jsonfile"), jsonFileId), null);
-            if (ts2.exists())
-            {
-                return ts2.getArrayList(String.class).get(0);
+                getStatusLogger().info("jbrowse database exists using the output file: " + outputFileId);
+                return databaseId;
             }
             else
             {
@@ -102,51 +82,101 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                     dbRow.put("createdby", getContainerUser().getUser().getUserId());
                     dbRow.put("modified", new Date());
                     dbRow.put("modifiedby", getContainerUser().getUser().getUserId());
+                    dbRow.put("jsonConfig", "{\"trackSelector\": {\"sortHierarchical\": false}}");
 
                     databases.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(dbRow), new BatchValidationException(), null, new HashMap<>());
-
-                    //then database member
-                    TableInfo databaseMembers = getJbrowseUserSchema().getTable("database_members");
-                    CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
-                    row.put("database", databaseId);
-                    row.put("jsonfile", jsonFileId);
-                    row.put("category", "Variants");
-                    row.put("container", getContainerUser().getContainer().getId());
-                    row.put("created", new Date());
-                    row.put("createdby", getContainerUser().getUser().getUserId());
-                    row.put("modified", new Date());
-                    row.put("modifiedby", getContainerUser().getUser().getUserId());
-
-                    databaseMembers.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
-
-                    _log.info("recreating jbrowse session: " + databaseId);
-                    JobRunner jr = JobRunner.getDefault();
-                    jr.execute(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            try
-                            {
-                                JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), databaseId);
-                            }
-                            catch (PipelineValidationException e)
-                            {
-                                _log.error(e.getMessage(), e);
-                            }
-                        }
-                    });
-
-                    return databaseId;
                 }
                 catch (Exception e)
                 {
-                    _log.error("Error creating jsonfile: " + String.valueOf(inputValue), e);
+                    getStatusLogger().error("Error creating database: " + String.valueOf(inputValue), e);
                 }
             }
+
+            //then JSONfiles/database members
+            final String finalDbId = databaseId;
+            List<FieldKey> fks = Arrays.asList(
+                    FieldKey.fromString("trackName"),
+                    FieldKey.fromString("label"),
+                    FieldKey.fromString("category"),
+                    FieldKey.fromString("url"),
+                    FieldKey.fromString("description"),
+                    FieldKey.fromString("vcfId/dataid/DataFileUrl")
+            );
+
+            TableInfo tracksPerRelease = QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
+            Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(tracksPerRelease, fks);
+
+            TableSelector ts = new TableSelector(tracksPerRelease, colMap.values(), new SimpleFilter(FieldKey.fromString("releaseId"), releaseId), null);
+            if (!ts.exists())
+            {
+                getStatusLogger().error("no track records found for release: " + releaseId);
+            }
+
+            ts.forEachResults(rs -> {
+                try
+                {
+                    getStatusLogger().info("possibly creating track for: " + rs.getString(FieldKey.fromString("trackName")));
+                    String jsonFile = getOrCreateJsonFile(rs);
+                    getOrCreateDatabaseMember(finalDbId, jsonFile);
+                }
+                catch (Exception e)
+                {
+                    getStatusLogger().error(e.getMessage(), e);
+                }
+            });
+
+            getStatusLogger().info("recreating jbrowse session: " + databaseId);
+            JobRunner jr = JobRunner.getDefault();
+            jr.execute(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    try
+                    {
+                        JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), finalDbId);
+                    }
+                    catch (PipelineValidationException e)
+                    {
+                        getStatusLogger().error(e.getMessage(), e);
+                    }
+                }
+            });
+
+            return databaseId;
+        }
+        else
+        {
+            getStatusLogger().info("output file was null for incoming release: " + releaseId);
         }
 
         return null;
+    }
+
+    private void getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
+    {
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("database"), databaseId);
+        filter.addCondition(FieldKey.fromString("jsonfile"), jsonFileId);
+
+        if (new TableSelector(getDatabaseMembers(), filter, null).exists())
+        {
+            getStatusLogger().info("database member exists for: " + jsonFileId);
+            return;
+        }
+
+        TableInfo databaseMembers = getJbrowseUserSchema().getTable("database_members");
+        CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
+        row.put("database", databaseId);
+        row.put("jsonfile", jsonFileId);
+        row.put("category", "Variants");
+        row.put("container", getContainerUser().getContainer().getId());
+        row.put("created", new Date());
+        row.put("createdby", getContainerUser().getUser().getUserId());
+        row.put("modified", new Date());
+        row.put("modifiedby", getContainerUser().getUser().getUserId());
+
+        getStatusLogger().info("creating database member for: " + jsonFileId);
+        databaseMembers.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
     }
 
     private TableInfo getJsonFiles()
@@ -188,5 +218,66 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
         return _databases;
 
+    }
+
+    private String getOrCreateJsonFile(Results rs) throws SQLException
+    {
+        int outputFileId = getOrCreateOutputFile(rs.getInt(FieldKey.fromString("vcfId/dataid/DataFileUrl")), getInputValue("objectId"), rs.getString("label"));
+
+        //determine if there is already a JSONfile for this outputfile
+        TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
+        if (ts1.exists())
+        {
+            getStatusLogger().info("jsonfile already exists for output: " + outputFileId);
+            return ts1.getArrayList(String.class).get(0);
+        }
+
+        try
+        {
+            boolean isDefaultTrack = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
+
+            TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
+            CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
+            row.put("objectid", new GUID().toString());
+            row.put("outputFile", outputFileId);
+            row.put("relPath", "tracks/data-" + outputFileId);
+            row.put("container", getContainerUser().getContainer().getId());
+            row.put("created", new Date());
+            row.put("createdby", getContainerUser().getUser().getUserId());
+            row.put("modified", new Date());
+            row.put("modifiedby", getContainerUser().getUser().getUserId());
+
+            if (isDefaultTrack)
+            {
+                row.put("trackJson", "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
+            }
+            else
+            {
+                JSONObject meta = new JSONObject();
+                if (rs.getObject(FieldKey.fromString("description")) != null)
+                {
+                    meta.put("Description", rs.getString(FieldKey.fromString("description")));
+                }
+
+                if (rs.getObject(FieldKey.fromString("url")) != null)
+                {
+                    meta.put("Website", rs.getString(FieldKey.fromString("url")));
+                }
+
+                String metaStr = meta.isEmpty() ? "" : ", metadata: " + meta.toString();
+                row.put("trackJson", "{\"category\":\"" + rs.getString(FieldKey.fromString("category")) + "\",\"visibleByDefault\": false" + metaStr + "}");
+            }
+
+            getStatusLogger().info("creating jsonfile for output: " + outputFileId);
+            List<Map<String, Object>> rows = jsonFiles.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
+
+            return (String) rows.get(0).get("objectid");
+        }
+        catch (Exception e)
+        {
+            getStatusLogger().error("Error creating jsonfile for ID: " + outputFileId, e);
+        }
+
+        return null;
     }
 }

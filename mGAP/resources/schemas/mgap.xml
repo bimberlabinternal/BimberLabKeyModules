@@ -177,6 +177,14 @@
                     <className>org.labkey.mgap.query.VariantReleaseDisplayColumnFactory</className>
                 </displayColumnFactory>
             </column>
+            <column columnName="viewInBrowser" wrappedColumnName="rowid">
+                <isUserEditable>false</isUserEditable>
+                <columnTitle></columnTitle>
+                <isHidden>true</isHidden>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.VariantReleaseGenomeBrowserDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
         </columns>
         <buttonBarOptions includeStandardButtons="true" alwaysShowRecordSelectors="false">
             <!--<item>-->
@@ -385,6 +393,9 @@
             <column columnName="allele">
                 <columnTitle>Allele</columnTitle>
             </column>
+            <column columnName="af">
+                <columnTitle>Allele Frequency</columnTitle>
+            </column>
             <column columnName="source">
 
             </column>
@@ -398,6 +409,18 @@
                 <columnTitle>Overlapping Gene(s)</columnTitle>
                 <displayColumnFactory>
                     <className>org.labkey.mgap.query.OverlappingGenesDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+            <column columnName="omim_phenotype">
+                <columnTitle>OMIM Phenotype(s)</columnTitle>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.OMIMPhenotypeDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+            <column columnName="omim">
+                <columnTitle>OMIM Entries</columnTitle>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.OMIMDisplayColumnFactory</className>
                 </displayColumnFactory>
             </column>
             <column columnName="jbrowse" wrappedColumnName="rowid">
@@ -504,6 +527,240 @@
                 <shownInUpdateView>false</shownInUpdateView>
                 <nullable>true</nullable>
                 <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="releaseTracks" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>mGAP Release Tracks</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="trackName">
+                <columnTitle>Track Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="label">
+                <columnTitle>Label</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="source">
+                <columnTitle>Source</columnTitle>
+                <url>${url}</url>
+            </column>
+            <column columnName="category">
+                <columnTitle>Category</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="url">
+                <columnTitle>URL</columnTitle>
+            </column>
+            <column columnName="vcfId">
+                <columnTitle>VCF File</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="description">
+                <columnTitle>Description</columnTitle>
+                <inputType>textarea</inputType>
+            </column>
+            <column columnName="isprimarytrack">
+                <columnTitle>Is Primary Track?</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="releaseTrackSubsets" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>mGAP Release Track Sample Sets</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="trackName">
+                <columnTitle>Track Name</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>mgap</fkDbSchema>
+                    <fkTable>releaseTracks</fkTable>
+                    <fkColumnName>trackName</fkColumnName>
+                    <fkDisplayColumnName>trackName</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="subjectId">
+                <columnTitle>Subject Id</columnTitle>
+                <nullable>false</nullable>
+                <isUserEditable>true</isUserEditable>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>subjects</fkTable>
+                    <fkColumnName>subjectname</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="mgapAlias" wrappedColumnName="subjectId">
+                <columnTitle>mGAP Alias</columnTitle>
+                <nullable>false</nullable>
+                <isUserEditable>false</isUserEditable>
+                <fk>
+                    <fkDbSchema>mgap</fkDbSchema>
+                    <fkTable>animalMapping</fkTable>
+                    <fkColumnName>subjectname</fkColumnName>
+                    <fkDisplayColumnName>externalAlias</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="tracksPerRelease" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.mgap.query.ReleaseTracksCustomizer" />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>mGAP Tracks Per Release</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="releaseId">
+                <columnTitle>Release</columnTitle>
+                <fk>
+                    <fkDbSchema>mgap</fkDbSchema>
+                    <fkTable>variantCatalogReleases</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>version</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="trackName">
+                <columnTitle>Track Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="label">
+                <columnTitle>Label</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="source">
+                <columnTitle>Source</columnTitle>
+                <url>${url}</url>
+            </column>
+            <column columnName="category">
+                <columnTitle>Category</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="url">
+                <columnTitle>URL</columnTitle>
+            </column>
+            <column columnName="vcfId">
+                <columnTitle>VCF File</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="description">
+                <columnTitle>Description</columnTitle>
+                <inputType>textarea</inputType>
+            </column>
+            <column columnName="isprimarytrack">
+                <columnTitle>Is Primary Track?</columnTitle>
+                <defaultValue>false</defaultValue>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="viewInBrowser" wrappedColumnName="rowid">
+                <isUserEditable>false</isUserEditable>
+                <columnTitle></columnTitle>
+                <isHidden>true</isHidden>
+                <displayColumnFactory>
+                    <className>org.labkey.mgap.query.TracksPerReleaseGenomeBrowserDisplayColumnFactory</className>
+                </displayColumnFactory>
             </column>
         </columns>
     </table>

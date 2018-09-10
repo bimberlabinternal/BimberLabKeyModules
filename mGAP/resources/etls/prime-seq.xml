@@ -22,6 +22,7 @@
                 <!--</alternateKeys>-->
             </destination>
         </transform>
+
         <transform id="step2" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
             <source schemaName="mGAP" queryName="sequenceDatasetsSource" remoteSource="PRIMESEQ">
@@ -36,6 +37,41 @@
 
             </destination>
         </transform>
+
+        <transform id="tracksPerRelease" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="tracksPerRelease" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>releaseId</column>
+                    <column>trackName</column>
+                    <column>label</column>
+                    <column>category</column>
+                    <column>url</column>
+                    <column>source</column>
+                    <column>description</column>
+                    <column>isprimarytrack</column>
+                    <column>vcfId/dataid/DataFileUrl</column>
+                    <column>vcfId/library_id/name</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mGAP" queryName="tracksPerRelease" targetOption="truncate">
+                <columnTransforms>
+                    <column source="vcfId/dataid/DataFileUrl" target="vcfId" transformClass="org.labkey.mgap.columnTransforms.TrackOutputFileTransform" />
+                </columnTransforms>
+            </destination>
+        </transform>
+
+        <!--<transform id="releaseTrackSubsets" type="RemoteQueryTransformStep">-->
+        <!--<description>Copy to local table</description>-->
+        <!--<source schemaName="mGAP" queryName="releaseTrackSubsets" remoteSource="PRIMESEQ">-->
+        <!--<sourceColumns>-->
+        <!--<column>trackName</column>-->
+        <!--<column>subjectId</column>-->
+        <!--</sourceColumns>-->
+        <!--</source>-->
+        <!--<destination schemaName="mGAP" queryName="releaseTrackSubsets" targetOption="truncate"/>-->
+        <!--</transform>-->
+
         <transform id="step3" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
             <source schemaName="mGAP" queryName="variantCatalogReleases" remoteSource="PRIMESEQ">
@@ -72,8 +108,10 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="mGAP" queryName="releaseStats" targetOption="merge">
-
+            <destination schemaName="mGAP" queryName="releaseStats" targetOption="truncate">
+                <columnTransforms>
+                    <column source="objectid" target="objectid" transformClass="org.labkey.mgap.columnTransforms.PopulateObjectid" />
+                </columnTransforms>
             </destination>
         </transform>
         <transform id="step5" type="RemoteQueryTransformStep">
@@ -89,11 +127,16 @@
                     <column>reason</column>
                     <column>description</column>
                     <column>overlappingGenes</column>
+                    <column>omim</column>
+                    <column>omim_phenotype</column>
                     <column>objectId</column>
+                    <column>af</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="mGAP" queryName="variantList" targetOption="merge">
-
+            <destination schemaName="mGAP" queryName="variantList" targetOption="truncate">
+                <columnTransforms>
+                    <column source="objectid" target="objectid" transformClass="org.labkey.mgap.columnTransforms.PopulateObjectid" />
+                </columnTransforms>
             </destination>
         </transform>
     </transforms>

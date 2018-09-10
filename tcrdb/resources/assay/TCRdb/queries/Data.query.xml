@@ -116,7 +116,7 @@
                     <includeScript>/tcrdb/window/ExportDataWindow.js</includeScript>
                     <includeScript>/tcrdb/window/DownloadCloneWindow.js</includeScript>
                     <item text="More Actions" insertAfter="last" iconCls="ellipsis-h">
-                        <item text="View Batches" requiresSelection="true">
+                        <item text="View Batches">
                             <onClick>Laboratory.Assay.viewBatchesBtn(dataRegion, 'Data')</onClick>
                         </item>
                         <item text="View Runs">
@@ -133,6 +133,9 @@
                         </item>
                         <item text="Download Clone Materials">
                             <onClick>TCRdb.window.DownloadCloneWindow.buttonHandler(dataRegionName);</onClick>
+                        </item>
+                        <item text="Download Clone Sequence">
+                            <onClick>TCRdb.window.DownloadCloneWindow.downloadSequenceHandler(dataRegionName);</onClick>
                         </item>
                     </item>
                 </buttonBarOptions>

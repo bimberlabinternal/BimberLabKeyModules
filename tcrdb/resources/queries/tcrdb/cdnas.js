@@ -19,13 +19,17 @@ function beforeUpsert(row, oldRow, errors){
     oldRow = oldRow || {};
     var rowId = row.rowId || oldRow.rowId || rowIdx;
     rowIdx--;
-    var wellArr = [(row.plateId || oldRow.plateId), (row.well || oldRow.well)];
-    var wellKey = wellArr.join('<>').toUpperCase();
-    if (wellMap[wellKey] && wellMap[wellKey] !== rowId){
-        errors.well = 'Duplicate entry for plate/well: ' + wellArr.join('/');
-    }
-    else {
-        wellMap[wellKey] = rowId;
+
+    var well = row.well || oldRow.well || '';
+    if ('pool' !== well.toLowerCase()) {
+        var wellArr = [(row.plateId || oldRow.plateId), well];
+        var wellKey = wellArr.join('<>').toUpperCase();
+        if (wellMap[wellKey] && wellMap[wellKey] !== rowId) {
+            errors.well = 'Duplicate entry for plate/well: ' + wellArr.join('/');
+        }
+        else {
+            wellMap[wellKey] = rowId;
+        }
     }
 
     //Note: this will only work if the incoming row has a container property

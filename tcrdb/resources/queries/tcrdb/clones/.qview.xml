@@ -1,4 +1,15 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+    <columns>
+        <column name="cloneName" />
+        <column name="chain" />
+        <column name="cdr3" />
+        <column name="vGene" />
+        <column name="dGene" />
+        <column name="jGene" />
+        <column name="cGene" />
+        <column name="comments" />
+        <column name="workbook" />
+    </columns>
     <sorts>
         <sort column="cloneName" descending="false" />
     </sorts>

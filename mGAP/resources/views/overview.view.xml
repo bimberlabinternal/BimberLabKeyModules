@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view" title="The Macaque Genotype and Phenotype Database (mGAP)">
+<view xmlns="http://labkey.org/data/xml/view" title="The Macaque Genotype and Phenotype Resource (mGAP)">
     <permissions>
         <permission name="read"/>
     </permissions>

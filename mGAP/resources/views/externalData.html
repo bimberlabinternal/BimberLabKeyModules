@@ -1,0 +1,28 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var childEl = jQuery('#' + webpart.wrapperDivId + ' > div.wp');
+        childEl.attr('id', webpart.wrapperDivId + '-wp');
+        var releaseId = mGAP.Utils.getMGapReleaseId();
+
+        LDK.Utils.getReadOnlyQWP({
+            frame: 'none',
+            title: 'External Data',
+            schemaName: 'mgap',
+            queryName: 'tracksPerRelease',
+            filterArray: [LABKEY.Filter.create('releaseId/rowId', releaseId), LABKEY.Filter.create('isprimarytrack', false)],
+            columns: 'label,source,description,viewInBrowser,vcfId/dataId/ViewOrDownload',
+            maxRows: 50,
+            showRecordSelectors: false,
+            showDetailsColumn: false,
+            buttonBar: {position: 'none', includeStandardButtons: false, items: []}
+        }).render(childEl.attr('id'));
+    });
+
+</script>
+
+The core dataset in mGAP is derived from Indian-origin rhesus macaques housed at the Oregon National Primate Research Center; however, starting with release 1.5 we now include additional
+datasets provided by external collaborators.  The table below lists these collaborators:
+<br><br>
+<div class="wp" style="min-height: 50px;min-width: 200px;"></div>

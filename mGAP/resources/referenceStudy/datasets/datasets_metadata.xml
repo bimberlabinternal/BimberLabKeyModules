@@ -5,6 +5,7 @@
             <column columnName="objectid">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
+                <isHidden>true</isHidden>
             </column>
         </columns>
     </sharedConfig>
@@ -259,9 +260,14 @@
                 <columnTitle>Species</columnTitle>
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="avgKinship">
+                <columnTitle>Average Kinship With Cohort</columnTitle>
+                <datatype>double</datatype>
+            </column>
             <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>false</isKeyField>
+                <isHidden>true</isHidden>
             </column>
         </columns>
         <tableTitle>Demographics</tableTitle>
