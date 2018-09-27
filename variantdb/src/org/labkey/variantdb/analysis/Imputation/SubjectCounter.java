@@ -61,7 +61,7 @@ public class SubjectCounter
                 {
                     if (!trueGenos.contains(imputedGeno) && !"0".equals(imputedGeno) && (!isUncalled(trueGenos, log, markerName, subject)))
                     {
-                        log.info("dense/framework overlap, but imputed value doesnt match the input: " + markerName + ", " + subject + ". input genotype: " + imputationInputGenotype.getGenotypeString() + ", " + StringUtils.join(imputedGeno, ";") + ", bases: " + StringUtils.join(alleleToBase, ";") + ", true genotypes: " + StringUtils.join(trueGenos, ";"));
+                        log.info("dense/framework overlap, but imputed value doesn't match the input: " + markerName + ", " + subject + ". input genotype: " + imputationInputGenotype.getGenotypeString() + ", " + StringUtils.join(imputedGeno, ";") + ", bases: " + StringUtils.join(alleleToBase, ";") + ", true genotypes: " + StringUtils.join(trueGenos, ";"));
                     }
                 }
 
