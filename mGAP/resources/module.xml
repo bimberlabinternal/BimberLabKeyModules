@@ -28,6 +28,13 @@
                 <permission>ADMIN</permission>
             </editPermissions>
         </propertyDescriptor>
+        <propertyDescriptor name="OmimApiKey">
+            <canSetPerContainer>true</canSetPerContainer>
+            <description>This is the API key to use when making OMIM requests</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
     </properties>
     <clientDependencies>
         <dependency path="mGAP/mgap.css"/>

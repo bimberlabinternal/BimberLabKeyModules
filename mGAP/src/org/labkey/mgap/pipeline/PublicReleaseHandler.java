@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.DbScope;
 import org.labkey.api.data.Results;
@@ -58,12 +59,15 @@ import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.PrintWriters;
+import org.labkey.mgap.mGAPManager;
 import org.labkey.mgap.mGAPModule;
 import org.labkey.mgap.mGAPSchema;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -400,8 +404,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     map.put("reason", line[5]);
                                     map.put("description", line[6]);
                                     map.put("overlappingGenes", line[7]);
-                                    map.put("omim", line[8]);
-                                    map.put("omim_phenotype", line[9]);
+                                    map.put("omim", updateOmimD(line[8], job.getContainer(), job.getLogger()));
+                                    map.put("omim_phenotype", updateOmimD(line[9], job.getContainer(), job.getLogger()));
                                     map.put("af", line[10]);
                                     map.put("objectId", new GUID().toString());
 
@@ -542,6 +546,97 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 }
             }
         }
+
+        Map<String, String> omimMap = new HashMap<>();
+
+        public String updateOmimD(String input, Container c, Logger log)
+        {
+            if (input.contains("<>"))
+            {
+                String[] parts = input.split("<>");
+                input = parts.length == 1 ? parts[0] : parts[1];
+            }
+
+            if (omimMap.containsKey(input))
+            {
+                return omimMap.get(input);
+            }
+
+            String ret = input;
+            String apiKey = mGAPManager.get().getOmimApiKey(c);
+            if (apiKey == null)
+            {
+                log.error("OMIM APIKey not set");
+                omimMap.put(input, input);
+                return input;
+            }
+
+            try
+            {
+                String resolved = getOmimJson(input, apiKey, log);
+                if (resolved != null && !resolved.equals(input))
+                {
+                    //OMIM gene entries default to containing semicolons, which is our delimiter in this field
+                    resolved = resolved.replaceAll(";", ",");
+                    ret = resolved + "<>" + input;
+                }
+            }
+            catch (IOException e)
+            {
+                log.error(e);
+            }
+
+            omimMap.put(input, ret);
+
+            return ret;
+        }
+
+        private String getOmimJson(String input, String apiKey, Logger log) throws IOException
+        {
+            String url = "https://api.omim.org/api/entry?mimNumber=" + input + "&apiKey=" + apiKey + "&format=json";
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            if (con.getResponseCode() != HttpURLConnection.HTTP_OK)
+            {
+                log.error("bad request: " + url);
+                return null;
+            }
+
+            try (BufferedReader in = Readers.getReader(con.getInputStream()))
+            {
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null)
+                {
+                    response.append(inputLine);
+                }
+
+                JSONObject json = new JSONObject(response.toString());
+                if (json.containsKey("omim"))
+                {
+                    json = json.getJSONObject("omim");
+                    if (json.containsKey("entryList"))
+                    {
+                        for (JSONObject j : json.getJSONArray("entryList").toJSONObjectArray())
+                        {
+                            String val = j.getJSONObject("entry").getJSONObject("titles").optString("preferredTitle", input);
+                            if (val.contains(";"))
+                            {
+                                String[] tokens = val.split(";");
+                                String id = StringUtils.trimToNull(tokens[tokens.length - 1]);
+                                String name = StringUtils.join(Arrays.asList(Arrays.copyOf(tokens, tokens.length-1)), ";");
+                                val = name + " (" + id + ")";
+                            }
+
+                            return val;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
 
         @Override
         public void processFilesOnWebserver(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
@@ -905,10 +1000,10 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     continue;
                                 }
 
-                                String description = "Type: " + tokens[1] + ", Gene: " + tokens[3];
+                                String description = "Type: " + (tokens[1].replaceAll("&", ", ")) + "; Gene: " + tokens[3];
                                 if (tokens.length > 10 && !StringUtils.isEmpty(tokens[10]))
                                 {
-                                    description += ", AA Change: " + tokens[10];
+                                    description += "; AA Change: " + tokens[10];
                                 }
 
                                 maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger());
@@ -1454,6 +1549,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
 
             Set<String> ret = new LinkedHashSet<>();
+            //TODO: consider: tokens = input.split("\\)(,){0,1}(?!_[0-9]+)");
             String[] tokens = input.split("\\)(,){0,1}");
             for (String token : tokens)
             {
@@ -1489,9 +1585,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 name = name.replaceAll(" +", " ");
                 name = name.replaceAll("\\[", "");
                 name = name.replaceAll("\\]", "");
+                name = name.replaceAll("^\\?", "");
+                name = name.replaceAll("\\?$", "");
                 name = StringUtils.trimToEmpty(name);
 
-                if (!StringUtils.isEmpty(name) && !".".equals(name))
+                if (!StringUtils.isEmpty(name) && !".".equals(name) && !StringUtils.isEmpty(id))
                 {
                     ret.add(name + "<>" + id);
                 }
@@ -1533,8 +1631,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     Pair.of("Spinal_muscular_atrophy,_distal,_autosomal_recessive,_4,_611067_(3),Charcot-Marie-Tooth_disease,_recessive_intermediate_C,_615376_(3)",PageFlowUtil.set("Spinal muscular atrophy, distal, autosomal recessive, 4<>611067", "Charcot-Marie-Tooth disease, recessive intermediate C<>615376")),
                     Pair.of("Charcot-Marie-Tooth_disease,_type_2A1,_118210_(3),_Pheochromocytoma,171300_(3),_{Neuroblastoma,_susceptibility_to,_1},_256700_(3)", PageFlowUtil.set("Charcot-Marie-Tooth disease, type 2A1<>118210","Pheochromocytoma<>171300","Neuroblastoma, susceptibility to, 1<>256700")),
                     Pair.of("Obesity,_morbid,_due_to_leptin_receptor_deficiency,_614963_(3)", PageFlowUtil.set("Obesity, morbid, due to leptin receptor deficiency<>614963")),
-                    Pair.of("Severe_combined_immunodeficiency_due_to_ADA_deficiency,_102700_(3),Adenosine_deaminase_deficiency,_partial,_102700_(3)", PageFlowUtil.set("Severe combined immunodeficiency due to ADA deficiency<>102700","Adenosine deaminase deficiency, partial<>102700")),
-                    Pair.of("{Malaria,_cerebral,_susceptibility_to},_611162_(3),_{Septic_shock,susceptibility_to}_(3),_{Asthma,_susceptibility_to},_600807_(3),_{Dementia,_vascular,_susceptibility_to}_(3),_{Migraine_without_aura,_susceptibility_to},157300_(3)_157300_(3)", PageFlowUtil.set("Malaria, cerebral, susceptibility to<>611162","Septic shock,susceptibility to<>","Asthma, susceptibility to<>600807","Dementia, vascular, susceptibility to<>","Migraine without aura, susceptibility to<>157300"))
+                    Pair.of("?Severe_combined_immunodeficiency_due_to_ADA_deficiency,_102700_(3),Adenosine_deaminase_deficiency,_partial,_102700_(3)", PageFlowUtil.set("Severe combined immunodeficiency due to ADA deficiency<>102700","Adenosine deaminase deficiency, partial<>102700")),
+                    Pair.of("{Malaria,_cerebral,_susceptibility_to},_611162_(3),_{Septic_shock,susceptibility_to}_(3),_{Asthma,_susceptibility_to},_600807_(3),_{Dementia,_vascular,_susceptibility_to}_(3),_{Migraine_without_aura,_susceptibility_to},157300_(3)_157300_(3)", PageFlowUtil.set("Malaria, cerebral, susceptibility to<>611162","Asthma, susceptibility to<>600807","Migraine without aura, susceptibility to<>157300"))
+                    //TODO: this is a badly formed entry; however, it will not get parsed correctly.  they key thing is that we get the entityId right though
+                    //Pair.of("Peroxisome_biogenesis_disorder_6A_(Zellweger),_614870_(3),Peroxisome_biogenesis_disorder_6B,_614871_(3)", PageFlowUtil.set("Peroxisome_biogenesis_disorder_6A_(Zellweger)<>614870", "Peroxisome_biogenesis_disorder_6B<>614871"))
+                    //Night_blindness,_congenital_stationary_(complete),_1F,_autosomalrecessive,_615058_(3)
             );
 
             PublicReleaseHandler.Processor pr = new PublicReleaseHandler.Processor();
@@ -1543,6 +1644,13 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             {
                 Set<String> ret = pr.parseOmim(pair.getLeft(), _log);
                 Assert.assertEquals(pair.getRight(), ret);
+
+                //NOTE: since this requires an API key and queries OMIM not suitable to general testing, but this can be uncommented for local dev
+                //for (String term : ret)
+                //{
+                //    String updated = pr.updateOmimD(term, ContainerManager.getRoot(), _log);
+                //    Assert.assertNotNull(updated);
+                //}
             }
         }
     }

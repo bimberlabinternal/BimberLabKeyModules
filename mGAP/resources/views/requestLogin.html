@@ -7,7 +7,7 @@
                 border: false
             },
             items: [{
-                html: 'mGAP is available to all researchers; however, we ask that you provide basic information so that we can track usage and control access.  Please fill out the fields below, hit submit, and you should receive a confirmation email shortly:',
+                html: 'mGAP is available to all researchers; however, we ask that you provide basic information so that we can track usage and control access.  Please fill out the fields below, hit submit, and you should receive an email shortly that will allow you to create your login and password:',
                 style: 'padding-bottom: 20px;'
             },{
                 xtype: 'textfield',
@@ -62,6 +62,9 @@
                 name: 'reason',
                 style: 'margin-top: 20px;',
                 allowBlank: false
+            },{
+                html: 'Please note: once you hit submit, this request goes into a queue for our team to review.  Once approved, you will receive a separate email to create your login/password.  After hitting submit you will be redirected back to the mGAP home page.',
+                style: 'padding-bottom: 10px;'
             }],
             width: 800,
             buttonAlign: 'left',
@@ -88,7 +91,7 @@
                         success: function(response){
                             console.log(response);
 
-                            Ext4.Msg.alert('Success', 'An account has been requested.  You should receive a reply shortly.', function(){
+                            Ext4.Msg.alert('Success', 'An account has been requested.  Once approved, you will receive an email with a link to create your password.', function(){
                                 window.location = LABKEY.ActionURL.getContextPath() + '/';
                             });
                         },

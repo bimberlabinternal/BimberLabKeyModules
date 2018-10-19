@@ -13,13 +13,9 @@
         var webpart = <%=webpartContext%>;
 
         Ext4.get(webpart.wrapperDivId).update(
-                '<div>The table below shows a subset of the variants identified in this release.  It is designed to highlight predicted high-impact variants, including variants:<p/>' +
-                '<ul>' +
-                '<li>Identical to a ClinVar Allele Annotated as Pathogenic</li>' +
-                '<li>Predicted as High Impact on Protein Coding by SnpEff</li>' +
-                '<li>Predicted as Damaging by PolyPhen2 (human annotations)</li>' +
-                '</ul>' +
-                'Note: you can click the column headers to sort or filter, and the table can be exported to excel using the export button in the button bar.' +
+                '<div>From each mGAP release, we generate a list of \'High Impact\' Variants, including variants overlapping with human disease-associated variants or those predicted to have a deleterious impact on protein coding. The table below contains a list of all OMIM entries overlapping these variants. These are putative disease models, and would require additional validation. <a href="' + LABKEY.ActionURL.buildURL('mgap', 'variantList', null, {release: rowId}) + '">Click here to view the entire variant list.</a><p/>' +
+                '<br>Note: you can click the column headers to sort or filter, and the table can be exported to excel using the export button in the button bar.' +
+                '<br>' +
                 '</div>' +
                 '<br>' +
                 '<div id="qwp_'+webpart.wrapperDivId+'"></div>'
@@ -28,7 +24,8 @@
         LDK.Utils.getReadOnlyQWP({
             name: 'query',
             schemaName: 'mGAP',
-            queryName: 'variantList',
+            queryName: 'phenotypes',
+            columns: 'releaseId,omim_phenotype,omim,variantLink',
             filterArray: [
                     LABKEY.Filter.create('releaseId/rowid', rowId, LABKEY.Filter.Types.EQUAL)
             ]

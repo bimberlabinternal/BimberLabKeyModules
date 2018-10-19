@@ -100,6 +100,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                     FieldKey.fromString("category"),
                     FieldKey.fromString("url"),
                     FieldKey.fromString("description"),
+                    FieldKey.fromString("isprimarytrack"),
                     FieldKey.fromString("vcfId/dataid/DataFileUrl")
             );
 
@@ -222,7 +223,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     private String getOrCreateJsonFile(Results rs) throws SQLException
     {
-        int outputFileId = getOrCreateOutputFile(rs.getInt(FieldKey.fromString("vcfId/dataid/DataFileUrl")), getInputValue("objectId"), rs.getString("label"));
+        int outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString("vcfId/dataid/DataFileUrl")), getInputValue("objectId"), rs.getString("label"));
 
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);

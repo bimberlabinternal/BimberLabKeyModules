@@ -34,6 +34,21 @@ public class OMIMPhenotypeDisplayColumnFactory implements DisplayColumnFactory
             }
 
             @Override
+            public Object getExcelCompatibleValue(RenderContext ctx)
+            {
+                Object val = super.getExcelCompatibleValue(ctx);
+                if (val != null)
+                {
+                    String ret = String.valueOf(val);
+                    ret.replaceAll("<>", ", ");
+
+                    return ret;
+                }
+
+                return val;
+            }
+
+            @Override
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 String rawValue = StringUtils.trimToNull(ctx.get(getBoundKey("omim_phenotype"), String.class));
@@ -55,7 +70,7 @@ public class OMIMPhenotypeDisplayColumnFactory implements DisplayColumnFactory
                     }
                     else
                     {
-                        out.write(delim + "<a>" + entry + "</a>");
+                        out.write(delim + "<a>" + elements[0] + "</a>");
                     }
 
                     delim = "<br>";

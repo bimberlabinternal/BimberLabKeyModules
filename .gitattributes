@@ -13,6 +13,7 @@ DISCVR/mGAP/resources/queries/laboratory/subjects/.qview.xml -text
 DISCVR/mGAP/resources/queries/mGAP/animalMapping.js -text
 DISCVR/mGAP/resources/queries/mGAP/animalMapping.query.xml -text
 DISCVR/mGAP/resources/queries/mGAP/genomesSource.sql -text
+DISCVR/mGAP/resources/queries/mGAP/phenotypes/.qview.xml -text
 DISCVR/mGAP/resources/queries/mGAP/releaseStats.js -text
 DISCVR/mGAP/resources/queries/mGAP/releaseTrackSubsets/.qview.xml -text
 DISCVR/mGAP/resources/queries/mGAP/sequenceDatasets/.qview.xml -text
@@ -44,6 +45,7 @@ DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.41-16.42.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.42-16.43.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.43-16.44.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.44-16.45.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.45-16.46.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-15.30-15.31.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.31-16.32.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.32-16.33.sql -text
@@ -59,6 +61,7 @@ DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.41-16.42.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.42-16.43.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.43-16.44.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.44-16.45.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.45-16.46.sql -text
 DISCVR/mGAP/resources/schemas/mgap.xml -text
 DISCVR/mGAP/resources/views/_footer.html -text
 DISCVR/mGAP/resources/views/about.html -text
@@ -87,9 +90,13 @@ DISCVR/mGAP/resources/views/geneSearch.webpart.xml -text
 DISCVR/mGAP/resources/views/helpMenu.html -text
 DISCVR/mGAP/resources/views/helpMenu.view.xml -text
 DISCVR/mGAP/resources/views/helpMenu.webpart.xml -text
+DISCVR/mGAP/resources/views/login.html -text
+DISCVR/mGAP/resources/views/login.view.xml -text
 DISCVR/mGAP/resources/views/overview.html -text
 DISCVR/mGAP/resources/views/overview.view.xml -text
 DISCVR/mGAP/resources/views/overview.webpart.xml -text
+DISCVR/mGAP/resources/views/phenotypeList.html -text
+DISCVR/mGAP/resources/views/phenotypeList.view.xml -text
 DISCVR/mGAP/resources/views/phenotypes.html -text
 DISCVR/mGAP/resources/views/phenotypes.view.xml -text
 DISCVR/mGAP/resources/views/phenotypes.webpart.xml -text
@@ -145,13 +152,16 @@ DISCVR/mGAP/src/org/labkey/mgap/pipeline/MultiSourceAnnotatorRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/OriginalAlleleAnnotatorRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/PublicReleaseHandler.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/VariantsToTableRunner.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/BreakTextDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/OMIMDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/OMIMPhenotypeDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/OverlappingGenesDisplayColumnFactory.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/PhenotypeVariantLinkDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/ReleaseTracksCustomizer.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TracksPerReleaseGenomeBrowserDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TriggerHelper.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/UserRequestCustomizer.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/VariantDescriptionDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/VariantListJBrowseDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/VariantReleaseCustomizer.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/VariantReleaseDisplayColumnFactory.java -text

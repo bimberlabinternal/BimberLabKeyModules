@@ -39,6 +39,7 @@ public class mGAPManager
     public static final String NotifyPropName = "MGAPContactUsers";
     public static final String MailChimpApiKeyPropName = "MGAPMailChimpApiKey";
     public static final String MailChimpListIdPropName = "MGAPMailChimpList";
+    public static final String OmimApiKeyPropName = "OmimApiKey";
 
     private mGAPManager()
     {
@@ -59,6 +60,14 @@ public class mGAPManager
             return null;
 
         return ContainerManager.getForPath(path);
+    }
+
+    public String getOmimApiKey(Container c)
+    {
+        Module m = ModuleLoader.getInstance().getModule(mGAPModule.NAME);
+        ModuleProperty mp = m.getModuleProperties().get(mGAPManager.OmimApiKeyPropName);
+
+        return mp.getEffectiveValue(c);
     }
 
     public Set<User> getNotificationUsers()

@@ -21,11 +21,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.labkey.api.action.ApiSimpleResponse;
+import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.CoreSchema;
@@ -42,6 +45,9 @@ import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.module.ModuleProperty;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateService;
+import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
@@ -58,14 +64,19 @@ import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.settings.AppProps;
+import org.labkey.api.settings.LookAndFeelProperties;
 import org.labkey.api.util.ConfigurationException;
 import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.URLHelper;
+import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.UnauthorizedException;
+import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.mail.Address;
 import javax.mail.Message;
@@ -88,9 +99,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -195,7 +208,7 @@ public class mGAPController extends SpringActionController
 
                         DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=userRequests&query.viewName=Pending Requests", c);
                         mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
-                        mail.setFrom(AppProps.getInstance().getAdministratorContactEmail(true));
+                        mail.setFrom(getReplyEmail(getContainer()));
                         mail.setSubject("mGap Account Request");
                         mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
 
@@ -425,7 +438,7 @@ public class mGAPController extends SpringActionController
 
                 MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                 mail.setEncodedHtmlContent("Your account request has been approved for mGAP!  " + (isLDAP ? "Your institutional email/password should give access.  " : "") + "<a href=\"" + AppProps.getInstance().getBaseServerUrl() + mGapContainer.getStartURL(getUser()).toString() + "\">Click here to access the site</a>");
-                mail.setFrom(AppProps.getInstance().getAdministratorContactEmail(true));
+                mail.setFrom(getReplyEmail(getContainer()));
                 mail.setSubject("mGap Account Request");
                 mail.addRecipients(Message.RecipientType.TO, u.getEmail());
 
@@ -437,6 +450,18 @@ public class mGAPController extends SpringActionController
 
             return response;
         }
+    }
+
+    private String getReplyEmail(Container c)
+    {
+        LookAndFeelProperties lfp = LookAndFeelProperties.getInstance(getContainer());
+        String email = lfp.getSystemEmailAddress();
+        if (email == null)
+        {
+            return AppProps.getInstance().getAdministratorContactEmail(true);
+        }
+
+        return email;
     }
 
     // Based on:
@@ -685,7 +710,7 @@ public class mGAPController extends SpringActionController
 
                     MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                     mail.setEncodedHtmlContent("A support request was submitted from mGap by:" + form.getEmail() + "<br><br>Message:<br>" + form.getComment());
-                    mail.setFrom(AppProps.getInstance().getAdministratorContactEmail(true));
+                    mail.setFrom(getReplyEmail(getContainer()));
                     mail.setSubject("mGap Help Request");
                     mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
 
@@ -729,6 +754,158 @@ public class mGAPController extends SpringActionController
         public void setComment(String comment)
         {
             _comment = comment;
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public static class UpdateOmimAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Update OMIM Entries");
+
+            HtmlView view = new HtmlView("This will iterate all OMIM values from the VariantList table and query OMIM to replace their title using the official value.  Do you want to continue?");
+            return view;
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            List<Map<String, Object>> toUpdate = new ArrayList<>();
+            List<Map<String, Object>> oldKeys = new ArrayList<>();
+
+            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);
+
+            PublicReleaseHandler.Processor pr = new PublicReleaseHandler.Processor();
+            AtomicInteger ordinal = new AtomicInteger(0);
+            new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_TABLE)).forEachResults(rs -> {
+                ordinal.getAndIncrement();
+                if (ordinal.get() % 1000 == 0)
+                {
+                    _log.info(String.format("processed %s rows", ordinal.get()));
+                }
+
+                int rowId = rs.getInt(FieldKey.fromString("rowId"));
+                String objectId = rs.getString(FieldKey.fromString("objectId"));
+                String omim_phenotype = rs.getString(FieldKey.fromString("omim_phenotype"));
+                String omim = rs.getString(FieldKey.fromString("omim"));
+                String container = rs.getString(FieldKey.fromString("container"));
+                String description = rs.getString(FieldKey.fromString("description"));
+
+                Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                row.put("rowId", rowId);
+                row.put("objectId", objectId);
+                row.put("container", container);
+
+                Map<String, Object> keys = new CaseInsensitiveHashMap<>();
+                keys.put("rowId", rowId);
+                keys.put("objectId", objectId);
+
+                boolean doUpdate = false;
+
+                if (omim_phenotype != null)
+                {
+                    String updated = getUpdatedVal(omim_phenotype, pr, rowId);
+                    if (!omim_phenotype.equals(updated))
+                    {
+                        doUpdate = true;
+                        row.put("omim_phenotype", updated);
+                    }
+                }
+
+                if (omim != null)
+                {
+                    String updated = getUpdatedVal(omim, pr, rowId);
+                    if (!omim.equals(updated))
+                    {
+                        doUpdate = true;
+                        row.put("omim", updated);
+                    }
+                }
+
+                if (description.contains("&"))
+                {
+                    doUpdate = true;
+                    description = description.replaceAll("&", ", ");
+                    row.put("description", description);
+                }
+
+                if (doUpdate)
+                {
+                    toUpdate.add(row);
+                    oldKeys.add(keys);
+                }
+            });
+
+            _log.info("total updates: " + toUpdate.size());
+            try
+            {
+                QueryUpdateService qus = us.getTable(mGAPSchema.TABLE_VARIANT_TABLE).getUpdateService();
+                qus.setBulkLoad(true);
+                qus.updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, new HashMap<>());
+                _log.info("update complete");
+            }
+            catch (Exception e)
+            {
+                _log.error(e);
+                throw e;
+            }
+
+            return true;
+        }
+
+        private String getUpdatedVal(String input, PublicReleaseHandler.Processor pr, int rowId)
+        {
+            Set<String> vals = new LinkedHashSet<>();
+            String[] tokens = input.split(";");
+            for (String token : tokens)
+            {
+                //these are records lacking a valid ID and will not resolve.  drop these for now.
+                if (token.endsWith("<>"))
+                {
+                    continue;
+                }
+
+                if (token.contains("<>"))
+                {
+                    String[] parts = token.split("<>");
+                    token = parts.length == 1 ? parts[0] : parts[1];
+                    String updated = pr.updateOmimD(token, getContainer(), _log);
+                    if (!updated.contains("<>"))
+                    {
+                        _log.error("Unable to resolve: [" + token + "] for row: " + rowId);
+                    }
+                    vals.add(updated);
+                }
+                else
+                {
+                    //these are suspect and should probably be dropped:
+                    String updated = pr.updateOmimD(token, getContainer(), _log);
+                    if (!updated.equals(token) && updated.contains("<>"))
+                    {
+                        vals.add(updated);
+                    }
+                    else
+                    {
+                        _log.error("Unable to resolve: [" + token + "] for row: " + rowId);
+                    }
+                }
+            }
+
+            return vals.isEmpty() ? null : StringUtils.join(vals, ";");
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @Override
+        public @NotNull URLHelper getSuccessURL(Object o)
+        {
+            return getContainer().getStartURL(getUser());
         }
     }
 }

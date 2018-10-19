@@ -48,7 +48,16 @@ public class OMIMDisplayColumnFactory implements DisplayColumnFactory
                 String delim = "";
                 for (String entry : tokens)
                 {
-                    out.write(delim + "<a target=\"_blank\" href=\"https://www.omim.org/entry/" + entry + "\">" + entry + "</a>");
+                    String id = entry;
+                    String text = entry;
+                    if (entry.contains("<>"))
+                    {
+                        String[] parts = entry.split("<>");
+                        id = parts[1];
+                        text = parts[0];
+                    }
+
+                    out.write(delim + "<a target=\"_blank\" href=\"https://www.omim.org/entry/" + id + "\">" + text + "</a>");
                     delim = "<br>";
                 }
             }

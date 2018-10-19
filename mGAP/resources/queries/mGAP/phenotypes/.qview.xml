@@ -1,0 +1,6 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <sorts>
+        <sort column="releaseId/rowId" descending="false"/>
+        <sort column="omim_phenotype" descending="false"/>
+    </sorts>
+</customView>

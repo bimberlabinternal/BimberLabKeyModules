@@ -139,6 +139,22 @@
                 </columnTransforms>
             </destination>
         </transform>
+
+        <transform id="step6" type="RemoteQueryTransformStep">
+            <description>Copy to local table</description>
+            <source schemaName="mGAP" queryName="phenotypes" remoteSource="PRIMESEQ">
+                <sourceColumns>
+                    <column>releaseId</column>
+                    <column>omim_phenotype</column>
+                    <column>omim_entry</column>
+                    <column>omim</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mGAP" queryName="phenotypes" targetOption="truncate">
+                <columnTransforms>
+                </columnTransforms>
+            </destination>
+        </transform>
     </transforms>
     <schedule>
         <cron expression="0 0 1 * * ?"/>

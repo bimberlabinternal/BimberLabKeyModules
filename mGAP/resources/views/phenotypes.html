@@ -8,36 +8,36 @@
     (function ($){
         $(function(){
             var rawData = [
-                ['Genetic association reported','SIV progression','Nomura , et al.','https://www.ncbi.nlm.nih.gov/pubmed/22754552'],
-                ['Genetic association reported','SIV progression','Letvin , et al.','https://www.ncbi.nlm.nih.gov/pubmed/21543722'],
-                ['Genetic association reported','SIV progression','Lim , et al.','https://www.ncbi.nlm.nih.gov/pubmed/20585621'],
-                ['Genetic association reported','Age-related macular degeneration','Francis , et al.','https://www.ncbi.nlm.nih.gov/pubmed/18535016'],
-                ['Genetic association reported','Age-related macular degeneration','Singh, et al.','https://www.ncbi.nlm.nih.gov/pubmed/19028492'],
-                ['Genetic association reported','Colorectal cancer','Brammer, et al.','https://www.ncbi.nlm.nih.gov/pubmed/29490919'],
-                ['Genetic association reported','Krabbe disease ','Luzi, et al.','https://www.ncbi.nlm.nih.gov/pubmed/9192853'],
-                ['Genetic association reported','Ammenorhea','Lomniczi, et al.','https://www.ncbi.nlm.nih.gov/pubmed/22128021'],
-                ['Genetic association reported','Naltrexone response','Vallender, et al.','https://www.ncbi.nlm.nih.gov/pubmed/20153935'],
-                ['Genetic association reported','HPA axis dysregulation','Ferguson, et al.','https://www.ncbi.nlm.nih.gov/pubmed/22998353'],
-                ['Genetic association reported','Alcohol intake levels','Lindell, et al.','https://www.ncbi.nlm.nih.gov/pubmed/20368518'],
-                ['Genetic association reported','Alcohol intake levels','Barr, et al.','https://www.ncbi.nlm.nih.gov/pubmed/19706546'],
-                ['Genetic association reported','Alcohol intake levels','Cervera-Juanes, et al.','https://www.ncbi.nlm.nih.gov/pubmed/26148813'],
-                ['Genetic association reported','Anxiety','Spinelli , et al.','https://www.ncbi.nlm.nih.gov/pubmed/22293001'],
-                ['Genetic association reported','Anxiety','Rogers, et al.','https://www.ncbi.nlm.nih.gov/pubmed/23147386'],
-                ['Genetic association not-reported','Autism','Bauman, et al.','https://www.ncbi.nlm.nih.gov/pubmed/28774750'],
-                ['Genetic association not-reported','Age-associated coginitive decline','Paspalas, et al.','https://www.ncbi.nlm.nih.gov/pubmed/29241829'],
-                ['Genetic association not-reported','Polycystic ovary syndrome (PCOS)','Abbott, et al.','https://www.ncbi.nlm.nih.gov/pubmed/28333238'],
-                ['Genetic association not-reported','Endometriosis','Assaf, et al.','https://www.ncbi.nlm.nih.gov/pubmed/21521902'],
-                ['Genetic association not-reported','Endometriosis','Franasiak, et al.','https://www.ncbi.nlm.nih.gov/pubmed/25031316'],
-                ['Genetic association not-reported','Endometriosis','Zondervan, et al.','https://www.ncbi.nlm.nih.gov/pubmed/14747196'],
-                ['Genetic association not-reported','Left ventricular hyertrophy','Reader, et al.','https://www.ncbi.nlm.nih.gov/pubmed/27053572'],
-                ['Genetic association not-reported','Type III Von-Willebrand','Patterson, et al.','https://www.ncbi.nlm.nih.gov/pubmed/12211283'],
-                ['Genetic association not-reported','Type II Diabetes','Qian, et al.','https://www.ncbi.nlm.nih.gov/pubmed/26113016'],
-                ['Genetic association not-reported','Type II Diabetes','Pare, et al.','https://www.ncbi.nlm.nih.gov/pubmed/17278131'],
-                ['Genetic association not-reported','Type II Diabetes','Bremer, et al.','https://www.ncbi.nlm.nih.gov/pubmed/21884510'],
-                ['Genetic association not-reported','Squamous cell carcinoma','Jean, et al.','https://www.ncbi.nlm.nih.gov/pubmed/21640039'],
-                ['Genetic association not-reported','Coat-like retinopathy','Liu, et al.','https://www.ncbi.nlm.nih.gov/pubmed/25656754'],
-                ['Genetic association not-reported','TB progression','Maiello, et al.','https://www.ncbi.nlm.nih.gov/pubmed/28947646'],
-                ['Genetic association not-reported','Osteoporosis ','Simmons , et al.','https://www.ncbi.nlm.nih.gov/pubmed/26864889']
+                ['Genetic Association Reported','SIV progression','Nomura , et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22754552'],
+                ['Genetic Association Reported','SIV progression','Letvin , et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21543722'],
+                ['Genetic Association Reported','SIV progression','Lim , et al. 2010','https://www.ncbi.nlm.nih.gov/pubmed/20585621'],
+                ['Genetic Association Reported','Age-related macular degeneration','Francis , et al. 2008','https://www.ncbi.nlm.nih.gov/pubmed/18535016'],
+                ['Genetic Association Reported','Age-related macular degeneration','Singh, et al. 2009','https://www.ncbi.nlm.nih.gov/pubmed/19028492'],
+                ['Genetic Association Reported','Colorectal cancer','Brammer, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/29490919'],
+                ['Genetic Association Reported','Krabbe disease ','Luzi, et al. 1997','https://www.ncbi.nlm.nih.gov/pubmed/9192853'],
+                ['Genetic Association Reported','Ammenorhea','Lomniczi, et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22128021'],
+                ['Genetic Association Reported','Naltrexone response','Vallender, et al. 2010','https://www.ncbi.nlm.nih.gov/pubmed/20153935'],
+                ['Genetic Association Reported','HPA axis dysregulation','Ferguson, et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22998353'],
+                ['Genetic Association Reported','Alcohol intake levels','Lindell, et al. 2010','https://www.ncbi.nlm.nih.gov/pubmed/20368518'],
+                ['Genetic Association Reported','Alcohol intake levels','Barr, et al. 2009','https://www.ncbi.nlm.nih.gov/pubmed/19706546'],
+                ['Genetic Association Reported','Alcohol intake levels','Cervera-Juanes, et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/26148813'],
+                ['Genetic Association Reported','Anxiety','Spinelli , et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22293001'],
+                ['Genetic Association Reported','Anxiety','Rogers, et al. 2013','https://www.ncbi.nlm.nih.gov/pubmed/23147386'],
+                ['No Genetic Association Reported','Autism','Bauman, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/28774750'],
+                ['No Genetic Association Reported','Age-associated coginitive decline','Paspalas, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/29241829'],
+                ['No Genetic Association Reported','Polycystic ovary syndrome (PCOS)','Abbott, et al. 2017','https://www.ncbi.nlm.nih.gov/pubmed/28333238'],
+                ['No Genetic Association Reported','Endometriosis','Assaf, et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/21521902'],
+                ['No Genetic Association Reported','Endometriosis','Franasiak, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/25031316'],
+                ['No Genetic Association Reported','Endometriosis','Zondervan, et al. 2004','https://www.ncbi.nlm.nih.gov/pubmed/14747196'],
+                ['No Genetic Association Reported','Left ventricular hyertrophy','Reader, et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/27053572'],
+                ['No Genetic Association Reported','Type III Von-Willebrand','Patterson, et al. 2002','https://www.ncbi.nlm.nih.gov/pubmed/12211283'],
+                ['No Genetic Association Reported','Type II Diabetes','Qian, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/26113016'],
+                ['No Genetic Association Reported','Type II Diabetes','Pare, et al. 2007','https://www.ncbi.nlm.nih.gov/pubmed/17278131'],
+                ['No Genetic Association Reported','Type II Diabetes','Bremer, et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21884510'],
+                ['No Genetic Association Reported','Squamous cell carcinoma','Jean, et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21640039'],
+                ['No Genetic Association Reported','Coat-like retinopathy','Liu, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/25656754'],
+                ['No Genetic Association Reported','TB progression','Maiello, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/28947646'],
+                ['No Genetic Association Reported','Osteoporosis ','Simmons , et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/26864889']
             ];
 
             var dataMap = {};
@@ -48,12 +48,12 @@
             });
 
             var dataSet = [];
-            $.each(dataMap['Genetic association reported'], function(key, value){
+            $.each(dataMap['Genetic Association Reported'], function(key, value){
                 dataSet.push(['Genetic Association Reported', key, value.join(', ')]);
             });
 
-            $.each(dataMap['Genetic association not-reported'], function(key, value){
-                dataSet.push(['Genetic Association Not Reported', key, value.join(', ')]);
+            $.each(dataMap['No Genetic Association Reported'], function(key, value){
+                dataSet.push(['No Genetic Association Reported', key, value.join(', ')]);
             });
 
             var table = $('#phenotypeTable').DataTable({
@@ -73,10 +73,23 @@
             });
 
             table.table().header().remove();
+
+            var rowId = mGAP.Utils.getMGapReleaseId();
+            var url = LABKEY.ActionURL.buildURL('mgap', 'phenotypeList', null, {release: rowId});
+            $('#traitUrl').attr('href', url);
         });
     })(jQuery);
 </script>
 
+<h4 style="text-decoration: underline">Diseases/Phenotypes Implicated By Variant Data:</h4>
+<div style="padding-bottom: 10px;">
+    From each mGAP release, we generate a list of 'High Impact' variants, including variants overlapping with human disease-associated variants or those predicted to have a deleterious impact on protein coding. Using OMIM annotations, we generate a list of putative disease models based on these variants.
+    <br><br>
+    <ul>
+        <li><a id="traitUrl">Click here to view the current list of phenotypes</a></li>
+    </ul>
+</div>
+<h4 style="text-decoration: underline">Published Macaque Models:</h4>
 <div class="colDiv">
     <div style="flex: 1;max-width: 40%;margin-right: 20px;">
         Macaques serve as essential pre-clinical models for a range of human diseases. Research in macaques has been essential for advances in genetics, immunology, endocrinology, reproductive biology, stem cell biology, biological imaging, and neuroscience.

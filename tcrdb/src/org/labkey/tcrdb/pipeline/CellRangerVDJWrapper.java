@@ -302,7 +302,12 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 }
 
                 File outputHtmlRename = new File(outdir, prefix + outputHtml.getName());
+                if (outputHtmlRename.exists())
+                {
+                    outputHtmlRename.delete();
+                }
                 FileUtils.moveFile(outputHtml, outputHtmlRename);
+
                 output.addSequenceOutput(outputHtmlRename, rs.getName() + " 10x VDJ Summary", "10x Run Summary", rs.getRowId(), null, referenceGenome.getGenomeId(), null);
 
                 File outputVloupe = new File(outdir, "vloupe.vloupe");
@@ -312,6 +317,10 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 }
 
                 File outputVloupeRename = new File(outdir, prefix + outputVloupe.getName());
+                if (outputVloupeRename.exists())
+                {
+                    outputVloupeRename.delete();
+                }
                 FileUtils.moveFile(outputVloupe, outputVloupeRename);
                 output.addSequenceOutput(outputVloupeRename, rs.getName() + " 10x VLoupe", "10x VLoupe", rs.getRowId(), null, referenceGenome.getGenomeId(), null);
             }
@@ -367,9 +376,14 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             Matcher m = FILE_PATTERN.matcher(fileName);
             if (m.matches())
             {
-                if (!StringUtils.isEmpty(m.group(6)))
+                if (!StringUtils.isEmpty(m.group(7)))
                 {
-                    return m.group(1) + "_L" + m.group(2) + "_" + m.group(3) + m.group(4) + m.group(5) + ".fastq.gz";
+                    return m.group(1).replaceAll("_", "-") + StringUtils.trimToEmpty(m.group(2)) + "_L" + StringUtils.trimToEmpty(m.group(3)) + "_" + StringUtils.trimToEmpty(m.group(4)) + StringUtils.trimToEmpty(m.group(5)) + StringUtils.trimToEmpty(m.group(6)) + ".fastq.gz";
+                }
+                else if (m.group(1).contains("_"))
+                {
+                    getPipelineCtx().getLogger().info("replacing underscores in file/sample name");
+                    return m.group(1).replaceAll("_", "-") + StringUtils.trimToEmpty(m.group(2)) + "_L" + StringUtils.trimToEmpty(m.group(3)) + "_" + StringUtils.trimToEmpty(m.group(4)) + StringUtils.trimToEmpty(m.group(5)) + StringUtils.trimToEmpty(m.group(6)) + ".fastq.gz";
                 }
                 else
                 {
@@ -406,7 +420,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                     }
 
                     Files.createSymbolicLink(target1.toPath(), rd.getFile1().toPath());
-                    ret.add(getSampleName(rd.getFile1().getName()));
+                    ret.add(getSampleName(target1.getName()));
 
                     if (rd.getFile2() != null)
                     {
@@ -419,7 +433,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                             Files.delete(target2.toPath());
                         }
                         Files.createSymbolicLink(target2.toPath(), rd.getFile2().toPath());
-                        ret.add(getSampleName(rd.getFile2().getName()));
+                        ret.add(getSampleName(target2.getName()));
                     }
                 }
                 catch (IOException e)
@@ -732,7 +746,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             }
         }
 
-        private static Pattern FILE_PATTERN = Pattern.compile("^(.+)_L(.+?)_(R){0,1}([0-9])(_[0-9]+){0,1}(.*?)(\\.f(ast){0,1}q)(\\.gz)?$");
+        private static Pattern FILE_PATTERN = Pattern.compile("^(.+?)(_S[0-9]+){0,1}_L(.+?)_(R){0,1}([0-9])(_[0-9]+){0,1}(.*?)(\\.f(ast){0,1}q)(\\.gz)?$");
         private static Pattern SAMPLE_PATTERN = Pattern.compile("^(.+)_S[0-9]+(.*)$");
 
         private String getSampleName(String fn)
@@ -750,6 +764,8 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 {
                     getPipelineCtx().getLogger().debug("_S not found in sample: [" + ret + "]");
                 }
+
+                ret = ret.replaceAll("_", "-");
 
                 return ret;
             }

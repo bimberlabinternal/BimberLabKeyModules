@@ -48,7 +48,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.45;
+        return 16.46;
     }
 
     @Override
