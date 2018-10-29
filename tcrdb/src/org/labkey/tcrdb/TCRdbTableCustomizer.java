@@ -9,6 +9,7 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.DetailsURL;
@@ -19,6 +20,7 @@ import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.study.assay.AssayProtocolSchema;
 import org.labkey.api.study.assay.AssayProvider;
+import org.labkey.api.study.assay.AssayResultTable;
 import org.labkey.api.study.assay.AssayService;
 
 import java.util.Arrays;
@@ -56,6 +58,10 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             {
                 customizeClones(ti);
             }
+            else if (ti instanceof AssayResultTable)
+            {
+                customizeAssayData(ti);
+            }
         }
     }
 
@@ -65,9 +71,9 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         if (ti.getColumn(name) == null)
         {
             SQLFragment sql = new SQLFragment("CASE " +
-                " WHEN (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".readsetId) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() +
-                " WHEN (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() +
-                " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END");
+                    " WHEN (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".readsetId) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() +
+                    " WHEN (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() +
+                    " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END");
 
             ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.BOOLEAN, ti.getColumn("readsetId"), ti.getColumn("enrichedReadsetId"));
             newCol.setLabel("Has Any Readset With Data?");
@@ -142,7 +148,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         {
             DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=cdnas&query.sortId/stimId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
 
-            SQLFragment sql = new SQLFragment("(select count(c.rowid) as expr FROM " +  TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " so JOIN " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c ON (so.rowid = c.sortId) WHERE so.stimId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
+            SQLFragment sql = new SQLFragment("(select count(c.rowid) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " so JOIN " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c ON (so.rowid = c.sortId) WHERE so.stimId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
             ExprColumn newCol = new ExprColumn(ti, "numLibraries", sql, JdbcType.INTEGER, ti.getColumn("rowid"));
             newCol.setLabel("# cDNA Libraries");
             newCol.setURL(details);
@@ -167,10 +173,10 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         if (ti.getColumn(cDNA) == null)
         {
             SQLFragment sql = new SQLFragment("(CASE" +
-                " WHEN ((select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) > 0) " +
-                " THEN (select max(c.rowid) FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) " +
-                " ELSE null " +
-            "END)");
+                    " WHEN ((select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) > 0) " +
+                    " THEN (select max(c.rowid) FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) " +
+                    " ELSE null " +
+                    "END)");
             ExprColumn newCol = new ExprColumn(ti, cDNA, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
             newCol.setLabel("cDNA Library");
             UserSchema us = QueryService.get().getUserSchema(ti.getUserSchema().getUser(), (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()), TCRdbSchema.NAME);
@@ -229,7 +235,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
 
             SQLFragment sql2 = new SQLFragment("(select count(distinct CDR3) as expr FROM (").append(selectSql).append(") a " + whereClause + ")");
             ExprColumn newCol2 = new ExprColumn(ti, "numCDR3s" + colNameSuffix, sql2, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol2.setLabel("# Distinct CDR3s" +  colLabelSuffix);
+            newCol2.setLabel("# Distinct CDR3s" + colLabelSuffix);
             newCol2.setURL(details);
             ti.addColumn(newCol2);
 
@@ -309,10 +315,24 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             TableInfo data = schema.createDataTable(false);
             SQLFragment dataSelectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("subjectId"), data.getColumn("cdr3"), data.getColumn("fraction")), null, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
 
-            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("a.subjectId"), true, true, getChr(ti) + "(10)")).append(" as expr FROM (").append(dataSelectSql).append(") a WHERE a.cdr3 = " + ExprColumn.STR_TABLE_ALIAS+ ".cdr3 AND a.fraction >= 0.005)");
+            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("a.subjectId"), true, true, getChr(ti) + "(10)")).append(" as expr FROM (").append(dataSelectSql).append(") a WHERE a.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3 AND a.fraction >= 0.005)");
             ExprColumn col = new ExprColumn(ti, colName, sql, JdbcType.VARCHAR, ti.getColumn("cdr3"));
             col.setLabel("Animals with CDR3");
             col.setURL(details);
+            ti.addColumn(col);
+        }
+    }
+
+    private void customizeAssayData(AbstractTableInfo ti)
+    {
+        LaboratoryService.get().getAssayTableCustomizer().customize(ti);
+
+        String colName = "cloneNames";
+        if (ti.getColumn(colName) == null)
+        {
+            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("c.cloneName"), true, true, getChr(ti) + "(10)")).append(" as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CLONES + " c WHERE c.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3)");
+            ExprColumn col = new ExprColumn(ti, colName, sql, JdbcType.VARCHAR, ti.getColumn("cdr3"));
+            col.setLabel("Clone Name(s)");
             ti.addColumn(col);
         }
     }

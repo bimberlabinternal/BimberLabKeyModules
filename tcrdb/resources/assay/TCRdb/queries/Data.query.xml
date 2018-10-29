@@ -2,7 +2,7 @@
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="Data" tableDbType="TABLE" useColumnOrder="true">
-                <javaCustomizer class="org.labkey.laboratory.query.DefaultAssayCustomizer" />
+                <javaCustomizer class="org.labkey.tcrdb.TCRdbTableCustomizer" />
                 <columns>
                     <column columnName="subjectId">
                     </column>
