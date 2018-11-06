@@ -1612,6 +1612,7 @@ snprcEHRModules/snprc_scheduler/src/client/app.html -text
 snprcEHRModules/snprc_scheduler/src/client/app.js -text
 snprcEHRModules/snprc_scheduler/src/client/components/AnimalList.jsx -text
 snprcEHRModules/snprc_scheduler/src/client/components/ProjectDetails.jsx -text
+snprcEHRModules/snprc_scheduler/src/client/components/ProjectItemList.jsx -text
 snprcEHRModules/snprc_scheduler/src/client/components/ProjectList.jsx -text
 snprcEHRModules/snprc_scheduler/src/client/components/TimelineDetails.jsx -text
 snprcEHRModules/snprc_scheduler/src/client/components/TimelineList.jsx -text
