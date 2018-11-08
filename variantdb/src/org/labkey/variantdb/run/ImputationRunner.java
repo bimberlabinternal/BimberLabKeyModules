@@ -957,7 +957,7 @@ public class ImputationRunner
     private Integer getMaxThreads()
     {
         String threads = PipelineJobService.get().getConfigProperties().getSoftwarePackagePath("SEQUENCEANALYSIS_MAX_THREADS");
-        if (StringUtils.trimToNull(threads) != null && NumberUtils.isNumber(threads))
+        if (StringUtils.trimToNull(threads) != null && NumberUtils.isCreatable(threads))
         {
             try
             {
