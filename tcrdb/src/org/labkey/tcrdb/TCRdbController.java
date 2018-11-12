@@ -36,7 +36,6 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
-import org.labkey.api.security.CSRF;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.ReadPermission;
@@ -500,7 +499,6 @@ public class TCRdbController extends SpringActionController
 
     @RequiresPermission(ReadPermission.class)
     @IgnoresTermsOfUse
-    @CSRF
     public static class DownloadSequenceAction extends ExportAction<DownloadCloneMaterialsForm>
     {
         public void export(DownloadCloneMaterialsForm form, HttpServletResponse response, BindException errors) throws Exception
@@ -583,7 +581,6 @@ public class TCRdbController extends SpringActionController
 
     @RequiresPermission(ReadPermission.class)
     @IgnoresTermsOfUse
-    @CSRF
     public static class DownloadCloneMaterials extends ExportAction<DownloadCloneMaterialsForm>
     {
         public void export(DownloadCloneMaterialsForm form, HttpServletResponse response, BindException errors) throws Exception

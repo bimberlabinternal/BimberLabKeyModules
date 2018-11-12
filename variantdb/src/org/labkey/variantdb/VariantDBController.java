@@ -16,10 +16,8 @@
 
 package org.labkey.variantdb;
 
-import htsjdk.tribble.TribbleException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 import org.labkey.api.action.ApiAction;
 import org.labkey.api.action.ApiResponse;
 import org.labkey.api.action.ApiSimpleResponse;
@@ -28,7 +26,6 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.pipeline.PipeRoot;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.FieldKey;
-import org.labkey.api.security.CSRF;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -48,9 +45,7 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class VariantDBController extends SpringActionController
 {
@@ -64,7 +59,6 @@ public class VariantDBController extends SpringActionController
     }
 
     @RequiresPermission(InsertPermission.class)
-    @CSRF
     public class LoadDbSnpDataAction extends ApiAction<LoadDbSnpForm>
     {
         public ApiResponse execute(LoadDbSnpForm form, BindException errors) throws Exception
@@ -139,7 +133,6 @@ public class VariantDBController extends SpringActionController
     }
 
     @RequiresPermission(InsertPermission.class)
-    @CSRF
     public class VariantImportAction extends ApiAction<VariantImportForm>
     {
         public ApiResponse execute(VariantImportForm form, BindException errors) throws Exception
@@ -205,7 +198,6 @@ public class VariantDBController extends SpringActionController
     }
 
     @RequiresPermission(InsertPermission.class)
-    @CSRF
     public class LiftOverVariantsAction extends ApiAction<LiftOverVariantsForm>
     {
         public ApiResponse execute(LiftOverVariantsForm form, BindException errors) throws Exception
@@ -265,7 +257,6 @@ public class VariantDBController extends SpringActionController
     }
 
     @RequiresPermission(InsertPermission.class)
-    @CSRF
     public class MendelianCheckAction extends ApiAction<MendelianCheckForm>
     {
         public ApiResponse execute(MendelianCheckForm form, BindException errors) throws Exception
