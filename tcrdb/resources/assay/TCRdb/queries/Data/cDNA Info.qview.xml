@@ -2,9 +2,10 @@
    <columns>
        <column name="analysisId" />
        <column name="sampleName" />
-       <column name="subjectId" />
-       <column name="date" />
-       <column name="libraryId/label"/>
+       <column name="cDNA/sortId/stimId/animal" />
+       <column name="cDNA/sortId/stimId/date" />
+       <column name="cDNA/sortId/stimId/stim" />
+       <column name="cDNA/sortId/population" />
        <column name="locus" />
        <column name="vHit" />
        <column name="dHit"/>
@@ -31,7 +32,8 @@
        <column name="disabled"/>
    </columns>
    <sorts>
-       <sort column="sampleName"/>
+       <sort column="cDNA/sortId/stimId/population"/>
        <sort column="locus"/>
+       <sort column="count" descending="true"/>
    </sorts>
 </customView>

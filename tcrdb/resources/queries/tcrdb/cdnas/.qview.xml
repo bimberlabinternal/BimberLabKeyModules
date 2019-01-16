@@ -9,10 +9,12 @@
         <column name="sortId/population" />
         <column name="sortId/replicate" />
         <column name="sortId/cells" />
+        <column name="sortId/hto" />
         <column name="plateId" />
         <column name="well" />
         <column name="readsetId" />
         <column name="enrichedReadsetId" />
+        <column name="hashingReadsetId" />
         <column name="comment" />
         <column name="status" />
         <column name="workbook" />

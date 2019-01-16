@@ -32,6 +32,8 @@ public class mGAPSchema
     public static final String TABLE_RELEASE_TRACKS = "releaseTracks";
     public static final String TABLE_RELEASE_TRACK_SUBSETS = "releaseTrackSubsets";
     public static final String TABLE_TRACKS_PER_RELEASE = "tracksPerRelease";
+    public static final String TABLE_PHENOTYPES = "phenotypes";
+
 
     public static mGAPSchema getInstance()
     {

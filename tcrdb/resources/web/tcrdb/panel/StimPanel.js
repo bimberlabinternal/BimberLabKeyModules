@@ -1488,6 +1488,16 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 fieldLabel: 'Allow Duplicate Barcodes',
                                 checked: false,
                                 itemId: 'allowDuplicates'
+                            },{
+                                xtype: 'checkbox',
+                                fieldLabel: 'Use Simple Sample Names',
+                                checked: false,
+                                itemId: 'simpleSampleNames'
+                            },{
+                                xtype: 'checkbox',
+                                fieldLabel: 'Include Blanks',
+                                checked: true,
+                                itemId: 'includeBlanks'
                             }],
                             doReverseComplement: function(seq){
                                 if (!seq){
@@ -1517,6 +1527,8 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                     var adapter = btn.up('window').down('#adapter').getValue();
                                     var includeWithData = btn.up('window').down('#includeWithData').getValue();
                                     var allowDuplicates = btn.up('window').down('#allowDuplicates').getValue();
+                                    var simpleSampleNames = btn.up('window').down('#simpleSampleNames').getValue();
+                                    var includeBlanks = btn.up('window').down('#includeBlanks').getValue();
                                     var doReverseComplement = btn.up('window').doReverseComplement;
 
                                     var isMatchingApplication = function(application, libraryType, readsetApplication){
@@ -1535,12 +1547,16 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                         }
                                     };
 
+                                    var getSampleName = function(simpleSampleNames, readsetId, readsetName, suffix){
+                                        return (simpleSampleNames ? 's_' + readsetId : readsetId + '_' + readsetName) + (suffix ? '_' + suffix : '');
+                                    }
+
                                     LABKEY.Query.selectRows({
                                         containerPath: Laboratory.Utils.getQueryContainerPath(),
                                         schemaName: 'tcrdb',
                                         queryName: 'cdnas',
                                         sort: 'plateId,well/addressByColumn',
-                                        columns: 'rowid,readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
+                                        columns: 'rowid,readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/librarytype,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
                                         scope: this,
                                         filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
                                         failure: LDK.Utils.getErrorCallback(),
@@ -1553,6 +1569,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                             }
 
                                             var barcodes = 'Illumina';
+                                            var readsetIds = {};
                                             var barcodeCombosUsed = [];
                                             if (instrument == 'NextSeq (MPSSR)' || instrument == 'Basic List (MedGenome)') {
                                                 var rc5 = (instrument == 'NextSeq (MPSSR)');
@@ -1561,35 +1578,45 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
                                                 Ext4.Array.forEach(results.rows, function (r) {
                                                     //only include readsets without existing data
-                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
+                                                    if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
+                                                        //allow for cell hashing / shared readsets
+                                                        readsetIds[r.readsetId] = true;
+
                                                         //reverse complement both barcodes:
                                                         var barcode5 = rc5 ? doReverseComplement(r['readsetId/barcode5/sequence']) : r['readsetId/barcode5/sequence'];
                                                         var barcode3 = rc3 ? doReverseComplement(r['readsetId/barcode3/sequence']) : r['readsetId/barcode3/sequence'];
                                                         barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                                                        rows.push([r.readsetId + '_' + r['readsetId/name'], adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
+                                                        rows.push([getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']), adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
                                                     }
 
-                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['enrichedReadsetId/application'])) {
+                                                    if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'])) {
+                                                        //allow for cell hashing / shared readsets
+                                                        readsetIds[r.enrichedReadsetId] = true;
+
                                                         var barcode5 = rc5 ? doReverseComplement(r['enrichedReadsetId/barcode5/sequence']) : r['enrichedReadsetId/barcode5/sequence'];
                                                         var barcode3 = rc3 ? doReverseComplement(r['enrichedReadsetId/barcode3/sequence']) : r['enrichedReadsetId/barcode3/sequence'];
                                                         barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
-                                                        rows.push([r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'], adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
+                                                        rows.push([getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name']), adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
                                                     }
                                                 }, this);
 
                                                 //add missing barcodes:
-                                                var blankIdx = 0;
-                                                Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function(barcode5){
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function(barcode3){
-                                                        var combo = barcode5 + '/' + barcode3;
-                                                        if (barcodeCombosUsed.indexOf(combo) == -1){
-                                                            blankIdx++;
-                                                            var barcode5Seq = rc5 ? doReverseComplement(this.barcodeMap[barcodes][barcode5]) : this.barcodeMap[barcodes][barcode5];
-                                                            var barcode3Seq = rc3 ? doReverseComplement(this.barcodeMap[barcodes][barcode3]) : this.barcodeMap[barcodes][barcode3];
-                                                            rows.push([plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, adapter, barcode5, barcode5Seq, barcode3, barcode3Seq].join('\t'));
-                                                        }
+                                                if (includeBlanks) {
+                                                    var blankIdx = 0;
+                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function (barcode5) {
+                                                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function (barcode3) {
+                                                            var combo = barcode5 + '/' + barcode3;
+                                                            if (barcodeCombosUsed.indexOf(combo) == -1) {
+                                                                blankIdx++;
+                                                                var barcode5Seq = rc5 ? doReverseComplement(this.barcodeMap[barcodes][barcode5]) : this.barcodeMap[barcodes][barcode5];
+                                                                var barcode3Seq = rc3 ? doReverseComplement(this.barcodeMap[barcodes][barcode3]) : this.barcodeMap[barcodes][barcode3];
+
+                                                                var name = simpleSampleNames ? 's_Blank' + blankIdx : plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx;
+                                                                rows.push([name, adapter, barcode5, barcode5Seq, barcode3, barcode3Seq].join('\t'));
+                                                            }
+                                                        }, this);
                                                     }, this);
-                                                }, this);
+                                                }
                                             }
                                             else if (instrument === 'MiSeq (ONPRC)') {
                                                 var rows = [];
@@ -1617,7 +1644,10 @@ Ext4.define('TCRdb.panel.StimPanel', {
 
                                                 Ext4.Array.forEach(results.rows, function (r) {
                                                     //only include readsets without existing data
-                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
+                                                    if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
+                                                        //allow for cell hashing / shared readsets
+                                                        readsetIds[r.readsetId] = true;
+
                                                         //reverse complement both barcodes:
                                                         var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
                                                         var barcode3 = r['readsetId/barcode3/sequence'];
@@ -1628,7 +1658,10 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                         rows.push([r.readsetId, cleanedName, '', '', r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join(','));
                                                     }
 
-                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['enrichedReadsetId/application'])) {
+                                                    if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'])) {
+                                                        //allow for cell hashing / shared readsets
+                                                        readsetIds[r.enrichedReadsetId] = true;
+
                                                         var barcode5 = doReverseComplement(r['enrichedReadsetId/barcode5/sequence']);
                                                         var barcode3 = r['enrichedReadsetId/barcode3/sequence'];
                                                         var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
@@ -1640,18 +1673,20 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                 }, this);
 
                                                 //add missing barcodes:
-                                                var blankIdx = 0;
-                                                Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function(barcode5){
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function(barcode3){
-                                                        var combo = barcode5 + '/' + barcode3;
-                                                        if (barcodeCombosUsed.indexOf(combo) == -1){
-                                                            blankIdx++;
-                                                            var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
-                                                            var barcode3Seq = this.barcodeMap[barcodes][barcode3];
-                                                            rows.push([plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, null, null, null, barcode5, barcode5Seq, barcode3, barcode3Seq].join(','));
-                                                        }
+                                                if (includeBlanks) {
+                                                    var blankIdx = 0;
+                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function (barcode5) {
+                                                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function (barcode3) {
+                                                            var combo = barcode5 + '/' + barcode3;
+                                                            if (barcodeCombosUsed.indexOf(combo) == -1) {
+                                                                blankIdx++;
+                                                                var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
+                                                                var barcode3Seq = this.barcodeMap[barcodes][barcode3];
+                                                                rows.push([plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, null, null, null, barcode5, barcode5Seq, barcode3, barcode3Seq].join(','));
+                                                            }
+                                                        }, this);
                                                     }, this);
-                                                }, this);
+                                                }
                                             }
                                             else if (instrument === '10x Sample Sheet') {
                                                 var doRC = false;
@@ -1661,7 +1696,10 @@ Ext4.define('TCRdb.panel.StimPanel', {
 
                                                 Ext4.Array.forEach(results.rows, function (r) {
                                                     //only include readsets without existing data
-                                                    if (r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
+                                                    if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
+                                                        //allow for cell hashing / shared readsets
+                                                        readsetIds[r.readsetId] = true;
+
                                                         var barcode5s = r['readsetId/barcode5/sequence'].split(',');
                                                         barcodeCombosUsed.push(r['readsetId/barcode5']);
                                                         Ext4.Array.forEach(barcode5s, function(bc, idx){
@@ -1669,11 +1707,15 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                             cleanedName = cleanedName.replace(/\//g, '-');
                                                             bc = doRC ? doReverseComplement(bc) : bc;
 
-                                                            rows.push([r.readsetId + '_' + r['readsetId/barcode5'] + '_' + (idx+1), cleanedName, bc, ''].join(','));
+                                                            var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name'], (idx+1));
+                                                            rows.push([sampleName, cleanedName, bc, ''].join(','));
                                                         }, this);
                                                     }
 
-                                                    if (r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['enrichedReadsetId/application'])) {
+                                                    if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'])) {
+                                                        //allow for cell hashing / shared readsets
+                                                        readsetIds[r.enrichedReadsetId] = true;
+
                                                         var barcode5s = r['enrichedReadsetId/barcode5/sequence'].split(',');
                                                         barcodeCombosUsed.push(r['enrichedReadsetId/barcode5']);
                                                         Ext4.Array.forEach(barcode5s, function(bc, idx){
@@ -1681,23 +1723,26 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                                             cleanedName = cleanedName.replace(/\//g, '-');
                                                             bc = doRC ? doReverseComplement(bc) : bc;
 
-                                                            rows.push([r.enrichedReadsetId + '_' + r['enrichedReadsetId/barcode5'] + '_' + (idx+1), cleanedName, bc, ''].join(','));
+                                                            var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (idx+1) + '-TCR');
+                                                            rows.push([sampleName, cleanedName, bc, ''].join(','));
                                                         }, this);
                                                     }
                                                 }, this);
 
                                                 //add missing barcodes:
-                                                var blankIdx = 0;
-                                                Ext4.Array.forEach(TCRdb.panel.StimPanel.TENX_BARCODES, function(barcode5){
-                                                    if (barcodeCombosUsed.indexOf(barcode5) === -1){
-                                                        blankIdx++;
-                                                        var barcode5Seq = this.barcodeMap[barcodes][barcode5].split(',');
-                                                        Ext4.Array.forEach(barcode5Seq, function(seq, idx){
-                                                            seq = doRC ? doReverseComplement(seq) : seq;
-                                                            rows.push([barcode5 + '_' + (idx + 1), plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, seq, ''].join(','));
-                                                        }, this);
-                                                    }
-                                                }, this);
+                                                if (includeBlanks) {
+                                                    var blankIdx = 0;
+                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.TENX_BARCODES, function (barcode5) {
+                                                        if (barcodeCombosUsed.indexOf(barcode5) === -1) {
+                                                            blankIdx++;
+                                                            var barcode5Seq = this.barcodeMap[barcodes][barcode5].split(',');
+                                                            Ext4.Array.forEach(barcode5Seq, function (seq, idx) {
+                                                                seq = doRC ? doReverseComplement(seq) : seq;
+                                                                rows.push([barcode5 + '_' + (idx + 1), plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, seq, ''].join(','));
+                                                            }, this);
+                                                        }
+                                                    }, this);
+                                                }
                                             }
 
                                             //check for unique barcodes

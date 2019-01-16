@@ -72,9 +72,20 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
             TCRdbImportNavItem item = new TCRdbImportNavItem(this, "TCR Stims/Sorts", LaboratoryService.NavItemCategory.data, "TCRdb");
             item.setQueryCache(cache);
             items.add(item);
+
+            TCRdbBulkImportNavItem item2 = new TCRdbBulkImportNavItem(this, "TCR/10x Import", LaboratoryService.NavItemCategory.data, "TCRdb");
+            item2.setQueryCache(cache);
+            items.add(item2);
         }
 
         items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES, "TCR Clones", LaboratoryService.NavItemCategory.data, "TCRdb", cache));
+        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS, "TCR cDNA Libraries", LaboratoryService.NavItemCategory.data, "TCRdb", cache){
+            @Override
+            public ActionURL getImportUrl(Container c, User u)
+            {
+                return null;
+            }
+        });
 
         return Collections.unmodifiableList(items);
     }

@@ -267,6 +267,12 @@
         <exp:Label>Analysis Id</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
+        <exp:Name>cDNA</exp:Name>
+        <exp:Required>false</exp:Required>
+        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
+        <exp:Label>cDNA Id</exp:Label>
+    </exp:PropertyDescriptor>
+    <exp:PropertyDescriptor>
         <exp:Name>pipelineRunId</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>

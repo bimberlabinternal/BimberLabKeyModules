@@ -1,6 +1,14 @@
 <script type="text/javascript">
-    var ctx = LABKEY.getModuleContext('mgap') || {};
-    var folder = ctx['mgapReleaseId'];
+    (function($, LABKEY) {
+        $(function(){
+            var ctx = LABKEY.getModuleContext('mgap') || {};
+            var folder = ctx['MGAPContainer'];
+            if (folder) {
+                var el = $('#returnUrl');
+                el.attr('value', LABKEY.ActionURL.buildURL('project', 'start', folder));
+            }
+        });
+    }(jQuery, LABKEY));
 
 </script>
 <form class="auth-form" name="login" action="javascript:void(0)" method="post">
@@ -31,9 +39,10 @@
                 <a class="labkey-text-link" href="<%=contextPath%>/mgap/home/requestLogin.view?">Request an account</a>
             </span>
         </div>
-        <input type="hidden" id="returnUrl" name="returnUrl" value="<%=contextPath%>/project/mGAP/start.view">
+        <input type="hidden" id="returnUrl" name="returnUrl" value="">
         <input type="hidden" id="urlhash" name="urlhash">
         <input type="hidden" name='X-LABKEY-CSRF'>
+        <div style="margin-top: 10px;">Note to OHSU users: use your university login/password (once registered)</div>
     </div>
 </form>
 <div class="otherLoginMechanismsSection" hidden>

@@ -189,7 +189,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
         {
             File clinvarVCF = ctx.getSequenceSupport().getCachedData(ctx.getParams().getInt(CLINVAR_VCF));
             ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(GRCH37));
-            Integer chainFileId = (Integer)ctx.getSequenceSupport().getCachedObject(CHAIN_FILE);
+            Integer chainFileId = ctx.getSequenceSupport().getCachedObject(CHAIN_FILE, Integer.class);
             File chainFile = ctx.getSequenceSupport().getCachedData(chainFileId);
 
             for (SequenceOutputFile so : inputFiles)

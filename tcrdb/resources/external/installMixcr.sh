@@ -82,12 +82,12 @@ then
     rm -Rf $LKTOOLS_DIR/libraries
     rm -Rf $LKTOOLS_DIR/importFromIMGT.sh
 
-    wget $WGET_OPTS https://github.com/milaboratory/mixcr/releases/download/v2.0.2/mixcr-2.0.2.zip
-    unzip mixcr-2.0.2.zip
+    wget $WGET_OPTS https://github.com/milaboratory/mixcr/releases/download/v3.0.2/mixcr-3.0.2.zip
+    unzip mixcr-3.0.2.zip
 
-    install ./mixcr-2.0.2/mixcr $LKTOOLS_DIR/mixcr
-    install ./mixcr-2.0.2/mixcr.jar $LKTOOLS_DIR/mixcr.jar
-    cp -R ./mixcr-2.0.2/libraries $LKTOOLS_DIR
+    install ./mixcr-3.0.2/mixcr $LKTOOLS_DIR/mixcr
+    install ./mixcr-3.0.2/mixcr.jar $LKTOOLS_DIR/mixcr.jar
+    cp -R ./mixcr-3.0.2/libraries $LKTOOLS_DIR
 
 else
     echo "Already installed"

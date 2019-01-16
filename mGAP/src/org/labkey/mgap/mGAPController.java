@@ -16,6 +16,9 @@
 
 package org.labkey.mgap;
 
+import htsjdk.samtools.util.CloseableIterator;
+import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,10 +38,13 @@ import org.labkey.api.data.CoreSchema;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbScope;
+import org.labkey.api.data.Results;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Sort;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.module.AllowedDuringUpgrade;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
@@ -97,6 +103,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -437,7 +444,7 @@ public class mGAPController extends SpringActionController
                 boolean isLDAP = SecurityManager.isLdapEmail(new ValidEmail(u.getEmail()));
 
                 MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
-                mail.setEncodedHtmlContent("Your account request has been approved for mGAP!  " + (isLDAP ? "Your institutional email/password should give access.  " : "") + "<a href=\"" + AppProps.getInstance().getBaseServerUrl() + mGapContainer.getStartURL(getUser()).toString() + "\">Click here to access the site</a>");
+                mail.setEncodedHtmlContent("Your account request has been approved for mGAP!  " + "<a href=\"" + AppProps.getInstance().getBaseServerUrl() + mGapContainer.getStartURL(getUser()).toString() + "\">Click here to access the site.</a>" + (isLDAP ? "  Use your normal OHSU email/password to login." : ""));
                 mail.setFrom(getReplyEmail(getContainer()));
                 mail.setSubject("mGap Account Request");
                 mail.addRecipients(Message.RecipientType.TO, u.getEmail());
@@ -772,71 +779,123 @@ public class mGAPController extends SpringActionController
         @Override
         public boolean handlePost(Object o, BindException errors) throws Exception
         {
+            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);
+            TableSelector ts = new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowId", "objectId"), null, new Sort("-releaseDate"));
+            ts.setMaxRows(1);
+            Integer releaseRowId;
+            String releaseObjectId;
+            try (Results rs = ts.getResults())
+            {
+                rs.first();
+                releaseRowId = rs.getInt("rowId");
+                releaseObjectId = rs.getString("objectId");
+            }
+
             List<Map<String, Object>> toUpdate = new ArrayList<>();
             List<Map<String, Object>> oldKeys = new ArrayList<>();
 
-            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);
-
             PublicReleaseHandler.Processor pr = new PublicReleaseHandler.Processor();
             AtomicInteger ordinal = new AtomicInteger(0);
-            new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_TABLE)).forEachResults(rs -> {
-                ordinal.getAndIncrement();
-                if (ordinal.get() % 1000 == 0)
-                {
-                    _log.info(String.format("processed %s rows", ordinal.get()));
-                }
+            Sort sort = new Sort(FieldKey.fromString("contig"));
+            sort.appendSortColumn(FieldKey.fromString("position"), Sort.SortDirection.ASC, false);
 
-                int rowId = rs.getInt(FieldKey.fromString("rowId"));
-                String objectId = rs.getString(FieldKey.fromString("objectId"));
-                String omim_phenotype = rs.getString(FieldKey.fromString("omim_phenotype"));
-                String omim = rs.getString(FieldKey.fromString("omim"));
-                String container = rs.getString(FieldKey.fromString("container"));
-                String description = rs.getString(FieldKey.fromString("description"));
+            Integer outputFileId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), Collections.singleton("vcfId")).getObject(releaseRowId, Integer.class);
+            ExpData data = SequenceOutputFile.getForId(outputFileId).getExpData();
+            File vcf = data.getFile();
 
-                Map<String, Object> row = new CaseInsensitiveHashMap<>();
-                row.put("rowId", rowId);
-                row.put("objectId", objectId);
-                row.put("container", container);
-
-                Map<String, Object> keys = new CaseInsensitiveHashMap<>();
-                keys.put("rowId", rowId);
-                keys.put("objectId", objectId);
-
-                boolean doUpdate = false;
-
-                if (omim_phenotype != null)
-                {
-                    String updated = getUpdatedVal(omim_phenotype, pr, rowId);
-                    if (!omim_phenotype.equals(updated))
+            try (VCFFileReader reader = new VCFFileReader(vcf))
+            {
+                new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_TABLE), new SimpleFilter(FieldKey.fromString("releaseId"), releaseObjectId), sort).forEachResults(rs -> {
+                    ordinal.getAndIncrement();
+                    if (ordinal.get() % 1000 == 0)
                     {
-                        doUpdate = true;
-                        row.put("omim_phenotype", updated);
+                        _log.info(String.format("processed %s rows", ordinal.get()));
                     }
-                }
 
-                if (omim != null)
-                {
-                    String updated = getUpdatedVal(omim, pr, rowId);
-                    if (!omim.equals(updated))
+                    Set<String> omims = new LinkedHashSet<>();
+                    Set<String> omimds = new LinkedHashSet<>();
+
+                    int start = rs.getInt("position");
+                    int end = start + rs.getString("reference").length() - 1;
+                    try (CloseableIterator<VariantContext> it = reader.query(rs.getString(FieldKey.fromString("contig")), start, end))
                     {
-                        doUpdate = true;
-                        row.put("omim", updated);
+                        AtomicInteger vcs = new AtomicInteger();
+                        it.forEachRemaining(vc -> {
+                            if (vc.getStart() != start)
+                            {
+                                //_log.error("unexpected start: " + vc.getStart() + " / " + start);
+                                return;
+                            }
+                            vcs.getAndIncrement();
+
+                            if (vc.getAttribute("OMIMN") != null)
+                            {
+                                String val = vc.getAttributeAsString("OMIMN", null);
+                                if (val.contains(";"))
+                                {
+                                    _log.error("Unexpected OMIM value: " + val);
+                                }
+
+                                omims.add(vc.getAttributeAsString("OMIMN", null));
+                            }
+
+                            if (vc.getAttribute("OMIMD") != null)
+                            {
+                                omimds.addAll(pr.parseRawOmimd(vc, logger));
+                            }
+                        });
+
+                        if (vcs.get() > 1)
+                        {
+                            _log.error("Multiple VCs: " + start + ", total: " + vcs.get());
+                        }
                     }
-                }
 
-                if (description.contains("&"))
-                {
-                    doUpdate = true;
-                    description = description.replaceAll("&", ", ");
-                    row.put("description", description);
-                }
+                    int rowId = rs.getInt(FieldKey.fromString("rowId"));
 
-                if (doUpdate)
-                {
-                    toUpdate.add(row);
-                    oldKeys.add(keys);
-                }
-            });
+                    String objectId = rs.getString(FieldKey.fromString("objectId"));
+                    String omim_phenotype = rs.getString(FieldKey.fromString("omim_phenotype"));
+                    String omim = rs.getString(FieldKey.fromString("omim"));
+                    String container = rs.getString(FieldKey.fromString("container"));
+
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                    row.put("rowId", rowId);
+                    row.put("objectId", objectId);
+                    row.put("container", container);
+
+                    Map<String, Object> keys = new CaseInsensitiveHashMap<>();
+                    keys.put("rowId", rowId);
+                    keys.put("objectId", objectId);
+
+                    boolean doUpdate = false;
+
+                    if (!omimds.isEmpty())
+                    {
+                        String updated = pr.queryOmim(StringUtils.join(omimds, ";"), getContainer(), _log);
+                        if (!updated.equals(omim_phenotype))
+                        {
+                            doUpdate = true;
+                            row.put("omim_phenotype", updated);
+                        }
+                    }
+
+                    if (!omims.isEmpty())
+                    {
+                        String updated = pr.queryOmim(StringUtils.join(omims, ";"), getContainer(), _log);
+                        if (!updated.equals(omim))
+                        {
+                            doUpdate = true;
+                            row.put("omim", updated);
+                        }
+                    }
+
+                    if (doUpdate)
+                    {
+                        toUpdate.add(row);
+                        oldKeys.add(keys);
+                    }
+                });
+            }
 
             _log.info("total updates: " + toUpdate.size());
             try
@@ -845,6 +904,9 @@ public class mGAPController extends SpringActionController
                 qus.setBulkLoad(true);
                 qus.updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, new HashMap<>());
                 _log.info("update complete");
+
+                //update phenotype table:
+                pr.updatePhenotypes(releaseObjectId, _log, getContainer(), getUser());
             }
             catch (Exception e)
             {
@@ -853,47 +915,6 @@ public class mGAPController extends SpringActionController
             }
 
             return true;
-        }
-
-        private String getUpdatedVal(String input, PublicReleaseHandler.Processor pr, int rowId)
-        {
-            Set<String> vals = new LinkedHashSet<>();
-            String[] tokens = input.split(";");
-            for (String token : tokens)
-            {
-                //these are records lacking a valid ID and will not resolve.  drop these for now.
-                if (token.endsWith("<>"))
-                {
-                    continue;
-                }
-
-                if (token.contains("<>"))
-                {
-                    String[] parts = token.split("<>");
-                    token = parts.length == 1 ? parts[0] : parts[1];
-                    String updated = pr.updateOmimD(token, getContainer(), _log);
-                    if (!updated.contains("<>"))
-                    {
-                        _log.error("Unable to resolve: [" + token + "] for row: " + rowId);
-                    }
-                    vals.add(updated);
-                }
-                else
-                {
-                    //these are suspect and should probably be dropped:
-                    String updated = pr.updateOmimD(token, getContainer(), _log);
-                    if (!updated.equals(token) && updated.contains("<>"))
-                    {
-                        vals.add(updated);
-                    }
-                    else
-                    {
-                        _log.error("Unable to resolve: [" + token + "] for row: " + rowId);
-                    }
-                }
-            }
-
-            return vals.isEmpty() ? null : StringUtils.join(vals, ";");
         }
 
         @Override

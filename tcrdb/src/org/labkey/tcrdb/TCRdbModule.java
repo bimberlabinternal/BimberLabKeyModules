@@ -25,6 +25,7 @@ import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
+import org.labkey.tcrdb.pipeline.CellRangerCellHashingHandler;
 import org.labkey.tcrdb.pipeline.CellRangerVDJWrapper;
 import org.labkey.tcrdb.pipeline.MiXCRAnalysis;
 
@@ -44,7 +45,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 15.43;
+        return 15.44;
     }
 
     @Override
@@ -108,6 +109,8 @@ public class TCRdbModule extends ExtendedSimpleModule
             {
                 SequencePipelineService.get().registerPipelineStep(new MiXCRAnalysis.Provider());
                 SequencePipelineService.get().registerPipelineStep(new CellRangerVDJWrapper.VDJProvider());
+
+                SequenceAnalysisService.get().registerFileHandler(new CellRangerCellHashingHandler());
 
                 _hasRegistered = true;
             }

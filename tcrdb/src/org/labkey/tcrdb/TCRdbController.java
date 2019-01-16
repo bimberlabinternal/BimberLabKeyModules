@@ -16,14 +16,22 @@
 
 package org.labkey.tcrdb;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.labkey.api.action.ApiAction;
+import org.labkey.api.action.ApiSimpleResponse;
+import org.labkey.api.action.ApiUsageException;
 import org.labkey.api.action.ExportAction;
+import org.labkey.api.action.SimpleApiJsonForm;
 import org.labkey.api.action.SimpleViewAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.DbScope;
 import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.StopIteratingException;
@@ -32,14 +40,17 @@ import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.RequiresPermission;
+import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.sequenceanalysis.RefNtSequenceModel;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
@@ -609,8 +620,11 @@ public class TCRdbController extends SpringActionController
 
             // find distinct analyses for assay rows and primary segments
             SimpleFilter assayFilter = new SimpleFilter(FieldKey.fromString("rowId"), rowIds, CompareType.IN);
-            TableSelector ts = new TableSelector(assayData, PageFlowUtil.set("analysisId", "vHit", "jHit", "dHit", "cHit"), assayFilter, null);
+            TableSelector ts = new TableSelector(assayData, PageFlowUtil.set("analysisId", "vHit", "jHit", "dHit", "cHit", "cloneId", "sequence", "sampleName", "clonesFile", "cdr3"), assayFilter, null);
             Set<String> primarySegments = new HashSet<>();
+            Map<Integer, Set<String>> clnaToCloneMap = new HashMap<>();
+            Map<String, String> clnaToCDR3Map = new HashMap<>();
+            StringBuilder imputedSequences = new StringBuilder();
             Set<Integer> analyses = new HashSet<>();
             final String[] segmentFields = new String[]{"vHit", "jHit", "cHit"};
             ts.forEachResults(rs -> {
@@ -625,6 +639,23 @@ public class TCRdbController extends SpringActionController
                 if (rs.getObject(FieldKey.fromString("analysisId")) != null)
                 {
                     analyses.add(rs.getInt(FieldKey.fromString("analysisId")));
+                }
+
+                if (rs.getObject(FieldKey.fromString("sequence")) != null)
+                {
+                    imputedSequences.append(">").append(rs.getString(FieldKey.fromString("sampleName"))).append("_").append(rs.getString(FieldKey.fromString("cdr3"))).append("\n");
+                    imputedSequences.append(rs.getString(FieldKey.fromString("sequence"))).append("\n");
+                }
+
+                if (rs.getObject(FieldKey.fromString("cloneId")) != null && rs.getObject(FieldKey.fromString("clonesFile")) != null)
+                {
+                    Integer key = rs.getInt(FieldKey.fromString("clonesFile"));
+                    Set<String> set = clnaToCloneMap.containsKey(key) ? clnaToCloneMap.get(key) : new HashSet<>();
+                    set.add(rs.getString(FieldKey.fromString("cloneId")));
+
+                    clnaToCloneMap.put(key, set);
+
+                    clnaToCDR3Map.put(key.toString() + "_" + rs.getString(FieldKey.fromString("cloneId")), rs.getString(FieldKey.fromString("cdr3")));
                 }
             });
 
@@ -679,15 +710,83 @@ public class TCRdbController extends SpringActionController
                 }
             });
 
+            //then exportReadsForClones:
+            for (Integer expData : clnaToCloneMap.keySet())
+            {
+                MiXCRWrapper wrapper = new MiXCRWrapper(_log);
+                ExpData d = ExperimentService.get().getExpData(expData);
+                if (d == null)
+                {
+                    _log.error("Unable to find exp data with ID: " + expData);
+                    continue;
+                }
+
+                if (d.getFile() == null || !d.getFile().exists())
+                {
+                    _log.error("File not found for ExpData: " + (d.getFile() == null ? expData : d.getFile().getPath()));
+                    continue;
+                }
+
+                List<String> args = new ArrayList<>();
+                args.add("-s");
+                args.add("--id");
+                args.addAll(clnaToCloneMap.get(expData));
+
+                String basename = SequenceAnalysisService.get().getUnzippedBaseName(d.getFile().getName()) + ".readsForClones";
+                File fqBase = new File(FileUtils.getTempDirectory(), basename + ".fastq.gz");
+
+                wrapper.doExportReadsForClones(d.getFile(), fqBase, args);
+
+                for (String cloneId : clnaToCloneMap.get(expData))
+                {
+                    String cdr3 = clnaToCDR3Map.get(expData.toString() + "_" + cloneId);
+
+                    File fq1 = new File(fqBase.getParentFile(), basename + "_cln" + cloneId + "_R1.fastq.gz");
+                    if (!fq1.exists())
+                    {
+                        _log.error("unable to find file: " + fq1.getPath());
+                    }
+                    else
+                    {
+                        File fq1m = new File(fqBase.getParentFile(), basename + "_cln" + cloneId + "." + cdr3 + ".R1.fastq.gz");
+                        FileUtils.moveFile(fq1, fq1m);
+
+                        files.add(fq1m);
+                    }
+
+                    File fq2 = new File(fqBase.getParentFile(), basename + "_cln" + cloneId + "_R2.fastq.gz");
+                    if (!fq2.exists())
+                    {
+                        _log.error("unable to find file: " + fq2.getPath());
+                    }
+                    else
+                    {
+                        File fq2m = new File(fqBase.getParentFile(), basename + "_cln" + cloneId + "." + cdr3 + ".R2.fastq.gz");
+                        FileUtils.moveFile(fq2, fq2m);
+
+                        files.add(fq2m);
+                    }
+                }
+            }
+
             PageFlowUtil.prepareResponseForFile(response, Collections.emptyMap(), "Clones.zip", true);
             Set<String> distinctNames = new HashSet<>();
             try (ZipOutputStream zOut = new ZipOutputStream(response.getOutputStream()))
             {
+                //the segments:
                 ZipEntry fileEntryFasta = new ZipEntry("segments.fasta");
                 distinctNames.add("segments.fasta");
 
                 zOut.putNextEntry(fileEntryFasta);
                 zOut.write(fasta.toString().getBytes(StringUtilsLabKey.DEFAULT_CHARSET));
+                zOut.closeEntry();
+
+                //the FL imputed clones:
+                ZipEntry fileEntryFasta2 = new ZipEntry("imputedClones.fasta");
+                distinctNames.add("imputedClones.fasta");
+
+                zOut.putNextEntry(fileEntryFasta2);
+                zOut.write(imputedSequences.toString().getBytes(StringUtilsLabKey.DEFAULT_CHARSET));
                 zOut.closeEntry();
 
                 for (File f : files)
@@ -759,6 +858,187 @@ public class TCRdbController extends SpringActionController
         public void setQueryName(String queryName)
         {
             _queryName = queryName;
+        }
+    }
+
+    @RequiresPermission(InsertPermission.class)
+    public static class ImportTenXAction extends ApiAction<SimpleApiJsonForm>
+    {
+        @Override
+        public Object execute(SimpleApiJsonForm form, BindException errors) throws Exception
+        {
+            List<Map<String, Object>> stimRows = parseRows(form, "stimRows");
+            List<Map<String, Object>> sortRows = parseRows(form, "sortRows");
+            List<Map<String, Object>> readsetRows = parseRows(form, "readsetRows");
+            List<Map<String, Object>> cDNARows = parseRows(form, "cDNARows");
+
+            UserSchema tcrdb = QueryService.get().getUserSchema(getUser(), getContainer(), TCRdbSchema.NAME);
+            UserSchema sequenceAnalysis = QueryService.get().getUserSchema(getUser(), getContainer(), "sequenceanalysis");
+
+            try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
+            {
+                BatchValidationException bve = new BatchValidationException();
+
+                Map<String, Integer> stimMap = new HashMap<>();
+                final List<Map<String, Object>> stimRowsToInsert = new ArrayList<>();
+                stimRows.forEach(r -> {
+                    if (r.get("objectId") == null)
+                    {
+                        throw new ApiUsageException("Missing objectId for stim row");
+                    }
+
+                    if (r.get("rowId") != null && StringUtils.trimToNull(r.get("rowId").toString()) != null)
+                    {
+                        stimMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
+                    }
+                    else
+                    {
+                        stimRowsToInsert.add(r);
+                    }
+                });
+
+
+                List<Map<String, Object>> insertedStimRows = tcrdb.getTable(TCRdbSchema.TABLE_STIMS).getUpdateService().insertRows(getUser(), getContainer(), stimRowsToInsert, bve, null, new HashMap<>());
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+
+
+                insertedStimRows.forEach(r -> {
+                    if (r.get("rowId") == null)
+                    {
+                        throw new ApiUsageException("Missing rowId for inserted stim row");
+                    }
+
+                    stimMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
+                });
+
+                sortRows.forEach(r -> {
+                    if (stimMap.get(r.get("stimGUID")) == null)
+                    {
+                        throw new ApiUsageException("Unable to find stimId for row");
+                    }
+                    r.put("stimId", stimMap.get((String)r.get("stimGUID")));
+                });
+                sortRows = tcrdb.getTable(TCRdbSchema.TABLE_SORTS).getUpdateService().insertRows(getUser(), getContainer(), sortRows, bve, null, new HashMap<>());
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+
+                Map<String, Integer> sortMap = new HashMap<>();
+                sortRows.forEach(r -> {
+                    if (r.get("objectId") == null)
+                    {
+                        throw new ApiUsageException("Missing objectId for sort row");
+                    }
+                    sortMap.put((String)r.get("objectId"), (Integer)r.get("rowId"));
+                });
+
+                readsetRows = sequenceAnalysis.getTable("sequence_readsets").getUpdateService().insertRows(getUser(), getContainer(), readsetRows, bve, null, new HashMap<>());
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+
+                Map<String, Integer> readsetMap = new HashMap<>();
+                readsetRows.forEach(r -> {
+                    if (r.get("objectId") == null)
+                    {
+                        throw new ApiUsageException("Missing objectId for readset row");
+                    }
+
+                    readsetMap.put((String)r.get("objectId"), (Integer)r.get("rowId"));
+                });
+
+                cDNARows.forEach(r -> {
+                    if (sortMap.get(r.get("sortGUID")) == null)
+                    {
+                        throw new ApiUsageException("Unable to find sortId for row");
+                    }
+                    r.put("sortId", sortMap.get((String)r.get("sortGUID")));
+                });
+                cDNARows.forEach(r -> r.put("readsetId", readsetMap.get((String)r.get("readsetGUID"))));
+                cDNARows.forEach(r -> r.put("hashingReadsetId", readsetMap.get((String)r.get("hashingReadsetGUID"))));
+                cDNARows.forEach(r -> r.put("enrichedReadsetId", readsetMap.get((String)r.get("enrichedReadsetGUID"))));
+                tcrdb.getTable(TCRdbSchema.TABLE_CDNAS).getUpdateService().insertRows(getUser(), getContainer(), cDNARows, bve, null, new HashMap<>());
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+
+                transaction.commit();
+            }
+
+            return new ApiSimpleResponse("success", true);
+        }
+    }
+
+    private static List<Map<String, Object>> parseRows(SimpleApiJsonForm form, String propName) throws ApiUsageException
+    {
+        if (!form.getJsonObject().containsKey(propName))
+        {
+            throw new ApiUsageException("Missing property: " + propName);
+        }
+
+        JSONArray arr = form.getJsonObject().getJSONArray(propName);
+
+        List<Map<String, Object>> ret = new ArrayList<>();
+        Arrays.stream(arr.toJSONObjectArray()).forEach(m -> {
+            Map<String, Object> map = new CaseInsensitiveHashMap<>();
+            map.putAll(m);
+            ret.add(map);
+        });
+
+        return ret;
+    }
+
+    @RequiresPermission(ReadPermission.class)
+    public static class GetMatchingStimsAction extends ApiAction<SimpleApiJsonForm>
+    {
+        final List<String> FIELDS = Arrays.asList("animalId", "date", "stim", "treatment");
+
+        @Override
+        public Object execute(SimpleApiJsonForm form, BindException errors) throws Exception
+        {
+            ApiSimpleResponse resp = new ApiSimpleResponse();
+
+            List<Map<String, Object>> stimRows = parseRows(form, "stimRows");
+
+            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), TCRdbSchema.NAME);
+            if (us == null)
+            {
+                throw new ApiUsageException("Unable to find schema: " + TCRdbSchema.NAME);
+            }
+
+            TableInfo ti = us.getTable(TCRdbSchema.TABLE_STIMS);
+
+            Map<Object, Integer> ret = new HashMap<>();
+            stimRows.forEach(r -> {
+                SimpleFilter filter = new SimpleFilter();
+                FIELDS.forEach(f -> {
+                    if (r.get(f) != null)
+                    {
+                        filter.addCondition(FieldKey.fromString(f), r.get(f));
+                    }
+                });
+
+                if (!filter.isEmpty())
+                {
+                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowId"), filter, null);
+                    if (ts.getRowCount() == 1)
+                    {
+                        int rowId = ts.getObject(Integer.class);
+                        ret.put(r.get("objectId"), rowId);
+                    }
+                }
+
+            });
+
+            resp.put("rowMap", ret);
+
+            return resp;
         }
     }
 }

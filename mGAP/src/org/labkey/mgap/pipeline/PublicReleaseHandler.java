@@ -39,10 +39,16 @@ import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
 import org.labkey.api.pipeline.file.FileAnalysisJobSupport;
 import org.labkey.api.query.BatchValidationException;
+import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
+import org.labkey.api.query.QueryException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateService;
+import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
+import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
@@ -327,6 +333,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
             boolean testOnly = StringUtils.isEmpty(job.getParameters().get("testOnly")) ? false : ConvertHelper.convert(job.getParameters().get("testOnly"), boolean.class);
 
+            String releaseId = new GUID().toString();
             for (String release : outputVCFMap.keySet())
             {
                 SequenceOutputFile so = outputVCFMap.get(release);
@@ -371,8 +378,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 row.put("genomeId", so.getLibrary_id());
                 row.put("totalSubjects", totalSubjects);
                 row.put("totalVariants", totalVariants);
-                String guid = new GUID().toString();
-                row.put("objectId", guid);
+                row.put("objectId", releaseId);
 
                 try
                 {
@@ -395,7 +401,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     }
 
                                     Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                                    map.put("releaseId", guid);
+                                    map.put("releaseId", releaseId);
                                     map.put("contig", line[0]);
                                     map.put("position", line[1]);
                                     map.put("reference", line[2]);
@@ -404,8 +410,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     map.put("reason", line[5]);
                                     map.put("description", line[6]);
                                     map.put("overlappingGenes", line[7]);
-                                    map.put("omim", updateOmimD(line[8], job.getContainer(), job.getLogger()));
-                                    map.put("omim_phenotype", updateOmimD(line[9], job.getContainer(), job.getLogger()));
+                                    map.put("omim", queryOmim(line[8], job.getContainer(), job.getLogger()));
+                                    map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
                                     map.put("af", line[10]);
                                     map.put("objectId", new GUID().toString());
 
@@ -434,7 +440,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     }
 
                                     Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                                    map.put("releaseId", guid);
+                                    map.put("releaseId", releaseId);
                                     map.put("category", line[0]);
                                     map.put("metricName", line[1]);
                                     map.put("value", line[2]);
@@ -471,7 +477,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                             map.put("description", rs.getString(FieldKey.fromString("description")));
                             map.put("isprimarytrack", rs.getBoolean(FieldKey.fromString("isprimarytrack")));
                             map.put("url", rs.getString(FieldKey.fromString("url")));
-                            map.put("releaseId", guid);
+                            map.put("releaseId", releaseId);
                             map.put("vcfId", so3 == null ? rs.getInt(FieldKey.fromString("vcfId")) : so3.getRowid());
                             map.put("objectId", new GUID().toString());
 
@@ -538,6 +544,10 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                     job.getLogger().info("total tracks per release records: " + tracksPerReleaseRows.size());
 
+                    //finally phenotypes:
+                    int phenotypes = updatePhenotypes(releaseId, job.getLogger(), job.getContainer(), job.getUser());
+                    job.getLogger().info("total phenotypes: " + phenotypes);
+
                     transaction.commit();
                 }
                 catch (Exception e)
@@ -549,56 +559,64 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
         Map<String, String> omimMap = new HashMap<>();
 
-        public String updateOmimD(String input, Container c, Logger log)
+        public String queryOmim(String orig, Container c, Logger log)
         {
-            if (input.contains("<>"))
+            String[] elements = orig.split(";");
+            List<String> retList = new ArrayList<>();
+            for (String input : elements)
             {
-                String[] parts = input.split("<>");
-                input = parts.length == 1 ? parts[0] : parts[1];
-            }
-
-            if (omimMap.containsKey(input))
-            {
-                return omimMap.get(input);
-            }
-
-            String ret = input;
-            String apiKey = mGAPManager.get().getOmimApiKey(c);
-            if (apiKey == null)
-            {
-                log.error("OMIM APIKey not set");
-                omimMap.put(input, input);
-                return input;
-            }
-
-            try
-            {
-                String resolved = getOmimJson(input, apiKey, log);
-                if (resolved != null && !resolved.equals(input))
+                if (input.contains("<>"))
                 {
-                    //OMIM gene entries default to containing semicolons, which is our delimiter in this field
-                    resolved = resolved.replaceAll(";", ",");
-                    ret = resolved + "<>" + input;
+                    String[] parts = input.split("<>");
+                    input = parts.length == 1 ? parts[0] : parts[1];
                 }
-            }
-            catch (IOException e)
-            {
-                log.error(e);
+
+                if (omimMap.containsKey(input))
+                {
+                    retList.add(omimMap.get(input));
+                    continue;
+                }
+
+                String ret = input;
+                String apiKey = mGAPManager.get().getOmimApiKey(c);
+                if (apiKey == null)
+                {
+                    log.error("OMIM APIKey not set");
+                    omimMap.put(input, input);
+                    retList.add(input);
+                    continue;
+                }
+
+                try
+                {
+                    String resolved = getOmimJson(input, apiKey, log, orig);
+                    if (resolved != null && !resolved.equals(input))
+                    {
+                        //OMIM gene entries default to containing semicolons, which is our delimiter in this field
+                        resolved = resolved.replaceAll(";", ",");
+                        ret = resolved + "<>" + input;
+                    }
+                }
+                catch (IOException e)
+                {
+                    log.error(e + ", orig value: " + orig);
+                }
+
+                omimMap.put(input, ret);
+                retList.add(ret);
             }
 
-            omimMap.put(input, ret);
-
-            return ret;
+            return StringUtils.join(retList, ";");
         }
 
-        private String getOmimJson(String input, String apiKey, Logger log) throws IOException
+        private String getOmimJson(String input, String apiKey, Logger log, String orig) throws IOException
         {
             String url = "https://api.omim.org/api/entry?mimNumber=" + input + "&apiKey=" + apiKey + "&format=json";
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             if (con.getResponseCode() != HttpURLConnection.HTTP_OK)
             {
-                log.error("bad request: " + url);
+                log.error("bad request: " + url + ", orig: " + orig);
                 return null;
             }
 
@@ -927,17 +945,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                     if (vc.getAttribute("OMIMD") != null)
                     {
-                        if (vc.getAttribute("OMIMD") instanceof Collection || vc.getAttribute("OMIMD").getClass().isArray())
-                        {
-                            ctx.getLogger().warn("OMIMD non-string: " + vc.getAttribute("OMIMD").getClass().getName());
-                            ctx.getLogger().warn(vc.getAttribute("OMIMD"));
-                        }
-
-                        Collection<String> vals = parseOmim(vc.getAttributeAsString("OMIMD", null), ctx.getLogger());
-                        if (vals != null)
-                        {
-                            omimds.addAll(vals);
-                        }
+                        omimds.addAll(parseRawOmimd(vc, ctx.getLogger()));
                     }
 
                     Set<String> overlappingGenes = new HashSet<>();
@@ -1082,6 +1090,31 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                 generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
             }
+        }
+
+        public Collection<String> parseRawOmimd(VariantContext vc, Logger log)
+        {
+            //NOTE: because this field can have internal commas, this can be parsed incorrectly, so ignore this and re-join
+            String rawVal;
+            if (vc.getAttribute("OMIMD") instanceof Collection)
+            {
+                rawVal = StringUtils.join(vc.getAttributeAsStringList("OMIMD", null), ",");
+            }
+            else
+            {
+                rawVal = vc.getAttributeAsString("OMIMD", null);
+            }
+
+            if (!StringUtils.isEmpty(rawVal) && ! ".".equals(rawVal))
+            {
+                Collection<String> vals = parseOmim(rawVal, log);
+                if (vals != null)
+                {
+                    return vals;
+                }
+            }
+
+            return Collections.emptySet();
         }
 
         private boolean isAllowableClinVarSig(String x)
@@ -1541,9 +1574,9 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             return idx.exists();
         }
 
-        protected Set<String> parseOmim(String input, Logger log)
+        public Set<String> parseOmim(String input, Logger log)
         {
-            if (input == null)
+            if (input == null || input.equals("."))
             {
                 return Collections.emptySet();
             }
@@ -1591,6 +1624,10 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
                 if (!StringUtils.isEmpty(name) && !".".equals(name) && !StringUtils.isEmpty(id))
                 {
+                    if (id.length() < 4)
+                    {
+                        log.warn("suspect OMIM parsing: " + input + " / " + name + "<>" + id);
+                    }
                     ret.add(name + "<>" + id);
                 }
             }
@@ -1612,6 +1649,81 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
 
             return lastIndex;
+        }
+
+        public int updatePhenotypes(String releaseId, Logger log, Container c, User u) throws QueryException
+        {
+            List<Map<String, Object>> phenotypeRows = new ArrayList<>();
+            Set<String> keys = new HashSet<>();
+
+            new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_TABLE), new SimpleFilter(FieldKey.fromString("releaseId"), releaseId), null).forEachResults(rs ->{
+                if (rs.getObject("omim_phenotype") == null)
+                {
+                    return;
+                }
+
+                String[] tokens = rs.getString("omim_phenotype").split(";");
+                for (String phenotype : tokens)
+                {
+                    String key = phenotype + "|" + rs.getString(FieldKey.fromString("omim"));
+                    if (keys.contains(key))
+                    {
+                        return;
+                    }
+                    keys.add(key);
+
+                    String[] parts = phenotype.split("<>");
+                    if (parts.length != 2)
+                    {
+                        log.error("Malformed phenotype: " + phenotype);
+                        continue;
+                    }
+
+                    Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                    map.put("releaseId", releaseId);
+                    map.put("omim_phenotype", parts[0]);
+                    map.put("omim_entry", parts[1]);
+                    map.put("omim", rs.getString(FieldKey.fromString("omim")));
+                    map.put("objectId", new GUID().toString());
+                    phenotypeRows.add(map);
+                }
+            });
+
+            TableInfo phenotype = QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_PHENOTYPES);
+            BatchValidationException errors = new BatchValidationException();
+
+            try
+            {
+                //delete existing:
+                List<Map<String, Object>> toDelete = new ArrayList<>();
+                new TableSelector(phenotype, PageFlowUtil.set("rowId", "container"), new SimpleFilter(FieldKey.fromString("releaseId"), releaseId), null).forEachResults(rs -> {
+                    Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                    map.put("rowId", rs.getInt("rowId"));
+                    map.put("container", rs.getString("container"));
+
+                    toDelete.add(map);
+                });
+
+                if (!toDelete.isEmpty())
+                {
+                    phenotype.getUpdateService().deleteRows(u, c, toDelete, null, new HashMap<>());
+                }
+
+                //then add:
+                QueryUpdateService qus = phenotype.getUpdateService();
+                qus.setBulkLoad(true);
+                qus.insertRows(u, c, phenotypeRows, errors, null, new HashMap<>());
+                if (errors.hasErrors())
+                {
+                    throw errors;
+                }
+
+                return phenotypeRows.size();
+            }
+            catch (BatchValidationException | QueryUpdateServiceException | DuplicateKeyException | SQLException | InvalidKeyException e)
+            {
+                throw new QueryException(e.getMessage(), e);
+            }
         }
     }
 

@@ -1,3 +1,20 @@
+<script type="text/javascript">
+    (function($, LABKEY) {
+        $(function(){
+            var ctx = LABKEY.getModuleContext('mgap') || {};
+            var folder = ctx['MGAPContainer'];
+            if (!folder) {
+                return;
+            }
+
+            if (!LABKEY.Security.currentUser.isGuest) {
+                var el = $('#login-el');
+                el.html('Go To Site');
+                el.attr('href', LABKEY.ActionURL.buildURL('project', 'start', folder));
+            }
+        });
+    }(jQuery, LABKEY));
+</script>
 <div class="full" id="slideshow">
     <img src="<%=contextPath%>/mGAP/welcome/images/102_6203.jpg" class="bgM"/>
     <img src="<%=contextPath%>/mGAP/welcome/images/102_6438.jpg" class="bgM"/>
@@ -24,7 +41,7 @@
                         <a href="#" data-toggle="modal" data-target="#aboutModal">About</a>
                     </li>
                     <li>
-                        <a href="<%=contextPath%>/login-login.view?returnUrl=<%=contextPath%>/project/mGAP/start.view?">Login</a>
+                        <a href="<%=contextPath%>/login-login.view?returnUrl=<%=contextPath%>/project/mGAP/start.view?" id="login-el">Login</a>
                     </li>
                     <li>
                         <a href="<%=contextPath%>/mGAP/requestLogin.view">Request Access</a>

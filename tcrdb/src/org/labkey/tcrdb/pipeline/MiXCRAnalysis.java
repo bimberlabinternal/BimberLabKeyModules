@@ -7,10 +7,13 @@ import htsjdk.samtools.fastq.FastqWriter;
 import htsjdk.samtools.fastq.FastqWriterFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.CompareType;
+import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.TableInfo;
+import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.exp.api.ExpRun;
@@ -19,6 +22,7 @@ import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.ValidationException;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.FileResource;
@@ -31,7 +35,6 @@ import org.labkey.api.sequenceanalysis.pipeline.AbstractPipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.AnalysisStep;
 import org.labkey.api.sequenceanalysis.pipeline.DefaultPipelineStepOutput;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
-import org.labkey.api.sequenceanalysis.pipeline.PipelineStepOutput;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PreprocessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
@@ -41,6 +44,7 @@ import org.labkey.api.sequenceanalysis.run.PicardWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.study.assay.AssayService;
 import org.labkey.api.util.FileUtil;
+import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.Pair;
 import org.labkey.api.util.Path;
 import org.labkey.api.util.StringUtilsLabKey;
@@ -48,6 +52,7 @@ import org.labkey.api.view.ViewBackgroundInfo;
 import org.labkey.api.view.ViewContext;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.tcrdb.TCRdbModule;
+import org.labkey.tcrdb.TCRdbSchema;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -70,6 +75,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
+
 /**
  * Created by bimber on 5/10/2016.
  */
@@ -87,10 +93,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
     private static final String CLONES_FILE = "MiXCR Clones File";
     private static final String FINAL_VDJ_FILE = "MiXCR VDJ Alignment";
     private static final String DIFF_LOCI = "diffLoci";
-    private static final String IS_RNA_SEQ = "isRnaSeq";
     private static final String TARGET_ASSAY = "targetAssay";
-    private static final String DO_ASSEMBLE_PARTIAL = "doAssemblePartial";
-    private static final String DO_ALIGN_FOR_NOVELS = "doAlignForNovels";
     private static final String LOCI = "loci";
 
     public static class Provider extends AbstractAnalysisStepProvider<MiXCRAnalysis>
@@ -115,10 +118,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("checked", true);
                     }}, true),
-                    ToolParameterDescriptor.create(IS_RNA_SEQ, "RNA-Seq Data", "If checked, MiXCR settings tailored to RNA-Seq (see -p rna-seq) will be used.", "checkbox", new JSONObject()
-                    {{
-                        put("checked", true);
-                    }}, true),
                     ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
                     ToolParameterDescriptor.create(LOCI, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
                     {{
@@ -127,15 +126,10 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(FLAG_MISSENSE, "Flag Missense CDR3", "If checked, if a sample has duplicate CDR3 clones from the same locus, and and one of these is missense, that clone will be flagged and excluded from many reports.", "checkbox", new JSONObject()
                     {{
                         put("checked", false);
-                    }}, true),
-                    ToolParameterDescriptor.create(DO_ASSEMBLE_PARTIAL, "Attempt to Align Partial Hits", "If checked, the MiXCR assemblePartial command will be used.", "checkbox", new JSONObject()
-                    {{
-                        put("checked", true);
-                    }}, true),
-                    ToolParameterDescriptor.create(DO_ALIGN_FOR_NOVELS, "Attempt to Identify Novel Segments", "If checked, this will run a separate alignment against genomic regions to potentially identify novel V/J segments (TCR only).", "checkbox", new JSONObject()
-                    {{
-                        put("checked", false);
-                    }}, false)
+                    }}, true)
+                    //TODO
+                    //--do-not-extend-alignments
+                    //--impute-germline-on-export
             ), Arrays.asList("ux/CheckCombo/CheckCombo.css", "ux/CheckCombo/CheckCombo.js", "tcrdb/field/LibraryField.js", "tcrdb/field/AssaySelectorField.js", "tcrdb/field/LocusField.js"), null);
         }
 
@@ -211,7 +205,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             //now trim:
             List<String> trimParams = Arrays.asList("MAXINFO:50:0.9", "MINLEN:50");
-            PreprocessingStep.Output trimOutput = SequencePipelineService.get().simpleTrimFastqPair(forwardFq, reverseFq, trimParams, getPipelineCtx().getLogger());
+            PreprocessingStep.Output trimOutput = SequencePipelineService.get().simpleTrimFastqPair(forwardFq, reverseFq, trimParams, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getLogger());
             for (File f : trimOutput.getIntermediateFiles())
             {
                 output.addIntermediateFile(f);
@@ -323,25 +317,23 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             List<String> alignParams = new ArrayList<>();
             List<String> assembleParams = new ArrayList<>();
-            if (getProvider().getParameterByName(IS_RNA_SEQ).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class))
-            {
-                alignParams.add("-p");
-                alignParams.add("rna-seq");
-            }
 
             String libraryName = StringUtils.trimToNull(library.optString("libraryName"));
             if (libraryName != null)
             {
-                alignParams.add("--library");
-                alignParams.add(libraryName);
+                alignParams.add("--library " + libraryName);
             }
 
             if (library.optString("additionalParams") != null)
             {
                 // -OvParameters.geneFeatureToAlign=VRegion
-                for (String s : library.getString("additionalParams").split(";"))
+                String additional = StringUtils.trimToNull(library.getString("additionalParams"));
+                if (additional != null)
                 {
-                    alignParams.add(s);
+                    for (String s : library.getString("additionalParams").split(";"))
+                    {
+                        alignParams.add(s);
+                    }
                 }
             }
 
@@ -353,47 +345,45 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getJob().getLogger());
             if (threads != null)
             {
-                alignParams.add("-t");
-                alignParams.add(threads.toString());
-
-                assembleParams.add("-t");
-                assembleParams.add(threads.toString());
+                alignParams.add("-t " + threads.toString());
+                assembleParams.add("-t " + threads.toString());
             }
 
-            boolean doAssemblePartial = getProvider().getParameterByName(DO_ASSEMBLE_PARTIAL).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class);
-            boolean doAlignForNovel = getProvider().getParameterByName(DO_ALIGN_FOR_NOVELS).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+            List<String> generalParams = new ArrayList<>();
 
             String prefix = getOutputPrefix(FileUtil.getBaseName(inputBam), String.valueOf(rowid), species);
-            File clones = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix, species, alignParams, assembleParams, doAssemblePartial, false);
-            output.addOutput(clones, CLONES_FILE);
-
-            File alignForNovels = null;
-            if (doAlignForNovel)
+            File assembledClones = mixcr.doAnalyze(forwardFq, reverseFq, prefix, species, generalParams, alignParams, assembleParams, Collections.emptyList());
+            if (!assembledClones.exists())
             {
-                alignForNovels = mixcr.doAlignmentAndAssemble(forwardFq, reverseFq, prefix + "_novels", species, alignParams, assembleParams, doAssemblePartial, true);
-                output.addIntermediateFile(alignForNovels);
-            }
-            else
-            {
-                getPipelineCtx().getLogger().debug("check for novel/orphan segments will be skipped");
+                throw new PipelineJobException("Unable to find file: " + assembledClones.getPath());
             }
 
-            output.addIntermediateFile(new File(outputDir, prefix + ".align.vdjca.gz"), "MiXCR VDJ Alignment");
+            output.addSequenceOutput(assembledClones, assembledClones.getName(), "MiXCR Clones", rs.getReadsetId(), null, referenceGenome.getGenomeId(), null);
 
-            File alignPartialOutput1 = new File(outputDir, prefix + ".assemblePartial_1.vdjca.gz");
-            if (alignPartialOutput1.exists())
-            {
-                output.addIntermediateFile(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
-            }
+            File alignOutput = mixcr.getAlignFile(prefix, outputDir);
+            output.addIntermediateFile(alignOutput, "MiXCR VDJ Alignment");
 
-            File finalVDJ = new File(outputDir, getFinalVDJFileName(prefix, doAssemblePartial));
-            output.addOutput(finalVDJ, FINAL_VDJ_FILE);
+            File alignPartialOutput1 = mixcr.getAssemblePartialFile(prefix, outputDir, "0");
+            output.addIntermediateFile(alignPartialOutput1, "MiXCR VDJ Alignment, Recovery Step 1");
 
-            output.addOutput(new File(outputDir, MiXCRAnalysis.getClonesFileName(prefix) + ".index"), "MiXCR VDJ Index File 1");
-            output.addOutput(new File(outputDir, MiXCRAnalysis.getClonesFileName(prefix) + ".index.p"), "MiXCR VDJ Index File 2");
+            File alignPartialOutput2 = mixcr.getAssemblePartialFile(prefix, outputDir, "1");
+            output.addIntermediateFile(alignPartialOutput2, "MiXCR VDJ Alignment, Recovery Step 2");
+
+            File extendAlignmentsOut = mixcr.getExtendedFile(prefix, outputDir);
+            //output.addIntermediateFile(extendAlignmentsOut, "MiXCR VDJ Alignment, Extended");
+
+            File assembleOut = mixcr.getAssembleOut(prefix, outputDir);
+            output.addOutput(assembleOut, CLONES_FILE);
+            //output.addIntermediateFile(assembleOut, "MiXCR VDJ Assembled Data");
+
+            //File assembleContigsOut = mixcr.getAssembleContigsOut(prefix, outputDir);
+            //output.addIntermediateFile(assembleContigsOut, "MiXCR VDJ Assembled");
+
+            //this is our final output in the chain:
+            output.addOutput(extendAlignmentsOut, FINAL_VDJ_FILE);
 
             //write summary
-            writeSummary(outputDir, prefix, mixcr, output, rs, totalReadsInExportedAlignments.get(rowid).get(species), alignForNovels);
+            writeSummary(outputDir, prefix, mixcr, output, rs, totalReadsInExportedAlignments.get(rowid).get(species));
 
             for (String locus : loci)
             {
@@ -415,7 +405,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     exportParams.add(minCloneFraction.toString());
                 }
 
-                mixcr.doExportClones(clones, table, locus, exportParams);
+                mixcr.doExportClones(assembledClones, table, locus, exportParams);
                 if (!tables.containsKey(rowid))
                 {
                     tables.put(rowid, new HashMap<>());
@@ -513,7 +503,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                                             getPipelineCtx().getLogger().warn("Initial locus does not match the locus inferred by the gene hits.  chains: " + locus + ", inferred without V: " + inferredLocusWithoutV + ", with V: " + inferredLocusWithV);
                                         }
 
-                                        int readCount = Integer.parseInt(fields[FIELDS.indexOf("count") - TOTAL_ADDED_FIELDS]);
+                                        int readCount = ((Double)Double.parseDouble(fields[FIELDS.indexOf("count") - TOTAL_ADDED_FIELDS])).intValue();
                                         if (!totalReadsInExportedClones.get(libraryId).get(species).containsKey(rowLocus))
                                         {
                                             totalReadsInExportedClones.get(libraryId).get(species).put(rowLocus, 0);
@@ -586,7 +576,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         return new File(outputDir, prefix + ".summary.txt");
     }
 
-    private void writeSummary(File outputDir, String prefix, MiXCRWrapper mixcr, MiXCROutput output, Readset rs, Map<String, Integer> totalReadsInExportedAlignmentsByLocus, @Nullable File alignForNovels) throws PipelineJobException
+    private void writeSummary(File outputDir, String prefix, MiXCRWrapper mixcr, MiXCROutput output, Readset rs, Map<String, Integer> totalReadsInExportedAlignmentsByLocus) throws PipelineJobException
     {
         File alignExport = new File(outputDir, prefix + ".alignments.txt");
         File alignOutput = mixcr.getAlignOutputFile(outputDir, prefix);
@@ -687,12 +677,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                 }
             }
 
-
-            if (alignForNovels != null)
-            {
-                doOrphanCheck(alignForNovels, orphans, outputDir, prefix, output, hitMap, totalAlignmentsInspected, mixcr);
-            }
-
             //write separate list of C-Gene counts, primarily to make it easier to append to RNA-Seq gene count tables
             File constantCounts = new File(outputDir, prefix + ".cAlignments.txt");
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(constantCounts), '\t', CSVWriter.NO_QUOTE_CHARACTER))
@@ -711,92 +695,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         output.addIntermediateFile(alignExport);
-    }
-
-    private void doOrphanCheck(File alignForNovels, Map<String, List<String[]>> orphans, File outputDir, String prefix, MiXCROutput output, Map<String, Integer> hitMap, int totalAlignmentsInspected, MiXCRWrapper mixcr) throws IOException, PipelineJobException
-    {
-        Set<String> readsWithUpstreamJAlignment = new HashSet<>();
-        Set<String> readsWithDownstreamVAlignment = new HashSet<>();
-        if (alignForNovels != null && !orphans.isEmpty())
-        {
-            getPipelineCtx().getLogger().info("exporting/inspecting potentially orphan alignments");
-
-            File alignExportOrphans = new File(outputDir, prefix + ".alignments.forOrphans.txt");
-            mixcr.doExportAlignments(alignForNovels, alignExportOrphans, null);
-            output.addIntermediateFile(alignExportOrphans);
-
-            try (CSVReader orphanReader = new CSVReader(Readers.getReader(alignExportOrphans), '\t'))
-            {
-                String[] orphanLine;
-                while ((orphanLine = orphanReader.readNext()) != null)
-                {
-                    if (orphanLine[0].startsWith("bestVGene"))
-                    {
-                        continue;
-                    }
-
-                    String readName = orphanLine[READ1_IDX];
-                    if (StringUtils.trimToNull(orphanLine[V_DOWNSTREAM_IDX]) != null)
-                    {
-                        readsWithDownstreamVAlignment.add(readName);
-                    }
-
-                    if (StringUtils.trimToNull(orphanLine[J_UPSTREAM_IDX]) != null)
-                    {
-                        readsWithUpstreamJAlignment.add(readName);
-                    }
-                }
-            }
-        }
-
-        getPipelineCtx().getLogger().info("total reads with J alignment and upstream sequence: " + readsWithUpstreamJAlignment.size());
-        getPipelineCtx().getLogger().info("total reads with V alignment and downstream sequence: " + readsWithDownstreamVAlignment.size());
-
-        int totalOrphans = 0;
-        int lowFreqOrphans = 0;
-        File orphanFile = new File(outputDir, prefix + ".orphanAlignments.txt");
-        output.addOutput(orphanFile, "MiCXR Possible Novel Segments");
-        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(orphanFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-        {
-            writer.writeNext(new String[]{"Readset", "ReadsetId", "Segment", "Hit", "TotalAlignments", "TotalAlignmentsForHit", "TotalOrphansForHit", "Fraction", "HasVDownstreamSequence", "HasJUpstreamSequence", "ReadName1", "ReadDirection1", "Sequence1", "ReadName2", "ReadDirection2", "Sequence2"});
-            for (String hit : orphans.keySet())
-            {
-                if (orphans.get(hit).size() > 5)
-                {
-                    double orphanFraction = orphans.get(hit).size() / (double)hitMap.get(hit);
-                    double orphanFractionOfTotal = orphans.get(hit).size() / (double)totalAlignmentsInspected;
-                    if (orphanFraction < 0.1 || orphanFractionOfTotal < 0.01)
-                    {
-                        lowFreqOrphans++;
-                        continue;
-                    }
-
-                    String totalForHit = String.valueOf(hitMap.get(hit));
-                    for (String[] row : orphans.get(hit))
-                    {
-                        totalOrphans++;
-                        List<String> rowList = new ArrayList<>(Arrays.asList(row));
-                        rowList.add(4, String.valueOf(totalAlignmentsInspected));
-                        rowList.add(5, totalForHit);
-                        rowList.add(6, String.valueOf(orphans.get(hit).size()));
-                        rowList.add(7, String.valueOf(100.0 * orphanFraction));
-                        rowList.add(8, readsWithDownstreamVAlignment.contains(row[4]) ? "true" : "false");
-                        rowList.add(9, readsWithUpstreamJAlignment.contains(row[4]) ? "true" : "false");
-                        writer.writeNext(rowList.toArray(new String[rowList.size()]));
-                    }
-                }
-            }
-        }
-
-        if (totalOrphans == 0)
-        {
-            orphanFile.delete();
-        }
-        else
-        {
-            getPipelineCtx().getLogger().info("total potential orphan/novel alignments: " + totalOrphans);
-            getPipelineCtx().getLogger().info("low frequency orphans skipped: " + lowFreqOrphans);
-        }
     }
 
     private File getCombinedTable(File outputDir)
@@ -838,12 +736,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             "jBestIdentityPercent",
             "cdr3_nt",
             "cdr3_qual",
-            "sequence",
-            "vMismatches",
-            "dMismatches",
-            "jMismatches",
-            "cMismatches"
-            //"nSeqVDJTranscript"
+            "sequence"
     );
 
     private class RunData
@@ -1170,16 +1063,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     }
 
-    public static String getClonesFileName(String outputPrefix)
-    {
-        return outputPrefix + ".clones";
-    }
-
-    public static String getFinalVDJFileName(String outputPrefix, boolean doAssemblePartial)
-    {
-        return doAssemblePartial ? outputPrefix + ".assemblePartial_2.vdjca.gz" : outputPrefix + ".align.vdjca.gz";
-    }
-
     private String getOutputPrefix(String basename, String libraryId, String species)
     {
         return basename + "." + libraryId + "." + species;
@@ -1335,8 +1218,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
         ExpRun run = ExperimentService.get().getExpRun(runId);
 
-        boolean doAssemblePartial = getProvider().getParameterByName(DO_ASSEMBLE_PARTIAL).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class);
-
         List<? extends ExpData> cloneDatas = run.getInputDatas(CLONES_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
         List<? extends ExpData> vdjDatas = run.getInputDatas(FINAL_VDJ_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
 
@@ -1384,7 +1265,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     rd.mixcrVersions.add(row.get("mixcrVersion").toString());
                 }
 
-                String cloneFileName = getClonesFileName(rd.prefix);
+                String cloneFileName = MiXCRWrapper.getAssembledFileName(rd.prefix);
                 ExpData clonesFile = null;
                 for (ExpData d : cloneDatas)
                 {
@@ -1397,14 +1278,14 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
                 if (clonesFile == null)
                 {
-                    getPipelineCtx().getLogger().warn("unable to find clones file, expected: " + cloneFileName);
+                    getPipelineCtx().getLogger().error("unable to find clones file, expected: " + cloneFileName);
                 }
                 else
                 {
                     row.put("clonesFile", clonesFile.getRowId());
                 }
 
-                String vdjFileName = getFinalVDJFileName(rd.prefix, doAssemblePartial);
+                String vdjFileName = MiXCRWrapper.getFinalVDJFileName(rd.prefix);
                 ExpData vdjFile = null;
                 for (ExpData d : vdjDatas)
                 {
@@ -1472,6 +1353,37 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
         row.put("alignmentId", model.getAlignmentFile());
         row.put("analysisId", model.getRowId());
+
+        //attempt to locate cDNA:
+        TableInfo cDNATable = TCRdbSchema.getInstance().getSchema().getTable(TCRdbSchema.TABLE_CDNAS);
+        if (model.getReadset() != null)
+        {
+            SimpleFilter filter = new SimpleFilter();
+            filter.addClause(new SimpleFilter.OrClause(
+                new CompareType.CompareClause(FieldKey.fromString("readsetId"), CompareType.EQUAL, model.getReadset()),
+                new CompareType.CompareClause(FieldKey.fromString("enrichedReadsetId"), CompareType.EQUAL, model.getReadset())
+            ));
+
+            TableSelector ts1 = new TableSelector(cDNATable, PageFlowUtil.set("rowId"), filter, null);
+            if (ts1.exists())
+            {
+                List<Integer> rowIds = ts1.getArrayList(Integer.class);
+                if (rowIds.size() == 1)
+                {
+                    row.put("cDNA", rowIds.get(0));
+                }
+                else
+                {
+                    getPipelineCtx().getLogger().warn("Expected single cDNA for: " + model.getReadset() + ", found: " + rowIds.size());
+                }
+            }
+        }
+
+        if (!row.containsKey("cDNA"))
+        {
+            getPipelineCtx().getLogger().warn("Unable to find cDNA for: " + model.getReadset());
+        }
+
         row.put("pipelineRunId", runId);
 
         return row;
@@ -1638,11 +1550,9 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     private void importRun(RunData rd, File outDir, AnalysisModel model, ExpProtocol protocol, ViewContext vc) throws ValidationException, PipelineJobException
     {
-        boolean doAssemblePartial = getProvider().getParameterByName(DO_ASSEMBLE_PARTIAL).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class);
-
         JSONObject runProps = new JSONObject();
         runProps.put("performedby", getPipelineCtx().getJob().getUser().getDisplayName(getPipelineCtx().getJob().getUser()));
-        runProps.put("assayName", (rd.mixcrVersions.isEmpty() ? "MiXCR" : rd.mixcrVersions.iterator().next()) + (doAssemblePartial ? "" : "-NoAssemblePartial"));
+        runProps.put("assayName", (rd.mixcrVersions.isEmpty() ? "MiXCR" : rd.mixcrVersions.iterator().next()));
         runProps.put("Name", "Analysis: " + model.getAnalysisId());
         runProps.put("analysisId", model.getAnalysisId());
 

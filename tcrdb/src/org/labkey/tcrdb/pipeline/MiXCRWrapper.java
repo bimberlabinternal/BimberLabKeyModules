@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,41 +27,48 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         super(log);
     }
 
-    public File doAlignmentAndAssemble(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> alignParams, List<String> assembleParams, boolean doAssemblePartial, boolean forNovels) throws PipelineJobException
+    public File doAnalyze(File fq1, @Nullable File fq2, String outputPrefix, String species, List<String> generalParams, List<String> alignParams, List<String> assembleParams, List<String> extendParams) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
-        //NOTE: can manually set this.  for now assume the LK user's home directory
-        //args.add("-Dlibrary.path");
 
-        args.add("align");
+        args.add("analyze");
+        args.add("shotgun");
+
+        //args.add("--overwrite-if-required");
         args.add("-f");
-        args.add("-r");
+        args.add("--starting-material");
+        args.add("rna");
+
+        args.add("--report");
         File logFile = new File(getOutputDir(fq1), outputPrefix + ".log.txt");
         args.add(logFile.getPath());
+
+        args.add("--contig-assembly");
 
         args.add("-s");
         args.add(species);
 
-        args.add("-OallowPartialAlignments=true");
-        args.add("-g");
-        args.add("--save-description");
+        args.addAll(generalParams);
 
-        if (alignParams != null)
-        {
-            args.addAll(alignParams);
-        }
+        alignParams.add("-OallowPartialAlignments=true");
+        alignParams.add("-OsaveOriginalReads=true");
+        alignParams.forEach(x -> addStepArg("--align", x, args));
 
-        if (forNovels)
-        {
-            getLogger().info("creating alignment file for purpose of identifying novel genes");
-            args.add("-OvParameters.geneFeatureToAlign='{FR1Begin:VEnd(100)}'");
-            args.add("-OjParameters.geneFeatureToAlign='{JBegin(-100):FR4End}'");
+        //--assemblePartial
 
-            //limit to TCR
-            args.add("-c");
-            args.add("TCR");
-        }
+        //--extend
+        extendParams.forEach(x -> addStepArg("--extend", x, args));
+
+        assembleParams.add("-OaddReadsCountOnClustering=true");
+        assembleParams.add("-ObadQualityThreshold=10");
+        assembleParams.forEach(x -> addStepArg("--assemble", x, args));
+
+        //--assembleContigs
+
+
+        //--export
+
 
         args.add(fq1.getPath());
         if (fq2 != null)
@@ -68,89 +76,73 @@ public class MiXCRWrapper extends AbstractCommandWrapper
             args.add(fq2.getPath());
         }
 
-        File alignOut = getAlignOutputFile(getOutputDir(fq1), outputPrefix);
+        File alignOut = new File(getOutputDir(fq1), outputPrefix);
         args.add(alignOut.getPath());
 
         execute(args);
 
-        if (forNovels)
-        {
-            return alignOut;
-        }
-
         writeLogToLog(logFile);
 
-        File inputForFinalAlignment;
-        if (doAssemblePartial)
+        for (String token : Arrays.asList("ALL", "IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"))
         {
-            getLogger().info("assembling partial reads, round 1");
-            File partialAssembleOut1 = new File(getOutputDir(fq1), outputPrefix + ".assemblePartial_1.vdjca.gz");
-            doAssemblePartial(alignOut, partialAssembleOut1, logFile);
-
-            getLogger().info("assembling partial reads, round 2");
-            File partialAssembleOut2 = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix, doAssemblePartial));
-            doAssemblePartial(partialAssembleOut1, partialAssembleOut2, logFile);
-
-            inputForFinalAlignment = partialAssembleOut2;
-        }
-        else
-        {
-            getLogger().info("assemble partial will not be used");
-            inputForFinalAlignment = alignOut;
+            File text = new File(getOutputDir(fq1), outputPrefix + ".clonotypes." + token + ".txt");
+            if (text.exists())
+            {
+                text.delete();
+            }
+            else
+            {
+                getLogger().warn("unable to find expected output: " + text.getPath());
+            }
         }
 
-        //getLogger().info("extend alignments");
-        //File extendAlignmentsOut = new File(getOutputDir(fq1), MiXCRAnalysis.getFinalVDJFileName(outputPrefix));
-        //doExtendAlignments(partialAssembleOut2, extendAlignmentsOut, logFile);
-
-        getLogger().info("assembling final reads");
-        File assembleOut = new File(getOutputDir(fq1), MiXCRAnalysis.getClonesFileName(outputPrefix));
-        List<String> assembleArgs = new ArrayList<>();
-        assembleArgs.addAll(getBaseArgs());
-        assembleArgs.add("assemble");
-        assembleArgs.add("-f");
-        assembleArgs.add("-r");
-        assembleArgs.add(logFile.getPath());
-
-        File indexFile = new File(getOutputDir(fq1), MiXCRAnalysis.getClonesFileName(outputPrefix) + ".index");
-        assembleArgs.add("--index");
-        assembleArgs.add(indexFile.getPath());
-
-        assembleArgs.add("-OaddReadsCountOnClustering=true");
-        assembleArgs.add("-ObadQualityThreshold=10");
-
-        if (assembleParams != null)
-        {
-            assembleArgs.addAll(assembleParams);
-        }
-
-        assembleArgs.add(inputForFinalAlignment.getPath());
-        assembleArgs.add(assembleOut.getPath());
-
-        execute(assembleArgs);
-        writeLogToLog(logFile);
-
-        return assembleOut;
+        return getAssembleContigsOut(outputPrefix, getOutputDir(fq1));
     }
 
-    //public void exportReadsForClones(File vdjca, File index, File outDir, String basename)
-    //{
-    //    //mixcr exportReadsForClones index_file alignments.vdjca.gz 0 reads.fastq.gz
-    //}
-
-    private void doAssemblePartial(File alignOut, File output, File logFile) throws PipelineJobException
+    public static String getExtendedName(String outputPrefix)
     {
-        List<String> partialAssembleArgs = new ArrayList<>();
-        partialAssembleArgs.addAll(getBaseArgs());
-        partialAssembleArgs.add("assemblePartial");
-        partialAssembleArgs.add("-f");
-        partialAssembleArgs.add("-r");
-        partialAssembleArgs.add(logFile.getPath());
-        partialAssembleArgs.add(alignOut.getPath());
-        partialAssembleArgs.add(output.getPath());
-        execute(partialAssembleArgs);
+        return outputPrefix + ".extended.vdjca";
+    }
 
-        writeLogToLog(logFile);
+    public File getAssemblePartialFile(String basename, File outdir, String step)
+    {
+        return new File(outdir, basename + ".rescued_" + step + ".vdjca");
+    }
+
+    public File getAlignFile(String basename, File outdir)
+    {
+        return new File(outdir, basename + ".vdjca");
+    }
+
+    public static String getFinalVDJFileName(String basename)
+    {
+        return getExtendedName(basename);
+    }
+
+    public File getExtendedFile(String basename, File outdir)
+    {
+        return new File(outdir, getExtendedName(basename));
+    }
+
+    public File getAssembleOut(String basename, File outdir)
+    {
+        return new File(outdir, getAssembledFileName(basename));
+    }
+
+    public File getAssembleContigsOut(String basename, File outdir)
+    {
+        return new File(outdir, basename + ".contigs.clns");
+    }
+
+    public static String getAssembledFileName(String outputPrefix)
+    {
+        return outputPrefix + ".clna";
+    }
+
+    private void addStepArg(String prefix, String val, List<String> args)
+    {
+        args.add(prefix);
+        args.add("\"" + val + "\"");
     }
 
     private void writeLogToLog(File log) throws PipelineJobException
@@ -194,7 +186,6 @@ public class MiXCRWrapper extends AbstractCommandWrapper
             args.addAll(extraParams);
         }
 
-        args.add("-s");  //no spaces in header
         args.add("-cloneId");
         args.add("-vHit");
         args.add("-dHit");
@@ -226,17 +217,8 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("CDR3");
         args.add("-qFeature");
         args.add("CDR3");
-        args.add("-sequence");
-        //args.add("-nFeature");
-        //args.add("VDJTranscript");
-        args.add("-nMutations");
-        args.add("VRegion");
-        args.add("-nMutations");
-        args.add("DRegion");
-        args.add("-nMutations");
-        args.add("JRegion");
-        args.add("-nMutations");
-        args.add("CExon1");
+        args.add("-nFeatureImputed");
+        args.add("VDJRegion");
         args.add("-f");
         args.add(clones.getPath());
         args.add(output.getPath());
@@ -244,11 +226,41 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         execute(args);
     }
 
+    public void doExportReadsForClones(File cloneAln, File outputFq, List<String> extraArgs) throws PipelineJobException
+    {
+        List<String> args = new ArrayList<>();
+        args.addAll(getBaseArgs());
+        args.add("exportReadsForClones");
+        args.add("-f");
+
+        if (extraArgs != null)
+        {
+            args.addAll(extraArgs);
+        }
+        args.add(cloneAln.getPath());
+        args.add(outputFq.getPath());
+
+        StringBuffer stdErr = new StringBuffer();
+        try
+        {
+            executeWithOutput(args, stdErr);
+        }
+        catch (Exception e)
+        {
+            getLogger().error("MiXCR exportReadsForClones error:");
+            getLogger().error(stdErr);
+
+            throw e;
+        }
+    }
+
     public void doExportAlignmentsPretty(File align, File output, List<String> extraArgs) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
         args.add("exportAlignmentsPretty");
+        args.add("-f");
+
         if (extraArgs != null)
         {
             args.addAll(extraArgs);
@@ -256,7 +268,18 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add(align.getPath());
         args.add(output.getPath());
 
-        execute(args);
+        StringBuffer stdErr = new StringBuffer();
+        try
+        {
+            executeWithOutput(args, stdErr);
+        }
+        catch (Exception e)
+        {
+            getLogger().error("MiXCR exportAlignmentsPretty error:");
+            getLogger().error(stdErr);
+
+            throw e;
+        }
     }
 
     public void doExportAlignments(File align, File output, List<String> extraArgs) throws PipelineJobException
@@ -280,16 +303,17 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         args.add("-jHitScore");
         args.add("-cHitScore");
 
-        args.add("-readId");
-        args.add("-sequence");
+        args.add("-readIds");
+        args.add("-targetSequences");
+
         args.add("-positionOf");
         args.add("VEndTrimmed");
         args.add("-positionOf");
         args.add("JBeginTrimmed");
         args.add("-positionOf");
         args.add("CBegin");
-        args.add("-descrR1");
-        args.add("-descrR2");
+        args.add("-descrsR1");
+        args.add("-descrsR2");
 
         args.add("-nFeature");
         args.add("{JBegin(-25):JBegin(-5)}");
@@ -364,6 +388,6 @@ public class MiXCRWrapper extends AbstractCommandWrapper
 
     public File getAlignOutputFile(File outDir, String outputPrefix)
     {
-        return new File(outDir, outputPrefix + ".align.vdjca.gz");
+        return new File(outDir, outputPrefix + ".vdjca");
     }
 }

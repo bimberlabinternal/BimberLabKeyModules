@@ -67,6 +67,14 @@
                             <fkDisplayColumnName>rowid</fkDisplayColumnName>
                         </fk>
                     </column>
+                    <column columnName="cDNA">
+                        <fk>
+                            <fkDbSchema>tcrdb</fkDbSchema>
+                            <fkTable>cdnas</fkTable>
+                            <fkColumnName>rowid</fkColumnName>
+                            <fkDisplayColumnName>rowid</fkDisplayColumnName>
+                        </fk>
+                    </column>
                     <column columnName="pipelineRunId">
                         <columnTitle>Run Id</columnTitle>
                         <fk>

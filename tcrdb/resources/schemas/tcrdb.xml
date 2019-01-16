@@ -223,27 +223,20 @@
                     <fkDbSchema>laboratory</fkDbSchema>
                     <fkTable>96well_plate</fkTable>
                     <fkColumnName>well</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="hto">
+                <columnTitle>Hashtag Oligo</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>hashtag_oligos</fkTable>
+                    <fkColumnName>tag_name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
             <column columnName="buffer">
 
-            </column>
-            <column columnName="readsetId">
-                <isHidden>true</isHidden>
-                <fk>
-                    <fkDbSchema>sequenceanalysis</fkDbSchema>
-                    <fkTable>sequence_readsets</fkTable>
-                    <fkColumnName>rowid</fkColumnName>
-                </fk>
-            </column>
-            <column columnName="enrichedReadsetId">
-                <isHidden>true</isHidden>
-                <columnTitle>Readset (TCR Enriched)</columnTitle>
-                <fk>
-                    <fkDbSchema>sequenceanalysis</fkDbSchema>
-                    <fkTable>sequence_readsets</fkTable>
-                    <fkColumnName>rowid</fkColumnName>
-                </fk>
             </column>
             <column columnName="comment">
 
@@ -320,9 +313,11 @@
                     <fkDbSchema>laboratory</fkDbSchema>
                     <fkTable>96well_plate</fkTable>
                     <fkColumnName>well</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
             <column columnName="readsetId">
+                <columnTitle>Readset (GEX)</columnTitle>
                 <fk>
                     <fkDbSchema>sequenceanalysis</fkDbSchema>
                     <fkTable>sequence_readsets</fkTable>
@@ -330,12 +325,26 @@
                 </fk>
             </column>
             <column columnName="enrichedReadsetId">
-                <columnTitle>Readset (TCR Enriched)</columnTitle>
+                <columnTitle>Readset (TCR)</columnTitle>
                 <fk>
                     <fkDbSchema>sequenceanalysis</fkDbSchema>
                     <fkTable>sequence_readsets</fkTable>
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
+            </column>
+            <column columnName="hashingReadsetId">
+                <columnTitle>Readset (Cell Hashing)</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>sequence_readsets</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="cdnaConc">
+                <columnTitle>cDNA Concentration (ng/uL)</columnTitle>
+            </column>
+            <column columnName="enrichedConc">
+                <columnTitle>TCR Enriched Concentration (ng/uL)</columnTitle>
             </column>
             <column columnName="comment">
 
@@ -381,6 +390,25 @@
                 <isHidden>true</isHidden>
             </column>
         </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>laboratory/buttons.js</includeScript>
+            <item text="Insert" permission="INSERT" iconCls="plus">
+                <item>
+                    <item text="Import Bulk Stims">
+                        <onClick>Laboratory.buttonHandlers.importDataHandlerForView(dataRegionName, 'tcrdb', 'stimDashboard')</onClick>
+                    </item>
+                    <item text="Import 10x">
+                        <onClick>Laboratory.buttonHandlers.importDataHandlerForView(dataRegionName, 'tcrdb', 'poolImport')</onClick>
+                    </item>
+                </item>
+            </item>
+            <item hidden="true">
+                <originalText>Insert</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+        </buttonBarOptions>
     </table>
     <table tableName="peptides" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
