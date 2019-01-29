@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.releaseStats ALTER COLUMN metricName type VARCHAR(2000);

@@ -288,7 +288,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
         }
 
         @Override
-        public void complete(PipelineJob job, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated) throws PipelineJobException
+        public void complete(PipelineJob job, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated, SequenceAnalysisJobSupport support) throws PipelineJobException
         {
             if (outputsCreated.isEmpty())
             {
@@ -413,6 +413,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     map.put("omim", queryOmim(line[8], job.getContainer(), job.getLogger()));
                                     map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
                                     map.put("af", line[10]);
+                                    map.put("identifier", line[11]);
                                     map.put("objectId", new GUID().toString());
 
                                     variantTableRows.add(map);
@@ -729,7 +730,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                 args.add("-o");
                                 args.add(outputFile.getPath());
 
-                                for (String key : Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR", "ReverseComplementedAlleles"))
+                                for (String key : Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR", "ReverseComplementedAlleles", "LiftedContig", "LiftedStart", "LiftedStop"))
                                 {
                                     args.add("-A");
                                     args.add(key);
@@ -1014,7 +1015,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     description += "; AA Change: " + tokens[10];
                                 }
 
-                                maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger());
+                                maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
                             }
                         }
                     }
@@ -1024,6 +1025,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                         List<String> clnAlleles = vc.getAttributeAsStringList("CLN_ALLELE", "");
                         List<String> clnSigs = vc.getAttributeAsStringList("CLN_SIG", "");
                         List<String> clnDisease = vc.getAttributeAsStringList("CLN_DN", "");
+                        List<String> clnAlleleIds = vc.getAttributeAsStringList("CLN_ALLELEID", "");
                         int i = -1;
                         for (String sigList : clnSigs)
                         {
@@ -1042,7 +1044,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     }, ",");
 
                                     String allele = clnAlleles.get(i);
-                                    maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger());
+                                    maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(j));
                                 }
 
                                 j++;
@@ -1065,7 +1067,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     "Score: " + String.valueOf(maxScore)
                             }, ",");
 
-                            maybeWriteVariantLine(queuedLines, vc, null, "Polyphen2", "Prediction: " + StringUtils.join(polyphenPredictions, ","), description, overlappingGenes, omims, omimds, ctx.getLogger());
+                            maybeWriteVariantLine(queuedLines, vc, null, "Polyphen2", "Prediction: " + StringUtils.join(polyphenPredictions, ","), description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
                         }
                     }
 
@@ -1201,7 +1203,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                             addForValue("AnnotationSummary", "Predicted High Impact (SnpEff)");
                         }
 
-                        //coding potential:
+                        filterCodingPotential(codingPotential);
                         for (String type : codingPotential)
                         {
                             addForValue("CodingPotential", type);
@@ -1316,6 +1318,25 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             Map<String, Integer> countsPerLevel = new HashMap<>(20);
         }
 
+        public static void filterCodingPotential(Set<String> codingPotential)
+        {
+            //due to overlapping transcripts, this is often added.  remove these less-specific terms in order
+            for (String type : Arrays.asList("intragenic_variant", "non_coding_transcript_variant", "intron_variant"))
+            {
+                if (codingPotential.size() > 1 && codingPotential.contains(type))
+                {
+                    codingPotential.remove(type);
+                }
+            }
+
+            if (codingPotential.contains("synonymous_variant") || codingPotential.contains("missense_variant"))
+            {
+                codingPotential.remove("intragenic_variant");
+                codingPotential.remove("non_coding_transcript_variant");
+                codingPotential.contains("intron_variant");
+            }
+        }
+
         private void generateSummary(JobContext ctx, File variantsToTable, File output, File outputPerValue, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
         {
             ctx.getLogger().info("reading variant table");
@@ -1397,7 +1418,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
         }
 
-        private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omims, Collection<String> omimds, Logger log)
+        private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omims, Collection<String> omimds, Logger log, String identifier)
         {
             if (allele == null)
             {
@@ -1430,7 +1451,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, description, StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString()));
+            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, description, StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier));
         }
 
         private Map<String, String> parseSampleMap(File sampleMapFile) throws PipelineJobException

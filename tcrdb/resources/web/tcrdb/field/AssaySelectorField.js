@@ -2,6 +2,8 @@ Ext4.define('TCRdb.field.AssaySelectorField', {
 	extend: 'Ext.form.field.ComboBox',
 	alias: 'widget.tcr-assayselectorfield',
 
+	autoSelectAssay: true,
+
 	initComponent: function(){
 		Ext4.apply(this, {
 			queryMode: 'local',
@@ -43,7 +45,7 @@ Ext4.define('TCRdb.field.AssaySelectorField', {
 			}));
 		}, this);
 
-		if (results.length == 1){
+		if (this.autoSelectAssay && results.length === 1){
 			this.setValue(results[0].id);
 		}
 		this.setDisabled(false);

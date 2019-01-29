@@ -2,7 +2,7 @@
    <columns>
        <column name="analysisId" />
        <column name="sampleName" />
-       <column name="cDNA/sortId/stimId/animal" />
+       <column name="cDNA/sortId/stimId/animalId" />
        <column name="cDNA/sortId/stimId/date" />
        <column name="cDNA/sortId/stimId/stim" />
        <column name="cDNA/sortId/population" />
@@ -32,7 +32,7 @@
        <column name="disabled"/>
    </columns>
    <sorts>
-       <sort column="cDNA/sortId/stimId/population"/>
+       <sort column="cDNA/sortId/population"/>
        <sort column="locus"/>
        <sort column="count" descending="true"/>
    </sorts>

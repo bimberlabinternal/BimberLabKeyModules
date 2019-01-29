@@ -24,6 +24,7 @@ public class TCRdbSchema
 {
     private static final TCRdbSchema _instance = new TCRdbSchema();
     public static final String NAME = "tcrdb";
+    public static final String SEQUENCE_ANALYSIS = "sequenceanalysis";
 
     public static final String TABLE_LIBRARIES = "mixcr_libraries";
     public static final String TABLE_SORTS = "sorts";

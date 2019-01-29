@@ -31,6 +31,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                 keys.add(getBoundKey("container"));
                 keys.add(getBoundKey("contig"));
                 keys.add(getBoundKey("position"));
+                keys.add(getBoundKey("identifier"));
             }
 
             private FieldKey getBoundKey(String colName)
@@ -54,11 +55,10 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                 String contig = StringUtils.trimToNull(ctx.get(getBoundKey("contig"), String.class));
                 Integer position = ctx.get(getBoundKey("position"), Integer.class);
                 String delim = "";
+                int start = position - 200;
+                int stop = position + 200;
                 if (jbrowseId != null)
                 {
-                    int start = position - 1000;
-                    int stop = position + 1000;
-
                     DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&loc=" + contig + ":" + start + ".." + stop, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
                     delim = "<br>";
@@ -69,7 +69,36 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                     out.write(delim);
                     DetailsURL url = DetailsURL.fromString("/jbrowse/genotypeTable.view?trackId=data-" + jbrowseTrackId + "&chr=" + contig + "&start=" + position + "&stop=" + position, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View Genotypes At Position</a>");
+                    delim = "<br>";
                 }
+
+                if (ctx.get(FieldKey.fromString("identifier")) != null)
+                {
+                    String identifier = StringUtils.trimToNull(ctx.get(getBoundKey("identifier"), String.class));
+                    if (identifier != null && identifier.contains(":"))
+                    {
+                        String[] parts = identifier.split(":");
+                        switch (parts[0])
+                        {
+                            case "ClinVar":
+                                if (!StringUtils.isEmpty(parts[1]))
+                                {
+                                    String url = "https://www.ncbi.nlm.nih.gov/clinvar/variation/" + parts[1] + "/";
+                                    out.write(delim);
+                                    out.write("<a class=\"labkey-text-link\" href=\"" + url + "\");\">View in ClinVar</a>");
+                                    delim = "<br>";
+                                }
+                                break;
+                        }
+                    }
+                }
+
+                //Ensembl does use chr or padded names.
+                String contigE = contig.replaceAll("chr", "");
+                contigE = contigE.replaceAll("^0", "");
+                String url = "https://www.ensembl.org/Macaca_mulatta/Location/View?db=core;r=" + contigE + ":" + start +"-" + stop;
+                out.write(delim);
+                out.write("<a class=\"labkey-text-link\" href=\"" + url + "\");\">View Region in Ensembl</a>");
             }
         };
     }

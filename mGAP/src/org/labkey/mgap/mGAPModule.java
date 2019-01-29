@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.labkey.api.audit.AuditLogService;
+import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableSelector;
@@ -48,7 +49,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.46;
+        return 16.48;
     }
 
     @Override
@@ -98,7 +99,9 @@ public class mGAPModule extends ExtendedSimpleModule
     {
         JSONObject ret = super.getPageContextJson(context);
 
-        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "jbrowseId"), new SimpleFilter(FieldKey.fromString("container"), context.getContainer().getId()), new Sort("-releaseDate"));
+        SimpleFilter filter = new SimpleFilter();
+        filter.addClause(ContainerFilter.CURRENT.createFilterClause(mGAPSchema.getInstance().getSchema(), FieldKey.fromString("container"), context.getContainer()));
+        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "version", "jbrowseId"), filter, new Sort("-releaseDate"));
         ts.setMaxRows(1);
         ts.forEachResults(rs -> {
             String jbrowseId = rs.getString(FieldKey.fromString("jbrowseId"));
@@ -112,6 +115,13 @@ public class mGAPModule extends ExtendedSimpleModule
             {
                 ret.put("mgapReleaseId", rowId);
             }
+
+            String releaseVersion = rs.getString(FieldKey.fromString("version"));
+            if (releaseVersion != null)
+            {
+                ret.put("mgapReleaseVersion", releaseVersion);
+            }
+
         });
 
         return ret;

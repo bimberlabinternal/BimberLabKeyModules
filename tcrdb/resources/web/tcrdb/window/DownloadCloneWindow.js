@@ -30,7 +30,6 @@ Ext4.define('TCRdb.window.DownloadCloneWindow', {
                     }
 
                     var checked = LABKEY.DataRegions[dataRegionName].getChecked();
-                    LDK.Assert.assertEquality('getChecked and getSelected do not match', data.selected.length, checked.length)
 
                     Ext4.create('TCRdb.window.DownloadCloneWindow', {
                         dataRegionName: dataRegionName,

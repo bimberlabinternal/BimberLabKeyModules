@@ -2,20 +2,11 @@ package org.labkey.tcrdb.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
-import org.labkey.api.data.ColumnInfo;
-import org.labkey.api.data.Container;
-import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.TableInfo;
-import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
-import org.labkey.api.query.FieldKey;
-import org.labkey.api.query.QueryService;
-import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
@@ -28,25 +19,21 @@ import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.tcrdb.TCRdbModule;
-import org.labkey.tcrdb.TCRdbSchema;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType("cloupe", false);
-    private static final String READSET_TO_HASHING_MAP = "readsetToHashingMap";
 
     public CellRangerCellHashingHandler()
     {
@@ -93,77 +80,10 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
     public class Processor implements SequenceOutputHandler.SequenceOutputProcessor
     {
-        private String getFilterFieldName()
-        {
-            return "readsetId";
-        }
-
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            job.getLogger().debug("preparing cell hashing files");
-            Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
-            UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
-            TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS);
-
-            Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
-                    FieldKey.fromString("rowid"),
-                    FieldKey.fromString("sortId/hto"),
-                    FieldKey.fromString("sortId/hto/sequence"),
-                    FieldKey.fromString("hashingReadsetId"))
-            );
-
-            File barcodeOutput = getValidHashingBarcodeFile(outputDir);
-            HashMap<Integer, Integer> readsetToHashingMap = new HashMap<>();
-            try (CSVWriter bcWriter = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER))
-            {
-                List<Readset> cachedReadsets = support.getCachedReadsets();
-                Set<String> distinctHTOs = new HashSet<>();
-                for (Readset rs : cachedReadsets)
-                {
-                    AtomicBoolean hasError = new AtomicBoolean(false);
-                    new TableSelector(cDNAs, colMap.values(), new SimpleFilter(FieldKey.fromString(getFilterFieldName()), rs.getRowId()), null).forEachResults(results -> {
-
-                        if (results.getObject(FieldKey.fromString("hashingReadsetId")) == null)
-                        {
-                            hasError.set(true);
-                        }
-
-                        if (results.getObject(FieldKey.fromString("sortId/hto/sequence")) == null)
-                        {
-                            hasError.set(true);
-                        }
-
-                        support.cacheReadset(results.getInt(FieldKey.fromString("hashingReadsetId")), job.getUser());
-                        readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
-
-                        String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
-                        if (!distinctHTOs.contains(hto) && !StringUtils.isEmpty(results.getString(FieldKey.fromString("sortId/hto/sequence"))))
-                        {
-                            distinctHTOs.add(hto);
-                            bcWriter.writeNext(new String[]{results.getString(FieldKey.fromString("sortId/hto/sequence")), results.getString(FieldKey.fromString("sortId/hto"))});
-                        }
-                    });
-
-                    if (hasError.get())
-                    {
-                        throw new PipelineJobException("No cell hashing readset or HTO found for one or more cDNAs. see the file");
-                    }
-                }
-
-                if (distinctHTOs.isEmpty())
-                {
-                    throw new PipelineJobException("Cell hashing was selected, but no HTOs were found");
-                }
-
-                job.getLogger().info("distinct HTOs: " + distinctHTOs.size());
-
-                support.cacheObject(READSET_TO_HASHING_MAP, readsetToHashingMap);
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
+            CellRangerVDJUtils.prepareCellHashingFiles(job, support, outputDir, "readsetId");
         }
 
         @Override
@@ -179,23 +99,43 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
             for (SequenceOutputFile so : inputFiles)
             {
-                //find TSV:
-                File barcodeDir = new File(so.getFile().getParentFile(), "filtered_gene_bc_matrices");
-                File[] children = barcodeDir.listFiles(new FileFilter()
-                {
-                    @Override
-                    public boolean accept(File pathname)
-                    {
-                        return pathname.isDirectory();
-                    }
-                });
+                ctx.getLogger().info("processing file: " + so.getName());
 
-                if (children == null || children.length != 1)
+                //find TSV:
+                File perCellTsv;
+                File barcodeDir = new File(so.getFile().getParentFile(), "filtered_gene_bc_matrices");
+                if (!barcodeDir.exists())
                 {
-                    throw new PipelineJobException("Expected to find a single subfolder under: " + barcodeDir.getPath());
+                    //this might be a re-analysis loupe directory.  in this case, use the tsne projection.csv as the whitelist:
+                    File dir = new File(so.getFile().getParentFile(), "analysis");
+                    dir = new File(dir, "tsne");
+                    dir = new File(dir, "2_components");
+                    if (!dir.exists())
+                    {
+                        throw new PipelineJobException("Unable to find barcode or analysis directory: " + dir.getPath());
+                    }
+
+                    perCellTsv = new File(dir, "projection.csv");
+                }
+                else
+                {
+                    File[] children = barcodeDir.listFiles(new FileFilter()
+                    {
+                        @Override
+                        public boolean accept(File pathname)
+                        {
+                            return pathname.isDirectory();
+                        }
+                    });
+
+                    if (children == null || children.length != 1)
+                    {
+                        throw new PipelineJobException("Expected to find a single subfolder under: " + barcodeDir.getPath());
+                    }
+
+                    perCellTsv = new File(children[0], "barcodes.tsv");
                 }
 
-                File perCellTsv = new File(children[0], "barcodes.tsv");
                 if (!perCellTsv.exists())
                 {
                     throw new PipelineJobException("Unable to find file: " + perCellTsv.getPath());
@@ -219,11 +159,15 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
         private File processLoupeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action) throws PipelineJobException
         {
-            Map<Integer, Integer> readsetToHashing = CellRangerVDJWrapper.getCachedReadsetMap(ctx.getSequenceSupport());
+            ctx.getLogger().debug("inspecting file: " + perCellTsv.getPath());
+
+            CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
+
+            Map<Integer, Integer> readsetToHashing = CellRangerVDJUtils.getCachedReadsetMap(ctx.getSequenceSupport());
             ctx.getLogger().debug("total cashed readset/HTO pairs: " + readsetToHashing.size());
 
             //prepare whitelist of cell indexes
-            File cellBarcodeWhitelist = getValidCellIndexFile(ctx.getSourceDirectory());
+            File cellBarcodeWhitelist = utils.getValidCellIndexFile();
             Set<String> uniqueBarcodes = new HashSet<>();
             ctx.getLogger().debug("writing cell barcodes");
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER);CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), '\t'))
@@ -256,7 +200,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             }
 
             //prepare whitelist of barcodes, based on cDNA records
-            File htoBarcodeWhitelist = getValidHashingBarcodeFile(ctx.getSourceDirectory());
+            File htoBarcodeWhitelist = utils.getValidHashingBarcodeFile();
             if (!htoBarcodeWhitelist.exists())
             {
                 throw new PipelineJobException("Unable to find file: " + htoBarcodeWhitelist.getPath());
@@ -270,40 +214,50 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             }
 
             //run CiteSeqCount.  this will use Multiseq to make calls per cell
-            File cellToHto = getCellToHtoFile(ctx.getSourceDirectory());
+            File cellToHto = utils.getCellToHtoFile();
             File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
 
             List<String> extraParams = new ArrayList<>();
             extraParams.add("-u");
             extraParams.add(citeSeqCountUnknownOutput.getPath());
 
-            SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams);
+            cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams);
             ctx.getFileManager().addOutput(action, "CiteSeqCount Counts", cellToHto);
             ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
 
             ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls", rs.getReadsetId(), null, genomeId, null);
 
+            File forLoupe = new File(ctx.getSourceDirectory(), rs.getName() + "-CiteSeqCalls.csv");
+            try (CSVReader reader = new CSVReader(Readers.getReader(cellToHto), '\t');CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(forLoupe), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+            {
+                writer.writeNext(new String[]{"CellBarcode", "HTO"});
+                String[] line;
+                int idx = 0;
+                while ((line = reader.readNext()) != null)
+                {
+                    idx++;
+
+                    if (idx > 1)
+                    {
+                        line[0] = line[0] + "-1";
+                    }
+
+                    writer.writeNext(line);
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+            ctx.getFileManager().addSequenceOutput(forLoupe, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls (Loupe)", rs.getReadsetId(), null, genomeId, null);
+
             if (citeSeqCountUnknownOutput.exists())
             {
-                CellRangerVDJWrapper.logTopUnknownBarcodes(citeSeqCountUnknownOutput, ctx.getLogger());
+                Map<String, String> allBarcodes = CellRangerVDJUtils.readAllBarcodes(ctx.getSourceDirectory());
+                CellRangerVDJUtils.logTopUnknownBarcodes(citeSeqCountUnknownOutput, ctx.getLogger(), allBarcodes);
             }
 
             return cellToHto;
-        }
-
-        private File getValidHashingBarcodeFile(File webserverDir)
-        {
-            return new File(webserverDir, "validHashingBarcodes.csv");
-        }
-
-        private File getValidCellIndexFile(File webserverDir)
-        {
-            return new File(webserverDir, "validCellIndexes.csv");
-        }
-
-        private File getCellToHtoFile(File webserverDir)
-        {
-            return new File(webserverDir, "cellbarcodeToHTO.txt");
         }
     }
 }

@@ -38,60 +38,67 @@ mGAP.Utils = (function($){
                         return parts.join(".");
                     }
 
+                    var versionLine = '';
+                    if (mGAP.Utils.getMGapReleaseVersion()) {
+                        versionLine = '<tr><td>Current Version:</td><td>' + mGAP.Utils.getMGapReleaseVersion() + '</td></tr>';
+                    }
                     var data0 = map.Counts || {};
-                    $('#' + tableId).html('<table><tr><td>Total Variants:</td><td>' + numberWithCommas(data0.TotalVariants) + '</td></tr><tr><td>Total Animals:</td><td>' + numberWithCommas(data0.TotalSamples) + '</td></tr><tr><td style="padding-right: 20px;">Private Variants:</td><td>' + numberWithCommas(data0.TotalPrivateVariants) + '</td></tr></table>');
+                    $('#' + tableId).html('<table>' + versionLine + '<tr><td>Total Variants:</td><td>' + numberWithCommas(data0.TotalVariants) + '</td></tr><tr><td>Total Animals:</td><td>' + numberWithCommas(data0.TotalSamples) + '</td></tr><tr><td style="padding-right: 20px;">Private Variants:</td><td>' + numberWithCommas(data0.TotalPrivateVariants) + '</td></tr></table>');
 
                     var data1 = map.CodingPotential || {};
-                    var codingLabels = ["Missense", "Synonymous", "3' UTR", "5' UTR", "Downstream Gene", "Intragenic", "Upstream Gene", "Intergenic", "Intron"];
+                    var codingLabels = ["Exonic", "Downstream<br>Gene", "Upstream Gene", "Intergenic", "Intronic / Non-coding"];
                     var codingData = [];
                     var codingDataMap = {};
-                    for (var metricName in data1){
-                        var target;
-                        switch (metricName) {
-                            case 'missense_variant':
-                                target = 'Missense';
-                                break;
-                            case 'synonymous_variant':
-                                target = 'Synonymous';
-                                break;
-                            case '3_prime_UTR_variant':
-                                target = '3\' UTR';
-                                break;
-                            case '5_prime_UTR_premature_start_codon_gain_variant':
-                            case '5_prime_UTR_variant':
-                                target = '5\' UTR';
-                                break;
-                            case 'downstream_gene_variant':
-                                target = 'Downstream Gene';
-                                break;
-                            case 'intragenic_variant':
-                                target = 'Intragenic';
-                                break;
-                            case 'intergenic_region':
-                                target = 'Intergenic';
-                                break;
-                            case 'intron_variant':
-                                target = 'Intron';
-                                break;
-                            default:
-                                target = metricName;
+                    for (var values in data1){
+                        var metricNames = values.split(';');
+                        var targets = [];
 
-                            //other examples:
-                            //case 'stop_lost':
-                            //case 'splice_acceptor_variant':
-                            //case 'splice_region_variant':
-                            //case 'stop_retained_variant':
-                            //case 'non_coding_transcript_exon_variant':
-                            //case 'stop_gained':
-                            //case 'initiator_codon_variant':
-                            //case 'non_coding_transcript_variant':
-                            //case 'start_lost':
-                            //case 'non_canonical_start_codon':
-                            //case 'splice_donor_variant':
+                        //filter:
+                        if (metricNames.length > 1 && metricNames.indexOf('intron_variant') > -1) {
+                            metricNames.remove('downstream_gene_variant');
+                            metricNames.remove('upstream_gene_variant');
                         }
 
-                        codingDataMap[target] = codingDataMap[target] || 0;
-                        codingDataMap[target] += data1[metricName];
+                        if (metricNames.indexOf('downstream_gene_variant') > -1) {
+                            targets.push('Downstream<br>Gene');
+                        }
+                        if (metricNames.indexOf('upstream_gene_variant') > -1) {
+                            targets.push('Upstream Gene');
+                        }
+
+                        $.each(metricNames, function(idx, val) {
+                            if (['missense_variant', 'synonymous_variant', 'stop_lost', 'stop_retained_variant', 'stop_gained', 'initiator_codon_variant', 'start_lost', 'non_canonical_start_codon', 'exon_loss_variant'].indexOf(val) > -1) {
+                                targets.push('Exonic');
+                                return false;
+                            }
+                            else if (['downstream_gene_variant'].indexOf(val) > -1) {
+                                return;
+                            }
+                            else if (['upstream_gene_variant'].indexOf(val) > -1) {
+                                return;
+                            }
+                            else if (['intron_variant', 'splice_acceptor_variant', 'splice_region_variant', 'splice_donor_variant'].indexOf(val) > -1) {
+                                targets.push('Intronic / Non-coding');
+                                return false;
+                            }
+                            else if (['intragenic_variant', 'non_coding_transcript_variant', 'non_coding_transcript_exon_variant', '3_prime_UTR_variant', '5_prime_UTR_premature_start_codon_gain_variant', '5_prime_UTR_variant'].indexOf(val) > -1) {
+                                targets.push('Intronic / Non-coding');
+                                return false;
+                            }
+                            else if (['intergenic_region'].indexOf(val) > -1) {
+                                targets.push('Intergenic');
+                                return false;
+                            }
+                        }, this);
+
+                        if (!targets.length){
+                            targets.push(values);
+                        }
+
+                        $.each(targets, function(idx, target){
+                            codingDataMap[target] = codingDataMap[target] || 0;
+                            codingDataMap[target] += data1[values];
+                        }, this);
                     }
 
                     $.each(codingLabels, function(idx, val){
@@ -110,8 +117,8 @@ mGAP.Utils = (function($){
                             "autobiny": true
                         }], {
                             "width": width,
-                            "height": 200,
-                            "margin": {"l": 80, "r": 0, "t": 20, "b": 90},
+                            "height": 300,
+                            "margin": {"l": 40, "r": 10, "t": 10, "b": 70},
                             "autosize": false,
                             "showlegend": false,
                             "breakpoints": [],
@@ -207,6 +214,12 @@ mGAP.Utils = (function($){
             var ctx = LABKEY.getModuleContext('mgap') || {};
 
             return ctx['mgapReleaseId'];
+        },
+
+        getMGapReleaseVersion: function(){
+            var ctx = LABKEY.getModuleContext('mgap') || {};
+
+            return ctx['mgapReleaseVersion'];
         }
     }
 })(jQuery);

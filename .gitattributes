@@ -47,6 +47,8 @@ DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.42-16.43.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.43-16.44.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.44-16.45.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.45-16.46.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.46-16.47.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.47-16.48.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-15.30-15.31.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.31-16.32.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.32-16.33.sql -text
@@ -63,6 +65,8 @@ DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.42-16.43.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.43-16.44.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.44-16.45.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.45-16.46.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.46-16.47.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.47-16.48.sql -text
 DISCVR/mGAP/resources/schemas/mgap.xml -text
 DISCVR/mGAP/resources/views/_footer.html -text
 DISCVR/mGAP/resources/views/about.html -text
@@ -159,6 +163,7 @@ DISCVR/mGAP/src/org/labkey/mgap/query/OMIMPhenotypeDisplayColumnFactory.java -te
 DISCVR/mGAP/src/org/labkey/mgap/query/OverlappingGenesDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/PhenotypeVariantLinkDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/ReleaseTracksCustomizer.java -text
+DISCVR/mGAP/src/org/labkey/mgap/query/SourceDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TracksPerReleaseGenomeBrowserDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TriggerHelper.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/UserRequestCustomizer.java -text
@@ -267,6 +272,8 @@ DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbSchema.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbTableCustomizer.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbUserSchema.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerCellHashingHandler.java -text
+DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJCellHashingHandler.java -text
+DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJUtils.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJWrapper.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/MiXCRAnalysis.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/MiXCRWrapper.java -text

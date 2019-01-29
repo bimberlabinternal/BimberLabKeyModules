@@ -1,6 +1,5 @@
 package org.labkey.mgap.columnTransforms;
 
-import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
@@ -250,7 +249,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                row.put("trackJson", "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
+                row.put("trackJson", "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
             }
             else
             {
