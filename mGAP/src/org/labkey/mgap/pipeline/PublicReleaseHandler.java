@@ -1204,10 +1204,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                         }
 
                         filterCodingPotential(codingPotential);
-                        for (String type : codingPotential)
-                        {
-                            addForValue("CodingPotential", type);
-                        }
+                        String type = StringUtils.join(new TreeSet<>(codingPotential), ";");
+                        addForValue("CodingPotential", type);
                     }
                     else if ("CLN_SIG".equals(fieldName))
                     {

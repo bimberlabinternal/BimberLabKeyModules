@@ -169,7 +169,7 @@ public class CellRangerVDJUtils
         return new File(outDir, "all_contig_annotations.csv");
     }
 
-    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support) throws PipelineJobException
+    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
         _log.debug("total cashed readset/HTO pairs: " + readsetToHashing.size());
@@ -225,11 +225,16 @@ public class CellRangerVDJUtils
         File cellToHto = getCellToHtoFile();
         File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
 
-        List<String> extraParams = new ArrayList<>();
-        extraParams.add("-u");
-        extraParams.add(citeSeqCountUnknownOutput.getPath());
+        List<String> args = new ArrayList<>();
+        args.add("-u");
+        args.add(citeSeqCountUnknownOutput.getPath());
 
-        SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), _log, extraParams);
+        if (extraParams != null)
+        {
+            args.addAll(extraParams);
+        }
+
+        SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), _log, args);
         output.addOutput(cellToHto, "CiteSeqCount Counts");
         output.addOutput(citeSeqCountUnknownOutput, "CiteSeqCount Unknown Barcodes");
 

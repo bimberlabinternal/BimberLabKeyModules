@@ -11,9 +11,11 @@ import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
+import org.labkey.api.sequenceanalysis.pipeline.CommandLineParam;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
+import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
@@ -38,7 +40,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
     public CellRangerCellHashingHandler()
     {
         super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/CellRangerAggrTextarea.js")), Arrays.asList(
-
+                ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-hd"), "hd", "Edit Distance", null, "ldk-integerfield", null, null)
         ));
     }
 
@@ -221,6 +223,8 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             extraParams.add("-u");
             extraParams.add(citeSeqCountUnknownOutput.getPath());
 
+            extraParams.addAll(getClientCommandArgs(ctx.getParams()));
+
             cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams);
             ctx.getFileManager().addOutput(action, "CiteSeqCount Counts", cellToHto);
             ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
@@ -228,7 +232,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls", rs.getReadsetId(), null, genomeId, null);
 
             File forLoupe = new File(ctx.getSourceDirectory(), rs.getName() + "-CiteSeqCalls.csv");
-            try (CSVReader reader = new CSVReader(Readers.getReader(cellToHto), '\t');CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(forLoupe), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+            try (CSVReader reader = new CSVReader(Readers.getReader(cellToHto), '\t');CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(forLoupe), ',', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 writer.writeNext(new String[]{"CellBarcode", "HTO"});
                 String[] line;

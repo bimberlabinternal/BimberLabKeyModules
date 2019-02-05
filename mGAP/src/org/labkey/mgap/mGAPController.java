@@ -828,13 +828,10 @@ public class mGAPController extends SpringActionController
 
                         PublicReleaseHandler.Processor.filterCodingPotential(codingPotential);
                         //coding potential:
-                        for (String type : codingPotential)
-                        {
-                            //String type = StringUtils.join(new TreeSet<>(codingPotential), ";");
-                            Long v = map.getOrDefault(type, 0L);
-                            v++;
-                            map.put(type, v);
-                        }
+                        String type = StringUtils.join(new TreeSet<>(codingPotential), ";");
+                        Long v = map.getOrDefault(type, 0L);
+                        v++;
+                        map.put(type, v);
                     }
 
                     for (String type : map.keySet())
@@ -856,9 +853,9 @@ public class mGAPController extends SpringActionController
             try
             {
                 SimpleFilter deleteFilter = new SimpleFilter(FieldKey.fromString("releaseId"), releaseObjectId);
-                deleteFilter.addCondition(FieldKey.fromString("container"), releaseObjectId);
+                deleteFilter.addCondition(FieldKey.fromString("container"), releaseContainerId);
                 deleteFilter.addCondition(FieldKey.fromString("category"), "CodingPotential");
-                List<Integer> toDelete = new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_STATS), PageFlowUtil.set("rowid"), deleteFilter, null).getArrayList(Integer.class);
+                List<String> toDelete = new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_STATS), PageFlowUtil.set("objectId"), deleteFilter, null).getArrayList(String.class);
                 _log.info("deleting existing rows: " + toDelete.size());
 
                 Container target = ContainerManager.getForId(releaseContainerId);
@@ -869,7 +866,7 @@ public class mGAPController extends SpringActionController
                 List<Map<String, Object>> rows = new ArrayList<>();
                 toDelete.forEach(x -> {
                     Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                    map.put("rowId", x);
+                    map.put("objectId", x);
                     rows.add(map);
                 });
 

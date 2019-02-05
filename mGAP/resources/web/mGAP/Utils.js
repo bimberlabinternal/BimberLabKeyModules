@@ -46,7 +46,7 @@ mGAP.Utils = (function($){
                     $('#' + tableId).html('<table>' + versionLine + '<tr><td>Total Variants:</td><td>' + numberWithCommas(data0.TotalVariants) + '</td></tr><tr><td>Total Animals:</td><td>' + numberWithCommas(data0.TotalSamples) + '</td></tr><tr><td style="padding-right: 20px;">Private Variants:</td><td>' + numberWithCommas(data0.TotalPrivateVariants) + '</td></tr></table>');
 
                     var data1 = map.CodingPotential || {};
-                    var codingLabels = ["Exonic", "Downstream<br>Gene", "Upstream Gene", "Intergenic", "Intronic / Non-coding"];
+                    var codingLabels = ["Exonic", "Downstream<br>Gene", "Upstream<br>Gene", "Intergenic", "Intronic / Non-coding"];
                     var codingData = [];
                     var codingDataMap = {};
                     for (var values in data1){
@@ -63,11 +63,11 @@ mGAP.Utils = (function($){
                             targets.push('Downstream<br>Gene');
                         }
                         if (metricNames.indexOf('upstream_gene_variant') > -1) {
-                            targets.push('Upstream Gene');
+                            targets.push('Upstream<br>Gene');
                         }
 
                         $.each(metricNames, function(idx, val) {
-                            if (['missense_variant', 'synonymous_variant', 'stop_lost', 'stop_retained_variant', 'stop_gained', 'initiator_codon_variant', 'start_lost', 'non_canonical_start_codon', 'exon_loss_variant'].indexOf(val) > -1) {
+                            if (['missense_variant', 'synonymous_variant', 'stop_lost', 'stop_retained_variant', 'stop_gained', 'initiator_codon_variant', 'start_lost', 'non_canonical_start_codon', 'exon_loss_variant', 'frameshift_variant', 'conservative_inframe_insertion', 'disruptive_inframe_insertion', 'conservative_inframe_deletion', 'disruptive_inframe_deletion'].indexOf(val) > -1) {
                                 targets.push('Exonic');
                                 return false;
                             }
