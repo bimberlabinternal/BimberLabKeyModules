@@ -30,6 +30,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                 keys.add(getBoundKey("releaseId/vcfId"));
                 keys.add(getBoundKey("container"));
                 keys.add(getBoundKey("contig"));
+                keys.add(getBoundKey("reference"));
                 keys.add(getBoundKey("position"));
                 keys.add(getBoundKey("identifier"));
             }
@@ -53,13 +54,15 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                 Integer jbrowseTrackId = ctx.get(getBoundKey("releaseId/vcfId"), Integer.class);
                 String containerId = ctx.get(getBoundKey("container"), String.class);
                 String contig = StringUtils.trimToNull(ctx.get(getBoundKey("contig"), String.class));
+                String ref = ctx.get(getBoundKey("reference"), String.class);
                 Integer position = ctx.get(getBoundKey("position"), Integer.class);
                 String delim = "";
                 int start = position - 200;
                 int stop = position + 200;
+                int length = ref.length();
                 if (jbrowseId != null)
                 {
-                    DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&loc=" + contig + ":" + start + ".." + stop, ContainerManager.getForId(containerId));
+                    DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&loc=" + contig + ":" + start + ".." + stop + "&highlight=" + contig + ":" + position + ".." + (position + length - 1), ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
                     delim = "<br>";
                 }
