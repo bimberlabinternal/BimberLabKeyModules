@@ -21,10 +21,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
-import org.labkey.api.action.ApiAction;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ApiUsageException;
 import org.labkey.api.action.ExportAction;
+import org.labkey.api.action.MutatingApiAction;
+import org.labkey.api.action.ReadOnlyApiAction;
 import org.labkey.api.action.SimpleApiJsonForm;
 import org.labkey.api.action.SimpleViewAction;
 import org.labkey.api.action.SpringActionController;
@@ -862,7 +863,7 @@ public class TCRdbController extends SpringActionController
     }
 
     @RequiresPermission(InsertPermission.class)
-    public static class ImportTenXAction extends ApiAction<SimpleApiJsonForm>
+    public static class ImportTenXAction extends MutatingApiAction<SimpleApiJsonForm>
     {
         @Override
         public Object execute(SimpleApiJsonForm form, BindException errors) throws Exception
@@ -995,7 +996,7 @@ public class TCRdbController extends SpringActionController
     }
 
     @RequiresPermission(ReadPermission.class)
-    public static class GetMatchingStimsAction extends ApiAction<SimpleApiJsonForm>
+    public static class GetMatchingStimsAction extends ReadOnlyApiAction<SimpleApiJsonForm>
     {
         final List<String> FIELDS = Arrays.asList("animalId", "date", "stim", "treatment");
 

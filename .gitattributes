@@ -330,7 +330,6 @@ DISCVR/variantdb/src/org/labkey/variantdb/analysis/Imputation/SubjectCounter.jav
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/ImputationAnalysis.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/ImputedVCFGenerator.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/analysis/MendelianAnalysisHandler.java -text
-DISCVR/variantdb/src/org/labkey/variantdb/button/DbSnpLoadButton.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/ClinVarVCFRecord.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/DbSnpImportPipelineJob.java -text
 DISCVR/variantdb/src/org/labkey/variantdb/pipeline/DbSnpImportPipelineProvider.java -text

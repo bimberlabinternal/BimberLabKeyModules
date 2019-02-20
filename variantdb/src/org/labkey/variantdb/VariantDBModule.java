@@ -21,17 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.labkey.api.data.Container;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
-import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
-import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.variantdb.analysis.GBSAnalysisHandler;
 import org.labkey.variantdb.analysis.ImputationAnalysis;
-import org.labkey.variantdb.button.DbSnpLoadButton;
-import org.labkey.variantdb.pipeline.DbSnpImportPipelineProvider;
-import org.labkey.variantdb.pipeline.VariantImportPipelineProvider;
 import org.labkey.variantdb.query.VariantDBUserSchema;
 import org.labkey.variantdb.security.VariantManagerRole;
 
@@ -80,10 +75,6 @@ public class VariantDBModule extends ExtendedSimpleModule
         RoleManager.registerRole(new VariantManagerRole());
         LaboratoryService.get().registerDataProvider(new VariantDBDataProvider(this));
         SequenceAnalysisService.get().registerDataProvider(new VariantDBDataProvider(this));
-        PipelineService.get().registerPipelineProvider(new DbSnpImportPipelineProvider(this));
-        PipelineService.get().registerPipelineProvider(new VariantImportPipelineProvider(this));
-
-        LDKService.get().registerQueryButton(new DbSnpLoadButton(), VariantDBSchema.NAME, VariantDBSchema.TABLE_REFERENCE_VARIANTS);
 
         //register resources
         new PipelineStartup();

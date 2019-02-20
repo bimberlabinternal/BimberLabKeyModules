@@ -19,13 +19,9 @@ package org.labkey.mgap;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONObject;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
@@ -46,9 +42,6 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.module.AllowedDuringUpgrade;
-import org.labkey.api.module.Module;
-import org.labkey.api.module.ModuleLoader;
-import org.labkey.api.module.ModuleProperty;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
@@ -89,23 +82,13 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
-import javax.net.ssl.HttpsURLConnection;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -437,7 +420,6 @@ public class mGAPController extends SpringActionController
             for (SecurityManager.NewUserStatus st : newUserStatusList)
             {
                 SecurityManager.sendRegistrationEmail(getViewContext(), st.getEmail(), null, st, null);
-                addMailChimpEmail(st.getEmail().getEmailAddress());
             }
 
             for (User u : existingUsersGivenAccess)
@@ -452,7 +434,6 @@ public class mGAPController extends SpringActionController
                 mail.addRecipients(Message.RecipientType.TO, u.getEmail());
 
                 MailHelper.send(mail, getUser(), getContainer());
-                addMailChimpEmail(u.getEmail());
             }
 
             response.put("success", !errors.hasErrors());
@@ -471,83 +452,6 @@ public class mGAPController extends SpringActionController
         }
 
         return email;
-    }
-
-    // Based on:
-    // https://developer.mailchimp.com/documentation/mailchimp/guides/manage-subscribers-with-the-mailchimp-api/
-    private void addMailChimpEmail(String email)
-    {
-        Module m = ModuleLoader.getInstance().getModule(mGAPModule.NAME);
-        ModuleProperty mpApi = m.getModuleProperties().get(mGAPManager.MailChimpApiKeyPropName);
-        ModuleProperty mpList = m.getModuleProperties().get(mGAPManager.MailChimpListIdPropName);
-
-        String apiKey = StringUtils.trimToNull(mpApi.getEffectiveValue(getContainer()));
-        if (apiKey == null)
-        {
-            _log.error("MailChimp API key not set");
-            return;
-        }
-
-        if (!apiKey.contains(":"))
-        {
-            _log.error("MailChimp API Key not in the form user:apiKey: " + apiKey);
-            return;
-        }
-
-        String apiKeyOnly = apiKey.split(":")[1];
-        if (!apiKeyOnly.contains("-"))
-        {
-            _log.error("MailChimp API Key does not contain data center separated by hyphen: " + apiKeyOnly);
-            return;
-        }
-
-        String listId = StringUtils.trimToNull(mpList.getEffectiveValue(getContainer()));
-        if (listId == null)
-        {
-            _log.error("MailChimp list ID not set");
-            return;
-        }
-
-        String dataCenter = apiKeyOnly.split("-")[1];
-        String response = null;
-        try
-        {
-            URL url = new URL("https://" + dataCenter + ".api.mailchimp.com/3.0/lists/" + listId + "/members/");
-            JSONObject toAdd = new JSONObject();
-            toAdd.put("email_address", email);
-            toAdd.put("status", "subscribed");
-            toAdd.put("merge_fields", new JSONObject());
-
-            HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-
-            String encoded = Base64.getEncoder().encodeToString((apiKey).getBytes(StandardCharsets.UTF_8));
-            con.setRequestProperty("Authorization", "Basic " + encoded);
-            con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-
-            con.setDoOutput(true);
-            con.setRequestMethod("POST");
-
-            try (BufferedWriter httpRequestBodyWriter = new BufferedWriter(new OutputStreamWriter(con.getOutputStream(), Charsets.UTF_8)))
-            {
-                httpRequestBodyWriter.write(toAdd.toString());
-            }
-
-            int responseCode = con.getResponseCode();
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), Charsets.UTF_8)); StringWriter writer = new StringWriter())
-            {
-                IOUtils.copy(in, writer);
-                response = writer.toString();
-            }
-
-            if (responseCode != HttpStatus.SC_OK)
-            {
-                _log.error("Error registering with MailChimp.  Status: " + url + ", response: " + response);
-            }
-        }
-        catch (IOException e)
-        {
-            _log.error("Unable to register with MailChimp" + (response == null ? "" :  ": " + response));
-        }
     }
 
     public static class ApproveUserRequestsForm extends Object

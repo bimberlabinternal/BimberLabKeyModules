@@ -14,20 +14,6 @@
                 <permission>ADMIN</permission>
             </editPermissions>
         </propertyDescriptor>
-        <propertyDescriptor name="MGAPMailChimpList">
-            <canSetPerContainer>true</canSetPerContainer>
-            <description>This is the ID of the MailChimp subscription list to which new users are auto-added.</description>
-            <editPermissions>
-                <permission>ADMIN</permission>
-            </editPermissions>
-        </propertyDescriptor>
-        <propertyDescriptor name="MGAPMailChimpApiKey">
-            <canSetPerContainer>true</canSetPerContainer>
-            <description>This is the API key to use for MailChimp requests.  This should be in the form userName:apiKey</description>
-            <editPermissions>
-                <permission>ADMIN</permission>
-            </editPermissions>
-        </propertyDescriptor>
         <propertyDescriptor name="OmimApiKey">
             <canSetPerContainer>true</canSetPerContainer>
             <description>This is the API key to use when making OMIM requests</description>
