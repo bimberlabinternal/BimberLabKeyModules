@@ -328,6 +328,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         Ext4.Msg.wait('Looking for matching stims');
         LABKEY.Ajax.request({
             url: LABKEY.ActionURL.buildURL('tcrdb', 'getMatchingStims', Laboratory.Utils.getQueryContainerPath(), null),
+            method: 'POST',
             jsonData: {
                 stimRows: stimRows
             },
@@ -632,6 +633,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         Ext4.Msg.wait('Saving...');
         LABKEY.Ajax.request({
             url: LABKEY.ActionURL.buildURL('tcrdb', 'importTenx', Laboratory.Utils.getQueryContainerPath()),
+            method: 'POST',
             jsonData: config.rowData.groupedRows,
             scope: this,
             success: function(){

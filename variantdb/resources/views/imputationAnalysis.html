@@ -43,7 +43,11 @@
                 Ext4.Msg.wait('Loading sample information...');
 
                 LABKEY.Ajax.request({
-                    url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'getSamplesFromVcf', null, {outputFileIds: this.outputFileIds}),
+                    url: LABKEY.ActionURL.buildURL('sequenceanalysis', 'getSamplesFromVcf', null),
+                    method: 'POST',
+                    jsonData: {
+                        outputFileIds: this.outputFileIds
+                    },
                     failure: LDK.Utils.getErrorCallback(),
                     success: LABKEY.Utils.getCallbackWrapper(this.onLoad, this, false),
                     scope: this
