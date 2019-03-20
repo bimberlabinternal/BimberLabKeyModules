@@ -2,6 +2,7 @@ package org.labkey.tcrdb.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
+import htsjdk.samtools.util.IOUtil;
 import org.json.JSONObject;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
@@ -105,8 +106,18 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
                 //find TSV:
                 File perCellTsv;
-                File barcodeDir = new File(so.getFile().getParentFile(), "filtered_gene_bc_matrices");
-                if (!barcodeDir.exists())
+                File barcodeDir = null;
+                for (String dirName : Arrays.asList("filtered_gene_bc_matrices", "filtered_feature_bc_matrix"))
+                {
+                    File f = new File(so.getFile().getParentFile(), dirName);
+                    if (f.exists())
+                    {
+                        barcodeDir = f;
+                        break;
+                    }
+                }
+
+                if (barcodeDir == null)
                 {
                     //this might be a re-analysis loupe directory.  in this case, use the tsne projection.csv as the whitelist:
                     File dir = new File(so.getFile().getParentFile(), "analysis");
@@ -119,7 +130,8 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
                     perCellTsv = new File(dir, "projection.csv");
                 }
-                else
+                //cellranger 2 format
+                else if ("filtered_gene_bc_matrices".equals(barcodeDir.getName()))
                 {
                     File[] children = barcodeDir.listFiles(new FileFilter()
                     {
@@ -136,6 +148,10 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
                     }
 
                     perCellTsv = new File(children[0], "barcodes.tsv");
+                }
+                else
+                {
+                    perCellTsv = new File(barcodeDir, "barcodes.tsv.gz");
                 }
 
                 if (!perCellTsv.exists())
@@ -172,7 +188,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             File cellBarcodeWhitelist = utils.getValidCellIndexFile();
             Set<String> uniqueBarcodes = new HashSet<>();
             ctx.getLogger().debug("writing cell barcodes");
-            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER);CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), '\t'))
+            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER);CSVReader reader = new CSVReader(IOUtil.openFileForBufferedUtf8Reading(perCellTsv), '\t'))
             {
                 int rowIdx = 0;
                 String[] row;
@@ -226,7 +242,8 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             extraParams.addAll(getClientCommandArgs(ctx.getParams()));
 
             cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams);
-            ctx.getFileManager().addOutput(action, "CiteSeqCount Counts", cellToHto);
+            ctx.getFileManager().addOutput(action, "Cell Hashing GEX Calls", cellToHto);
+            ctx.getFileManager().addOutput(action, "Cell Hashing GEX Report", new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"));
             ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
 
             ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls", rs.getReadsetId(), null, genomeId, null);

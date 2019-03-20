@@ -494,19 +494,22 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             var readsetGUIDs = {};
 
             readsetGUIDs.hashingReadsetGUID = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'hto', 'HTO', 'Cell Hashing', null);
-            if (!readsetGUIDs.hashingReadsetGUID){
+            // this could be omitted
+            if (readsetGUIDs.hashingReadsetGUID === false){
                 hasError = true;
                 return false;
             }
 
             readsetGUIDs.readsetGUID = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'gex', 'GEX', 'RNA-seq, Single Cell', '10x 5\' GEX');
+            // always expect a GEX readset
             if (!readsetGUIDs.readsetGUID){
                 hasError = true;
                 return false;
             }
 
             readsetGUIDs.enrichedReadsetGUID = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'tcr', 'TCR', 'RNA-seq, Single Cell', '10x 5\' VDJ (Rhesus A/B/G)');
-            if (!readsetGUIDs.enrichedReadsetGUID){
+            // this could be omitted
+            if (readsetGUIDs.enrichedReadsetGUID === false){
                 hasError = true;
                 return false;
             }
@@ -550,7 +553,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
             return guid;
         }
-        else {
+        else if (idxValues.length > 1) {
             Ext4.Msg.alert('Error', 'Pool ' + poolName + ' uses more than one ' + type + ' index');
             return false;
         }

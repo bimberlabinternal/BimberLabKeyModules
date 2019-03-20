@@ -231,6 +231,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.40-15.41.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.41-15.42.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.42-15.43.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.43-15.44.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.44-15.45.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.30-15.31.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.31-15.32.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.32-15.33.sql -text
@@ -245,6 +246,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.40-15.41.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.41-15.42.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.42-15.43.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.43-15.44.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.44-15.45.sql -text
 DISCVR/tcrdb/resources/schemas/tcrdb.xml -text
 DISCVR/tcrdb/resources/views/poolImport.html -text
 DISCVR/tcrdb/resources/views/poolImport.view.xml -text

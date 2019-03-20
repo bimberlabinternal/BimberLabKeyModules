@@ -618,6 +618,9 @@
                     <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
+            <column columnName="status">
+                <columnTitle>Status</columnTitle>
+            </column>
             <column columnName="comments">
 
             </column>

@@ -131,7 +131,6 @@
     </transforms>
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified"/>
     <schedule>
-        <!--3:00AM-->
-        <cron expression="0 30 3 * * ?"/>
+        <cron expression="0 30 1 * * ?"/>
     </schedule>
 </etl>

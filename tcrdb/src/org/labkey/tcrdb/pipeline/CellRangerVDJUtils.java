@@ -62,7 +62,7 @@ public class CellRangerVDJUtils
         _sourceDir = sourceDir;
     }
     
-    public void prepareVDJHasingFiles(PipelineJob job, SequenceAnalysisJobSupport support) throws PipelineJobException
+    public void prepareVDJHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support) throws PipelineJobException
     {
         _log.debug("preparing cell hashing files");
 
@@ -234,9 +234,10 @@ public class CellRangerVDJUtils
             args.addAll(extraParams);
         }
 
-        SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), _log, args);
-        output.addOutput(cellToHto, "CiteSeqCount Counts");
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), _log, args);
         output.addOutput(citeSeqCountUnknownOutput, "CiteSeqCount Unknown Barcodes");
+        output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
+        output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");
 
         if (citeSeqCountUnknownOutput.exists())
         {

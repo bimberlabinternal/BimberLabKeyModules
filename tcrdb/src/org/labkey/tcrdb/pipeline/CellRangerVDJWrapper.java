@@ -187,7 +187,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
 
             if (getProvider().getParameterByName(CELL_HASHING).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
             {
-                getUtils().prepareVDJHasingFiles(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport());
+                getUtils().prepareVDJHashingFiles(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport());
             }
             else
             {

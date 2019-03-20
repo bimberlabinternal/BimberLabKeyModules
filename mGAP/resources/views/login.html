@@ -1,11 +1,13 @@
 <script type="text/javascript">
     (function($, LABKEY) {
         $(function(){
-            var ctx = LABKEY.getModuleContext('mgap') || {};
-            var folder = ctx['MGAPContainer'];
-            if (folder) {
-                var el = $('#returnUrl');
-                el.attr('value', LABKEY.ActionURL.buildURL('project', 'start', folder));
+            if (!LABKEY.Security.currentUser.isAdmin) {
+                var ctx = LABKEY.getModuleContext('mgap') || {};
+                var folder = ctx['MGAPContainer'];
+                if (folder) {
+                    var el = $('#returnUrl');
+                    el.attr('value', LABKEY.ActionURL.buildURL('project', 'start', folder));
+                }
             }
         });
     }(jQuery, LABKEY));

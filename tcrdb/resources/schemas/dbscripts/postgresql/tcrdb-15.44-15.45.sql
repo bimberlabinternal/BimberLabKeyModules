@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.clones ADD status varchar(200);
