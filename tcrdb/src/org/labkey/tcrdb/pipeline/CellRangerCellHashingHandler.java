@@ -241,7 +241,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
             extraParams.addAll(getClientCommandArgs(ctx.getParams()));
 
-            cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams);
+            cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams);
             ctx.getFileManager().addOutput(action, "Cell Hashing GEX Calls", cellToHto);
             ctx.getFileManager().addOutput(action, "Cell Hashing GEX Report", new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"));
             ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);

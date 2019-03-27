@@ -155,7 +155,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
             //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
-            File cellToHto = utils.runRemoteCellHashingTasks(output, perCellTsv, rs, ctx.getSequenceSupport(), extraParams);
+            File cellToHto = utils.runRemoteCellHashingTasks(output, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory());
 
             ctx.getFileManager().addStepOutputs(action, output);
 

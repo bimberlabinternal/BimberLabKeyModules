@@ -169,7 +169,7 @@ public class CellRangerVDJUtils
         return new File(outDir, "all_contig_annotations.csv");
     }
 
-    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams) throws PipelineJobException
+    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
         _log.debug("total cashed readset/HTO pairs: " + readsetToHashing.size());
@@ -234,7 +234,7 @@ public class CellRangerVDJUtils
             args.addAll(extraParams);
         }
 
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()), _log, args);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(cellToHto.getName()), _log, args);
         output.addOutput(citeSeqCountUnknownOutput, "CiteSeqCount Unknown Barcodes");
         output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
         output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");

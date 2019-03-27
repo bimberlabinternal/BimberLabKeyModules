@@ -311,7 +311,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             //NOTE: run these before cleanup in case of failure
             if (getProvider().getParameterByName(CELL_HASHING).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
             {
-                getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null);
+                getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory());
             }
 
             //now do cleanup/rename:
