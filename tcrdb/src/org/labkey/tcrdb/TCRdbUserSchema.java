@@ -3,6 +3,7 @@ package org.labkey.tcrdb;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.ldk.table.SharedDataTable;
@@ -37,13 +38,14 @@ public class TCRdbUserSchema extends SimpleUserSchema
 
     @Override
     @Nullable
-    protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable)
+    protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable, ContainerFilter cf)
     {
         if (TCRdbSchema.TABLE_LIBRARIES.equalsIgnoreCase(name))
         {
+            // TODO: assert cf is null or not default?
             return new SharedDataTable(this, sourceTable).init();
         }
 
-        return super.createWrappedTable(name, sourceTable);
+        return super.createWrappedTable(name, sourceTable, cf);
     }
 }

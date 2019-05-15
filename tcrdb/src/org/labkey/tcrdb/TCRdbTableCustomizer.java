@@ -180,7 +180,10 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             ExprColumn newCol = new ExprColumn(ti, cDNA, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
             newCol.setLabel("cDNA Library");
             UserSchema us = QueryService.get().getUserSchema(ti.getUserSchema().getUser(), (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()), TCRdbSchema.NAME);
-            newCol.setFk(new QueryForeignKey(us, null, TCRdbSchema.TABLE_CDNAS, "rowid", "rowid"));
+            newCol.setFk(QueryForeignKey.from(us, ti.getContainerFilter())
+                    .table(TCRdbSchema.TABLE_CDNAS)
+                    .key("rowid")
+                    .display("rowid"));
             ti.addColumn(newCol);
         }
     }
@@ -307,12 +310,12 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
 
         AssayProtocolSchema schema = ap.createProtocolSchema(ti.getUserSchema().getUser(), target, protocols.get(0), null);
         DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=" + schema.getSchemaName() + "&query.queryName=data&query.viewName=Clonotype Export&query.CDR3~eq=${cdr3}&query.sort=analysisId/readset/cdna/sortId/cells", target);
-        ti.getColumn("cdr3").setURL(details);
+        ti.getMutableColumn("cdr3").setURL(details);
 
         String colName = "distinctAnimals";
         if (ti.getColumn(colName) == null)
         {
-            TableInfo data = schema.createDataTable(false);
+            TableInfo data = schema.createDataTable(null,false);
             SQLFragment dataSelectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("subjectId"), data.getColumn("cdr3"), data.getColumn("fraction")), null, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
 
             SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("a.subjectId"), true, true, getChr(ti) + "(10)")).append(" as expr FROM (").append(dataSelectSql).append(") a WHERE a.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3 AND a.fraction >= 0.005)");

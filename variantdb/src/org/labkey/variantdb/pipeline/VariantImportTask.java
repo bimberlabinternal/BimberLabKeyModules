@@ -8,6 +8,7 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFCodec;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbScope;
@@ -174,18 +175,18 @@ public class VariantImportTask extends PipelineJob.Task<VariantImportTask.Factor
 
         //create temp table so we can assign IDs, then insert
         TempTableInfo variantTemp = createTempTable(VariantDBSchema.getInstance().getSchema(), "variants", Arrays.asList(
-                new ColumnInfo("objectid", JdbcType.VARCHAR),
-                new ColumnInfo("sequenceid", JdbcType.INTEGER),
-                new ColumnInfo("startPosition", JdbcType.INTEGER),
-                new ColumnInfo("endPosition", JdbcType.INTEGER),
-                new ColumnInfo("reference", JdbcType.VARCHAR),
-                new ColumnInfo("allele", JdbcType.VARCHAR),
-                new ColumnInfo("status", JdbcType.VARCHAR),
-                new ColumnInfo("dbSnpAccession", JdbcType.VARCHAR),
-                new ColumnInfo("variantId", JdbcType.VARCHAR),
-                new ColumnInfo("referenceVariantId", JdbcType.VARCHAR),
-                new ColumnInfo("referenceAlleleId", JdbcType.VARCHAR),
-                new ColumnInfo("provisionalId", JdbcType.VARCHAR)
+                new BaseColumnInfo("objectid", JdbcType.VARCHAR),
+                new BaseColumnInfo("sequenceid", JdbcType.INTEGER),
+                new BaseColumnInfo("startPosition", JdbcType.INTEGER),
+                new BaseColumnInfo("endPosition", JdbcType.INTEGER),
+                new BaseColumnInfo("reference", JdbcType.VARCHAR),
+                new BaseColumnInfo("allele", JdbcType.VARCHAR),
+                new BaseColumnInfo("status", JdbcType.VARCHAR),
+                new BaseColumnInfo("dbSnpAccession", JdbcType.VARCHAR),
+                new BaseColumnInfo("variantId", JdbcType.VARCHAR),
+                new BaseColumnInfo("referenceVariantId", JdbcType.VARCHAR),
+                new BaseColumnInfo("referenceAlleleId", JdbcType.VARCHAR),
+                new BaseColumnInfo("provisionalId", JdbcType.VARCHAR)
         ));
 
         try (FeatureReader reader = AbstractFeatureReader.getFeatureReader(outputFile.getFile().getAbsolutePath(), new VCFCodec(), false))

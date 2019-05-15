@@ -2,8 +2,10 @@ package org.labkey.variantdb.query;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.JdbcType;
 import org.labkey.api.data.SQLFragment;
@@ -51,11 +53,11 @@ public class VariantDBUserSchema extends SimpleUserSchema
 
     @Override
     @Nullable
-    protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable)
+    protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable, ContainerFilter cf)
     {
         if (VariantDBSchema.TABLE_REFERENCE_VARIANTS.equalsIgnoreCase(name))
         {
-            CustomPermissionsTable ret = getCustomPermissionTable(sourceTable, VariantManagerPermission.class);
+            CustomPermissionsTable ret = getCustomPermissionTable(sourceTable, cf, VariantManagerPermission.class);
             SQLFragment sql = new SQLFragment("COALESCE(" + ExprColumn.STR_TABLE_ALIAS + ".dbSnpAccession, " + ret.getSqlDialect().concatenate("'lcl'", "CAST(" + ExprColumn.STR_TABLE_ALIAS + ".rowid AS VARCHAR)") + ")");
             ExprColumn newCol = new ExprColumn(ret, "displayName", sql, JdbcType.VARCHAR, ret.getColumn("rowid"), ret.getColumn("dbSnpAccession"));
             newCol.setLabel("Variant Id");
@@ -74,7 +76,7 @@ public class VariantDBUserSchema extends SimpleUserSchema
 
             for (ColumnInfo col : cols)
             {
-                ret.addColumn(col);
+                ret.addColumn( (BaseColumnInfo)col );
             }
 
             ret.setDetailsURL(DetailsURL.fromString("/variantdb/referenceVariantDetails.view?variantId=${objectid}"));
@@ -82,20 +84,20 @@ public class VariantDBUserSchema extends SimpleUserSchema
         }
         else if (VariantDBSchema.TABLE_REFERENCE_VARIANT_ALLELES.equalsIgnoreCase(name))
         {
-            CustomPermissionsTable ret = getCustomPermissionTable(sourceTable, VariantManagerPermission.class);
+            CustomPermissionsTable ret = getCustomPermissionTable(sourceTable, cf, VariantManagerPermission.class);
             return ret;
         }
         else if (VariantDBSchema.TABLE_VARIANTS.equalsIgnoreCase(name))
         {
-            return getCustomPermissionTable(sourceTable, VariantManagerPermission.class);
+            return getCustomPermissionTable(sourceTable, cf, VariantManagerPermission.class);
         }
         else
-            return super.createWrappedTable(name, sourceTable);
+            return super.createWrappedTable(name, sourceTable, cf);
     }
 
-    private CustomPermissionsTable getCustomPermissionTable(TableInfo schemaTable, Class<? extends Permission> perm)
+    private CustomPermissionsTable getCustomPermissionTable(TableInfo schemaTable, ContainerFilter cf, Class<? extends Permission> perm)
     {
-        CustomPermissionsTable ret = new CustomPermissionsTable(this, schemaTable);
+        CustomPermissionsTable ret = new CustomPermissionsTable(this, schemaTable, cf);
         ret.addPermissionMapping(InsertPermission.class, perm);
         ret.addPermissionMapping(UpdatePermission.class, perm);
         ret.addPermissionMapping(DeletePermission.class, perm);

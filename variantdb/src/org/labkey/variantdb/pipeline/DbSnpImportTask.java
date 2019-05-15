@@ -14,6 +14,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbScope;
@@ -165,30 +166,30 @@ public class DbSnpImportTask extends PipelineJob.Task<DbSnpImportTask.Factory>
     {        
         //create temp table so we can assign IDs, then insert
         TempTableInfo variantTemp = createTempTable(VariantDBSchema.getInstance().getSchema(), "variants", Arrays.asList(
-                new ColumnInfo("objectid", JdbcType.VARCHAR),
-                new ColumnInfo("sequenceid", JdbcType.INTEGER),
-                new ColumnInfo("startPosition", JdbcType.INTEGER),
-                new ColumnInfo("endPosition", JdbcType.INTEGER),
-                new ColumnInfo("reference", JdbcType.VARCHAR),
-                new ColumnInfo("allele", JdbcType.VARCHAR),
-                new ColumnInfo("status", JdbcType.VARCHAR),
-                new ColumnInfo("dbSnpAccession", JdbcType.VARCHAR),
-                new ColumnInfo("referenceVariantId", JdbcType.VARCHAR),
-                new ColumnInfo("referenceAlleleId", JdbcType.VARCHAR)
+                new BaseColumnInfo("objectid", JdbcType.VARCHAR),
+                new BaseColumnInfo("sequenceid", JdbcType.INTEGER),
+                new BaseColumnInfo("startPosition", JdbcType.INTEGER),
+                new BaseColumnInfo("endPosition", JdbcType.INTEGER),
+                new BaseColumnInfo("reference", JdbcType.VARCHAR),
+                new BaseColumnInfo("allele", JdbcType.VARCHAR),
+                new BaseColumnInfo("status", JdbcType.VARCHAR),
+                new BaseColumnInfo("dbSnpAccession", JdbcType.VARCHAR),
+                new BaseColumnInfo("referenceVariantId", JdbcType.VARCHAR),
+                new BaseColumnInfo("referenceAlleleId", JdbcType.VARCHAR)
         ));
 
         TempTableInfo refVariantsTemp = createTempTable(VariantDBSchema.getInstance().getSchema(), "refVariants", Arrays.asList(
-                new ColumnInfo("objectid", JdbcType.VARCHAR),
-                new ColumnInfo("dbSnpAccession", JdbcType.VARCHAR)
+                new BaseColumnInfo("objectid", JdbcType.VARCHAR),
+                new BaseColumnInfo("dbSnpAccession", JdbcType.VARCHAR)
         ));
 
         TempTableInfo refVariantAllelesTemp = createTempTable(VariantDBSchema.getInstance().getSchema(), "refVariantAlleles", Arrays.asList(
-                new ColumnInfo("objectid", JdbcType.VARCHAR),
-                new ColumnInfo("dbSnpAccession", JdbcType.VARCHAR),
-                new ColumnInfo("referencePosition", JdbcType.INTEGER),
-                new ColumnInfo("reference", JdbcType.VARCHAR),
-                new ColumnInfo("allele", JdbcType.VARCHAR),
-                new ColumnInfo("status", JdbcType.VARCHAR)
+                new BaseColumnInfo("objectid", JdbcType.VARCHAR),
+                new BaseColumnInfo("dbSnpAccession", JdbcType.VARCHAR),
+                new BaseColumnInfo("referencePosition", JdbcType.INTEGER),
+                new BaseColumnInfo("reference", JdbcType.VARCHAR),
+                new BaseColumnInfo("allele", JdbcType.VARCHAR),
+                new BaseColumnInfo("status", JdbcType.VARCHAR)
         ));
 
         try (FeatureReader reader = AbstractFeatureReader.getFeatureReader(localFile.getAbsolutePath(), new VCFCodec(), false))
@@ -452,17 +453,17 @@ public class DbSnpImportTask extends PipelineJob.Task<DbSnpImportTask.Factory>
 
         //create temp table so we can assign IDs, then insert
         List<ColumnInfo> cols = new ArrayList<>();
-        cols.add(new ColumnInfo("objectid", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("sequenceid", JdbcType.INTEGER));
-        cols.add(new ColumnInfo("startPosition", JdbcType.INTEGER));
-        cols.add(new ColumnInfo("endPosition", JdbcType.INTEGER));
-        cols.add(new ColumnInfo("reference", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("allele", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("dbSnpAccession", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("attributeName", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("attributeValue", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("referenceVariantId", JdbcType.VARCHAR));
-        cols.add(new ColumnInfo("referenceAlleleId", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("objectid", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("sequenceid", JdbcType.INTEGER));
+        cols.add(new BaseColumnInfo("startPosition", JdbcType.INTEGER));
+        cols.add(new BaseColumnInfo("endPosition", JdbcType.INTEGER));
+        cols.add(new BaseColumnInfo("reference", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("allele", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("dbSnpAccession", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("attributeName", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("attributeValue", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("referenceVariantId", JdbcType.VARCHAR));
+        cols.add(new BaseColumnInfo("referenceAlleleId", JdbcType.VARCHAR));
 
 
         TempTableInfo variantTemp = createTempTable(VariantDBSchema.getInstance().getSchema(), "clinvar", cols);
