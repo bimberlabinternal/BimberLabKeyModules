@@ -12,6 +12,11 @@ dependencies {
    compile "io.repseq:repseqio:${repseqVersion}"
 }
 
+// This conditional is needed only until we merge initial fb_4713_assay_refactor branch into develop
+if (project.findProject(":server:modules:platform:assay") != null) {
+   BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: BuildUtils.getPlatformModuleProjectPath(project.gradle, "assay"), depProjectConfig: "apiCompile")
+}
+
 project.task("copyMixcr",
         type: Copy,
         group: "Build",
