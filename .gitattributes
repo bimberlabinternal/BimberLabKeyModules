@@ -446,6 +446,7 @@ labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/SSPImportHelper.ja
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/SSPPivotingImportMethod.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/assay/UCDavisSTRImportMethod.java -text
 labModules/GenotypeAssays/src/org/labkey/genotypeassays/buttons/CacheAnalysesButton.java -text
+labModules/GenotypeAssays/test/src/org/labkey/test/tests/external/labModules/GenotypeAssaysTest.java -text
 labModules/build.gradle -text
 labModules/elispot_assay/build.gradle -text
 labModules/elispot_assay/module.properties -text
@@ -495,6 +496,7 @@ labModules/elispot_assay/src/org/labkey/elispot_assay/ELISPOT_AssayModule.java -
 labModules/elispot_assay/src/org/labkey/elispot_assay/ELISPOT_AssaySchema.java -text
 labModules/elispot_assay/src/org/labkey/elispot_assay/assay/AIDImportMethod.java -text
 labModules/elispot_assay/src/org/labkey/elispot_assay/assay/DefaultImportMethod.java -text
+labModules/elispot_assay/test/src/org/labkey/test/tests/external/labModules/ELISPOT_AssayTest.java -text
 labModules/flowassays/build.gradle -text
 labModules/flowassays/module.properties -text
 labModules/flowassays/resources/assay/ICS/config.xml -text
@@ -555,3 +557,4 @@ labModules/flowassays/src/org/labkey/flowassays/assay/FlowNavItem.java -text
 labModules/flowassays/src/org/labkey/flowassays/assay/FlowPivotingImportMethod.java -text
 labModules/flowassays/src/org/labkey/flowassays/assay/ICSDataProvider.java -text
 labModules/flowassays/src/org/labkey/flowassays/assay/ImmunophenotypingDataProvider.java -text
+labModules/flowassays/test/src/org/labkey/test/tests/external/labModules/FlowAssaysTest.java -text
