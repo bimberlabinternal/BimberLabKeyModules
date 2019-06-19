@@ -169,7 +169,7 @@ public class CellRangerVDJUtils
         return new File(outDir, "all_contig_annotations.csv");
     }
 
-    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir) throws PipelineJobException
+    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
         _log.debug("total cashed readset/HTO pairs: " + readsetToHashing.size());
@@ -178,9 +178,10 @@ public class CellRangerVDJUtils
         File cellBarcodeWhitelist = getValidCellIndexFile();
         Set<String> uniqueBarcodes = new HashSet<>();
         _log.debug("writing cell barcodes");
-        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), '\t'))
+        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
         {
             int rowIdx = 0;
+            int noCallRows = 0;
             String[] row;
             while ((row = reader.readNext()) != null)
             {
@@ -188,6 +189,12 @@ public class CellRangerVDJUtils
                 rowIdx++;
                 if (rowIdx > 1)
                 {
+                    if (row.length >= 13 && "None".equals(row[12]))
+                    {
+                        noCallRows++;
+                        continue;
+                    }
+
                     //NOTE: 10x appends "-1" to barcodes
                     String barcode = row[0].split("-")[0];
                     if (!uniqueBarcodes.contains(barcode))
@@ -199,6 +206,7 @@ public class CellRangerVDJUtils
             }
 
             _log.debug("rows inspected: " + (rowIdx - 1));
+            _log.debug("rows without CDR3: " + noCallRows);
             _log.debug("unique cell barcodes: " + uniqueBarcodes.size());
             output.addIntermediateFile(cellBarcodeWhitelist);
         }
@@ -213,7 +221,6 @@ public class CellRangerVDJUtils
         {
             throw new PipelineJobException("Unable to find file: " + htoBarcodeWhitelist.getPath());
         }
-        output.addIntermediateFile(htoBarcodeWhitelist);
 
         Readset htoReadset = support.getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
         if (htoReadset == null)
@@ -234,7 +241,7 @@ public class CellRangerVDJUtils
             args.addAll(extraParams);
         }
 
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(cellToHto.getName()), _log, args);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, args, false, sourceDir);
         output.addOutput(citeSeqCountUnknownOutput, "CiteSeqCount Unknown Barcodes");
         output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
         output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");
@@ -250,7 +257,7 @@ public class CellRangerVDJUtils
 
     public File getCellToHtoFile()
     {
-        return new File(_sourceDir, "cellbarcodeToHTO.txt");
+        return new File(_sourceDir, "cellbarcodeToHTO.calls.txt");
     }
 
     public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean useCellHashing, SequenceAnalysisJobSupport support) throws PipelineJobException
@@ -372,14 +379,7 @@ public class CellRangerVDJUtils
                         continue;
                     }
 
-                    //NOTE: CiteSeqCounts concatenates name + HTO sequence.
                     String hto = line[1];
-                    int i = hto.lastIndexOf("-");
-                    if (i > -1)
-                    {
-                        hto = hto.substring(0, i);
-                    }
-
                     if ("Doublet".equals(hto))
                     {
                         doublet++;
@@ -408,10 +408,12 @@ public class CellRangerVDJUtils
             {
                 throw new PipelineJobException(e);
             }
+
+            job.getLogger().info("total cell hashing calls found: " + cellBarcodeToCDNAMap.size());
         }
-        else
+        else if (useCellHashing)
         {
-            _log.debug("Cell hashing is not used");
+            throw new PipelineJobException("Cell hashing output not found: " + cellbarcodeToHtoFile.getPath());
         }
 
         Map<String, Map<Integer, Integer>> countMapBySample = new HashMap<>();
@@ -423,6 +425,7 @@ public class CellRangerVDJUtils
         {
             String[] line;
             int idx = 0;
+            int noCDR3 = 0;
             int totalSkipped = 0;
             Set<String> knownBarcodes = new HashSet<>();
             while ((line = reader.readNext()) != null)
@@ -436,12 +439,13 @@ public class CellRangerVDJUtils
 
                 if ("None".equals(line[12]))
                 {
+                    noCDR3++;
                     continue;
                 }
 
                 //NOTE: 10x appends "-1" to barcode sequences
                 String barcode = line[0].split("-")[0];
-                Integer cDNA = useCellHashing ? cellBarcodeToCDNAMap.get(barcode) : -1;
+                Integer cDNA = useCellHashing ? cellBarcodeToCDNAMap.get(barcode) : Integer.valueOf(-1);
                 if (cDNA == null)
                 {
                     _log.info("skipping cell barcode without HTO call: " + barcode);
@@ -462,6 +466,7 @@ public class CellRangerVDJUtils
             }
 
             _log.info("total clonotype rows inspected: " + idx);
+            _log.info("total clonotype rows without CDR3: " + noCDR3);
             _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped);
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + countMapBySample.size());
@@ -474,6 +479,7 @@ public class CellRangerVDJUtils
         //header for consensus_annotations.csv
         //clonotype_id	consensus_id	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis
         List<Map<String, Object>> rows = new ArrayList<>();
+        int totalCells = 0;
         _log.info("processing consensus CSV: " + consensusCsv.getPath());
         try (CSVReader reader = new CSVReader(Readers.getReader(consensusCsv), ','))
         {
@@ -537,6 +543,7 @@ public class CellRangerVDJUtils
                     row.put("cdr3_nt", removeNone(line[11]));
 
                     row.put("count", countData.get(cDNA));
+                    totalCells += countData.get(cDNA);
 
                     double fraction = countData.get(cDNA).doubleValue() / totalCellsMapBySample.get(cDNA);
                     row.put("fraction", fraction);
@@ -563,6 +570,7 @@ public class CellRangerVDJUtils
         }
 
         _log.info("total assay rows: " + rows.size());
+        _log.info("total cells: " + totalCells);
         saveRun(job, protocol, model, rows, outDir);
     }
 
@@ -712,7 +720,7 @@ public class CellRangerVDJUtils
                 AtomicBoolean hasError = new AtomicBoolean(false);
                 new TableSelector(cDNAs, colMap.values(), new SimpleFilter(FieldKey.fromString(filterFieldName), rs.getRowId()), null).forEachResults(results -> {
 
-                    if (results.getObject(FieldKey.fromString("hashingReadsetId")) == null)
+                    if (results.getObject(FieldKey.fromString("hashingReadsetId")) == null || results.getInt(FieldKey.fromString("hashingReadsetId")) == 0)
                     {
                         hasError.set(true);
                     }

@@ -25,6 +25,9 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
+import org.labkey.api.ldk.buttons.ShowBulkEditButton;
+import org.labkey.api.ldk.buttons.ShowEditUIButton;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -49,7 +52,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.48;
+        return 16.52;
     }
 
     @Override
@@ -62,6 +65,10 @@ public class mGAPModule extends ExtendedSimpleModule
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
         AuditLogService.get().registerAuditType(new mGapAuditTypeProvider());
+
+        LDKService.get().registerQueryButton(new ShowEditUIButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_USER_REQUESTS), mGAPSchema.NAME, mGAPSchema.TABLE_USER_REQUESTS);
+        LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING), mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING);
+        LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE), mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE);
 
         new PipelineStartup();
     }

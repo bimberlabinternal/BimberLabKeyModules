@@ -1245,14 +1245,6 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                     var cDNAsToUpdate = {};
                                     var errorMsgs = [];
 
-                                    //TODO
-                                    // var containerMap = {};
-                                    // var win = this.up('window');
-                                    // Ext4.Array.forEach(win.libraryRows, function(r){
-                                    //     console.log(r);
-                                    //     containerMap[r.rowId] = r.container;
-                                    // }, this);
-
                                     Ext4.Array.forEach(text, function (row, rowIdx) {
                                         var r = {};
                                         for (var headerName in headerToField){
@@ -1428,7 +1420,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 forceSelection: true,
                                 editable: false,
                                 labelWidth: 160,
-                                storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List (MedGenome)', '10x Sample Sheet']
+                                storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List (MedGenome)', '10x Sample Sheet', 'Novogene']
                             },{
                                 xtype: 'ldk-simplecombo',
                                 itemId: 'application',
@@ -1471,13 +1463,13 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 checked: false,
                                 itemId: 'includeWithData',
                                 listeners: {
-                                    change: function(field, val){
+                                    change: function (field, val) {
                                         var target = field.up('window').down('#sourcePlates');
                                         var sql = 'SELECT distinct plateId as plateId from tcrdb.cdnas ' + (val ? '' : 'c WHERE c.allReadsetsHaveData = false');
                                         target.store.sql = sql;
                                         target.store.removeAll();
-                                        target.store.load(function(){
-                                            if (target.getPicker()){
+                                        target.store.load(function () {
+                                            if (target.getPicker()) {
                                                 target.getPicker().refresh();
                                             }
                                         }, this);
@@ -1516,256 +1508,66 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 text: 'Submit',
                                 scope: this,
                                 handler: function(btn){
-                                    var plateIds = btn.up('window').down('#sourcePlates').getValue();
-                                    if (!plateIds || !plateIds.length){
-                                        Ext4.Msg.alert('Error', 'Must provide the plate Id(s)');
-                                        return;
-                                    }
+                                    this.onSubmit(btn);
+                                }
+                            },{
+                                text: 'Add List of Plates',
+                                scope: this,
+                                handler: function(btn){
+                                    //this is the only supported application for this right now:
+                                    btn.up('window').down('#instrument').setValue('Novogene');
+                                    btn.up('window').down('#simpleSampleNames').setValue(true);
 
-                                    var instrument = btn.up('window').down('#instrument').getValue();
-                                    var application = btn.up('window').down('#application').getValue();
-                                    var adapter = btn.up('window').down('#adapter').getValue();
-                                    var includeWithData = btn.up('window').down('#includeWithData').getValue();
-                                    var allowDuplicates = btn.up('window').down('#allowDuplicates').getValue();
-                                    var simpleSampleNames = btn.up('window').down('#simpleSampleNames').getValue();
-                                    var includeBlanks = btn.up('window').down('#includeBlanks').getValue();
-                                    var doReverseComplement = btn.up('window').doReverseComplement;
+                                    var win = Ext4.create('Ext.window.Window', {
+                                        bodyStyle: 'padding: 5px;',
+                                        title: 'Add Ordered List of Plates',
+                                        width: 300,
+                                        items: [{
+                                            html: 'Add an ordered list of plates, using two tab-delimited columns.  The first is the plate ID, and the second is the library type (GEX or VDJ).  An optional third column can be used to append an alias for this plate, which will be used at the library name',
+                                            border: false
+                                        },{
+                                            xtype: 'textarea',
+                                            fieldLabel: 'Plate List',
+                                            labelAlign: 'top',
+                                            width: 270,
+                                            height: 200
+                                        }],
+                                        buttons: [{
+                                            text: 'Add',
+                                            scope: this,
+                                            handler: function (b) {
+                                                var text = b.up('window').down('textarea').getValue();
+                                                if (!text) {
+                                                    Ext4.Msg.alert('Error', 'Must enter a list of plates');
+                                                    return;
+                                                }
 
-                                    var isMatchingApplication = function(application, libraryType, readsetApplication){
-                                        if (!application){
-                                            return true;
-                                        }
-
-                                        if (application === 'Whole Transcriptome RNA-Seq'){
-                                            return readsetApplication === 'RNA-seq' || readsetApplication === 'RNA-seq, Single Cell';
-                                        }
-                                        else if (application === 'TCR Enriched'){
-                                            return readsetApplication === 'RNA-seq + Enrichment';
-                                        }
-                                        else if (readsetApplication === 'RNA-seq, Single Cell'){
-                                            return (libraryType === '10x 5\' GEX' && application === '10x GEX') || (libraryType === '10x 5\' VDJ (Rhesus A/B/G)' && application === '10x VDJ');
-                                        }
-                                    };
-
-                                    var getSampleName = function(simpleSampleNames, readsetId, readsetName, suffix){
-                                        return (simpleSampleNames ? 's_' + readsetId : readsetId + '_' + readsetName) + (suffix ? '_' + suffix : '');
-                                    }
-
-                                    LABKEY.Query.selectRows({
-                                        containerPath: Laboratory.Utils.getQueryContainerPath(),
-                                        schemaName: 'tcrdb',
-                                        queryName: 'cdnas',
-                                        sort: 'plateId,well/addressByColumn',
-                                        columns: 'rowid,readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/librarytype,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
-                                        scope: this,
-                                        filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
-                                        failure: LDK.Utils.getErrorCallback(),
-                                        success: function (results) {
-                                            Ext4.Msg.hide();
-
-                                            if (!results || !results.rows || !results.rows.length) {
-                                                Ext4.Msg.alert('Error', 'No libraries found for the selected plates');
-                                                return;
-                                            }
-
-                                            var barcodes = 'Illumina';
-                                            var readsetIds = {};
-                                            var barcodeCombosUsed = [];
-                                            if (instrument == 'NextSeq (MPSSR)' || instrument == 'Basic List (MedGenome)') {
-                                                var rc5 = (instrument == 'NextSeq (MPSSR)');
-                                                var rc3 = (instrument == 'NextSeq (MPSSR)');
-
-                                                var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
-                                                Ext4.Array.forEach(results.rows, function (r) {
-                                                    //only include readsets without existing data
-                                                    if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
-                                                        //allow for cell hashing / shared readsets
-                                                        readsetIds[r.readsetId] = true;
-
-                                                        //reverse complement both barcodes:
-                                                        var barcode5 = rc5 ? doReverseComplement(r['readsetId/barcode5/sequence']) : r['readsetId/barcode5/sequence'];
-                                                        var barcode3 = rc3 ? doReverseComplement(r['readsetId/barcode3/sequence']) : r['readsetId/barcode3/sequence'];
-                                                        barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                                                        rows.push([getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']), adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
-                                                    }
-
-                                                    if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'])) {
-                                                        //allow for cell hashing / shared readsets
-                                                        readsetIds[r.enrichedReadsetId] = true;
-
-                                                        var barcode5 = rc5 ? doReverseComplement(r['enrichedReadsetId/barcode5/sequence']) : r['enrichedReadsetId/barcode5/sequence'];
-                                                        var barcode3 = rc3 ? doReverseComplement(r['enrichedReadsetId/barcode3/sequence']) : r['enrichedReadsetId/barcode3/sequence'];
-                                                        barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
-                                                        rows.push([getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name']), adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
+                                                text = LDK.Utils.CSVToArray(Ext4.String.trim(text), '\t');
+                                                var hadError = false;
+                                                Ext4.Array.forEach(text, function(r){
+                                                    if (r.length < 2){
+                                                        hadError = true;
                                                     }
                                                 }, this);
 
-                                                //add missing barcodes:
-                                                if (includeBlanks) {
-                                                    var blankIdx = 0;
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function (barcode5) {
-                                                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function (barcode3) {
-                                                            var combo = barcode5 + '/' + barcode3;
-                                                            if (barcodeCombosUsed.indexOf(combo) == -1) {
-                                                                blankIdx++;
-                                                                var barcode5Seq = rc5 ? doReverseComplement(this.barcodeMap[barcodes][barcode5]) : this.barcodeMap[barcodes][barcode5];
-                                                                var barcode3Seq = rc3 ? doReverseComplement(this.barcodeMap[barcodes][barcode3]) : this.barcodeMap[barcodes][barcode3];
-
-                                                                var name = simpleSampleNames ? 's_Blank' + blankIdx : plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx;
-                                                                rows.push([name, adapter, barcode5, barcode5Seq, barcode3, barcode3Seq].join('\t'));
-                                                            }
-                                                        }, this);
-                                                    }, this);
+                                                if (hadError) {
+                                                    Ext4.Msg.alert('Error', 'All rows must have at least 2 values');
+                                                    return;
                                                 }
+
+                                                b.up('window').close();
+                                                this.onSubmit(btn, text);
                                             }
-                                            else if (instrument === 'MiSeq (ONPRC)') {
-                                                var rows = [];
-                                                rows.push('[Header]');
-                                                rows.push('IEMFileVersion,4');
-                                                rows.push('Investigator Name,Bimber');
-                                                rows.push('Experiment Name,' + plateIds.join(';'));
-                                                rows.push('Date,11/16/2017');
-                                                rows.push('Workflow,GenerateFASTQ');
-                                                rows.push('Application,FASTQ Only');
-                                                rows.push('Assay,Nextera XT');
-                                                rows.push('Description,');
-                                                rows.push('Chemistry,Amplicon');
-                                                rows.push('');
-                                                rows.push('[Reads]');
-                                                rows.push('251');
-                                                rows.push('251');
-                                                rows.push('');
-                                                rows.push('[Settings]');
-                                                rows.push('ReverseComplement,0');
-                                                rows.push('Adapter,' + adapter);
-                                                rows.push('');
-                                                rows.push('[Data]');
-                                                rows.push('Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description');
-
-                                                Ext4.Array.forEach(results.rows, function (r) {
-                                                    //only include readsets without existing data
-                                                    if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
-                                                        //allow for cell hashing / shared readsets
-                                                        readsetIds[r.readsetId] = true;
-
-                                                        //reverse complement both barcodes:
-                                                        var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
-                                                        var barcode3 = r['readsetId/barcode3/sequence'];
-                                                        var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
-                                                        cleanedName = cleanedName.replace(/\//g, '-');
-
-                                                        barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                                                        rows.push([r.readsetId, cleanedName, '', '', r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join(','));
-                                                    }
-
-                                                    if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'])) {
-                                                        //allow for cell hashing / shared readsets
-                                                        readsetIds[r.enrichedReadsetId] = true;
-
-                                                        var barcode5 = doReverseComplement(r['enrichedReadsetId/barcode5/sequence']);
-                                                        var barcode3 = r['enrichedReadsetId/barcode3/sequence'];
-                                                        var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
-                                                        cleanedName = cleanedName.replace(/\//g, '-');
-
-                                                        barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
-                                                        rows.push([r.enrichedReadsetId, cleanedName, '', '', r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join(','))
-                                                    }
-                                                }, this);
-
-                                                //add missing barcodes:
-                                                if (includeBlanks) {
-                                                    var blankIdx = 0;
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function (barcode5) {
-                                                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function (barcode3) {
-                                                            var combo = barcode5 + '/' + barcode3;
-                                                            if (barcodeCombosUsed.indexOf(combo) == -1) {
-                                                                blankIdx++;
-                                                                var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
-                                                                var barcode3Seq = this.barcodeMap[barcodes][barcode3];
-                                                                rows.push([plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, null, null, null, barcode5, barcode5Seq, barcode3, barcode3Seq].join(','));
-                                                            }
-                                                        }, this);
-                                                    }, this);
-                                                }
+                                        },{
+                                            text: 'Cancel',
+                                            scope: this,
+                                            handler: function(b){
+                                                b.up('window').close();
                                             }
-                                            else if (instrument === '10x Sample Sheet') {
-                                                var doRC = false;
-                                                var rows = [];
-                                                var barcodes = '10x Chromium Single Cell v2';
-                                                rows.push('Sample_ID,Sample_Name,index,Sample_Project');
-
-                                                Ext4.Array.forEach(results.rows, function (r) {
-                                                    //only include readsets without existing data
-                                                    if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'])) {
-                                                        //allow for cell hashing / shared readsets
-                                                        readsetIds[r.readsetId] = true;
-
-                                                        var barcode5s = r['readsetId/barcode5/sequence'].split(',');
-                                                        barcodeCombosUsed.push(r['readsetId/barcode5']);
-                                                        Ext4.Array.forEach(barcode5s, function(bc, idx){
-                                                            var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
-                                                            cleanedName = cleanedName.replace(/\//g, '-');
-                                                            bc = doRC ? doReverseComplement(bc) : bc;
-
-                                                            var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name'], (idx+1));
-                                                            rows.push([sampleName, cleanedName, bc, ''].join(','));
-                                                        }, this);
-                                                    }
-
-                                                    if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'])) {
-                                                        //allow for cell hashing / shared readsets
-                                                        readsetIds[r.enrichedReadsetId] = true;
-
-                                                        var barcode5s = r['enrichedReadsetId/barcode5/sequence'].split(',');
-                                                        barcodeCombosUsed.push(r['enrichedReadsetId/barcode5']);
-                                                        Ext4.Array.forEach(barcode5s, function(bc, idx){
-                                                            var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
-                                                            cleanedName = cleanedName.replace(/\//g, '-');
-                                                            bc = doRC ? doReverseComplement(bc) : bc;
-
-                                                            var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (idx+1) + '-TCR');
-                                                            rows.push([sampleName, cleanedName, bc, ''].join(','));
-                                                        }, this);
-                                                    }
-                                                }, this);
-
-                                                //add missing barcodes:
-                                                if (includeBlanks) {
-                                                    var blankIdx = 0;
-                                                    Ext4.Array.forEach(TCRdb.panel.StimPanel.TENX_BARCODES, function (barcode5) {
-                                                        if (barcodeCombosUsed.indexOf(barcode5) === -1) {
-                                                            blankIdx++;
-                                                            var barcode5Seq = this.barcodeMap[barcodes][barcode5].split(',');
-                                                            Ext4.Array.forEach(barcode5Seq, function (seq, idx) {
-                                                                seq = doRC ? doReverseComplement(seq) : seq;
-                                                                rows.push([barcode5 + '_' + (idx + 1), plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, seq, ''].join(','));
-                                                            }, this);
-                                                        }
-                                                    }, this);
-                                                }
-                                            }
-
-                                            //check for unique barcodes
-                                            var sorted = barcodeCombosUsed.slice().sort();
-                                            var duplicates = [];
-                                            for (var i = 0; i < sorted.length - 1; i++) {
-                                                if (sorted[i + 1] === sorted[i]) {
-                                                    duplicates.push(sorted[i]);
-                                                }
-                                            }
-
-                                            duplicates = Ext4.unique(duplicates);
-                                            if (!allowDuplicates && duplicates.length){
-                                                Ext4.Msg.alert('Error', 'Duplicate barcodes: ' + duplicates.join(', '));
-                                                btn.up('window').down('textarea').setValue(null);
-                                                btn.up('window').down('#downloadData').setDisabled(true);
-                                            }
-                                            else {
-                                                btn.up('window').down('textarea').setValue(rows.join('\n'));
-                                                btn.up('window').down('#downloadData').setDisabled(false);
-                                            }
-                                        }
+                                        }]
                                     });
+
+                                    win.show();
                                 }
                             },{
                                 text: 'Download Data',
@@ -1831,6 +1633,337 @@ Ext4.define('TCRdb.panel.StimPanel', {
                 }]
             }]
         }
+    },
+
+    onSubmit: function(btn, expectedPairs){
+        var plateIds = [];
+
+        if (expectedPairs) {
+            var hadError = false;
+            Ext4.Array.forEach(expectedPairs, function(p){
+                plateIds.push(p[0]);
+            }, this);
+        }
+        else {
+            plateIds = btn.up('window').down('#sourcePlates').getValue();
+        }
+
+        if (!plateIds || !plateIds.length){
+            Ext4.Msg.alert('Error', 'Must provide the plate Id(s)');
+            return;
+        }
+
+        var instrument = btn.up('window').down('#instrument').getValue();
+        var application = btn.up('window').down('#application').getValue();
+        var adapter = btn.up('window').down('#adapter').getValue();
+        var includeWithData = btn.up('window').down('#includeWithData').getValue();
+        var allowDuplicates = btn.up('window').down('#allowDuplicates').getValue();
+        var simpleSampleNames = btn.up('window').down('#simpleSampleNames').getValue();
+        var includeBlanks = btn.up('window').down('#includeBlanks').getValue();
+        var doReverseComplement = btn.up('window').doReverseComplement;
+
+        var isMatchingApplication = function(application, libraryType, readsetApplication, rowLevelApplication){
+            if (!application && !rowLevelApplication){
+                return true;
+            }
+
+            if (application === 'Whole Transcriptome RNA-Seq'){
+                return readsetApplication === 'RNA-seq' || readsetApplication === 'RNA-seq, Single Cell';
+            }
+            else if (application === 'TCR Enriched'){
+                return readsetApplication === 'RNA-seq + Enrichment';
+            }
+            else if (readsetApplication === 'RNA-seq, Single Cell'){
+                application = rowLevelApplication || application;
+                return (libraryType === '10x 5\' GEX' && application === '10x GEX') || (libraryType === '10x 5\' VDJ (Rhesus A/B/G)' && application === '10x VDJ');
+            }
+        };
+
+        var getSampleName = function(simpleSampleNames, readsetId, readsetName, suffix){
+            return (simpleSampleNames ? 's_' + readsetId : readsetId + '_' + readsetName) + (suffix ? '_' + suffix : '');
+        };
+
+        Ext4.Msg.wait('Loading cDNA data');
+        LABKEY.Query.selectRows({
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
+            schemaName: 'tcrdb',
+            queryName: 'cdnas',
+            sort: 'plateId,well/addressByColumn',
+            columns: 'rowid,plateid,readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/librarytype,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
+            scope: this,
+            filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
+            failure: LDK.Utils.getErrorCallback(),
+            success: function (results) {
+                Ext4.Msg.hide();
+
+                if (!results || !results.rows || !results.rows.length) {
+                    Ext4.Msg.alert('Error', 'No libraries found for the selected plates');
+                    return;
+                }
+
+                var sortedRows = results.rows;
+                if (expectedPairs) {
+                    sortedRows = [];
+                    var missingRows = [];
+                    Ext4.Array.forEach(expectedPairs, function(p){
+                        var found = false;
+                        Ext4.Array.forEach(results.rows, function(row){
+                            if (row.plateId === p[0]) {
+                                if (p[1] === 'GEX') {
+                                    if (includeWithData || row['readsetId/totalFiles'] === 0) {
+                                        if (row['readsetId/librarytype'].match('GEX')) {
+                                            sortedRows.push(Ext4.apply({targetApplication: '10x GEX', plateAlias: (p.length > 2 ? p[2] : null)}, row));
+                                            found = true;
+                                            return false;
+                                        }
+                                    }
+                                }
+                                else if (p[1] === 'VDJ') {
+                                    if (includeWithData || row['enrichedReadsetId/totalFiles'] === 0) {
+                                        if (row['enrichedReadsetId/librarytype'].match('VDJ')) {
+                                            sortedRows.push(Ext4.apply({targetApplication: '10x VDJ', plateAlias: (p.length > 2 ? p[2] : null)}, row));
+                                            found = true;
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                        }, this);
+
+                        if (!found) {
+                            missingRows.push(p[0] + '/' + p[1]);
+                        }
+                    }, this);
+
+                    if (missingRows.length){
+                        Ext4.Msg.alert('Error', 'The following plates were not found:<br>' + missingRows.join('<br>'));
+                        return;
+                    }
+                }
+
+                var barcodes = 'Illumina';
+                var readsetIds = {};
+                var barcodeCombosUsed = [];
+                if (instrument === 'NextSeq (MPSSR)' || instrument === 'Basic List (MedGenome)') {
+                    var rc5 = (instrument === 'NextSeq (MPSSR)');
+                    var rc3 = (instrument === 'NextSeq (MPSSR)');
+
+                    var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
+                    Ext4.Array.forEach(sortedRows, function (r) {
+                        //only include readsets without existing data
+                        if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] == 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'], r.targetApplication)) {
+                            //allow for cell hashing / shared readsets
+                            readsetIds[r.readsetId] = true;
+
+                            //reverse complement both barcodes:
+                            var barcode5 = rc5 ? doReverseComplement(r['readsetId/barcode5/sequence']) : r['readsetId/barcode5/sequence'];
+                            var barcode3 = rc3 ? doReverseComplement(r['readsetId/barcode3/sequence']) : r['readsetId/barcode3/sequence'];
+                            barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
+                            rows.push([getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']), adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
+                        }
+
+                        if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'], r.targetApplication)) {
+                            //allow for cell hashing / shared readsets
+                            readsetIds[r.enrichedReadsetId] = true;
+
+                            var barcode5 = rc5 ? doReverseComplement(r['enrichedReadsetId/barcode5/sequence']) : r['enrichedReadsetId/barcode5/sequence'];
+                            var barcode3 = rc3 ? doReverseComplement(r['enrichedReadsetId/barcode3/sequence']) : r['enrichedReadsetId/barcode3/sequence'];
+                            barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
+                            rows.push([getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name']), adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
+                        }
+                    }, this);
+
+                    //add missing barcodes:
+                    if (includeBlanks) {
+                        var blankIdx = 0;
+                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function (barcode5) {
+                            Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function (barcode3) {
+                                var combo = barcode5 + '/' + barcode3;
+                                if (barcodeCombosUsed.indexOf(combo) === -1) {
+                                    blankIdx++;
+                                    var barcode5Seq = rc5 ? doReverseComplement(this.barcodeMap[barcodes][barcode5]) : this.barcodeMap[barcodes][barcode5];
+                                    var barcode3Seq = rc3 ? doReverseComplement(this.barcodeMap[barcodes][barcode3]) : this.barcodeMap[barcodes][barcode3];
+
+                                    var name = simpleSampleNames ? 's_Blank' + blankIdx : plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx;
+                                    rows.push([name, adapter, barcode5, barcode5Seq, barcode3, barcode3Seq].join('\t'));
+                                }
+                            }, this);
+                        }, this);
+                    }
+                }
+                else if (instrument === 'MiSeq (ONPRC)') {
+                    var rows = [];
+                    rows.push('[Header]');
+                    rows.push('IEMFileVersion,4');
+                    rows.push('Investigator Name,Bimber');
+                    rows.push('Experiment Name,' + plateIds.join(';'));
+                    rows.push('Date,11/16/2017');
+                    rows.push('Workflow,GenerateFASTQ');
+                    rows.push('Application,FASTQ Only');
+                    rows.push('Assay,Nextera XT');
+                    rows.push('Description,');
+                    rows.push('Chemistry,Amplicon');
+                    rows.push('');
+                    rows.push('[Reads]');
+                    rows.push('251');
+                    rows.push('251');
+                    rows.push('');
+                    rows.push('[Settings]');
+                    rows.push('ReverseComplement,0');
+                    rows.push('Adapter,' + adapter);
+                    rows.push('');
+                    rows.push('[Data]');
+                    rows.push('Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description');
+
+                    Ext4.Array.forEach(sortedRows, function (r) {
+                        //only include readsets without existing data
+                        if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'], r.targetApplication)) {
+                            //allow for cell hashing / shared readsets
+                            readsetIds[r.readsetId] = true;
+
+                            //reverse complement both barcodes:
+                            var barcode5 = doReverseComplement(r['readsetId/barcode5/sequence']);
+                            var barcode3 = r['readsetId/barcode3/sequence'];
+                            var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
+                            cleanedName = cleanedName.replace(/\//g, '-');
+
+                            barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
+                            rows.push([r.readsetId, cleanedName, '', '', r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join(','));
+                        }
+
+                        if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] == 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'], r.targetApplication)) {
+                            //allow for cell hashing / shared readsets
+                            readsetIds[r.enrichedReadsetId] = true;
+
+                            var barcode5 = doReverseComplement(r['enrichedReadsetId/barcode5/sequence']);
+                            var barcode3 = r['enrichedReadsetId/barcode3/sequence'];
+                            var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
+                            cleanedName = cleanedName.replace(/\//g, '-');
+
+                            barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
+                            rows.push([r.enrichedReadsetId, cleanedName, '', '', r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join(','))
+                        }
+                    }, this);
+
+                    //add missing barcodes:
+                    if (includeBlanks) {
+                        var blankIdx = 0;
+                        Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES5, function (barcode5) {
+                            Ext4.Array.forEach(TCRdb.panel.StimPanel.BARCODES3, function (barcode3) {
+                                var combo = barcode5 + '/' + barcode3;
+                                if (barcodeCombosUsed.indexOf(combo) === -1) {
+                                    blankIdx++;
+                                    var barcode5Seq = doReverseComplement(this.barcodeMap[barcodes][barcode5]);
+                                    var barcode3Seq = this.barcodeMap[barcodes][barcode3];
+                                    rows.push([plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, null, null, null, barcode5, barcode5Seq, barcode3, barcode3Seq].join(','));
+                                }
+                            }, this);
+                        }, this);
+                    }
+                }
+                else if (instrument === '10x Sample Sheet' || instrument === 'Novogene') {
+                    var doRC = false;
+                    var rows = [];
+                    var barcodes = '10x Chromium Single Cell v2';
+
+                    if (instrument === '10x Sample Sheet') {
+                        rows.push('Sample_ID,Sample_Name,index,Sample_Project');
+                    }
+
+                    var delim = instrument === 'Novogene' ? '\t' : ',';
+                    Ext4.Array.forEach(sortedRows, function (r) {
+                        //only include readsets without existing data
+                        if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'], r.targetApplication)) {
+                            //allow for cell hashing / shared readsets
+                            readsetIds[r.readsetId] = true;
+
+                            var barcode5s = r['readsetId/barcode5/sequence'].split(',');
+                            barcodeCombosUsed.push(r['readsetId/barcode5']);
+                            Ext4.Array.forEach(barcode5s, function(bc, idx){
+                                var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
+                                cleanedName = cleanedName.replace(/\//g, '-');
+                                bc = doRC ? doReverseComplement(bc) : bc;
+
+                                var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name'], (idx+1));
+                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
+                                if (instrument === 'Novogene') {
+                                    if (r.plateAlias) {
+                                        data.unshift(r.plateAlias);
+                                        data.push(r.plateId + '-GEX');
+                                    }
+                                    else {
+                                        data.unshift(r.plateId + '-GEX');
+                                    }
+                                }
+                                rows.push(data.join(delim));
+                            }, this);
+                        }
+
+                        if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'], r.targetApplication)) {
+                            //allow for cell hashing / shared readsets
+                            readsetIds[r.enrichedReadsetId] = true;
+
+                            var barcode5s = r['enrichedReadsetId/barcode5/sequence'].split(',');
+                            barcodeCombosUsed.push(r['enrichedReadsetId/barcode5']);
+                            Ext4.Array.forEach(barcode5s, function(bc, idx){
+                                var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
+                                cleanedName = cleanedName.replace(/\//g, '-');
+                                bc = doRC ? doReverseComplement(bc) : bc;
+
+                                var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (idx+1) + (instrument === 'Novogene' ? '' : '-TCR'));
+                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
+                                if (instrument === 'Novogene') {
+                                    if (r.plateAlias) {
+                                        data.unshift(r.plateAlias);
+                                        data.push(r.plateId + '-TCR');
+                                    }
+                                    else {
+                                        data.unshift(r.plateId + '-TCR');
+                                    }
+                                }
+
+                                rows.push(data.join(delim));
+                            }, this);
+                        }
+                    }, this);
+
+                    //add missing barcodes:
+                    if (includeBlanks && instrument !== 'Novogene') {
+                        var blankIdx = 0;
+                        Ext4.Array.forEach(TCRdb.panel.StimPanel.TENX_BARCODES, function (barcode5) {
+                            if (barcodeCombosUsed.indexOf(barcode5) === -1) {
+                                blankIdx++;
+                                var barcode5Seq = this.barcodeMap[barcodes][barcode5].split(',');
+                                Ext4.Array.forEach(barcode5Seq, function (seq, idx) {
+                                    seq = doRC ? doReverseComplement(seq) : seq;
+                                    rows.push([barcode5 + '_' + (idx + 1), plateIds.join(';').replace(/\//g, '-') + '_Blank' + blankIdx, seq, ''].join(delim));
+                                }, this);
+                            }
+                        }, this);
+                    }
+                }
+
+                //check for unique barcodes
+                var sorted = barcodeCombosUsed.slice().sort();
+                var duplicates = [];
+                for (var i = 0; i < sorted.length - 1; i++) {
+                    if (sorted[i + 1] === sorted[i]) {
+                        duplicates.push(sorted[i]);
+                    }
+                }
+
+                duplicates = Ext4.unique(duplicates);
+                if (!allowDuplicates && duplicates.length){
+                    Ext4.Msg.alert('Error', 'Duplicate barcodes: ' + duplicates.join(', '));
+                    btn.up('window').down('textarea').setValue(null);
+                    btn.up('window').down('#downloadData').setDisabled(true);
+                }
+                else {
+                    btn.up('window').down('textarea').setValue(rows.join('\n'));
+                    btn.up('window').down('#downloadData').setDisabled(false);
+                }
+            }
+        });
     },
 
     getPlateCallback: function(plateIds, fieldId){

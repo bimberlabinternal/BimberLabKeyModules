@@ -61,9 +61,9 @@ import java.util.Set;
 public class AnnotationHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private final FileType _vcfType = new FileType(Arrays.asList(".vcf"), ".vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
-    private static final String GRCH37 = "genome37";
+    public static final String GRCH37 = "genome37";
     private static final String CLINVAR_VCF = "clinvar37";
-    private static final String CHAIN_FILE = "CHAIN_FILE";
+    public static final String CHAIN_FILE = "CHAIN_FILE";
 
     public AnnotationHandler()
     {
@@ -93,12 +93,6 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
     public boolean canProcess(SequenceOutputFile o)
     {
         return o.getFile() != null && o.getFile().exists() && _vcfType.isType(o.getFile());
-    }
-
-    @Override
-    public List<String> validateParameters(JSONObject params)
-    {
-        return null;
     }
 
     @Override
@@ -148,34 +142,6 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
 
             //find chain files:
             findChainFile(sourceGenome, params.getInt(GRCH37), support, job);
-        }
-
-        private void findChainFile(int sourceGenome, int targetGenome, SequenceAnalysisJobSupport support, PipelineJob job) throws PipelineJobException
-        {
-            SimpleFilter filter = new SimpleFilter(FieldKey.fromString("genomeId1"), sourceGenome);
-            filter.addCondition(FieldKey.fromString("genomeId2"), targetGenome);
-            filter.addCondition(FieldKey.fromString("dateDisabled"), null, CompareType.ISBLANK);
-
-            TableSelector ts = new TableSelector(DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("chain_files"), PageFlowUtil.set("chainFile"), filter, new Sort("-version"));
-            if (!ts.exists())
-            {
-                throw new PipelineJobException("Unable to find chain file from genome " + sourceGenome + " to " + targetGenome);
-            }
-
-            if (ts.getRowCount() > 1)
-            {
-                job.getLogger().warn("more than one active chain file found from genome " + sourceGenome + " to " + targetGenome);
-            }
-
-            Integer chainId = ts.getObject(Integer.class);
-            ExpData data = ExperimentService.get().getExpData(chainId);
-            if (data == null)
-            {
-                throw new PipelineJobException("Unable to find ExpData chain file from genome " + sourceGenome + " to " + targetGenome + " with id: " + chainId);
-            }
-
-            support.cacheExpData(data);
-            support.cacheObject(CHAIN_FILE, chainId);
         }
 
         @Override
@@ -369,7 +335,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 if (!indexExists(clinvarAnnotatedBackport ))
                 {
                     BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(ctx.getLogger());
-                    bpRunner.execute(clinvarAnnotated, originalGenome.getWorkingFastaFile(), clinvarAnnotatedBackport);
+                    bpRunner.execute(clinvarAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), clinvarAnnotatedBackport);
                 }
                 else
                 {
@@ -385,7 +351,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 if (!indexExists(cassandraAnnotatedBackport))
                 {
                     BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(ctx.getLogger());
-                    bpRunner.execute(cassandraAnnotated, originalGenome.getWorkingFastaFile(), cassandraAnnotatedBackport);
+                    bpRunner.execute(cassandraAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), cassandraAnnotatedBackport);
                 }
                 else
                 {
@@ -642,5 +608,33 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
     {
         File idx = new File(vcf.getPath() + ".tbi");
         return idx.exists();
+    }
+
+    public static void findChainFile(int sourceGenome, int targetGenome, SequenceAnalysisJobSupport support, PipelineJob job) throws PipelineJobException
+    {
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("genomeId1"), sourceGenome);
+        filter.addCondition(FieldKey.fromString("genomeId2"), targetGenome);
+        filter.addCondition(FieldKey.fromString("dateDisabled"), null, CompareType.ISBLANK);
+
+        TableSelector ts = new TableSelector(DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("chain_files"), PageFlowUtil.set("chainFile"), filter, new Sort("-version"));
+        if (!ts.exists())
+        {
+            throw new PipelineJobException("Unable to find chain file from genome " + sourceGenome + " to " + targetGenome);
+        }
+
+        if (ts.getRowCount() > 1)
+        {
+            job.getLogger().warn("more than one active chain file found from genome " + sourceGenome + " to " + targetGenome);
+        }
+
+        Integer chainId = ts.getObject(Integer.class);
+        ExpData data = ExperimentService.get().getExpData(chainId);
+        if (data == null)
+        {
+            throw new PipelineJobException("Unable to find ExpData chain file from genome " + sourceGenome + " to " + targetGenome + " with id: " + chainId);
+        }
+
+        support.cacheExpData(data);
+        support.cacheObject(CHAIN_FILE, chainId);
     }
 }

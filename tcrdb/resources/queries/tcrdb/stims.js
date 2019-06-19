@@ -18,10 +18,7 @@ function beforeUpsert(row, oldRow, errors){
        if (!LABKEY.ExtAdapter.isEmpty(val)){
            var normalizedVal = helper.getLookupValue(val, f);
 
-           if (LABKEY.ExtAdapter.isEmpty(normalizedVal)){
-               errors[f] = ['Unknown value for field: ' + f + '. Value was: ' + val];
-           }
-           else {
+           if (!LABKEY.ExtAdapter.isEmpty(normalizedVal)){
                row[f] = normalizedVal;  //cache value for purpose of normalizing case
            }
        }

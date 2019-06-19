@@ -169,7 +169,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
             }
         }
 
-        Integer minspots = runProperties.containsKey(MIN_SPOTS_FIELD) ? runProperties.getInt(MIN_SPOTS_FIELD) : null;
+        Integer minspots = runProperties.containsKey(MIN_SPOTS_FIELD) ? Integer.valueOf(runProperties.getInt(MIN_SPOTS_FIELD)) : null;
         if (minspots == null)
         {
             minspots = 0;

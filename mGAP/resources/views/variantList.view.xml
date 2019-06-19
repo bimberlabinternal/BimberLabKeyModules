@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view" title="Variants of Interest">
+<view xmlns="http://labkey.org/data/xml/view" title="Predicted Damaging Variants">
     <permissions>
         <permission name="read"/>
     </permissions>

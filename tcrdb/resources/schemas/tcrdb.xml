@@ -123,6 +123,7 @@
                     <fkDbSchema>tcrdb</fkDbSchema>
                     <fkTable>peptides</fkTable>
                     <fkColumnName>stim</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
             <column columnName="treatment">
@@ -505,7 +506,7 @@
             </column>
             <column columnName="cloneName">
                 <columnTitle>Clone Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="cellBackground">
                 <columnTitle>Cell Background</columnTitle>
@@ -579,6 +580,11 @@
             <column columnName="cloneName">
                 <columnTitle>Clone Name</columnTitle>
                 <nullable>false</nullable>
+            </column>
+            <column columnName="displayName">
+                <columnTitle>Clone Display Name</columnTitle>
+                <nullable>false</nullable>
+                <description>This can be used to group multiple related clones, such as permutations of the same original clone</description>
             </column>
             <column columnName="chain">
                 <columnTitle>Chain/Locus</columnTitle>

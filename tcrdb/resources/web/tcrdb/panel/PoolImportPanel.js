@@ -69,7 +69,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         transform: 'cells'
     },{
         name: 'hto_library_index',
-        labels: ['HTO Library Index'],
+        labels: ['HTO Library Index', 'HTO Index'],
         allowRowSpan: true,
         transform: 'htoIndex'
     },{
@@ -78,7 +78,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         allowRowSpan: true
     },{
         name: 'gex_library_index',
-        labels: ['5\' GEX Library Index', '5\' GEX Index', 'GEX Index', 'GEX Library Index', '5-GEX Index'],
+        labels: ['5\' GEX Library Index', '5\' GEX Index', 'GEX Index', 'GEX Library Index', '5-GEX Index', '5\'GEX Library Index'],
         allowRowSpan: true,
         transform: 'tenXBarcode'
     },{
@@ -106,7 +106,12 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
     transforms: {
         htoIndex: function(val, panel) {
-            if (Ext4.isNumeric(val)){
+            if (Ext4.isNumeric(val)) {
+                //indexes are named D7XX.  accept rows named '1', '12', etc.
+                val = parseInt(val);
+                if (val < 100){
+                    val = val + 700;
+                }
                 return 'D' + val;
             }
 
@@ -273,6 +278,21 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                 itemId: 'effector',
                 value: 'PBMC'
             },{
+                xtype: 'checkbox',
+                fieldLabel: 'Require GEX Library',
+                itemId: 'requireGEX',
+                checked: true
+            },{
+                xtype: 'checkbox',
+                fieldLabel: 'Require TCR Library',
+                itemId: 'requireTCR',
+                checked: true
+            },{
+                xtype: 'checkbox',
+                fieldLabel: 'Require HTO Library',
+                itemId: 'requireHTO',
+                checked: true
+            },{
                 xtype: 'textarea',
                 fieldLabel: 'Paste Data Below',
                 labelAlign: 'top',
@@ -328,6 +348,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         Ext4.Msg.wait('Looking for matching stims');
         LABKEY.Ajax.request({
             url: LABKEY.ActionURL.buildURL('tcrdb', 'getMatchingStims', Laboratory.Utils.getQueryContainerPath(), null),
+            timeout: 99999,
             method: 'POST',
             jsonData: {
                 stimRows: stimRows
@@ -556,6 +577,13 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         else if (idxValues.length > 1) {
             Ext4.Msg.alert('Error', 'Pool ' + poolName + ' uses more than one ' + type + ' index');
             return false;
+        }
+        else if (idxValues.length === 0) {
+            var required = this.down('#require' + type).getValue();
+            if (required) {
+                Ext4.Msg.alert('Error', 'No index found for pool: ' + poolName + ', for library type: ' + type);
+                return false;
+            }
         }
     },
 

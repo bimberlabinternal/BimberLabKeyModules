@@ -45,6 +45,7 @@
                     <column>releaseId</column>
                     <column>trackName</column>
                     <column>label</column>
+                    <column>totalSamples</column>
                     <column>category</column>
                     <column>url</column>
                     <column>source</column>

@@ -42,7 +42,8 @@ public class PopulateIdsStep implements TaskRefTask
         remoteSource(),
         targetSchema(),
         targetQuery(),
-        targetColumn();
+        targetColumn(),
+        targetAliasColumn();
     }
 
     @Override
@@ -76,27 +77,34 @@ public class PopulateIdsStep implements TaskRefTask
         {
             //first select all rows from remote table
             SelectRowsCommand sr = new SelectRowsCommand(_settings.get(Settings.targetSchema.name()), _settings.get(Settings.targetQuery.name()));
-            sr.setColumns(Arrays.asList(_settings.get(Settings.targetColumn.name())));
+            sr.setColumns(Arrays.asList(_settings.get(Settings.targetColumn.name()), _settings.get(Settings.targetAliasColumn.name())));
             sr.addFilter(new Filter(_settings.get(Settings.targetColumn.name()), null, Filter.Operator.NONBLANK));
 
             //and select all rows from our source table
             SelectRowsResponse srr = sr.execute(rc.connection, rc.remoteContainer);
-            Set<String> existingIds = new HashSet<>();
-            srr.getRows().forEach(x -> existingIds.add(String.valueOf(x.get(_settings.get(Settings.targetColumn.name())))));
+            Map<String, String> existingIds = new HashMap<>();
+            srr.getRows().forEach(x -> existingIds.put(String.valueOf(x.get(_settings.get(Settings.targetColumn.name()))), String.valueOf(x.get(_settings.get(Settings.targetAliasColumn.name())))));
 
-            //identify remote deleted
-            Set<String> toDelete = new HashSet<>(existingIds);
-            toDelete.removeAll(localIdToAlias.keySet());
+            //identify remote deletes
+            Set<String> toDelete = new HashSet<>();
+            existingIds.forEach((id, alias) -> {
+                if (!localIdToAlias.containsKey(id) || !localIdToAlias.get(id).equals(alias))
+                {
+                    toDelete.add(id);
+                }
+            });
+
             if (!toDelete.isEmpty())
             {
                 DeleteRowsCommand dr = new DeleteRowsCommand(_settings.get(Settings.targetSchema.name()), _settings.get(Settings.targetQuery.name()));
                 toDelete.forEach(x -> {
-                    dr.addRow(toRow(x, localIdToAlias));
+                    dr.addRow(toRow(x, null));
                 });
 
                 dr.execute(rc.connection, rc.remoteContainer);
 
                 job.getLogger().info("deleted " + dr.getRows().size() + " remote rows");
+                toDelete.forEach(existingIds::remove);
             }
             else
             {
@@ -104,8 +112,14 @@ public class PopulateIdsStep implements TaskRefTask
             }
 
             //then remote inserts
-            Set<String> toInsert = new HashSet<>(localIdToAlias.keySet());
-            toInsert.removeAll(existingIds);
+            Set<String> toInsert = new HashSet<>();
+            localIdToAlias.forEach((id, alias) -> {
+                if (!existingIds.containsKey(id))
+                {
+                    toInsert.add(id);
+                }
+            });
+
             if (!toInsert.isEmpty())
             {
                 InsertRowsCommand dr = new InsertRowsCommand(_settings.get(Settings.targetSchema.name()), _settings.get(Settings.targetQuery.name()));
@@ -134,7 +148,8 @@ public class PopulateIdsStep implements TaskRefTask
     {
         Map<String, Object> ret = new CaseInsensitiveHashMap<>();
         ret.put(_settings.get(Settings.targetColumn.name()), sampleName);
-        ret.put("mgapAlias", localIdToAlias.get(sampleName));
+        if (localIdToAlias != null)
+            ret.put(_settings.get(Settings.targetAliasColumn.name()), localIdToAlias.get(sampleName));
 
         return ret;
     }

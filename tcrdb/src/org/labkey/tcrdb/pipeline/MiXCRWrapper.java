@@ -339,7 +339,6 @@ public class MiXCRWrapper extends AbstractCommandWrapper
         File jar = new File(getJAR().getPath());
         args.add("-Dmixcr.path=" + jar.getParentFile().getPath());
         args.add("-Dmixcr.command=mixcr");
-        args.add("-XX:+AggressiveOpts");
 
         if (_libraryPath != null)
         {

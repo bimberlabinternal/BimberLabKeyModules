@@ -18,10 +18,7 @@ public class VariantsToTableRunner extends AbstractGatkWrapper
     public File execute(File inputVcf, File outputTable, File fasta, List<String> fields)  throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
-        args.add(SequencePipelineService.get().getJavaFilepath());
-        args.addAll(SequencePipelineService.get().getJavaOpts());
-        args.add("-jar");
-        args.add(getJAR().getPath());
+        args.addAll(getBaseArgs());
 
         args.add("-T");
         args.add("VariantsToTable");

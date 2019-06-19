@@ -133,6 +133,15 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="liftedVcfId">
+                <columnTitle>Lifted VCF File</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="totalSubjects">
                 <columnTitle>Total Subjects</columnTitle>
             </column>
@@ -361,7 +370,7 @@
         <importUrl />
         <deleteUrl />
         <pkColumnName>rowid</pkColumnName>
-        <tableTitle>Variants of Interest</tableTitle>
+        <tableTitle>Predicted Damaging Variants</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
@@ -724,6 +733,9 @@
                 <columnTitle>Source</columnTitle>
                 <url>${url}</url>
             </column>
+            <column columnName="totalSamples">
+                <columnTitle># Samples</columnTitle>
+            </column>
             <column columnName="category">
                 <columnTitle>Category</columnTitle>
                 <nullable>false</nullable>
@@ -852,6 +864,76 @@
                 <displayColumnFactory>
                     <className>org.labkey.mgap.query.PhenotypeVariantLinkDisplayColumnFactory</className>
                 </displayColumnFactory>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+        </buttonBarOptions>
+    </table>
+
+    <table tableName="pedigreeOverrides" tableDbType="TABLE" useColumnOrder="true">
+        <tableUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Pedigree Overrides</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>true</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="subjectId">
+                <columnTitle>Subject Id</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="relationship">
+                <columnTitle>Relationship (Dam/Sire/Self)</columnTitle>
+                <nullable>false</nullable>
+                <validators>
+                    <validator>
+                        <name>RelationshipValidator</name>
+                        <typeURI>urn:lsid:labkey.com:PropertyValidator:regex</typeURI>
+                        <expression>Dam|Sire|Self</expression>
+                        <errorMessage>Relationship must be one of: Dam, Sire, or Self</errorMessage>
+                    </validator>
+                </validators>
+            </column>
+            <column columnName="correctedValue">
+                <columnTitle>Corrected Value</columnTitle>
+            </column>
+            <column columnName="originalValue">
+                <columnTitle>Original Value</columnTitle>
+            </column>
+            <column columnName="comment">
+                <columnTitle>Comment</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
             </column>
         </columns>
         <buttonBarOptions includeStandardButtons="true">

@@ -13,7 +13,7 @@
             Ext4.fly(Ext4.query('#currentReleaseDiv')[0]).update(
                 '<span>Current Release:</span>' +
                 '<ul class="mgapList">' +
-                    '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'variantList', null, {release: releaseId}) + '">Variants of Interest</a></li>' +
+                    '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'variantList', null, {release: releaseId}) + '">Predicted Damaging Variants</a></li>' +
                     (jbrowseId ? '<li><a href="' + LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: jbrowseId}) + '">Genome Browser</a></li>' : '') +
                 '</ul>'
             );

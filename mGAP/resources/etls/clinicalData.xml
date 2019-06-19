@@ -15,7 +15,7 @@
                     <column>runid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="chemistryResults" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="chemistryResults" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
@@ -32,7 +32,7 @@
                     <column>avgKinship</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="demographics" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="demographics" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
@@ -48,7 +48,7 @@
                     <column>runid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="microbiology" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="microbiology" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
@@ -61,7 +61,7 @@
                     <column>weight</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
@@ -95,7 +95,7 @@
                     <column>runid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="hematologyResults" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="hematologyResults" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
@@ -109,7 +109,7 @@
                     <column>codes</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="pathologyDiagnoses" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="pathologyDiagnoses" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
@@ -124,7 +124,7 @@
                     <column>codes</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="histology" targetOption="merge" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="histology" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>

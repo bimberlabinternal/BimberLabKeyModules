@@ -49,6 +49,10 @@ DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.44-16.45.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.45-16.46.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.46-16.47.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.47-16.48.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.48-16.49.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.49-16.50.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.50-16.51.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.51-16.52.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-15.30-15.31.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.31-16.32.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.32-16.33.sql -text
@@ -67,6 +71,10 @@ DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.44-16.45.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.45-16.46.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.46-16.47.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.47-16.48.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.48-16.49.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.49-16.50.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.50-16.51.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.51-16.52.sql -text
 DISCVR/mGAP/resources/schemas/mgap.xml -text
 DISCVR/mGAP/resources/views/_footer.html -text
 DISCVR/mGAP/resources/views/about.html -text
@@ -142,6 +150,7 @@ DISCVR/mGAP/src/org/labkey/mgap/columnTransforms/OutputFileTransform.java -text
 DISCVR/mGAP/src/org/labkey/mgap/columnTransforms/PopulateObjectid.java -text
 DISCVR/mGAP/src/org/labkey/mgap/columnTransforms/TrackOutputFileTransform.java -text
 DISCVR/mGAP/src/org/labkey/mgap/etl/PopulateIdsStep.java -text
+DISCVR/mGAP/src/org/labkey/mgap/etl/UpdatePedigreeStep.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPController.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPManager.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPModule.java -text
@@ -232,6 +241,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.41-15.42.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.42-15.43.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.43-15.44.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.44-15.45.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/postgresql/tcrdb-15.45-15.46.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.30-15.31.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.31-15.32.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.32-15.33.sql -text
@@ -247,6 +257,7 @@ DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.41-15.42.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.42-15.43.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.43-15.44.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.44-15.45.sql -text
+DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.45-15.46.sql -text
 DISCVR/tcrdb/resources/schemas/tcrdb.xml -text
 DISCVR/tcrdb/resources/views/poolImport.html -text
 DISCVR/tcrdb/resources/views/poolImport.view.xml -text
@@ -279,6 +290,7 @@ DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJUtils.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJWrapper.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/MiXCRAnalysis.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/MiXCRWrapper.java -text
+DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/SeuratCellHashingHandler.java -text
 DISCVR/tcrdb/webapp/WEB-INF/tcrdbContext.xml -text
 DISCVR/variantdb/build.gradle -text
 DISCVR/variantdb/module.properties -text

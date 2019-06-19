@@ -9,6 +9,7 @@
         <column name="cGene" />
         <column name="status" />
         <column name="comments" />
+        <column name="displayName" />
         <column name="workbook" />
     </columns>
     <sorts>

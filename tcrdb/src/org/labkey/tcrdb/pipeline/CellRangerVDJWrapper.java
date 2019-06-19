@@ -55,6 +55,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -142,44 +143,57 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 File fasta = getGenomeFasta();
                 try (PrintWriter writer = PrintWriters.getPrintWriter(fasta))
                 {
+                    final AtomicInteger i = new AtomicInteger(0);
                     UserSchema us = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), getPipelineCtx().getJob().getContainer(), "sequenceanalysis");
                     List<Integer> seqIds = new TableSelector(us.getTable("reference_library_members"), PageFlowUtil.set("ref_nt_id"), new SimpleFilter(FieldKey.fromString("library_id"), referenceGenome.getGenomeId()), null).getArrayList(Integer.class);
                     new TableSelector(us.getTable("ref_nt_sequences"), new SimpleFilter(FieldKey.fromString("rowid"), seqIds, CompareType.IN), null).forEach(nt -> {
-                        //example: >1|TRAV41*01 TRAV41|TRAV41|L-REGION+V-REGION|TR|TRA|None|None
-                        StringBuilder header = new StringBuilder();
-                        header.append(">").append(nt.getRowid()).append("|").append(nt.getName()).append(" ").append(nt.getLineage()).append("|").append(nt.getLineage()).append("|");
-                        //translate into V_Region
-                        String type;
-                        if (nt.getLineage().contains("J"))
+
+                        if (nt.getLocus() == null)
                         {
-                            type = "J-REGION";
-                        }
-                        else if (nt.getLineage().contains("V"))
-                        {
-                            type = "L-REGION+V-REGION";
-                        }
-                        else if (nt.getLineage().contains("C"))
-                        {
-                            type = "C-REGION";
-                        }
-                        else if (nt.getLineage().contains("D"))
-                        {
-                            type = "D-REGION";
-                        }
-                        else
-                        {
-                            throw new RuntimeException("Unknown lineage: " + nt.getLineage());
+                            throw new IllegalArgumentException("Locus was empty for NT with ID: " + nt.getRowid());
                         }
 
-                        header.append(type).append("|TR|").append(nt.getLocus()).append("|None|None");
+                        //NOTE: this allows dual TRA/TRD segments
+                        String[] loci = nt.getLocus().split("/");
+                        for (String locus : loci)
+                        {
+                            i.getAndIncrement(); //cant use sequenceId since sequences might be represented multiple times across loci
 
-                        writer.write(header + "\n");
-                        writer.write(nt.getSequence() + "\n");
+                            //example: >1|TRAV41*01 TRAV41|TRAV41|L-REGION+V-REGION|TR|TRA|None|None
+                            StringBuilder header = new StringBuilder();
+                            header.append(">").append(i.get()).append("|").append(nt.getName()).append(" ").append(nt.getLineage()).append("|").append(nt.getLineage()).append("|");
+                            //translate into V_Region
+                            String type;
+                            if (nt.getLineage().contains("J"))
+                            {
+                                type = "J-REGION";
+                            }
+                            else if (nt.getLineage().contains("V"))
+                            {
+                                type = "L-REGION+V-REGION";
+                            }
+                            else if (nt.getLineage().contains("C"))
+                            {
+                                type = "C-REGION";
+                            }
+                            else if (nt.getLineage().contains("D"))
+                            {
+                                type = "D-REGION";
+                            }
+                            else
+                            {
+                                throw new RuntimeException("Unknown lineage: " + nt.getLineage());
+                            }
+
+                            header.append(type).append("|TR|").append(locus).append("|None|None");
+
+                            writer.write(header + "\n");
+                            writer.write(nt.getSequence() + "\n");
+                        }
                         nt.clearCachedSequence();
-
                     }, RefNtSequenceModel.class);
                 }
-                catch (IOException e)
+                catch (IllegalArgumentException | IOException e)
                 {
                     throw new PipelineJobException(e);
                 }
@@ -311,7 +325,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             //NOTE: run these before cleanup in case of failure
             if (getProvider().getParameterByName(CELL_HASHING).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
             {
-                getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory());
+                getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory());
             }
 
             //now do cleanup/rename:

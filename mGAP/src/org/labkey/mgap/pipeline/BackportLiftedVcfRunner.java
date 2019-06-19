@@ -15,10 +15,10 @@ public class BackportLiftedVcfRunner extends DISCVRSeqRunner
         super(log);
     }
 
-    public File execute(File inputVcf, File fasta, File outputVcf) throws PipelineJobException
+    public File execute(File inputVcf, File targetGenome, File currentGenome, File outputVcf) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
-        args.add(SequencePipelineService.get().getJavaFilepath());
+        args.add(SequencePipelineService.get().getJava8FilePath());
         args.addAll(SequencePipelineService.get().getJavaOpts());
         args.add("-jar");
         args.add(getJar().getPath());
@@ -27,8 +27,11 @@ public class BackportLiftedVcfRunner extends DISCVRSeqRunner
         args.add("-V");
         args.add(inputVcf.getPath());
 
+        args.add("-R");
+        args.add(currentGenome.getPath());
+
         args.add("--targetFasta");
-        args.add(fasta.getPath());
+        args.add(targetGenome.getPath());
 
         args.add("-O");
         args.add(outputVcf.getPath());

@@ -120,6 +120,17 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 {{
                     put("checked", false);
                 }}, false),
+                ToolParameterDescriptor.create(AnnotationHandler.GRCH37, "GRCh37 Genome", "The genome that matches human GRCh37.", "ldk-simplelabkeycombo", new JSONObject()
+                {{
+                    put("width", 400);
+                    put("schemaName", "sequenceanalysis");
+                    put("queryName", "reference_libraries");
+                    put("containerPath", "js:Laboratory.Utils.getQueryContainerPath()");
+                    put("filterArray", "js:[LABKEY.Filter.create('datedisabled', null, LABKEY.Filter.Types.ISBLANK)]");
+                    put("displayField", "name");
+                    put("valueField", "rowid");
+                    put("allowBlank", false);
+                }}, null),
                 ToolParameterDescriptor.create("testOnly", "Test Only", "If selected, the various files will be created, but a record will not be created in the relases table, meaning it will not be synced to mGAP.", "checkbox", new JSONObject()
                 {{
                     put("checked", false);
@@ -131,12 +142,6 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
     public boolean canProcess(SequenceOutputFile o)
     {
         return o.getFile() != null && o.getFile().exists() && _vcfType.isType(o.getFile());
-    }
-
-    @Override
-    public List<String> validateParameters(JSONObject params)
-    {
-        return null;
     }
 
     @Override
@@ -159,6 +164,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
     public static class Processor implements SequenceOutputProcessor
     {
+        private Set<String> _omimWarnings = new HashSet<>();
+
         public Processor()
         {
 
@@ -275,6 +282,18 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             {
                 throw new PipelineJobException(e);
             }
+
+            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(params.getInt(AnnotationHandler.GRCH37), job.getUser()));
+
+            //find chain files:
+            Set<Integer> genomeIds = new HashSet<>();
+            inputFiles.forEach(so -> genomeIds.add(so.getLibrary_id()));
+            if (genomeIds.size() != 1)
+            {
+                throw new PipelineJobException("Expected all inputs to use the same genome");
+            }
+
+            AnnotationHandler.findChainFile(genomeIds.iterator().next(), params.getInt(AnnotationHandler.GRCH37), support, job);
         }
 
         private File getTrackFile(File outputDir)
@@ -297,6 +316,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
             Map<String, SequenceOutputFile> outputVCFMap = new HashMap<>();
             Map<String, SequenceOutputFile> outputTableMap = new HashMap<>();
+            Map<String, SequenceOutputFile> liftedVcfMap = new HashMap<>();
             Map<String, SequenceOutputFile> trackVCFMap = new HashMap<>();
 
             for (SequenceOutputFile so : outputsCreated)
@@ -310,6 +330,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 {
                     String name = so.getName().replaceAll(" Variant Table", "");
                     outputTableMap.put(name, so);
+                }
+                else if (so.getCategory().contains("Lifted"))
+                {
+                    String name = so.getName().replaceAll(" Lifted to Human", "");
+                    liftedVcfMap.put(name, so);
                 }
                 else if (so.getCategory().endsWith("Release"))
                 {
@@ -343,6 +368,12 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Unable to find table output for release: " + release);
                 }
 
+                SequenceOutputFile liftedVcf = liftedVcfMap.get(release);
+                if (liftedVcf == null)
+                {
+                    throw new PipelineJobException("Unable to find lifted VCF for release: " + release);
+                }
+
                 //find basic stats:
                 job.getLogger().info("inspecting file: " + so.getName());
                 int totalSubjects;
@@ -374,6 +405,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 row.put("version", job.getParameters().get("releaseVersion"));
                 row.put("releaseDate", new Date());
                 row.put("vcfId", so.getRowid());
+                row.put("liftedVcfId", liftedVcf.getRowid());
                 row.put("variantTable", so2.getRowid());
                 row.put("genomeId", so.getLibrary_id());
                 row.put("totalSubjects", totalSubjects);
@@ -471,10 +503,13 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                 return;
                             }
 
+                            long totalSamples = new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS), new SimpleFilter(FieldKey.fromString("trackName"), rs.getString(FieldKey.fromString("trackName"))), null).getRowCount();
+
                             Map<String, Object> map = new CaseInsensitiveHashMap<>();
                             map.put("trackName", rs.getString(FieldKey.fromString("trackName")));
                             map.put("label", rs.getString(FieldKey.fromString("label")));
                             map.put("category", rs.getString(FieldKey.fromString("category")));
+                            map.put("totalSamples", totalSamples);
                             map.put("description", rs.getString(FieldKey.fromString("description")));
                             map.put("isprimarytrack", rs.getBoolean(FieldKey.fromString("isprimarytrack")));
                             map.put("url", rs.getString(FieldKey.fromString("url")));
@@ -578,7 +613,12 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     continue;
                 }
 
-                String ret = input;
+                String ret = StringUtils.trimToNull(input);
+                if (ret == null)
+                {
+                    continue;
+                }
+
                 String apiKey = mGAPManager.get().getOmimApiKey(c);
                 if (apiKey == null)
                 {
@@ -612,6 +652,12 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
 
         private String getOmimJson(String input, String apiKey, Logger log, String orig) throws IOException
         {
+            if (input == null || input.length() < 4)
+            {
+                log.error("bad omim value: " + input);
+                return null;
+            }
+
             String url = "https://api.omim.org/api/entry?mimNumber=" + input + "&apiKey=" + apiKey + "&format=json";
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -715,7 +761,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                             public void execute(File input, File outputFile, File referenceFasta) throws PipelineJobException
                             {
                                 List<String> args = new ArrayList<>();
-                                args.add(SequencePipelineService.get().getJavaFilepath());
+                                args.add(SequencePipelineService.get().getJava8FilePath());
                                 args.addAll(SequencePipelineService.get().getJavaOpts());
                                 args.add("-jar");
                                 File gatkJar = getJAR();
@@ -848,6 +894,14 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                             output2.setCategory((testOnly ? "Test " : "") + "mGAP Release Variant Table");
                             output2.setLibrary_id(genome.getGenomeId());
                             ctx.getFileManager().addSequenceOutput(output2);
+
+                            File lifted = liftToHuman(ctx, primaryTrackVcf, genome);
+                            SequenceOutputFile output3 = new SequenceOutputFile();
+                            output3.setFile(lifted);
+                            output3.setName("mGAP Release: " + releaseVersion + " Lifted to Human");
+                            output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
+                            output3.setLibrary_id(genome.getGenomeId());
+                            ctx.getFileManager().addSequenceOutput(output3);
                         }
                     }
                     else
@@ -869,6 +923,53 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("No VCF marked as the primary track");
                 }
             }
+        }
+
+        private File liftToHuman(JobContext ctx, File primaryTrackVcf, ReferenceGenome sourceGenome) throws PipelineJobException
+        {
+            //drop genotypes for performance:
+            ctx.getLogger().info("creating VCF without genotypes");
+            File noGenotypes = new File(primaryTrackVcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".noGenotypes.vcf.gz");
+            if (indexExists(noGenotypes))
+            {
+                ctx.getLogger().info("resuming from file: " + noGenotypes.getPath());
+            }
+            else
+            {
+                SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
+                wrapper.execute(sourceGenome.getWorkingFastaFile(), primaryTrackVcf, noGenotypes, Arrays.asList("--sites_only"));
+            }
+
+            ctx.getFileManager().addIntermediateFile(noGenotypes);
+            ctx.getFileManager().addIntermediateFile(new File(noGenotypes.getPath() + ".tbi"));
+
+            //lift to target genome
+            ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(AnnotationHandler.GRCH37));
+            Integer chainFileId = ctx.getSequenceSupport().getCachedObject(AnnotationHandler.CHAIN_FILE, Integer.class);
+            File chainFile = ctx.getSequenceSupport().getCachedData(chainFileId);
+
+            ctx.getLogger().info("lift to genome: " + grch37Genome.getGenomeId());
+
+            File liftedToGRCh37 = getLiftedVcfName(ctx.getOutputDir(), primaryTrackVcf);
+            File liftoverRejects = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".liftoverRejectGRCh37.vcf.gz");
+            if (!indexExists(liftoverRejects))
+            {
+                LiftoverVcfRunner liftoverVcfRunner = new LiftoverVcfRunner(ctx.getLogger());
+                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37, 0.95);
+            }
+            else
+            {
+                ctx.getLogger().info("resuming with existing file: " + liftedToGRCh37.getPath());
+            }
+            ctx.getFileManager().addIntermediateFile(liftoverRejects);
+            ctx.getFileManager().addIntermediateFile(new File(liftoverRejects.getPath() + ".tbi"));
+
+            return liftedToGRCh37;
+        }
+
+        private File getLiftedVcfName(File outDir, File primaryTrackVcf)
+        {
+            return new File(outDir, SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".liftToGRCh37.vcf.gz");
         }
 
         private File getVariantTableName(JobContext ctx, File vcfInput)
@@ -1060,12 +1161,20 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                         polyphenPredictions.remove("B");
                         polyphenPredictions.remove("P");
 
+                        String description = null;
                         if (!polyphenPredictions.isEmpty())
                         {
-                            Double maxScore = Collections.max(vc.getAttributeAsDoubleList("NE", 0.0));
-                            String description = StringUtils.join(new String[]{
-                                    "Score: " + String.valueOf(maxScore)
-                            }, ",");
+                            try
+                            {
+                                Double maxScore = Collections.max(vc.getAttributeAsDoubleList("NE", 0.0));
+                                description = StringUtils.join(new String[]{
+                                        "Score: " + String.valueOf(maxScore)
+                                }, ",");
+                            }
+                            catch (NumberFormatException e)
+                            {
+                                ctx.getLogger().warn("Unable to parse NE attribute decimal (" + vc.getAttribute("NE") + ") for variant at position: " + vc.toStringWithoutGenotypes());
+                            }
 
                             maybeWriteVariantLine(queuedLines, vc, null, "Polyphen2", "Prediction: " + StringUtils.join(polyphenPredictions, ","), description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
                         }
@@ -1449,7 +1558,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, description, StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier));
+            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier));
         }
 
         private Map<String, String> parseSampleMap(File sampleMapFile) throws PipelineJobException
@@ -1645,7 +1754,11 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 {
                     if (id.length() < 4)
                     {
-                        log.warn("suspect OMIM parsing: " + input + " / " + name + "<>" + id);
+                        if (!_omimWarnings .contains(input))
+                        {
+                            log.warn("suspect OMIM parsing: " + input + " / " + name + "<>" + id);
+                            _omimWarnings .add(input);
+                        }
                     }
                     ret.add(name + "<>" + id);
                 }
@@ -1694,7 +1807,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     String[] parts = phenotype.split("<>");
                     if (parts.length != 2)
                     {
-                        log.error("Malformed phenotype: " + phenotype);
+                        log.warn("Malformed phenotype: " + phenotype);
                         continue;
                     }
 

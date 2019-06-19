@@ -1,9 +1,11 @@
-<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
     <columns>
         <column name="subjectname"/>
         <column name="species"/>
         <column name="geographic_origin"/>
         <column name="gender"/>
+        <column name="mother"/>
+        <column name="father"/>
     </columns>
     <sorts>
         <sort column="subjectname" descending="false"/>

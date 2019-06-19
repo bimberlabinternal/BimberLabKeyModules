@@ -22,6 +22,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
+import org.labkey.api.ldk.buttons.ShowBulkEditButton;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
@@ -29,6 +30,7 @@ import org.labkey.tcrdb.pipeline.CellRangerCellHashingHandler;
 import org.labkey.tcrdb.pipeline.CellRangerVDJCellHashingHandler;
 import org.labkey.tcrdb.pipeline.CellRangerVDJWrapper;
 import org.labkey.tcrdb.pipeline.MiXCRAnalysis;
+import org.labkey.tcrdb.pipeline.SeuratCellHashingHandler;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -46,7 +48,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 15.45;
+        return 15.46;
     }
 
     @Override
@@ -77,6 +79,10 @@ public class TCRdbModule extends ExtendedSimpleModule
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES);
 
         LDKService.get().registerQueryButton(new ChangeStatusButton(), "tcrdb", "stims");
+
+        LDKService.get().registerQueryButton(new ShowBulkEditButton(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS), TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS);
+        LDKService.get().registerQueryButton(new ShowBulkEditButton(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_SORTS), TCRdbSchema.NAME, TCRdbSchema.TABLE_SORTS);
+        LDKService.get().registerQueryButton(new ShowBulkEditButton(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES), TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES);
 
         //register resources
         new PipelineStartup();
@@ -113,6 +119,7 @@ public class TCRdbModule extends ExtendedSimpleModule
 
                 SequenceAnalysisService.get().registerFileHandler(new CellRangerCellHashingHandler());
                 SequenceAnalysisService.get().registerFileHandler(new CellRangerVDJCellHashingHandler());
+                SequenceAnalysisService.get().registerFileHandler(new SeuratCellHashingHandler());
 
                 _hasRegistered = true;
             }

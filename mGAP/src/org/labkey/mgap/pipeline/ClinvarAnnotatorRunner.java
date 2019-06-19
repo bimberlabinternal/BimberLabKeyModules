@@ -18,7 +18,7 @@ public class ClinvarAnnotatorRunner extends DISCVRSeqRunner
     public File execute(File inputVcf, File clinvarVcf, File outputVcf)  throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
-        args.add(SequencePipelineService.get().getJavaFilepath());
+        args.add(SequencePipelineService.get().getJava8FilePath());
         args.addAll(SequencePipelineService.get().getJavaOpts());
         args.add("-jar");
         args.add(getJar().getPath());

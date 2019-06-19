@@ -1,16 +1,16 @@
 <script type="text/javascript">
-    (function($, LABKEY) {
-        $(function(){
-            if (!LABKEY.Security.currentUser.isAdmin) {
-                var ctx = LABKEY.getModuleContext('mgap') || {};
-                var folder = ctx['MGAPContainer'];
-                if (folder) {
-                    var el = $('#returnUrl');
-                    el.attr('value', LABKEY.ActionURL.buildURL('project', 'start', folder));
-                }
-            }
-        });
-    }(jQuery, LABKEY));
+    // (function($, LABKEY) {
+    //     $(function(){
+    //         if (!LABKEY.Security.currentUser.isAdmin) {
+    //             var ctx = LABKEY.getModuleContext('mgap') || {};
+    //             var folder = ctx['MGAPContainer'];
+    //             if (folder) {
+    //                 var el = $('#returnUrl');
+    //                 el.attr('value', LABKEY.ActionURL.buildURL('project', 'start', folder));
+    //             }
+    //         }
+    //     });
+    // }(jQuery, LABKEY));
 
 </script>
 <form class="auth-form" name="login" action="javascript:void(0)" method="post">
