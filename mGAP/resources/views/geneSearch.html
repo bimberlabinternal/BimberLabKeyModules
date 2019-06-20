@@ -8,7 +8,6 @@
                 'dijit/form/ComboBox',
                 'dijit/form/Button',
                 'dojo/keys',
-                'JBrowse/View/InfoDialog',
                 "dojo/html"
             ],
             function(
@@ -16,7 +15,6 @@
                     dijitComboBox,
                     dijitButton,
                     keys,
-                    InfoDialog,
                     html
             ) {
                 var webpart = <%=webpartContext%>;
@@ -26,137 +24,179 @@
                     return;
                 }
 
-                var base = LABKEY.contextPath + "/jbrowseApp/";
-                var browserRoot = LABKEY.contextPath + "/jbrowseApp/";
-                var dataRoot = LABKEY.contextPath + "/_webdav" + LABKEY.Security.currentContainer.path + "/@Files/.jbrowse/" + "databases/" + databaseId;
+                var renderWidget = function(databaseId, targetDiv) {
+                    var base = LABKEY.contextPath + "/jbrowseApp/";
+                    var browserRoot = LABKEY.contextPath + "/jbrowseApp/";
+                    var dataRoot = LABKEY.contextPath + "/_webdav" + LABKEY.Security.currentContainer.path + "/@Files/.jbrowse/" + "databases/" + databaseId;
 
-                var browser = new Browser({
-                    baseUrl: base,
-                    names: {
-                        type: 'Hash',
-                        url: dataRoot + '/names/'
-                    },
-                    browserRoot: browserRoot,
-                    dataRoot: dataRoot,
-                    unitTestMode: true
-                });
-                browser.renderedFatalErrors = true;
-                browser.fatalError = function(error){
-                    html.set(webpart.wrapperDivId, 'There was an error loading the genome browser with ID: ' + databaseId);
-                }
-
-                browser.afterMilestone( 'loadNames', function() {
-                    this.nameStore = browser.nameStore;
-
-                    var searchbox = dojo.create('div', {
-                        style: 'display:inline-block;'
-                    }, webpart.wrapperDivId);
-
-                    this.inputBox = dojo.create('input', {placeHolder: "type in your name", baseClass: 'myClass'}, searchbox);
-
-                    this.locationBox = new dijitComboBox({
-                        style: {width: '200px'},
-                        maxLength: 400,
-                        searchAttr: "name",
-                        placeHolder: "Enter gene name",
-                        title: 'Enter gene or feature name',
-                        'class': 'lk-input'
-                    }, this.inputBox);
-
-                    browser.afterMilestone('loadNames', dojo.hitch(this, function () {
-                        if (this.nameStore) {
-                            this.locationBox.set('store', browser.nameStore);
-                        }
-                    }));
-                    this.locationBox.focusNode.spellcheck = false;
-
-                    dojo.query('div.dijitArrowButton', this.locationBox.domNode ).orphan();
-
-                    dojo.connect( this.locationBox.focusNode, "keydown", this, function(event) {
-                        if( event.keyCode == keys.ESCAPE ) {
-                            this.locationBox.set('value','');
-                        }
-                        else if (event.keyCode == keys.ENTER) {
-                            this.locationBox.closeDropDown(false);
-                            this.navigateTo( this.locationBox.get('value') );
-                            this.goButton.set('disabled',true);
-                            dojo.stopEvent(event);
-                        } else {
-                            this.goButton.set('disabled', false);
-                        }
+                    var browser = new Browser({
+                        baseUrl: base,
+                        names: {
+                            type: 'Hash',
+                            url: dataRoot + '/names/'
+                        },
+                        browserRoot: browserRoot,
+                        dataRoot: dataRoot,
+                        unitTestMode: true
                     });
-                    dojo.connect( searchbox, 'onselectstart', function(evt) { evt.stopPropagation(); return true; });
+                    browser.renderedFatalErrors = true;
+                    browser.fatalError = function (error) {
+                        html.set(targetDiv, 'There was an error loading the genome browser with ID: ' + databaseId);
+                    }
 
-                    this.searchNames = function( /**String*/ loc ) {
-                        return browser.nameStore.query({ name: loc }).then(
-                                function( nameMatches ) {
-                                    // if we have no matches, pop up a dialog saying so, and
-                                    // do nothing more
-                                    if( ! nameMatches.length ) {
-                                        return false;
-                                    }
+                    browser.afterMilestone('loadNames', function () {
+                        this.nameStore = browser.nameStore;
 
-                                    var goingTo;
+                        var searchbox = dojo.create('div', {
+                            style: 'display:inline-block;'
+                        }, targetDiv);
 
-                                    //first check for exact case match
-                                    for (var i = 0; i < nameMatches.length; i++) {
-                                        if( nameMatches[i].name  == loc )
-                                            goingTo = nameMatches[i];
-                                    }
-                                    //if no exact case match, try a case-insentitive match
-                                    if( !goingTo ) {
-                                        for( i = 0; i < nameMatches.length; i++ ) {
-                                            if( nameMatches[i].name.toLowerCase() == loc.toLowerCase() )
-                                                goingTo = nameMatches[i];
-                                        }
-                                    }
-                                    //else just pick a match
-                                    if( !goingTo ) goingTo = nameMatches[0];
+                        this.inputBox = dojo.create('input', {
+                            placeHolder: "type in your name",
+                            baseClass: 'myClass'
+                        }, searchbox);
 
-                                    return goingTo;
-                                },
-                                function(e) {
-                                    console.error( e );
-                                    new InfoDialog({title: 'Error', content: 'Error reading from name store.'}).show();
-                                    return false;
-                                });
-                    };
+                        this.locationBox = new dijitComboBox({
+                            style: {width: '200px'},
+                            maxLength: 400,
+                            searchAttr: "name",
+                            placeHolder: "Enter gene name",
+                            title: 'Enter gene or feature name',
+                            'class': 'lk-input'
+                        }, this.inputBox);
 
-                    this.navigateTo = function (loc, callee) {
-                        if (!loc){
-                            return;
-                        }
-
-                        this.searchNames(loc).then(function(loc, callee){
-                            if (!loc){
-                                new InfoDialog({title: 'Error', content: 'Coordinates not found for this location.'}).show();
+                        browser.afterMilestone('loadNames', dojo.hitch(this, function () {
+                            if (this.nameStore) {
+                                this.locationBox.set('store', browser.nameStore);
                             }
-                            else if (loc.multipleLocations){
-                                new InfoDialog({title: 'Error', content: 'This location matched multiple positions in the genome.'}).show();
-                                LDK.Utils.logToServer('Jbrowse multiple locations found: ' + JSON.stringify(loc.location));
+                        }));
+                        this.locationBox.focusNode.spellcheck = false;
+
+                        dojo.query('div.dijitArrowButton', this.locationBox.domNode).orphan();
+
+                        dojo.connect(this.locationBox.focusNode, "keydown", this, function (event) {
+                            if (event.keyCode == keys.ESCAPE) {
+                                this.locationBox.set('value', '');
+                            }
+                            else if (event.keyCode == keys.ENTER) {
+                                this.locationBox.closeDropDown(false);
+                                this.navigateTo(this.locationBox.get('value'));
+                                this.goButton.set('disabled', true);
+                                dojo.stopEvent(event);
                             }
                             else {
-                                var url = LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: databaseId, loc: loc.location.ref + ':' + loc.location.start + '..' + loc.location.end})
-                                //console.log(url)
-                                window.location = url;
+                                this.goButton.set('disabled', false);
                             }
                         });
-                    };
+                        dojo.connect(searchbox, 'onselectstart', function (evt) {
+                            evt.stopPropagation();
+                            return true;
+                        });
 
-                    // make the 'Go' button
-                    this.goButton = new dijitButton({
-                        label: 'Go',
-                        baseClass: "noBorder",
-                        onClick: dojo.hitch(this, function (event) {
-                            this.navigateTo(this.locationBox.get('value'));
-                            this.goButton.set('disabled', true);
-                            dojo.stopEvent(event);
-                        }),
-                        className: 'labkey-button'
-                    }, dojo.create('button', {}, searchbox));
-                });
+                        this.searchNames = function ( /**String*/ loc) {
+                            return browser.nameStore.query({name: loc}).then(
+                                    function (nameMatches) {
+                                        // if we have no matches, pop up a dialog saying so, and
+                                        // do nothing more
+                                        if (!nameMatches.length) {
+                                            return false;
+                                        }
 
-                browser.loadNames();
+                                        var goingTo;
+
+                                        //first check for exact case match
+                                        for (var i = 0; i < nameMatches.length; i++) {
+                                            if (nameMatches[i].name == loc)
+                                                goingTo = nameMatches[i];
+                                        }
+                                        //if no exact case match, try a case-insentitive match
+                                        if (!goingTo) {
+                                            for (i = 0; i < nameMatches.length; i++) {
+                                                if (nameMatches[i].name.toLowerCase() == loc.toLowerCase())
+                                                    goingTo = nameMatches[i];
+                                            }
+                                        }
+                                        //else just pick a match
+                                        if (!goingTo) goingTo = nameMatches[0];
+
+                                        return goingTo;
+                                    },
+                                    function (e) {
+                                        console.error(e);
+                                        alert('Error reading from name store.');
+                                        return false;
+                                    });
+                        };
+
+                        this.navigateTo = function (loc, callee) {
+                            if (!loc) {
+                                return;
+                            }
+
+                            this.searchNames(loc).then(function (loc, callee) {
+                                if (!loc) {
+                                    alert('Coordinates not found for this location.');
+                                }
+                                else if (loc.multipleLocations) {
+                                    alert('This location matched multiple positions in the genome.');
+                                    LDK.Utils.logToServer('Jbrowse multiple locations found: ' + JSON.stringify(loc.location));
+                                }
+                                else {
+                                    var url = LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {
+                                        database: databaseId,
+                                        loc: loc.location.ref + ':' + loc.location.start + '..' + loc.location.end
+                                    });
+                                    window.location = url;
+                                }
+                            });
+                        };
+
+                        // make the 'Go' button
+                        this.goButton = new dijitButton({
+                            label: 'Go',
+                            baseClass: "noBorder",
+                            onClick: dojo.hitch(this, function (event) {
+                                this.navigateTo(this.locationBox.get('value'));
+                                this.goButton.set('disabled', true);
+                                dojo.stopEvent(event);
+                            }),
+                            className: 'labkey-button'
+                        }, dojo.create('button', {}, searchbox));
+                    });
+
+                    browser.loadNames();
+                }
+
+                var humanDatabaseId = mGAP.Utils.getHumanMGapJBrowseSession();
+                if (humanDatabaseId) {
+                    //create two divs:
+                    var div1 = document.createElement('div');
+                    div1.setAttribute("id", webpart.wrapperDivId + '-1');
+
+                    var div2 = document.createElement('div');
+                    div2.setAttribute("id", webpart.wrapperDivId + '-2');
+
+                    var label1 = document.createElement('div');
+                    label1.setAttribute('style', 'padding-top: 10px;');
+                    label1.innerHTML = 'Search Against The Macaque Genome:';
+
+                    document.getElementById(webpart.wrapperDivId).appendChild(label1);
+
+                    document.getElementById(webpart.wrapperDivId).appendChild(div1);
+
+                    var label2 = document.createElement('div');
+                    label2.setAttribute('style', 'padding-top: 10px;');
+                    label2.innerHTML = 'Search Against The Human Genome:';
+
+                    document.getElementById(webpart.wrapperDivId).appendChild(label2);
+                    document.getElementById(webpart.wrapperDivId).appendChild(div2);
+
+                    renderWidget(databaseId, div1.getAttribute("id"));
+                    renderWidget(humanDatabaseId, div2.getAttribute("id"));
+                }
+                else {
+                    renderWidget(databaseId, webpart.wrapperDivId);
+                }
             });
 
 

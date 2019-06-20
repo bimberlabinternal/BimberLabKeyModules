@@ -210,6 +210,12 @@ mGAP.Utils = (function($){
             return ctx['mgapJBrowse'];
         },
 
+        getHumanMGapJBrowseSession: function(){
+            var ctx = LABKEY.getModuleContext('mgap') || {};
+
+            return ctx['mgapJBrowseHuman'];
+        },
+
         getMGapReleaseId: function(){
             var ctx = LABKEY.getModuleContext('mgap') || {};
 

@@ -2,7 +2,6 @@ package org.labkey.mgap.columnTransforms;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.Selector;
@@ -82,9 +81,14 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         return _outputFilesTableInfo;
     }
 
+    protected String getGenomeIdField()
+    {
+        return "genomeId/Name";
+    }
+
     protected Integer getLibraryId()
     {
-        String name = (String)getInputValue("genomeId/Name");
+        String name = (String)getInputValue(getGenomeIdField());
         Map<String, Integer> genomeMap = getGenomeIdMap();
         if (name == null || genomeMap == null)
         {
@@ -166,7 +170,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     row.put("category", "VCF File");
                     row.put("dataid", d.getRowId());
                     row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
-                    row.put("description", "mGAP Release");
+                    row.put("description", getDescription());
                     row.put("library_id", getLibraryId());
                     row.put("container", getContainerUser().getContainer().getId());
                     row.put("created", new Date());
@@ -187,5 +191,10 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         }
 
         return null;
+    }
+
+    protected String getDescription()
+    {
+        return "mGAP Release";
     }
 }

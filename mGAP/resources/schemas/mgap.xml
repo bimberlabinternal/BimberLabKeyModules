@@ -142,6 +142,16 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="humanJbrowseId">
+                <columnTitle>Genome Browser (Human)</columnTitle>
+                <nullable>true</nullable>
+                <isUserEditable>false</isUserEditable>
+                <fk>
+                    <fkDbSchema>jbrowse</fkDbSchema>
+                    <fkTable>databases</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="totalSubjects">
                 <columnTitle>Total Subjects</columnTitle>
             </column>

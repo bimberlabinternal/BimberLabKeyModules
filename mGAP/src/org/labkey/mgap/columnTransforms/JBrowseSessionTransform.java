@@ -39,6 +39,11 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
     private transient TableInfo _databases;
     private transient UserSchema _jbus;
 
+    protected String getDataFileUrlField()
+    {
+        return "vcfId/dataid/DataFileUrl";
+    }
+
     @Override
     protected Object doTransform(Object inputValue)
     {
@@ -48,7 +53,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             getStatusLogger().error("no release ID for variantRelease row");
         }
 
-        Integer outputFileId = getOrCreateOutputFile(getInputValue("vcfId/dataid/DataFileUrl"), getInputValue("objectId"), null);
+        Integer outputFileId = getOrCreateOutputFile(getInputValue(getDataFileUrlField()), getInputValue("objectId"), null);
         if (outputFileId != null)
         {
             //find database ID, if exists:
@@ -70,7 +75,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                     CaseInsensitiveHashMap<Object> dbRow = new CaseInsensitiveHashMap<>();
                     databaseId = new GUID().toString();
                     dbRow.put("objectid", databaseId);
-                    dbRow.put("name", "mGAP Release: " + getInputValue("version"));
+                    dbRow.put("name", getDatabaseName());
                     dbRow.put("description", null);
                     dbRow.put("libraryId", getLibraryId());
                     dbRow.put("temporary", false);
@@ -222,7 +227,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     private String getOrCreateJsonFile(Results rs) throws SQLException
     {
-        int outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString("vcfId/dataid/DataFileUrl")), getInputValue("objectId"), rs.getString("label"));
+        int outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString(getDataFileUrlField())), getInputValue("objectId"), rs.getString("label"));
 
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
@@ -249,7 +254,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                row.put("trackJson", "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}");
+                row.put("trackJson", getTrackDescription());
             }
             else
             {
@@ -279,5 +284,15 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         }
 
         return null;
+    }
+
+    protected String getDatabaseName()
+    {
+        return "mGAP Release: " + getInputValue("version");
+    }
+
+    protected String getTrackDescription()
+    {
+        return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}";
     }
 }

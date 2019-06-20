@@ -52,7 +52,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.52;
+        return 16.53;
     }
 
     @Override
@@ -108,13 +108,19 @@ public class mGAPModule extends ExtendedSimpleModule
 
         SimpleFilter filter = new SimpleFilter();
         filter.addClause(ContainerFilter.CURRENT.createFilterClause(mGAPSchema.getInstance().getSchema(), FieldKey.fromString("container"), context.getContainer()));
-        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "version", "jbrowseId"), filter, new Sort("-releaseDate"));
+        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "version", "jbrowseId", "humanJbrowseId"), filter, new Sort("-releaseDate"));
         ts.setMaxRows(1);
         ts.forEachResults(rs -> {
             String jbrowseId = rs.getString(FieldKey.fromString("jbrowseId"));
             if (jbrowseId != null)
             {
                 ret.put("mgapJBrowse", jbrowseId);
+            }
+
+            String humanJbrowseId = rs.getString(FieldKey.fromString("humanJbrowseId"));
+            if (humanJbrowseId != null)
+            {
+                ret.put("mgapJBrowseHuman", humanJbrowseId);
             }
 
             Integer rowId = rs.getInt(FieldKey.fromString("rowid"));

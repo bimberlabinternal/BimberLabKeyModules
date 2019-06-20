@@ -86,6 +86,10 @@
                     <column>dbSnpId</column>
                     <column>jbrowseId</column>
                     <column>variantTable</column>
+                    <column>liftedVcfId/dataid/DataFileUrl</column>
+                    <column>liftedVcfId/name</column>
+                    <column>liftedVcfId/library_id/name</column>
+                    <column>humanJbrowseId</column>
                     <column>objectId</column>
                 </sourceColumns>
             </source>
@@ -94,6 +98,8 @@
                     <column source="genomeId/name" target="genomeId" transformClass="org.labkey.mgap.columnTransforms.GenomeTransform" />
                     <column source="vcfId/dataid/DataFileUrl" target="vcfId" transformClass="org.labkey.mgap.columnTransforms.OutputFileTransform" />
                     <column source="jbrowseId" transformClass="org.labkey.mgap.columnTransforms.JBrowseSessionTransform"/>
+                    <column source="liftedVcfId/dataid/DataFileUrl" target="liftedVcfId" transformClass="org.labkey.mgap.columnTransforms.LiftedVcfTransform" />
+                    <column source="humanJbrowseId" transformClass="org.labkey.mgap.columnTransforms.JBrowseHumanSessionTransform"/>
                 </columnTransforms>
             </destination>
         </transform>
