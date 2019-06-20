@@ -1,0 +1,10 @@
+<module xmlns="http://labkey.org/moduleProperties/xml/">
+    <clientDependencies>
+        <dependency path="clientapi/ext4.lib.xml"/>
+    </clientDependencies>
+    <requiredModuleContext>
+        <requiredModule name="LDK" />
+        <requiredModule name="Laboratory" />
+        <requiredModule name="SequenceAnalysis" />
+    </requiredModuleContext>
+</module>
