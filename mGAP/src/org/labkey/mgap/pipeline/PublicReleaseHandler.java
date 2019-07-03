@@ -722,6 +722,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
 
             GeneToNameTranslator translator = new GeneToNameTranslator(gtf, ctx.getLogger());
+            ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(AnnotationHandler.GRCH37));
 
             for (SequenceOutputFile so : inputFiles)
             {
@@ -895,12 +896,12 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                             output2.setLibrary_id(genome.getGenomeId());
                             ctx.getFileManager().addSequenceOutput(output2);
 
-                            File lifted = liftToHuman(ctx, primaryTrackVcf, genome);
+                            File lifted = liftToHuman(ctx, primaryTrackVcf, genome, grch37Genome);
                             SequenceOutputFile output3 = new SequenceOutputFile();
                             output3.setFile(lifted);
                             output3.setName("mGAP Release: " + releaseVersion + " Lifted to Human");
                             output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
-                            output3.setLibrary_id(genome.getGenomeId());
+                            output3.setLibrary_id(grch37Genome.getGenomeId());
                             ctx.getFileManager().addSequenceOutput(output3);
                         }
                     }
@@ -925,7 +926,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
         }
 
-        private File liftToHuman(JobContext ctx, File primaryTrackVcf, ReferenceGenome sourceGenome) throws PipelineJobException
+        private File liftToHuman(JobContext ctx, File primaryTrackVcf, ReferenceGenome sourceGenome, ReferenceGenome grch37Genome) throws PipelineJobException
         {
             //drop genotypes for performance:
             ctx.getLogger().info("creating VCF without genotypes");
@@ -944,7 +945,6 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             ctx.getFileManager().addIntermediateFile(new File(noGenotypes.getPath() + ".tbi"));
 
             //lift to target genome
-            ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(AnnotationHandler.GRCH37));
             Integer chainFileId = ctx.getSequenceSupport().getCachedObject(AnnotationHandler.CHAIN_FILE, Integer.class);
             File chainFile = ctx.getSequenceSupport().getCachedData(chainFileId);
 

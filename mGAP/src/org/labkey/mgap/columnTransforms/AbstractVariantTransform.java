@@ -102,6 +102,11 @@ abstract public class AbstractVariantTransform extends ColumnTransform
     {
         try
         {
+            if (dataFileUrl == null)
+            {
+                throw new IllegalArgumentException("DataFileUrl was null.");
+            }
+
             URI uri = new URI(String.valueOf(dataFileUrl));
             File f = new File(uri);
             if (!f.exists())

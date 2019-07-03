@@ -8,14 +8,16 @@
                 'dijit/form/ComboBox',
                 'dijit/form/Button',
                 'dojo/keys',
-                "dojo/html"
+                'dojo/html',
+                'dojo/_base/array'
             ],
             function(
                     Browser,
                     dijitComboBox,
                     dijitButton,
                     keys,
-                    html
+                    html,
+                    array
             ) {
                 var webpart = <%=webpartContext%>;
                 var databaseId = mGAP.Utils.getMGapJBrowseSession();
@@ -134,20 +136,55 @@
                             }
 
                             this.searchNames(loc).then(function (loc, callee) {
+                                var url = loc.location ? loc.location.ref + ':' + loc.location.start + '..' + loc.location.end : null;
+
                                 if (!loc) {
                                     alert('Coordinates not found for this location.');
+                                    return false;
                                 }
                                 else if (loc.multipleLocations) {
-                                    alert('This location matched multiple positions in the genome.');
-                                    LDK.Utils.logToServer('Jbrowse multiple locations found: ' + JSON.stringify(loc.location));
-                                }
-                                else {
-                                    var url = LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {
-                                        database: databaseId,
-                                        loc: loc.location.ref + ':' + loc.location.start + '..' + loc.location.end
+                                    var unique = {};
+                                    var uniqueRef = {};
+                                    array.forEach(loc.multipleLocations, function(l){
+                                        unique[l.ref + '<>' + l.start + '<>' + l.end] = true;
+                                        uniqueRef[l.ref] = true;
                                     });
-                                    window.location = url;
+
+                                    if (Object.keys(unique).length === 1) {
+                                        url = Object.keys(unique).split('<>');
+                                        url = url[0] + ':' + url[1] + '..' + url[2];
+                                    }
+                                    else if (Object.keys(uniqueRef).length === 1) {
+                                        var minStart = null;
+                                        var maxStop = null;
+                                        array.forEach(loc.multipleLocations, function(l){
+                                            var start = l.start;
+                                            var end = l.end;
+
+                                            if (!minStart || minStart > start){
+                                                minStart = start
+                                            }
+
+                                            if (!maxStop || maxStop < end){
+                                                maxStop = end;
+                                            }
+                                        });
+
+                                        url = Object.keys(unique)[0] + ':' + minStart + '..' + maxStop;
+                                    }
+
+                                    if (!url) {
+                                        alert('This location matched multiple positions in the genome.');
+                                        LDK.Utils.logError('Jbrowse multiple locations found: ' + Object.keys(unique));
+                                        return false;
+                                    }
                                 }
+
+                                url = LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {
+                                    database: databaseId,
+                                    loc: url
+                                });
+                                window.location = url;
                             });
                         };
 
@@ -167,36 +204,39 @@
                     browser.loadNames();
                 }
 
-                var humanDatabaseId = mGAP.Utils.getHumanMGapJBrowseSession();
-                if (humanDatabaseId) {
-                    //create two divs:
-                    var div1 = document.createElement('div');
-                    div1.setAttribute("id", webpart.wrapperDivId + '-1');
+                //NOTE: remove this feature for now.  It is difficult to get scoping right with dual browsers on same page.
+                // var humanDatabaseId = mGAP.Utils.getHumanMGapJBrowseSession();
+                // if (humanDatabaseId) {
+                //     //create two divs:
+                //     var div1 = document.createElement('div');
+                //     div1.setAttribute("id", webpart.wrapperDivId + '-1');
+                //
+                //     var div2 = document.createElement('div');
+                //     div2.setAttribute("id", webpart.wrapperDivId + '-2');
+                //
+                //     var label1 = document.createElement('div');
+                //     label1.setAttribute('style', 'padding-top: 10px;');
+                //     label1.innerHTML = 'Search Against The Macaque Genome:';
+                //
+                //     document.getElementById(webpart.wrapperDivId).appendChild(label1);
+                //
+                //     document.getElementById(webpart.wrapperDivId).appendChild(div1);
+                //
+                //     var label2 = document.createElement('div');
+                //     label2.setAttribute('style', 'padding-top: 10px;');
+                //     label2.innerHTML = 'Search Against The Human Genome:';
+                //
+                //     document.getElementById(webpart.wrapperDivId).appendChild(label2);
+                //     document.getElementById(webpart.wrapperDivId).appendChild(div2);
+                //
+                //     renderWidget(databaseId, div1.getAttribute("id"));
+                //     renderWidget(humanDatabaseId, div2.getAttribute("id"));
+                // }
+                // else {
+                //     renderWidget(databaseId, webpart.wrapperDivId);
+                // }
 
-                    var div2 = document.createElement('div');
-                    div2.setAttribute("id", webpart.wrapperDivId + '-2');
-
-                    var label1 = document.createElement('div');
-                    label1.setAttribute('style', 'padding-top: 10px;');
-                    label1.innerHTML = 'Search Against The Macaque Genome:';
-
-                    document.getElementById(webpart.wrapperDivId).appendChild(label1);
-
-                    document.getElementById(webpart.wrapperDivId).appendChild(div1);
-
-                    var label2 = document.createElement('div');
-                    label2.setAttribute('style', 'padding-top: 10px;');
-                    label2.innerHTML = 'Search Against The Human Genome:';
-
-                    document.getElementById(webpart.wrapperDivId).appendChild(label2);
-                    document.getElementById(webpart.wrapperDivId).appendChild(div2);
-
-                    renderWidget(databaseId, div1.getAttribute("id"));
-                    renderWidget(humanDatabaseId, div2.getAttribute("id"));
-                }
-                else {
-                    renderWidget(databaseId, webpart.wrapperDivId);
-                }
+                renderWidget(databaseId, webpart.wrapperDivId);
             });
 
 

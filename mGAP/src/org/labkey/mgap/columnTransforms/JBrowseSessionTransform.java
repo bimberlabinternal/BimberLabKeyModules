@@ -53,7 +53,13 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             getStatusLogger().error("no release ID for variantRelease row");
         }
 
-        Integer outputFileId = getOrCreateOutputFile(getInputValue(getDataFileUrlField()), getInputValue("objectId"), null);
+        Object input = getInputValue(getDataFileUrlField());
+        if (input == null)
+        {
+            throw new IllegalArgumentException("DataFileUrl was null for key: " + getDataFileUrlField());
+        }
+
+        Integer outputFileId = getOrCreateOutputFile(input, getInputValue("objectId"), null);
         if (outputFileId != null)
         {
             //find database ID, if exists:
@@ -70,10 +76,12 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             {
                 try
                 {
+                    databaseId = new GUID().toString();
+                    getStatusLogger().info("creating jbrowse database: " + databaseId);
+
                     //create database
                     TableInfo databases = getJbrowseUserSchema().getTable("databases");
                     CaseInsensitiveHashMap<Object> dbRow = new CaseInsensitiveHashMap<>();
-                    databaseId = new GUID().toString();
                     dbRow.put("objectid", databaseId);
                     dbRow.put("name", getDatabaseName());
                     dbRow.put("description", null);
@@ -96,57 +104,8 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                 }
             }
 
-            //then JSONfiles/database members
-            final String finalDbId = databaseId;
-            List<FieldKey> fks = Arrays.asList(
-                    FieldKey.fromString("trackName"),
-                    FieldKey.fromString("label"),
-                    FieldKey.fromString("category"),
-                    FieldKey.fromString("url"),
-                    FieldKey.fromString("description"),
-                    FieldKey.fromString("isprimarytrack"),
-                    FieldKey.fromString("vcfId/dataid/DataFileUrl")
-            );
-
-            TableInfo tracksPerRelease = QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
-            Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(tracksPerRelease, fks);
-
-            TableSelector ts = new TableSelector(tracksPerRelease, colMap.values(), new SimpleFilter(FieldKey.fromString("releaseId"), releaseId), null);
-            if (!ts.exists())
-            {
-                getStatusLogger().error("no track records found for release: " + releaseId);
-            }
-
-            ts.forEachResults(rs -> {
-                try
-                {
-                    getStatusLogger().info("possibly creating track for: " + rs.getString(FieldKey.fromString("trackName")));
-                    String jsonFile = getOrCreateJsonFile(rs);
-                    getOrCreateDatabaseMember(finalDbId, jsonFile);
-                }
-                catch (Exception e)
-                {
-                    getStatusLogger().error(e.getMessage(), e);
-                }
-            });
-
-            getStatusLogger().info("recreating jbrowse session: " + databaseId);
-            JobRunner jr = JobRunner.getDefault();
-            jr.execute(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    try
-                    {
-                        JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), finalDbId);
-                    }
-                    catch (PipelineValidationException e)
-                    {
-                        getStatusLogger().error(e.getMessage(), e);
-                    }
-                }
-            });
+            addTracks(databaseId, releaseId);
+            recreateSession(databaseId);
 
             return databaseId;
         }
@@ -158,7 +117,66 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         return null;
     }
 
-    private void getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
+    private void recreateSession(final String databaseId)
+    {
+        // Note: because this transction hasnt committed yet, this will fail frequently, but that job can just be restarted.
+        //TODO: consider trying to run on delay or specifically after this is complete.
+        getStatusLogger().info("recreating jbrowse session: " + databaseId);
+        JobRunner jr = JobRunner.getDefault();
+        jr.execute(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), databaseId);
+                }
+                catch (PipelineValidationException e)
+                {
+                    getStatusLogger().error(e.getMessage(), e);
+                }
+            }
+        });
+    }
+
+    protected void addTracks(final String databaseId, String releaseId)
+    {
+        //then JSONfiles/database members
+        List<FieldKey> fks = Arrays.asList(
+                FieldKey.fromString("trackName"),
+                FieldKey.fromString("label"),
+                FieldKey.fromString("category"),
+                FieldKey.fromString("url"),
+                FieldKey.fromString("description"),
+                FieldKey.fromString("isprimarytrack"),
+                FieldKey.fromString("vcfId/dataid/DataFileUrl")
+        );
+
+        TableInfo tracksPerRelease = QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
+        Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(tracksPerRelease, fks);
+
+        TableSelector ts = new TableSelector(tracksPerRelease, colMap.values(), new SimpleFilter(FieldKey.fromString("releaseId"), releaseId), null);
+        if (!ts.exists())
+        {
+            getStatusLogger().error("no track records found for release: " + releaseId);
+        }
+
+        ts.forEachResults(rs -> {
+            try
+            {
+                getStatusLogger().info("possibly creating track for: " + rs.getString(FieldKey.fromString("trackName")));
+                String jsonFile = getOrCreateJsonFile(rs, "vcfId/dataid/DataFileUrl");
+                getOrCreateDatabaseMember(databaseId, jsonFile);
+            }
+            catch (Exception e)
+            {
+                getStatusLogger().error(e.getMessage(), e);
+            }
+        });
+    }
+
+    protected void getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
     {
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("database"), databaseId);
         filter.addCondition(FieldKey.fromString("jsonfile"), jsonFileId);
@@ -184,7 +202,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         databaseMembers.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
     }
 
-    private TableInfo getJsonFiles()
+    protected TableInfo getJsonFiles()
     {
         if (_jsonFiles == null)
         {
@@ -204,7 +222,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         return _databaseMembers;
     }
 
-    private UserSchema getJbrowseUserSchema()
+    protected UserSchema getJbrowseUserSchema()
     {
         if (_jbus == null)
         {
@@ -225,9 +243,9 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     }
 
-    private String getOrCreateJsonFile(Results rs) throws SQLException
+    private String getOrCreateJsonFile(Results rs, String fieldKey) throws SQLException
     {
-        int outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString(getDataFileUrlField())), getInputValue("objectId"), rs.getString("label"));
+        int outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString(fieldKey)), getInputValue("objectId"), rs.getString("label"));
 
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
