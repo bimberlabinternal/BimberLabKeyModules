@@ -25,6 +25,7 @@ import org.labkey.api.query.ValidationException;
 import org.labkey.api.reader.FastaDataLoader;
 import org.labkey.api.reader.FastaLoader;
 import org.labkey.api.reader.Readers;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AlignmentOutputImpl;
@@ -66,7 +67,7 @@ public class CellRangerVDJUtils
     {
         _log.debug("preparing cell hashing files");
 
-        CellRangerVDJUtils.writeAllBarcodes(_sourceDir);
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir);
 
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
@@ -230,27 +231,10 @@ public class CellRangerVDJUtils
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         File cellToHto = getCellToHtoFile();
-        File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
 
-        List<String> args = new ArrayList<>();
-        args.add("-u");
-        args.add(citeSeqCountUnknownOutput.getPath());
-
-        if (extraParams != null)
-        {
-            args.addAll(extraParams);
-        }
-
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, args, false, sourceDir);
-        output.addOutput(citeSeqCountUnknownOutput, "CiteSeqCount Unknown Barcodes");
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, extraParams, false, sourceDir);
         output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
         output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");
-
-        if (citeSeqCountUnknownOutput.exists())
-        {
-            Map<String, String> allBarcodes = readAllBarcodes(_sourceDir);
-            logTopUnknownBarcodes(citeSeqCountUnknownOutput, _log, allBarcodes);
-        }
 
         return cellToHto;
     }
@@ -622,76 +606,6 @@ public class CellRangerVDJUtils
         return support.getCachedObject(CellRangerVDJUtils.READSET_TO_HASHING_MAP, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, Integer.class, Integer.class));
     }
 
-    public static File getAllBarcodesFile(File webserverDir)
-    {
-        return new File(webserverDir, "allHTOBarcodes.txt");
-    }
-
-    public static void writeAllBarcodes(File webserverDir) throws PipelineJobException
-    {
-        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(getAllBarcodesFile(webserverDir)), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-        {
-            TableSelector ts = new TableSelector(DbSchema.get(TCRdbSchema.SEQUENCE_ANALYSIS).getTable("barcodes"), PageFlowUtil.set("sequence", "tag_name"), new SimpleFilter(FieldKey.fromString("group_name"), "5p-HTOs"), null);
-            ts.forEachResults(rs -> {
-                writer.writeNext(new String[]{rs.getString(FieldKey.fromString("sequence")), rs.getString(FieldKey.fromString("tag_name"))});
-            });
-        }
-        catch (IOException e)
-        {
-            throw new PipelineJobException(e);
-        }
-    }
-
-    public static Map<String, String> readAllBarcodes(File webserverDir) throws PipelineJobException
-    {
-        File barcodes = getAllBarcodesFile(webserverDir);
-        try (CSVReader reader = new CSVReader(Readers.getReader(barcodes), '\t'))
-        {
-            Map<String, String> ret = new HashMap<>();
-            String[] line;
-            while ((line = reader.readNext()) != null)
-            {
-                ret.put(line[0], line[1]);
-            }
-
-            return ret;
-        }
-        catch (IOException e)
-        {
-            throw new PipelineJobException(e);
-        }
-    }
-
-    public static void logTopUnknownBarcodes(File citeSeqCountUnknownOutput, Logger log, Map<String, String> allBarcodes) throws PipelineJobException
-    {
-        try (CSVReader reader = new CSVReader(Readers.getReader(citeSeqCountUnknownOutput), ','))
-        {
-            String[] line;
-            int lineIdx = 0;
-            log.info("Top unknown barcodes:");
-            while ((line = reader.readNext()) != null)
-            {
-                lineIdx++;
-                if (lineIdx == 1)
-                {
-                    continue;
-                }
-
-                String name = allBarcodes.get(line[0]);
-                log.info(line[0] + (name == null ? "" : " (" + name + ")") + ": " + line[1]);
-
-                if (lineIdx == 7)
-                {
-                    break;
-                }
-            }
-        }
-        catch (IOException e)
-        {
-            throw new PipelineJobException(e);
-        }
-    }
-
     public static void prepareCellHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support, File outputDir, String filterFieldName) throws PipelineJobException
     {
         job.getLogger().debug("preparing cell hashing files");
@@ -706,7 +620,7 @@ public class CellRangerVDJUtils
                 FieldKey.fromString("hashingReadsetId"))
         );
 
-        CellRangerVDJUtils.writeAllBarcodes(outputDir);
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(outputDir);
 
         CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
         File barcodeOutput = utils.getValidHashingBarcodeFile();

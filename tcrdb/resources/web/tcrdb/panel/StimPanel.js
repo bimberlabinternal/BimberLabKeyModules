@@ -1889,10 +1889,10 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 if (instrument === 'Novogene') {
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
-                                        data.push(r.plateId + '-GEX');
+                                        data.push('G' + r.plateId.replace(/-/g, '_'));
                                     }
                                     else {
-                                        data.unshift(r.plateId + '-GEX');
+                                        data.push('G' + r.plateId.replace(/-/g, '_'));
                                     }
                                 }
                                 rows.push(data.join(delim));
@@ -1915,10 +1915,10 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 if (instrument === 'Novogene') {
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
-                                        data.push(r.plateId + '-TCR');
+                                        data.push('T' + r.plateId.replace(/-/g, '_'));
                                     }
                                     else {
-                                        data.unshift(r.plateId + '-TCR');
+                                        data.push('T' + r.plateId.replace(/-/g, '_'));
                                     }
                                 }
 

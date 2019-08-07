@@ -9,6 +9,7 @@
         <column name="population" />
         <column name="replicate" />
         <column name="cells" />
+        <column name="hto" />
         <column name="plateId" />
         <column name="well" />
         <column name="buffer" />

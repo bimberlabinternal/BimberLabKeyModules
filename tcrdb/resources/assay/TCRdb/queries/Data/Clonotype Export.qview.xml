@@ -17,6 +17,7 @@
        <column name="jHit"/>
        <column name="cHit"/>
        <column name="CDR3"/>
+       <column name="cloneNames"/>
        <column name="count"/>
        <column name="fraction"/>
 
@@ -24,9 +25,12 @@
        <column name="workbook" />
        <column name="analysisId/readset/clonotypeTRA"/>
        <column name="analysisId/readset/clonotypeTRB"/>
+       <column name="cloneId"/>
+       <column name="clonotypes"/>
    </columns>
    <sorts>
-       <sort column="sampleName"/>
+       <!--<sort column="sampleName"/>-->
+       <sort column="count" descending="true"/>
        <sort column="locus"/>
    </sorts>
 </customView>

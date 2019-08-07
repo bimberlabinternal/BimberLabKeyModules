@@ -22,12 +22,16 @@ import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONObject;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
 import org.labkey.api.action.MutatingApiAction;
+import org.labkey.api.action.RedirectAction;
 import org.labkey.api.action.SpringActionController;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.CoreSchema;
@@ -42,6 +46,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.module.AllowedDuringUpgrade;
+import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
@@ -89,9 +94,11 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -805,6 +812,169 @@ public class mGAPController extends SpringActionController
         public @NotNull URLHelper getSuccessURL(Object o)
         {
             return getContainer().getStartURL(getUser());
+        }
+    }
+
+    public static class GenomeBrowserForm
+    {
+        private String _databaseId;
+        private String _species;
+        private String _trackName;
+
+        public String getDatabaseId()
+        {
+            return _databaseId;
+        }
+
+        public void setDatabaseId(String databaseId)
+        {
+            _databaseId = databaseId;
+        }
+
+        public String getSpecies()
+        {
+            return _species;
+        }
+
+        public void setSpecies(String species)
+        {
+            _species = species;
+        }
+
+        public String getTrackName()
+        {
+            return _trackName;
+        }
+
+        public void setTrackName(String trackName)
+        {
+            _trackName = trackName;
+        }
+    }
+
+    @RequiresPermission(ReadPermission.class)
+    public class GenomeBrowserAction extends RedirectAction<GenomeBrowserForm>
+    {
+        @Override
+        public URLHelper getURL(GenomeBrowserForm form, Errors errors)
+        {
+            Container target = mGAPManager.get().getMGapContainer();
+            if (target == null)
+            {
+                errors.reject(ERROR_MSG, "No mGAP Project is configured on this server");
+                return null;
+            }
+
+            if (!target.hasPermission(getUser(), ReadPermission.class))
+            {
+                throw new UnauthorizedException("The current user does not have read permission on the folder: " + target.getPath());
+            }
+
+            JSONObject ctx = ModuleLoader.getInstance().getModule(mGAPModule.class).getPageContextJson(getViewContext());
+
+            String jbrowseDatabaseId = StringUtils.trimToNull(form.getDatabaseId());
+            String species = StringUtils.trimToNull(form.getSpecies());
+            if (jbrowseDatabaseId == null)
+            {
+                jbrowseDatabaseId = ctx.getString("human".equals(species) ? "mgapJBrowseHuman": "mgapJBrowse");
+            }
+
+            if (jbrowseDatabaseId == null)
+            {
+                errors.reject(ERROR_MSG, "No databaseId provided");
+                return null;
+            }
+
+            String trackString = "";
+            String trackName = StringUtils.trimToNull(form.getTrackName());
+            if (trackName != null)
+            {
+
+                List<String> trackNames = Arrays.asList(trackName.split(","));
+                Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
+                if (!trackIDs.isEmpty())
+                {
+                    trackString = "&tracks=" + StringUtils.join(trackIDs, ",");
+                }
+            }
+
+            return DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseDatabaseId + trackString, target).getActionURL();
+        }
+
+        public Collection<String> getTracks(Container target, String jbrowseSession, String releaseId, List<String> trackNames)
+        {
+            Set<String> ret = new LinkedHashSet<>();
+
+            UserSchema mgap = QueryService.get().getUserSchema(getUser(), target, mGAPSchema.NAME);
+            UserSchema jbrowse = QueryService.get().getUserSchema(getUser(), target, "jbrowse");
+
+            //find the selected tracks:
+            SimpleFilter trackFilter = new SimpleFilter(FieldKey.fromString("releaseId"), releaseId);
+            trackFilter.addCondition(FieldKey.fromString("trackName"), trackNames, CompareType.IN);
+            List<Integer> outputFileIds = new TableSelector(mgap.getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE), PageFlowUtil.set("vcfId"), trackFilter, null).getArrayList(Integer.class);
+
+            //now database members from these outputFileIds:
+            TableInfo databaseMembers = jbrowse.getTable("database_members");
+            Map<FieldKey, ColumnInfo> cols = QueryService.get().getColumns(databaseMembers, PageFlowUtil.set(FieldKey.fromString("jsonfile/relpath")));
+            if (!outputFileIds.isEmpty())
+            {
+                SimpleFilter dbFilter = new SimpleFilter(FieldKey.fromString("database"), jbrowseSession);
+                dbFilter.addCondition(FieldKey.fromString("jsonfile/outputfile"), outputFileIds, CompareType.IN);
+                List<String> relPaths = new TableSelector(databaseMembers, cols.values(), dbFilter, null).getArrayList(String.class);
+                if (relPaths != null && !relPaths.isEmpty())
+                {
+                    relPaths.forEach(r -> ret.add(r.contains("/") ? r.split("/")[1] : r));
+                }
+                else
+                {
+                    _log.error("Unable to find jsonfiles for tracks: " + StringUtils.join(trackNames, ";") + ", with outputIDs: " + StringUtils.join(outputFileIds, ","));
+                }
+            }
+            else
+            {
+                _log.error("Unable to find tracks: " + StringUtils.join(trackNames, ";"));
+            }
+
+            //any tracks that are defaultVisible for this session, which should include the primary track:
+            SimpleFilter filter = new SimpleFilter(FieldKey.fromString("database"), jbrowseSession);
+            filter.addCondition(FieldKey.fromString("jsonfile/trackJson"), PageFlowUtil.set("visibleByDefault\":true", "visibleByDefault\": true"), CompareType.CONTAINS_ONE_OF);
+            List<String> relPaths = new TableSelector(databaseMembers, cols.values(), filter, null).getArrayList(String.class);
+            if (relPaths != null && !relPaths.isEmpty())
+            {
+                relPaths.forEach(r -> ret.add(r.contains("/") ? r.split("/")[1] : r));
+            }
+            else
+            {
+                _log.error("Unable to find any defaultVisible tracks for database: " + jbrowseSession);
+            }
+
+            //find genome ID.  this could be across folders, so use DB schema
+            DbSchema jbrowseSchema = DbSchema.get("jbrowse", DbSchemaType.Module);
+            TableInfo databasesTable = jbrowseSchema.getTable("databases");
+            Integer genomeId = new TableSelector(databasesTable, PageFlowUtil.set("libraryId"), new SimpleFilter(FieldKey.fromString("objectid"), jbrowseSession), null).getObject(Integer.class);
+
+            //then find the base jbrowse session for this genome.
+            SimpleFilter filterPrimaryDb = new SimpleFilter(FieldKey.fromString("libraryId"), genomeId);
+            filterPrimaryDb.addCondition(FieldKey.fromString("primarydb"), true);
+            String defaultSessionContainerId = new TableSelector(databasesTable, PageFlowUtil.set("container"), filterPrimaryDb, null).getObject(String.class);
+            if (defaultSessionContainerId != null)
+            {
+                //any tracks that are defaultVisible for the primary DB:
+                Container defaultSessionContainer = ContainerManager.getForId(defaultSessionContainerId);
+                UserSchema dsJbrowseSchema = defaultSessionContainer.equals(target) ? jbrowse : QueryService.get().getUserSchema(getUser(), defaultSessionContainer, "jbrowse");
+                SimpleFilter filterTracks = new SimpleFilter(FieldKey.fromString("trackJson"), PageFlowUtil.set("visibleByDefault\":true", "visibleByDefault\": true"), CompareType.CONTAINS_ONE_OF);
+                filterTracks.addCondition(FieldKey.fromString("trackid/library_id"), genomeId);
+                List<Integer> trackIds = new TableSelector(dsJbrowseSchema.getTable("jsonfiles"), PageFlowUtil.set("trackid"), filterTracks, null).getArrayList(Integer.class);
+                if (trackIds != null && !trackIds.isEmpty())
+                {
+                    trackIds.forEach(x -> ret.add("track-" + x));
+                }
+            }
+            else
+            {
+                _log.error("Unable to find the default jbrowse session associated with genome: " + genomeId);
+            }
+            return ret;
         }
     }
 }

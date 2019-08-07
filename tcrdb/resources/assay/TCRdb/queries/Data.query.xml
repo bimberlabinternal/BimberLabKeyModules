@@ -75,6 +75,9 @@
                             <fkDisplayColumnName>rowid</fkDisplayColumnName>
                         </fk>
                     </column>
+                    <column columnName="cloneId">
+                        <url>/query/executeQuery.view?schemaName=${schemaName}&amp;queryName=Data&amp;query.analysisId~eq=${analysisId}&amp;query.cloneId~eq=${cloneId}&amp;query.cDNA~eq=${cDNA}</url>
+                    </column>
                     <column columnName="pipelineRunId">
                         <columnTitle>Run Id</columnTitle>
                         <fk>

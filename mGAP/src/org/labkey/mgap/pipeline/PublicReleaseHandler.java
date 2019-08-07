@@ -446,6 +446,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                                     map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
                                     map.put("af", line[10]);
                                     map.put("identifier", line[11]);
+                                    map.put("cadd", line[12]);
                                     map.put("objectId", new GUID().toString());
 
                                     variantTableRows.add(map);
@@ -509,6 +510,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                             map.put("trackName", rs.getString(FieldKey.fromString("trackName")));
                             map.put("label", rs.getString(FieldKey.fromString("label")));
                             map.put("category", rs.getString(FieldKey.fromString("category")));
+                            map.put("source", rs.getString(FieldKey.fromString("source")));
                             map.put("totalSamples", totalSamples);
                             map.put("description", rs.getString(FieldKey.fromString("description")));
                             map.put("isprimarytrack", rs.getBoolean(FieldKey.fromString("isprimarytrack")));
@@ -987,7 +989,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
             try (VCFFileReader reader = new VCFFileReader(vcfInput); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF"});
+                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "CADD_PH"});
                 while (it.hasNext())
                 {
                     Set<List<String>> queuedLines = new LinkedHashSet<>();
@@ -1558,7 +1560,9 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier));
+            Object cadd = vc.getAttribute("CADD_PH");
+
+            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier, cadd == null ? "" : cadd.toString()));
         }
 
         private Map<String, String> parseSampleMap(File sampleMapFile) throws PipelineJobException

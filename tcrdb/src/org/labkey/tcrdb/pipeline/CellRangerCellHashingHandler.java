@@ -261,17 +261,14 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         File cellToHto = utils.getCellToHtoFile();
-        File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
 
         List<String> extraParams = new ArrayList<>();
-        extraParams.add("-u");
-        extraParams.add(citeSeqCountUnknownOutput.getPath());
-
         extraParams.addAll(commandArgs);
 
         cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams, false, ctx.getSourceDirectory());
         ctx.getFileManager().addOutput(action, "Cell Hashing GEX Calls", cellToHto);
         ctx.getFileManager().addOutput(action, "Cell Hashing GEX Report", new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"));
+        File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
         ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
 
         ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": Cell Hashing Calls", category, rs.getReadsetId(), null, genomeId, null);
@@ -300,12 +297,6 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
                 throw new PipelineJobException(e);
             }
             ctx.getFileManager().addSequenceOutput(forLoupe, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls (Loupe)", rs.getReadsetId(), null, genomeId, null);
-        }
-
-        if (citeSeqCountUnknownOutput.exists())
-        {
-            Map<String, String> allBarcodes = CellRangerVDJUtils.readAllBarcodes(ctx.getSourceDirectory());
-            CellRangerVDJUtils.logTopUnknownBarcodes(citeSeqCountUnknownOutput, ctx.getLogger(), allBarcodes);
         }
 
         return cellToHto;

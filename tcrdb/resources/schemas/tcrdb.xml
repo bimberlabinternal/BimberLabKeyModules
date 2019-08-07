@@ -583,7 +583,7 @@
             </column>
             <column columnName="displayName">
                 <columnTitle>Clone Display Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
                 <description>This can be used to group multiple related clones, such as permutations of the same original clone</description>
             </column>
             <column columnName="chain">

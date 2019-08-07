@@ -24,6 +24,7 @@
 
        <column name="cdr3_nt"/>
        <column name="cloneId"/>
+       <column name="clonotypes"/>
        <column name="alignmentId"/>
 
        <column name="comment" />

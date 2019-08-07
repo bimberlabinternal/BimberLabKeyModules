@@ -54,6 +54,7 @@ DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.49-16.50.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.50-16.51.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.51-16.52.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.52-16.53.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/postgresql/mgap-16.53-16.54.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-15.30-15.31.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.31-16.32.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.32-16.33.sql -text
@@ -77,6 +78,7 @@ DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.49-16.50.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.50-16.51.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.51-16.52.sql -text
 DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.52-16.53.sql -text
+DISCVR/mGAP/resources/schemas/dbscripts/sqlserver/mgap-16.53-16.54.sql -text
 DISCVR/mGAP/resources/schemas/mgap.xml -text
 DISCVR/mGAP/resources/views/_footer.html -text
 DISCVR/mGAP/resources/views/about.html -text
@@ -159,12 +161,12 @@ DISCVR/mGAP/src/org/labkey/mgap/mGAPController.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPManager.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPModule.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGAPSchema.java -text
+DISCVR/mGAP/src/org/labkey/mgap/mGAPUserNotification.java -text
 DISCVR/mGAP/src/org/labkey/mgap/mGapAuditTypeProvider.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/AnnotationHandler.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/BackportLiftedVcfRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/CassandraRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/ClinvarAnnotatorRunner.java -text
-DISCVR/mGAP/src/org/labkey/mgap/pipeline/DISCVRSeqRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/LiftoverVcfRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/MultiSourceAnnotatorRunner.java -text
 DISCVR/mGAP/src/org/labkey/mgap/pipeline/OriginalAlleleAnnotatorRunner.java -text
@@ -175,7 +177,6 @@ DISCVR/mGAP/src/org/labkey/mgap/query/OMIMDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/OMIMPhenotypeDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/OverlappingGenesDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/PhenotypeVariantLinkDisplayColumnFactory.java -text
-DISCVR/mGAP/src/org/labkey/mgap/query/ReleaseTracksCustomizer.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/SourceDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TracksPerReleaseGenomeBrowserDisplayColumnFactory.java -text
 DISCVR/mGAP/src/org/labkey/mgap/query/TriggerHelper.java -text
@@ -258,6 +259,7 @@ DISCVR/tcrdb/resources/external/install.R -text
 DISCVR/tcrdb/resources/external/installMixcr.sh -text
 DISCVR/tcrdb/resources/queries/tcrdb/cdnas.js -text
 DISCVR/tcrdb/resources/queries/tcrdb/cdnas/.qview.xml -text
+DISCVR/tcrdb/resources/queries/tcrdb/cdnas/Assay[!!-~]Info.qview.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/clones/.qview.xml -text
 DISCVR/tcrdb/resources/queries/tcrdb/hashtag_oligos.sql -text
 DISCVR/tcrdb/resources/queries/tcrdb/sortStatusByPlate.query.xml -text

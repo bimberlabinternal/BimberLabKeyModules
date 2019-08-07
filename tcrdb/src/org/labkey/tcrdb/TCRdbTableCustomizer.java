@@ -94,6 +94,8 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         }
 
         addAssayFieldsToCDnas(ti);
+
+        LDKService.get().applyNaturalSort(ti, "plateId");
     }
 
     private void customizeSorts(AbstractTableInfo ti)
@@ -197,7 +199,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
     {
         addAssayFieldsToTable(ti, "analysisId/readset", "LEFT JOIN sequenceanalysis.sequence_analyses a2 ON (a.analysisId = a2.rowId) WHERE a2.readset = " + ExprColumn.STR_TABLE_ALIAS + ".readsetId", "readsetId", "FullTranscript", " (Full Transcriptome)");
 
-        addAssayFieldsToTable(ti, "analysisId/readset", "LEFT JOIN sequenceanalysis.sequence_analyses a2 ON (a.analysisId = a2.rowId) WHERE a2.readset = " + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId", "enrichedReadsetId", "TCREnriched", " (TCR Enriched)");
+        addAssayFieldsToTable(ti, "cdna", " WHERE a.cDNA = " + ExprColumn.STR_TABLE_ALIAS + ".rowid", "enrichedReadsetId", "TCREnriched", " (TCR Enriched)", false);
     }
 
     private void addAssayFieldsToTable(AbstractTableInfo ti, String urlField, String whereClause, String urlSourceCol)
@@ -206,6 +208,11 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
     }
 
     private void addAssayFieldsToTable(AbstractTableInfo ti, String urlField, String whereClause, String urlSourceCol, String colNameSuffix, String colLabelSuffix)
+    {
+        addAssayFieldsToTable(ti, urlField, whereClause, urlSourceCol, colNameSuffix, colLabelSuffix, true);
+    }
+
+    private void addAssayFieldsToTable(AbstractTableInfo ti, String urlField, String whereClause, String urlSourceCol, String colNameSuffix, String colLabelSuffix, boolean addRunColumns)
     {
         if (ti.getColumn("numTcrResults" + colNameSuffix) == null)
         {
@@ -227,7 +234,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             SimpleFilter filter = new SimpleFilter(FieldKey.fromString("locus"), "None", CompareType.NEQ_OR_NULL);
             filter.addCondition(FieldKey.fromString("disabled"), true, CompareType.NEQ_OR_NULL);
 
-            SQLFragment selectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("analysisId"), data.getColumn("CDR3"), data.getColumn("locus"), data.getColumn("fraction"), data.getColumn("count")), filter, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
+            SQLFragment selectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("analysisId"), data.getColumn("CDR3"), data.getColumn("locus"), data.getColumn("fraction"), data.getColumn("count"), data.getColumn("cDNA")), filter, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
             DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=assay." + ap.getName().replaceAll(" ", "") + "." + protocols.get(0).getName() + "&query.queryName=data&query." + urlField + "~eq=${" + urlSourceCol + "}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
 
             SQLFragment sql = new SQLFragment("(select count(*) as expr FROM (").append(selectSql).append(") a " + whereClause + ")");
@@ -254,15 +261,11 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             newCol4.setURL(details);
             ti.addColumn(newCol4);
 
-            TableInfo runs = schema.getTable("runs");
-            SQLFragment runSelectSql = QueryService.get().getSelectSQL(runs, Arrays.asList(runs.getColumn("analysisId")), null, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
-            DetailsURL runDetails = DetailsURL.fromString("/query/executeQuery.view?schemaName=assay." + ap.getName().replaceAll(" ", "") + "." + protocols.get(0).getName() + "&query.queryName=runs&query." + urlField + "~eq=${" + urlSourceCol + "}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
-
-            SQLFragment sql5 = new SQLFragment("(select count(*) as expr FROM (").append(runSelectSql).append(") a " + whereClause + ")");
-            ExprColumn newCol5 = new ExprColumn(ti, "numTcrRuns" + colNameSuffix, sql5, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol5.setLabel("# TCR Runs" + colLabelSuffix);
-            newCol5.setURL(runDetails);
-            ti.addColumn(newCol5);
+            SQLFragment sqlTotal = new SQLFragment("(select sum(count) as expr FROM (").append(selectSql).append(") a " + whereClause + ")");
+            ExprColumn newColTotal = new ExprColumn(ti, "numCells" + colNameSuffix, sqlTotal, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newColTotal.setLabel("# TCR Cells/Reads" + colLabelSuffix);
+            newColTotal.setURL(details);
+            ti.addColumn(newColTotal);
 
             SQLFragment sql6 = new SQLFragment("(select sum(a.count) as expr FROM (").append(selectSql).append(") a " + whereClause + " )");
             ExprColumn newCol6 = new ExprColumn(ti, "totalCDR3Reads" + colNameSuffix, sql6, JdbcType.INTEGER, ti.getColumn("rowid"));
@@ -270,11 +273,53 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             newCol6.setURL(details);
             ti.addColumn(newCol6);
 
+            if (addRunColumns)
+            {
+                TableInfo runs = schema.getTable("runs");
+                SQLFragment runSelectSql = QueryService.get().getSelectSQL(runs, Arrays.asList(runs.getColumn("analysisId")), null, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
+                DetailsURL runDetails = DetailsURL.fromString("/query/executeQuery.view?schemaName=assay." + ap.getName().replaceAll(" ", "") + "." + protocols.get(0).getName() + "&query.queryName=runs&query." + urlField + "~eq=${" + urlSourceCol + "}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
+
+                SQLFragment sql5 = new SQLFragment("(select count(*) as expr FROM (").append(runSelectSql).append(") a " + whereClause + ")");
+                ExprColumn newCol5 = new ExprColumn(ti, "numTcrRuns" + colNameSuffix, sql5, JdbcType.INTEGER, ti.getColumn("rowid"));
+                newCol5.setLabel("# TCR Runs" + colLabelSuffix);
+                newCol5.setURL(runDetails);
+                ti.addColumn(newCol5);
+            }
+
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRA", colNameSuffix, colLabelSuffix);
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRB", colNameSuffix, colLabelSuffix);
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRD", colNameSuffix, colLabelSuffix);
             addClonotypeForLocusCol(ti, selectSql, whereClause, details, "TRG", colNameSuffix, colLabelSuffix);
         }
+    }
+
+    private void addAssayClonotypeColumn(AbstractTableInfo ti)
+    {
+        if (ti.getColumn("clonotypes") != null)
+        {
+            return;
+        }
+
+        if (!(ti instanceof AssayResultTable))
+        {
+            _log.error("Table not an AssayResultTable: " + ti.getName());
+            return;
+        }
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("locus"), "None", CompareType.NEQ_OR_NULL);
+        filter.addCondition(FieldKey.fromString("disabled"), true, CompareType.NEQ_OR_NULL);
+
+        SQLFragment selectSql = QueryService.get().getSelectSQL(ti, Arrays.asList(ti.getColumn("analysisId"), ti.getColumn("cloneId"), ti.getColumn("Run"), ti.getColumn("cDNA"), ti.getColumn("cdr3"), ti.getColumn("locus")), filter, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
+
+        String whereClause = " WHERE (a.cloneId = " + ExprColumn.STR_TABLE_ALIAS + ".cloneId AND a.analysisId = " + ExprColumn.STR_TABLE_ALIAS + ".analysisId AND a.Run = " + ExprColumn.STR_TABLE_ALIAS + ".Run AND a.cDNA = " + ExprColumn.STR_TABLE_ALIAS + ".cDNA) ";
+        SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment(ti.getSqlDialect().concatenate("a.locus", "':'","a.CDR3")), true, true, getChr(ti) + "(10)")).append(" FROM (").append(selectSql).append(") a " + whereClause + " )");
+        ExprColumn newCol = new ExprColumn(ti, "clonotypes", sql, JdbcType.VARCHAR, ti.getColumn("analysisId"), ti.getColumn("cloneId"));
+        newCol.setLabel("Clonotype for Clone");
+        newCol.setDescription("CDR3 clonotypes for this cloneId");
+
+        DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=assay." + ti.getUserSchema().getSchemaName().replaceAll(" ", "") + "&query.queryName=data&query.analysisId~eq=${analysisId}&query.cDNA~eq=${cDNA}&query.cloneId~eq=${cloneId}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
+        newCol.setURL(details);
+        ti.addColumn(newCol);
     }
 
     private void addClonotypeForLocusCol(AbstractTableInfo ti, SQLFragment selectSql, String whereClause, DetailsURL details, String locus, String colNameSuffix, String colLabelSuffix)
@@ -309,7 +354,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         }
 
         AssayProtocolSchema schema = ap.createProtocolSchema(ti.getUserSchema().getUser(), target, protocols.get(0), null);
-        DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=" + schema.getSchemaName() + "&query.queryName=data&query.viewName=Clonotype Export&query.CDR3~eq=${cdr3}&query.sort=analysisId/readset/cdna/sortId/cells", target);
+        DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=" + schema.getSchemaName() + "&query.queryName=data&query.viewName=Clonotype Export&query.CDR3~eq=${cdr3}", target);
         ti.getMutableColumn("cdr3").setURL(details);
 
         String colName = "distinctAnimals";
@@ -338,5 +383,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             col.setLabel("Clone Name(s)");
             ti.addColumn(col);
         }
+
+        addAssayClonotypeColumn(ti);
     }
 }

@@ -28,6 +28,7 @@ import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.buttons.ShowBulkEditButton;
 import org.labkey.api.ldk.buttons.ShowEditUIButton;
+import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -52,7 +53,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.53;
+        return 16.54;
     }
 
     @Override
@@ -69,6 +70,8 @@ public class mGAPModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new ShowEditUIButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_USER_REQUESTS), mGAPSchema.NAME, mGAPSchema.TABLE_USER_REQUESTS);
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING), mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING);
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE), mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE);
+
+        NotificationService.get().registerNotification(new mGAPUserNotification(this));
 
         new PipelineStartup();
     }
@@ -108,7 +111,7 @@ public class mGAPModule extends ExtendedSimpleModule
 
         SimpleFilter filter = new SimpleFilter();
         filter.addClause(ContainerFilter.CURRENT.createFilterClause(mGAPSchema.getInstance().getSchema(), FieldKey.fromString("container"), context.getContainer()));
-        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "version", "jbrowseId", "humanJbrowseId"), filter, new Sort("-releaseDate"));
+        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "objectid", "version", "jbrowseId", "humanJbrowseId"), filter, new Sort("-releaseDate"));
         ts.setMaxRows(1);
         ts.forEachResults(rs -> {
             String jbrowseId = rs.getString(FieldKey.fromString("jbrowseId"));
@@ -135,6 +138,11 @@ public class mGAPModule extends ExtendedSimpleModule
                 ret.put("mgapReleaseVersion", releaseVersion);
             }
 
+            String mgapReleaseGUID = rs.getString(FieldKey.fromString("objectid"));
+            if (mgapReleaseGUID != null)
+            {
+                ret.put("mgapReleaseGUID", mgapReleaseGUID);
+            }
         });
 
         return ret;

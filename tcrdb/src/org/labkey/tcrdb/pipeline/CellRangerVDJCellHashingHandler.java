@@ -3,6 +3,7 @@ package org.labkey.tcrdb.pipeline;
 import au.com.bytecode.opencsv.CSVReader;
 import org.apache.commons.beanutils.ConversionException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONObject;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.DbSchema;
@@ -220,7 +221,9 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         {
                             value = "0";
                         }
-                        r.put("metricvalue", value);
+
+                        String fieldName = NumberUtils.isCreatable(value) ? "metricvalue" : "qualvalue";
+                        r.put(fieldName, value);
 
                         r.put("dataid", so.getDataId());
                         r.put("readset", so.getReadset());
@@ -244,7 +247,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         String delim = description.length() > 0 ? "\n" : "";
 
                         DecimalFormat fmt = new DecimalFormat("##.##%");
-                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative"))
+                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative", "UniqueHtos", "UnknownHtoMatchingKnown"))
                         {
                             if (valueMap.get(metricName) != null)
                             {

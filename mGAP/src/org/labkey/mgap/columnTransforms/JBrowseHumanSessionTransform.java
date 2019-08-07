@@ -30,7 +30,7 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
     }
 
     @Override
-    protected String getTrackDescription()
+    protected String getTrackJson()
     {
         return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**These annotations are created by lifting the macaque variants to human coordinates, and must be viewed in that context.</h2>\"}";
     }
@@ -93,7 +93,7 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
             row.put("createdby", getContainerUser().getUser().getUserId());
             row.put("modified", new Date());
             row.put("modifiedby", getContainerUser().getUser().getUserId());
-            row.put("trackJson", getTrackDescription());
+            row.put("trackJson", getTrackJson());
 
             getStatusLogger().info("creating jsonfile for output: " + outputFileId);
             List<Map<String, Object>> rows = jsonFiles.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), new BatchValidationException(), null, new HashMap<>());
@@ -106,5 +106,11 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
         }
 
         return null;
+    }
+
+    @Override
+    protected String getSessionJson()
+    {
+        return "{\"trackSelector\": {\"sortHierarchical\": false},\"defaultLocation\":\"7:117105838..117144362\"}";
     }
 }

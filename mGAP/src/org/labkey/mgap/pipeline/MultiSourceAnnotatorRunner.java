@@ -3,6 +3,7 @@ package org.labkey.mgap.pipeline;
 import org.apache.log4j.Logger;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
+import org.labkey.api.sequenceanalysis.run.DISCVRSeqRunner;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -17,12 +18,7 @@ public class MultiSourceAnnotatorRunner extends DISCVRSeqRunner
 
     public File execute(File inputVcf, File cassandraVcf, File clinvarVcf, File liftoverRejects, File outputVcf)  throws PipelineJobException
     {
-        List<String> args = new ArrayList<>();
-        args.add(SequencePipelineService.get().getJava8FilePath());
-        args.addAll(SequencePipelineService.get().getJavaOpts());
-        args.add("-jar");
-        args.add(getJar().getPath());
-        args.add("MultiSourceAnnotator");
+        List<String> args = getBaseArgs("MultiSourceAnnotator");
 
         args.add("-V");
         args.add(inputVcf.getPath());

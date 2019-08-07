@@ -25,6 +25,7 @@
        <column name="dGenes"/>
        <column name="jGenes"/>
        <column name="cGenes"/>
+       <column name="cloneId"/>
        <column name="vBestIdentityPercent" />
        <column name="dBestIdentityPercent"/>
        <column name="jBestIdentityPercent"/>

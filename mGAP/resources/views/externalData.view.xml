@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view" title="Collaborators and External Sources of Data">
+<view xmlns="http://labkey.org/data/xml/view" title="External Data and Cohorts">
     <permissions>
         <permission name="read"/>
     </permissions>

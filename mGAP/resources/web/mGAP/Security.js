@@ -16,7 +16,7 @@ mGAP.Security = new function(){
             }
 
             Ext4.Msg.confirm('Approve Requests', 'You are able to approve ' + rowIds.length + ' user requests.  Continue?', function(val){
-                if (val == 'yes'){
+                if (val === 'yes'){
                     Ext4.Msg.wait('Loading...');
                     LABKEY.Ajax.request({
                         method: 'POST',
@@ -27,7 +27,8 @@ mGAP.Security = new function(){
                         success: function(){
                             Ext4.Msg.hide();
                             Ext4.Msg.alert('Success', 'Requests approved!', function(){
-                                LABKEY.DataRegions[dataRegionName].refresh();
+                                //note: drop view, so we see the newly added user(s)
+                                LABKEY.DataRegions[dataRegionName].changeView(null);
                             });
                         },
                         failure: LDK.Utils.getErrorCallback({

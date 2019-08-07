@@ -5,6 +5,7 @@ import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.DbScope;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SimpleFilter;
@@ -94,7 +95,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                     dbRow.put("createdby", getContainerUser().getUser().getUserId());
                     dbRow.put("modified", new Date());
                     dbRow.put("modifiedby", getContainerUser().getUser().getUserId());
-                    dbRow.put("jsonConfig", "{\"trackSelector\": {\"sortHierarchical\": false}}");
+                    dbRow.put("jsonConfig", getSessionJson());
 
                     databases.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(dbRow), new BatchValidationException(), null, new HashMap<>());
                 }
@@ -117,27 +118,25 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         return null;
     }
 
+    protected String getSessionJson()
+    {
+        return "{\"trackSelector\": {\"sortHierarchical\": false}}";
+    }
+
     private void recreateSession(final String databaseId)
     {
-        // Note: because this transction hasnt committed yet, this will fail frequently, but that job can just be restarted.
-        //TODO: consider trying to run on delay or specifically after this is complete.
+        // Note: because this transction hasnt committed yet, the DB record will not exist yet, unless it was created in the previous ETL iteration
         getStatusLogger().info("recreating jbrowse session: " + databaseId);
-        JobRunner jr = JobRunner.getDefault();
-        jr.execute(new Runnable()
-        {
-            @Override
-            public void run()
+        DbScope.getLabKeyScope().addCommitTask(() -> {
+            try
             {
-                try
-                {
-                    JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), databaseId);
-                }
-                catch (PipelineValidationException e)
-                {
-                    getStatusLogger().error(e.getMessage(), e);
-                }
+                JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), databaseId);
             }
-        });
+            catch (PipelineValidationException e)
+            {
+                getStatusLogger().error(e.getMessage(), e);
+            }
+        }, DbScope.CommitTaskOption.POSTCOMMIT);
     }
 
     protected void addTracks(final String databaseId, String releaseId)
@@ -272,7 +271,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                row.put("trackJson", getTrackDescription());
+                row.put("trackJson", getTrackJson());
             }
             else
             {
@@ -309,7 +308,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         return "mGAP Release: " + getInputValue("version");
     }
 
-    protected String getTrackDescription()
+    protected String getTrackJson()
     {
         return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}";
     }

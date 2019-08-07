@@ -25,22 +25,18 @@ public class TracksPerReleaseGenomeBrowserDisplayColumnFactory extends VariantRe
     @Override
     public DisplayColumn createRenderer(ColumnInfo colInfo)
     {
-        return new VariantReleaseGenomeBrowserDisplayColumnFactory.BrowserDataColumn(colInfo, PageFlowUtil.set("releaseId/jbrowseId", "releaseId/container", "jbrowseTracks"))
+        return new VariantReleaseGenomeBrowserDisplayColumnFactory.BrowserDataColumn(colInfo, PageFlowUtil.set("releaseId/jbrowseId", "releaseId/container", "trackName"))
         {
             @Override
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 String jbrowseId = ctx.get(getBoundKey("releaseId", "jbrowseId"), String.class);
                 String containerId = ctx.get(getBoundKey("releaseId", "container"), String.class);
-                String jbrowseTracks = ctx.get(getBoundKey("jbrowseTracks"), String.class);
+                String trackName = ctx.get(getBoundKey("trackName"), String.class);
 
-                if (jbrowseId != null && jbrowseTracks != null)
+                if (jbrowseId != null && trackName != null)
                 {
-                    //reverse order serves to put the 'track-' items (like built-in genes) ahead of the data- items (like VCFs)
-                    List<String> tracks = new ArrayList<>(Arrays.asList(jbrowseTracks.split(",")));
-                    Collections.sort(tracks, Collections.reverseOrder());
-
-                    DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&tracks=" + StringUtils.join(tracks, ","), ContainerManager.getForId(containerId));
+                    DetailsURL url = DetailsURL.fromString("/mgap/genomeBrowser.view?database=" + jbrowseId + "&trackName=" + trackName, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
                 }
             }

@@ -15,7 +15,7 @@
        <column name="cloneNames"/>
        <column name="count"/>
        <column name="fraction"/>
-
+       <column name="cloneId"/>
        <column name="vGene" />
        <column name="dGene"/>
        <column name="jGene"/>
