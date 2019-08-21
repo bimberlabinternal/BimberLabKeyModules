@@ -310,6 +310,15 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             }
 
             getWrapper().setWorkingDir(outputDirectory);
+
+            //Note: we can safely assume only this server is working on these files, so if the _lock file exists, it was from a previous failed job.
+            File lockFile = new File(outputDirectory, id + "/_lock");
+            if (lockFile.exists())
+            {
+                getPipelineCtx().getLogger().info("Lock file exists, deleting: " + lockFile.getPath());
+                lockFile.delete();
+            }
+
             getWrapper().execute(args);
 
             File outdir = new File(outputDirectory, id);
