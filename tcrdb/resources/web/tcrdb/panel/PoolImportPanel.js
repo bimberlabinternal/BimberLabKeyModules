@@ -557,6 +557,9 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         var idxValues = this.getUniqueValues(rowArr, prefix + '_library_index');
         var conc = this.getUniqueValues(rowArr, prefix + '_library_conc');
         var fragment = this.getUniqueValues(rowArr, prefix + '_library_fragment');
+        var subjectid = this.getUniqueValues(rowArr, 'animalId');
+        subjectid = subjectid.length == 1 ? subjectid[0] : null;
+
         if (idxValues.length === 1){
             var guid = LABKEY.Utils.generateUUID();
             readsetRows.push({
@@ -567,6 +570,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                 platform: 'ILLUMINA',
                 application: application,
                 librarytype: librarytype,
+                subjectid: subjectid,
                 sampleType: 'mRNA',
                 objectId: guid,
                 container: LABKEY.Security.currentContainer.id

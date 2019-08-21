@@ -333,6 +333,7 @@ DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbTableCustomizer.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/TCRdbUserSchema.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerCellHashingHandler.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJCellHashingHandler.java -text
+DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJResultHandler.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJUtils.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/CellRangerVDJWrapper.java -text
 DISCVR/tcrdb/src/org/labkey/tcrdb/pipeline/MiXCRAnalysis.java -text

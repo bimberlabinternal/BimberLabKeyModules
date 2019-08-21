@@ -1,30 +1,34 @@
 package org.labkey.mgap.pipeline;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineJobService;
-import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.File;
 
 public class CassandraRunner extends AbstractCommandWrapper
 {
+    private Integer _maxRamOverride = null;
+
     public CassandraRunner(Logger log)
     {
         super(log);
+    }
+
+    public void setMaxRamOverride(Integer maxRamOverride)
+    {
+        _maxRamOverride = maxRamOverride;
     }
 
     public File execute(File inputVcfUnzipped, File outputVcfUnzipped, List<String> extraArgs) throws PipelineJobException
     {
         List<String> args = new ArrayList<>();
         args.add(SequencePipelineService.get().getJavaFilepath());
-        args.addAll(SequencePipelineService.get().getJavaOpts());
+        args.addAll(SequencePipelineService.get().getJavaOpts(_maxRamOverride));
         args.add("-jar");
         args.add(getJar().getPath());
         args.add("-t");

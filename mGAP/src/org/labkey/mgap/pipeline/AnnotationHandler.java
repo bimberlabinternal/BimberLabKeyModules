@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.apache.log4j.spi.LoggerRepository;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.DbSchema;
@@ -272,7 +271,13 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                     int idx = 0;
                     for (File vcf : files)
                     {
-                        bashCommands.add("cat " + vcf.getPath() + (idx == 0 ? " > " : " | grep -v '#' >> ") + outputUnzip.getPath());
+                        //Build header.  Note: swapping the Number=0 for strings is a hack to deal with bad cassdanra data
+                        if (idx == 0)
+                        {
+                            bashCommands.add("cat " + vcf.getPath() + " | head -n 50000 | grep -e '#' | sed 's/Number=0,Type=String/Number=1,Type=String/' > " + outputUnzip.getPath());
+                        }
+
+                        bashCommands.add("cat " + vcf.getPath() + " | grep -v '#' >> " + outputUnzip.getPath());
                         idx++;
                     }
 
@@ -325,7 +330,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 for (SAMSequenceRecord seq : dict.getSequences())
                 {
                     String basename = SequenceAnalysisService.get().getUnzippedBaseName(cassandraAnnotated.getName());
-                    CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), cassandraAnnotated.getParentFile(), basename, grch37Genome, liftedToGRCh37, ctx.getFileManager(), ctx.getLogger());
+                    CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), cassandraAnnotated.getParentFile(), basename, grch37Genome, liftedToGRCh37, ctx.getFileManager(), ctx.getLogger(), null);  //the memory override is moot since it wont be run
                     job.addIntermediateFiles();
                 }
 
@@ -393,22 +398,26 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
             String basename = SequenceAnalysisService.get().getUnzippedBaseName(finalOutput.getName());
 
             SAMSequenceDictionary dict = SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary().toPath());
+            Integer threads = SequencePipelineService.get().getMaxThreads(ctx.getLogger());
+            Integer maxRam = null;
+            if (threads != null)
+            {
+                maxRam = SequencePipelineService.get().getMaxRam();
+                if (maxRam != null)
+                {
+                    maxRam = Math.min(12, Double.valueOf(Math.floor(maxRam / threads)).intValue());
+                }
+            }
+
+
             //NOTE: need to scale RAM per job if running in parallel on the node
-            Integer maxJobs = 1; //SequencePipelineService.get().getMaxThreads(ctx.getLogger());
-            //if (maxJobs == null)
-            //{
-            //   maxJobs = 1;
-            //}
-            //
-            //maxJobs--;
-            //maxJobs = Math.max(1, maxJobs);
-            //maxJobs = Math.min(12, maxJobs);  //keep concurrent reasonable for I/O
+            Integer maxJobs = threads == null ? 1 : Math.min(4, threads);
 
             JobRunner jobRunner = new JobRunner("CassandraRunner", maxJobs);
             List<CassandraPerChrJob> jobs = new ArrayList<>();
             for (SAMSequenceRecord seq : dict.getSequences())
             {
-                CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), finalOutput.getParentFile(), basename, genome, liftedToGRCh37, ctx.getFileManager(), ctx.getLogger());
+                CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), finalOutput.getParentFile(), basename, genome, liftedToGRCh37, ctx.getFileManager(), ctx.getLogger(), maxRam);
                 jobs.add(job);
                 jobRunner.execute(job);
             }
@@ -464,8 +473,9 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
         private TaskFileManager _fileManager;
         private  File _logFile;
         private boolean _hasVariants = true;
+        private Integer _maxRamOverride = null;
 
-        public CassandraPerChrJob(String chr, File outputDir, String outputBasename, ReferenceGenome genome, File inputVcf, TaskFileManager fileManager, Logger primaryLog)
+        public CassandraPerChrJob(String chr, File outputDir, String outputBasename, ReferenceGenome genome, File inputVcf, TaskFileManager fileManager, Logger primaryLog, Integer maxRamOverride)
         {
             _chr = chr;
             _subsetVcf = new File(outputDir, outputBasename + "." + _chr + ".subset.vcf");
@@ -475,6 +485,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
             _fileManager = fileManager;
             _primaryLog = primaryLog;
             _logFile = new File(_cassandraOutputVcf.getParentFile(), outputBasename + "." + chr + ".log");
+            _maxRamOverride = maxRamOverride;
         }
 
         private Logger _logger = null;
@@ -514,8 +525,8 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                 }
                 else
                 {
-                    //TODO: limit RAM?
                     SelectVariantsWrapper sv = new SelectVariantsWrapper(getLog());
+                    sv.setMaxRamOverride(_maxRamOverride);
                     sv.execute(_referenceGenome.getWorkingFastaFile(), _inputVcf, _subsetVcf, Arrays.asList("-L", _chr));
 
                     FileUtils.touch(subsetDone);
@@ -567,6 +578,7 @@ public class AnnotationHandler extends AbstractParameterizedOutputHandler<Sequen
                     }
 
                     CassandraRunner cassRunner = new CassandraRunner(getLog());
+                    cassRunner.setMaxRamOverride(_maxRamOverride);
                     cassRunner.execute(_subsetVcf, _cassandraOutputVcf, extraArgs);
 
                     FileUtils.touch(cassandraDone);

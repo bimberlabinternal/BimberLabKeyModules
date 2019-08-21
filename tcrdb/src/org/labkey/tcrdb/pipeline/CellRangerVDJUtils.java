@@ -4,11 +4,12 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
+import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.Container;
-import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
@@ -31,7 +32,6 @@ import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AlignmentOutputImpl;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
-import org.labkey.api.assay.AssayService;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.ViewBackgroundInfo;
@@ -111,20 +111,22 @@ public class CellRangerVDJUtils
                     {
                         hasError.set(true);
                     }
+                    else
+                    {
+                        support.cacheReadset(results.getInt(FieldKey.fromString("hashingReadsetId")), job.getUser());
+                        readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
+
+                        String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
+                        if (!distinctHTOs.contains(hto) && !StringUtils.isEmpty(results.getString(FieldKey.fromString("sortId/hto/sequence"))))
+                        {
+                            distinctHTOs.add(hto);
+                            bcWriter.writeNext(new String[]{results.getString(FieldKey.fromString("sortId/hto/sequence")), results.getString(FieldKey.fromString("sortId/hto"))});
+                        }
+                    }
 
                     if (results.getObject(FieldKey.fromString("sortId/hto/sequence")) == null)
                     {
                         hasError.set(true);
-                    }
-
-                    support.cacheReadset(results.getInt(FieldKey.fromString("hashingReadsetId")), job.getUser());
-                    readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
-
-                    String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
-                    if (!distinctHTOs.contains(hto) && !StringUtils.isEmpty(results.getString(FieldKey.fromString("sortId/hto/sequence"))))
-                    {
-                        distinctHTOs.add(hto);
-                        bcWriter.writeNext(new String[]{results.getString(FieldKey.fromString("sortId/hto/sequence")), results.getString(FieldKey.fromString("sortId/hto"))});
                     }
                 });
 
@@ -246,6 +248,11 @@ public class CellRangerVDJUtils
 
     public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean useCellHashing, SequenceAnalysisJobSupport support) throws PipelineJobException
     {
+        importAssayData(job, model, outDir, assayId, useCellHashing, support, null);
+    }
+
+    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean useCellHashing, SequenceAnalysisJobSupport support, @Nullable Integer runId) throws PipelineJobException
+    {
         if (assayId == null)
         {
             _log.info("No assay selected, will not import");
@@ -288,8 +295,16 @@ public class CellRangerVDJUtils
 
         _log.info("loading results into assay: " + assayId);
 
-        Integer runId = SequencePipelineService.get().getExpRunIdForJob(job);
-        Readset rs = support.getCachedReadset(model.getReadset());
+        if (runId == null)
+        {
+            runId = SequencePipelineService.get().getExpRunIdForJob(job);
+        }
+        else
+        {
+            job.getLogger().debug("Using supplied runId: " + runId);
+        }
+
+        Readset rs = SequenceAnalysisService.get().getReadset(model.getReadset(), job.getUser());
 
         //first build map of distinct FL sequences:
         _log.info("processing FASTA: " + consensusFasta.getPath());
@@ -555,7 +570,7 @@ public class CellRangerVDJUtils
 
         _log.info("total assay rows: " + rows.size());
         _log.info("total cells: " + totalCells);
-        saveRun(job, protocol, model, rows, outDir);
+        saveRun(job, protocol, model, rows, outDir, runId);
     }
 
     private String removeNone(String input)
@@ -563,7 +578,7 @@ public class CellRangerVDJUtils
         return "None".equals(input) ? null : input;
     }
 
-    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir) throws PipelineJobException
+    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId) throws PipelineJobException
     {
         ViewBackgroundInfo info = job.getInfo();
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
@@ -573,8 +588,6 @@ public class CellRangerVDJUtils
         runProps.put("assayName", "10x");
         runProps.put("Name", "Analysis: " + model.getAnalysisId());
         runProps.put("analysisId", model.getAnalysisId());
-
-        Integer runId = SequencePipelineService.get().getExpRunIdForJob(job);
         runProps.put("pipelineRunId", runId);
 
         JSONObject json = new JSONObject();
