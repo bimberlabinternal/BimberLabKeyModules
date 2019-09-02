@@ -48,7 +48,7 @@ public class NeighboringVariantsDisplayColumnFactory implements DisplayColumnFac
                     url.addParameter("query.startPosition~gte", end);
                     url.addParameter("query.sequenceid~eq", sequenceId);
 
-                    out.write(PageFlowUtil.textLink("View Neighboring Variants", url.toString(), null));
+                    out.write(PageFlowUtil.link("View Neighboring Variants").href(url).toString());
                 }
                 else
                 {
