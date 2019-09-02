@@ -27,7 +27,7 @@ import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
 import org.labkey.api.action.MutatingApiAction;
-import org.labkey.api.action.RedirectAction;
+import org.labkey.api.action.SimpleRedirectAction;
 import org.labkey.api.action.SpringActionController;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
@@ -78,6 +78,7 @@ import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
+import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
 import org.labkey.mgap.pipeline.PublicReleaseHandler;
 import org.springframework.validation.BindException;
@@ -853,16 +854,15 @@ public class mGAPController extends SpringActionController
     }
 
     @RequiresPermission(ReadPermission.class)
-    public class GenomeBrowserAction extends RedirectAction<GenomeBrowserForm>
+    public class GenomeBrowserAction extends SimpleRedirectAction<GenomeBrowserForm>
     {
         @Override
-        public URLHelper getURL(GenomeBrowserForm form, Errors errors)
+        public URLHelper getRedirectURL(GenomeBrowserForm form)
         {
             Container target = mGAPManager.get().getMGapContainer();
             if (target == null)
             {
-                errors.reject(ERROR_MSG, "No mGAP Project is configured on this server");
-                return null;
+                throw new NotFoundException("No mGAP Project is configured on this server");
             }
 
             if (!target.hasPermission(getUser(), ReadPermission.class))
@@ -881,8 +881,7 @@ public class mGAPController extends SpringActionController
 
             if (jbrowseDatabaseId == null)
             {
-                errors.reject(ERROR_MSG, "No databaseId provided");
-                return null;
+                throw new NotFoundException("No databaseId provided");
             }
 
             String trackString = "";
