@@ -20,9 +20,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ApiUsageException;
+import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.ReadOnlyApiAction;
@@ -43,11 +45,13 @@ import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryAction;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.RequiresPermission;
+import org.labkey.api.security.permissions.AdminPermission;
 import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.sequenceanalysis.RefNtSequenceModel;
@@ -56,11 +60,13 @@ import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.StringUtilsLabKey;
+import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NavTree;
 import org.labkey.api.view.SpringErrorView;
 import org.labkey.tcrdb.pipeline.MiXCRWrapper;
 import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletResponse;
@@ -1040,6 +1046,66 @@ public class TCRdbController extends SpringActionController
             resp.put("rowMap", ret);
 
             return resp;
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public class CreateGenomeFromMixcrAction extends ConfirmAction<CreateGenomeFromMixcrForm>
+    {
+        @Override
+        public ModelAndView getConfirmView(CreateGenomeFromMixcrForm form, BindException errors) throws Exception
+        {
+            setTitle("Create Genome from MiXCR Library");
+
+            HtmlView view = new HtmlView("This will create a reference genome from the selected MiXCR library JSON.  Note: if there is an existing sequence in this folder with the same name and sequence, it will be re-used rather than creating a new sequence.  If there is an existing record of the same name, but with a different shorter sequence, that sequence will be marked as disabled.  Do you want to continue?");
+            return view;
+        }
+
+        @Override
+        public boolean handlePost(CreateGenomeFromMixcrForm form, BindException errors) throws Exception
+        {
+            try
+            {
+                TCRdbManager.get().createGenomeFromMixcrDb(form.getRowId(), getUser(), getContainer());
+            }
+            catch (Exception e)
+            {
+                _log.error(e.getMessage(), e);
+                throw e;
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(CreateGenomeFromMixcrForm form, Errors errors)
+        {
+            if (form.getRowId() == null || form.getRowId() == 0)
+            {
+                errors.reject(ERROR_MSG, "Must provide the library row Id");
+            }
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(CreateGenomeFromMixcrForm form)
+        {
+            return QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, TCRdbSchema.NAME, TCRdbSchema.TABLE_LIBRARIES);
+        }
+    }
+
+    public static class CreateGenomeFromMixcrForm
+    {
+        private Integer _rowId;
+
+        public Integer getRowId()
+        {
+            return _rowId;
+        }
+
+        public void setRowId(Integer rowId)
+        {
+            _rowId = rowId;
         }
     }
 }

@@ -31,11 +31,13 @@ import org.labkey.api.ldk.buttons.ShowEditUIButton;
 import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.FieldKey;
-import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.ContainerUser;
-import org.labkey.mgap.pipeline.AnnotationHandler;
-import org.labkey.mgap.pipeline.PublicReleaseHandler;
+import org.labkey.mgap.pipeline.AnnotationStep;
+import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
+import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
+import org.labkey.mgap.pipeline.mGapReleaseGenerator;
 import org.labkey.mgap.query.mGAPUserSchema;
 
 import java.util.Set;
@@ -53,7 +55,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public double getVersion()
     {
-        return 16.54;
+        return 16.55;
     }
 
     @Override
@@ -95,8 +97,10 @@ public class mGAPModule extends ExtendedSimpleModule
             }
             else
             {
-                SequenceAnalysisService.get().registerFileHandler(new PublicReleaseHandler());
-                SequenceAnalysisService.get().registerFileHandler(new AnnotationHandler());
+                //SequenceAnalysisService.get().registerFileHandler(new mGapReleaseGenerator());
+                SequencePipelineService.get().registerPipelineStep(new AnnotationStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsForMgapStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new RenameSamplesForMgapStep.Provider());
 
                 _hasRegistered = true;
             }
@@ -151,6 +155,6 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public @NotNull Set<Class> getUnitTests()
     {
-        return PageFlowUtil.set(PublicReleaseHandler.TestCase.class);
+        return PageFlowUtil.set(mGapReleaseGenerator.TestCase.class);
     }
 }

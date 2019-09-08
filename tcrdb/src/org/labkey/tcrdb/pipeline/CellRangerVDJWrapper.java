@@ -159,6 +159,8 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                         {
                             i.getAndIncrement(); //cant use sequenceId since sequences might be represented multiple times across loci
 
+                            String seq = nt.getSequence();
+
                             //example: >1|TRAV41*01 TRAV41|TRAV41|L-REGION+V-REGION|TR|TRA|None|None
                             StringBuilder header = new StringBuilder();
                             header.append(">").append(i.get()).append("|").append(nt.getName()).append(" ").append(nt.getLineage()).append("|").append(nt.getLineage()).append("|");
@@ -170,7 +172,15 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                             }
                             else if (nt.getLineage().contains("V"))
                             {
-                                type = "L-REGION+V-REGION";
+                                if (seq.length() < 300)
+                                {
+                                    getPipelineCtx().getLogger().info("Using V-REGION due to short length: " + nt.getName() + " / " + nt.getSeqLength());
+                                    type = "V-REGION";
+                                }
+                                else
+                                {
+                                    type = "L-REGION+V-REGION";
+                                }
                             }
                             else if (nt.getLineage().contains("C"))
                             {
@@ -188,7 +198,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                             header.append(type).append("|TR|").append(locus).append("|None|None");
 
                             writer.write(header + "\n");
-                            writer.write(nt.getSequence() + "\n");
+                            writer.write(seq + "\n");
                         }
                         nt.clearCachedSequence();
                     }, RefNtSequenceModel.class);

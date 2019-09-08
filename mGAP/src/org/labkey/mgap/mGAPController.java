@@ -80,7 +80,7 @@ import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
-import org.labkey.mgap.pipeline.PublicReleaseHandler;
+import org.labkey.mgap.pipeline.mGapReleaseGenerator;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -739,7 +739,7 @@ public class mGAPController extends SpringActionController
                             codingPotential.addAll(Arrays.asList(types));
                         }
 
-                        PublicReleaseHandler.Processor.filterCodingPotential(codingPotential);
+                        mGapReleaseGenerator.Processor.filterCodingPotential(codingPotential);
                         //coding potential:
                         String type = StringUtils.join(new TreeSet<>(codingPotential), ";");
                         Long v = map.getOrDefault(type, 0L);

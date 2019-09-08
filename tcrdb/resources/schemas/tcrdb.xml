@@ -66,6 +66,15 @@
                 <isHidden>true</isHidden>
             </column>
         </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <includeScript>/tcrdb/buttons.js</includeScript>
+            <item text="More Actions" insertAfter="last" iconCls="ellipsis-h">
+                <item text="Create Genome">
+                    <onClick>TCRdb.buttons.createMixcrGenome(dataRegionName)</onClick>
+                </item>
+            </item>
+        </buttonBarOptions>
     </table>
     <table tableName="loci" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />

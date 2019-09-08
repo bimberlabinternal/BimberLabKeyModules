@@ -55,9 +55,7 @@ import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandl
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
-import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
-import org.labkey.api.sequenceanalysis.run.AbstractGatkWrapper;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.FileType;
@@ -93,11 +91,11 @@ import java.util.regex.Pattern;
 /**
  * Created by bimber on 5/2/2017.
  */
-public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
+public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private final FileType _vcfType = new FileType(Arrays.asList(".vcf"), ".vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
 
-    public PublicReleaseHandler()
+    public mGapReleaseGenerator()
     {
         super(ModuleLoader.getInstance().getModule(mGAPModule.class), "Create mGAP Release", "This will prepare an input VCF for use as an mGAP public release.  This will optionally include: removing excess annotations and program records, limiting to SNVs (optional) and removing genotype data (optional).  If genotypes are retained, the subject names will be checked for mGAP aliases and replaced as needed.", null, Arrays.asList(
                 ToolParameterDescriptor.create("releaseVersion", "Version", "This string will be used as the version when published.", "textfield", new JSONObject(){{
@@ -120,7 +118,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 {{
                     put("checked", false);
                 }}, false),
-                ToolParameterDescriptor.create(AnnotationHandler.GRCH37, "GRCh37 Genome", "The genome that matches human GRCh37.", "ldk-simplelabkeycombo", new JSONObject()
+                ToolParameterDescriptor.create(AnnotationStep.GRCH37, "GRCh37 Genome", "The genome that matches human GRCh37.", "ldk-simplelabkeycombo", new JSONObject()
                 {{
                     put("width", 400);
                     put("schemaName", "sequenceanalysis");
@@ -181,6 +179,8 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             toSelect.add(FieldKey.fromString("trackName"));
             toSelect.add(FieldKey.fromString("subjectId"));
             toSelect.add(FieldKey.fromString("trackName/isprimarytrack"));
+            toSelect.add(FieldKey.fromString("trackName/mergepriority"));
+            toSelect.add(FieldKey.fromString("trackName/skipvalidation"));
             toSelect.add(FieldKey.fromString("trackName/vcfId"));
             Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(releaseTrackSubsets, toSelect);
 
@@ -199,7 +199,9 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     writer.writeNext(new String[]{
                             rs.getString(FieldKey.fromString("trackName")),
                             rs.getString(FieldKey.fromString("subjectId")),
-                            String.valueOf(rs.getBoolean(FieldKey.fromString("trackName/isprimarytrack")))
+                            String.valueOf(rs.getBoolean(FieldKey.fromString("trackName/isprimarytrack"))),
+                            String.valueOf(rs.getObject(FieldKey.fromString("trackName/mergepriority")) == null ? -1 : rs.getInt(FieldKey.fromString("trackName/mergepriority"))),
+                            String.valueOf(rs.getObject(FieldKey.fromString("trackName/skipvalidation")) != null && rs.getBoolean(FieldKey.fromString("trackName/skipvalidation")))
                     });
 
                     distinctTracks.add(rs.getString(FieldKey.fromString("trackName")));
@@ -283,7 +285,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException(e);
             }
 
-            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(params.getInt(AnnotationHandler.GRCH37), job.getUser()));
+            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(params.getInt(AnnotationStep.GRCH37), job.getUser()));
 
             //find chain files:
             Set<Integer> genomeIds = new HashSet<>();
@@ -293,7 +295,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException("Expected all inputs to use the same genome");
             }
 
-            AnnotationHandler.findChainFile(genomeIds.iterator().next(), params.getInt(AnnotationHandler.GRCH37), support, job);
+            AnnotationStep.findChainFile(genomeIds.iterator().next(), params.getInt(AnnotationStep.GRCH37), support, job);
         }
 
         private File getTrackFile(File outputDir)
@@ -724,7 +726,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             }
 
             GeneToNameTranslator translator = new GeneToNameTranslator(gtf, ctx.getLogger());
-            ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(AnnotationHandler.GRCH37));
+            ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(AnnotationStep.GRCH37));
 
             for (SequenceOutputFile so : inputFiles)
             {
@@ -737,7 +739,6 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                 boolean variantTableOnly = ctx.getParams().optBoolean("variantTableOnly", false);
                 //if variantTableOnly is selected, automatically ignore all these.
                 boolean removeAnnotations = !variantTableOnly && ctx.getParams().optBoolean("removeAnnotations", false);
-                boolean snvOnly = !variantTableOnly && ctx.getParams().optBoolean("snvOnly", false);
                 String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
 
                 File currentVCF = so.getFile();
@@ -749,78 +750,9 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                //remove removeAnnotations
-                if (removeAnnotations)
-                {
-                    File outputFile = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".noAnnotations.vcf.gz");
-                    if (indexExists(outputFile))
-                    {
-                        ctx.getLogger().info("re-using existing output: " + outputFile.getPath());
-                    }
-                    else
-                    {
-                        new AbstractGatkWrapper(ctx.getLogger())
-                        {
-                            public void execute(File input, File outputFile, File referenceFasta) throws PipelineJobException
-                            {
-                                List<String> args = new ArrayList<>();
-                                args.add(SequencePipelineService.get().getJava8FilePath());
-                                args.addAll(SequencePipelineService.get().getJavaOpts());
-                                args.add("-jar");
-                                File gatkJar = getJAR();
-                                gatkJar = new File(getJAR().getParentFile(), FileUtil.getBaseName(gatkJar) + "-discvr.jar");
-                                args.add(gatkJar.getPath());
-                                args.add("-T");
-                                args.add("RemoveAnnotations");
-                                args.add("-R");
-                                args.add(referenceFasta.getPath());
-                                args.add("-V");
-                                args.add(input.getPath());
-                                args.add("-o");
-                                args.add(outputFile.getPath());
+                //TODO: sanity check annotations exist/dont
 
-                                for (String key : Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR", "ReverseComplementedAlleles", "LiftedContig", "LiftedStart", "LiftedStop"))
-                                {
-                                    args.add("-A");
-                                    args.add(key);
-                                }
-
-                                //for (String key : Arrays.asList("DP", "AD"))
-                                //{
-                                //    args.add("-GA");
-                                //    args.add(key);
-                                //}
-
-                                args.add("-ef");
-                                args.add("--clearGenotypeFilter");
-
-                                super.execute(args);
-                            }
-                        }.execute(currentVCF, outputFile, genome.getWorkingFastaFile());
-                    }
-
-                    currentVCF = outputFile;
-                    ctx.getFileManager().addIntermediateFile(outputFile);
-                    ctx.getFileManager().addIntermediateFile(new File(outputFile.getPath() + ".tbi"));
-                }
-
-                //SNPs only:
-                if (snvOnly)
-                {
-                    File outputFile = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".snv.vcf.gz");
-                    if (indexExists(outputFile))
-                    {
-                        ctx.getLogger().info("re-using existing output: " + outputFile.getPath());
-                    }
-                    else
-                    {
-                        SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
-                        wrapper.execute(genome.getWorkingFastaFile(), currentVCF, outputFile, Arrays.asList("--selectTypeToInclude", "SNP"));
-                    }
-                    currentVCF = outputFile;
-                    ctx.getFileManager().addIntermediateFile(outputFile);
-                    ctx.getFileManager().addIntermediateFile(new File(outputFile.getPath() + ".tbi"));
-                }
+                //TODO: sanity check all sample names comply
 
                 if (!variantTableOnly)
                 {
@@ -947,7 +879,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
             ctx.getFileManager().addIntermediateFile(new File(noGenotypes.getPath() + ".tbi"));
 
             //lift to target genome
-            Integer chainFileId = ctx.getSequenceSupport().getCachedObject(AnnotationHandler.CHAIN_FILE, Integer.class);
+            Integer chainFileId = ctx.getSequenceSupport().getCachedObject(AnnotationStep.CHAIN_FILE, Integer.class);
             File chainFile = ctx.getSequenceSupport().getCachedData(chainFileId);
 
             ctx.getLogger().info("lift to genome: " + grch37Genome.getGenomeId());
@@ -1886,7 +1818,7 @@ public class PublicReleaseHandler extends AbstractParameterizedOutputHandler<Seq
                     //Night_blindness,_congenital_stationary_(complete),_1F,_autosomalrecessive,_615058_(3)
             );
 
-            PublicReleaseHandler.Processor pr = new PublicReleaseHandler.Processor();
+            mGapReleaseGenerator.Processor pr = new mGapReleaseGenerator.Processor();
 
             for (Pair<String, Set<String>> pair : toTest)
             {

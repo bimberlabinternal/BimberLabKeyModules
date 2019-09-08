@@ -572,7 +572,7 @@
     <table tableName="releaseTracks" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>rowid</pkColumnName>
-        <tableTitle>mGAP Release Tracks</tableTitle>
+        <tableTitle>mGAP Tracks Published In Each New Release</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
@@ -616,6 +616,13 @@
             </column>
             <column columnName="isprimarytrack">
                 <columnTitle>Is Primary Track?</columnTitle>
+            </column>
+            <column columnName="mergepriority">
+                <columnTitle>Merge Priority Order</columnTitle>
+                <description>This order will be used for genotype priority order when merging to create the primary release VCF.  Lower numbers have higher priority.  Set to -1 to exclude this track when merging.</description>
+            </column>
+            <column columnName="skipvalidation">
+                <columnTitle>Skip Validation?</columnTitle>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
