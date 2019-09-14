@@ -1,4 +1,4 @@
 {table}
 Filename|Component|Version|Source|License|LabKey Dev|Purpose
-mixcr-2.0.3.jar|MiXCR|2.0.3|{link:MiXCR|https://github.com/milaboratory/mixcr}|{link:MIT|http://www.opensource.org/licenses/mit-license.php}|bbimber|TCR Analysis
+repseqio-1.3.2.jar|repseqio|1.3.2|{link:repseqio|https://github.com/repseqio/repseqio}|{link:Apache 2.0|http://www.apache.org/licenses/}|bbimber|TCR Analysis
 {table}
