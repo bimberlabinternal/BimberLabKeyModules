@@ -13,15 +13,18 @@ public class TCRdbBulkImportNavItem extends AbstractImportingNavItem
 {
     public static final String NAME = "TCR/10x Import";
 
-    public TCRdbBulkImportNavItem(DataProvider provider, String label, LaboratoryService.NavItemCategory itemType, String reportCategory)
+    private String _url;
+
+    public TCRdbBulkImportNavItem(DataProvider provider, String label, LaboratoryService.NavItemCategory itemType, String reportCategory, String url)
     {
         super(provider, NAME, label, itemType, (reportCategory == null ? "TCRdb" : reportCategory));
+        _url = url;
     }
 
     @Override
     public ActionURL getImportUrl(Container c, User u)
     {
-        return DetailsURL.fromString("tcrdb/poolImport.view").getActionURL();
+        return DetailsURL.fromString(_url).getActionURL();
     }
 
     @Override

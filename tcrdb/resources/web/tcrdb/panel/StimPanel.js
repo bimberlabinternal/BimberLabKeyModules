@@ -1884,7 +1884,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 cleanedName = cleanedName.replace(/\//g, '-');
                                 bc = doRC ? doReverseComplement(bc) : bc;
 
-                                var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name'], (idx+1));
+                                var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']);
                                 var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
                                 if (instrument === 'Novogene') {
                                     if (r.plateAlias) {
@@ -1910,7 +1910,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 cleanedName = cleanedName.replace(/\//g, '-');
                                 bc = doRC ? doReverseComplement(bc) : bc;
 
-                                var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (idx+1) + (instrument === 'Novogene' ? '' : '-TCR'));
+                                var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (instrument === 'Novogene' ? '' : '-TCR'));
                                 var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
                                 if (instrument === 'Novogene') {
                                     if (r.plateAlias) {

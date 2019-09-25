@@ -31,9 +31,11 @@ import org.labkey.api.ldk.buttons.ShowEditUIButton;
 import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
@@ -72,6 +74,7 @@ public class mGAPModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new ShowEditUIButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_USER_REQUESTS), mGAPSchema.NAME, mGAPSchema.TABLE_USER_REQUESTS);
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING), mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING);
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE), mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE);
+        LDKService.get().registerQueryButton(new ReleaseButton(this), mGAPSchema.NAME, mGAPSchema.TABLE_RELEASE_TRACKS);
 
         NotificationService.get().registerNotification(new mGAPUserNotification(this));
 
@@ -97,7 +100,7 @@ public class mGAPModule extends ExtendedSimpleModule
             }
             else
             {
-                //SequenceAnalysisService.get().registerFileHandler(new mGapReleaseGenerator());
+                SequenceAnalysisService.get().registerFileHandler(new mGapReleaseGenerator());
                 SequencePipelineService.get().registerPipelineStep(new AnnotationStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RenameSamplesForMgapStep.Provider());

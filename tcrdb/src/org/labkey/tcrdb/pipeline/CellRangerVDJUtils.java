@@ -6,6 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
+import org.labkey.api.assay.AssayProtocolSchema;
+import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
@@ -26,6 +28,7 @@ import org.labkey.api.query.ValidationException;
 import org.labkey.api.reader.FastaDataLoader;
 import org.labkey.api.reader.FastaLoader;
 import org.labkey.api.reader.Readers;
+import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
@@ -42,6 +45,7 @@ import org.labkey.tcrdb.TCRdbSchema;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,15 +67,15 @@ public class CellRangerVDJUtils
         _sourceDir = sourceDir;
     }
     
-    public void prepareVDJHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support) throws PipelineJobException
+    public void prepareVDJHashingFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support) throws PipelineJobException
     {
-        _log.debug("preparing cell hashing files");
-
-        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir);
-
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
         TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS);
+
+        _log.debug("preparing cDNA and cell hashing files");
+
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir);
 
         Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
                 FieldKey.fromString("rowid"),
@@ -91,6 +95,7 @@ public class CellRangerVDJUtils
             writer.writeNext(new String[]{"TCR_ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HTO_Name", "HTO_Seq", "HashingReadsetId"});
             List<Readset> cachedReadsets = support.getCachedReadsets();
             Set<String> distinctHTOs = new HashSet<>();
+            Set<Boolean> hashingStatus = new HashSet<>();
             for (Readset rs : cachedReadsets)
             {
                 AtomicBoolean hasError = new AtomicBoolean(false);
@@ -107,11 +112,13 @@ public class CellRangerVDJUtils
                             String.valueOf(results.getInt(FieldKey.fromString("hashingReadsetId")))
                     });
 
-                    if (results.getObject(FieldKey.fromString("hashingReadsetId")) == null)
+                    boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
+                    hashingStatus.add(useCellHashing);
+                    if (useCellHashing && results.getObject(FieldKey.fromString("hashingReadsetId")) == null)
                     {
                         hasError.set(true);
                     }
-                    else
+                    else if (useCellHashing)
                     {
                         support.cacheReadset(results.getInt(FieldKey.fromString("hashingReadsetId")), job.getUser());
                         readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
@@ -122,11 +129,11 @@ public class CellRangerVDJUtils
                             distinctHTOs.add(hto);
                             bcWriter.writeNext(new String[]{results.getString(FieldKey.fromString("sortId/hto/sequence")), results.getString(FieldKey.fromString("sortId/hto"))});
                         }
-                    }
 
-                    if (results.getObject(FieldKey.fromString("sortId/hto/sequence")) == null)
-                    {
-                        hasError.set(true);
+                        if (results.getObject(FieldKey.fromString("sortId/hto/sequence")) == null)
+                        {
+                            hasError.set(true);
+                        }
                     }
                 });
 
@@ -134,9 +141,15 @@ public class CellRangerVDJUtils
                 {
                     throw new PipelineJobException("No cell hashing readset or HTO found for one or more cDNAs. see the file: " + output.getName());
                 }
+
+                if (hashingStatus.size() > 1)
+                {
+                    throw new PipelineJobException("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
+                }
             }
 
-            if (distinctHTOs.isEmpty())
+            boolean useCellHashing = hashingStatus.iterator().next();
+            if (useCellHashing && distinctHTOs.isEmpty())
             {
                 throw new PipelineJobException("Cell hashing was selected, but no HTOs were found");
             }
@@ -149,7 +162,6 @@ public class CellRangerVDJUtils
         {
             throw new PipelineJobException(e);
         }
-
     }
 
     public File getCDNAInfoFile()
@@ -175,6 +187,12 @@ public class CellRangerVDJUtils
     public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
+        if (readsetToHashing.isEmpty())
+        {
+            _log.info("No cached hashing readsets, skipping");
+            return null;
+        }
+
         _log.debug("total cashed readset/HTO pairs: " + readsetToHashing.size());
 
         //prepare whitelist of cell indexes
@@ -246,12 +264,12 @@ public class CellRangerVDJUtils
         return new File(_sourceDir, "cellbarcodeToHTO.calls.txt");
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean useCellHashing, SequenceAnalysisJobSupport support) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean deleteExisting) throws PipelineJobException
     {
-        importAssayData(job, model, outDir, assayId, useCellHashing, support, null);
+        importAssayData(job, model, outDir, assayId, null, deleteExisting);
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean useCellHashing, SequenceAnalysisJobSupport support, @Nullable Integer runId) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
     {
         if (assayId == null)
         {
@@ -263,13 +281,6 @@ public class CellRangerVDJUtils
         if (protocol == null)
         {
             throw new PipelineJobException("Unable to find protocol: " + assayId);
-        }
-
-        File clonotypeCsv = new File(outDir, "clonotypes.csv");
-        if (!clonotypeCsv .exists())
-        {
-            _log.warn("unable to find consensus contigs: " + clonotypeCsv .getPath());
-            return;
         }
 
         File allCsv = getPerCellCsv(outDir);
@@ -345,9 +356,15 @@ public class CellRangerVDJUtils
                         continue;
                     }
 
+                    String htoName = StringUtils.trimToNull(line[5]);
+
                     CDNA cdna = CDNA.getRowId(Integer.parseInt(line[1]));
-                    htoNameToCDNAMap.put(line[5], cdna);
                     cDNAMap.put(Integer.parseInt(line[1]), cdna);
+                    if (htoName != null)
+                    {
+                        htoNameToCDNAMap.put(htoName, cdna);
+                    }
+
                 }
             }
             catch (IOException e)
@@ -357,8 +374,21 @@ public class CellRangerVDJUtils
         }
         else
         {
-            _log.debug("Cell hashing is not used");
+            throw new PipelineJobException("Unable to find cDNA info file, expected: " + cDNAFile.getPath());
         }
+
+        boolean useCellHashing = !htoNameToCDNAMap.isEmpty();
+        Integer defaultCDNA = null;
+        if (!useCellHashing)
+        {
+            if (cDNAMap.size() > 1)
+            {
+                throw new PipelineJobException("More than one cDNA record found, but cell hashing is not used");
+            }
+
+            defaultCDNA = cDNAMap.keySet().iterator().next();
+        }
+
 
         File cellbarcodeToHtoFile = getCellToHtoFile();
         Map<String, Integer> cellBarcodeToCDNAMap = new HashMap<>();
@@ -444,7 +474,7 @@ public class CellRangerVDJUtils
 
                 //NOTE: 10x appends "-1" to barcode sequences
                 String barcode = line[0].split("-")[0];
-                Integer cDNA = useCellHashing ? cellBarcodeToCDNAMap.get(barcode) : Integer.valueOf(-1);
+                Integer cDNA = useCellHashing ? cellBarcodeToCDNAMap.get(barcode) : defaultCDNA;
                 if (cDNA == null)
                 {
                     _log.info("skipping cell barcode without HTO call: " + barcode);
@@ -509,13 +539,7 @@ public class CellRangerVDJUtils
 
                     Map<String, Object> row = new CaseInsensitiveHashMap<>();
 
-                    if (cDNA == -1)
-                    {
-                        row.put("sampleName", rs.getName());
-                        row.put("subjectId", rs.getSubjectId());
-                        row.put("sampleDate", rs.getSampleDate());
-                    }
-                    else if (cDNARecord == null)
+                    if (cDNARecord == null)
                     {
                         throw new PipelineJobException("Unable to find cDNA for ID: " + cDNA);
                     }
@@ -570,7 +594,7 @@ public class CellRangerVDJUtils
 
         _log.info("total assay rows: " + rows.size());
         _log.info("total cells: " + totalCells);
-        saveRun(job, protocol, model, rows, outDir, runId);
+        saveRun(job, protocol, model, rows, outDir, runId, deleteExisting);
     }
 
     private String removeNone(String input)
@@ -578,7 +602,7 @@ public class CellRangerVDJUtils
         return "None".equals(input) ? null : input;
     }
 
-    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId) throws PipelineJobException
+    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId, boolean deleteExisting) throws PipelineJobException
     {
         ViewBackgroundInfo info = job.getInfo();
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
@@ -605,7 +629,20 @@ public class CellRangerVDJUtils
             _log.debug("saving assay file to: " + assayTmp.getPath());
             try
             {
-                LaboratoryService.get().saveAssayBatch(rows, json, assayTmp, vc, AssayService.get().getProvider(protocol), protocol);
+                AssayProvider ap = AssayService.get().getProvider(protocol);
+                if (deleteExisting)
+                {
+                    if (model.getReadset() == null)
+                    {
+                        _log.info("No readset found for this sample, cannot delete existing runs");
+                    }
+                    else
+                    {
+                        deleteExistingData(ap, protocol, info.getContainer(), info.getUser(), _log, model.getReadset());
+                    }
+                }
+
+                LaboratoryService.get().saveAssayBatch(rows, json, assayTmp, vc, ap, protocol);
             }
             catch (ValidationException e)
             {
@@ -614,9 +651,34 @@ public class CellRangerVDJUtils
         }
     }
 
+    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, int readsetId)
+    {
+        log.info("Preparing to delete any existing runs from this container for the same readset:" + readsetId);
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysisId/readset"), readsetId);
+        filter.addCondition(FieldKey.fromString("Folder"), c.getId());
+
+        AssayProtocolSchema aps = ap.createProtocolSchema(u, c, protocol, null);
+        TableSelector ts = new TableSelector(aps.createRunsTable(null), PageFlowUtil.set("RowId"), filter, null);
+        if (ts.exists())
+        {
+            Collection<Integer> toDelete = ts.getArrayList(Integer.class);
+            if (!toDelete.isEmpty())
+            {
+                log.info("Deleting existing runs: " + StringUtils.join(toDelete, ";"));
+                ExperimentService.get().deleteExperimentRunsByRowIds(c, u, toDelete);
+            }
+        }
+    }
+
     public static Map<Integer, Integer> getCachedReadsetMap(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
         return support.getCachedObject(CellRangerVDJUtils.READSET_TO_HASHING_MAP, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, Integer.class, Integer.class));
+    }
+
+    public boolean useCellHashing(SequenceAnalysisJobSupport support) throws PipelineJobException
+    {
+        return !getCachedReadsetMap(support).isEmpty();
     }
 
     public static void prepareCellHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support, File outputDir, String filterFieldName) throws PipelineJobException
@@ -642,10 +704,18 @@ public class CellRangerVDJUtils
         {
             List<Readset> cachedReadsets = support.getCachedReadsets();
             Set<String> distinctHTOs = new HashSet<>();
+            Set<Boolean> hashingStatus = new HashSet<>();
             for (Readset rs : cachedReadsets)
             {
                 AtomicBoolean hasError = new AtomicBoolean(false);
                 new TableSelector(cDNAs, colMap.values(), new SimpleFilter(FieldKey.fromString(filterFieldName), rs.getRowId()), null).forEachResults(results -> {
+                    boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
+                    hashingStatus.add(useCellHashing);
+
+                    if (!useCellHashing)
+                    {
+                        return;
+                    }
 
                     if (results.getObject(FieldKey.fromString("hashingReadsetId")) == null || results.getInt(FieldKey.fromString("hashingReadsetId")) == 0)
                     {
@@ -674,7 +744,13 @@ public class CellRangerVDJUtils
                 }
             }
 
-            if (distinctHTOs.isEmpty())
+            if (hashingStatus.size() > 1)
+            {
+                throw new PipelineJobException("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
+            }
+
+            boolean useCellHashing = hashingStatus.iterator().next();
+            if (useCellHashing && distinctHTOs.isEmpty())
             {
                 throw new PipelineJobException("Cell hashing was selected, but no HTOs were found");
             }

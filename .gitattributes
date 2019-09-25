@@ -147,7 +147,9 @@ DISCVR/mGAP/resources/web/mGAP/welcome/images/102_6438.jpg -text
 DISCVR/mGAP/resources/web/mGAP/welcome/images/102_7224.jpg -text
 DISCVR/mGAP/resources/web/mGAP/welcome/js/bootstrap.min.js -text
 DISCVR/mGAP/resources/web/mGAP/welcome/js/jquery.cycle.all.js -text
+DISCVR/mGAP/resources/web/mGAP/window/ReleaseWindow.js -text
 DISCVR/mGAP/resources/web/mGAP/window/SequenceDownloadWindow.js -text
+DISCVR/mGAP/src/org/labkey/mgap/buttons/ReleaseButton.java -text
 DISCVR/mGAP/src/org/labkey/mgap/columnTransforms/AbstractVariantTransform.java -text
 DISCVR/mGAP/src/org/labkey/mgap/columnTransforms/ExpDataTransform.java -text
 DISCVR/mGAP/src/org/labkey/mgap/columnTransforms/GenomeTransform.java -text
@@ -310,6 +312,8 @@ DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.43-15.44.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.44-15.45.sql -text
 DISCVR/tcrdb/resources/schemas/dbscripts/sqlserver/tcrdb-15.45-15.46.sql -text
 DISCVR/tcrdb/resources/schemas/tcrdb.xml -text
+DISCVR/tcrdb/resources/views/cDNAImport.html -text
+DISCVR/tcrdb/resources/views/cDNAImport.view.xml -text
 DISCVR/tcrdb/resources/views/poolImport.html -text
 DISCVR/tcrdb/resources/views/poolImport.view.xml -text
 DISCVR/tcrdb/resources/views/stimDashboard.html -text
@@ -322,6 +326,7 @@ DISCVR/tcrdb/resources/web/tcrdb/field/LibraryField.js -text
 DISCVR/tcrdb/resources/web/tcrdb/field/LocusField.js -text
 DISCVR/tcrdb/resources/web/tcrdb/panel/PoolImportPanel.js -text
 DISCVR/tcrdb/resources/web/tcrdb/panel/StimPanel.js -text
+DISCVR/tcrdb/resources/web/tcrdb/panel/cDNAImportPanel.js -text
 DISCVR/tcrdb/resources/web/tcrdb/window/ChangeStatusWindow.js -text
 DISCVR/tcrdb/resources/web/tcrdb/window/DownloadCloneWindow.js -text
 DISCVR/tcrdb/resources/web/tcrdb/window/ExportDataWindow.js -text

@@ -157,7 +157,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceSequenceOutputHandlerTask(job))
         {
-            File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.xml");
+            File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
             if (jobXml.exists())
             {
                 try (BufferedReader reader = Readers.getReader(jobXml))

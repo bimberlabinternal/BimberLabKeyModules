@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.DELETE_EXISTING_ASSAY_DATA;
 import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.TARGET_ASSAY;
 
 public class CellRangerVDJResultHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
@@ -32,6 +33,9 @@ public class CellRangerVDJResultHandler extends AbstractParameterizedOutputHandl
     {
         super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger VDJ/Cell Result Import", "This will run parse the results of Cell Ranger VDJ and import the results into the target assay.", new LinkedHashSet<>(PageFlowUtil.set("tcrdb/field/AssaySelectorField.js")), Arrays.asList(
                 ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
+                ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
+                    put("checked", true);
+                }}, true),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files.", "checkbox", new JSONObject(){{
                     put("checked", false);
                 }}, false)
@@ -98,10 +102,16 @@ public class CellRangerVDJResultHandler extends AbstractParameterizedOutputHandl
                     throw new PipelineJobException("Invalid assay Id, cannot import: " + job.getParameters().get(TARGET_ASSAY));
                 }
 
+                Boolean deleteExistingData = false;
+                if (job.getParameters().get(DELETE_EXISTING_ASSAY_DATA) != null)
+                {
+                    deleteExistingData = ConvertHelper.convert(job.getParameters().get(DELETE_EXISTING_ASSAY_DATA), Boolean.class);
+                }
+
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, false, support, model.getRunId());
+                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, model.getRunId(), deleteExistingData);
                 }
             }
         }

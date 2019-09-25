@@ -33,24 +33,6 @@
         <exp:Label>Sample Category</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>stimulation</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>Stimulation</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>plate</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>Plate</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>well</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>Well</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
         <exp:Name>libraryId</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
@@ -109,12 +91,6 @@
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#float</exp:RangeURI>
         <exp:Label>Fraction</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>targets</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
-        <exp:Label># Targets</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>vHits</exp:Name>
@@ -189,24 +165,6 @@
         <exp:Label>C-Genes</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>vBestIdentityPercent</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>V Best Identity Percent</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>dBestIdentityPercent</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>D Best Identity Percent</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>jBestIdentityPercent</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>J Best Identity Percent</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
         <exp:Name>cdr3_nt</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
@@ -268,7 +226,7 @@
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
         <exp:Name>cDNA</exp:Name>
-        <exp:Required>false</exp:Required>
+        <exp:Required>true</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#int</exp:RangeURI>
         <exp:Label>cDNA Id</exp:Label>
     </exp:PropertyDescriptor>
@@ -285,27 +243,9 @@
         <exp:Label>Disabled?</exp:Label>
     </exp:PropertyDescriptor>
     <exp:PropertyDescriptor>
-        <exp:Name>vMismatches</exp:Name>
+        <exp:Name>calculatedPopulation</exp:Name>
         <exp:Required>false</exp:Required>
         <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>VRegion Mismatches</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>dMismatches</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>DRegion Mismatches</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>jMismatches</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>JRegion Mismatches</exp:Label>
-    </exp:PropertyDescriptor>
-    <exp:PropertyDescriptor>
-        <exp:Name>cMismatches</exp:Name>
-        <exp:Required>false</exp:Required>
-        <exp:RangeURI>http://www.w3.org/2001/XMLSchema#string</exp:RangeURI>
-        <exp:Label>CExon1 Mismatches</exp:Label>
+        <exp:Label>Calculated Population</exp:Label>
     </exp:PropertyDescriptor>
 </ap:domain>

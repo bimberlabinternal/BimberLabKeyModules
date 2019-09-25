@@ -42,6 +42,7 @@ import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.PicardWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
+import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
@@ -74,6 +75,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
+
+import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.DELETE_EXISTING_ASSAY_DATA;
 
 
 /**
@@ -122,6 +125,9 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     ToolParameterDescriptor.create(LOCI, "Loci", "Clones matching the selected loci will be exported.", "tcrdb-locusfield", new JSONObject()
                     {{
                         put("value", "ALL");
+                    }}, true),
+                    ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
+                        put("checked", true);
                     }}, true),
                     ToolParameterDescriptor.create(FLAG_MISSENSE, "Flag Missense CDR3", "If checked, if a sample has duplicate CDR3 clones from the same locus, and and one of these is missense, that clone will be flagged and excluded from many reports.", "checkbox", new JSONObject()
                     {{
@@ -718,7 +724,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             "length",
             "count",
             "fraction",
-            "targets",
             "vHits",
             "dHits",
             "jHits",
@@ -731,9 +736,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
             "jGenes",
             "cGene",
             "cGenes",
-            "vBestIdentityPercent",
-            "dBestIdentityPercent",
-            "jBestIdentityPercent",
             "cdr3_nt",
             "cdr3_qual",
             "sequence"
@@ -1349,7 +1351,6 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
         row.put("sampleType", null);
         row.put("category", null);
-        row.put("stimulation", null);
 
         row.put("alignmentId", model.getAlignmentFile());
         row.put("analysisId", model.getRowId());
@@ -1597,7 +1598,21 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
 
         getPipelineCtx().getLogger().debug("saving assay file to: " + assayTmp.getPath());
-        LaboratoryService.get().saveAssayBatch(rd.rows, json, assayTmp, vc, AssayService.get().getProvider(protocol), protocol);
+
+        AssayProvider ap = AssayService.get().getProvider(protocol);
+        boolean deleteExistingAssayData = getProvider().getParameterByName(DELETE_EXISTING_ASSAY_DATA).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+        if (deleteExistingAssayData)
+        {
+            if (model.getReadset() == null)
+            {
+                getPipelineCtx().getLogger().info("No readset found for this sample, cannot delete existing runs");
+            }
+            else
+            {
+                CellRangerVDJUtils.deleteExistingData(ap, protocol, getPipelineCtx().getJob().getContainer(), getPipelineCtx().getJob().getUser(), getPipelineCtx().getLogger(), model.getReadset());
+            }
+        }
+        LaboratoryService.get().saveAssayBatch(rd.rows, json, assayTmp, vc, ap, protocol);
     }
 
     private JSONArray getTcrDbs() throws PipelineJobException

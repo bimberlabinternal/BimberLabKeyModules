@@ -4,14 +4,14 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     //TODO: replicate, buffer?
     COLUMNS: [{
         name: 'expt',
-        labels: ['Expt', 'Expt #', 'Experiment'],
+        labels: ['Expt', 'Expt #', 'Experiment', 'Exp#', 'Exp #'],
         allowRowSpan: true,
         alwaysShow: true,
         transform: 'expt',
         allowBlank: false
     },{
         name: 'plateId',
-        labels: ['Pool/Tube', 'Pool', 'Pool Num', 'Pool #'],
+        labels: ['Pool/Tube', 'Pool', 'Pool Num', 'Pool #', 'Tube #', 'Tube#'],
         allowRowSpan: true,
         alwaysShow: true,
         transform: 'pool',
@@ -26,7 +26,8 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         name: 'animalId',
         labels: ['Animal Id', 'SubjectId', 'Subject Id'],
         allowRowSpan: true,
-        allowBlank: false
+        allowBlank: false,
+        transform: 'animal',
     },{
         name: 'sampleDate',
         labels: ['Sample Date', 'Date'],
@@ -43,9 +44,10 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         allowBlank: false
     },{
         name: 'stim',
-        labels: ['Stim'],
+        labels: ['Stim', 'Peptide Only Conditions'],
         allowRowSpan: false,
-        allowBlank: false
+        allowBlank: false,
+        transform: 'stim'
     },{
         name: 'stim_num',
         labels: ['Stim #'],
@@ -57,8 +59,14 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         allowRowSpan: true,
         allowBlank: false
     },{
+        name: 'sortId',
+        labels: ['Sort Id'],
+        allowRowSpan: false,
+        allowBlank: true,
+        alwaysShow: true
+    },{
         name: 'hto',
-        labels: ['HTO', 'HTO Oligo', 'HTO-Oligo', 'HTO barcode'],
+        labels: ['HTO', 'HTO Oligo', 'HTO-Oligo', 'HTO barcode', 'Barcode'],
         allowRowSpan: true,
         transform: 'hto'
     },{
@@ -91,7 +99,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         allowRowSpan: true
     },{
         name: 'tcr_library_index',
-        labels: ['TCR Library Index', 'TCR Index'],
+        labels: ['TCR Library Index', 'TCR Index', 'TCR Libray Index'],
         allowRowSpan: true,
         transform: 'tenXBarcode'
     },{
@@ -104,7 +112,25 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         allowRowSpan: true
     }],
 
+    IGNORED_COLUMNS: [],
+
     transforms: {
+        stim: function(val, panel) {
+            if (val && val === '--') {
+                val = 'NoStim';
+            }
+
+            return val;
+        },
+
+        animal: function(val, panel) {
+            if (val) {
+                val = val.replace(/ PBMC/, '');
+            }
+
+            return val;
+        },
+
         htoIndex: function(val, panel) {
             if (Ext4.isNumeric(val)) {
                 //indexes are named D7XX.  accept rows named '1', '12', etc.
@@ -153,7 +179,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         },
 
         pool: function(val, panel){
-            if (panel.EXPERIMENT && Ext4.isNumeric(val) && panel.EXPERIMENT != val){
+            if (panel.EXPERIMENT && Ext4.isNumeric(val) && panel.EXPERIMENT !== val){
                 return panel.EXPERIMENT + '-' + val;
             }
 
@@ -164,7 +190,14 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             return val || panel.SAMPLE_DATE;
         },
 
-        effector: function(val, panel){
+        effector: function(val, panel, row){
+            if (val && val.endsWith('PBMC')) {
+                var tmp = val.replace(/( )+PBMC$/,'');
+                if (tmp.length === 5) {
+                    row.animalId = tmp;
+                    val = 'PBMC';
+                }
+            }
             return val || panel.EFFECTOR;
         }
     },
@@ -186,134 +219,151 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             defaults: {
                 border: false
             },
-            items: [{
-                layout: {
-                    type: 'hbox'
-                },
-                items: [{
-                    xtype: 'ldk-integerfield',
-                    style: 'margin-right: 5px;',
-                    fieldLabel: 'Current Folder/Workbook',
-                    labelWidth: 200,
-                    minValue: 1,
-                    value: LABKEY.Security.currentContainer.type === 'workbook' ? LABKEY.Security.currentContainer.name : null,
-                    emptyText: LABKEY.Security.currentContainer.type === 'workbook' ? null : 'Showing All',
-                    listeners: {
-                        afterRender: function(field){
-                            new Ext4.util.KeyNav(field.getEl(), {
-                                enter : function(e){
-                                    var btn = field.up('panel').down('#goButton');
-                                    btn.handler(btn);
-                                },
-                                scope : this
-                            });
-                        }
-                    }
-                },{
-                    xtype: 'button',
-                    itemId: 'goButton',
-                    scope: this,
-                    text: 'Go',
-                    handler: function(btn){
-                        var wb = btn.up('panel').down('ldk-integerfield').getValue();
-                        if (!wb){
-                            wb = '';
-                        }
-
-                        var container = LABKEY.Security.currentContainer.type === 'workbook' ? LABKEY.Security.currentContainer.parentPath + '/' + wb : LABKEY.Security.currentContainer.path + '/' + wb;
-                        window.location = LABKEY.ActionURL.buildURL('tcrdb', 'poolImport', container);
-                    }
-                },{
-                    xtype: 'button',
-                    scope: this,
-                    hidden: !LABKEY.Security.currentUser.canInsert,
-                    text: 'Create Workbook',
-                    handler: function(btn){
-                        Ext4.create('Laboratory.window.WorkbookCreationWindow', {
-                            abortIfContainerIsWorkbook: false,
-                            canAddToExistingExperiment: false,
-                            controller: 'tcrdb',
-                            action: 'poolImport',
-                            title: 'Create Workbook'
-                        }).show();
-                    }
-                }]
-            }, {
-                style: 'padding-top: 10px;',
-                html: 'This page is designed to help import TCR/10x data, including pooled samples. Each sample tends to create many libraries with many indexes/barcodes to track.  Use the fields below to download the excel template and paste data to import.<p>'
-            },{
-                layout: 'hbox',
-                items: [{
-                    xtype: 'button',
-                    text: 'Download Template',
-                    border: true,
-                    scope: this,
-                    href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportTemplate.xlsx'
-                },{
-                    xtype: 'button',
-                    text: 'Download Example Import',
-                    border: true,
-                    scope: this,
-                    href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportExample.xlsx'
-                }]
-            }, {
-                xtype: 'ldk-linkbutton',
-                text: 'Manage Allowable Values for Stims',
-                linkCls: 'labkey-text-link',
-                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', Laboratory.Utils.getQueryContainerPath(), {schemaName: 'tcrdb', 'query.queryName': 'peptides'}),
-                style: 'margin-top: 10px;'
-            },{
-                xtype: 'textfield',
-                style: 'margin-top: 20px;',
-                fieldLabel: 'Expt Number',
-                itemId: 'exptNum',
-                value: LABKEY.Security.currentContainer.type === 'workbook' ? LABKEY.Security.currentContainer.name : null
-            },{
-                xtype: 'datefield',
-                fieldLabel: 'Sample Date',
-                itemId: 'sampleDate'
-            },{
-                xtype: 'textfield',
-                fieldLabel: 'Effectors',
-                itemId: 'effector',
-                value: 'PBMC'
-            },{
-                xtype: 'checkbox',
-                fieldLabel: 'Require GEX Library',
-                itemId: 'requireGEX',
-                checked: true
-            },{
-                xtype: 'checkbox',
-                fieldLabel: 'Require TCR Library',
-                itemId: 'requireTCR',
-                checked: true
-            },{
-                xtype: 'checkbox',
-                fieldLabel: 'Require HTO Library',
-                itemId: 'requireHTO',
-                checked: true
-            },{
-                xtype: 'textarea',
-                fieldLabel: 'Paste Data Below',
-                labelAlign: 'top',
-                itemId: 'data',
-                width: 1000,
-                height: 300
-            },{
-                xtype: 'button',
-                text: 'Preview',
-                border: true,
-                scope: this,
-                handler: this.onPreview
-            },{
-                style: 'margin-top: 20px;margin-bottom: 10px;',
-                itemId: 'previewArea',
-                autoEl: 'table',
-                cls: 'stripe hover'
-            }]
+            items: this.getPanelItems()
         });
 
         this.callParent(arguments);
+    },
+
+    getPanelItems: function(){
+        return [{
+            layout: {
+                type: 'hbox'
+            },
+            items: [{
+                xtype: 'ldk-integerfield',
+                style: 'margin-right: 5px;',
+                fieldLabel: 'Current Folder/Workbook',
+                labelWidth: 200,
+                minValue: 1,
+                value: LABKEY.Security.currentContainer.type === 'workbook' ? LABKEY.Security.currentContainer.name : null,
+                emptyText: LABKEY.Security.currentContainer.type === 'workbook' ? null : 'Showing All',
+                listeners: {
+                    afterRender: function(field){
+                        new Ext4.util.KeyNav(field.getEl(), {
+                            enter : function(e){
+                                var btn = field.up('panel').down('#goButton');
+                                btn.handler(btn);
+                            },
+                            scope : this
+                        });
+                    }
+                }
+            },{
+                xtype: 'button',
+                itemId: 'goButton',
+                scope: this,
+                text: 'Go',
+                handler: function(btn){
+                    var wb = btn.up('panel').down('ldk-integerfield').getValue();
+                    if (!wb){
+                        wb = '';
+                    }
+
+                    var container = LABKEY.Security.currentContainer.type === 'workbook' ? LABKEY.Security.currentContainer.parentPath + '/' + wb : LABKEY.Security.currentContainer.path + '/' + wb;
+                    window.location = LABKEY.ActionURL.buildURL('tcrdb', 'poolImport', container);
+                }
+            },{
+                xtype: 'button',
+                scope: this,
+                hidden: !LABKEY.Security.currentUser.canInsert,
+                text: 'Create Workbook',
+                handler: function(btn){
+                    Ext4.create('Laboratory.window.WorkbookCreationWindow', {
+                        abortIfContainerIsWorkbook: false,
+                        canAddToExistingExperiment: false,
+                        controller: 'tcrdb',
+                        action: 'poolImport',
+                        title: 'Create Workbook'
+                    }).show();
+                }
+            }]
+        }, {
+            style: 'padding-top: 10px;',
+            html: 'This page is designed to help import TCR/10x data, including pooled samples. Each sample tends to create many libraries with many indexes/barcodes to track.  Use the fields below to download the excel template and paste data to import.<p>'
+        },{
+            layout: 'hbox',
+            items: [{
+                xtype: 'button',
+                text: 'Download Template',
+                border: true,
+                scope: this,
+                href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportTemplate.xlsx'
+            },{
+                xtype: 'button',
+                text: 'Download Example Import',
+                border: true,
+                scope: this,
+                href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportExample.xlsx'
+            }]
+        }, {
+            xtype: 'ldk-linkbutton',
+            text: 'Manage Allowable Values for Stims',
+            linkCls: 'labkey-text-link',
+            href: LABKEY.ActionURL.buildURL('query', 'executeQuery', Laboratory.Utils.getQueryContainerPath(), {schemaName: 'tcrdb', 'query.queryName': 'peptides'}),
+            style: 'margin-top: 10px;'
+        },{
+            xtype: 'textfield',
+            style: 'margin-top: 20px;',
+            fieldLabel: 'Expt Number',
+            itemId: 'exptNum',
+            value: LABKEY.Security.currentContainer.type === 'workbook' ? LABKEY.Security.currentContainer.name : null
+        },{
+            xtype: 'datefield',
+            fieldLabel: 'Sample Date',
+            itemId: 'sampleDate'
+        },{
+            xtype: 'textfield',
+            fieldLabel: 'Effectors',
+            itemId: 'effector',
+            value: 'PBMC'
+        },{
+            xtype: 'checkbox',
+            fieldLabel: 'Require GEX Library',
+            itemId: 'requireGEX',
+            checked: true
+        },{
+            xtype: 'checkbox',
+            fieldLabel: 'Require TCR Library',
+            itemId: 'requireTCR',
+            checked: true
+        },{
+            xtype: 'checkbox',
+            fieldLabel: 'Require HTO Library',
+            itemId: 'requireHTO',
+            checked: true
+        },{
+            xtype: 'checkbox',
+            fieldLabel: 'Skip cDNA Libraries',
+            itemId: 'skipCDNA',
+            checked: false,
+            listeners: {
+                scope: this,
+                change: function(field, val) {
+                    field.up('panel').down('#requireGEX').setValue(!val);
+                    field.up('panel').down('#requireTCR').setValue(!val);
+                    field.up('panel').down('#requireHTO').setValue(!val);
+                }
+            }
+        },{
+            xtype: 'textarea',
+            fieldLabel: 'Paste Data Below',
+            labelAlign: 'top',
+            itemId: 'data',
+            width: 1000,
+            height: 300
+        },{
+            xtype: 'button',
+            text: 'Preview',
+            border: true,
+            scope: this,
+            handler: this.onPreview
+        },{
+            style: 'margin-top: 20px;margin-bottom: 10px;',
+            itemId: 'previewArea',
+            autoEl: 'table',
+            cls: 'stripe hover'
+        }];
     },
 
     onPreview: function(btn) {
@@ -330,7 +380,12 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         }
         this.EFFECTOR = this.down('#effector').getValue();
 
+        //this is a special case.  if the first character is Tab, this indicates a blank field.  Add a placeholder so it's not trimmed:
+        if (text .startsWith("\t")) {
+            text = 'Column1' + text;
+        }
         text = Ext4.String.trim(text);
+
         var rows = LDK.Utils.CSVToArray(text, '\t');
         var colArray = this.parseHeader(rows.shift());
         var parsedRows = this.parseRows(colArray, rows);
@@ -341,7 +396,8 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                 date: r.sampleDate,
                 stim: r.stim,
                 treatment: r.treatment || 'None',
-                objectId: r.objectId
+                objectId: r.objectId,
+                population: r.population
             });
         }, this);
 
@@ -358,21 +414,31 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                 Ext4.Msg.hide();
 
                 Ext4.Array.forEach(parsedRows, function(r){
-                    if (results.rowMap[r.objectId]){
-                        r.stimId = results.rowMap[r.objectId];
+                    if (results.stimMap[r.objectId]){
+                        r.stimId = results.stimMap[r.objectId];
+                    }
+
+                    if (results.sortMap[r.objectId]){
+                        r.sortId = results.sortMap[r.objectId];
                     }
                 }, this);
 
                 var groupedRows = this.groupForImport(colArray, parsedRows);
                 if (!groupedRows){
+                    console.log('No rows after grouping');
                     return;
                 }
 
                 this.renderPreview(colArray, parsedRows, groupedRows);
+
+                if (results.recordErrors) {
+                    Ext4.Array.forEach(results.recordErrors, function(e){
+                        console.error(e);
+                    }, this);
+                }
             }, this),
             failure: LDK.Utils.getErrorCallback()
         });
-
     },
 
     parseHeader: function(headerRow){
@@ -386,6 +452,10 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         }, this);
 
         Ext4.Array.forEach(this.COLUMNS, function(colData, idx){
+            if (this.IGNORED_COLUMNS.indexOf(colData.name) > -1) {
+                return;
+            }
+
             if (colData.alwaysShow || colData.allowBlank === false || colNames[colData.name]){
                 colData = Ext4.apply({}, colData);
                 colData.dataIdx = colNames[colData.name];
@@ -414,7 +484,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
                 if (cell){
                     if (col.transform && this.transforms[col.transform]){
-                        cell = this.transforms[col.transform](cell, this);
+                        cell = this.transforms[col.transform](cell, this, data);
                     }
 
                     data[col.name] = cell;
@@ -426,7 +496,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                 else {
                     //allow transform even if value is null
                     if (col.transform && this.transforms[col.transform]){
-                        cell = this.transforms[col.transform](cell, this);
+                        cell = this.transforms[col.transform](cell, this, data);
                     }
 
                     data[col.name] = cell;
@@ -446,7 +516,8 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             cDNARows: [],
             readsetRows: []
         };
-        var hasError = false;
+
+        var errorsMsgs = [];
 
         //stims:
         var stimMap = {};
@@ -471,9 +542,6 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     container: LABKEY.Security.currentContainer.id
                 });
             }
-            else {
-                //TODO: sanity check?
-            }
 
             row.stim_num = row.stim_num || stimIdxs[key];
         }, this);
@@ -481,13 +549,14 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         //sorts:
         var sortMap = {};
         Ext4.Array.forEach(parsedRows, function(row){
-            var stimId = stimMap[this.getStimKey(row)];
+            var stimGUID = stimMap[this.getStimKey(row)];
             var key = this.getSortKey(row);
             if (!sortMap[key]){
                 var guid = LABKEY.Utils.generateUUID();
                 sortMap[key] = guid;
                 ret.sortRows.push({
-                    stimGUID: stimId,
+                    rowId: row.sortId || null,
+                    stimGUID: stimGUID,
                     population: row.population,
                     replicate: row.replicate,
                     cells: row.cells,
@@ -498,9 +567,6 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     objectId: guid,
                     container: LABKEY.Security.currentContainer.id
                 });
-            }
-            else {
-                //TODO: sanity check?
             }
         }, this);
 
@@ -514,24 +580,25 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         Ext4.Object.each(poolMap, function(poolName, rowArr){
             var readsetGUIDs = {};
 
+            var requireHTO = this.down('#requireHTO').getValue();
             readsetGUIDs.hashingReadsetGUID = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'hto', 'HTO', 'Cell Hashing', null);
-            // this could be omitted
-            if (readsetGUIDs.hashingReadsetGUID === false){
-                hasError = true;
+            if (requireHTO && readsetGUIDs.hashingReadsetGUID === false){
+                errorsMsgs.push('Missing HTO library');
                 return false;
             }
 
+            var requireGEX = this.down('#requireGEX').getValue();
             readsetGUIDs.readsetGUID = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'gex', 'GEX', 'RNA-seq, Single Cell', '10x 5\' GEX');
             // always expect a GEX readset
-            if (!readsetGUIDs.readsetGUID){
-                hasError = true;
+            if (requireGEX && readsetGUIDs.readsetGUID === false){
+                errorsMsgs.push('Missing GEX library');
                 return false;
             }
 
+            var requireTCR = this.down('#requireTCR').getValue();
             readsetGUIDs.enrichedReadsetGUID = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'tcr', 'TCR', 'RNA-seq, Single Cell', '10x 5\' VDJ (Rhesus A/B/G)');
-            // this could be omitted
-            if (readsetGUIDs.enrichedReadsetGUID === false){
-                hasError = true;
+            if (requireTCR && readsetGUIDs.enrichedReadsetGUID === false){
+                errorsMsgs.push('Missing TCR library');
                 return false;
             }
 
@@ -550,7 +617,13 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }, this);
         }, this);
 
-        return hasError ? null : ret;
+        if (errorsMsgs.length) {
+            errorsMsgs = Ext4.unique(errorsMsgs);
+            Ext4.Msg.alert('Error', errorsMsgs.join('\n'));
+            return null;
+        }
+
+        return ret;
     },
 
     processReadsetForGroup: function(poolName, rowArr, readsetRows, prefix, type, application, librarytype){
@@ -558,7 +631,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         var conc = this.getUniqueValues(rowArr, prefix + '_library_conc');
         var fragment = this.getUniqueValues(rowArr, prefix + '_library_fragment');
         var subjectid = this.getUniqueValues(rowArr, 'animalId');
-        subjectid = subjectid.length == 1 ? subjectid[0] : null;
+        subjectid = subjectid.length === 1 ? subjectid[0] : null;
 
         if (idxValues.length === 1){
             var guid = LABKEY.Utils.generateUUID();
@@ -686,6 +759,6 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     },
 
     getSortKey: function(data){
-        return [this.getStimKey(data), data.population, data.hto].join('|');
+        return [this.getStimKey(data), data.sortId, data.population, data.hto].join('|');
     }
 });

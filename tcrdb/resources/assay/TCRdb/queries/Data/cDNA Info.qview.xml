@@ -6,6 +6,7 @@
        <column name="cDNA/sortId/stimId/date" />
        <column name="cDNA/sortId/stimId/stim" />
        <column name="cDNA/sortId/population" />
+       <column name="calculatedPopulation" />
        <column name="locus" />
        <column name="vHit" />
        <column name="dHit"/>

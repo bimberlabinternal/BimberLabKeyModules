@@ -35,7 +35,7 @@ JOB_FILE=${JOB_FILE//file:/}
 # Note: to make updates easier, copy code for every job, not just week-long ones
 # also string replace "/home/groups/prime-seq/exacloud/labkey/" for local dir in arguments
 
-BASENAME=`basename $JOB_FILE '.job.xml'`
+BASENAME=`basename $JOB_FILE '.job.json.txt'`
 
 #make new temp directory
 TEMP_DIR=`mktemp -d --tmpdir=$TEMP_BASEDIR --suffix=$BASENAME`

@@ -67,7 +67,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
     }
 
     public static final String TARGET_ASSAY = "targetAssay";
-    private static final String CELL_HASHING = "useCellHashing";
+    public static final String DELETE_EXISTING_ASSAY_DATA = "deleteExistingAssayData";
 
     public static class VDJProvider extends AbstractAlignmentStepProvider<AlignmentStep>
     {
@@ -82,12 +82,13 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--force-cells"), "force-cells", "Force Cells", "Force pipeline to use this number of cells, bypassing the cell detection algorithm. Use this if the number of cells estimated by Cell Ranger is not consistent with the barcode rank plot.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
                     }}, null),
-                    ToolParameterDescriptor.create(CELL_HASHING, "Use Cell Hashing?", "If selected, this will use the data in the cDNA table to identify the proper HTOs and cell hashing readset.  It will run CiteSeqCount and generate HTO cells per cell", "checkbox", new JSONObject(){{
-                        put("inputValue", true);
-                    }}, false),
                     ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", new JSONObject(){{
                         put("autoSelectAssay", false);
-                    }}, null)
+                    }}, null),
+                    ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
+                        put("checked", true);
+                    }}, true)
+
             ), PageFlowUtil.set("tcrdb/field/AssaySelectorField.js"), "https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger", true, false, false, ALIGNMENT_MODE.MERGE_THEN_ALIGN);
         }
 
@@ -209,14 +210,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 }
             }
 
-            if (getProvider().getParameterByName(CELL_HASHING).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
-            {
-                getUtils().prepareVDJHashingFiles(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport());
-            }
-            else
-            {
-                getPipelineCtx().getLogger().debug("cell hashing was not selected");
-            }
+            getUtils().prepareVDJHashingFilesIfNeeded(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport());
         }
 
         private File getGenomeFasta()
@@ -342,10 +336,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             output.setBAM(bam);
 
             //NOTE: run these before cleanup in case of failure
-            if (getProvider().getParameterByName(CELL_HASHING).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
-            {
-                getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory());
-            }
+            getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory());
 
             //now do cleanup/rename:
             try
@@ -598,9 +589,8 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             if (bam.exists())
             {
                 Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-                boolean useCellHashing = getProvider().getParameterByName(CELL_HASHING).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
-
-                getUtils().importAssayData(getPipelineCtx().getJob(), model, bam.getParentFile(), assayId, useCellHashing, getPipelineCtx().getSequenceSupport());
+                Boolean deleteExisting = getProvider().getParameterByName(DELETE_EXISTING_ASSAY_DATA).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+                getUtils().importAssayData(getPipelineCtx().getJob(), model, bam.getParentFile(), assayId, deleteExisting);
             }
             else
             {

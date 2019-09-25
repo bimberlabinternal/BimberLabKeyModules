@@ -4,13 +4,9 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.IOUtil;
-import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.variantcontext.writer.Options;
-import htsjdk.variant.variantcontext.writer.VariantContextWriter;
-import htsjdk.variant.variantcontext.writer.VariantContextWriterBuilder;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.io.FileUtils;
@@ -24,20 +20,18 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
-import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.DbScope;
-import org.labkey.api.data.Results;
-import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.exp.api.ExpData;
+import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
-import org.labkey.api.pipeline.file.FileAnalysisJobSupport;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
@@ -56,6 +50,7 @@ import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
+import org.labkey.api.sequenceanalysis.run.AbstractGatkWrapper;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.FileType;
@@ -77,6 +72,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,30 +90,20 @@ import java.util.regex.Pattern;
 public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private final FileType _vcfType = new FileType(Arrays.asList(".vcf"), ".vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
+    public static final String MMUL_GENOME = "mmulGenome";
 
     public mGapReleaseGenerator()
     {
-        super(ModuleLoader.getInstance().getModule(mGAPModule.class), "Create mGAP Release", "This will prepare an input VCF for use as an mGAP public release.  This will optionally include: removing excess annotations and program records, limiting to SNVs (optional) and removing genotype data (optional).  If genotypes are retained, the subject names will be checked for mGAP aliases and replaced as needed.", null, Arrays.asList(
+        super(ModuleLoader.getInstance().getModule(mGAPModule.class), "Create mGAP Release", "This will prepare an input VCF for use as an mGAP public release.  This will optionally include: removing excess annotations and program records, limiting to SNVs (optional) and removing genotype data (optional).  If genotypes are retained, the subject names will be checked for mGAP aliases and replaced as needed.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/GenomeFileSelectorField.js")), Arrays.asList(
                 ToolParameterDescriptor.create("releaseVersion", "Version", "This string will be used as the version when published.", "textfield", new JSONObject(){{
                     put("allowBlank", false);
                 }}, null),
-                ToolParameterDescriptor.create("removeAnnotations", "Remove Most Annotations", "If selected, most annotations and extraneous information will be removed.  This is both to trim down the size of the public VCF and to shield some information.", "checkbox", new JSONObject(){{
-                    put("checked", true);
-                }}, null),
-                ToolParameterDescriptor.create("snvOnly", "Limit To SNVs", "If selected, only variants of the type SNV will be included.", "checkbox", new JSONObject()
-                {{
-                    put("checked", false);
-                }}, false),
                 ToolParameterDescriptor.createExpDataParam("gtfFile", "GTF File", "The gene file used to create these annotations.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
                 {{
                     put("extensions", Arrays.asList("gtf"));
                     put("width", 400);
                     put("allowBlank", false);
                 }}, null),
-                ToolParameterDescriptor.create("variantTableOnly", "Variant Table Only", "If selected, the input VCF will be used as-is, and the only output will be the table of significant variants.  This was created mostly for testing purposes.", "checkbox", new JSONObject()
-                {{
-                    put("checked", false);
-                }}, false),
                 ToolParameterDescriptor.create(AnnotationStep.GRCH37, "GRCh37 Genome", "The genome that matches human GRCh37.", "ldk-simplelabkeycombo", new JSONObject()
                 {{
                     put("width", 400);
@@ -129,7 +115,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     put("valueField", "rowid");
                     put("allowBlank", false);
                 }}, null),
-                ToolParameterDescriptor.create("testOnly", "Test Only", "If selected, the various files will be created, but a record will not be created in the relases table, meaning it will not be synced to mGAP.", "checkbox", new JSONObject()
+                ToolParameterDescriptor.create("testOnly", "Test Only", "If selected, the various files will be created, but a record will not be created in the releases table, meaning it will not be synced to mGAP.", "checkbox", new JSONObject()
                 {{
                     put("checked", false);
                 }}, false)
@@ -140,6 +126,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
     public boolean canProcess(SequenceOutputFile o)
     {
         return o.getFile() != null && o.getFile().exists() && _vcfType.isType(o.getFile());
+    }
+
+    @Override
+    public boolean isVisible()
+    {
+        return false;
     }
 
     @Override
@@ -173,117 +165,53 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             job.getLogger().info("writing track/subset data to file");
-            TableInfo releaseTrackSubsets = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS);
+            TableInfo releaseTrackSubsets = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
 
             Set<FieldKey> toSelect = new HashSet<>();
             toSelect.add(FieldKey.fromString("trackName"));
-            toSelect.add(FieldKey.fromString("subjectId"));
-            toSelect.add(FieldKey.fromString("trackName/isprimarytrack"));
-            toSelect.add(FieldKey.fromString("trackName/mergepriority"));
-            toSelect.add(FieldKey.fromString("trackName/skipvalidation"));
-            toSelect.add(FieldKey.fromString("trackName/vcfId"));
+            toSelect.add(FieldKey.fromString("mergepriority"));
+            toSelect.add(FieldKey.fromString("skipvalidation"));
+            toSelect.add(FieldKey.fromString("isprimarytrack"));
+            toSelect.add(FieldKey.fromString("vcfId"));
+            toSelect.add(FieldKey.fromString("vcfId/dataId"));
             Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(releaseTrackSubsets, toSelect);
 
             Set<String> distinctTracks = new HashSet<>();
-            Set<String> distinctSubjects = new HashSet<>();
-            File trackFile = getTrackFile(outputDir);
+            File trackFile = getTrackListFile(outputDir);
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(trackFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 new TableSelector(releaseTrackSubsets, colMap.values(), null, null).forEachResults(rs -> {
-                    if (rs.getObject(FieldKey.fromString("trackName/vcfId")) != null)
+                    if (rs.getObject(FieldKey.fromString("vcfId")) == null)
                     {
-                        job.getLogger().info("skipping row b/c it has a VCF already: " + FieldKey.fromString("trackName"));
+                        boolean isPrimary = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
+                        if (!isPrimary)
+                        {
+                            throw new SQLException("No VCF found for track: " + rs.getObject(FieldKey.fromString("trackName")));
+                        }
+
+                        //special-case the primary track, which we will generate by merging
                         return;
                     }
 
+                    ExpData d = ExperimentService.get().getExpData(rs.getInt(FieldKey.fromString("vcfId")));
+                    support.cacheExpData(d);
+
                     writer.writeNext(new String[]{
                             rs.getString(FieldKey.fromString("trackName")),
-                            rs.getString(FieldKey.fromString("subjectId")),
-                            String.valueOf(rs.getBoolean(FieldKey.fromString("trackName/isprimarytrack"))),
-                            String.valueOf(rs.getObject(FieldKey.fromString("trackName/mergepriority")) == null ? -1 : rs.getInt(FieldKey.fromString("trackName/mergepriority"))),
-                            String.valueOf(rs.getObject(FieldKey.fromString("trackName/skipvalidation")) != null && rs.getBoolean(FieldKey.fromString("trackName/skipvalidation")))
+                            String.valueOf(rs.getInt(FieldKey.fromString("vcfId/dataId"))),
+                            String.valueOf(rs.getObject(FieldKey.fromString("mergepriority")) == null ? 999 : rs.getInt(FieldKey.fromString("mergepriority"))),
+                            String.valueOf(rs.getObject(FieldKey.fromString("skipvalidation")) != null && rs.getBoolean(FieldKey.fromString("skipvalidation")))
                     });
 
                     distinctTracks.add(rs.getString(FieldKey.fromString("trackName")));
-                    distinctSubjects.add(rs.getString(FieldKey.fromString("subjectId")));
                 });
             }
-            catch (IOException e)
+            catch (IOException | RuntimeException e)
             {
                 throw new PipelineJobException(e);
             }
 
             job.getLogger().info("total tracks: " + distinctTracks.size());
-
-            File outputFile = getSampleNameFile(((FileAnalysisJobSupport)job).getAnalysisDirectory());
-            job.getLogger().debug("caching mGAP aliases to file: " + outputFile.getPath());
-
-            Map<String, String> sampleNameMap = new HashMap<>();
-            for (SequenceOutputFile so : inputFiles)
-            {
-                try
-                {
-                    SequenceAnalysisService.get().ensureVcfIndex(so.getFile(), job.getLogger());
-                }
-                catch (IOException e)
-                {
-                    throw new PipelineJobException(e);
-                }
-
-                try (VCFFileReader reader = new VCFFileReader(so.getFile()))
-                {
-                    VCFHeader header = reader.getFileHeader();
-                    TableInfo ti = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
-                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), distinctSubjects, CompareType.IN), null);
-                    ts.forEachResults(new Selector.ForEachBlock<Results>()
-                    {
-                        @Override
-                        public void exec(Results rs) throws SQLException
-                        {
-                            sampleNameMap.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
-                        }
-                    });
-
-                    Set<String> sampleNames = new HashSet<>(header.getSampleNamesInOrder());
-                    job.getLogger().info("total samples in input VCF: " + sampleNames.size());
-
-                    sampleNames.retainAll(distinctSubjects);
-                    job.getLogger().info("total samples to be written to any track: " + sampleNames.size());
-                    if (sampleNames.size() != distinctSubjects.size())
-                    {
-                        Set<String> samplesMissing = new HashSet<>(distinctSubjects);
-                        samplesMissing.removeAll(header.getSampleNamesInOrder());
-                        job.getLogger().warn("not all samples requested in tracks found in VCF.  missing: " + StringUtils.join(samplesMissing, ","));
-                    }
-
-                    sampleNames.removeAll(sampleNameMap.keySet());
-                    if (!sampleNames.isEmpty())
-                    {
-                        throw new PipelineJobException("mGAP Aliases were not found for all IDs.  Missing: " + StringUtils.join(sampleNames, ", "));
-                    }
-
-                    //also list samples in VCF that will not be used:
-                    sampleNames = new HashSet<>(header.getSampleNamesInOrder());
-                    sampleNames.removeAll(distinctSubjects);
-                    if (!sampleNames.isEmpty())
-                    {
-                        job.getLogger().info("the following samples are in the VCF but not selected to use in any track: " + StringUtils.join(sampleNames, ","));
-                    }
-                }
-            }
-
-            job.getLogger().info("total sample names to alias: " + sampleNameMap.size());
-            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(outputFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-            {
-                for (String name : sampleNameMap.keySet())
-                {
-                    writer.writeNext(new String[]{name, sampleNameMap.get(name)});
-                }
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
 
             support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(params.getInt(AnnotationStep.GRCH37), job.getUser()));
 
@@ -294,18 +222,16 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             {
                 throw new PipelineJobException("Expected all inputs to use the same genome");
             }
+            int sourceGenome = genomeIds.iterator().next();
+            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(sourceGenome, job.getUser()));
+            support.cacheObject(MMUL_GENOME, sourceGenome);
 
             AnnotationStep.findChainFile(genomeIds.iterator().next(), params.getInt(AnnotationStep.GRCH37), support, job);
         }
 
-        private File getTrackFile(File outputDir)
+        private File getTrackListFile(File outputDir)
         {
             return new File(outputDir, "releaseTracks.txt");
-        }
-
-        private File getSampleNameFile(File outputDir)
-        {
-            return new File(outputDir, "sampleMapping.txt");
         }
 
         @Override
@@ -416,123 +342,128 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                 try
                 {
-                    if (!testOnly){
-                        variantReleaseRows.add(row);
+                    variantReleaseRows.add(row);
 
-                        File variantTable = so2.getFile();
-                        if (variantTable.exists())
+                    File variantTable = so2.getFile();
+                    if (variantTable.exists())
+                    {
+                        try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(variantTable), '\t'))
                         {
-                            try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(variantTable), '\t'))
+                            String[] line;
+                            int lineNo = 0;
+                            while ((line = reader.readNext()) != null)
                             {
-                                String[] line;
-                                int lineNo = 0;
-                                while ((line = reader.readNext()) != null)
+                                lineNo++;
+                                if (lineNo == 1)
                                 {
-                                    lineNo++;
-                                    if (lineNo == 1)
-                                    {
-                                        continue; //header
-                                    }
-
-                                    Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                                    map.put("releaseId", releaseId);
-                                    map.put("contig", line[0]);
-                                    map.put("position", line[1]);
-                                    map.put("reference", line[2]);
-                                    map.put("allele", line[3]);
-                                    map.put("source", line[4]);
-                                    map.put("reason", line[5]);
-                                    map.put("description", line[6]);
-                                    map.put("overlappingGenes", line[7]);
-                                    map.put("omim", queryOmim(line[8], job.getContainer(), job.getLogger()));
-                                    map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
-                                    map.put("af", line[10]);
-                                    map.put("identifier", line[11]);
-                                    map.put("cadd", line[12]);
-                                    map.put("objectId", new GUID().toString());
-
-                                    variantTableRows.add(map);
+                                    continue; //header
                                 }
+
+                                Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                                map.put("releaseId", releaseId);
+                                map.put("contig", line[0]);
+                                map.put("position", line[1]);
+                                map.put("reference", line[2]);
+                                map.put("allele", line[3]);
+                                map.put("source", line[4]);
+                                map.put("reason", line[5]);
+                                map.put("description", line[6]);
+                                map.put("overlappingGenes", line[7]);
+                                map.put("omim", queryOmim(line[8], job.getContainer(), job.getLogger()));
+                                map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
+                                map.put("af", line[10]);
+                                map.put("identifier", line[11]);
+                                map.put("cadd", line[12]);
+                                map.put("objectId", new GUID().toString());
+
+                                variantTableRows.add(map);
                             }
                         }
-                        else
-                        {
-                            job.getLogger().error("unable to find release stats file: " + variantTable.getPath());
-                        }
-
-                        File releaseStats = new File(so.getFile().getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(so.getFile().getName()) + ".summaryByField.txt");
-                        if (releaseStats.exists())
-                        {
-                            try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(releaseStats), '\t'))
-                            {
-                                String[] line;
-                                int lineNo = 0;
-                                while ((line = reader.readNext()) != null)
-                                {
-                                    lineNo++;
-                                    if (lineNo == 1)
-                                    {
-                                        continue; //header
-                                    }
-
-                                    Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                                    map.put("releaseId", releaseId);
-                                    map.put("category", line[0]);
-                                    map.put("metricName", line[1]);
-                                    map.put("value", line[2]);
-                                    map.put("objectId", new GUID().toString());
-                                    releaseStatsRows.add(map);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
-                        }
-
-                        //also tracks:
-                        UserSchema us = QueryService.get().getUserSchema(job.getUser(), job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer(), mGAPSchema.NAME);
-                        new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_TRACKS), null, null).forEachResults(rs -> {
-                            SequenceOutputFile so3 = trackVCFMap.get(rs.getString(FieldKey.fromString("trackName")));
-                            if (so3 == null && rs.getBoolean(FieldKey.fromString("isprimarytrack")))
-                            {
-                                //this is the primary track
-                                so3 = so;
-                            }
-
-                            if (so3 == null && rs.getObject("vcfId") == null)
-                            {
-                                job.getLogger().error("unable to find track with name: " + rs.getString(FieldKey.fromString("trackName")));
-                                return;
-                            }
-
-                            long totalSamples = new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS), new SimpleFilter(FieldKey.fromString("trackName"), rs.getString(FieldKey.fromString("trackName"))), null).getRowCount();
-
-                            Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                            map.put("trackName", rs.getString(FieldKey.fromString("trackName")));
-                            map.put("label", rs.getString(FieldKey.fromString("label")));
-                            map.put("category", rs.getString(FieldKey.fromString("category")));
-                            map.put("source", rs.getString(FieldKey.fromString("source")));
-                            map.put("totalSamples", totalSamples);
-                            map.put("description", rs.getString(FieldKey.fromString("description")));
-                            map.put("isprimarytrack", rs.getBoolean(FieldKey.fromString("isprimarytrack")));
-                            map.put("url", rs.getString(FieldKey.fromString("url")));
-                            map.put("releaseId", releaseId);
-                            map.put("vcfId", so3 == null ? rs.getInt(FieldKey.fromString("vcfId")) : so3.getRowid());
-                            map.put("objectId", new GUID().toString());
-
-                            tracksPerReleaseRows.add(map);
-                        });
                     }
                     else
                     {
-                        job.getLogger().info("This was selected as a test-only run, so skipping creation of release record");
-                        job.getLogger().info("variant release record values:");
-                        for (String field : row.keySet())
+                        job.getLogger().error("unable to find release stats file: " + variantTable.getPath());
+                    }
+
+                    File releaseStats = new File(so.getFile().getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(so.getFile().getName()) + ".summaryByField.txt");
+                    if (releaseStats.exists())
+                    {
+                        try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(releaseStats), '\t'))
                         {
-                            job.getLogger().info(field + ": " + row.get(field));
+                            String[] line;
+                            int lineNo = 0;
+                            while ((line = reader.readNext()) != null)
+                            {
+                                lineNo++;
+                                if (lineNo == 1)
+                                {
+                                    continue; //header
+                                }
+
+                                Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                                map.put("releaseId", releaseId);
+                                map.put("category", line[0]);
+                                map.put("metricName", line[1]);
+                                map.put("value", line[2]);
+                                map.put("objectId", new GUID().toString());
+                                releaseStatsRows.add(map);
+                            }
                         }
                     }
+                    else
+                    {
+                        job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
+                    }
+
+                    //also tracks:
+                    UserSchema us = QueryService.get().getUserSchema(job.getUser(), job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer(), mGAPSchema.NAME);
+                    new TableSelector(us.getTable(mGAPSchema.TABLE_RELEASE_TRACKS), null, null).forEachResults(rs -> {
+                        SequenceOutputFile so3 = trackVCFMap.get(rs.getString(FieldKey.fromString("trackName")));
+                        if (so3 == null && rs.getBoolean(FieldKey.fromString("isprimarytrack")))
+                        {
+                            //this is the primary track
+                            so3 = so;
+                        }
+
+                        if (so3 == null && rs.getObject("vcfId") == null)
+                        {
+                            job.getLogger().error("unable to find track with name: " + rs.getString(FieldKey.fromString("trackName")));
+                            return;
+                        }
+
+                        if (so3 == null)
+                        {
+                            throw new SQLException("Unable to find sequence output for track: " + rs.getString(FieldKey.fromString("trackName")));
+                        }
+
+                        File vcf = so3.getFile();
+                        if (!vcf.exists())
+                        {
+                            job.getLogger().error("Unable to find file: " + vcf.getPath());
+                            return;
+                        }
+
+                        int totalSamples = -1;
+                        try (VCFFileReader reader = new VCFFileReader(vcf))
+                        {
+                            totalSamples = reader.getFileHeader().getNGenotypeSamples();
+                        }
+
+                        Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                        map.put("trackName", rs.getString(FieldKey.fromString("trackName")));
+                        map.put("label", rs.getString(FieldKey.fromString("label")));
+                        map.put("category", rs.getString(FieldKey.fromString("category")));
+                        map.put("source", rs.getString(FieldKey.fromString("source")));
+                        map.put("totalSamples", totalSamples);
+                        map.put("description", rs.getString(FieldKey.fromString("description")));
+                        map.put("isprimarytrack", rs.getBoolean(FieldKey.fromString("isprimarytrack")));
+                        map.put("url", rs.getString(FieldKey.fromString("url")));
+                        map.put("releaseId", releaseId);
+                        map.put("vcfId", so3.getDataId());
+                        map.put("objectId", new GUID().toString());
+
+                        tracksPerReleaseRows.add(map);
+                    });
                 }
                 catch (Exception e)
                 {
@@ -594,6 +525,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 {
                     throw new PipelineJobException("Error saving data: " + e.getMessage(), e);
                 }
+            }
+            else
+            {
+                job.getLogger().info("This was selected as a test-only run, so skipping creation of release record");
             }
         }
 
@@ -713,6 +648,70 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
         }
 
+        public static class TrackDescriptor
+        {
+            String _trackName;
+            Integer _dataId;
+            Integer _mergePriority;
+            boolean _skipValidation;
+
+            public TrackDescriptor(String[] vals)
+            {
+                _trackName = vals[0];
+                _dataId = Integer.parseInt(vals[1]);
+                _mergePriority = Integer.parseInt(vals[2]);
+                _skipValidation = Boolean.parseBoolean(vals[3]);
+            }
+
+            public String getTrackName()
+            {
+                return _trackName;
+            }
+
+            public Integer getDataId()
+            {
+                return _dataId;
+            }
+
+            public Integer getMergePriority()
+            {
+                return _mergePriority;
+            }
+
+            public boolean isSkipValidation()
+            {
+                return _skipValidation;
+            }
+        }
+
+        private List<TrackDescriptor> getTracks(File webserverDir) throws PipelineJobException
+        {
+            try (CSVReader reader = new CSVReader(Readers.getReader(getTrackListFile(webserverDir)), '\t'))
+            {
+                List<TrackDescriptor> ret = new ArrayList<>();
+                String[] line;
+                while ((line = reader.readNext()) != null)
+                {
+                    ret.add(new TrackDescriptor(line));
+                }
+
+                ret.sort(new Comparator<TrackDescriptor>()
+                {
+                    @Override
+                    public int compare(TrackDescriptor o1, TrackDescriptor o2)
+                    {
+                        return o1.getMergePriority().compareTo(o2.getMergePriority());
+                    }
+                });
+
+                return ret;
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+
         @Override
         public void processFilesRemote(List<SequenceOutputFile> inputFiles, JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
@@ -727,135 +726,171 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             GeneToNameTranslator translator = new GeneToNameTranslator(gtf, ctx.getLogger());
             ReferenceGenome grch37Genome = ctx.getSequenceSupport().getCachedGenome(ctx.getParams().getInt(AnnotationStep.GRCH37));
+            int genomeId = ctx.getSequenceSupport().getCachedObject(MMUL_GENOME, Integer.class);
+            ReferenceGenome genome = ctx.getSequenceSupport().getCachedGenome(genomeId);
 
-            for (SequenceOutputFile so : inputFiles)
+            String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
+
+            List<String> priorities = new ArrayList<>();
+            List<String> combineArgs = new ArrayList<>();
+
+            try
             {
-                ReferenceGenome genome = ctx.getSequenceSupport().getCachedGenome(so.getLibrary_id());
-
                 RecordedAction action = new RecordedAction();
-                action.addInput(so.getFile(), "Input VCF");
-                action.addInput(new File(so.getFile().getPath() + ".tbi"), "Input VCF Index");
-
-                boolean variantTableOnly = ctx.getParams().optBoolean("variantTableOnly", false);
-                //if variantTableOnly is selected, automatically ignore all these.
-                boolean removeAnnotations = !variantTableOnly && ctx.getParams().optBoolean("removeAnnotations", false);
-                String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
-
-                File currentVCF = so.getFile();
-
-                //count subjects
-                int totalSubjects = 0;
-                try (VCFFileReader reader = new VCFFileReader(so.getFile()))
+                int idx = 0;
+                for (TrackDescriptor track : getTracks(ctx.getSourceDirectory()))
                 {
-                    totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
-                }
+                    ctx.getLogger().info("inspecting track: " + track.getTrackName());
+                    idx++;
 
-                //TODO: sanity check annotations exist/dont
+                    File vcf = ctx.getSequenceSupport().getCachedData(track.getDataId());
+                    action.addInput(vcf, "Input VCF");
+                    action.addInput(new File(vcf.getPath() + ".tbi"), "Input VCF Index");
 
-                //TODO: sanity check all sample names comply
+                    //sanity check annotations exist/dont
+                    checkVcfAnnotationsAndSamples(vcf, track.isSkipValidation());
 
-                if (!variantTableOnly)
-                {
-                    currentVCF = renameSamples(currentVCF, genome, ctx);
-                    ctx.getFileManager().addIntermediateFile(currentVCF);
-                    ctx.getFileManager().addIntermediateFile(new File(currentVCF.getPath() + ".tbi"));
-                }
-
-                ctx.getLogger().info("splitting VCF by track:");
-                String primaryTrackName = getPrimaryTrackName(getTrackFile(ctx.getSourceDirectory()));
-                Map<String, List<String>> subjectByTrack = parseTrackMap(getTrackFile(ctx.getSourceDirectory()));
-
-                File primaryTrackVcf = null;
-                for (String trackName : subjectByTrack.keySet())
-                {
-                    ctx.getLogger().info("track: " + trackName + ", total samples: " + subjectByTrack.get(trackName).size());
-                    File outputFile = new File(FileUtil.makeLegalName(trackName).replaceAll(" ", "_") + ".vcf.gz");
-                    boolean isPrimaryTrack = trackName.equals(primaryTrackName);
-                    if (isPrimaryTrack)
+                    File renamedVcf = new File(ctx.getOutputDir(), FileUtil.makeLegalName(track.getTrackName()).replaceAll(" ", "_") + ".vcf.gz");
+                    File renamedVcfIdx = new File(renamedVcf.getPath() + ".tbi");
+                    File renamedVcfDone = new File(renamedVcf.getPath() + ".done");
+                    if (renamedVcfDone.exists())
                     {
-                        ctx.getLogger().info("this is the primary track");
-                        outputFile = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
-                        primaryTrackVcf = outputFile;
-                    }
-
-                    if (indexExists(outputFile))
-                    {
-                        ctx.getLogger().info("re-using existing output: " + outputFile.getPath());
+                        ctx.getLogger().info("File already copied: " + renamedVcf.getPath());
                     }
                     else
                     {
-                        if (outputFile.exists())
+                        ctx.getLogger().info("Copying VCF: " + renamedVcf.getPath());
+                        if (renamedVcf.exists())
                         {
-                            ctx.getLogger().info("deleting existing file: " + outputFile.getPath());
-                            outputFile.delete();
+                            renamedVcf.delete();
                         }
+                        FileUtils.copyFile(vcf, renamedVcf);
 
-                        Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(ctx.getSourceDirectory()));
-                        SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
+
+                        if (renamedVcfIdx.exists())
+                        {
+                            renamedVcfIdx.delete();
+                        }
+                        FileUtils.copyFile(new File(vcf.getPath() + ".tbi"), renamedVcfIdx);
+
+                        FileUtils.touch(renamedVcfDone);
+                    }
+
+                    ctx.getFileManager().removeIntermediateFile(renamedVcf);
+                    ctx.getFileManager().removeIntermediateFile(renamedVcfIdx);
+                    ctx.getFileManager().addIntermediateFile(renamedVcfDone);
+
+                    String id = String.valueOf(idx);
+                    combineArgs.add("--variant:" + id);
+                    combineArgs.add(renamedVcf.getPath());
+                    priorities.add(id);
+
+                    SequenceOutputFile output = new SequenceOutputFile();
+                    output.setFile(renamedVcf);
+                    output.setName(track.getTrackName());
+                    output.setCategory("Release Track");
+                    output.setLibrary_id(genome.getGenomeId());
+                    ctx.getFileManager().addSequenceOutput(output);
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            combineArgs.add("-priority");
+            combineArgs.add(StringUtils.join(priorities, ","));
+
+            //Next, merge into primary VCF
+            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
+            if (indexExists(primaryTrackVcf))
+            {
+                ctx.getLogger().info("reusing existing vcf: " + primaryTrackVcf.getPath());
+            }
+            else
+            {
+                new AbstractGatkWrapper(ctx.getLogger())
+                {
+                    public void execute(File referenceFasta, File outputVcf, List<String> combineArgs) throws PipelineJobException
+                    {
                         List<String> args = new ArrayList<>();
-                        args.add("-env");
-                        args.add("-noTrim"); //in order to keep annotations correct
-                        subjectByTrack.get(trackName).forEach(x -> {
-                            args.add("-sn");
-                            args.add(sampleMap.get(x));
-                        });
-                        wrapper.execute(genome.getWorkingFastaFile(), currentVCF, outputFile, args);
+                        args.addAll(getBaseArgs());
+                        args.add("-T");
+                        args.add("CombineVariants");
+                        args.add("-R");
+                        args.add(referenceFasta.getPath());
+                        args.add("-o");
+                        args.add(outputVcf.getPath());
+                        args.add("-genotypeMergeOptions");
+                        args.add("PRIORITIZE");
+                        args.addAll(combineArgs);
 
-                        ctx.getLogger().info("total sites: " + SequenceAnalysisService.get().getVCFLineCount(outputFile, ctx.getLogger(), false));
+                        execute(args);
                     }
+                }.execute(genome.getWorkingFastaFile(), primaryTrackVcf, combineArgs);
+            }
 
-                    ctx.getFileManager().removeIntermediateFile(outputFile);
-                    ctx.getFileManager().removeIntermediateFile(new File(outputFile.getPath() + ".tbi"));
+            //Then summarize:
+            ctx.getLogger().info("inspecting primary VCF and creating summary table");
+            inspectAndSummarizeVcf(ctx, primaryTrackVcf, translator, genome, true);
+            boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
 
-                    //make outputs, summarize:
-                    boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
-                    if (isPrimaryTrack)
+            SequenceOutputFile output = new SequenceOutputFile();
+            output.setFile(primaryTrackVcf);
+            output.setName("mGAP Release: " + releaseVersion);
+            output.setCategory((testOnly ? "Test " : "") + "mGAP Release");
+            output.setLibrary_id(genome.getGenomeId());
+            ctx.getFileManager().addSequenceOutput(output);
+
+            File interestingVariantTable = getVariantTableName(ctx, primaryTrackVcf);
+            SequenceOutputFile output2 = new SequenceOutputFile();
+            output2.setFile(interestingVariantTable);
+            output2.setName("mGAP Release: " + releaseVersion + " Variant Table");
+            output2.setCategory((testOnly ? "Test " : "") + "mGAP Release Variant Table");
+            output2.setLibrary_id(genome.getGenomeId());
+            ctx.getFileManager().addSequenceOutput(output2);
+
+            File lifted = liftToHuman(ctx, primaryTrackVcf, genome, grch37Genome);
+            SequenceOutputFile output3 = new SequenceOutputFile();
+            output3.setFile(lifted);
+            output3.setName("mGAP Release: " + releaseVersion + " Lifted to Human");
+            output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
+            output3.setLibrary_id(grch37Genome.getGenomeId());
+            ctx.getFileManager().addSequenceOutput(output3);
+        }
+
+        private void checkVcfAnnotationsAndSamples(File vcfInput, boolean skipAnnotationChecks) throws PipelineJobException
+        {
+            try (VCFFileReader reader = new VCFFileReader(vcfInput))
+            {
+                VCFHeader header = reader.getFileHeader();
+
+                if (!header.getSampleNamesInOrder().isEmpty())
+                {
+                    Set<String> nonCompliant = new HashSet<>();
+                    for (String subject : header.getSampleNamesInOrder())
                     {
-                        ctx.getLogger().info("inspecting primary VCF and creating summary table");
-                        inspectAndSummarizeVcf(ctx, primaryTrackVcf, translator, genome, true);
-                        if (!variantTableOnly)
+                        if (!subject.matches("^m[0-9]+$"))
                         {
-                            SequenceOutputFile output = new SequenceOutputFile();
-                            output.setFile(primaryTrackVcf);
-                            output.setName("mGAP Release: " + releaseVersion);
-                            output.setCategory((testOnly ? "Test " : "") + "mGAP Release");
-                            output.setLibrary_id(genome.getGenomeId());
-                            ctx.getFileManager().addSequenceOutput(output);
-
-                            File interestingVariantTable = getVariantTableName(ctx, primaryTrackVcf);
-                            SequenceOutputFile output2 = new SequenceOutputFile();
-                            output2.setFile(interestingVariantTable);
-                            output2.setName("mGAP Release: " + releaseVersion + " Variant Table");
-                            output2.setCategory((testOnly ? "Test " : "") + "mGAP Release Variant Table");
-                            output2.setLibrary_id(genome.getGenomeId());
-                            ctx.getFileManager().addSequenceOutput(output2);
-
-                            File lifted = liftToHuman(ctx, primaryTrackVcf, genome, grch37Genome);
-                            SequenceOutputFile output3 = new SequenceOutputFile();
-                            output3.setFile(lifted);
-                            output3.setName("mGAP Release: " + releaseVersion + " Lifted to Human");
-                            output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
-                            output3.setLibrary_id(grch37Genome.getGenomeId());
-                            ctx.getFileManager().addSequenceOutput(output3);
+                            nonCompliant.add(subject);
                         }
                     }
-                    else
+
+                    if (!nonCompliant.isEmpty())
                     {
-                        if (!variantTableOnly)
-                        {
-                            SequenceOutputFile output = new SequenceOutputFile();
-                            output.setFile(outputFile);
-                            output.setName(trackName);
-                            output.setCategory((testOnly ? "Test " : "") + "mGAP Release Track");
-                            output.setLibrary_id(genome.getGenomeId());
-                            ctx.getFileManager().addSequenceOutput(output);
-                        }
+                        throw new PipelineJobException("Names do not conform to format: " + StringUtils.join(nonCompliant, ","));
                     }
                 }
 
-                if (primaryTrackVcf == null)
+                if (!skipAnnotationChecks)
                 {
-                    throw new PipelineJobException("No VCF marked as the primary track");
+                    for (String info : Arrays.asList("CADD_PH", "OMIMN", "CLN_ALLELE", "AF"))
+                    {
+                        if (!header.hasInfoLine(info))
+                        {
+                            throw new PipelineJobException("VCF missing expected header line: " + info);
+                        }
+                    }
                 }
             }
         }
@@ -1497,25 +1532,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier, cadd == null ? "" : cadd.toString()));
         }
 
-        private Map<String, String> parseSampleMap(File sampleMapFile) throws PipelineJobException
-        {
-            Map<String, String> ret = new HashMap<>();
-            try (CSVReader reader = new CSVReader(Readers.getReader(sampleMapFile), '\t'))
-            {
-                String[] line;
-                while ((line = reader.readNext()) != null)
-                {
-                    ret.put(line[0], line[1]);
-                }
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
-
-            return ret;
-        }
-
         private String getPrimaryTrackName(File trackFile) throws PipelineJobException
         {
             Set<String> ret = new HashSet<>();
@@ -1566,70 +1582,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             }
 
             return ret;
-        }
-
-        private File renameSamples(File currentVCF, ReferenceGenome genome, JobContext ctx) throws PipelineJobException
-        {
-            ctx.getLogger().info("renaming samples in VCF");
-
-            Set<String> allSamples = new HashSet<>();
-            Map<String, List<String>> trackMap = parseTrackMap(getTrackFile(ctx.getSourceDirectory()));
-            trackMap.forEach((k, v) -> allSamples.addAll(v));
-
-            File outputFile = new File(currentVCF.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".renamed.vcf.gz");
-            if (indexExists(outputFile))
-            {
-                ctx.getLogger().info("re-using existing output: " + outputFile.getPath());
-            }
-            else
-            {
-                Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(ctx.getSourceDirectory()));
-
-                VariantContextWriterBuilder builder = new VariantContextWriterBuilder();
-                builder.setReferenceDictionary(SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary()));
-                builder.setOutputFile(outputFile);
-                builder.setOption(Options.USE_ASYNC_IO);
-
-                try (VCFFileReader reader = new VCFFileReader(currentVCF); VariantContextWriter writer = builder.build())
-                {
-                    VCFHeader header = reader.getFileHeader();
-                    List<String> samples = header.getSampleNamesInOrder();
-                    List<String> remappedSamples = new ArrayList<>();
-
-                    for (String sample : samples)
-                    {
-                        if (sampleMap.containsKey(sample))
-                        {
-                            remappedSamples.add(sampleMap.get(sample));
-                        }
-                        else if (!allSamples.contains(sample))
-                        {
-                            ctx.getLogger().info("sample lacks an alias, but will not be included in output: " + sample);
-                            remappedSamples.add(sample);
-                        }
-                        else
-                        {
-                            throw new PipelineJobException("No alternate name provided for sample: " + sample);
-                        }
-                    }
-
-                    if (remappedSamples.size() != samples.size())
-                    {
-                        throw new PipelineJobException("The number of renamed samples does not equal starting samples: " + samples.size() + " / " + remappedSamples.size());
-                    }
-
-                    writer.writeHeader(new VCFHeader(header.getMetaDataInInputOrder(), remappedSamples));
-                    try (CloseableIterator<VariantContext> it = reader.iterator())
-                    {
-                        while (it.hasNext())
-                        {
-                            writer.add(it.next());
-                        }
-                    }
-                }
-            }
-
-            return outputFile;
         }
 
         private boolean indexExists(File vcf)

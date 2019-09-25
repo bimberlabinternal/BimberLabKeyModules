@@ -911,7 +911,6 @@ public class TCRdbController extends SpringActionController
                     throw bve;
                 }
 
-
                 insertedStimRows.forEach(r -> {
                     if (r.get("rowId") == null)
                     {
@@ -921,26 +920,38 @@ public class TCRdbController extends SpringActionController
                     stimMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
                 });
 
+                Map<String, Integer> sortMap = new HashMap<>();
+                final List<Map<String, Object>> sortRowsToInsert = new ArrayList<>();
                 sortRows.forEach(r -> {
                     if (stimMap.get(r.get("stimGUID")) == null)
                     {
                         throw new ApiUsageException("Unable to find stimId for row");
                     }
-                    r.put("stimId", stimMap.get((String)r.get("stimGUID")));
+
+                    if (r.get("rowId") != null && StringUtils.trimToNull(r.get("rowId").toString()) != null)
+                    {
+                        sortMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
+                    }
+                    else
+                    {
+                        r.put("stimId", stimMap.get(r.get("stimGUID")));
+                        sortRowsToInsert.add(r);
+                    }
                 });
-                sortRows = tcrdb.getTable(TCRdbSchema.TABLE_SORTS).getUpdateService().insertRows(getUser(), getContainer(), sortRows, bve, null, new HashMap<>());
+
+                sortRows = tcrdb.getTable(TCRdbSchema.TABLE_SORTS).getUpdateService().insertRows(getUser(), getContainer(), sortRowsToInsert, bve, null, new HashMap<>());
                 if (bve.hasErrors())
                 {
                     throw bve;
                 }
 
-                Map<String, Integer> sortMap = new HashMap<>();
                 sortRows.forEach(r -> {
                     if (r.get("objectId") == null)
                     {
                         throw new ApiUsageException("Missing objectId for sort row");
                     }
-                    sortMap.put((String)r.get("objectId"), (Integer)r.get("rowId"));
+
+                    sortMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
                 });
 
                 readsetRows = sequenceAnalysis.getTable("sequence_readsets").getUpdateService().insertRows(getUser(), getContainer(), readsetRows, bve, null, new HashMap<>());
@@ -1020,30 +1031,58 @@ public class TCRdbController extends SpringActionController
             }
 
             TableInfo ti = us.getTable(TCRdbSchema.TABLE_STIMS);
+            TableInfo tiSort = us.getTable(TCRdbSchema.TABLE_SORTS);
 
-            Map<Object, Integer> ret = new HashMap<>();
+            List<String> retErrors = new ArrayList<>();
+            Map<Object, Integer> stimRowMap = new HashMap<>();
+            Map<Object, Integer> sortRowMap = new HashMap<>();
             stimRows.forEach(r -> {
+                List<Object> keys = new ArrayList<>();
                 SimpleFilter filter = new SimpleFilter();
                 FIELDS.forEach(f -> {
                     if (r.get(f) != null)
                     {
-                        filter.addCondition(FieldKey.fromString(f), r.get(f));
+                        filter.addCondition(FieldKey.fromString(f), r.get(f), ("date".equals(f) ? CompareType.DATE_EQUAL : CompareType.EQUAL));
+                        keys.add(r.get(f));
                     }
                 });
 
                 if (!filter.isEmpty())
                 {
                     TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowId"), filter, null);
-                    if (ts.getRowCount() == 1)
+                    long count = ts.getRowCount();
+                    if (count == 1)
                     {
                         int rowId = ts.getObject(Integer.class);
-                        ret.put(r.get("objectId"), rowId);
+                        stimRowMap.put(r.get("objectId"), rowId);
+
+                        if (r.get("population") != null)
+                        {
+                            SimpleFilter sortFilter = new SimpleFilter(FieldKey.fromString("stimId"), rowId);
+                            sortFilter.addCondition(FieldKey.fromString("population"), r.get("population"));
+                            TableSelector tsSort = new TableSelector(tiSort, PageFlowUtil.set("rowId"), sortFilter, null);
+                            long countSort = tsSort.getRowCount();
+                            if (countSort == 1)
+                            {
+                                int sortRowId = tsSort.getObject(Integer.class);
+                                sortRowMap.put(r.get("objectId"), sortRowId);
+                            }
+                            else if (countSort > 1)
+                            {
+                                retErrors.add("More than one matching sort found: " + StringUtils.join(keys, "|") + "|" + r.get("population"));
+                            }
+                        }
+                    }
+                    else if (count > 1 && filter.getClauses().size() == FIELDS.size())
+                    {
+                        retErrors.add("More than one matching stim found: " + StringUtils.join(keys, "|"));
                     }
                 }
-
             });
 
-            resp.put("rowMap", ret);
+            resp.put("stimMap", stimRowMap);
+            resp.put("sortMap", sortRowMap);
+            resp.put("recordErrors", retErrors);
 
             return resp;
         }

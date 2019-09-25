@@ -38,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.DELETE_EXISTING_ASSAY_DATA;
 import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.TARGET_ASSAY;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
@@ -49,6 +50,9 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
     {
         super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger VDJ/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger VDJ. Results will be imported into the selected assay.", new LinkedHashSet<>(PageFlowUtil.set("tcrdb/field/AssaySelectorField.js")), Arrays.asList(
                 ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
+                ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
+                    put("checked", true);
+                }}, true),
                 ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--max-error"), "hd", "Edit Distance", null, "ldk-integerfield", null, null),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", false);
@@ -98,7 +102,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
-            utils.prepareVDJHashingFiles(job, support);
+            utils.prepareVDJHashingFilesIfNeeded(job, support);
         }
 
         @Override
@@ -131,10 +135,16 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     throw new PipelineJobException("Invalid assay Id, cannot import: " + job.getParameters().get(TARGET_ASSAY));
                 }
 
+                Boolean deleteExistingData = false;
+                if (job.getParameters().get(DELETE_EXISTING_ASSAY_DATA) != null)
+                {
+                    deleteExistingData = ConvertHelper.convert(job.getParameters().get(DELETE_EXISTING_ASSAY_DATA), Boolean.class);
+                }
+
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, true, support);
+                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, deleteExistingData);
                 }
             }
         }
@@ -172,7 +182,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             ctx.addActions(action);
         }
 
-        private File processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action) throws PipelineJobException
+        private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action) throws PipelineJobException
         {
             CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
 
@@ -185,8 +195,16 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
             ctx.getFileManager().addStepOutputs(action, output);
 
-            ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": VDJ HTO Calls", CATEGORY, rs.getReadsetId(), null, null, null);
-            return cellToHto;
+            boolean useCellHashing = utils.useCellHashing(ctx.getSequenceSupport());
+            if (useCellHashing)
+            {
+                if (cellToHto == null)
+                {
+                    throw new PipelineJobException("Missing cell to HTO file");
+                }
+
+                ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": VDJ HTO Calls", CATEGORY, rs.getReadsetId(), null, null, null);
+            }
         }
     }
 

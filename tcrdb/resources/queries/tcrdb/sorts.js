@@ -20,13 +20,20 @@ function beforeUpsert(row, oldRow, errors){
         row.well = row.well.toUpperCase();
     }
 
-    if (row.population === 'TNF+'){
+    if (['TNF+', 'TNF Pos', 'CD69+/TNF+', 'CD69-Pos/TNF-Pos'].indexOf(row.population) !== -1){
         row.population = 'TNF-Pos';
     }
-    else if (row.population === 'TNF-'){
+    else if (['TNF-', 'CD69-/TNF-', 'TNF Neg', 'CD69-Neg/TNF-Neg'].indexOf(row.population) !== -1){
         row.population = 'TNF-Neg';
     }
+    else if (['Bulk CD8', 'Bulk CD8 T-cells', 'Bulk', 'Bulk-CD8'].indexOf(row.population) !== -1){
+        row.population = 'Bulk CD8s';
+    }
+    else if (['CD8-CD69-Pos', 'CD69-Pos/TNF-Neg', 'TNF-/CD69+', 'CD69+', 'CD69+/TNF-'].indexOf(row.population) !== -1){
+        row.population = 'CD69-Pos';
+    }
 
+    //Naive cells
     if (row.population && row.population.match(/ï/)){
         row.population = row.population.replace(/ï/g, 'i');
     }
