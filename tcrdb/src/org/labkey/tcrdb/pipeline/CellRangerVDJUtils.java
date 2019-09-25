@@ -21,8 +21,11 @@ import org.labkey.api.iterator.CloseableIterator;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.query.ValidationException;
 import org.labkey.api.reader.FastaDataLoader;
@@ -44,6 +47,7 @@ import org.labkey.tcrdb.TCRdbSchema;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -651,7 +655,7 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, int readsetId)
+    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, int readsetId) throws PipelineJobException
     {
         log.info("Preparing to delete any existing runs from this container for the same readset:" + readsetId);
 
@@ -659,14 +663,29 @@ public class CellRangerVDJUtils
         filter.addCondition(FieldKey.fromString("Folder"), c.getId());
 
         AssayProtocolSchema aps = ap.createProtocolSchema(u, c, protocol, null);
-        TableSelector ts = new TableSelector(aps.createRunsTable(null), PageFlowUtil.set("RowId"), filter, null);
+        TableInfo runsTable = aps.createRunsTable(null);
+        TableSelector ts = new TableSelector(runsTable, PageFlowUtil.set("RowId"), filter, null);
         if (ts.exists())
         {
             Collection<Integer> toDelete = ts.getArrayList(Integer.class);
             if (!toDelete.isEmpty())
             {
                 log.info("Deleting existing runs: " + StringUtils.join(toDelete, ";"));
-                ExperimentService.get().deleteExperimentRunsByRowIds(c, u, toDelete);
+                List<Map<String, Object>> keys = new ArrayList<>();
+                toDelete.forEach(x -> {
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                    row.put("rowid", x);
+                    keys.add(row);
+                });
+
+                try
+                {
+                    runsTable.getUpdateService().deleteRows(u, c, keys, null, null);
+                }
+                catch (BatchValidationException | SQLException | QueryUpdateServiceException | InvalidKeyException e)
+                {
+                    throw new PipelineJobException(e);
+                }
             }
         }
     }

@@ -1689,7 +1689,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
             schemaName: 'tcrdb',
             queryName: 'cdnas',
             sort: 'plateId,well/addressByColumn',
-            columns: 'rowid,plateid,readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/librarytype,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles',
+            columns: 'rowid,plateid,readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/librarytype,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles,readsetId/concentration,enrichedReadsetId/concentration',
             scope: this,
             filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
             failure: LDK.Utils.getErrorCallback(),
@@ -1887,13 +1887,28 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']);
                                 var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
                                 if (instrument === 'Novogene') {
+                                    data = idx === 0 ? [sampleName] : ['']; //only add once per group
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
                                         data.push('G' + r.plateId.replace(/-/g, '_'));
                                     }
                                     else {
-                                        data.push('G' + r.plateId.replace(/-/g, '_'));
+                                        data.unshift('G' + r.plateId.replace(/-/g, '_'));
                                     }
+
+                                    data.push('Macaca mulatta');
+                                    data.push(bc);
+                                    data.push('');
+                                    data.push('');
+                                    data.push('');
+                                    data.push('');
+                                    data.push('500');
+                                    data.push('0');
+                                    data.push('');
+                                    if (idx === 0) {
+                                        data.push('Please QC individually and pool in equal amounts per lane');
+                                    }
+                                    //data.push(r['readsetId/concentration']);
                                 }
                                 rows.push(data.join(delim));
                             }, this);
@@ -1913,6 +1928,7 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                 var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (instrument === 'Novogene' ? '' : '-TCR'));
                                 var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
                                 if (instrument === 'Novogene') {
+                                    data = idx === 0 ? [sampleName] : ['']; //only add once per group
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
                                         data.push('T' + r.plateId.replace(/-/g, '_'));
@@ -1920,6 +1936,20 @@ Ext4.define('TCRdb.panel.StimPanel', {
                                     else {
                                         data.push('T' + r.plateId.replace(/-/g, '_'));
                                     }
+
+                                    data.push('Macaca mulatta');
+                                    data.push(bc);
+                                    data.push('');
+                                    data.push('');
+                                    data.push('');
+                                    data.push('');
+                                    data.push('700');
+                                    data.push('0');
+                                    data.push('');
+                                    if (idx === 0) {
+                                        data.push('Please QC individually and pool in equal amounts per lane');
+                                    }
+                                    //data.push(r['enrichedReadsetId/concentration']);
                                 }
 
                                 rows.push(data.join(delim));
