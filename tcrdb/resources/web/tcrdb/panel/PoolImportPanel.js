@@ -709,13 +709,19 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
         var data = [];
         var missingValues = false;
+        var requireHTO = this.down('#requireHTO').getValue();
         Ext4.Array.forEach(parsedRows, function(row, rowIdx){
             var toAdd = [rowIdx + 1];
             Ext4.Array.forEach(colIdxs, function(colIdx){
                 var colDef = colArray[colIdx];
                 var propName = colDef.name;
 
-                if (colDef.allowBlank === false && Ext4.isEmpty(row[propName])){
+                var allowBlank = colDef.allowBlank;
+                if (requireHTO && colDef.name === 'hto') {
+                    allowBlank = false;
+                }
+
+                if (allowBlank === false && Ext4.isEmpty(row[propName])){
                     missingValues = true;
                     toAdd.push('MISSING');
                 }
