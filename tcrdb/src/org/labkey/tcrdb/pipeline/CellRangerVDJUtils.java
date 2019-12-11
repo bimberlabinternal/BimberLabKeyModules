@@ -63,15 +63,15 @@ public class CellRangerVDJUtils
 {
     private Logger _log;
     private File _sourceDir;
-    
+
     public static final String READSET_TO_HASHING_MAP = "readsetToHashingMap";
-    
+
     public CellRangerVDJUtils(Logger log, File sourceDir)
     {
-        _log = log;    
+        _log = log;
         _sourceDir = sourceDir;
     }
-    
+
     public void prepareVDJHashingFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support) throws PipelineJobException
     {
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();

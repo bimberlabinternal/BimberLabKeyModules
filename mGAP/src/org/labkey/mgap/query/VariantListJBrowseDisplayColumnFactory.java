@@ -1,6 +1,7 @@
 package org.labkey.mgap.query;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DataColumn;
@@ -17,6 +18,8 @@ import java.util.Set;
 
 public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFactory
 {
+    private static final Logger _log = Logger.getLogger(VariantListJBrowseDisplayColumnFactory.class);
+
     @Override
     public DisplayColumn createRenderer(ColumnInfo colInfo)
     {
@@ -81,17 +84,24 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                     if (identifier != null && identifier.contains(":"))
                     {
                         String[] parts = identifier.split(":");
-                        switch (parts[0])
+                        if (parts.length != 2)
                         {
-                            case "ClinVar":
-                                if (!StringUtils.isEmpty(parts[1]))
-                                {
-                                    String url = "https://www.ncbi.nlm.nih.gov/clinvar/variation/" + parts[1] + "/";
-                                    out.write(delim);
-                                    out.write("<a class=\"labkey-text-link\" href=\"" + url + "\");\">View in ClinVar</a>");
-                                    delim = "<br>";
-                                }
-                                break;
+                            _log.warn("Invalid variant identifier: " + identifier);
+                        }
+                        else
+                        {
+                            switch (parts[0])
+                            {
+                                case "ClinVar":
+                                    if (!StringUtils.isEmpty(parts[1]))
+                                    {
+                                        String url = "https://www.ncbi.nlm.nih.gov/clinvar/variation/" + parts[1] + "/";
+                                        out.write(delim);
+                                        out.write("<a class=\"labkey-text-link\" href=\"" + url + "\");\">View in ClinVar</a>");
+                                        delim = "<br>";
+                                    }
+                                    break;
+                            }
                         }
                     }
                 }
