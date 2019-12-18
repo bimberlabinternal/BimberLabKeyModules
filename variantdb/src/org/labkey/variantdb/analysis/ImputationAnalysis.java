@@ -636,10 +636,9 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
                 args.add("-L");
                 args.add(frameworkMarkers.getPath());
 
-                args.add("-ef");
-                args.add("--selectTypeToExclude");
+                args.add("--exclude-filtered");
+                args.add("--select-type-to-exclude");
                 args.add("INDEL");
-                args.add("-trimAlternates");
 
                 for (String sn : samplesNeeded.get(rowId))
                 {

@@ -12,6 +12,7 @@ import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
+import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
 import org.labkey.api.sequenceanalysis.run.AbstractGatkWrapper;
 import org.labkey.api.util.FileUtil;
 
@@ -73,7 +74,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         return new File(vcf.getPath() + ".tbi").exists();
     }
 
-    public static class RemoveAnnotationsWrapper extends AbstractGatkWrapper
+    public static class RemoveAnnotationsWrapper extends AbstractDiscvrSeqWrapper
     {
         public RemoveAnnotationsWrapper(Logger log)
         {
@@ -82,20 +83,13 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
 
         public void execute(File input, File outputFile, File referenceFasta) throws PipelineJobException
         {
-            List<String> args = new ArrayList<>();
-            args.add(SequencePipelineService.get().getJava8FilePath());
-            args.addAll(SequencePipelineService.get().getJavaOpts());
-            args.add("-jar");
-            File gatkJar = getJAR();
-            gatkJar = new File(getJAR().getParentFile(), FileUtil.getBaseName(gatkJar) + "-discvr.jar");
-            args.add(gatkJar.getPath());
-            args.add("-T");
+            List<String> args = new ArrayList<>(getBaseArgs());
             args.add("RemoveAnnotations");
             args.add("-R");
             args.add(referenceFasta.getPath());
             args.add("-V");
             args.add(input.getPath());
-            args.add("-o");
+            args.add("-O");
             args.add(outputFile.getPath());
 
             for (String key : ALLOWABLE_ANNOTATIONS)

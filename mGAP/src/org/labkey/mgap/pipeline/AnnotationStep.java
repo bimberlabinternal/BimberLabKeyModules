@@ -180,7 +180,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
                 if (dropFiltered)
                 {
-                    selectArgs.add("-ef");
+                    selectArgs.add("--exclude-filtered");
                 }
 
                 SelectVariantsWrapper wrapper = new SelectVariantsWrapper(getPipelineCtx().getLogger());
