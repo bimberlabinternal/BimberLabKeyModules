@@ -35,7 +35,7 @@ import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
-import org.labkey.api.sequenceanalysis.pipeline.AlignmentOutputImpl;
+import org.labkey.api.sequenceanalysis.pipeline.PipelineStepOutput;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.FileUtil;
@@ -196,7 +196,7 @@ public class CellRangerVDJUtils
         return new File(outDir, "all_contig_annotations.csv");
     }
 
-    public File runRemoteCellHashingTasks(AlignmentOutputImpl output, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir) throws PipelineJobException
+    public File runRemoteCellHashingTasks(PipelineStepOutput output, String outputCategory, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir, Integer editDistance, boolean scanEditDistances) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
         if (readsetToHashing.isEmpty())
@@ -264,7 +264,7 @@ public class CellRangerVDJUtils
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         File cellToHto = getCellToHtoFile();
 
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, extraParams, false, sourceDir);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, extraParams, false, sourceDir, editDistance, scanEditDistances);
         output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
         output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");
 

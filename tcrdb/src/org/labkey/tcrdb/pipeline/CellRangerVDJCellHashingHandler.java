@@ -44,7 +44,7 @@ import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.TARGET_ASSAY;
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType("vloupe", false);
-    private static final String CATEGORY = "Cell Hashing Calls (VDJ)";
+    public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
 
     public CellRangerVDJCellHashingHandler()
     {
@@ -194,8 +194,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
             //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
-            File cellToHto = utils.runRemoteCellHashingTasks(output, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory());
+            boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
+            int editDistance = ctx.getParams().optInt("editDistance", 2);
 
+            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances);
             ctx.getFileManager().addStepOutputs(action, output);
 
             boolean useCellHashing = utils.useCellHashing(ctx.getSequenceSupport());
@@ -205,10 +207,13 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 {
                     throw new PipelineJobException("Missing cell to HTO file");
                 }
-
-                ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": VDJ HTO Calls", CATEGORY, rs.getReadsetId(), null, null, null);
             }
         }
+    }
+
+    private static File getMetricsFile(File callFile)
+    {
+        return new File(callFile.getPath().replaceAll(".calls.txt", ".metrics.txt"));
     }
 
     public static void processMetrics(SequenceOutputFile so, PipelineJob job, boolean updateDescription) throws PipelineJobException
@@ -217,7 +222,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         {
             Map<String, String> valueMap = new HashMap<>();
 
-            File metrics = new File(so.getFile().getParentFile(), "metrics.txt");
+            File metrics = getMetricsFile(so.getFile());
             if (metrics.exists())
             {
                 job.getLogger().info("Loading metrics");
