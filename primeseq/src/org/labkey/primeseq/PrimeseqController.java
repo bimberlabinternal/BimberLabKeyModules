@@ -16,27 +16,44 @@
 
 package org.labkey.primeseq;
 
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.labkey.api.action.ApiResponse;
 import org.labkey.api.action.ApiSimpleResponse;
+import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ReadOnlyApiAction;
 import org.labkey.api.action.SpringActionController;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
+import org.labkey.api.data.ContainerType;
+import org.labkey.api.module.Module;
+import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.security.RequiresPermission;
+import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.permissions.ReadPermission;
+import org.labkey.api.util.HtmlString;
+import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
+import org.labkey.api.view.HtmlView;
 import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PrimeseqController extends SpringActionController
 {
     private static final DefaultActionResolver _actionResolver = new DefaultActionResolver(PrimeseqController.class);
     public static final String NAME = "primeseq";
+    private static final Logger _log = Logger.getLogger(PrimeseqController.class);
 
     public PrimeseqController()
     {
@@ -126,4 +143,63 @@ public class PrimeseqController extends SpringActionController
             return ret;
         }
     }
+
+    @RequiresSiteAdmin
+    public class EnsureModuleActiveAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Enable Module Across Site");
+
+            return new HtmlView(HtmlString.of("This will enable the PRIMe-seq module in any folder that has already enabled SequenceAnalysis.  Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            Container root = ContainerManager.getRoot();
+            processContainer(root);
+
+            return true;
+        }
+
+        private void processContainer(Container c)
+        {
+            if (!c.isContainerFor(ContainerType.DataType.folderManagement))
+            {
+                return;
+            }
+
+            Set<Module> am = c.getActiveModules();
+            Module primeSeq = ModuleLoader.getInstance().getModule(PrimeseqModule.NAME);
+            if (am.contains(ModuleLoader.getInstance().getModule("SequenceAnalysis")) && !am.contains(primeSeq))
+            {
+                am = new HashSet<>(am);
+                am.add(primeSeq);
+
+                _log.info("Enabling Prime-seq module in container: " + c.getPath());
+                c.setActiveModules(am, getUser());
+            }
+
+            for (Container child : c.getChildren())
+            {
+                processContainer(child);
+            }
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
+
 }
