@@ -822,7 +822,7 @@ public class CellRangerVDJUtils
         return !getCachedReadsetMap(support).isEmpty();
     }
 
-    public static void prepareCellHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support, File outputDir, String filterFieldName) throws PipelineJobException
+    public static void prepareCellHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support, File outputDir, String filterFieldName, boolean throwOnZeroHto) throws PipelineJobException
     {
         job.getLogger().debug("preparing cell hashing files");
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
@@ -904,6 +904,11 @@ public class CellRangerVDJUtils
             job.getLogger().info("distinct HTOs: " + distinctHTOs.size());
 
             support.cacheObject(READSET_TO_HASHING_MAP, readsetToHashingMap);
+
+            if (throwOnZeroHto && distinctHTOs.isEmpty())
+            {
+                throw new PipelineJobException("None of the provided samples use cell hashing");
+            }
         }
         catch (IOException e)
         {

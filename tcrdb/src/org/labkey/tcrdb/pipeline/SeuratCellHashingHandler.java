@@ -79,7 +79,7 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            CellRangerVDJUtils.prepareCellHashingFiles(job, support, outputDir, "readsetId");
+            CellRangerVDJUtils.prepareCellHashingFiles(job, support, outputDir, "readsetId", true);
         }
 
         @Override
