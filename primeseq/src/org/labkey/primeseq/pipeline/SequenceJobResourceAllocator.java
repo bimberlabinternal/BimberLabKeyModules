@@ -319,12 +319,17 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         }
 
         Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String qos = null;
         if (params.get("resourceSettings.resourceSettings.qos") != null)
         {
             //exacloud: 36 hours
             //long_jobs: 10 days (max 60 jobs currently)
             //very_long_jobs: 30 days (suspends when node is busy)
-            String qos = StringUtils.trimToNull(ConvertHelper.convert(params.get("resourceSettings.resourceSettings.qos"), String.class));
+            qos = StringUtils.trimToNull(ConvertHelper.convert(params.get("resourceSettings.resourceSettings.qos"), String.class));
+        }
+
+        if (qos != null)
+        {
             if (engine.getType().equals("SlurmEngine"))
             {
                 job.getLogger().debug("qos as supplied by job: " + qos);
