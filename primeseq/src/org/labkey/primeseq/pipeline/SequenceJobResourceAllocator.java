@@ -299,11 +299,22 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
     private void possiblyAddHighIO(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
     {
-        job.getLogger().info("Adding QOS HighIO");
-        String line = "#SBATCH --qos=highio";
-        if (!lines.contains(line))
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.highIO"));
+        if (val == null)
         {
-            lines.add(line);
+            return;
+        }
+
+        boolean highIO = Boolean.parseBoolean(val);
+        if (highIO)
+        {
+            job.getLogger().info("Adding QOS HighIO");
+            String line = "#SBATCH --qos=highio";
+            if (!lines.contains(line))
+            {
+                lines.add(line);
+            }
         }
     }
 
