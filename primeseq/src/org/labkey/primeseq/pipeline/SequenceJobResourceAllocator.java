@@ -365,7 +365,10 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
                 //then add
                 lines.add("#SBATCH --partition=exacloud");
-                lines.add("#SBATCH --qos=" + qosName);
+                if (qosName != null)
+                {
+                    lines.add("#SBATCH --qos=" + qosName);
+                }
                 lines.add("#SBATCH --time=" + time);
             }
             else
