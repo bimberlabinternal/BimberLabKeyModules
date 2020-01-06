@@ -274,7 +274,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         int editDistance = ctx.getParams().optInt("editDistance", 2);
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
-        cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams, false, ctx.getSourceDirectory(), editDistance, scanEditDistances);
+        cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId);
         ctx.getFileManager().addStepOutputs(action, output);
 
         ctx.getFileManager().addOutput(action, category, cellToHto);

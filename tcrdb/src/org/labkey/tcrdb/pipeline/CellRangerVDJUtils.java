@@ -196,7 +196,7 @@ public class CellRangerVDJUtils
         return new File(outDir, "all_contig_annotations.csv");
     }
 
-    public File runRemoteCellHashingTasks(PipelineStepOutput output, String outputCategory, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir, Integer editDistance, boolean scanEditDistances) throws PipelineJobException
+    public File runRemoteCellHashingTasks(PipelineStepOutput output, String outputCategory, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir, Integer editDistance, boolean scanEditDistances, Integer genomeId) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
         if (readsetToHashing.isEmpty())
@@ -264,7 +264,7 @@ public class CellRangerVDJUtils
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         File cellToHto = getCellToHtoFile();
 
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, extraParams, false, sourceDir, editDistance, scanEditDistances);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, extraParams, false, sourceDir, editDistance, scanEditDistances, genomeId);
         output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
         output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");
 

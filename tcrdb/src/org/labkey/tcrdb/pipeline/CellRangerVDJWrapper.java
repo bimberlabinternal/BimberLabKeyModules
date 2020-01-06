@@ -348,7 +348,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 boolean scanEditDistances = getProvider().getParameterByName("scanEditDistances").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
                 int editDistance = getProvider().getParameterByName("editDistance").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class, 2);
 
-                getUtils().runRemoteCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances);
+                getUtils().runRemoteCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances, referenceGenome.getGenomeId());
             }
             else
             {

@@ -179,13 +179,13 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                processVloupeFile(ctx, perCellTsv, rs, action);
+                processVloupeFile(ctx, perCellTsv, rs, action, so.getLibrary_id());
             }
 
             ctx.addActions(action);
         }
 
-        private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action) throws PipelineJobException
+        private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action, Integer genomeId) throws PipelineJobException
         {
             CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
 
@@ -197,7 +197,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
             int editDistance = ctx.getParams().optInt("editDistance", 2);
 
-            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances);
+            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId);
             ctx.getFileManager().addStepOutputs(action, output);
 
             boolean useCellHashing = utils.useCellHashing(ctx.getSequenceSupport());
