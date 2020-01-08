@@ -27,7 +27,10 @@ public class ExacloudResourceSettings implements JobResourceSettings
                 }}, null),
                 ToolParameterDescriptor.create("highIO", "Add HighIO Flag", "If selected, --qos=highio will be added, which limits the number of concurrent jobs that can run.", "checkbox", null, null),
                 ToolParameterDescriptor.create("time", "Requested Time (days/hours)", "If provided, this is passed to the --time argument.  This cannot be higher than the limit for your requested partition.  Examples are: '2124', '1-0' (1 day, 0 hours), '10-0' (10 days), and '0-72' (72 hours).  If left blank, this will be automatically assigned.", "textfield", null, null),
-                ToolParameterDescriptor.create("javaProcessXmx", "Java Process Xmx (GB)", "The value to be used as -Xmx for the LabKey remote java process.  Unless you have a good reason, do not change this", "ldk-integerfield", null, null)
+                ToolParameterDescriptor.create("javaProcessXmx", "Java Process Xmx (GB)", "The value to be used as -Xmx for the LabKey remote java process.  Unless you have a good reason, do not change this", "ldk-integerfield", null, null),
+                ToolParameterDescriptor.create("localDisk", "Local Disk (MB)", "The value to be used as -Xmx for the LabKey remote java process.  Unless you have a good reason, do not change this", "ldk-integerfield", new JSONObject(){{
+                    put("minValue", 1000000);
+                }}, 1000000)
         );
     }
 

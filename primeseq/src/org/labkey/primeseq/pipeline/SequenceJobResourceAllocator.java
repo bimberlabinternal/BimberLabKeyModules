@@ -272,6 +272,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             possiblyAddQOS(job, engine, lines);
             possiblyAddHighIO(job, engine, lines);
+            possiblyAddDisk(job, engine, lines);
         }
         else
         {
@@ -316,6 +317,21 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 lines.add(line);
             }
         }
+    }
+
+    private void possiblyAddDisk(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localDisk"));
+        if (val == null)
+        {
+            return;
+        }
+
+        lines.removeIf(line -> line.contains("#SBATCH --gres=disk:"));
+
+        job.getLogger().debug("Adding local disk (mb): " + val);
+        lines.add("#SBATCH --gres=disk:" + val);
     }
 
     private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
