@@ -30,7 +30,7 @@ public class ExacloudResourceSettings implements JobResourceSettings
                 ToolParameterDescriptor.create("javaProcessXmx", "Java Process Xmx (GB)", "The value to be used as -Xmx for the LabKey remote java process.  Unless you have a good reason, do not change this", "ldk-integerfield", null, null),
                 ToolParameterDescriptor.create("localDisk", "Local Disk (GB)", "Do not change this unless you are certain.  Each job requests and uses local space (/mnt/scratch) for temp files.  If your job will require more space, consider increasing this.", "ldk-integerfield", new JSONObject(){{
                     put("minValue", 512);
-                }}, 2056)
+                }}, 1028)
         );
     }
 
