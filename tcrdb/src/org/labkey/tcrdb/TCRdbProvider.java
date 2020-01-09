@@ -3,6 +3,7 @@ package org.labkey.tcrdb;
 import org.json.JSONObject;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
+import org.labkey.api.laboratory.DetailsUrlWithoutLabelNavItem;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.laboratory.NavItem;
 import org.labkey.api.laboratory.QueryCountNavItem;
@@ -13,6 +14,8 @@ import org.labkey.api.laboratory.SummaryNavItem;
 import org.labkey.api.laboratory.TabbedReportItem;
 import org.labkey.api.ldk.table.QueryCache;
 import org.labkey.api.module.Module;
+import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.AbstractSequenceDataProvider;
@@ -45,12 +48,6 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
     }
 
     @Override
-    public List<NavItem> getMiscItems(Container c, User u)
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
     public String getName()
     {
         return NAME;
@@ -63,27 +60,41 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
     }
 
     @Override
+    public List<NavItem> getMiscItems(Container c, User u)
+    {
+        List<NavItem> items = new ArrayList<>();
+        if (c.getActiveModules().contains(ModuleLoader.getInstance().getModule(TCRdbModule.class)))
+        {
+            items.add(new DetailsUrlWithoutLabelNavItem(this, "Export 10x Library Information", DetailsURL.fromString("tcrdb/libraryExport.view"), LaboratoryService.NavItemCategory.misc, NAME));
+        }
+
+        return items;
+    }
+
+    @Override
     public List<NavItem> getDataNavItems(Container c, User u)
     {
         List<NavItem> items = new ArrayList<>();
         QueryCache cache = new QueryCache();
-        if (c.getActiveModules().contains(getOwningModule()))
+        if (!c.getActiveModules().contains(getOwningModule()))
         {
-            TCRdbImportNavItem item = new TCRdbImportNavItem(this, "TCR Stims/Sorts", LaboratoryService.NavItemCategory.data, "TCRdb");
-            item.setQueryCache(cache);
-            items.add(item);
-
-            TCRdbBulkImportNavItem item2 = new TCRdbBulkImportNavItem(this, "TCR/10x Stim/cDNA Import", LaboratoryService.NavItemCategory.data, "TCRdb", "tcrdb/poolImport.view");
-            item2.setQueryCache(cache);
-            items.add(item2);
-
-            TCRdbBulkImportNavItem item3 = new TCRdbBulkImportNavItem(this, "TCR/10x Readset Import", LaboratoryService.NavItemCategory.data, "TCRdb", "tcrdb/cDNAImport.view");
-            item3.setQueryCache(cache);
-            items.add(item3);
+            return Collections.emptyList();
         }
 
-        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES, "TCR Clones", LaboratoryService.NavItemCategory.data, "TCRdb", cache));
-        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS, "TCR cDNA Libraries", LaboratoryService.NavItemCategory.data, "TCRdb", cache){
+        TCRdbImportNavItem item = new TCRdbImportNavItem(this, "TCR Stims/Sorts", LaboratoryService.NavItemCategory.data, NAME);
+        item.setQueryCache(cache);
+        items.add(item);
+
+        TCRdbBulkImportNavItem item2 = new TCRdbBulkImportNavItem(this, "TCR/10x Import 1: Stims/cDNA", LaboratoryService.NavItemCategory.data, NAME, "tcrdb/poolImport.view");
+        item2.setQueryCache(cache);
+        items.add(item2);
+
+        TCRdbBulkImportNavItem item3 = new TCRdbBulkImportNavItem(this, "TCR/10x Import 2: Libraries/Readsets", LaboratoryService.NavItemCategory.data, NAME, "tcrdb/cDNAImport.view");
+        item3.setQueryCache(cache);
+        items.add(item3);
+
+        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES, "TCR Clones", LaboratoryService.NavItemCategory.data, NAME, cache));
+        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CDNAS, "TCR cDNA Libraries", LaboratoryService.NavItemCategory.data, NAME, cache){
             @Override
             public ActionURL getImportUrl(Container c, User u)
             {
@@ -164,7 +175,7 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
         List<TabbedReportItem> items = new ArrayList<>();
 
         NavItem owner = getDataNavItems(c, u).get(0);
-        String category = "TCRdb";
+        String category = NAME;
         QueryCache cache = new QueryCache();
 
         TabbedReportItem stims = new QueryTabbedReportItem(cache, this, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIMS, "TCR Stims/Blood Draws", category);

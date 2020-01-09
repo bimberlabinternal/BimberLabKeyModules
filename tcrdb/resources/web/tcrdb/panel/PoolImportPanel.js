@@ -4,7 +4,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     //TODO: replicate, buffer?
     COLUMNS: [{
         name: 'expt',
-        labels: ['Expt', 'Expt #', 'Experiment', 'Exp#', 'Exp #'],
+        labels: ['Expt', 'Expt #', 'Experiment', 'Exp#', 'Exp #', 'Workbook'],
         allowRowSpan: true,
         alwaysShow: true,
         transform: 'expt',
@@ -67,7 +67,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     },{
         name: 'hto',
         labels: ['HTO', 'HTO Oligo', 'HTO-Oligo', 'HTO barcode', 'Barcode'],
-        allowRowSpan: true,
+        allowRowSpan: false,
         transform: 'hto'
     },{
         name: 'cells',
