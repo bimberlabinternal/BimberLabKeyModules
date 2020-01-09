@@ -265,8 +265,6 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         }
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
-        File cellToHto = utils.getCellToHtoFile();
-
         List<String> extraParams = new ArrayList<>();
         extraParams.addAll(commandArgs);
 
@@ -274,7 +272,8 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         int editDistance = ctx.getParams().optInt("editDistance", 2);
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
-        cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
+        String basename = FileUtil.makeLegalName(rs.getName());
+        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
         ctx.getFileManager().addStepOutputs(action, output);
 
         ctx.getFileManager().addOutput(action, category, cellToHto);
