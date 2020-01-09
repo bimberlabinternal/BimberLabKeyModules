@@ -15,7 +15,9 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExpProtocol;
+import org.labkey.api.exp.api.ExpRun;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.iterator.CloseableIterator;
 import org.labkey.api.laboratory.LaboratoryService;
@@ -65,6 +67,7 @@ public class CellRangerVDJUtils
     private File _sourceDir;
 
     public static final String READSET_TO_HASHING_MAP = "readsetToHashingMap";
+    private static final String HASHING_CALLS = "Cell Hashing TCR Calls";
 
     public CellRangerVDJUtils(Logger log, File sourceDir)
     {
@@ -262,23 +265,23 @@ public class CellRangerVDJUtils
         }
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
-        File cellToHto = getCellToHtoFile();
+        String basename = FileUtil.makeLegalName(rs.getName());
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, sourceDir, editDistance, scanEditDistances, rs, genomeId);
+        if (!hashtagCalls.exists())
+        {
+            throw new PipelineJobException("Unable to find expected file: " + hashtagCalls.getPath());
+        }
+        output.addOutput(hashtagCalls, HASHING_CALLS);
 
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, FileUtil.getBaseName(FileUtil.getBaseName(cellToHto.getName())), _log, extraParams, false, sourceDir, editDistance, scanEditDistances, rs, genomeId);
-        output.addOutput(hashtagCalls, "Cell Hashing TCR Calls");
-        output.addOutput(new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"), "Cell Hashing TCR Report");
+        File html = new File(hashtagCalls.getParentFile(), FileUtil.getBaseName(FileUtil.getBaseName(hashtagCalls.getName())) + ".html");
+        if (!html.exists())
+        {
+            throw new PipelineJobException("Unable to find HTML file: " + html.getPath());
+        }
 
-        return cellToHto;
-    }
+        output.addOutput(html, "Cell Hashing TCR Report");
 
-    public File getCellToHtoFile()
-    {
-        return new File(_sourceDir, "cellbarcodeToHTO.calls.txt");
-    }
-
-    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, boolean deleteExisting) throws PipelineJobException
-    {
-        importAssayData(job, model, outDir, assayId, null, deleteExisting);
+        return hashtagCalls;
     }
 
     public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
@@ -326,8 +329,6 @@ public class CellRangerVDJUtils
         {
             job.getLogger().debug("Using supplied runId: " + runId);
         }
-
-        Readset rs = SequenceAnalysisService.get().getReadset(model.getReadset(), job.getUser());
 
         //first build map of distinct FL sequences:
         _log.info("processing FASTA: " + consensusFasta.getPath());
@@ -401,8 +402,13 @@ public class CellRangerVDJUtils
             defaultCDNA = cDNAMap.keySet().iterator().next();
         }
 
+        ExpRun run = ExperimentService.get().getExpRun(runId);
+        if (run == null)
+        {
+            throw new PipelineJobException("Unable to find ExpRun: " + runId);
+        }
 
-        File cellbarcodeToHtoFile = getCellToHtoFile();
+        File cellbarcodeToHtoFile = getCellToHtoFile(run);
         Map<String, Integer> cellBarcodeToCDNAMap = new HashMap<>();
         Set<String> doubletBarcodes = new HashSet<>();
         if (cellbarcodeToHtoFile.exists())
@@ -633,6 +639,28 @@ public class CellRangerVDJUtils
         _log.info("total assay rows: " + rows.size());
         _log.info("total cells: " + totalCells);
         saveRun(job, protocol, model, rows, outDir, runId, deleteExisting);
+    }
+
+    private File getCellToHtoFile(ExpRun run) throws PipelineJobException
+    {
+        List<? extends ExpData> datas = run.getInputDatas(HASHING_CALLS, ExpProtocol.ApplicationType.ExperimentRunOutput);
+        if (datas.isEmpty())
+        {
+            throw new PipelineJobException("Unable to find hashing calls output");
+        }
+
+        if (datas.size() > 1)
+        {
+            throw new PipelineJobException("More than one cell hashing calls output found");
+        }
+
+        File ret = datas.get(0).getFile();
+        if (ret == null || !ret.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + (ret == null ? "null" : ret.getPath()));
+        }
+
+        return ret;
     }
 
     private static class AssayModel

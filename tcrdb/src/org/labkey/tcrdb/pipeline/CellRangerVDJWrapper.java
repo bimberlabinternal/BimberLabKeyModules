@@ -624,7 +624,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             {
                 Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
                 Boolean deleteExisting = getProvider().getParameterByName(DELETE_EXISTING_ASSAY_DATA).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
-                getUtils().importAssayData(getPipelineCtx().getJob(), model, bam.getParentFile(), assayId, deleteExisting);
+                getUtils().importAssayData(getPipelineCtx().getJob(), model, bam.getParentFile(), assayId, null, deleteExisting);
             }
             else
             {
