@@ -273,6 +273,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddQOS(job, engine, lines);
             possiblyAddHighIO(job, engine, lines);
             possiblyAddDisk(job, engine, lines);
+            possiblyAddSSD(job, engine, lines);
         }
         else
         {
@@ -321,7 +322,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
     private void possiblyAddDisk(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
     {
-        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        Map<String, String> params = ((HasJobParams) job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localDisk"));
         if (val == null)
         {
@@ -332,6 +333,27 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         job.getLogger().debug("Adding local disk (mb): " + val);
         lines.add("#SBATCH --gres=disk:" + val);
+    }
+
+    private void possiblyAddSSD(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localSSD"));
+        if (val == null)
+        {
+            return;
+        }
+
+        boolean parsed = Boolean.parseBoolean(val);
+        if (parsed)
+        {
+            job.getLogger().info("Requiring local SSD scratch space");
+            String line = "#SBATCH -C ssdscratch";
+            if (!lines.contains(line))
+            {
+                lines.add(line);
+            }
+        }
     }
 
     private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)

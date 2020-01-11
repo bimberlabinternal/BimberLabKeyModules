@@ -30,7 +30,8 @@ public class ExacloudResourceSettings implements JobResourceSettings
                 ToolParameterDescriptor.create("javaProcessXmx", "Java Process Xmx (GB)", "The value to be used as -Xmx for the LabKey remote java process.  Unless you have a good reason, do not change this", "ldk-integerfield", null, null),
                 ToolParameterDescriptor.create("localDisk", "Local Disk (GB)", "Do not change this unless you are certain.  Each job requests and uses local space (/mnt/scratch) for temp files.  If your job will require more space, consider increasing this.", "ldk-integerfield", new JSONObject(){{
                     put("minValue", 512);
-                }}, 1028)
+                }}, 1028),
+                ToolParameterDescriptor.create("localSSD", "Request Nodes With SSD Scratch", "If selected, -C ssdscratch will be added to the submit script, which limits to node with faster SSD scratch space.  This might be important for I/O intense jobs.", "checkbox", null, null)
         );
     }
 
