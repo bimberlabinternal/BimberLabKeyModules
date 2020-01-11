@@ -543,7 +543,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                             }, this);
                         }
 
-                        //TODO
                         if (!readsetIds[r.hashingReadsetId] && r.hashingReadsetId && (includeWithData || r['hashingReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['hashingReadsetId/librarytype'], r['hashingReadsetId/application'], r.targetApplication)) {
                             //allow for cell hashing / shared readsets
                             readsetIds[r.hashingReadsetId] = true;

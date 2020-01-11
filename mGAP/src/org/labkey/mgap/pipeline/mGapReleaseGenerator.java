@@ -738,7 +738,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             {
                 RecordedAction action = new RecordedAction();
                 int idx = 0;
-                for (TrackDescriptor track : getTracks(ctx.getSourceDirectory()))
+                for (TrackDescriptor track : getTracks(ctx.getSourceDirectory(true)))
                 {
                     ctx.getLogger().info("inspecting track: " + track.getTrackName());
                     idx++;

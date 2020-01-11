@@ -1,6 +1,7 @@
 package org.labkey.mgap.pipeline;
 
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.DISCVRSeqRunner;
@@ -16,7 +17,7 @@ public class MultiSourceAnnotatorRunner extends DISCVRSeqRunner
         super(log);
     }
 
-    public File execute(File inputVcf, File cassandraVcf, File clinvarVcf, File liftoverRejects, File outputVcf)  throws PipelineJobException
+    public File execute(File inputVcf, File cassandraVcf, File clinvarVcf, File liftoverRejects, File outputVcf, @Nullable List<String> options)  throws PipelineJobException
     {
         List<String> args = getBaseArgs("MultiSourceAnnotator");
 
@@ -35,6 +36,10 @@ public class MultiSourceAnnotatorRunner extends DISCVRSeqRunner
         args.add("-O");
         args.add(outputVcf.getPath());
 
+        if (options != null)
+        {
+            args.addAll(options);
+        }
         execute(args);
 
         if (!outputVcf.exists())

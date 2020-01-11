@@ -1,6 +1,8 @@
 package org.labkey.mgap.pipeline;
 
+import htsjdk.samtools.util.Interval;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
@@ -8,13 +10,10 @@ import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
-import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
-import org.labkey.api.sequenceanalysis.run.AbstractGatkWrapper;
-import org.labkey.api.util.FileUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
     }
 
     @Override
-    public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome) throws PipelineJobException
+    public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable Interval interval) throws PipelineJobException
     {
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
 
@@ -59,7 +58,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         }
         else
         {
-            getWrapper().execute(inputVCF, outputFile, genome.getWorkingFastaFile());
+            getWrapper().execute(inputVCF, outputFile, genome.getWorkingFastaFile(), interval);
         }
 
         output.setVcf(outputFile);
@@ -81,7 +80,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
             super(log);
         }
 
-        public void execute(File input, File outputFile, File referenceFasta) throws PipelineJobException
+        public void execute(File input, File outputFile, File referenceFasta, @Nullable Interval interval) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
             args.add("RemoveAnnotations");
@@ -91,6 +90,12 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
             args.add(input.getPath());
             args.add("-O");
             args.add(outputFile.getPath());
+
+            if (interval != null)
+            {
+                args.add("-L");
+                args.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+            }
 
             for (String key : ALLOWABLE_ANNOTATIONS)
             {

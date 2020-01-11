@@ -3,6 +3,7 @@ package org.labkey.mgap.pipeline;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 import htsjdk.samtools.util.CloseableIterator;
+import htsjdk.samtools.util.Interval;
 import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.Options;
@@ -11,6 +12,7 @@ import htsjdk.variant.variantcontext.writer.VariantContextWriterBuilder;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.Selector;
@@ -81,11 +83,11 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
     }
 
     @Override
-    public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome) throws PipelineJobException
+    public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable Interval interval) throws PipelineJobException
     {
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
 
-        File outputFile = renameSamples(inputVCF, genome);
+        File outputFile = renameSamples(inputVCF, genome, interval);
 
         output.setVcf(outputFile);
         output.addIntermediateFile(outputFile);
@@ -104,7 +106,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         return new File(outputDir, "sampleMapping.txt");
     }
 
-    private File renameSamples(File currentVCF, ReferenceGenome genome) throws PipelineJobException
+    private File renameSamples(File currentVCF, ReferenceGenome genome, @Nullable Interval interval) throws PipelineJobException
     {
         getPipelineCtx().getLogger().info("renaming samples in VCF");
 
@@ -116,7 +118,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         }
         else
         {
-            Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory()));
+            Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory(true)));
 
             VariantContextWriterBuilder builder = new VariantContextWriterBuilder();
             builder.setReferenceDictionary(SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary()));
@@ -152,7 +154,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                 }
 
                 writer.writeHeader(new VCFHeader(header.getMetaDataInInputOrder(), remappedSamples));
-                try (CloseableIterator<VariantContext> it = reader.iterator())
+                try (CloseableIterator<VariantContext> it = (interval == null ? reader.iterator() : reader.query(interval.getContig(), interval.getStart(), interval.getEnd())))
                 {
                     while (it.hasNext())
                     {
@@ -187,7 +189,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
     private void writeSampleInfoToFile(File input) throws PipelineJobException
     {
 
-        File outputFile = getSampleNameFile(getPipelineCtx().getSourceDirectory());
+        File outputFile = getSampleNameFile(getPipelineCtx().getSourceDirectory(true));
         getPipelineCtx().getLogger().debug("caching mGAP aliases to file: " + outputFile.getPath());
 
         Map<String, String> sampleNameMap = new HashMap<>();
