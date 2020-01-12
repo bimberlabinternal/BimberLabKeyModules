@@ -4,7 +4,6 @@ import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
-import htsjdk.samtools.util.SequenceUtil;
 import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
@@ -40,17 +39,13 @@ import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
-import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.util.Job;
 import org.labkey.api.util.JobRunner;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SafeFileAppender;
-import org.labkey.api.writer.PrintWriters;
 
-import javax.validation.constraints.Null;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -72,7 +67,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         super(provider, ctx, new CassandraRunner(ctx.getLogger()));
     }
 
-    public static class Provider extends AbstractVariantProcessingStepProvider<AnnotationStep>
+    public static class Provider extends AbstractVariantProcessingStepProvider<AnnotationStep> implements VariantProcessingStep.SupportsScatterGather
     {
         public Provider()
         {

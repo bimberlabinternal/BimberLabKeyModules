@@ -57,7 +57,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         super(provider, ctx);
     }
 
-    public static class Provider extends AbstractVariantProcessingStepProvider<RenameSamplesForMgapStep>
+    public static class Provider extends AbstractVariantProcessingStepProvider<RenameSamplesForMgapStep> implements VariantProcessingStep.SupportsScatterGather
     {
         public Provider()
         {

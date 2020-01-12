@@ -30,7 +30,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         super(provider, ctx, new RemoveAnnotationsWrapper(ctx.getLogger()));
     }
 
-    public static class Provider extends AbstractVariantProcessingStepProvider<RemoveAnnotationsForMgapStep>
+    public static class Provider extends AbstractVariantProcessingStepProvider<RemoveAnnotationsForMgapStep> implements VariantProcessingStep.SupportsScatterGather
     {
         public Provider()
         {
