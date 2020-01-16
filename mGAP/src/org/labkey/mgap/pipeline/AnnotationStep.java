@@ -130,7 +130,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
     }
 
     @Override
-    public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable Interval interval) throws PipelineJobException
+    public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
     {
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
 
@@ -155,7 +155,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             firstSample = reader.getFileHeader().getSampleNamesInOrder().get(0);
         }
 
-        boolean needToSubsetToInterval = interval != null;
+        boolean needToSubsetToInterval = intervals != null && !intervals.isEmpty();
         boolean dropGenotypes = totalSubjects > 10;
         boolean dropFiltered = getProvider().getParameterByName("dropFiltered").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class);
 
@@ -184,8 +184,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
                 if (needToSubsetToInterval)
                 {
-                    selectArgs.add("-L");
-                    selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                    for (Interval interval : intervals)
+                    {
+                        selectArgs.add("-L");
+                        selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                    }
                     needToSubsetToInterval = false;
                 }
 
@@ -213,26 +216,29 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             {
                 List<String> selectArgs = new ArrayList<>();
                 getPipelineCtx().getLogger().info("subsetting VCF by interval");
-                selectArgs.add("-L");
-                selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                for (Interval interval : intervals)
+                {
+                    selectArgs.add("-L");
+                    selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                }
                 needToSubsetToInterval = false;
 
-                File subset = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + "." + interval.getContig() + ".subset.vcf.gz");
-                if (!indexExists(subset))
+                File intervalSubset = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".intervalSubset.vcf.gz");
+                if (!indexExists(intervalSubset))
                 {
                     SelectVariantsWrapper wrapper = new SelectVariantsWrapper(getPipelineCtx().getLogger());
-                    wrapper.execute(originalGenome.getWorkingFastaFile(), inputVCF, subset, selectArgs);
+                    wrapper.execute(originalGenome.getWorkingFastaFile(), inputVCF, intervalSubset, selectArgs);
                 }
                 else
                 {
-                    getPipelineCtx().getLogger().info("resuming with existing file: " + subset.getPath());
+                    getPipelineCtx().getLogger().info("resuming with existing file: " + intervalSubset.getPath());
                 }
 
-                output.addOutput(subset, "VCF Subset");
-                output.addIntermediateFile(subset);
-                output.addIntermediateFile(new File(subset.getPath() + ".tbi"));
+                output.addOutput(intervalSubset, "VCF Subset");
+                output.addIntermediateFile(intervalSubset);
+                output.addIntermediateFile(new File(intervalSubset.getPath() + ".tbi"));
 
-                currentVcf = subset;
+                currentVcf = intervalSubset;
 
                 getPipelineCtx().getJob().getLogger().info("total variants: " + SequenceAnalysisService.get().getVCFLineCount(currentVcf, getPipelineCtx().getJob().getLogger(), false));
                 getPipelineCtx().getJob().getLogger().info("passing variants: " + SequenceAnalysisService.get().getVCFLineCount(currentVcf, getPipelineCtx().getJob().getLogger(), true));
@@ -279,7 +285,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         File cassandraAnnotated = new File(outputDirectory, basename + ".vcf.gz");
         if (!indexExists(cassandraAnnotated))
         {
-            List<File> files = runCassandraPerChromosome(liftedToGRCh37, cassandraAnnotated, grch37Genome, output, interval);
+            List<File> files = runCassandraPerChromosome(liftedToGRCh37, cassandraAnnotated, grch37Genome, output, intervals);
 
             SequenceAnalysisService.get().combineVcfs(files, outputDirectory, basename, getPipelineCtx().getLogger());
         }
@@ -341,8 +347,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             List<String> options = new ArrayList<>();
             if (needToSubsetToInterval)
             {
-                options.add("-L");
-                options.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                for (Interval interval : intervals)
+                {
+                    options.add("-L");
+                    options.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                }
                 needToSubsetToInterval = false;
             }
 
@@ -363,7 +372,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         return output;
     }
 
-    private List<File> runCassandraPerChromosome(File liftedToGRCh37, File finalOutput, ReferenceGenome genome, VariantProcessingStepOutputImpl output, @Nullable Interval interval) throws PipelineJobException
+    private List<File> runCassandraPerChromosome(File liftedToGRCh37, File finalOutput, ReferenceGenome genome, VariantProcessingStepOutputImpl output, @Nullable List<Interval> intervals) throws PipelineJobException
     {
         String basename = SequenceAnalysisService.get().getUnzippedBaseName(finalOutput.getName());
 
@@ -400,21 +409,21 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             cassdandraLogDir.mkdirs();
         }
 
-        List<SAMSequenceRecord> seqs = new ArrayList<>();
-        if (interval == null)
+        Set<String> contigs = new HashSet<>();
+        if (intervals == null || intervals.isEmpty())
         {
-            seqs.addAll(dict.getSequences());
+            dict.getSequences().forEach(seq -> contigs.add(seq.getSequenceName()));
         }
         else
         {
-            seqs.add(dict.getSequence(interval.getContig()));
+            intervals.forEach(interval -> contigs.add(dict.getSequence(interval.getContig()).getSequenceName()));
         }
 
-        getPipelineCtx().getLogger().debug("Total contigs for cassandra: " + seqs.size());
+        getPipelineCtx().getLogger().debug("Total contigs for cassandra: " + contigs.size());
 
-        for (SAMSequenceRecord seq : seqs)
+        for (String contig : contigs)
         {
-            CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), finalOutput.getParentFile(), basename, genome, liftedToGRCh37, output, getPipelineCtx().getLogger(), maxRamPerJob, cassdandraLogDir);
+            CassandraPerChrJob job = new CassandraPerChrJob(contig, finalOutput.getParentFile(), basename, genome, liftedToGRCh37, output, getPipelineCtx().getLogger(), maxRamPerJob, cassdandraLogDir);
             jobs.add(job);
             jobRunner.execute(job);
         }
