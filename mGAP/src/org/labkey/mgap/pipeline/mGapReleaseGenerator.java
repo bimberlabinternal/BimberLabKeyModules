@@ -50,7 +50,6 @@ import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
-import org.labkey.api.sequenceanalysis.run.AbstractGatkWrapper;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.FileType;
@@ -183,14 +182,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 new TableSelector(releaseTracks, colMap.values(), null, null).forEachResults(rs -> {
                     if (rs.getObject(FieldKey.fromString("vcfId")) == null)
                     {
-                        boolean isPrimary = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
-                        if (!isPrimary)
-                        {
-                            throw new SQLException("No VCF found for track: " + rs.getObject(FieldKey.fromString("trackName")));
-                        }
-
-                        //special-case the primary track, which we will generate by merging
-                        return;
+                        throw new SQLException("No VCF found for track: " + rs.getObject(FieldKey.fromString("trackName")));
                     }
 
                     ExpData d = ExperimentService.get().getExpData(rs.getInt(FieldKey.fromString("vcfId")));
@@ -200,7 +192,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                             rs.getString(FieldKey.fromString("trackName")),
                             String.valueOf(rs.getInt(FieldKey.fromString("vcfId/dataId"))),
                             String.valueOf(rs.getObject(FieldKey.fromString("mergepriority")) == null ? 999 : rs.getInt(FieldKey.fromString("mergepriority"))),
-                            String.valueOf(rs.getObject(FieldKey.fromString("skipvalidation")) != null && rs.getBoolean(FieldKey.fromString("skipvalidation")))
+                            String.valueOf(rs.getObject(FieldKey.fromString("skipvalidation")) != null && rs.getBoolean(FieldKey.fromString("skipvalidation"))),
+                            String.valueOf(rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack")))
                     });
 
                     distinctTracks.add(rs.getString(FieldKey.fromString("trackName")));
@@ -654,6 +647,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             Integer _dataId;
             Integer _mergePriority;
             boolean _skipValidation;
+            boolean _isPrimary;
 
             public TrackDescriptor(String[] vals)
             {
@@ -661,6 +655,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 _dataId = Integer.parseInt(vals[1]);
                 _mergePriority = Integer.parseInt(vals[2]);
                 _skipValidation = Boolean.parseBoolean(vals[3]);
+                _isPrimary = Boolean.parseBoolean(vals[4]);
             }
 
             public String getTrackName()
@@ -681,6 +676,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             public boolean isSkipValidation()
             {
                 return _skipValidation;
+            }
+
+            public boolean isPrimary()
+            {
+                return _isPrimary;
             }
         }
 
@@ -730,18 +730,14 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ReferenceGenome genome = ctx.getSequenceSupport().getCachedGenome(genomeId);
 
             String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
-
-            List<String> priorities = new ArrayList<>();
-            List<String> combineArgs = new ArrayList<>();
+            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
 
             try
             {
                 RecordedAction action = new RecordedAction();
-                int idx = 0;
                 for (TrackDescriptor track : getTracks(ctx.getSourceDirectory(true)))
                 {
                     ctx.getLogger().info("inspecting track: " + track.getTrackName());
-                    idx++;
 
                     File vcf = ctx.getSequenceSupport().getCachedData(track.getDataId());
                     action.addInput(vcf, "Input VCF");
@@ -750,7 +746,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     //sanity check annotations exist/dont
                     checkVcfAnnotationsAndSamples(vcf, track.isSkipValidation());
 
-                    File renamedVcf = new File(ctx.getOutputDir(), FileUtil.makeLegalName(track.getTrackName()).replaceAll(" ", "_") + ".vcf.gz");
+                    File renamedVcf = track.isPrimary() ? primaryTrackVcf : new File(ctx.getOutputDir(), FileUtil.makeLegalName(track.getTrackName()).replaceAll(" ", "_") + ".vcf.gz");
                     File renamedVcfIdx = new File(renamedVcf.getPath() + ".tbi");
                     File renamedVcfDone = new File(renamedVcf.getPath() + ".done");
                     if (renamedVcfDone.exists())
@@ -780,11 +776,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     ctx.getFileManager().removeIntermediateFile(renamedVcfIdx);
                     ctx.getFileManager().addIntermediateFile(renamedVcfDone);
 
-                    String id = String.valueOf(idx);
-                    combineArgs.add("--variant:" + id);
-                    combineArgs.add(renamedVcf.getPath());
-                    priorities.add(id);
-
                     SequenceOutputFile output = new SequenceOutputFile();
                     output.setFile(renamedVcf);
                     output.setName(track.getTrackName());
@@ -798,36 +789,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException(e);
             }
 
-            combineArgs.add("-priority");
-            combineArgs.add(StringUtils.join(priorities, ","));
-
-            //Next, merge into primary VCF
-            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
-            if (indexExists(primaryTrackVcf))
+            if (!primaryTrackVcf.exists())
             {
-                ctx.getLogger().info("reusing existing vcf: " + primaryTrackVcf.getPath());
-            }
-            else
-            {
-                new AbstractGatkWrapper(ctx.getLogger())
-                {
-                    public void execute(File referenceFasta, File outputVcf, List<String> combineArgs) throws PipelineJobException
-                    {
-                        List<String> args = new ArrayList<>();
-                        args.addAll(getBaseArgs());
-                        args.add("-T");
-                        args.add("CombineVariants");
-                        args.add("-R");
-                        args.add(referenceFasta.getPath());
-                        args.add("-o");
-                        args.add(outputVcf.getPath());
-                        args.add("-genotypeMergeOptions");
-                        args.add("PRIORITIZE");
-                        args.addAll(combineArgs);
-
-                        execute(args);
-                    }
-                }.execute(genome.getWorkingFastaFile(), primaryTrackVcf, combineArgs);
+                throw new PipelineJobException("Unable to find primary track VCF, expected: " + primaryTrackVcf.getPath());
             }
 
             //Then summarize:

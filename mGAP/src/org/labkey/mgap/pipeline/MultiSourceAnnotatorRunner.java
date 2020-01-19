@@ -27,8 +27,11 @@ public class MultiSourceAnnotatorRunner extends DISCVRSeqRunner
         args.add("-cv");
         args.add(clinvarVcf.getPath());
 
-        args.add("-c");
-        args.add(cassandraVcf.getPath());
+        if (cassandraVcf != null)
+        {
+            args.add("-c");
+            args.add(cassandraVcf.getPath());
+        }
 
         args.add("-lr");
         args.add(liftoverRejects.getPath());
