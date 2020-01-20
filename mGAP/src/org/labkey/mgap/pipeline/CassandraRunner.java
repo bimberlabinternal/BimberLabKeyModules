@@ -26,6 +26,11 @@ public class CassandraRunner extends AbstractCommandWrapper
 
     public File execute(File inputVcfUnzipped, File outputVcfUnzipped, List<String> extraArgs) throws PipelineJobException
     {
+        if (inputVcfUnzipped.getPath().endsWith(".gz") || outputVcfUnzipped.getPath().endsWith(".gz"))
+        {
+            throw new PipelineJobException("Expected input VCF to be unzipped:" + inputVcfUnzipped.getPath() + " / " + outputVcfUnzipped.getPath());
+        }
+
         List<String> args = new ArrayList<>();
         args.add(SequencePipelineService.get().getJavaFilepath());
         args.addAll(SequencePipelineService.get().getJavaOpts(_maxRamOverride));

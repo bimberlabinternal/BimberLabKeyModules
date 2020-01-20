@@ -1,17 +1,9 @@
 package org.labkey.mgap.pipeline;
 
-import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.samtools.SAMSequenceRecord;
-import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
-import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
-import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
@@ -39,10 +31,9 @@ import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
-import org.labkey.api.util.Job;
-import org.labkey.api.util.JobRunner;
+import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
-import org.labkey.api.util.SafeFileAppender;
 
 import java.io.File;
 import java.io.IOException;
@@ -166,26 +157,26 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 getPipelineCtx().getLogger().info("dropping filtered sites");
 
             File subset = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".subset.vcf.gz");
+            List<String> selectArgs = new ArrayList<>();
+            if (dropGenotypes)
+            {
+                selectArgs.add("--sites-only-vcf-output");
+            }
+
+            if (dropFiltered)
+            {
+                selectArgs.add("--exclude-filtered");
+            }
+
+            if (needToSubsetToInterval)
+            {
+                selectArgs.add("-L");
+                selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                needToSubsetToInterval = false;
+            }
+
             if (!indexExists(subset))
             {
-                List<String> selectArgs = new ArrayList<>();
-                if (dropGenotypes)
-                {
-                    selectArgs.add("--sites-only-vcf-output");
-                }
-
-                if (dropFiltered)
-                {
-                    selectArgs.add("--exclude-filtered");
-                }
-
-                if (needToSubsetToInterval)
-                {
-                    selectArgs.add("-L");
-                    selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
-                    needToSubsetToInterval = false;
-                }
-
                 SelectVariantsWrapper wrapper = new SelectVariantsWrapper(getPipelineCtx().getLogger());
                 wrapper.execute(originalGenome.getWorkingFastaFile(), inputVCF, subset, selectArgs);
             }
@@ -193,6 +184,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             {
                 getPipelineCtx().getLogger().info("resuming with existing file: " + subset.getPath());
             }
+
             output.addOutput(subset, "VCF Subset");
             output.addIntermediateFile(subset);
             output.addIntermediateFile(new File(subset.getPath() + ".tbi"));
@@ -385,16 +377,50 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
         Integer maxRam = SequencePipelineService.get().getMaxRam();
         cassRunner.setMaxRamOverride(maxRam);
-        cassRunner.execute(liftedToGRCh37, finalOutput, extraArgs);
 
-        if (!finalOutput.exists())
+        //Cassandra requires unzipped files
+        File liftedToGRCh37Unzipped = new File(liftedToGRCh37.getParentFile(), FileUtil.getBaseName(liftedToGRCh37.getName()));
+        File liftedToGRCh37UnzippedDone = new File(liftedToGRCh37Unzipped.getPath() + ".done");
+        if (!liftedToGRCh37UnzippedDone.exists())
+        {
+            SimpleScriptWrapper wrapper = new SimpleScriptWrapper(getPipelineCtx().getLogger());
+            wrapper.execute(Arrays.asList("gunzip", liftedToGRCh37.getPath()));
+            try
+            {
+                FileUtils.touch(liftedToGRCh37UnzippedDone);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("Resuming from file: " + liftedToGRCh37Unzipped.getPath());
+        }
+
+        output.addIntermediateFile(liftedToGRCh37Unzipped);
+        output.addIntermediateFile(liftedToGRCh37UnzippedDone);
+
+        File finalOutputUnzipped = new File(finalOutput.getParentFile(), FileUtil.getBaseName(finalOutput));
+
+        cassRunner.execute(liftedToGRCh37Unzipped, finalOutputUnzipped, extraArgs);
+
+        if (!finalOutputUnzipped.exists())
         {
             throw new PipelineJobException("Unable to find output");
         }
 
         try
         {
+            SequenceAnalysisService.get().bgzipFile(finalOutputUnzipped, getPipelineCtx().getLogger());
             SequenceAnalysisService.get().ensureVcfIndex(finalOutput, getPipelineCtx().getLogger());
+
+            if (finalOutputUnzipped.exists())
+            {
+                getPipelineCtx().getLogger().warn("Unzipped file still exists: " + finalOutputUnzipped);
+                output.addIntermediateFile(finalOutputUnzipped);
+            }
         }
         catch (IOException e)
         {
