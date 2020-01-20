@@ -402,25 +402,15 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.addIntermediateFile(liftedToGRCh37Unzipped);
         output.addIntermediateFile(liftedToGRCh37UnzippedDone);
 
-        File finalOutputUnzipped = new File(finalOutput.getParentFile(), FileUtil.getBaseName(finalOutput));
-
-        cassRunner.execute(liftedToGRCh37Unzipped, finalOutputUnzipped, extraArgs);
-
-        if (!finalOutputUnzipped.exists())
+        cassRunner.execute(liftedToGRCh37Unzipped, finalOutput, extraArgs);
+        if (!finalOutput.exists())
         {
             throw new PipelineJobException("Unable to find output");
         }
 
         try
         {
-            SequenceAnalysisService.get().bgzipFile(finalOutputUnzipped, getPipelineCtx().getLogger());
             SequenceAnalysisService.get().ensureVcfIndex(finalOutput, getPipelineCtx().getLogger());
-
-            if (finalOutputUnzipped.exists())
-            {
-                getPipelineCtx().getLogger().warn("Unzipped file still exists: " + finalOutputUnzipped);
-                output.addIntermediateFile(finalOutputUnzipped);
-            }
         }
         catch (IOException e)
         {
