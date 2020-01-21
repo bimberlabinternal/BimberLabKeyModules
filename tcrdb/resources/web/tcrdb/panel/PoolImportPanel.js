@@ -4,7 +4,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     //TODO: replicate, buffer?
     COLUMNS: [{
         name: 'expt',
-        labels: ['Expt', 'Expt #', 'Experiment', 'Exp#', 'Exp #'],
+        labels: ['Expt', 'Expt #', 'Experiment', 'Exp#', 'Exp #', 'Workbook'],
         allowRowSpan: true,
         alwaysShow: true,
         transform: 'expt',
@@ -67,7 +67,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     },{
         name: 'hto',
         labels: ['HTO', 'HTO Oligo', 'HTO-Oligo', 'HTO barcode', 'Barcode'],
-        allowRowSpan: true,
+        allowRowSpan: false,
         transform: 'hto'
     },{
         name: 'cells',
@@ -319,29 +319,34 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             value: 'PBMC'
         },{
             xtype: 'checkbox',
+            fieldLabel: 'Require HTO',
+            itemId: 'requireHashTag',
+            checked: true
+        },{
+            xtype: 'checkbox',
             fieldLabel: 'Require GEX Library',
             itemId: 'requireGEX',
-            checked: true
+            checked: false
         },{
             xtype: 'checkbox',
             fieldLabel: 'Require TCR Library',
             itemId: 'requireTCR',
-            checked: true
+            checked: false
         },{
             xtype: 'checkbox',
             fieldLabel: 'Require HTO Library',
             itemId: 'requireHTO',
-            checked: true
+            checked: false
         },{
             xtype: 'checkbox',
             fieldLabel: 'Require Library Concentrations',
             itemId: 'requireConc',
-            checked: true
+            checked: false
         }, {
             xtype: 'checkbox',
             fieldLabel: 'Skip Readsets',
             itemId: 'skipReadsets',
-            checked: false,
+            checked: true,
             listeners: {
                 scope: this,
                 change: function(field, val) {
@@ -709,13 +714,19 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
         var data = [];
         var missingValues = false;
+        var requireHTO = this.down('#requireHTO').getValue() || this.down('#requireHashTag').getValue();
         Ext4.Array.forEach(parsedRows, function(row, rowIdx){
             var toAdd = [rowIdx + 1];
             Ext4.Array.forEach(colIdxs, function(colIdx){
                 var colDef = colArray[colIdx];
                 var propName = colDef.name;
 
-                if (colDef.allowBlank === false && Ext4.isEmpty(row[propName])){
+                var allowBlank = colDef.allowBlank;
+                if (requireHTO && colDef.name === 'hto') {
+                    allowBlank = false;
+                }
+
+                if (allowBlank === false && Ext4.isEmpty(row[propName])){
                     missingValues = true;
                     toAdd.push('MISSING');
                 }

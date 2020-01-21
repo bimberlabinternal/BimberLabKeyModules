@@ -345,7 +345,10 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
             if (assayId != null)
             {
-                getUtils().runRemoteCellHashingTasks(output, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory());
+                boolean scanEditDistances = getProvider().getParameterByName("scanEditDistances").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+                int editDistance = getProvider().getParameterByName("editDistance").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class, 2);
+
+                getUtils().runRemoteCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances, referenceGenome.getGenomeId());
             }
             else
             {
@@ -621,7 +624,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             {
                 Integer assayId = getProvider().getParameterByName(TARGET_ASSAY).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
                 Boolean deleteExisting = getProvider().getParameterByName(DELETE_EXISTING_ASSAY_DATA).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
-                getUtils().importAssayData(getPipelineCtx().getJob(), model, bam.getParentFile(), assayId, deleteExisting);
+                getUtils().importAssayData(getPipelineCtx().getJob(), model, bam.getParentFile(), assayId, null, deleteExisting);
             }
             else
             {

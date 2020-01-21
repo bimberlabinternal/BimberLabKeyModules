@@ -83,7 +83,7 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             }]
         }, {
             style: 'padding-top: 10px;',
-            html: 'This page is designed to help import TCR/10x data, including pooled samples. Each sample tends to create many libraries with many indexes/barcodes to track.  Use the fields below to download the excel template and paste data to import.<p>'
+            html: 'This page is designed to help import the readset/index information for 10x libraries, after the stim/sort data has already been imported.<p>'
         }, {
             layout: 'hbox',
             items: [{
@@ -91,13 +91,7 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
                 text: 'Download Template',
                 border: true,
                 scope: this,
-                href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportTemplate.xlsx'
-            }, {
-                xtype: 'button',
-                text: 'Download Example Import',
-                border: true,
-                scope: this,
-                href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportExample.xlsx'
+                href: LABKEY.ActionURL.getContextPath() + '/tcrdb/exampleData/ImportReadsetTemplate.xlsx'
             }]
         }, {
             xtype: 'textfield',

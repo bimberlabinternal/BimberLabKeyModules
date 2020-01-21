@@ -270,9 +270,10 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     {
         if (job instanceof HasJobParams)
         {
-            possiblyAddWeekLongLines(job, engine, lines);
-
-            //possiblyAddHighIoFlag(job, engine, lines);
+            possiblyAddQOS(job, engine, lines);
+            possiblyAddHighIO(job, engine, lines);
+            possiblyAddDisk(job, engine, lines);
+            possiblyAddSSD(job, engine, lines);
         }
         else
         {
@@ -280,14 +281,11 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         }
     }
 
-    private void removeLines(List<String> lines, boolean removeTime)
+    private void removeQueueLines(List<String> lines)
     {
+        lines.removeIf(line -> line.contains("#SBATCH --partition="));
         lines.removeIf(line -> line.contains("#SBATCH --qos="));
-
-        if (removeTime)
-        {
-            lines.removeIf(line -> line.contains("#SBATCH --time="));
-        }
+        lines.removeIf(line -> line.contains("#SBATCH --time="));
     }
 
     private String getTime(PipelineJob job)
@@ -301,62 +299,126 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return null;
     }
 
-    private void possiblyAddWeekLongLines(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddHighIO(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
     {
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.highIO"));
+        if (val == null)
+        {
+            return;
+        }
+
+        boolean highIO = Boolean.parseBoolean(val);
+        if (highIO)
+        {
+            job.getLogger().info("Adding QOS HighIO");
+            String line = "#SBATCH --qos=highio";
+            if (!lines.contains(line))
+            {
+                lines.add(line);
+            }
+        }
+    }
+
+    private void possiblyAddDisk(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams) job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localDisk"));
+        if (val == null)
+        {
+            return;
+        }
+
+        lines.removeIf(line -> line.contains("#SBATCH --gres=disk:"));
+
+        job.getLogger().debug("Adding local disk (mb): " + val);
+        lines.add("#SBATCH --gres=disk:" + val);
+    }
+
+    private void possiblyAddSSD(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localSSD"));
+        if (val == null)
+        {
+            return;
+        }
+
+        boolean parsed = Boolean.parseBoolean(val);
+        if (parsed)
+        {
+            job.getLogger().info("Requiring local SSD scratch space");
+            String line = "#SBATCH -C ssdscratch";
+            if (!lines.contains(line))
+            {
+                lines.add(line);
+            }
+        }
+    }
+
+    private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        //first remove existing
+        removeQueueLines(lines);
+
         String time = getTime(job);
         if (time != null)
         {
             job.getLogger().debug("adding user-supplied time to job: " + time);
-            removeLines(lines, true);
-
-            lines.add("#SBATCH --time=" + time);
         }
 
         Map<String, String> params = ((HasJobParams)job).getJobParams();
-        if (params.get("resourceSettings.resourceSettings.weekLongJob") != null)
+        String qos = null;
+        if (params.get("resourceSettings.resourceSettings.qos") != null)
         {
-            Boolean weekLongJob = ConvertHelper.convert(params.get("resourceSettings.resourceSettings.weekLongJob"), Boolean.class);
-            if (weekLongJob)
-            {
-                job.getLogger().debug("adding WEEK_LONG_JOB as supplied by job");
-                if (engine.getType().equals("HTCondorEngine"))
-                {
-                    lines.add("concurrency_limits = WEEK_LONG_JOBS");
-                }
-                else if (engine.getType().equals("SlurmEngine"))
-                {
-                    //exacloud: 36 hours
-                    //long_jobs: 10 days (max 60 jobs currently)
-                    //very_long_jobs: 30 days (suspends when node is busy)
-
-                    //Note: consider supporting --time, which allows request of a shorter duration job
-
-                    //first remove existing
-                    removeLines(lines, true);
-
-                    //then add
-                    lines.add("#SBATCH --qos=long_jobs");
-                    lines.add("#SBATCH --time=" + (time == null ? "10-0" :  time));  //10 days
-                }
-            }
+            //exacloud: 36 hours
+            //long_jobs: 10 days (max 60 jobs currently)
+            //very_long_jobs: 30 days (suspends when node is busy)
+            qos = StringUtils.trimToNull(ConvertHelper.convert(params.get("resourceSettings.resourceSettings.qos"), String.class));
         }
 
-        if (params.get("resourceSettings.resourceSettings.veryLongJob") != null)
+        if (qos != null)
         {
-            Boolean weekLongJob = ConvertHelper.convert(params.get("resourceSettings.resourceSettings.veryLongJob"), Boolean.class);
-            if (weekLongJob)
+            if (engine.getType().equals("SlurmEngine"))
             {
-                job.getLogger().debug("adding very_long_jobs as supplied by job");
-                if (engine.getType().equals("SlurmEngine"))
+                job.getLogger().debug("qos as supplied by job: " + qos);
+                String qosName = null;
+                switch (qos)
                 {
-                    //first remove existing
-                    removeLines(lines, true);
-
-                    //then add
-                    lines.add("#SBATCH --qos=very_long_jobs");
-                    lines.add("#SBATCH --time=" + (time == null ? "30-0" : time));  //30 days
+                    case "Default":
+                        qosName = null;
+                        time = time == null ? "0-36" : time;
+                        break;
+                    case "LongJobs":
+                        qosName = "long_jobs";
+                        time = time == null ? "10-0" : time;
+                        break;
+                    case "VeryLongJobs":
+                        qosName = "very_long_jobs";
+                        time = time == null ? "30-0" : time;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown QOS: " + qos);
                 }
+
+                //then add
+                lines.add("#SBATCH --partition=exacloud");
+                if (qosName != null)
+                {
+                    lines.add("#SBATCH --qos=" + qosName);
+                }
+                lines.add("#SBATCH --time=" + time);
             }
+            else
+            {
+                job.getLogger().warn("QOS not supported with this engine type: " + engine.getType());
+            }
+        }
+        else
+        {
+            //otherwise add defaults
+            lines.add("#SBATCH --partition=exacloud");
+            lines.add("#SBATCH --time=" + (time == null ? "0-36" : time));
         }
     }
 

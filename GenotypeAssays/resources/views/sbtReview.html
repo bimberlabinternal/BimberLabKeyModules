@@ -221,8 +221,10 @@
 
                 if (this.pendingLoads > 0){
                     this.pendingLoads--;
-                    if (this.pendingLoads == 0){
-                        this.doLayout.defer(200, this);
+                    if (this.pendingLoads === 0){
+                        if (this.doLayout && this.doLayout.defer) {
+                            this.doLayout.defer(200, this);
+                        }
                         this.pendingLoads = -1;
                     }
                 }

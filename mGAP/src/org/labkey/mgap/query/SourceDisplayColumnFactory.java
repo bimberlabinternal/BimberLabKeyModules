@@ -45,7 +45,7 @@ public class SourceDisplayColumnFactory implements DisplayColumnFactory
                     String[] parts = identifier.split(":");
                     if (parts.length != 2)
                     {
-                        _log.error("Invalid variant identifier: " + val, new Exception());
+                        _log.warn("Invalid variant identifier: " + val);
                     }
                     else
                     {

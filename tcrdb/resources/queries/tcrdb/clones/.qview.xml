@@ -10,6 +10,8 @@
         <column name="status" />
         <column name="comments" />
         <column name="displayName" />
+        <column name="animals" />
+        <column name="responses" />
         <column name="workbook" />
     </columns>
     <sorts>

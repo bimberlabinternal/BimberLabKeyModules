@@ -18,8 +18,8 @@
         <column name="comment" />
         <column name="status" />
         <!--<column name="numTcrRunsTCREnriched" />-->
-        <column name="numTcrResultsTCREnriched" />
-        <column name="numCellsTCREnriched" />
+        <column name="numTcrTrbResultsTCREnriched" />
+        <column name="numCellsTrbTCREnriched" />
         <column name="numTcrRunsFullTranscript" />
         <column name="numTcrResultsFullTranscript" />
         <column name="workbook" />

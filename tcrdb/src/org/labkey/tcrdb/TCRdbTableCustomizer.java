@@ -243,6 +243,12 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             newCol.setURL(details);
             ti.addColumn(newCol);
 
+            SQLFragment sql0 = new SQLFragment("(select count(*) as expr FROM (").append(selectSql).append(") a " + whereClause + " AND a.locus = 'TRB')");
+            ExprColumn newCol0 = new ExprColumn(ti, "numTcrTrbResults" + colNameSuffix, sql0, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newCol0.setLabel("# TCR TRB Results" + colLabelSuffix);
+            newCol0.setURL(details);
+            ti.addColumn(newCol0);
+
             SQLFragment sql2 = new SQLFragment("(select count(distinct CDR3) as expr FROM (").append(selectSql).append(") a " + whereClause + ")");
             ExprColumn newCol2 = new ExprColumn(ti, "numCDR3s" + colNameSuffix, sql2, JdbcType.INTEGER, ti.getColumn("rowid"));
             newCol2.setLabel("# Distinct CDR3s" + colLabelSuffix);
@@ -266,6 +272,12 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             newColTotal.setLabel("# TCR Cells/Reads" + colLabelSuffix);
             newColTotal.setURL(details);
             ti.addColumn(newColTotal);
+
+            SQLFragment sqlTotal2 = new SQLFragment("(select sum(count) as expr FROM (").append(selectSql).append(") a " + whereClause + " AND a.locus = 'TRB')");
+            ExprColumn newColTotal2 = new ExprColumn(ti, "numCellsTrb" + colNameSuffix, sqlTotal2, JdbcType.INTEGER, ti.getColumn("rowid"));
+            newColTotal2.setLabel("# TCR Cells/Reads - TRB " + colLabelSuffix);
+            newColTotal2.setURL(details);
+            ti.addColumn(newColTotal2);
 
             SQLFragment sql6 = new SQLFragment("(select sum(a.count) as expr FROM (").append(selectSql).append(") a " + whereClause + " )");
             ExprColumn newCol6 = new ExprColumn(ti, "totalCDR3Reads" + colNameSuffix, sql6, JdbcType.INTEGER, ti.getColumn("rowid"));

@@ -44,7 +44,7 @@ import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.TARGET_ASSAY;
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType("vloupe", false);
-    private static final String CATEGORY = "Cell Hashing Calls (VDJ)";
+    public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
 
     public CellRangerVDJCellHashingHandler()
     {
@@ -53,9 +53,12 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, true),
-                ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--max-error"), "hd", "Edit Distance", null, "ldk-integerfield", null, null),
+                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
+                    put("checked", true);
+                }}, true),
+                ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
-                    put("checked", false);
+                    put("checked", true);
                 }}, false)
         ));
     }
@@ -144,7 +147,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, deleteExistingData);
+                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, null, deleteExistingData);
                 }
             }
         }
@@ -176,13 +179,13 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                processVloupeFile(ctx, perCellTsv, rs, action);
+                processVloupeFile(ctx, perCellTsv, rs, action, so.getLibrary_id());
             }
 
             ctx.addActions(action);
         }
 
-        private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action) throws PipelineJobException
+        private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action, Integer genomeId) throws PipelineJobException
         {
             CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
 
@@ -191,8 +194,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
             //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
-            File cellToHto = utils.runRemoteCellHashingTasks(output, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory());
+            boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
+            int editDistance = ctx.getParams().optInt("editDistance", 2);
 
+            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId);
             ctx.getFileManager().addStepOutputs(action, output);
 
             boolean useCellHashing = utils.useCellHashing(ctx.getSequenceSupport());
@@ -202,10 +207,13 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 {
                     throw new PipelineJobException("Missing cell to HTO file");
                 }
-
-                ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": VDJ HTO Calls", CATEGORY, rs.getReadsetId(), null, null, null);
             }
         }
+    }
+
+    private static File getMetricsFile(File callFile)
+    {
+        return new File(callFile.getPath().replaceAll(".calls.txt", ".metrics.txt"));
     }
 
     public static void processMetrics(SequenceOutputFile so, PipelineJob job, boolean updateDescription) throws PipelineJobException
@@ -214,7 +222,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         {
             Map<String, String> valueMap = new HashMap<>();
 
-            File metrics = new File(so.getFile().getParentFile(), "metrics.txt");
+            File metrics = getMetricsFile(so.getFile());
             if (metrics.exists())
             {
                 job.getLogger().info("Loading metrics");

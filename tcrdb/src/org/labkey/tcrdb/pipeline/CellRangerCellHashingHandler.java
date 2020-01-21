@@ -12,7 +12,8 @@ import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
-import org.labkey.api.sequenceanalysis.pipeline.CommandLineParam;
+import org.labkey.api.sequenceanalysis.pipeline.DefaultPipelineStepOutput;
+import org.labkey.api.sequenceanalysis.pipeline.PipelineStepOutput;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
@@ -37,13 +38,17 @@ import java.util.Set;
 public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType("cloupe", false);
+    public static String CATEGORY = "10x GEX Cell Hashing Calls";
 
     public CellRangerCellHashingHandler()
     {
         super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/CellRangerAggrTextarea.js")), Arrays.asList(
-                ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--max-error"), "hd", "Edit Distance", null, "ldk-integerfield", null, null),
+                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
+                    put("checked", true);
+                }}, true),
+                ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
-                    put("checked", false);
+                    put("checked", true);
                 }}, false)
         ));
     }
@@ -89,7 +94,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            CellRangerVDJUtils.prepareCellHashingFiles(job, support, outputDir, "readsetId");
+            CellRangerVDJUtils.prepareCellHashingFiles(job, support, outputDir, "readsetId", true);
         }
 
         @Override
@@ -172,7 +177,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                processBarcodeFile(ctx, perCellTsv, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), true, "10x GEX Cell Hashing Calls");
+                processBarcodeFile(ctx, perCellTsv, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), true, CATEGORY);
             }
 
             ctx.addActions(action);
@@ -183,7 +188,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         {
             for (SequenceOutputFile so : outputsCreated)
             {
-                if (so.getCategory().equals("10x GEX Cell Hashing Calls"))
+                if (so.getCategory().equals(CATEGORY))
                 {
                     CellRangerVDJCellHashingHandler.processMetrics(so, job, true);
                 }
@@ -260,18 +265,21 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         }
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
-        File cellToHto = utils.getCellToHtoFile();
-
         List<String> extraParams = new ArrayList<>();
         extraParams.addAll(commandArgs);
 
-        cellToHto = SequencePipelineService.get().runCiteSeqCount(htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), FileUtil.getBaseName(cellToHto.getName()), ctx.getLogger(), extraParams, false, ctx.getSourceDirectory());
-        ctx.getFileManager().addOutput(action, "Cell Hashing GEX Calls", cellToHto);
+        boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
+        int editDistance = ctx.getParams().optInt("editDistance", 2);
+
+        PipelineStepOutput output = new DefaultPipelineStepOutput();
+        String basename = FileUtil.makeLegalName(rs.getName());
+        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
+        ctx.getFileManager().addStepOutputs(action, output);
+
+        ctx.getFileManager().addOutput(action, category, cellToHto);
         ctx.getFileManager().addOutput(action, "Cell Hashing GEX Report", new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"));
         File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
         ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
-
-        ctx.getFileManager().addSequenceOutput(cellToHto, rs.getName() + ": Cell Hashing Calls", category, rs.getReadsetId(), null, genomeId, null);
 
         if (writeLoupe)
         {

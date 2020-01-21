@@ -1,0 +1,106 @@
+a {
+	color: #c5050c 
+}
+
+.btn-link {
+	color: #c5050c;
+}
+
+.nav .open > a, .nav .open > a:hover, .nav .open > a:focus {
+	border-color: #c5050c;
+}
+
+.pagination > li > a, .pagination > li > span {
+	color: #c5050c;
+}
+
+.nav-pills > .active > a > .badge {
+	color: #c5050c;
+}
+
+a.thumbnail.active {
+	border-color: #c5050c; 
+}
+
+.labkey-link {
+	color: #c5050c;
+}
+
+.labkey-header {
+	color: #c5050c;
+}
+
+th.labkey-header a:hover {
+	color: #c5050c;
+}
+
+.labkey-data-region tr.lk-row-hl > td, .labkey-data-region tr.lk-row-hl.lk-row-over > td {
+	background-color: #c5050c !important; 
+}
+
+.labkey-data-region .lk-dr-action-icon {
+	color: #c5050c;
+}
+
+.labkey-customview-item.x4-item-selected {
+	background: #c5050c;
+	outline-color: #c5050c;
+	border-top: 1px solid #c5050c;
+	border-bottom: 1px solid #c5050c; 
+}
+
+.labkey-customize-grid-panel .x4-grid-row-before-focused .x4-grid-td,
+.labkey-customize-grid-panel .x4-grid-row-focused .x4-grid-td,
+.labkey-customize-grid-panel .x4-grid-row-selected .x4-grid-td {
+	border-bottom: solid 1px #c5050c; 
+}
+
+.labkey-customize-grid-panel .x4-grid-row-focused .x4-grid-td,
+.labkey-customize-grid-panel .x4-grid-row-selected .x4-grid-td {
+	background-color: #c5050c; 
+}
+
+tr.labkey-nav-tree-row {
+	color: #c5050c;
+}
+
+th.labkey-wp-title-left a:hover {
+	color: #c5050c;
+}
+
+.labkey-wp-text-buttons a, .labkey-wp-text-buttons a:visited {
+	color: #c5050c;
+}
+
+.labkey-wp-text-buttons a:hover {
+	color: #c5050c;
+}
+
+.labkey-announcement-title a.announcement-title-link {
+	color: #c5050c;
+}
+
+td.labkey-tab, .labkey-tab {
+	color: #c5050c;
+}
+
+.labkey-tab a {
+	color: #c5050c;
+}
+
+.tool-icon a, .tool-icon a:visited {
+	color: #c5050c;
+}
+
+.edit-views-link:hover {
+	color: #c5050c; 
+}
+
+span.button-icon {
+	background-color: #c5050c;
+}
+
+.nav-tabs > li > a {
+	color: #c5050c;
+}
+

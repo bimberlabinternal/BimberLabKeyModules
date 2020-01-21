@@ -37,14 +37,19 @@
                 ['No Genetic Association Reported','Squamous cell carcinoma','Jean, et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21640039'],
                 ['No Genetic Association Reported','Coat-like retinopathy','Liu, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/25656754'],
                 ['No Genetic Association Reported','TB progression','Maiello, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/28947646'],
-                ['No Genetic Association Reported','Osteoporosis ','Simmons , et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/26864889']
+                ['No Genetic Association Reported','Osteoporosis ','Simmons, et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/26864889'],
+                ['No Genetic Association Reported','Cardiovascular Phenotypes','Ueda, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/30723724'],
+                ['Genetic Association Reported','Retinal Disease','Moshiri, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/30667376'],
+                ['Genetic Association Reported','Bardet-Biedl Syndrome','Peterson, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/31589838'],
+                ['Genetic Association Reported','Epidermolysis Bullosa','Johnson, et al. 2019','']
+
             ];
 
             var dataMap = {};
             $.each(rawData, function(idx, row){
                 dataMap[row[0]] = dataMap[row[0]] || {};
                 dataMap[row[0]][row[1]] = dataMap[row[0]][row[1]] || [];
-                dataMap[row[0]][row[1]].push('<a target="_blank" href="' + row[3] + '">' +  row[2] + '</a>');
+                dataMap[row[0]][row[1]].push(row[3] ? '<a target="_blank" href="' + row[3] + '">' +  row[2] + '</a>' : row[2]);
             });
 
             var dataSet = [];

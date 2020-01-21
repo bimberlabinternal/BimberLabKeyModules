@@ -2,13 +2,13 @@ package org.labkey.mgap.pipeline;
 
 import org.apache.log4j.Logger;
 import org.labkey.api.pipeline.PipelineJobException;
-import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
-import org.labkey.api.sequenceanalysis.run.AbstractGatkWrapper;
+import org.labkey.api.sequenceanalysis.run.AbstractGatk4Wrapper;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariantsToTableRunner extends AbstractGatkWrapper
+public class VariantsToTableRunner extends AbstractGatk4Wrapper
 {
     public VariantsToTableRunner(Logger log)
     {
@@ -17,10 +17,11 @@ public class VariantsToTableRunner extends AbstractGatkWrapper
 
     public File execute(File inputVcf, File outputTable, File fasta, List<String> fields)  throws PipelineJobException
     {
+        getLogger().info("Running GATK 4 VariantsToTable");
+
         List<String> args = new ArrayList<>();
         args.addAll(getBaseArgs());
 
-        args.add("-T");
         args.add("VariantsToTable");
 
         args.add("-R");
@@ -29,10 +30,8 @@ public class VariantsToTableRunner extends AbstractGatkWrapper
         args.add("-V");
         args.add(inputVcf.getPath());
 
-        args.add("-o");
+        args.add("-O");
         args.add(outputTable.getPath());
-
-        args.add("-AMD");
 
         fields.forEach(x ->{
             args.add("-F");
