@@ -218,6 +218,7 @@ public class CellRangerVDJUtils
         {
             int rowIdx = 0;
             int noCallRows = 0;
+            int nonCell = 0;
             String[] row;
             while ((row = reader.readNext()) != null)
             {
@@ -228,6 +229,12 @@ public class CellRangerVDJUtils
                     if (row.length >= 13 && "None".equals(row[12]))
                     {
                         noCallRows++;
+                        continue;
+                    }
+
+                    if ("False".equalsIgnoreCase(row[1]))
+                    {
+                        nonCell++;
                         continue;
                     }
 
@@ -243,6 +250,7 @@ public class CellRangerVDJUtils
 
             _log.debug("rows inspected: " + (rowIdx - 1));
             _log.debug("rows without CDR3: " + noCallRows);
+            _log.debug("rows not called as cells: " + nonCell);
             _log.debug("unique cell barcodes: " + uniqueBarcodes.size());
             output.addIntermediateFile(cellBarcodeWhitelist);
         }
@@ -558,10 +566,12 @@ public class CellRangerVDJUtils
                 totalCellsMapBySample.put(cDNA, cellbarcodesPerSample);
             }
 
+            int totalCells = idx - nonCell;
             _log.info("total clonotype rows inspected: " + idx);
             _log.info("total rows not cells: " + nonCell);
+            _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
-            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / idx)) + ")");
+            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped);
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + countMapBySample.size());
