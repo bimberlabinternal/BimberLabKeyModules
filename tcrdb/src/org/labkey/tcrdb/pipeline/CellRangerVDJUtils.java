@@ -135,7 +135,6 @@ public class CellRangerVDJUtils
                     }
                     else if (useCellHashing)
                     {
-                        support.cacheReadset(results.getInt(FieldKey.fromString("hashingReadsetId")), job.getUser());
                         readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
 
                         String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
@@ -161,6 +160,16 @@ public class CellRangerVDJUtils
                 {
                     throw new PipelineJobException("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
                 }
+            }
+
+            // if distinct HTOs is 1, no point in running hashing.  note: presence of hashing readsets is a trigger downstream
+            if (distinctHTOs.size() > 1)
+            {
+                readsetToHashingMap.forEach((readsetId, hashingReadsetId) -> support.cacheReadset(hashingReadsetId, job.getUser()));
+            }
+            else if (distinctHTOs.size() == 1)
+            {
+                job.getLogger().info("There is only a single HTO in this pool, will not use hashing");
             }
 
             boolean useCellHashing = hashingStatus.iterator().next();
@@ -399,6 +408,12 @@ public class CellRangerVDJUtils
         }
 
         boolean useCellHashing = !htoNameToCDNAMap.isEmpty();
+        if (htoNameToCDNAMap.size() == 1)
+        {
+            _log.debug("There is only one HTO in this pool, cell hashing will not be used");
+            useCellHashing = false;
+        }
+
         Integer defaultCDNA = null;
         if (!useCellHashing)
         {
@@ -862,7 +877,7 @@ public class CellRangerVDJUtils
 
     public boolean useCellHashing(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
-        return !getCachedReadsetMap(support).isEmpty();
+        return getCachedReadsetMap(support).size() > 1;
     }
 
     public static void prepareCellHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support, File outputDir, String filterFieldName, boolean throwOnZeroHto) throws PipelineJobException
