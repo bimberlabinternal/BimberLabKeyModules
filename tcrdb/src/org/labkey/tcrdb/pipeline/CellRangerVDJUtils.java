@@ -124,7 +124,7 @@ public class CellRangerVDJUtils
                             results.getString(FieldKey.fromString("sortId/population")),
                             results.getString(FieldKey.fromString("sortId/hto")),
                             results.getString(FieldKey.fromString("sortId/hto/sequence")),
-                            String.valueOf(results.getInt(FieldKey.fromString("hashingReadsetId")))
+                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("hashingReadsetId")))
                     });
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
@@ -416,11 +416,16 @@ public class CellRangerVDJUtils
             throw new PipelineJobException("Unable to find ExpRun: " + runId);
         }
 
-        File cellbarcodeToHtoFile = getCellToHtoFile(run);
         Map<String, Integer> cellBarcodeToCDNAMap = new HashMap<>();
         Set<String> doubletBarcodes = new HashSet<>();
-        if (cellbarcodeToHtoFile.exists())
+        if (useCellHashing)
         {
+            File cellbarcodeToHtoFile = getCellToHtoFile(run);
+            if (!cellbarcodeToHtoFile.exists())
+            {
+                throw new PipelineJobException("Cell hashing output not found: " + cellbarcodeToHtoFile.getPath());
+            }
+
             try (CSVReader reader = new CSVReader(Readers.getReader(cellbarcodeToHtoFile), '\t'))
             {
                 //cellbarcode -> HTO name
@@ -468,9 +473,9 @@ public class CellRangerVDJUtils
 
             job.getLogger().info("total cell hashing calls found: " + cellBarcodeToCDNAMap.size());
         }
-        else if (useCellHashing)
+        else
         {
-            throw new PipelineJobException("Cell hashing output not found: " + cellbarcodeToHtoFile.getPath());
+            job.getLogger().debug("Cell hashing is not used");
         }
 
         Map<String, Map<Integer, Integer>> countMapBySample = new HashMap<>();
