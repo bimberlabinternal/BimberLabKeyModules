@@ -541,7 +541,7 @@ public class CellRangerVDJUtils
                     }
                     else
                     {
-                        _log.info("skipping cell barcode without HTO call: " + barcode);
+                        //_log.info("skipping cell barcode without HTO call: " + barcode);
                         totalSkipped++;
                     }
                     continue;
@@ -591,7 +591,7 @@ public class CellRangerVDJUtils
             _log.info("total rows not cells: " + nonCell);
             _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
-            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / totalCells)) + ")");
+            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + "%)");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped);
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + countMapBySample.size());
@@ -611,8 +611,9 @@ public class CellRangerVDJUtils
         try (CSVReader reader = new CSVReader(Readers.getReader(consensusCsv), ','))
         {
             String[] line;
+            Set<String> uniqueClones = new HashSet<>();
             Set<String> clonesInspected = new HashSet<>();
-            int clonesWithoutCounts = 0;
+            Set<String> clonesWithoutCounts = new HashSet<>();
             int idx = 0;
             while ((line = reader.readNext()) != null)
             {
@@ -624,11 +625,16 @@ public class CellRangerVDJUtils
                 }
 
                 String cloneId = line[0];
+                uniqueClones.add(cloneId);
+
                 Map<Integer, Integer> countData = countMapBySample.get(cloneId);
                 if (countData == null)
                 {
-                    _log.warn("No count data for clone: " + cloneId);
-                    clonesWithoutCounts++;
+                    if (!clonesWithoutCounts.contains(cloneId))
+                    {
+                        _log.warn("No count data for clone: " + cloneId);
+                        clonesWithoutCounts.add(cloneId);
+                    }
                     continue;
                 }
 
@@ -647,7 +653,7 @@ public class CellRangerVDJUtils
                 totalCells += processRow(countData, cDNAMap, model, runId, am, totalCellsMapBySample, sequenceMap, rows);
             }
 
-            _log.info("total clones without count data: " + clonesWithoutCounts);
+            _log.info("total clones without count data: " + clonesWithoutCounts.size() + " (" + (NumberFormat.getPercentInstance().format(clonesWithoutCounts.size() / (double)uniqueClones.size())) + "%)");
         }
         catch (Exception e)
         {
