@@ -83,7 +83,7 @@ public class CellRangerVDJUtils
 
         _log.debug("preparing cDNA and cell hashing files");
 
-        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir);
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir, job.getUser(), job.getContainer());
 
         Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
                 FieldKey.fromString("rowid"),
@@ -900,7 +900,7 @@ public class CellRangerVDJUtils
                 FieldKey.fromString("hashingReadsetId"))
         );
 
-        SequenceAnalysisService.get().writeAllCellHashingBarcodes(outputDir);
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(outputDir, job.getUser(), job.getContainer());
 
         CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
         File barcodeOutput = utils.getValidHashingBarcodeFile();
