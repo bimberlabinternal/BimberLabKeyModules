@@ -433,6 +433,7 @@ public class CellRangerVDJUtils
 
         Map<String, Integer> cellBarcodeToCDNAMap = new HashMap<>();
         Set<String> doubletBarcodes = new HashSet<>();
+        Set<String> discordantBarcodes = new HashSet<>();
         if (useCellHashing)
         {
             File cellbarcodeToHtoFile = getCellToHtoFile(run);
@@ -446,6 +447,7 @@ public class CellRangerVDJUtils
                 //cellbarcode -> HTO name
                 String[] line;
                 int doublet = 0;
+                int discordant = 0;
                 int negative = 0;
                 while ((line = reader.readNext()) != null)
                 {
@@ -460,6 +462,12 @@ public class CellRangerVDJUtils
                     {
                         doublet++;
                         doubletBarcodes.add(line[0]);
+                        continue;
+                    }
+                    else if ("Discordant".equals(hto))
+                    {
+                        discordant++;
+                        discordantBarcodes.add(line[0]);
                         continue;
                     }
                     else if ("Negative".equals(hto))
@@ -479,6 +487,7 @@ public class CellRangerVDJUtils
                 }
 
                 _log.info("total doublets: " + doublet);
+                _log.info("total discordant: " + discordant);
                 _log.info("total negatives: " + negative);
             }
             catch (IOException e)
@@ -507,6 +516,7 @@ public class CellRangerVDJUtils
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
+            int discordantSkipped= 0;
             int hasCDR3NoClonotype = 0;
             Set<String> knownBarcodes = new HashSet<>();
             while ((line = reader.readNext()) != null)
@@ -538,6 +548,10 @@ public class CellRangerVDJUtils
                     if (doubletBarcodes.contains(barcode))
                     {
                         doubletSkipped++;
+                    }
+                    else if (discordantBarcodes.contains(barcode))
+                    {
+                        discordantSkipped++;
                     }
                     else
                     {
@@ -592,7 +606,8 @@ public class CellRangerVDJUtils
             _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
             _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + "%)");
-            _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped);
+            _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + "%)");
+            _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + "%)");
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + countMapBySample.size());
             _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
