@@ -83,7 +83,7 @@ public class CellRangerVDJUtils
 
         _log.debug("preparing cDNA and cell hashing files");
 
-        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir);
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir, job.getUser(), job.getContainer());
 
         Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
                 FieldKey.fromString("rowid"),
@@ -124,7 +124,7 @@ public class CellRangerVDJUtils
                             results.getString(FieldKey.fromString("sortId/population")),
                             results.getString(FieldKey.fromString("sortId/hto")),
                             results.getString(FieldKey.fromString("sortId/hto/sequence")),
-                            String.valueOf(results.getInt(FieldKey.fromString("hashingReadsetId")))
+                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("hashingReadsetId")))
                     });
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
@@ -135,7 +135,6 @@ public class CellRangerVDJUtils
                     }
                     else if (useCellHashing)
                     {
-                        support.cacheReadset(results.getInt(FieldKey.fromString("hashingReadsetId")), job.getUser());
                         readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
 
                         String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
@@ -161,6 +160,16 @@ public class CellRangerVDJUtils
                 {
                     throw new PipelineJobException("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
                 }
+            }
+
+            // if distinct HTOs is 1, no point in running hashing.  note: presence of hashing readsets is a trigger downstream
+            if (distinctHTOs.size() > 1)
+            {
+                readsetToHashingMap.forEach((readsetId, hashingReadsetId) -> support.cacheReadset(hashingReadsetId, job.getUser()));
+            }
+            else if (distinctHTOs.size() == 1)
+            {
+                job.getLogger().info("There is only a single HTO in this pool, will not use hashing");
             }
 
             boolean useCellHashing = hashingStatus.iterator().next();
@@ -218,6 +227,7 @@ public class CellRangerVDJUtils
         {
             int rowIdx = 0;
             int noCallRows = 0;
+            int nonCell = 0;
             String[] row;
             while ((row = reader.readNext()) != null)
             {
@@ -228,6 +238,12 @@ public class CellRangerVDJUtils
                     if (row.length >= 13 && "None".equals(row[12]))
                     {
                         noCallRows++;
+                        continue;
+                    }
+
+                    if ("False".equalsIgnoreCase(row[1]))
+                    {
+                        nonCell++;
                         continue;
                     }
 
@@ -243,6 +259,7 @@ public class CellRangerVDJUtils
 
             _log.debug("rows inspected: " + (rowIdx - 1));
             _log.debug("rows without CDR3: " + noCallRows);
+            _log.debug("rows not called as cells: " + nonCell);
             _log.debug("unique cell barcodes: " + uniqueBarcodes.size());
             output.addIntermediateFile(cellBarcodeWhitelist);
         }
@@ -391,6 +408,12 @@ public class CellRangerVDJUtils
         }
 
         boolean useCellHashing = !htoNameToCDNAMap.isEmpty();
+        if (htoNameToCDNAMap.size() == 1)
+        {
+            _log.debug("There is only one HTO in this pool, cell hashing will not be used");
+            useCellHashing = false;
+        }
+
         Integer defaultCDNA = null;
         if (!useCellHashing)
         {
@@ -408,16 +431,23 @@ public class CellRangerVDJUtils
             throw new PipelineJobException("Unable to find ExpRun: " + runId);
         }
 
-        File cellbarcodeToHtoFile = getCellToHtoFile(run);
         Map<String, Integer> cellBarcodeToCDNAMap = new HashMap<>();
         Set<String> doubletBarcodes = new HashSet<>();
-        if (cellbarcodeToHtoFile.exists())
+        Set<String> discordantBarcodes = new HashSet<>();
+        if (useCellHashing)
         {
+            File cellbarcodeToHtoFile = getCellToHtoFile(run);
+            if (!cellbarcodeToHtoFile.exists())
+            {
+                throw new PipelineJobException("Cell hashing output not found: " + cellbarcodeToHtoFile.getPath());
+            }
+
             try (CSVReader reader = new CSVReader(Readers.getReader(cellbarcodeToHtoFile), '\t'))
             {
                 //cellbarcode -> HTO name
                 String[] line;
                 int doublet = 0;
+                int discordant = 0;
                 int negative = 0;
                 while ((line = reader.readNext()) != null)
                 {
@@ -432,6 +462,12 @@ public class CellRangerVDJUtils
                     {
                         doublet++;
                         doubletBarcodes.add(line[0]);
+                        continue;
+                    }
+                    else if ("Discordant".equals(hto))
+                    {
+                        discordant++;
+                        discordantBarcodes.add(line[0]);
                         continue;
                     }
                     else if ("Negative".equals(hto))
@@ -451,6 +487,7 @@ public class CellRangerVDJUtils
                 }
 
                 _log.info("total doublets: " + doublet);
+                _log.info("total discordant: " + discordant);
                 _log.info("total negatives: " + negative);
             }
             catch (IOException e)
@@ -460,9 +497,9 @@ public class CellRangerVDJUtils
 
             job.getLogger().info("total cell hashing calls found: " + cellBarcodeToCDNAMap.size());
         }
-        else if (useCellHashing)
+        else
         {
-            throw new PipelineJobException("Cell hashing output not found: " + cellbarcodeToHtoFile.getPath());
+            job.getLogger().debug("Cell hashing is not used");
         }
 
         Map<String, Map<Integer, Integer>> countMapBySample = new HashMap<>();
@@ -479,6 +516,7 @@ public class CellRangerVDJUtils
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
+            int discordantSkipped= 0;
             int hasCDR3NoClonotype = 0;
             Set<String> knownBarcodes = new HashSet<>();
             while ((line = reader.readNext()) != null)
@@ -511,9 +549,13 @@ public class CellRangerVDJUtils
                     {
                         doubletSkipped++;
                     }
+                    else if (discordantBarcodes.contains(barcode))
+                    {
+                        discordantSkipped++;
+                    }
                     else
                     {
-                        _log.info("skipping cell barcode without HTO call: " + barcode);
+                        //_log.info("skipping cell barcode without HTO call: " + barcode);
                         totalSkipped++;
                     }
                     continue;
@@ -558,11 +600,14 @@ public class CellRangerVDJUtils
                 totalCellsMapBySample.put(cDNA, cellbarcodesPerSample);
             }
 
+            int totalCells = idx - nonCell;
             _log.info("total clonotype rows inspected: " + idx);
             _log.info("total rows not cells: " + nonCell);
+            _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
-            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / idx)) + ")");
-            _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped);
+            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + "%)");
+            _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + "%)");
+            _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + "%)");
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + countMapBySample.size());
             _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
@@ -581,8 +626,9 @@ public class CellRangerVDJUtils
         try (CSVReader reader = new CSVReader(Readers.getReader(consensusCsv), ','))
         {
             String[] line;
+            Set<String> uniqueClones = new HashSet<>();
             Set<String> clonesInspected = new HashSet<>();
-            int clonesWithoutCounts = 0;
+            Set<String> clonesWithoutCounts = new HashSet<>();
             int idx = 0;
             while ((line = reader.readNext()) != null)
             {
@@ -594,11 +640,16 @@ public class CellRangerVDJUtils
                 }
 
                 String cloneId = line[0];
+                uniqueClones.add(cloneId);
+
                 Map<Integer, Integer> countData = countMapBySample.get(cloneId);
                 if (countData == null)
                 {
-                    _log.warn("No count data for clone: " + cloneId);
-                    clonesWithoutCounts++;
+                    if (!clonesWithoutCounts.contains(cloneId))
+                    {
+                        _log.warn("No count data for clone: " + cloneId);
+                        clonesWithoutCounts.add(cloneId);
+                    }
                     continue;
                 }
 
@@ -617,7 +668,7 @@ public class CellRangerVDJUtils
                 totalCells += processRow(countData, cDNAMap, model, runId, am, totalCellsMapBySample, sequenceMap, rows);
             }
 
-            _log.info("total clones without count data: " + clonesWithoutCounts);
+            _log.info("total clones without count data: " + clonesWithoutCounts.size() + " (" + (NumberFormat.getPercentInstance().format(clonesWithoutCounts.size() / (double)uniqueClones.size())) + "%)");
         }
         catch (Exception e)
         {
@@ -847,7 +898,7 @@ public class CellRangerVDJUtils
 
     public boolean useCellHashing(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
-        return !getCachedReadsetMap(support).isEmpty();
+        return getCachedReadsetMap(support).size() > 1;
     }
 
     public static void prepareCellHashingFiles(PipelineJob job, SequenceAnalysisJobSupport support, File outputDir, String filterFieldName, boolean throwOnZeroHto) throws PipelineJobException
@@ -864,7 +915,7 @@ public class CellRangerVDJUtils
                 FieldKey.fromString("hashingReadsetId"))
         );
 
-        SequenceAnalysisService.get().writeAllCellHashingBarcodes(outputDir);
+        SequenceAnalysisService.get().writeAllCellHashingBarcodes(outputDir, job.getUser(), job.getContainer());
 
         CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
         File barcodeOutput = utils.getValidHashingBarcodeFile();
