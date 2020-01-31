@@ -1,17 +1,9 @@
 package org.labkey.mgap.pipeline;
 
-import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.samtools.SAMSequenceRecord;
-import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
-import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
-import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
@@ -39,10 +31,9 @@ import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
-import org.labkey.api.util.Job;
-import org.labkey.api.util.JobRunner;
+import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
-import org.labkey.api.util.SafeFileAppender;
 
 import java.io.File;
 import java.io.IOException;
@@ -148,11 +139,9 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
         //drop genotypes so all subsequent steps are faster
         int totalSubjects;
-        String firstSample;
         try (VCFFileReader reader = new VCFFileReader(inputVCF))
         {
             totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
-            firstSample = reader.getFileHeader().getSampleNamesInOrder().get(0);
         }
 
         boolean needToSubsetToInterval = intervals != null && !intervals.isEmpty();
@@ -168,30 +157,29 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 getPipelineCtx().getLogger().info("dropping filtered sites");
 
             File subset = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".subset.vcf.gz");
+            List<String> selectArgs = new ArrayList<>();
+            if (dropGenotypes)
+            {
+                selectArgs.add("--sites-only-vcf-output");
+            }
+
+            if (dropFiltered)
+            {
+                selectArgs.add("--exclude-filtered");
+            }
+
+            if (needToSubsetToInterval)
+            {
+                for (Interval interval : intervals)
+                {
+                    selectArgs.add("-L");
+                    selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+                }
+                needToSubsetToInterval = false;
+            }
+
             if (!indexExists(subset))
             {
-                List<String> selectArgs = new ArrayList<>();
-                if (dropGenotypes)
-                {
-                    selectArgs.add("-sn");
-                    selectArgs.add(firstSample);
-                }
-
-                if (dropFiltered)
-                {
-                    selectArgs.add("--exclude-filtered");
-                }
-
-                if (needToSubsetToInterval)
-                {
-                    for (Interval interval : intervals)
-                    {
-                        selectArgs.add("-L");
-                        selectArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
-                    }
-                    needToSubsetToInterval = false;
-                }
-
                 SelectVariantsWrapper wrapper = new SelectVariantsWrapper(getPipelineCtx().getLogger());
                 wrapper.execute(originalGenome.getWorkingFastaFile(), inputVCF, subset, selectArgs);
             }
@@ -199,6 +187,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             {
                 getPipelineCtx().getLogger().info("resuming with existing file: " + subset.getPath());
             }
+
             output.addOutput(subset, "VCF Subset");
             output.addIntermediateFile(subset);
             output.addIntermediateFile(new File(subset.getPath() + ".tbi"));
@@ -285,24 +274,19 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         File cassandraAnnotated = new File(outputDirectory, basename + ".vcf.gz");
         if (!indexExists(cassandraAnnotated))
         {
-            List<File> files = runCassandraPerChromosome(liftedToGRCh37, cassandraAnnotated, grch37Genome, output, intervals);
-
-            SequenceAnalysisService.get().combineVcfs(files, outputDirectory, basename, getPipelineCtx().getLogger());
+            //we can assume splitting happened upstream, so run over the full VCF
+            cassandraAnnotated = runCassandra(liftedToGRCh37, cassandraAnnotated, grch37Genome, output);
         }
         else
         {
             getPipelineCtx().getLogger().info("resuming with existing file: " + cassandraAnnotated.getPath());
         }
-        output.addOutput(cassandraAnnotated, "VCF Annotated With Cassandra");
-        output.addIntermediateFile(cassandraAnnotated);
-        output.addIntermediateFile(new File(cassandraAnnotated.getPath() + ".tbi"));
 
-        //re-add per-contig intermediates per chr, in case the job restarted:
-        SAMSequenceDictionary dict = SAMSequenceDictionaryExtractor.extractDictionary(grch37Genome.getSequenceDictionary().toPath());
-        for (SAMSequenceRecord seq : dict.getSequences())
+        if (cassandraAnnotated != null)
         {
-            CassandraPerChrJob job = new CassandraPerChrJob(seq.getSequenceName(), cassandraAnnotated.getParentFile(), basename, grch37Genome, liftedToGRCh37, output, getPipelineCtx().getLogger(), null, null);  //the memory override is moot since it wont be run
-            job.addIntermediateFiles();
+            output.addOutput(cassandraAnnotated, "VCF Annotated With Cassandra");
+            output.addIntermediateFile(cassandraAnnotated);
+            output.addIntermediateFile(new File(cassandraAnnotated.getPath() + ".tbi"));
         }
 
         //backport ClinVar
@@ -324,18 +308,26 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         //backport Cassandra
         getPipelineCtx().getLogger().info("backport Cassandra to source genome");
         File cassandraAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(cassandraAnnotated.getName()) + ".bp.vcf.gz");
-        if (!indexExists(cassandraAnnotatedBackport))
+        if (cassandraAnnotated != null)
         {
-            BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
-            bpRunner.execute(cassandraAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), cassandraAnnotatedBackport);
+            if (!indexExists(cassandraAnnotatedBackport))
+            {
+                BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
+                bpRunner.execute(cassandraAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), cassandraAnnotatedBackport);
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("resuming with existing file: " + cassandraAnnotatedBackport.getPath());
+            }
+            output.addOutput(cassandraAnnotatedBackport, "VCF Annotated With Cassandra, Backported");
+            output.addIntermediateFile(cassandraAnnotatedBackport);
+            output.addIntermediateFile(new File(cassandraAnnotatedBackport.getPath() + ".tbi"));
         }
         else
         {
-            getPipelineCtx().getLogger().info("resuming with existing file: " + cassandraAnnotatedBackport.getPath());
+            getPipelineCtx().getLogger().info("No cassandra output, will not backport");
+            cassandraAnnotatedBackport = null;
         }
-        output.addOutput(cassandraAnnotatedBackport, "VCF Annotated With Cassandra, Backported");
-        output.addIntermediateFile(cassandraAnnotatedBackport);
-        output.addIntermediateFile(new File(cassandraAnnotatedBackport.getPath() + ".tbi"));
 
         //multiannotator
         getPipelineCtx().getLogger().info("Running MultiSourceAnnotator");
@@ -372,259 +364,69 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         return output;
     }
 
-    private List<File> runCassandraPerChromosome(File liftedToGRCh37, File finalOutput, ReferenceGenome genome, VariantProcessingStepOutputImpl output, @Nullable List<Interval> intervals) throws PipelineJobException
+    private File runCassandra(File liftedToGRCh37, File finalOutput, ReferenceGenome genome, VariantProcessingStepOutputImpl output) throws PipelineJobException
     {
-        String basename = SequenceAnalysisService.get().getUnzippedBaseName(finalOutput.getName());
+        List<String> extraArgs = new ArrayList<>();
 
-        SAMSequenceDictionary dict = SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary().toPath());
-        Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getLogger());
-
-        //NOTE: need to scale RAM per job if running in parallel on the node.  Currently cap at 4 concurrent
-        Integer maxJobs = threads == null ? 1 : Math.min(4, threads);
-
-        Integer maxRamPerJob = null;
-        if (threads != null)
+        //NOTE: Cassandra will not sort the output when multithreaded, so the extra sorting we would need to do negates any benefit here
+        String tmpDir = SequencePipelineService.get().getJavaTempDir();
+        if (!StringUtils.isEmpty(tmpDir))
         {
-            Integer maxRam = SequencePipelineService.get().getMaxRam();
-            if (maxRam != null)
+            File tmpDirFile = new File(tmpDir, "cassandra");
+            if (!tmpDirFile.exists())
             {
-                maxRamPerJob = Double.valueOf(Math.floor(maxRam / threads)).intValue();
-                if (maxRamPerJob < 12)
-                {
-                    getPipelineCtx().getLogger().info("lowering number of concurrent jobs to ensure 12GB RAM/ea");
-                    maxRamPerJob = 12;
-                    maxJobs = Double.valueOf(Math.floor(maxRam / (double)maxRamPerJob)).intValue();
-                }
+                tmpDirFile.mkdirs();
             }
+
+            extraArgs.add("--tempDir");
+            extraArgs.add(tmpDirFile.getPath());
         }
 
-        getPipelineCtx().getLogger().info("max concurrent jobs: " + maxJobs);
-        getPipelineCtx().getLogger().info("max RAM per job: " + maxRamPerJob);
+        CassandraRunner cassRunner = new CassandraRunner(getPipelineCtx().getLogger());
 
-        JobRunner jobRunner = new JobRunner("CassandraRunner", maxJobs);
-        List<CassandraPerChrJob> jobs = new ArrayList<>();
-        File cassdandraLogDir = new File(getPipelineCtx().getSourceDirectory(true), "cassandra");
-        if (!cassdandraLogDir.exists())
-        {
-            cassdandraLogDir.mkdirs();
-        }
+        Integer maxRam = SequencePipelineService.get().getMaxRam();
+        cassRunner.setMaxRamOverride(maxRam);
 
-        Set<String> contigs = new HashSet<>();
-        if (intervals == null || intervals.isEmpty())
+        //Cassandra requires unzipped files
+        File liftedToGRCh37Unzipped = new File(liftedToGRCh37.getParentFile(), FileUtil.getBaseName(liftedToGRCh37.getName()));
+        File liftedToGRCh37UnzippedDone = new File(liftedToGRCh37Unzipped.getPath() + ".done");
+        if (!liftedToGRCh37UnzippedDone.exists())
         {
-            dict.getSequences().forEach(seq -> contigs.add(seq.getSequenceName()));
+            SimpleScriptWrapper wrapper = new SimpleScriptWrapper(getPipelineCtx().getLogger());
+            wrapper.execute(Arrays.asList("gunzip", liftedToGRCh37.getPath()));
+            try
+            {
+                FileUtils.touch(liftedToGRCh37UnzippedDone);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
         else
         {
-            intervals.forEach(interval -> contigs.add(dict.getSequence(interval.getContig()).getSequenceName()));
+            getPipelineCtx().getLogger().info("Resuming from file: " + liftedToGRCh37Unzipped.getPath());
         }
 
-        getPipelineCtx().getLogger().debug("Total contigs for cassandra: " + contigs.size());
+        output.addIntermediateFile(liftedToGRCh37Unzipped);
+        output.addIntermediateFile(liftedToGRCh37UnzippedDone);
 
-        for (String contig : contigs)
+        cassRunner.execute(liftedToGRCh37Unzipped, finalOutput, extraArgs);
+        if (!finalOutput.exists())
         {
-            CassandraPerChrJob job = new CassandraPerChrJob(contig, finalOutput.getParentFile(), basename, genome, liftedToGRCh37, output, getPipelineCtx().getLogger(), maxRamPerJob, cassdandraLogDir);
-            jobs.add(job);
-            jobRunner.execute(job);
+            throw new PipelineJobException("Unable to find output");
         }
 
-        getPipelineCtx().getLogger().info("total jobs: " + jobRunner.getJobCount());
-        jobRunner.waitForCompletion();
-        getPipelineCtx().getLogger().info("job runner complete");
-
-        List<String> errors = new ArrayList<>();
-        List<File> outputs = new ArrayList<>();
-        for (CassandraPerChrJob job : jobs)
+        try
         {
-            if (job._hadError)
-            {
-                errors.add(job.getChr());
-            }
-            else
-            {
-                if (job._hasVariants)
-                {
-                    if (!job._cassandraOutputVcf.exists())
-                    {
-                        throw new PipelineJobException("Unable to find expected file: " + job._cassandraOutputVcf.getPath());
-                    }
-
-                    outputs.add(job._cassandraOutputVcf);
-                }
-                else
-                {
-                    getPipelineCtx().getLogger().debug("no variants found for chromosome: " + job.getChr());
-                }
-            }
+            SequenceAnalysisService.get().ensureVcfIndex(finalOutput, getPipelineCtx().getLogger());
         }
-
-        if (!errors.isEmpty())
+        catch (IOException e)
         {
-            throw new PipelineJobException("Probelm running cassandra for chromosomes: " + StringUtils.join(errors, "; "));
+            throw new PipelineJobException(e);
         }
 
-        return outputs;
-    }
-
-    public static class CassandraPerChrJob extends Job
-    {
-        private Logger _primaryLog;
-        private String _chr;
-        private File _subsetVcf;
-        private File _cassandraOutputVcf;
-        private ReferenceGenome _referenceGenome;
-        private File _inputVcf;
-        private boolean _hadError = false;
-        private VariantProcessingStepOutputImpl _variantOutput;
-        private  File _logFile;
-        private boolean _hasVariants = true;
-        private Integer _maxRamOverride = null;
-
-        public CassandraPerChrJob(String chr, File outputDir, String outputBasename, ReferenceGenome genome, File inputVcf, VariantProcessingStepOutputImpl variantOutput, Logger primaryLog, Integer maxRamOverride, @Nullable File cassdandraLogDir)
-        {
-            _chr = chr;
-            _subsetVcf = new File(outputDir, outputBasename + "." + _chr + ".subset.vcf");
-            _cassandraOutputVcf = new File(outputDir, outputBasename + "." + _chr + ".cassandra.vcf");
-            _inputVcf = inputVcf;
-            _referenceGenome = genome;
-            _variantOutput = variantOutput;
-            _primaryLog = primaryLog;
-            _logFile = new File(cassdandraLogDir == null ? _cassandraOutputVcf.getParentFile() : cassdandraLogDir, outputBasename + "." + chr + ".log");
-            _maxRamOverride = maxRamOverride;
-        }
-
-        private Logger _logger = null;
-
-        private Logger getLog()
-        {
-            if (_logger == null)
-            {
-                // Create appending logger.
-                _logger = Logger.getLogger(CassandraPerChrJob.class.getName() + "|" + _chr);
-                _logger.removeAllAppenders();
-
-                SafeFileAppender appender = new SafeFileAppender(_logFile);
-                appender.setLayout(new PatternLayout("%d{DATE} %-5p: %m%n"));
-                _logger.addAppender(appender);
-                _logger.setLevel(Level.ALL);
-                //_logger.getLoggerRepository().setThreshold(Level.DEBUG);
-            }
-
-            return _logger;
-        }
-
-        @Override
-        public void run()
-        {
-            getLog();
-
-            try
-            {
-                _primaryLog.info("running cassandra for chromosome: " + _chr + ", with log: " + _logFile.getPath());
-                getLog().info("running cassandra for chromosome: " + _chr);
-
-                File subsetDone = new File(_subsetVcf + ".done");
-                if (subsetDone.exists())
-                {
-                    _primaryLog.info("re-using subset vcf, " + _subsetVcf.getPath());
-                }
-                else
-                {
-                    SelectVariantsWrapper sv = new SelectVariantsWrapper(getLog());
-                    sv.setMaxRamOverride(_maxRamOverride);
-                    sv.execute(_referenceGenome.getWorkingFastaFile(), _inputVcf, _subsetVcf, Arrays.asList("-L", _chr));
-
-                    FileUtils.touch(subsetDone);
-
-                    _primaryLog.info("finished subset for chromosome: " + _chr);
-                }
-
-                //verify variant count:
-                _hasVariants = true;
-                try (VCFFileReader reader = new VCFFileReader(_subsetVcf))
-                {
-                    try (CloseableIterator<VariantContext> it = reader.iterator())
-                    {
-                        if (!it.hasNext())
-                        {
-                            _hasVariants = false;
-                        }
-                    }
-                }
-
-                if (!_hasVariants)
-                {
-                    _primaryLog.info("no variants found for " + _chr + ", aborting");
-                    return;
-                }
-
-                File cassandraDone = new File(_cassandraOutputVcf + ".done");
-                if (cassandraDone.exists())
-                {
-                    _primaryLog.info("re-using cassandra vcf, " + _cassandraOutputVcf.getPath());
-                }
-                else
-                {
-                    List<String> extraArgs = new ArrayList<>();
-
-                    //NOTE: Cassandra will not sort the output when multithreaded, so the extra sorting we would need to do negates any benefit here
-                    //Integer threads = SequencePipelineService.get().getMaxThreads(getPipelineCtx().getLogger());
-                    //if (threads != null)
-                    //{
-                    //    extraArgs.add("-n");
-                    //    extraArgs.add(threads.toString());
-                    //}
-
-                    String tmpDir = SequencePipelineService.get().getJavaTempDir();
-                    if (!StringUtils.isEmpty(tmpDir))
-                    {
-                        File tmpDirFile = new File(tmpDir, "cassandra-" + _chr);
-                        if (!tmpDirFile.exists())
-                        {
-                            tmpDirFile.mkdirs();
-                        }
-
-                        extraArgs.add("--tempDir");
-                        extraArgs.add(tmpDirFile.getPath());
-                    }
-
-                    CassandraRunner cassRunner = new CassandraRunner(getLog());
-                    cassRunner.setMaxRamOverride(_maxRamOverride);
-                    cassRunner.execute(_subsetVcf, _cassandraOutputVcf, extraArgs);
-
-                    FileUtils.touch(cassandraDone);
-
-                    _primaryLog.info("finished cassandra for chromosome: " + _chr);
-                }
-
-                addIntermediateFiles();
-            }
-            catch (PipelineJobException | IOException e)
-            {
-                _primaryLog.error("Error processing sequence: " + _chr, e);
-                _hadError = true;
-
-                getLog().error(e);
-            }
-        }
-
-        public void addIntermediateFiles()
-        {
-            File subsetDone = new File(_subsetVcf + ".done");
-            _variantOutput.addIntermediateFile(subsetDone);
-            _variantOutput.addIntermediateFile(_subsetVcf);
-            _variantOutput.addIntermediateFile(new File(_subsetVcf.getPath() + ".idx"));
-
-            File cassandraDone = new File(_cassandraOutputVcf + ".done");
-            _variantOutput.addIntermediateFile(cassandraDone);
-            _variantOutput.addIntermediateFile(_cassandraOutputVcf);
-            _variantOutput.addIntermediateFile(new File(_cassandraOutputVcf.getPath() + ".idx"));
-        }
-
-        public String getChr()
-        {
-            return _chr;
-        }
+        return finalOutput;
     }
 
     protected static boolean indexExists(File vcf)
