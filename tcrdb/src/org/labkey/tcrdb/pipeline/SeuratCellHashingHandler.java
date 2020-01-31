@@ -22,7 +22,7 @@ import java.util.List;
 public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType(".seurat.rds", false);
-    private static final String CATEGORY = "Seurat Cell Hashing Calls";
+    public static final String CATEGORY = "Seurat Cell Hashing Calls";
 
     public SeuratCellHashingHandler()
     {

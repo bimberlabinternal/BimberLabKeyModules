@@ -216,6 +216,11 @@ public class CellRangerVDJUtils
             _log.info("No cached hashing readsets, skipping");
             return null;
         }
+        else if (readsetToHashing.size() == 1)
+        {
+            _log.info("Only a single hashing readset exists, will not use hashing");
+            return null;
+        }
 
         _log.debug("total cached readset/HTO pairs: " + readsetToHashing.size());
 
@@ -906,7 +911,7 @@ public class CellRangerVDJUtils
         job.getLogger().debug("preparing cell hashing files");
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
-        TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS);
+        TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS, null);
 
         Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
                 FieldKey.fromString("rowid"),

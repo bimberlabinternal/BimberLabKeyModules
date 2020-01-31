@@ -198,16 +198,14 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             int editDistance = ctx.getParams().optInt("editDistance", 2);
 
             File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId);
+            if (utils.useCellHashing(ctx.getSequenceSupport()) && cellToHto == null)
+            {
+                throw new PipelineJobException("Missing cell to HTO file");
+
+            }
+
             ctx.getFileManager().addStepOutputs(action, output);
 
-            boolean useCellHashing = utils.useCellHashing(ctx.getSequenceSupport());
-            if (useCellHashing)
-            {
-                if (cellToHto == null)
-                {
-                    throw new PipelineJobException("Missing cell to HTO file");
-                }
-            }
         }
     }
 
