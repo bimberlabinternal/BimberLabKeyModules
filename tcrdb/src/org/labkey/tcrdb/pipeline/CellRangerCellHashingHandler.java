@@ -278,7 +278,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
         String basename = FileUtil.makeLegalName(rs.getName());
-        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
+        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
         ctx.getFileManager().addStepOutputs(action, output);
 
         ctx.getFileManager().addOutput(action, category, cellToHto);

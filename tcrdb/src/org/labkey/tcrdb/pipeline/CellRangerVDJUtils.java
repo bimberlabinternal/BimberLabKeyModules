@@ -318,7 +318,7 @@ public class CellRangerVDJUtils
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         String basename = FileUtil.makeLegalName(rs.getName());
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, sourceDir, editDistance, scanEditDistances, rs, genomeId);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, false, sourceDir, editDistance, scanEditDistances, rs, genomeId);
         if (!hashtagCalls.exists())
         {
             throw new PipelineJobException("Unable to find expected file: " + hashtagCalls.getPath());
