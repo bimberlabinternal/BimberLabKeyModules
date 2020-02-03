@@ -638,9 +638,9 @@ public class CellRangerVDJUtils
             _log.info("total rows not cells: " + nonCell);
             _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
-            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + "%)");
-            _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + "%)");
-            _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + "%)");
+            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
+            _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
+            _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + countMapBySample.size());
             _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
@@ -701,7 +701,7 @@ public class CellRangerVDJUtils
                 totalCells += processRow(countData, cDNAMap, model, runId, am, totalCellsMapBySample, sequenceMap, rows);
             }
 
-            _log.info("total clones without count data: " + clonesWithoutCounts.size() + " (" + (NumberFormat.getPercentInstance().format(clonesWithoutCounts.size() / (double)uniqueClones.size())) + "%)");
+            _log.info("total clones without count data: " + clonesWithoutCounts.size() + " (" + (NumberFormat.getPercentInstance().format(clonesWithoutCounts.size() / (double)uniqueClones.size())) + ")");
         }
         catch (Exception e)
         {
