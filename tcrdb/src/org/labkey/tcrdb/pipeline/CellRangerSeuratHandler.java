@@ -447,10 +447,10 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                         String[] line;
                         while ((line = reader.readNext()) != null)
                         {
-                            if (hashingReadsetId.toString().equals(line[6]))
+                            if (hashingReadsetId.toString().equals(line[7]))
                             {
                                 htosForReadset++;
-                                bcWriter.writeNext(new String[]{line[5], line[4]});
+                                bcWriter.writeNext(new String[]{line[6], line[5]});
                             }
                         }
                     }
