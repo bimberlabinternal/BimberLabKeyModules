@@ -94,7 +94,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            CellRangerVDJUtils.prepareCellHashingFiles(job, support, outputDir, "readsetId", true);
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingFilesIfNeeded(job, support, "readsetId");
         }
 
         @Override
@@ -198,6 +198,12 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
     public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category) throws PipelineJobException
     {
+        CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
+        return processBarcodeFile(ctx, perCellTsv, rs, genomeId, action, commandArgs, writeLoupe, category, true, utils.getValidHashingBarcodeFile());
+    }
+
+    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean createOutputFiles, File htoBarcodeWhitelist) throws PipelineJobException
+    {
         ctx.getLogger().debug("inspecting file: " + perCellTsv.getPath());
 
         CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
@@ -251,7 +257,6 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         }
 
         //prepare whitelist of barcodes, based on cDNA records
-        File htoBarcodeWhitelist = utils.getValidHashingBarcodeFile();
         if (!htoBarcodeWhitelist.exists())
         {
             throw new PipelineJobException("Unable to find file: " + htoBarcodeWhitelist.getPath());
@@ -304,7 +309,15 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             {
                 throw new PipelineJobException(e);
             }
-            ctx.getFileManager().addSequenceOutput(forLoupe, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls (Loupe)", rs.getReadsetId(), null, genomeId, null);
+
+            if (createOutputFiles)
+            {
+                ctx.getFileManager().addSequenceOutput(forLoupe, rs.getName() + ": Cell Hashing Calls", "10x GEX Cell Hashing Calls (Loupe)", rs.getReadsetId(), null, genomeId, null);
+            }
+            else
+            {
+                ctx.getLogger().debug("Output file creation will be skipped");
+            }
         }
 
         return cellToHto;

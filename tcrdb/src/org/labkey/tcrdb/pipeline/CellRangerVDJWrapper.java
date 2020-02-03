@@ -216,7 +216,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 }
             }
 
-            getUtils().prepareVDJHashingFilesIfNeeded(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport());
+            getUtils().prepareHashingFilesIfNeeded(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport(), "enrichedReadsetId");
         }
 
         private File getGenomeFasta()

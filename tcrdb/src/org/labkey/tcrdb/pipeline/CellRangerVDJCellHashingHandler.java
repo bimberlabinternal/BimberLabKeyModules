@@ -105,7 +105,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
-            utils.prepareVDJHashingFilesIfNeeded(job, support);
+            utils.prepareHashingFilesIfNeeded(job, support, "enrichedReadsetId");
         }
 
         @Override
