@@ -390,7 +390,7 @@ public class CellRangerVDJUtils
                 while ((line = reader.readNext()) != null)
                 {
                     //header
-                    if (line[0].startsWith("TCR_ReadsetId"))
+                    if (line[0].startsWith("ReadsetId"))
                     {
                         continue;
                     }
