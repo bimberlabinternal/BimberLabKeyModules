@@ -241,6 +241,7 @@ public class CellRangerVDJUtils
         //prepare whitelist of cell indexes
         File cellBarcodeWhitelist = getValidCellIndexFile();
         Set<String> uniqueBarcodes = new HashSet<>();
+        Set<String> uniqueBarcodesIncludingNoCDR3 = new HashSet<>();
         _log.debug("writing cell barcodes");
         try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
         {
@@ -254,37 +255,57 @@ public class CellRangerVDJUtils
                 rowIdx++;
                 if (rowIdx > 1)
                 {
-                    if (row.length >= 13 && "None".equals(row[12]))
-                    {
-                        noCallRows++;
-                        continue;
-                    }
-
                     if ("False".equalsIgnoreCase(row[1]))
                     {
                         nonCell++;
                         continue;
                     }
 
+                    //NOTE: allow these to pass for cell-hashing under some conditions
+                    boolean hasCDR3 = !"None".equals(row[12]);
+                    if (!hasCDR3)
+                    {
+                        noCallRows++;
+                    }
+
                     //NOTE: 10x appends "-1" to barcodes
                     String barcode = row[0].split("-")[0];
-                    if (!uniqueBarcodes.contains(barcode))
+                    if (hasCDR3 && !uniqueBarcodes.contains(barcode))
                     {
                         writer.writeNext(new String[]{barcode});
                         uniqueBarcodes.add(barcode);
                     }
+
+                    uniqueBarcodesIncludingNoCDR3.add(barcode);
                 }
             }
 
             _log.debug("rows inspected: " + (rowIdx - 1));
             _log.debug("rows without CDR3: " + noCallRows);
             _log.debug("rows not called as cells: " + nonCell);
-            _log.debug("unique cell barcodes: " + uniqueBarcodes.size());
+            _log.debug("unique cell barcodes (with CDR3): " + uniqueBarcodes.size());
+            _log.debug("unique cell barcodes (including no CDR3): " + uniqueBarcodesIncludingNoCDR3.size());
             output.addIntermediateFile(cellBarcodeWhitelist);
         }
         catch (IOException e)
         {
             throw new PipelineJobException(e);
+        }
+
+        if (uniqueBarcodes.size() < 500 && uniqueBarcodesIncludingNoCDR3.size() > uniqueBarcodes.size())
+        {
+            _log.info("Total cell barcodes with CDR3s is low, so cell hashing will be performing using an input that includes valid cells that lacked CDR3 data.");
+            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER))
+            {
+                for (String barcode : uniqueBarcodesIncludingNoCDR3)
+                {
+                    writer.writeNext(new String[]{barcode});
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
 
         Readset htoReadset = support.getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
