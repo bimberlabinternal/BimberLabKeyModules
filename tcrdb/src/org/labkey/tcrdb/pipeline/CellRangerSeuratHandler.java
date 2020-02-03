@@ -480,6 +480,10 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     ctx.getLogger().info("Cell hashing was not used.  will not append to seurat");
                 }
             }
+            else
+            {
+                ctx.getLogger().info("Cell hashing was not used");
+            }
         }
 
         private void appendCallsToSeurat(JobContext ctx, File seuratObj, Map<String, File> finalCalls) throws PipelineJobException

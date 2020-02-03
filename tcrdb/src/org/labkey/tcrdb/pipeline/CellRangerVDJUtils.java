@@ -93,6 +93,7 @@ public class CellRangerVDJUtils
                 FieldKey.fromString("sortId/hto"),
                 FieldKey.fromString("sortId/hto/sequence"),
                 FieldKey.fromString("hashingReadsetId"),
+                FieldKey.fromString("hashingReadsetId/totalFiles"),
                 FieldKey.fromString("status"))
         );
 
@@ -101,7 +102,7 @@ public class CellRangerVDJUtils
         HashMap<Integer, Integer> readsetToHashingMap = new HashMap<>();
         try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(output), '\t', CSVWriter.NO_QUOTE_CHARACTER); CSVWriter bcWriter = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER))
         {
-            writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HTO_Name", "HTO_Seq", "HashingReadsetId"});
+            writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HTO_Name", "HTO_Seq", "HashingReadsetId", "HasHashingReads"});
             List<Readset> cachedReadsets = support.getCachedReadsets();
             Set<String> distinctHTOs = new HashSet<>();
             Set<Boolean> hashingStatus = new HashSet<>();
@@ -124,7 +125,8 @@ public class CellRangerVDJUtils
                             results.getString(FieldKey.fromString("sortId/population")),
                             results.getString(FieldKey.fromString("sortId/hto")),
                             results.getString(FieldKey.fromString("sortId/hto/sequence")),
-                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("hashingReadsetId")))
+                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("hashingReadsetId"))),
+                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("hashingReadsetId/totalFiles")) > 0)
                     });
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
@@ -158,7 +160,7 @@ public class CellRangerVDJUtils
 
                 if (hashingStatus.size() > 1)
                 {
-                    throw new PipelineJobException("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
+                    _log.info("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
                 }
                 else if (hashingStatus.isEmpty())
                 {
@@ -176,7 +178,7 @@ public class CellRangerVDJUtils
                 job.getLogger().info("There is only a single HTO in this pool, will not use hashing");
             }
 
-            boolean useCellHashing = hashingStatus.iterator().next();
+            boolean useCellHashing = hashingStatus.size() > 1 ? true : hashingStatus.iterator().next();
             if (useCellHashing && distinctHTOs.isEmpty())
             {
                 throw new PipelineJobException("Cell hashing was selected, but no HTOs were found");
@@ -929,9 +931,19 @@ public class CellRangerVDJUtils
         return support.getCachedObject(CellRangerVDJUtils.READSET_TO_HASHING_MAP, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, Integer.class, Integer.class));
     }
 
+    //NOTE: if readset ID is null, this will be interpreted as any readset using hashing
     public boolean useCellHashing(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
-        return getCachedReadsetMap(support).size() > 1;
+        if (getCachedReadsetMap(support).isEmpty())
+            return false;
+
+        File htoBarcodeWhitelist = getValidHashingBarcodeFile();
+        if (!htoBarcodeWhitelist.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + htoBarcodeWhitelist.getPath());
+        }
+
+        return SequencePipelineService.get().getLineCount(htoBarcodeWhitelist) > 1;
     }
 
     public static class CDNA
