@@ -220,13 +220,23 @@ public class CellRangerVDJUtils
             _log.info("No cached hashing readsets, skipping");
             return null;
         }
-        else if (readsetToHashing.size() == 1)
+
+        //prepare whitelist of barcodes, based on cDNA records
+        File htoBarcodeWhitelist = getValidHashingBarcodeFile();
+        if (!htoBarcodeWhitelist.exists())
         {
-            _log.info("Only a single hashing readset exists, will not use hashing");
+            throw new PipelineJobException("Unable to find file: " + htoBarcodeWhitelist.getPath());
+        }
+
+        long lineCount = SequencePipelineService.get().getLineCount(htoBarcodeWhitelist);
+        if (lineCount == 1)
+        {
+            _log.info("Only a HTO is used, will not use hashing");
             return null;
         }
 
-        _log.debug("total cached readset/HTO pairs: " + readsetToHashing.size());
+        _log.debug("total cached readset/hashing readset pairs: " + readsetToHashing.size());
+        _log.debug("unique HTOs: " + lineCount);
 
         //prepare whitelist of cell indexes
         File cellBarcodeWhitelist = getValidCellIndexFile();
@@ -275,13 +285,6 @@ public class CellRangerVDJUtils
         catch (IOException e)
         {
             throw new PipelineJobException(e);
-        }
-
-        //prepare whitelist of barcodes, based on cDNA records
-        File htoBarcodeWhitelist = getValidHashingBarcodeFile();
-        if (!htoBarcodeWhitelist.exists())
-        {
-            throw new PipelineJobException("Unable to find file: " + htoBarcodeWhitelist.getPath());
         }
 
         Readset htoReadset = support.getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
