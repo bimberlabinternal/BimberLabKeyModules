@@ -496,6 +496,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             {
                 rWriter.println("library(OOSAP)");
                 rWriter.println("seuratObj <- readRDS('" + seuratObj.getName() + "')");
+                rWriter.println("initialCells <- ncol(seuratObj)");
                 rWriter.println("callsFiles <- list(");
                 finalCalls.forEach((x, y) -> {
                     rWriter.println("'" + x + "' = '" + y.getName() + "'");
@@ -506,6 +507,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 rWriter.println("for (barcodePrefix in names(callsFiles)) {");
                 rWriter.println("   seuratObj <- OOSAP:::AppendCellHashing(seuratObj = seuratObj, barcodeCallFile = callsFiles[[barcodePrefix]], barcodePrefix = barcodePrefix)");
                 rWriter.println("}");
+                rWriter.println("if (ncol(seuratObj) != initialCells) { stop('Cell count not equal after appending cell hashing calls!') }");
                 rWriter.println("saveRDS(seuratObj, file = '" + seuratObj.getName() + "')");
 
                 bashWriter.println("#!/bin/bash");
