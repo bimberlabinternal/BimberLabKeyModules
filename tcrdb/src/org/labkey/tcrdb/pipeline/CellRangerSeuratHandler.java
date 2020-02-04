@@ -438,7 +438,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     Integer hashingReadsetId = CellRangerVDJUtils.getCachedReadsetMap(ctx.getSequenceSupport()).get(rs.getReadsetId());
                     if (hashingReadsetId == null)
                     {
-                        throw new PipelineJobException("Unable to find hashing readset Id for: " + rs.getReadsetId());
+                        ctx.getLogger().info("No hashing readset for: " + rs.getReadsetId() + ", this probably indicates either hashing is not used or the hashing data is not available.");
+                        return;
                     }
 
                     File perReadsetHtos = new File(allCellBarcodes.getParentFile(), "allowableHtos." + barcodePrefix + ".txt");
