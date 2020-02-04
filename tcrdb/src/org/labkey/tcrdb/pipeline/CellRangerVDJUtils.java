@@ -214,7 +214,7 @@ public class CellRangerVDJUtils
         return new File(outDir, "all_contig_annotations.csv");
     }
 
-    public File runRemoteCellHashingTasks(PipelineStepOutput output, String outputCategory, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir, Integer editDistance, boolean scanEditDistances, Integer genomeId) throws PipelineJobException
+    public File runRemoteCellHashingTasks(PipelineStepOutput output, String outputCategory, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir, Integer editDistance, boolean scanEditDistances, Integer genomeId, Integer minCountPerCell) throws PipelineJobException
     {
         Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
         if (readsetToHashing.isEmpty())
@@ -318,7 +318,7 @@ public class CellRangerVDJUtils
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         String basename = FileUtil.makeLegalName(rs.getName());
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, false, sourceDir, editDistance, scanEditDistances, rs, genomeId);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, minCountPerCell, sourceDir, editDistance, scanEditDistances, rs, genomeId);
         if (!hashtagCalls.exists())
         {
             throw new PipelineJobException("Unable to find expected file: " + hashtagCalls.getPath());

@@ -47,6 +47,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
                     put("checked", true);
                 }}, true),
                 ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
+                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 3),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, false)
@@ -275,10 +276,11 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
         boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
         int editDistance = ctx.getParams().optInt("editDistance", 2);
+        int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
         String basename = FileUtil.makeLegalName(rs.getName());
-        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, false, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
+        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, minCountPerCell, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
         ctx.getFileManager().addStepOutputs(action, output);
 
         ctx.getFileManager().addOutput(action, category, cellToHto);

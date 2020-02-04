@@ -57,6 +57,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     put("checked", true);
                 }}, true),
                 ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
+                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 3),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, false)
@@ -195,9 +196,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
             boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
+            int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
             int editDistance = ctx.getParams().optInt("editDistance", 2);
 
-            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId);
+            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell);
             if (utils.useCellHashing(ctx.getSequenceSupport()) && cellToHto == null)
             {
                 throw new PipelineJobException("Missing cell to HTO file");

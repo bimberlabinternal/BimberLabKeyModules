@@ -81,7 +81,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances (Hashing)", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, true),
-                ToolParameterDescriptor.create("editDistance", "Edit Distance (Hashing)", null, "ldk-integerfield", null, 1)
+                ToolParameterDescriptor.create("editDistance", "Edit Distance (Hashing)", null, "ldk-integerfield", null, 1),
+                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 3)
             ));
     }
 
