@@ -439,7 +439,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     if (hashingReadsetId == null)
                     {
                         ctx.getLogger().info("No hashing readset for: " + rs.getReadsetId() + ", this probably indicates either hashing is not used or the hashing data is not available.");
-                        return;
+                        continue;
                     }
 
                     File perReadsetHtos = new File(allCellBarcodes.getParentFile(), "allowableHtos." + barcodePrefix + ".txt");
