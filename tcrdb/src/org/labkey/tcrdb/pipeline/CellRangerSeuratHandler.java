@@ -499,9 +499,11 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 rWriter.println("seuratObj <- readRDS('" + seuratObj.getName() + "')");
                 rWriter.println("initialCells <- ncol(seuratObj)");
                 rWriter.println("callsFiles <- list(");
-                finalCalls.forEach((x, y) -> {
-                    rWriter.println("'" + x + "' = '" + y.getName() + "'");
-                });
+                int idx = 0;
+                for (String barcodePrefix : finalCalls.keySet()) {
+                    idx++;
+                    rWriter.println("'" + barcodePrefix + "' = '" + finalCalls.get(barcodePrefix).getName() + "'" + (idx < finalCalls.size() ? "," : ""));
+                }
 
                 rWriter.println(")");
                 rWriter.println("");
