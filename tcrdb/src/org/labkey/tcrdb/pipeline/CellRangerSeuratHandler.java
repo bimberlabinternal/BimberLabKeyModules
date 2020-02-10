@@ -491,7 +491,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
         private void appendCallsToSeurat(JobContext ctx, File seuratObj, Map<String, File> finalCalls) throws PipelineJobException
         {
             File rScript = new File(seuratObj.getParentFile(), "appendHashing.R");
-            File bashScript = new File(seuratObj.getParentFile(), "runDocker.R");
+            File bashScript = new File(seuratObj.getParentFile(), "runDocker.sh");
 
             try (PrintWriter rWriter = PrintWriters.getPrintWriter(rScript); PrintWriter bashWriter = PrintWriters.getPrintWriter(bashScript))
             {
@@ -522,7 +522,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 String ramOpts = "";
                 if (maxRam != null)
                 {
-                    ramOpts = " --memory=" +maxRam  +"g";
+                    ramOpts = " --memory=" +maxRam  +"g ";
                 }
 
                 bashWriter.println("sudo $DOCKER pull bimberlab/oosap");
