@@ -119,6 +119,13 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             fieldLabel: 'Require Library Concentrations',
             itemId: 'requireConc',
             checked: true
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: '10x Barcode Series',
+            itemId: 'barcodeSeries',
+            forceSelection: true,
+            storeValues: ['SI-GA'],
+            value: 'SI-GA'
         }, {
             xtype: 'textarea',
             fieldLabel: 'Paste Data Below',
