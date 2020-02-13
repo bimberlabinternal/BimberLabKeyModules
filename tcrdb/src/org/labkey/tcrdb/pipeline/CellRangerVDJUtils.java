@@ -787,7 +787,7 @@ public class CellRangerVDJUtils
             row.put("analysisId", model.getRowId());
             row.put("pipelineRunId", runId);
 
-            row.put("cloneId", assayModel.cloneId);
+            row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? null : assayModel.cloneId);
             row.put("locus", assayModel.locus);
             row.put("vHit", assayModel.vHit);
             row.put("dHit", assayModel.dHit);
