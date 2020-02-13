@@ -300,7 +300,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         if (forceRecreate || !indexExists(cassandraAnnotated))
         {
             //we can assume splitting happened upstream, so run over the full VCF
-            cassandraAnnotated = runCassandra(liftedToGRCh37, cassandraAnnotated, grch37Genome, output);
+            cassandraAnnotated = runCassandra(liftedToGRCh37, cassandraAnnotated, output, forceRecreate);
         }
         else
         {
@@ -389,7 +389,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         return output;
     }
 
-    private File runCassandra(File liftedToGRCh37, File finalOutput, ReferenceGenome genome, VariantProcessingStepOutputImpl output) throws PipelineJobException
+    private File runCassandra(File liftedToGRCh37, File finalOutput, VariantProcessingStepOutputImpl output, boolean forceRecreate) throws PipelineJobException
     {
         List<String> extraArgs = new ArrayList<>();
 
@@ -415,7 +415,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         //Cassandra requires unzipped files
         File liftedToGRCh37Unzipped = new File(liftedToGRCh37.getParentFile(), FileUtil.getBaseName(liftedToGRCh37.getName()));
         File liftedToGRCh37UnzippedDone = new File(liftedToGRCh37Unzipped.getPath() + ".done");
-        if (!liftedToGRCh37UnzippedDone.exists())
+        if (forceRecreate || !liftedToGRCh37UnzippedDone.exists())
         {
             SimpleScriptWrapper wrapper = new SimpleScriptWrapper(getPipelineCtx().getLogger());
             wrapper.execute(Arrays.asList("gunzip", liftedToGRCh37.getPath()));
