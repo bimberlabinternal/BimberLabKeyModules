@@ -18,152 +18,215 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                 border: false
             },
             items: [{
-
-            },{
-                bodyStyle: 'padding: 5px;',
+                xtype: 'radiogroup',
+                name: 'importType',
+                columns: 1,
                 items: [{
-                    xtype: 'ldk-simplecombo',
-                    itemId: 'instrument',
-                    fieldLabel: 'Instrument/Core',
-                    forceSelection: true,
-                    editable: false,
-                    labelWidth: 160,
-                    storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List (MedGenome)', '10x Sample Sheet', 'Novogene']
+                    boxLabel: 'Novogene/Plate List',
+                    inputValue: 'plateList',
+                    name: 'importType',
+                    checked: true
                 },{
-                    xtype: 'ldk-simplecombo',
-                    itemId: 'application',
-                    fieldLabel: 'Application/Type',
-                    forceSelection: true,
-                    editable: true,
-                    labelWidth: 160,
-                    allowBlank: true,
-                    storeValues: ['Whole Transcriptome RNA-Seq', 'TCR Enriched', '10x GEX', '10x VDJ']
-                },{
-                    xtype: 'labkey-combo',
-                    forceSelection: true,
-                    multiSelect: true,
-                    displayField: 'plateId',
-                    valueField: 'plateId',
-                    itemId: 'sourcePlates',
-                    fieldLabel: 'Source Plate Id',
-                    store: {
-                        type: 'labkey-store',
-                        schemaName: 'tcrdb',
-                        sql: 'SELECT distinct plateId as plateId from tcrdb.cdnas c WHERE c.allReadsetsHaveData = false',
-                        autoLoad: true
+                    boxLabel: 'Other',
+                    inputValue: 'other',
+                    name: 'importType'
+                }],
+                listeners: {
+                    scope: this,
+                    afterrender: function(field) {
+                        field.fireEvent('change', field, field.getValue());
                     },
-                    labelWidth: 160
-                },{
-                    xtype: 'textfield',
-                    itemId: 'adapter',
-                    fieldLabel: 'Adapter',
-                    labelWidth: 160,
-                    value: 'CTGTCTCTTATACACATCT'
-                },{
-                    xtype: 'textarea',
-                    fieldLabel: 'Names/Barcodes',
-                    labelAlign: 'top',
-                    width: 600,
-                    height: 300
-                },{
-                    xtype: 'checkbox',
-                    fieldLabel: 'Include Libraries With Data',
-                    checked: false,
-                    itemId: 'includeWithData',
-                    listeners: {
-                        change: function (field, val) {
-                            var target = field.up('tcrdb-libraryexportpanel').down('#sourcePlates');
-                            var sql = 'SELECT distinct plateId as plateId from tcrdb.cdnas ' + (val ? '' : 'c WHERE c.allReadsetsHaveData = false');
-                            target.store.sql = sql;
-                            target.store.removeAll();
-                            target.store.load(function () {
-                                if (target.getPicker()) {
-                                    target.getPicker().refresh();
-                                }
-                            }, this);
+                    change: function(field, val) {
+                        val = val.importType;
+                        var target = field.up('panel').down('#importArea');
+                        target.removeAll();
+                        if (val === 'other') {
+                            target.add([{
+                                xtype: 'ldk-simplecombo',
+                                itemId: 'instrument',
+                                fieldLabel: 'Instrument/Core',
+                                forceSelection: true,
+                                editable: false,
+                                labelWidth: 160,
+                                storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List (MedGenome)', '10x Sample Sheet', 'Novogene']
+                            },{
+                                xtype: 'ldk-simplecombo',
+                                itemId: 'application',
+                                fieldLabel: 'Application/Type',
+                                forceSelection: true,
+                                editable: true,
+                                labelWidth: 160,
+                                allowBlank: true,
+                                storeValues: ['Whole Transcriptome RNA-Seq', 'TCR Enriched', '10x GEX', '10x VDJ']
+                            },{
+                                xtype: 'labkey-combo',
+                                forceSelection: true,
+                                multiSelect: true,
+                                displayField: 'plateId',
+                                valueField: 'plateId',
+                                itemId: 'sourcePlates',
+                                fieldLabel: 'Source Plate Id',
+                                store: {
+                                    type: 'labkey-store',
+                                    schemaName: 'tcrdb',
+                                    sql: 'SELECT distinct plateId as plateId from tcrdb.cdnas c WHERE c.allReadsetsHaveData = false',
+                                    autoLoad: true
+                                },
+                                labelWidth: 160
+                            },{
+                                xtype: 'textfield',
+                                itemId: 'adapter',
+                                fieldLabel: 'Adapter',
+                                labelWidth: 160,
+                                value: 'CTGTCTCTTATACACATCT'
+                            }]);
+                        }
+                        else {
+                            target.add({
+                                border: false,
+                                defaults: {
+                                    border: false
+                                },
+                                items: [{
+                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, or HTO).  These can either be one column (i.e. G234-1 or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional final column can be used to provide the alias for this pool. This is mostly used for HTOs, where multiple libraries are pre-pooled.  See these examples:<br>' +
+                                            '<pre>' +
+                                                '234-2\tGEX<br>' +
+                                                '234-2\tVDJ<br>' +
+                                                'G233-2<br>' +
+                                                'T235-2<br>' +
+                                                '235-2\tHTO\tBNB-HTO-1<br>' +
+                                                'H235-2\tBNB-HTO-1' +
+                                            '</pre>',
+                                    border: false
+                                },{
+                                    xtype: 'hidden',
+                                    itemId: 'instrument',
+                                    value: 'Novogene'
+                                },{
+                                    xtype: 'textarea',
+                                    itemId: 'plateList',
+                                    fieldLabel: 'Plate List',
+                                    labelAlign: 'top',
+                                    width: 270,
+                                    height: 200,
+                                    enableKeyEvents: true,
+                                    listeners: {
+                                        specialkey: function (field, e) {
+                                            if (e.getKey() === e.TAB) {
+                                                field.setValue(field.getValue() + '\t');
+                                                e.preventDefault();
+                                            }
+                                        }
+                                    }
+                                }],
+                                buttonAlign: 'left',
+                                buttons: [{
+                                    text: 'Add',
+                                    scope: this,
+                                    handler: function (btn) {
+                                        var text = btn.up('panel').down('#plateList').getValue();
+                                        if (!text) {
+                                            Ext4.Msg.alert('Error', 'Must enter a list of plates');
+                                            return;
+                                        }
+
+                                        text = LDK.Utils.CSVToArray(Ext4.String.trim(text), '\t');
+                                        Ext4.Array.forEach(text, function(r, idx){
+                                            var val = r[0];
+                                            if (val.startsWith('G')){
+                                                val = val.substr(1);
+                                                val = val.replace('_', '-');
+                                                r[0] = 'GEX';
+                                                r.unshift(val);
+
+                                            }
+                                            else if (val.startsWith('T')){
+                                                val = val.substr(1);
+                                                val = val.replace('_', '-');
+                                                r[0] = 'VDJ';
+                                                r.unshift(val);
+                                            }
+                                            else if (val.startsWith('H')){
+                                                val = val.substr(1);
+                                                val = val.replace('_', '-');
+                                                r[0] = 'HTO';
+                                                r.unshift(val);
+                                            }
+                                        }, this);
+
+                                        var hadError = false;
+                                        Ext4.Array.forEach(text, function(r){
+                                            if (r.length < 2){
+                                                hadError = true;
+                                            }
+                                        }, this);
+
+                                        if (hadError) {
+                                            Ext4.Msg.alert('Error', 'All rows must have at least 2 values');
+                                            return;
+                                        }
+
+                                        this.onSubmit(btn, text);
+                                    }
+                                }]
+                            });
                         }
                     }
-                },{
-                    xtype: 'checkbox',
-                    fieldLabel: 'Allow Duplicate Barcodes',
-                    checked: false,
-                    itemId: 'allowDuplicates'
-                },{
-                    xtype: 'checkbox',
-                    fieldLabel: 'Use Simple Sample Names',
-                    checked: false,
-                    itemId: 'simpleSampleNames'
-                },{
-                    xtype: 'checkbox',
-                    fieldLabel: 'Include Blanks',
-                    checked: true,
-                    itemId: 'includeBlanks'
-                }],
+                }
+            }, {
+                bodyStyle: 'padding: 5px;',
+                itemId: 'importArea',
+                border: false,
+                defaults: {
+                    border: false
+                }
+            },{
+                xtype: 'checkbox',
+                boxLabel: 'Allow Duplicate Barcodes',
+                checked: false,
+                itemId: 'allowDuplicates'
+            },{
+                xtype: 'checkbox',
+                boxLabel: 'Use Simple Sample Names',
+                checked: true,
+                itemId: 'simpleSampleNames'
+            },{
+                xtype: 'checkbox',
+                boxLabel: 'Include Blanks',
+                checked: true,
+                itemId: 'includeBlanks'
+            },{
+                xtype: 'checkbox',
+                boxLabel: 'Include Libraries With Data',
+                checked: false,
+                itemId: 'includeWithData',
+                listeners: {
+                    change: function (field, val) {
+                        var target = field.up('tcrdb-libraryexportpanel').down('#sourcePlates');
+                        var sql = 'SELECT distinct plateId as plateId from tcrdb.cdnas ' + (val ? '' : 'c WHERE c.allReadsetsHaveData = false');
+                        target.store.sql = sql;
+                        target.store.removeAll();
+                        target.store.load(function () {
+                            if (target.getPicker()) {
+                                target.getPicker().refresh();
+                            }
+                        }, this);
+                    }
+                }
+            },{
+                xtype: 'textarea',
+                itemId: 'outputArea',
+                fieldLabel: 'Output',
+                labelAlign: 'top',
+                width: 1000,
+                height: 400
             }],
+            buttonAlign: 'left',
             buttons: [{
                 text: 'Submit',
                 scope: this,
                 handler: function(btn){
                     this.onSubmit(btn);
-                }
-            },{
-                text: 'Add List of Plates',
-                scope: this,
-                handler: function(btn){
-                    //this is the only supported application for this right now:
-                    btn.up('tcrdb-libraryexportpanel').down('#instrument').setValue('Novogene');
-                    btn.up('tcrdb-libraryexportpanel').down('#simpleSampleNames').setValue(true);
-
-                    var win = Ext4.create('Ext.window.Window', {
-                        bodyStyle: 'padding: 5px;',
-                        title: 'Add Ordered List of Plates',
-                        width: 300,
-                        items: [{
-                            html: 'Add an ordered list of plates, using two tab-delimited columns.  The first is the plate ID, and the second is the library type (GEX, VDJ, or HTO).  An optional third column can be used to append an alias for this plate, which will be used at the library name',
-                            border: false
-                        },{
-                            xtype: 'textarea',
-                            fieldLabel: 'Plate List',
-                            labelAlign: 'top',
-                            width: 270,
-                            height: 200
-                        }],
-                        buttons: [{
-                            text: 'Add',
-                            scope: this,
-                            handler: function (b) {
-                                var text = b.up('window').down('textarea').getValue();
-                                if (!text) {
-                                    Ext4.Msg.alert('Error', 'Must enter a list of plates');
-                                    return;
-                                }
-
-                                text = LDK.Utils.CSVToArray(Ext4.String.trim(text), '\t');
-                                var hadError = false;
-                                Ext4.Array.forEach(text, function(r){
-                                    if (r.length < 2){
-                                        hadError = true;
-                                    }
-                                }, this);
-
-                                if (hadError) {
-                                    Ext4.Msg.alert('Error', 'All rows must have at least 2 values');
-                                    return;
-                                }
-
-                                b.up('window').close();
-                                this.onSubmit(btn, text);
-                            }
-                        },{
-                            text: 'Cancel',
-                            scope: this,
-                            handler: function(b){
-                                b.up('window').close();
-                            }
-                        }]
-                    });
-
-                    win.show();
                 }
             },{
                 text: 'Download Data',
@@ -181,7 +244,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                         split = ',';
                     }
 
-                    var val = btn.up('tcrdb-libraryexportpanel').down('textarea').getValue();
+                    var val = btn.up('tcrdb-libraryexportpanel').down('#outputArea').getValue();
                     var rows = LDK.Utils.CSVToArray(Ext4.String.trim(val), split);
 
                     LABKEY.Utils.convertToTable({
@@ -194,6 +257,25 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
         });
 
         this.callParent(arguments);
+
+        Ext4.Msg.wait('Loading...');
+        LABKEY.Query.selectRows({
+            schemaName: 'sequenceanalysis',
+            queryName: 'barcodes',
+            sort: 'group_name,tag_name',
+            scope: this,
+            failure: LDK.Utils.getErrorCallback(),
+            success: function(results){
+                this.barcodeMap = {};
+
+                Ext4.Array.forEach(results.rows, function(r){
+                    this.barcodeMap[r.group_name] = this.barcodeMap[r.group_name] || {};
+                    this.barcodeMap[r.group_name][r.tag_name] = r.sequence;
+                }, this);
+
+                Ext4.Msg.hide();
+            }
+        });
     },
 
     onSubmit: function(btn, expectedPairs){
@@ -215,8 +297,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
         }
 
         var instrument = btn.up('tcrdb-libraryexportpanel').down('#instrument').getValue();
-        var application = btn.up('tcrdb-libraryexportpanel').down('#application').getValue();
-        var adapter = btn.up('tcrdb-libraryexportpanel').down('#adapter').getValue();
+        var application = btn.up('tcrdb-libraryexportpanel').down('#application') ? btn.up('tcrdb-libraryexportpanel').down('#application').getValue() :  null;
+        var adapter = btn.up('tcrdb-libraryexportpanel').down('#adapter') ? btn.up('tcrdb-libraryexportpanel').down('#adapter').getValue() : null;
         var includeWithData = btn.up('tcrdb-libraryexportpanel').down('#includeWithData').getValue();
         var allowDuplicates = btn.up('tcrdb-libraryexportpanel').down('#allowDuplicates').getValue();
         var simpleSampleNames = btn.up('tcrdb-libraryexportpanel').down('#simpleSampleNames').getValue();
@@ -490,7 +572,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('');
                                     data.push('');
                                     data.push('500');
-                                    data.push('0');
+                                    data.push('1');  //PhiX
                                     data.push('');
                                     if (idx === 0) {
                                         data.push('Please QC individually and pool in equal amounts per lane');
@@ -531,7 +613,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('');
                                     data.push('');
                                     data.push('700');
-                                    data.push('0');
+                                    data.push('1');  //PhiX
                                     data.push('');
                                     if (idx === 0) {
                                         data.push('Please QC individually and pool in equal amounts per lane');
@@ -575,7 +657,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('');
                                     data.push('');
                                     data.push('182');
-                                    data.push('0');
+                                    data.push('5');  //PhiX
                                     data.push('');
                                     if (idx === 0) {
                                         data.push('Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
@@ -616,11 +698,11 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                 duplicates = Ext4.unique(duplicates);
                 if (!allowDuplicates && duplicates.length){
                     Ext4.Msg.alert('Error', 'Duplicate barcodes: ' + duplicates.join(', '));
-                    btn.up('tcrdb-libraryexportpanel').down('textarea').setValue(null);
+                    btn.up('tcrdb-libraryexportpanel').down('#outputArea').setValue(null);
                     btn.up('tcrdb-libraryexportpanel').down('#downloadData').setDisabled(true);
                 }
                 else {
-                    btn.up('tcrdb-libraryexportpanel').down('textarea').setValue(rows.join('\n'));
+                    btn.up('tcrdb-libraryexportpanel').down('#outputArea').setValue(rows.join('\n'));
                     btn.up('tcrdb-libraryexportpanel').down('#downloadData').setDisabled(false);
                 }
             }
