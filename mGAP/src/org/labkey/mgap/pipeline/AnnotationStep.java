@@ -264,7 +264,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
         File liftedToGRCh37 = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(currentVcf.getName()) + ".liftTo" + grch37Genome.getGenomeId() + ".vcf.gz");
         File liftoverRejects = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(currentVcf.getName()) + ".liftoverReject" + grch37Genome.getGenomeId() + ".vcf.gz");
-        if (forceRecreate || !indexExists(liftoverRejects))
+        if (forceRecreate || !indexExists(liftoverRejects) || !indexExists(liftedToGRCh37))
         {
             LiftoverVcfRunner liftoverVcfRunner = new LiftoverVcfRunner(getPipelineCtx().getLogger());
             liftoverVcfRunner.doLiftover(currentVcf, chainFile, grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37, 0.95);
