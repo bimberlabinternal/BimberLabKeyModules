@@ -127,7 +127,6 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
     {
         getPipelineCtx().getLogger().info("renaming samples in VCF");
 
-        Set<String> allSamples = new HashSet<>();
         File outputFile = new File(currentVCF.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".renamed.vcf.gz");
         if (indexExists(outputFile))
         {
@@ -153,11 +152,6 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                     if (sampleMap.containsKey(sample))
                     {
                         remappedSamples.add(sampleMap.get(sample));
-                    }
-                    else if (!allSamples.contains(sample))
-                    {
-                        getPipelineCtx().getLogger().info("sample lacks an alias, but will not be included in output: " + sample);
-                        remappedSamples.add(sample);
                     }
                     else
                     {
