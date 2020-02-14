@@ -794,7 +794,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             success: function(){
                 Ext4.Msg.hide();
                 Ext4.Msg.alert('Success', 'Data Saved', function(){
-                    window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'cdnas', schemaName: 'tcrdb'})
+                    window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'cdnas', schemaName: 'tcrdb', 'query.sort': '-created'})
                 }, this);
             },
             failure: LDK.Utils.getErrorCallback()
