@@ -105,7 +105,7 @@ public class CassandraRunner extends AbstractCommandWrapper
                 writer.write("set -e\n");
                 writer.write("{\n");
                 writer.write("cat " + inputUnzip.getPath() + " | head -n 50000 | grep -e '^#' | grep -v '^##META' | sed 's/Number=0,Type=String/Number=1,Type=String/';\n");
-                writer.write("cat " + inputUnzip.getPath() + " | grep -v '^#';\n");
+                writer.write("cat " + inputUnzip.getPath() + " | grep -v '^#' |  sort -V -k1,1 -k2,2n;\n");
 
                 Integer threads = SequencePipelineService.get().getMaxThreads(getLogger());
                 if (threads != null)
