@@ -23,7 +23,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         alwaysShow: true
     },{
         name: 'animalId',
-        labels: ['Animal Id', 'SubjectId', 'Subject Id'],
+        labels: ['Animal Id', 'SubjectId', 'Subject Id', 'Effectors', 'Effector'],
         allowRowSpan: true,
         allowBlank: false,
         transform: 'animal'
@@ -33,13 +33,6 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         alwaysShow: true,
         allowRowSpan: true,
         transform: 'sampleDate',
-        allowBlank: false
-    },{
-        name: 'effector',
-        labels: ['Effectors', 'Effector'],
-        alwaysShow: true,
-        allowRowSpan: true,
-        transform: 'effector',
         allowBlank: false
     },{
         name: 'stim',
@@ -70,7 +63,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         transform: 'hto'
     },{
         name: 'cells',
-        labels: ['Cells', 'Cell #'],
+        labels: ['Cells', 'Cell #', 'Sort'],
         allowRowSpan: false,
         allowBlank: false,
         transform: 'cells'
@@ -181,6 +174,10 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
         pool: function(val, panel, row){
             var workbook = row.workbook || panel.EXPERIMENT;
+            //Note: convert values like 2B -> 2
+            if (val && !Ext4.isNumeric(val)) {
+                val = val.replace(/[^0-9]+/, '');
+            }
             if (workbook && Ext4.isNumeric(val) && workbook !== val){
                 return workbook + '-' + val;
             }
@@ -492,6 +489,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         var lastValueByCol = new Array(colArray.length);
         var ret = [];
 
+        var doSplitCellsByPool = false;
         Ext4.Array.forEach(rows, function(row, rowIdx){
             var data = {
                 objectId: LABKEY.Utils.generateUUID()
@@ -499,10 +497,6 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
             Ext4.Array.forEach(colArray, function(col, colIdx){
                 var cell = Ext4.isDefined(col.dataIdx) ? row[col.dataIdx] : '';
-                if (!col){
-                    return;
-                }
-
                 if (cell){
                     if (col.transform && this.transforms[col.transform]){
                         cell = this.transforms[col.transform](cell, this, data);
@@ -521,11 +515,45 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     }
 
                     data[col.name] = cell;
+
+                    if (!cell && col.name == 'cells' && lastValueByCol[colIdx]) {
+                        doSplitCellsByPool = true;
+                    }
                 }
             }, this);
 
             ret.push(data);
         }, this);
+
+        //split cells across rows
+        if (doSplitCellsByPool) {
+            var cellCountMap = {};
+            Ext4.Array.forEach(ret, function(data) {
+                if (data.plateId) {
+                    cellCountMap[data.plateId] = cellCountMap[data.plateId] || [];
+                    cellCountMap[data.plateId].push(data.cells);
+                }
+            }, this);
+
+            Ext4.Array.forEach(Ext4.Object.getKeys(cellCountMap), function(plateId) {
+                var arr = cellCountMap[plateId];
+                var size = arr.length;
+                arr = Ext4.Array.remove(arr, null);
+                arr = Ext4.Array.remove(arr, '');
+                if (arr.length === 1) {
+                    cellCountMap[plateId] = arr[0] / size;
+                }
+                else {
+                    delete cellCountMap[plateId];
+                }
+            }, this);
+
+            Ext4.Array.forEach(ret, function(data) {
+                if (data.plateId && cellCountMap[data.plateId]) {
+                    data.cells = cellCountMap[data.plateId];
+                }
+            }, this);
+        }
 
         return ret;
     },
