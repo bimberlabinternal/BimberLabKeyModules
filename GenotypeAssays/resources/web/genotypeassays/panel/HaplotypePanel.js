@@ -665,12 +665,12 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
                             Ext4.Array.forEach(highest, function (n) {
                                 //if there's a 20% differential, ignore the one explaining more hits
                                 if (totalPct - pctExplainedByMatch[n] > pctDifferentialFilter) {
-                                    matches.remove(n);
+                                    Ext4.Array.remove(matches, n);
                                 }
                             }, this);
                         }
 
-                        if (matches.length != initial){
+                        if (matches.length !== initial){
                             console.log('haplotypes remaining after pct filter: ' + matches.length + ' (' + initial + ')');
                         }
                     }
