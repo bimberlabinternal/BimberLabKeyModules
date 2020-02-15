@@ -117,7 +117,12 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 e.preventDefault();
                                             }
                                         }
-                                    }
+                                    },
+                                },{
+                                    xtype: 'ldk-numberfield',
+                                    itemId: 'defaultVolume',
+                                    fieldLabel: 'Default Volume (uL)',
+                                    value: 10
                                 }],
                                 buttonAlign: 'left',
                                 buttons: [{
@@ -298,6 +303,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
 
         var instrument = btn.up('tcrdb-libraryexportpanel').down('#instrument').getValue();
         var application = btn.up('tcrdb-libraryexportpanel').down('#application') ? btn.up('tcrdb-libraryexportpanel').down('#application').getValue() :  null;
+        var defaultVolume = btn.up('tcrdb-libraryexportpanel').down('#defaultVolume') ? btn.up('tcrdb-libraryexportpanel').down('#defaultVolume').getValue() :  '';
         var adapter = btn.up('tcrdb-libraryexportpanel').down('#adapter') ? btn.up('tcrdb-libraryexportpanel').down('#adapter').getValue() : null;
         var includeWithData = btn.up('tcrdb-libraryexportpanel').down('#includeWithData').getValue();
         var allowDuplicates = btn.up('tcrdb-libraryexportpanel').down('#allowDuplicates').getValue();
@@ -559,7 +565,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data = [sampleName];
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
-                                        data.push('G' + r.plateId.replace(/-/g, '_'));
                                     }
                                     else {
                                         data.unshift(idx === 0 ? 'G' + r.plateId.replace(/-/g, '_') : '');
@@ -568,8 +573,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('Macaca mulatta');
                                     data.push(bc);
                                     data.push('');
-                                    data.push('');
-                                    data.push('');
+                                    data.push(r['readsetId/concentration']);
+                                    data.push(defaultVolume);
                                     data.push('');
                                     data.push('500');
                                     data.push('1');  //PhiX
@@ -577,7 +582,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     if (idx === 0) {
                                         data.push('Please QC individually and pool in equal amounts per lane');
                                     }
-                                    //data.push(r['readsetId/concentration']);
                                 }
                                 rows.push(data.join(delim));
                             }, this);
@@ -600,7 +604,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data = [sampleName];
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
-                                        data.push('T' + r.plateId.replace(/-/g, '_'));
                                     }
                                     else {
                                         data.unshift(idx === 0 ? 'T' + r.plateId.replace(/-/g, '_') : '');
@@ -609,8 +612,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('Macaca mulatta');
                                     data.push(bc);
                                     data.push('');
-                                    data.push('');
-                                    data.push('');
+                                    data.push(r['enrichedReadsetId/concentration']);
+                                    data.push(defaultVolume);
                                     data.push('');
                                     data.push('700');
                                     data.push('1');  //PhiX
@@ -618,7 +621,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     if (idx === 0) {
                                         data.push('Please QC individually and pool in equal amounts per lane');
                                     }
-                                    //data.push(r['enrichedReadsetId/concentration']);
                                 }
 
                                 rows.push(data.join(delim));
@@ -644,7 +646,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data = [sampleName];
                                     if (r.plateAlias) {
                                         data.unshift(r.plateAlias);
-                                        data.push('T' + r.plateId.replace(/-/g, '_'));
                                     }
                                     else {
                                         data.unshift(idx === 0 ? 'H' + r.plateId.replace(/-/g, '_') : '');
@@ -653,8 +654,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('Macaca mulatta');
                                     data.push(bc);
                                     data.push('');
-                                    data.push('');
-                                    data.push('');
+                                    data.push(r['hashingReadsetId/concentration']);
+                                    data.push(defaultVolume);
                                     data.push('');
                                     data.push('182');
                                     data.push('5');  //PhiX
@@ -662,7 +663,6 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     if (idx === 0) {
                                         data.push('Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
                                     }
-                                    //data.push(r['enrichedReadsetId/concentration']);
                                 }
 
                                 rows.push(data.join(delim));

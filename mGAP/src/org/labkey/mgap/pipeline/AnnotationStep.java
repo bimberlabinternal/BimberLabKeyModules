@@ -422,6 +422,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             try
             {
                 FileUtils.touch(liftedToGRCh37UnzippedDone);
+                if (!liftedToGRCh37.exists() && indexExists(liftedToGRCh37))
+                {
+                    File idx = new File(liftedToGRCh37.getPath() + ".tbi");
+                    idx.delete();
+                }
             }
             catch (IOException e)
             {
