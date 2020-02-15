@@ -88,14 +88,18 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     border: false
                                 },
                                 items: [{
-                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, or HTO).  These can either be one column (i.e. G234-1 or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional final column can be used to provide the alias for this pool. This is mostly used for HTOs, where multiple libraries are pre-pooled.  See these examples:<br>' +
+                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, or HTO).  These can either be one column (i.e. G234-1 or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional next column is the lane assignment (i.e. Novaseq1, HiSeq1, HiSeq2). Finally, an optional final column can be used to provide the alias for this pool. This is mostly used for HTOs, where multiple libraries are pre-pooled (such as HTOs).  See these examples:<br>' +
                                             '<pre>' +
                                                 '234-2\tGEX<br>' +
                                                 '234-2\tVDJ<br>' +
                                                 'G233-2<br>' +
                                                 'T235-2<br>' +
-                                                '235-2\tHTO\tBNB-HTO-1<br>' +
-                                                'H235-2\tBNB-HTO-1' +
+                                                '234-2\tVDJ\tNovaSeq1<br>' +
+                                                'G233-2\tNovaSeq1<br>' +
+                                                '235-2\tHTO\tHiSeq1\tBNB-HTO-1<br>' +
+                                                'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
+                                                '235-2\tHTO\tHiSeq2\tBNB-HTO-1<br>' +
+                                                'H235-2\tHiSeq1\tBNB-HTO-1' +
                                             '</pre>',
                                     border: false
                                 },{
@@ -163,6 +167,13 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                         Ext4.Array.forEach(text, function(r){
                                             if (r.length < 2){
                                                 hadError = true;
+                                            }
+
+                                            //ensure all rows are of length 4
+                                            if (r.length !== 4) {
+                                                for (i=0;i<(4-r.length);i++) {
+                                                    r.push('');
+                                                }
                                             }
                                         }, this);
 
@@ -368,7 +379,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 if (p[1] === 'GEX') {
                                     if (includeWithData || row['readsetId/totalFiles'] === 0) {
                                         if (row['readsetId/librarytype'].match('GEX')) {
-                                            sortedRows.push(Ext4.apply({targetApplication: '10x GEX', plateAlias: (p.length > 2 ? p[2] : null)}, row));
+                                            sortedRows.push(Ext4.apply({targetApplication: '10x GEX', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
                                         }
@@ -377,7 +388,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 else if (p[1] === 'HTO') {
                                     if (includeWithData || row['hashingReadsetId/totalFiles'] === 0) {
                                         if (row['hashingReadsetId/application'].match('Cell Hashing')) {
-                                            sortedRows.push(Ext4.apply({targetApplication: '10x HTO', plateAlias: (p.length > 2 ? p[2] : null)}, row));
+                                            sortedRows.push(Ext4.apply({targetApplication: '10x HTO', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
                                         }
@@ -386,7 +397,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 else if (p[1] === 'VDJ') {
                                     if (includeWithData || row['enrichedReadsetId/totalFiles'] === 0) {
                                         if (row['enrichedReadsetId/librarytype'].match('VDJ')) {
-                                            sortedRows.push(Ext4.apply({targetApplication: '10x VDJ', plateAlias: (p.length > 2 ? p[2] : null)}, row));
+                                            sortedRows.push(Ext4.apply({targetApplication: '10x VDJ', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
                                         }
@@ -573,12 +584,12 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('Macaca mulatta');
                                     data.push(bc);
                                     data.push('');
-                                    data.push(r['readsetId/concentration']);
+                                    data.push(r['readsetId/concentration'] || '');
                                     data.push(defaultVolume);
                                     data.push('');
                                     data.push('500');
                                     data.push('1');  //PhiX
-                                    data.push('');
+                                    data.push(r.laneAssignment || '');
                                     if (idx === 0) {
                                         data.push('Please QC individually and pool in equal amounts per lane');
                                     }
@@ -617,7 +628,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('');
                                     data.push('700');
                                     data.push('1');  //PhiX
-                                    data.push('');
+                                    data.push(r.laneAssignment || '');
                                     if (idx === 0) {
                                         data.push('Please QC individually and pool in equal amounts per lane');
                                     }
@@ -659,7 +670,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push('');
                                     data.push('182');
                                     data.push('5');  //PhiX
-                                    data.push('');
+                                    data.push(r.laneAssignment || '');
                                     if (idx === 0) {
                                         data.push('Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
                                     }
