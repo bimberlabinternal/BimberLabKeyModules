@@ -1147,8 +1147,8 @@ public class TCRdbController extends SpringActionController
                 throw new ApiUsageException("Unable to find schema: " + TCRdbSchema.NAME);
             }
 
-            TableInfo ti = us.getTable(TCRdbSchema.TABLE_STIMS);
-            TableInfo tiSort = us.getTable(TCRdbSchema.TABLE_SORTS);
+            TableInfo ti = us.getTable(TCRdbSchema.TABLE_STIMS, null);
+            TableInfo tiSort = us.getTable(TCRdbSchema.TABLE_SORTS, null);
 
             List<String> retErrors = new ArrayList<>();
             Map<Object, Integer> stimRowMap = new HashMap<>();

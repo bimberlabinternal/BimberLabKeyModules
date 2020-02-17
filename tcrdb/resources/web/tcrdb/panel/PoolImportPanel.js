@@ -694,6 +694,11 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         var conc = this.getUniqueValues(rowArr, prefix + '_library_conc');
         var fragment = this.getUniqueValues(rowArr, prefix + '_library_fragment');
         var workbook = this.getUniqueValues(rowArr, 'workbook');
+        if (workbook.length > 1) {
+            return ['Error', 'Pool ' + poolName + ' uses more workbook ' + workbook.join(';')];
+        }
+        workbook = workbook.length === 1 ? workbook[0] : null;
+
         var subjectid = this.getUniqueValues(rowArr, 'animalId');
         subjectid = subjectid.length === 1 ? subjectid[0] : null;
 
