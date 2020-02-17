@@ -189,15 +189,15 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             containerPath: Laboratory.Utils.getQueryContainerPath(),
             schemaName: 'core',
             queryName: 'workbooks',
-            columns: 'workbookId,EntityId',
-            filterArray: [LABKEY.Filter.create('plateId', Ext4.unique(workbooks).join(';'), LABKEY.Filter.Types.IN)],
+            columns: 'Name,EntityId',
+            filterArray: [LABKEY.Filter.create('Name', Ext4.unique(workbooks).join(';'), LABKEY.Filter.Types.IN)],
             scope: this,
             success: function(results) {
                 Ext4.Msg.hide();
 
                 var workbookMap = {};
                 Ext4.Array.forEach(results.rows, function(r){
-                    workbookMap[r.workbookId] = r.EntityId;
+                    workbookMap[r.Name] = r.EntityId;
                 }, this);
 
                 Ext4.Array.forEach(groupedRows.cDNARows, function(r){
