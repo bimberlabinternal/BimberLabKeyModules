@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -76,9 +77,25 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
     @Override
     public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
     {
+        Map<String, String> sampleNameMap = new HashMap<>();
         for (SequenceOutputFile so : inputFiles)
         {
-            writeSampleInfoToFile(so.getFile());
+            sampleNameMap.putAll(getSamplesToAlias(so.getFile()));
+        }
+
+        File outputFile = getSampleNameFile(getPipelineCtx().getSourceDirectory(true));
+        getPipelineCtx().getLogger().debug("caching mGAP aliases to file: " + outputFile.getPath());
+        getPipelineCtx().getLogger().debug("total aliases: " + sampleNameMap.size());
+        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(outputFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+        {
+            for (String name : sampleNameMap.keySet())
+            {
+                writer.writeNext(new String[]{name, sampleNameMap.get(name)});
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
         }
     }
 
@@ -110,7 +127,6 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
     {
         getPipelineCtx().getLogger().info("renaming samples in VCF");
 
-        Set<String> allSamples = new HashSet<>();
         File outputFile = new File(currentVCF.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".renamed.vcf.gz");
         if (indexExists(outputFile))
         {
@@ -136,11 +152,6 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                     if (sampleMap.containsKey(sample))
                     {
                         remappedSamples.add(sampleMap.get(sample));
-                    }
-                    else if (!allSamples.contains(sample))
-                    {
-                        getPipelineCtx().getLogger().info("sample lacks an alias, but will not be included in output: " + sample);
-                        remappedSamples.add(sample);
                     }
                     else
                     {
@@ -203,12 +214,8 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         return ret;
     }
 
-    private void writeSampleInfoToFile(File input) throws PipelineJobException
+    private Map<String, String> getSamplesToAlias(File input) throws PipelineJobException
     {
-
-        File outputFile = getSampleNameFile(getPipelineCtx().getSourceDirectory(true));
-        getPipelineCtx().getLogger().debug("caching mGAP aliases to file: " + outputFile.getPath());
-
         Map<String, String> sampleNameMap = new HashMap<>();
         try
         {
@@ -225,7 +232,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             List<String> subjects = header.getSampleNamesInOrder();
             if (subjects.isEmpty())
             {
-                return;
+                return Collections.emptyMap();
             }
 
             TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
@@ -253,16 +260,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         }
 
         getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
-        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(outputFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-        {
-            for (String name : sampleNameMap.keySet())
-            {
-                writer.writeNext(new String[]{name, sampleNameMap.get(name)});
-            }
-        }
-        catch (IOException e)
-        {
-            throw new PipelineJobException(e);
-        }
+
+        return sampleNameMap;
     }
 }

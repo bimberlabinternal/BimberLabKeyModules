@@ -119,6 +119,13 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             fieldLabel: 'Require Library Concentrations',
             itemId: 'requireConc',
             checked: true
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: '10x Barcode Series',
+            itemId: 'barcodeSeries',
+            forceSelection: true,
+            storeValues: ['SI-GA'],
+            value: 'SI-GA'
         }, {
             xtype: 'textarea',
             fieldLabel: 'Paste Data Below',
@@ -156,11 +163,60 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
         var parsedRows = this.parseRows(colArray, rows);
 
         var groupedRows = this.groupForImport(colArray, parsedRows);
-        if (!groupedRows){
+        if (!groupedRows) {
             console.log('No rows after grouping');
             return;
         }
 
+        var workbooks = [];
+        var hadError = false;
+        Ext4.Array.forEach(parsedRows, function(row){
+            if (!row.workbook) {
+                hadError = true;
+            }
+            else {
+                workbooks.push(row.workbook);
+            }
+        }, this);
+
+        if (hadError) {
+            Ext4.Msg.alert('Error', 'One or more rows missing a workbook ID');
+            return;
+        }
+
+        Ext4.Msg.wait('Loading workbooks');
+        LABKEY.Query.selectRows({
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
+            schemaName: 'core',
+            queryName: 'workbooks',
+            columns: 'Name,EntityId',
+            filterArray: [LABKEY.Filter.create('Name', Ext4.unique(workbooks).join(';'), LABKEY.Filter.Types.IN)],
+            scope: this,
+            success: function(results) {
+                Ext4.Msg.hide();
+
+                var workbookMap = {};
+                Ext4.Array.forEach(results.rows, function(r){
+                    workbookMap[r.Name] = r.EntityId;
+                }, this);
+
+                Ext4.Array.forEach(groupedRows.cDNARows, function(r){
+                    LDK.Assert.assertNotEmpty('Unable to find workbook in map: ' + r.workbook, workbookMap[r.workbook]);
+                    r.container = workbookMap[r.workbook];
+                }, this);
+
+                Ext4.Array.forEach(groupedRows.readsetRows, function(r){
+                    LDK.Assert.assertNotEmpty('Unable to find workbook in map: ' + r.workbook, workbookMap[r.workbook]);
+                    r.container = workbookMap[r.workbook];
+                }, this);
+
+                this.onWorkbookQueryLoad(colArray, parsedRows, groupedRows);
+            },
+            failure: LDK.Utils.getErrorCallback()
+        });
+    },
+
+    onWorkbookQueryLoad: function(colArray, parsedRows, groupedRows) {
         var plateIDs = [];
         var hadError = false;
         Ext4.Array.forEach(parsedRows, function(row){
@@ -181,6 +237,7 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
 
         Ext4.Msg.wait('Looking for matching cDNA');
         LABKEY.Query.selectRows({
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
             schemaName: 'tcrdb',
             queryName: 'cdnas',
             columns: 'rowid,plateid,readsetid,enrichedreadsetid,hashingreadsetid,sortid/population,sortid,sortid/stimid',
@@ -228,6 +285,7 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
         var data = config.rowData.groupedRows;
 
         LABKEY.Query.insertRows({
+            containerPath: Laboratory.Utils.getQueryContainerPath(),
             schemaName: 'sequenceanalysis',
             queryName: 'sequence_readsets',
             rows: data.readsetRows,
@@ -256,6 +314,8 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
                         baseRow.hashingReadsetId = htoReadsetId;
                     }
 
+                    baseRow.container = row.container;
+
                     if (row.rowIds) {
                         Ext4.Array.forEach(row.rowIds, function(r){
                             var toAdd = Ext4.apply({
@@ -269,13 +329,14 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
 
                 if (toUpdate.length) {
                     LABKEY.Query.updateRows({
+                        containerPath: Laboratory.Utils.getQueryContainerPath(),
                         schemaName: 'tcrdb',
                         queryName: 'cdnas',
                         rows: toUpdate,
                         success: function (results) {
                             Ext4.Msg.hide();
                             Ext4.Msg.alert('Success', 'Data Saved', function(){
-                                window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {'query.queryName': 'cdnas', schemaName: 'tcrdb'})
+                                window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'cdnas', schemaName: 'tcrdb', 'query.sort': '-created'});
                             }, this);
                         },
                         failure: LDK.Utils.getErrorCallback(),
