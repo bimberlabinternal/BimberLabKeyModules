@@ -75,7 +75,7 @@ public class CellRangerVDJUtils
         _sourceDir = sourceDir;
     }
 
-    public void prepareHashingFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support, String filterField) throws PipelineJobException
+    public void prepareHashingFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support, String filterField, final boolean skipFailedCdna) throws PipelineJobException
     {
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
@@ -111,7 +111,7 @@ public class CellRangerVDJUtils
                 AtomicBoolean hasError = new AtomicBoolean(false);
                 //find cDNA records using this readset
                 new TableSelector(cDNAs, colMap.values(), new SimpleFilter(FieldKey.fromString(filterField), rs.getRowId()), null).forEachResults(results -> {
-                    if (results.getObject(FieldKey.fromString("status")) != null)
+                    if (skipFailedCdna && results.getObject(FieldKey.fromString("status")) != null)
                     {
                         _log.info("skipping cDNA with non-null status: " + results.getString(FieldKey.fromString("rowid")));
                         return;
