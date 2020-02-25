@@ -2,7 +2,7 @@ ALTER TABLE tcrdb.cdnas ADD citeseqReadsetId int;
 ALTER TABLE tcrdb.cdnas ADD citeseqPanel varchar(100);
 
 CREATE TABLE tcrdb.citeseq_panels (
-  rowid int serial,
+  rowid serial,
   name varchar(100),
   antibody varchar(100),
 
@@ -16,7 +16,7 @@ CREATE TABLE tcrdb.citeseq_panels (
 );
 
 CREATE TABLE tcrdb.citeseq_antibodies (
-  rowid int serial,
+  rowid serial,
   antibodyName varchar(100),
   markerName varchar(100),
   cloneName varchar(100),
