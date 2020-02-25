@@ -1085,7 +1085,8 @@ public class TCRdbController extends SpringActionController
                 cDNARows.forEach(r -> r.put("readsetId", readsetMap.get((String)r.get("readsetGUID"))));
                 cDNARows.forEach(r -> r.put("hashingReadsetId", readsetMap.get((String)r.get("hashingReadsetGUID"))));
                 cDNARows.forEach(r -> r.put("enrichedReadsetId", readsetMap.get((String)r.get("enrichedReadsetGUID"))));
-                tcrdb.getTable(TCRdbSchema.TABLE_CDNAS).getUpdateService().insertRows(getUser(), getContainer(), cDNARows, bve, null, new HashMap<>());
+                cDNARows.forEach(r -> r.put("citeseqReadsetId", readsetMap.get((String)r.get("citeseqReadsetGUID"))));
+                tcrdb.getTable(TCRdbSchema.TABLE_CDNAS, null).getUpdateService().insertRows(getUser(), getContainer(), cDNARows, bve, null, new HashMap<>());
                 if (bve.hasErrors())
                 {
                     throw bve;

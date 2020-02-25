@@ -88,7 +88,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     border: false
                                 },
                                 items: [{
-                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, or HTO).  These can either be one column (i.e. G234-1 or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional next column is the lane assignment (i.e. Novaseq1, HiSeq1, HiSeq2). Finally, an optional final column can be used to provide the alias for this pool. This is mostly used for HTOs, where multiple libraries are pre-pooled (such as HTOs).  See these examples:<br>' +
+                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, CITE, or HTO).  These can either be one column (i.e. G234-1, C234-1, H234-1, or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional next column is the lane assignment (i.e. Novaseq1, HiSeq1, HiSeq2). Finally, an optional final column can be used to provide the alias for this pool. This is mostly used for CITE-Seq/HTOs, where multiple libraries are pre-pooled.  See these examples:<br>' +
                                             '<pre>' +
                                                 '234-2\tGEX<br>' +
                                                 '234-2\tVDJ<br>' +
@@ -100,6 +100,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
                                                 '235-2\tHTO\tHiSeq2\tBNB-HTO-1<br>' +
                                                 'H235-2\tHiSeq1\tBNB-HTO-1' +
+                                                'C235-2\tHiSeq1\tBNB-HTO-1' +
                                             '</pre>',
                                     border: false
                                 },{
@@ -159,6 +160,12 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 val = val.substr(1);
                                                 val = val.replace('_', '-');
                                                 r[0] = 'HTO';
+                                                r.unshift(val);
+                                            }
+                                            else if (val.startsWith('C')){
+                                                val = val.substr(1);
+                                                val = val.replace('_', '-');
+                                                r[0] = 'CITE';
                                                 r.unshift(val);
                                             }
                                         }, this);
@@ -341,6 +348,10 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                 application = rowLevelApplication || application;
                 return (application === '10x HTO');
             }
+            else if (readsetApplication === 'CITE-Seq'){
+                application = rowLevelApplication || application;
+                return (application === '10x CITE-Seq');
+            }
         };
 
         var getSampleName = function(simpleSampleNames, readsetId, readsetName, suffix){
@@ -356,7 +367,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
             columns: 'rowid,plateid' +
                 ',readsetId,readsetId/name,readsetId/application,readsetId/librarytype,readsetId/barcode5,readsetId/barcode5/sequence,readsetId/barcode3,readsetId/barcode3/sequence,readsetId/totalFiles,readsetId/concentration' +
                 ',enrichedReadsetId,enrichedReadsetId/name,enrichedReadsetId/application,enrichedReadsetId/librarytype,enrichedReadsetId/barcode5,enrichedReadsetId/barcode5/sequence,enrichedReadsetId/barcode3,enrichedReadsetId/barcode3/sequence,enrichedReadsetId/totalFiles,enrichedReadsetId/concentration' +
-            ',hashingReadsetId,hashingReadsetId/name,hashingReadsetId/application,hashingReadsetId/librarytype,hashingReadsetId/barcode5,hashingReadsetId/barcode5/sequence,hashingReadsetId/barcode3,hashingReadsetId/barcode3/sequence,hashingReadsetId/totalFiles,hashingReadsetId/concentration',
+                ',hashingReadsetId,hashingReadsetId/name,hashingReadsetId/application,hashingReadsetId/librarytype,hashingReadsetId/barcode5,hashingReadsetId/barcode5/sequence,hashingReadsetId/barcode3,hashingReadsetId/barcode3/sequence,hashingReadsetId/totalFiles,hashingReadsetId/concentration' +
+                ',citeseqReadsetId,citeseqReadsetId/name,citeseqReadsetId/application,citeseqReadsetId/librarytype,citeseqReadsetId/barcode5,citeseqReadsetId/barcode5/sequence,citeseqReadsetId/barcode3,citeseqReadsetId/barcode3/sequence,citeseqReadsetId/totalFiles,citeseqReadsetId/concentration',
             scope: this,
             filterArray: [LABKEY.Filter.create('plateId', plateIds.join(';'), LABKEY.Filter.Types.IN)],
             failure: LDK.Utils.getErrorCallback(),
@@ -378,7 +390,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                             if (row.plateId === p[0]) {
                                 if (p[1] === 'GEX') {
                                     if (includeWithData || row['readsetId/totalFiles'] === 0) {
-                                        if (row['readsetId/librarytype'].match('GEX')) {
+                                        if (row['readsetId/librarytype'] && row['readsetId/librarytype'].match('GEX')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x GEX', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -387,8 +399,17 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'HTO') {
                                     if (includeWithData || row['hashingReadsetId/totalFiles'] === 0) {
-                                        if (row['hashingReadsetId/application'].match('Cell Hashing')) {
+                                        if (row['hashingReadsetId/application'] && row['hashingReadsetId/application'].match('Cell Hashing')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x HTO', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
+                                            found = true;
+                                            return false;
+                                        }
+                                    }
+                                }
+                                else if (p[1] === 'CITE') {
+                                    if (includeWithData || row['citeseqReadsetId/totalFiles'] === 0) {
+                                        if (row['citeseqReadsetId/application'] && row['citeseqReadsetId/application'].match('CITE-Seq')) {
+                                            sortedRows.push(Ext4.apply({targetApplication: '10x CITE-Seq', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
                                         }
@@ -427,36 +448,23 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                     var rows = [['Name', 'Adapter', 'I7_Index_ID', 'I7_Seq', 'I5_Index_ID', 'I5_Seq'].join('\t')];
                     Ext4.Array.forEach(sortedRows, function (r) {
                         //only include readsets without existing data
-                        if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'], r.targetApplication)) {
-                            //allow for cell hashing / shared readsets
-                            readsetIds[r.readsetId] = true;
+                        var processSample = function(rows, r, fieldName) {
+                            if (!readsetIds[r[fieldName]] && r[fieldName] && (includeWithData || r[fieldName + '/totalFiles'] === 0) && isMatchingApplication(application, r[fieldName + '/librarytype'], r[fieldName + '/application'], r.targetApplication)) {
+                                //allow for cell hashing / shared readsets
+                                readsetIds[r[fieldName]] = true;
 
-                            //reverse complement both barcodes:
-                            var barcode5 = rc5 ? doReverseComplement(r['readsetId/barcode5/sequence']) : r['readsetId/barcode5/sequence'];
-                            var barcode3 = rc3 ? doReverseComplement(r['readsetId/barcode3/sequence']) : r['readsetId/barcode3/sequence'];
-                            barcodeCombosUsed.push(r['readsetId/barcode5'] + '/' + r['readsetId/barcode3']);
-                            rows.push([getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']), adapter, r['readsetId/barcode5'], barcode5, r['readsetId/barcode3'], barcode3].join('\t'));
-                        }
+                                //reverse complement both barcodes:
+                                var barcode5 = rc5 ? doReverseComplement(r[fieldName + '/barcode5/sequence']) : r[fieldName + '/barcode5/sequence'];
+                                var barcode3 = rc3 ? doReverseComplement(r[fieldName + '/barcode3/sequence']) : r[fieldName + '/barcode3/sequence'];
+                                barcodeCombosUsed.push(r[fieldName + '/barcode5'] + '/' + r[fieldName + '/barcode3']);
+                                rows.push([getSampleName(simpleSampleNames, r[fieldName], r[fieldName + '/name']), adapter, r[fieldName + '/barcode5'], barcode5, r[fieldName + '/barcode3'], barcode3].join('\t'));
+                            }
+                        };
 
-                        if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'], r.targetApplication)) {
-                            //allow for cell hashing / shared readsets
-                            readsetIds[r.enrichedReadsetId] = true;
-
-                            var barcode5 = rc5 ? doReverseComplement(r['enrichedReadsetId/barcode5/sequence']) : r['enrichedReadsetId/barcode5/sequence'];
-                            var barcode3 = rc3 ? doReverseComplement(r['enrichedReadsetId/barcode3/sequence']) : r['enrichedReadsetId/barcode3/sequence'];
-                            barcodeCombosUsed.push(r['enrichedReadsetId/barcode5'] + '/' + r['enrichedReadsetId/barcode3']);
-                            rows.push([getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name']), adapter, r['enrichedReadsetId/barcode5'], barcode5, r['enrichedReadsetId/barcode3'], barcode3].join('\t'))
-                        }
-
-                        if (!readsetIds[r.hashingReadsetId] && r.hashingReadsetId && (includeWithData || r['hashingReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['hashingReadsetId/librarytype'], r['hashingReadsetId/application'], r.targetApplication)) {
-                            //allow for cell hashing / shared readsets
-                            readsetIds[r.hashingReadsetId] = true;
-
-                            var barcode5 = rc5 ? doReverseComplement(r['hashingReadsetId/barcode5/sequence']) : r['hashingReadsetId/barcode5/sequence'];
-                            var barcode3 = rc3 ? doReverseComplement(r['hashingReadsetId/barcode3/sequence']) : r['hashingReadsetId/barcode3/sequence'];
-                            barcodeCombosUsed.push(r['hashingReadsetId/barcode5'] + '/' + r['hashingReadsetId/barcode3']);
-                            rows.push([getSampleName(simpleSampleNames, r.hashingReadsetId, r['hashingReadsetId/name']), adapter, r['hashingReadsetId/barcode5'], barcode5, r['hashingReadsetId/barcode3'], barcode3].join('\t'))
-                        }
+                        processSample(rows, r, 'readsetId');
+                        processSample(rows, r, 'enrichedReadsetId');
+                        processSample(rows, r, 'hashingReadsetId');
+                        processSample(rows, r, 'citeseqReadsetId');
                     }, this);
 
                     //add missing barcodes:
@@ -556,123 +564,52 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                         rows.push('Sample_ID,Sample_Name,index,Sample_Project');
                     }
 
+                    //only include readsets without existing data
+                    var processType = function(readsetIds, rows, r, fieldName, suffix, size, phiX, samplePrefix, comment) {
+                        if (!readsetIds[r[fieldName]] && r[fieldName] && (includeWithData || r[fieldName + '/totalFiles'] === 0) && isMatchingApplication(application, r[fieldName + '/librarytype'], r[fieldName + '/application'], r.targetApplication)) {
+                            //allow for shared readsets across cDNAs (hashing, etc.)
+                            readsetIds[r[fieldName]] = true;
+
+                            var barcode5s = r[fieldName + '/barcode5/sequence'].split(',');
+                            barcodeCombosUsed.push([r[fieldName + '/barcode5'], '', r.laneAssignment || ''].join('/'));
+                            Ext4.Array.forEach(barcode5s, function (bc, idx) {
+                                var cleanedName = r[fieldName] + '_' + r[fieldName + '/name'].replace(/ /g, '_');
+                                cleanedName = cleanedName.replace(/\//g, '-');
+                                bc = doRC ? doReverseComplement(bc) : bc;
+
+                                var sampleName = getSampleName(simpleSampleNames, r[fieldName], r[fieldName + '/name']) + (suffix && instrument === 'Novogene' ? '' : '-' + suffix);
+                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
+                                if (instrument === 'Novogene') {
+                                    data = [sampleName];
+                                    if (r.plateAlias) {
+                                        data.unshift(r.plateAlias);
+                                    }
+                                    else {
+                                        data.unshift(samplePrefix + r.plateId.replace(/-/g, '_'));
+                                    }
+
+                                    data.push('Macaca mulatta');
+                                    data.push(bc);
+                                    data.push('');
+                                    data.push(r[fieldName + '/concentration'] || '');
+                                    data.push(defaultVolume);
+                                    data.push('');
+                                    data.push(size);
+                                    data.push(phiX);  //PhiX
+                                    data.push(r.laneAssignment || '');
+                                    data.push(comment || 'Please QC individually and pool in equal amounts per lane');
+                                }
+                                rows.push(data.join(delim));
+                            }, this);
+                        }
+                    };
+
                     var delim = instrument === 'Novogene' ? '\t' : ',';
                     Ext4.Array.forEach(sortedRows, function (r) {
-                        //only include readsets without existing data
-                        if (!readsetIds[r.readsetId] && r.readsetId && (includeWithData || r['readsetId/totalFiles'] === 0) && isMatchingApplication(application, r['readsetId/librarytype'], r['readsetId/application'], r.targetApplication)) {
-                            //allow for cell hashing / shared readsets
-                            readsetIds[r.readsetId] = true;
-
-                            var barcode5s = r['readsetId/barcode5/sequence'].split(',');
-                            barcodeCombosUsed.push(r['readsetId/barcode5']);
-                            Ext4.Array.forEach(barcode5s, function(bc, idx){
-                                var cleanedName = r.readsetId + '_' + r['readsetId/name'].replace(/ /g, '_');
-                                cleanedName = cleanedName.replace(/\//g, '-');
-                                bc = doRC ? doReverseComplement(bc) : bc;
-
-                                var sampleName = getSampleName(simpleSampleNames, r.readsetId, r['readsetId/name']);
-                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
-                                if (instrument === 'Novogene') {
-                                    data = [sampleName];
-                                    if (r.plateAlias) {
-                                        data.unshift(r.plateAlias);
-                                    }
-                                    else {
-                                        data.unshift('G' + r.plateId.replace(/-/g, '_'));
-                                    }
-
-                                    data.push('Macaca mulatta');
-                                    data.push(bc);
-                                    data.push('');
-                                    data.push(r['readsetId/concentration'] || '');
-                                    data.push(defaultVolume);
-                                    data.push('');
-                                    data.push('500');
-                                    data.push('1');  //PhiX
-                                    data.push(r.laneAssignment || '');
-                                    data.push('Please QC individually and pool in equal amounts per lane');
-                                }
-                                rows.push(data.join(delim));
-                            }, this);
-                        }
-
-                        if (!readsetIds[r.enrichedReadsetId] && r.enrichedReadsetId && (includeWithData || r['enrichedReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['enrichedReadsetId/librarytype'], r['enrichedReadsetId/application'], r.targetApplication)) {
-                            //allow for cell hashing / shared readsets
-                            readsetIds[r.enrichedReadsetId] = true;
-
-                            var barcode5s = r['enrichedReadsetId/barcode5/sequence'].split(',');
-                            barcodeCombosUsed.push(r['enrichedReadsetId/barcode5']);
-                            Ext4.Array.forEach(barcode5s, function(bc, idx){
-                                var cleanedName = r.enrichedReadsetId + '_' + r['enrichedReadsetId/name'].replace(/ /g, '_');
-                                cleanedName = cleanedName.replace(/\//g, '-');
-                                bc = doRC ? doReverseComplement(bc) : bc;
-
-                                var sampleName = getSampleName(simpleSampleNames, r.enrichedReadsetId, r['enrichedReadsetId/name'], (instrument === 'Novogene' ? '' : '-TCR'));
-                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
-                                if (instrument === 'Novogene') {
-                                    data = [sampleName];
-                                    if (r.plateAlias) {
-                                        data.unshift(r.plateAlias);
-                                    }
-                                    else {
-                                        data.unshift('T' + r.plateId.replace(/-/g, '_'));
-                                    }
-
-                                    data.push('Macaca mulatta');
-                                    data.push(bc);
-                                    data.push('');
-                                    data.push(r['enrichedReadsetId/concentration']);
-                                    data.push(defaultVolume);
-                                    data.push('');
-                                    data.push('700');
-                                    data.push('1');  //PhiX
-                                    data.push(r.laneAssignment || '');
-                                    data.push('Please QC individually and pool in equal amounts per lane');
-                                }
-
-                                rows.push(data.join(delim));
-                            }, this);
-                        }
-
-                        if (!readsetIds[r.hashingReadsetId] && r.hashingReadsetId && (includeWithData || r['hashingReadsetId/totalFiles'] === 0) && isMatchingApplication(application, r['hashingReadsetId/librarytype'], r['hashingReadsetId/application'], r.targetApplication)) {
-                            //allow for cell hashing / shared readsets
-                            readsetIds[r.hashingReadsetId] = true;
-
-                            var barcode5s = r['hashingReadsetId/barcode5/sequence'].split(',');
-                            barcodeCombosUsed.push(r['hashingReadsetId/barcode5']);
-                            Ext4.Array.forEach(barcode5s, function(bc, idx){
-                                var cleanedName = r.hashingReadsetId + '_' + r['hashingReadsetId/name'].replace(/ /g, '_');
-                                cleanedName = cleanedName.replace(/\//g, '-');
-
-                                //NOTE: the hashing barcodes need to be reversed relative to database
-                                bc = doReverseComplement(bc);
-
-                                var sampleName = getSampleName(simpleSampleNames, r.hashingReadsetId, r['hashingReadsetId/name'], (instrument === 'Novogene' ? '' : '-HTO'));
-                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
-                                if (instrument === 'Novogene') {
-                                    data = [sampleName];
-                                    if (r.plateAlias) {
-                                        data.unshift(r.plateAlias);
-                                    }
-                                    else {
-                                        data.unshift('H' + r.plateId.replace(/-/g, '_'));
-                                    }
-
-                                    data.push('Macaca mulatta');
-                                    data.push(bc);
-                                    data.push('');
-                                    data.push(r['hashingReadsetId/concentration']);
-                                    data.push(defaultVolume);
-                                    data.push('');
-                                    data.push('182');
-                                    data.push('5');  //PhiX
-                                    data.push(r.laneAssignment || '');
-                                    data.push('Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
-                                }
-
-                                rows.push(data.join(delim));
-                            }, this);
-                        }
+                        processType(readsetIds, rows, r, 'readsetId', 'GEX', 500, 1, 'G');
+                        processType(readsetIds, rows, r, 'enrichedReadsetId', 'TCR', 700, 1, 'T');
+                        processType(readsetIds, rows, r, 'hashingReadsetId', 'HTO', 182, 5, 'H', 'CITE-Seq, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
+                        processType(readsetIds, rows, r, 'citeseqReadsetId', 'CITE', 182, 5, 'C', 'Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
                     }, this);
 
                     //add missing barcodes:

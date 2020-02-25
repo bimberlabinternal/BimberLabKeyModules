@@ -114,6 +114,11 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             fieldLabel: 'Require HTO Library',
             itemId: 'requireHTO',
             checked: true
+        },{
+            xtype: 'checkbox',
+            fieldLabel: 'Require Cite-Seq Library',
+            itemId: 'requireCITE',
+            checked: false
         }, {
             xtype: 'checkbox',
             fieldLabel: 'Require Library Concentrations',
@@ -126,6 +131,13 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             forceSelection: true,
             storeValues: ['SI-GA'],
             value: 'SI-GA'
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: 'Hashing Type',
+            itemId: 'hashingType',
+            forceSelection: true,
+            storeValues: ['CD298', 'MultiSeq'],
+            value: 'CD298'
         }, {
             xtype: 'textarea',
             fieldLabel: 'Paste Data Below',
@@ -240,7 +252,7 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             containerPath: Laboratory.Utils.getQueryContainerPath(),
             schemaName: 'tcrdb',
             queryName: 'cdnas',
-            columns: 'rowid,plateid,readsetid,enrichedreadsetid,hashingreadsetid,sortid/population,sortid,sortid/stimid',
+            columns: 'rowid,plateid,readsetid,enrichedreadsetid,hashingreadsetid,citeseqreadsetid,sortid/population,sortid,sortid/stimid,citeseqpanel',
             filterArray: [LABKEY.Filter.create('plateId', plateIDs.join(';'), LABKEY.Filter.Types.IN)],
             scope: this,
             success: function(results) {
@@ -312,6 +324,11 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
                     var htoReadsetId = readsetMap[row.plateId + '-HTO'];
                     if (htoReadsetId) {
                         baseRow.hashingReadsetId = htoReadsetId;
+                    }
+
+                    var citeseqReadsetId = readsetMap[row.plateId + '-CITE'];
+                    if (citeseqReadsetId) {
+                        baseRow.citeseqReadsetId = citeseqReadsetId;
                     }
 
                     baseRow.container = row.container;
