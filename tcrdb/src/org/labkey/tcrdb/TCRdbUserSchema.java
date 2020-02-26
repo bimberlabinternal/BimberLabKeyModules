@@ -48,6 +48,10 @@ public class TCRdbUserSchema extends SimpleUserSchema
         }
         else if (TCRdbSchema.TABLE_CITE_SEQ_ANTIBODIES.equalsIgnoreCase(name))
         {
+            return new ContainerScopedTable<>(this, sourceTable, cf, "antibodyName").init();
+        }
+        else if (TCRdbSchema.TABLE_CITE_SEQ_PANELS.equalsIgnoreCase(name))
+        {
             return new ContainerScopedTable<>(this, sourceTable, cf, "name").init();
         }
 

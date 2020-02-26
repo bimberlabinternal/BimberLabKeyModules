@@ -32,6 +32,7 @@ public class TCRdbSchema
     public static final String TABLE_CDNAS = "cdnas";
     public static final String TABLE_CLONES = "clones";
     public static final String TABLE_CITE_SEQ_ANTIBODIES = "citeseq_antibodies";
+    public static final String TABLE_CITE_SEQ_PANELS = "citeseq_panels";
     public static final String TABLE_PROCESSING = "plate_processing";
 
     public static TCRdbSchema getInstance()
