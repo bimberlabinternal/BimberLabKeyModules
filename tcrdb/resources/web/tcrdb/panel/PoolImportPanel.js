@@ -23,7 +23,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         alwaysShow: true
     },{
         name: 'animalId',
-        labels: ['Animal Id', 'SubjectId', 'Subject Id', 'Effectors', 'Effector'],
+        labels: ['Animal Id', 'SubjectId', 'Subject Id'],
         allowRowSpan: true,
         allowBlank: false,
         transform: 'animal'
@@ -33,6 +33,13 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         alwaysShow: true,
         allowRowSpan: true,
         transform: 'sampleDate',
+        allowBlank: false
+    },{
+        name: 'effector',
+        labels: ['Effectors', 'Effector'],
+        alwaysShow: true,
+        allowRowSpan: true,
+        transform: 'effector',
         allowBlank: false
     },{
         name: 'stim',
@@ -75,6 +82,19 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     },{
         name: 'hto_library_conc',
         labels: ['HTO Library Conc', 'HTO Library Conc (ng/uL)', 'HTO (qubit) ng/uL', 'HTO (quibit) ng/uL'],
+        allowRowSpan: true
+    },{
+        name: 'citeseqpanel',
+        labels: ['Cite-Seq Panel', 'Cite-Seq Panel Name', 'CiteSeq Panel'],
+        allowRowSpan: true
+    },{
+        name: 'citeseq_library_index',
+        labels: ['Cite-Seq Library Index', 'Cite-Seq Index', 'CiteSeq Library Index', 'CiteSeq Index', 'Cite Seq Library Index', 'Cite Seq Index'],
+        allowRowSpan: true,
+        transform: 'htoIndex'
+    },{
+        name: 'citeseq_library_conc',
+        labels: ['Cite-Seq Library Conc', 'Cite-Seq Library Conc (ng/uL)', 'Cite-Seq (qubit) ng/uL', 'Cite-Seq (quibit) ng/uL'],
         allowRowSpan: true
     },{
         name: 'gex_library_index',
@@ -126,11 +146,28 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         htoIndex: function(val, panel) {
             if (Ext4.isNumeric(val)) {
                 //indexes are named D7XX.  accept rows named '1', '12', etc.
-                val = parseInt(val);
-                if (val < 100){
-                    val = val + 700;
+                var type = panel.down('#hashingType');
+                if (type === 'CD298') {
+                    val = parseInt(val);
+                    if (val < 100) {
+                        val = val + 700;
+                    }
+                    return 'D' + val;
                 }
-                return 'D' + val;
+                else if (type === 'MultiSeq') {
+                    val = parseInt(val);
+
+                    return 'MultiSeq-Idx-RP' + val;
+                }
+            }
+            else if (val) {
+                var type = panel.down('#hashingType');
+                if (type === 'MultiSeq' && String.valueOf(val).startsWith('MS')) {
+                    val = String.valueOf(val);
+                    val = val.replace(/^MS(-)*/ig, 'MultiSeq-Idx-RP');
+
+                    return val;
+                }
             }
 
             return val;
@@ -158,7 +195,19 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
         hto: function(val, panel){
             if (Ext4.isNumeric(val)){
-                return 'HTO-' + val;
+                var type = panel.down('#hashingType');
+                if (type === 'CD298') {
+                    return 'HTO-' + val;
+                }
+                else if (type === 'MultiSeq') {
+                    return 'MS-' + val;
+                }
+            }
+            else if (val) {
+                //Normalize hyphen use
+                val = String.valueOf(val);
+                val = val.replace(/^MS(-)*/, 'MS-');
+                val = val.replace(/^HTO(-)*/, 'HTO-');
             }
 
             return val;
@@ -192,10 +241,8 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         effector: function(val, panel, row){
             if (val && val.endsWith('PBMC')) {
                 var tmp = val.replace(/( )+PBMC$/,'');
-                if (tmp.length === 5) {
-                    row.animalId = tmp;
-                    val = 'PBMC';
-                }
+                row.animalId = tmp;
+                val = 'PBMC';
             }
             return val || panel.EFFECTOR;
         }
@@ -338,6 +385,11 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             checked: false
         },{
             xtype: 'checkbox',
+            fieldLabel: 'Require Cite-Seq Library',
+            itemId: 'requireCITE',
+            checked: false
+        },{
+            xtype: 'checkbox',
             fieldLabel: 'Require Library Concentrations',
             itemId: 'requireConc',
             checked: false
@@ -352,6 +404,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     field.up('panel').down('#requireGEX').setValue(!val);
                     field.up('panel').down('#requireTCR').setValue(!val);
                     field.up('panel').down('#requireHTO').setValue(!val);
+                    field.up('panel').down('#requireCITE').setValue(!val);
                 }
             }
         },{
@@ -361,6 +414,13 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             forceSelection: true,
             storeValues: ['SI-GA'],
             value: 'SI-GA'
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: 'Hashing Type',
+            itemId: 'hashingType',
+            forceSelection: true,
+            storeValues: ['CD298', 'MultiSeq'],
+            value: 'CD298'
         },{
             xtype: 'textarea',
             fieldLabel: 'Paste Data Below',
@@ -516,7 +576,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
                     data[col.name] = cell;
 
-                    if (!cell && col.name == 'cells' && lastValueByCol[colIdx]) {
+                    if (!cell && col.name === 'cells' && lastValueByCol[colIdx]) {
                         doSplitCellsByPool = true;
                     }
                 }
@@ -632,12 +692,32 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             var readsetGUIDs = {};
 
             var requireHTO = this.down('#requireHTO').getValue();
-            var rs = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'hto', 'HTO', 'Cell Hashing', null);
+            var hashingType = this.down('#hashingType');
+            var libraryType = null;
+            if (hashingType === 'CD298'){
+                libraryType = 'CD298 Hashing';
+            }
+            else if (hashingType === 'MultiSeq'){
+                libraryType = 'MultiSeq';
+            }
+
+            var rs = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'hto', 'HTO', 'Cell Hashing', libraryType);
             if (Ext4.isString(rs)) {
                 readsetGUIDs.hashingReadsetGUID = rs;
             }
             else if (requireHTO){
                 errorsMsgs.push('Missing HTO library');
+                errorsMsgs = errorsMsgs.concat(rs);
+                return false;
+            }
+
+            var requireCITE = this.down('#requireCITE').getValue();
+            var rs = this.processReadsetForGroup(poolName, rowArr, ret.readsetRows, 'citeseq', 'CITE', 'CITE-Seq', null);
+            if (Ext4.isString(rs)) {
+                readsetGUIDs.citeseqReadsetGUID = rs;
+            }
+            else if (requireCITE){
+                errorsMsgs.push('Missing CITE-Seq library');
                 errorsMsgs = errorsMsgs.concat(rs);
                 return false;
             }
@@ -673,6 +753,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     chemistry: null,
                     plateId: row.plateId,
                     well: row.well || 'Pool',
+                    citeseqpanel: row.citeseqpanel,
                     workbook: row.workbook
                 }, readsetGUIDs);
 

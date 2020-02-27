@@ -359,11 +359,28 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="citeseqReadsetId">
+                <columnTitle>Readset (CITE-Seq)</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>sequence_readsets</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="cdnaConc">
                 <columnTitle>cDNA Concentration (ng/uL)</columnTitle>
             </column>
             <column columnName="enrichedConc">
                 <columnTitle>TCR Enriched Concentration (ng/uL)</columnTitle>
+            </column>
+            <column columnName="citeseqpanel">
+                <columnTitle>Cite-Seq Panel</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>citeseq_panels</fkTable>
+                    <fkColumnName>name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
             </column>
             <column columnName="comment">
 
@@ -656,6 +673,115 @@
             </column>
             <column columnName="responses">
                 <columnTitle>Responses With Clone</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="citeseq_panels" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>CITE-Seq Panels</tableTitle>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="name">
+                <columnTitle>Panel Name</columnTitle>
+            </column>
+            <column columnName="antibody">
+                <columnTitle>Marker/Antigen</columnTitle>
+                <fk>
+                    <fkDbSchema>tcrdb</fkDbSchema>
+                    <fkTable>citeseq_antibodies</fkTable>
+                    <fkColumnName>antibodyName</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="citeseq_antibodies" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>CITE-Seq Panels</tableTitle>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="antibodyName">
+                <columnTitle>Antibody Name</columnTitle>
+            </column>
+            <column columnName="markerName">
+                <columnTitle>Marker/Antigen</columnTitle>
+            </column>
+            <column columnName="cloneName">
+                <columnTitle>Clone Name</columnTitle>
+            </column>
+            <column columnName="vendor">
+                <columnTitle>Vendor</columnTitle>
+            </column>
+            <column columnName="productId">
+                <columnTitle>Product Id</columnTitle>
+            </column>
+            <column columnName="barcodeName">
+                <columnTitle>Barcode Name</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>barcodes</fkTable>
+                    <fkColumnName>tag_name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="adaptersequence">
+                <inputType>textarea</inputType>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>

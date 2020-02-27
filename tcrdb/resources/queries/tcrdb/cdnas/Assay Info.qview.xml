@@ -15,6 +15,7 @@
         <column name="readsetId" />
         <column name="enrichedReadsetId" />
         <column name="hashingReadsetId" />
+        <column name="citeseqReadsetId" />
         <column name="comment" />
         <column name="status" />
         <!--<column name="numTcrRunsTCREnriched" />-->
