@@ -4,6 +4,10 @@ on:
     - cron:  "5 */3 * * *"
 jobs:
   sync-release-branches:
+    #See: https://help.github.com/en/actions/reference/contexts-and-expression-syntax-for-github-actions#github-context
+    # https://help.github.com/en/actions/configuring-and-managing-workflows/using-environment-variables#default-environment-variables
+    # github.head_ref should only be set on forked repos, meaning this action should only run on the primary fork
+    if: github.head_ref == ""
     runs-on: ubuntu-latest
     steps:
       - name: "Sync Release Branches"
@@ -15,6 +19,7 @@ jobs:
           destination_branch_prefix: "discvr-"
           github_token: ${{ secrets.GITHUB_TOKEN }}
   sync-develop:
+    if: github.head_ref == ""
     runs-on: ubuntu-latest
     steps:
       - name: "Sync Develop Branch"
