@@ -54,9 +54,16 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         alwaysShow: true
     },{
         name: 'population',
-        labels: ['Population'],
+        labels: ['Population', 'Target Population', 'Target Pop'],
         allowRowSpan: true,
-        allowBlank: false
+        allowBlank: false,
+        transform: 'population'
+    },{
+        name: 'tetramer',
+        labels: ['Tetramer'],
+        allowRowSpan: false,
+        allowBlank: true,
+        transform: 'tetramer'
     },{
         name: 'sortId',
         labels: ['Sort Id'],
@@ -91,7 +98,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         name: 'citeseq_library_index',
         labels: ['Cite-Seq Library Index', 'Cite-Seq Index', 'CiteSeq Library Index', 'CiteSeq Index', 'Cite Seq Library Index', 'Cite Seq Index'],
         allowRowSpan: true,
-        transform: 'htoIndex'
+        transform: 'citeSeqTenXBarcode'
     },{
         name: 'citeseq_library_conc',
         labels: ['Cite-Seq Library Conc', 'Cite-Seq Library Conc (ng/uL)', 'Cite-Seq (qubit) ng/uL', 'Cite-Seq (quibit) ng/uL'],
@@ -146,7 +153,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         htoIndex: function(val, panel) {
             if (Ext4.isNumeric(val)) {
                 //indexes are named D7XX.  accept rows named '1', '12', etc.
-                var type = panel.down('#hashingType');
+                var type = panel.down('#hashingType').getValue();
                 if (type === 'CD298') {
                     val = parseInt(val);
                     if (val < 100) {
@@ -159,14 +166,37 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
                     return 'MultiSeq-Idx-RP' + val;
                 }
+                else {
+                    LDK.Utils.logError('Unknown or missing hashingType: ' + type);
+                }
             }
             else if (val) {
-                var type = panel.down('#hashingType');
-                if (type === 'MultiSeq' && String.valueOf(val).startsWith('MS')) {
-                    val = String.valueOf(val);
+                var type = panel.down('#hashingType').getValue();
+                if (type === 'MultiSeq' && String(val).startsWith('MS')) {
+                    val = String(val);
                     val = val.replace(/^MS(-)*/ig, 'MultiSeq-Idx-RP');
 
                     return val;
+                }
+            }
+
+            return val;
+        },
+
+        citeSeqTenXBarcode: function(val, panel){
+            if (!val){
+                return;
+            }
+
+            var barcodeSeries = panel.down('#citeseqBarcodeSeries').getValue();
+            val = val.toUpperCase();
+            var re = new RegExp('^' + barcodeSeries + '-', 'i');
+            if (!val.match(re)) {
+                if (val.length > 3) {
+                    //errorMsgs.push('Every row must have name, application and proper barcodes');
+                }
+                else {
+                    val = barcodeSeries + '-' + val;
                 }
             }
 
@@ -195,7 +225,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
         hto: function(val, panel){
             if (Ext4.isNumeric(val)){
-                var type = panel.down('#hashingType');
+                var type = panel.down('#hashingType').getValue();
                 if (type === 'CD298') {
                     return 'HTO-' + val;
                 }
@@ -205,7 +235,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }
             else if (val) {
                 //Normalize hyphen use
-                val = String.valueOf(val);
+                val = String(val);
                 val = val.replace(/^MS(-)*/, 'MS-');
                 val = val.replace(/^HTO(-)*/, 'HTO-');
             }
@@ -229,6 +259,26 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }
             if (workbook && Ext4.isNumeric(val) && workbook !== val){
                 return workbook + '-' + val;
+            }
+
+            return val;
+        },
+
+        tetramer: function(val, panel, row){
+            if (val) {
+                if (['Tet+', 'Tetramer+', 'Tetramer'].indexOf(val) > -1) {
+                    row.population = null;
+                }
+
+                row.population = row.population || val;
+            }
+
+            return val;
+        },
+
+        population: function(val, panel, row){
+            if (val && ['Tet+', 'Tetramer+', 'Tetramer'].indexOf(val) > -1) {
+                val = row.tetramer;
             }
 
             return val;
@@ -409,11 +459,18 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }
         },{
             xtype: 'ldk-simplecombo',
-            fieldLabel: '10x Barcode Series',
+            fieldLabel: '10x GEX/TCR Barcode Series',
             itemId: 'barcodeSeries',
             forceSelection: true,
             storeValues: ['SI-GA'],
             value: 'SI-GA'
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: '10x Cite-Seq Barcode Series',
+            itemId: 'citeseqBarcodeSeries',
+            forceSelection: true,
+            storeValues: ['SI-NA'],
+            value: 'SI-NA'
         },{
             xtype: 'ldk-simplecombo',
             fieldLabel: 'Hashing Type',
@@ -692,7 +749,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             var readsetGUIDs = {};
 
             var requireHTO = this.down('#requireHTO').getValue();
-            var hashingType = this.down('#hashingType');
+            var hashingType = this.down('#hashingType').getValue();
             var libraryType = null;
             if (hashingType === 'CD298'){
                 libraryType = 'CD298 Hashing';
