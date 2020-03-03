@@ -91,7 +91,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         name: 'citeseq_library_index',
         labels: ['Cite-Seq Library Index', 'Cite-Seq Index', 'CiteSeq Library Index', 'CiteSeq Index', 'Cite Seq Library Index', 'Cite Seq Index'],
         allowRowSpan: true,
-        transform: 'htoIndex'
+        transform: 'citeSeqTenXBarcode'
     },{
         name: 'citeseq_library_conc',
         labels: ['Cite-Seq Library Conc', 'Cite-Seq Library Conc (ng/uL)', 'Cite-Seq (qubit) ng/uL', 'Cite-Seq (quibit) ng/uL'],
@@ -167,6 +167,26 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     val = val.replace(/^MS(-)*/ig, 'MultiSeq-Idx-RP');
 
                     return val;
+                }
+            }
+
+            return val;
+        },
+
+        citeSeqTenXBarcode: function(val, panel){
+            if (!val){
+                return;
+            }
+
+            var barcodeSeries = panel.down('#citeseqBarcodeSeries').getValue();
+            val = val.toUpperCase();
+            var re = new RegExp('^' + barcodeSeries + '-', 'i');
+            if (!val.match(re)) {
+                if (val.length > 3) {
+                    //errorMsgs.push('Every row must have name, application and proper barcodes');
+                }
+                else {
+                    val = barcodeSeries + '-' + val;
                 }
             }
 
@@ -409,11 +429,18 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }
         },{
             xtype: 'ldk-simplecombo',
-            fieldLabel: '10x Barcode Series',
+            fieldLabel: '10x GEX/TCR Barcode Series',
             itemId: 'barcodeSeries',
             forceSelection: true,
             storeValues: ['SI-GA'],
             value: 'SI-GA'
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: '10x Cite-Seq Barcode Series',
+            itemId: 'citeseqBarcodeSeries',
+            forceSelection: true,
+            storeValues: ['SI-NA'],
+            value: 'SI-NA'
         },{
             xtype: 'ldk-simplecombo',
             fieldLabel: 'Hashing Type',

@@ -87,7 +87,8 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                     }}, null),
                     ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
                         put("checked", true);
-                    }}, true)
+                    }}, true),
+                    ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true)
 
             ), PageFlowUtil.set("tcrdb/field/AssaySelectorField.js"), "https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger", true, false, false, ALIGNMENT_MODE.MERGE_THEN_ALIGN);
         }
@@ -152,8 +153,8 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 {
                     final AtomicInteger i = new AtomicInteger(0);
                     UserSchema us = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), getPipelineCtx().getJob().getContainer(), "sequenceanalysis");
-                    List<Integer> seqIds = new TableSelector(us.getTable("reference_library_members"), PageFlowUtil.set("ref_nt_id"), new SimpleFilter(FieldKey.fromString("library_id"), referenceGenome.getGenomeId()), null).getArrayList(Integer.class);
-                    new TableSelector(us.getTable("ref_nt_sequences"), new SimpleFilter(FieldKey.fromString("rowid"), seqIds, CompareType.IN), null).forEach(nt -> {
+                    List<Integer> seqIds = new TableSelector(us.getTable("reference_library_members", null), PageFlowUtil.set("ref_nt_id"), new SimpleFilter(FieldKey.fromString("library_id"), referenceGenome.getGenomeId()), null).getArrayList(Integer.class);
+                    new TableSelector(us.getTable("ref_nt_sequences", null), new SimpleFilter(FieldKey.fromString("rowid"), seqIds, CompareType.IN), null).forEach(nt -> {
 
                         if (nt.getLocus() == null)
                         {
