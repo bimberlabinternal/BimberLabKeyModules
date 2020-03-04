@@ -390,7 +390,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                             if (row.plateId === p[0]) {
                                 if (p[1] === 'GEX') {
                                     if (includeWithData || row['readsetId/totalFiles'] === 0) {
-                                        if (row['readsetId/librarytype'] && row['readsetId/librarytype'].match('GEX')) {
+                                        if (row['readsetId'] && row['readsetId/librarytype'] && row['readsetId/librarytype'].match('GEX')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x GEX', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -399,7 +399,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'HTO') {
                                     if (includeWithData || row['hashingReadsetId/totalFiles'] === 0) {
-                                        if (row['hashingReadsetId/application'] && row['hashingReadsetId/application'].match('Cell Hashing')) {
+                                        if (row['hashingReadsetId'] && row['hashingReadsetId/application'] && row['hashingReadsetId/application'].match('Cell Hashing')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x HTO', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -408,7 +408,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'CITE') {
                                     if (includeWithData || row['citeseqReadsetId/totalFiles'] === 0) {
-                                        if (row['citeseqReadsetId/application'] && row['citeseqReadsetId/application'].match('CITE-Seq')) {
+                                        if (row['citeseqReadsetId'] && row['citeseqReadsetId/application'] && row['citeseqReadsetId/application'].match('CITE-Seq')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x CITE-Seq', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -417,7 +417,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'VDJ') {
                                     if (includeWithData || row['enrichedReadsetId/totalFiles'] === 0) {
-                                        if (row['enrichedReadsetId/librarytype'].match('VDJ')) {
+                                        if (row['enrichedReadsetId'] && row['enrichedReadsetId/librarytype'].match('VDJ')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x VDJ', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;

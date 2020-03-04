@@ -159,11 +159,14 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
                     return 'MultiSeq-Idx-RP' + val;
                 }
+                else {
+                    LDK.Utils.logError('Unknown or missing hashingType: ' + type);
+                }
             }
             else if (val) {
                 var type = panel.down('#hashingType');
-                if (type === 'MultiSeq' && String.valueOf(val).startsWith('MS')) {
-                    val = String.valueOf(val);
+                if (type === 'MultiSeq' && String(val).startsWith('MS')) {
+                    val = String(val);
                     val = val.replace(/^MS(-)*/ig, 'MultiSeq-Idx-RP');
 
                     return val;
@@ -225,7 +228,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }
             else if (val) {
                 //Normalize hyphen use
-                val = String.valueOf(val);
+                val = String(val);
                 val = val.replace(/^MS(-)*/, 'MS-');
                 val = val.replace(/^HTO(-)*/, 'HTO-');
             }
