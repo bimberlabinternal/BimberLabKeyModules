@@ -54,9 +54,16 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         alwaysShow: true
     },{
         name: 'population',
-        labels: ['Population'],
+        labels: ['Population', 'Target Population', 'Target Pop'],
         allowRowSpan: true,
-        allowBlank: false
+        allowBlank: false,
+        transform: 'population'
+    },{
+        name: 'tetramer',
+        labels: ['Tetramer'],
+        allowRowSpan: false,
+        allowBlank: true,
+        transform: 'tetramer'
     },{
         name: 'sortId',
         labels: ['Sort Id'],
@@ -252,6 +259,26 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             }
             if (workbook && Ext4.isNumeric(val) && workbook !== val){
                 return workbook + '-' + val;
+            }
+
+            return val;
+        },
+
+        tetramer: function(val, panel, row){
+            if (val) {
+                if (['Tet+', 'Tetramer+', 'Tetramer'].indexOf(val) > -1) {
+                    row.population = null;
+                }
+
+                row.population = row.population || val;
+            }
+
+            return val;
+        },
+
+        population: function(val, panel, row){
+            if (val && ['Tet+', 'Tetramer+', 'Tetramer'].indexOf(val) > -1) {
+                val = row.tetramer;
             }
 
             return val;
