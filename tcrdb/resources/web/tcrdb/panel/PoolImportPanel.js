@@ -153,7 +153,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         htoIndex: function(val, panel) {
             if (Ext4.isNumeric(val)) {
                 //indexes are named D7XX.  accept rows named '1', '12', etc.
-                var type = panel.down('#hashingType');
+                var type = panel.down('#hashingType').getValue();
                 if (type === 'CD298') {
                     val = parseInt(val);
                     if (val < 100) {
@@ -171,7 +171,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                 }
             }
             else if (val) {
-                var type = panel.down('#hashingType');
+                var type = panel.down('#hashingType').getValue();
                 if (type === 'MultiSeq' && String(val).startsWith('MS')) {
                     val = String(val);
                     val = val.replace(/^MS(-)*/ig, 'MultiSeq-Idx-RP');
@@ -225,7 +225,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
 
         hto: function(val, panel){
             if (Ext4.isNumeric(val)){
-                var type = panel.down('#hashingType');
+                var type = panel.down('#hashingType').getValue();
                 if (type === 'CD298') {
                     return 'HTO-' + val;
                 }
@@ -749,7 +749,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             var readsetGUIDs = {};
 
             var requireHTO = this.down('#requireHTO').getValue();
-            var hashingType = this.down('#hashingType');
+            var hashingType = this.down('#hashingType').getValue();
             var libraryType = null;
             if (hashingType === 'CD298'){
                 libraryType = 'CD298 Hashing';
