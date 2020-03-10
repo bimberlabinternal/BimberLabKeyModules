@@ -1077,8 +1077,20 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                             "Significance: " + sig
                                     }, ",");
 
-                                    String allele = clnAlleles.get(i);
-                                    maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(j));
+                                    try
+                                    {
+                                        String allele = clnAlleles.get(i);
+                                        maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(j));
+
+                                    }
+                                    catch (IndexOutOfBoundsException e)
+                                    {
+                                        ctx.getLogger().error("Problem parsing line: " + vc.toStringWithoutGenotypes());
+                                        ctx.getLogger().error("Alleles: " + StringUtils.join(clnAlleles, ","));
+                                        ctx.getLogger().error("Allele IDs: " + StringUtils.join(clnAlleleIds, ","));
+                                        ctx.getLogger().error("Disease: " + StringUtils.join(clnDisease, ","));
+                                        ctx.getLogger().error("Significance: " + StringUtils.join(clnSigs, ","));
+                                    }
                                 }
 
                                 j++;
