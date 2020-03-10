@@ -1085,11 +1085,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     }
                                     catch (IndexOutOfBoundsException e)
                                     {
-                                        ctx.getLogger().error("Problem parsing line: " + vc.toStringWithoutGenotypes());
-                                        ctx.getLogger().error("Alleles: " + StringUtils.join(clnAlleles, ","));
-                                        ctx.getLogger().error("Allele IDs: " + StringUtils.join(clnAlleleIds, ","));
-                                        ctx.getLogger().error("Disease: " + StringUtils.join(clnDisease, ","));
-                                        ctx.getLogger().error("Significance: " + StringUtils.join(clnSigs, ","));
+                                        ctx.getLogger().warn("Problem parsing line: " + vc.toStringWithoutGenotypes());
+                                        ctx.getLogger().warn("Significance: " + sig + " / " + j);
+                                        ctx.getLogger().warn("Allele IDs: " + StringUtils.join(clnAlleleIds, ";"));
+                                        ctx.getLogger().warn("Disease: " + StringUtils.join(diseaseSplit, ";"));
                                     }
                                 }
 
