@@ -7,4 +7,8 @@ dependencies {
     BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":server:modules:LabDevKitModules:LDK", depProjectConfig: "apiCompile")
     BuildUtils.addLabKeyDependency(project: project, config: "compile", depProjectPath: ":server:optionalModules:dataintegration", depProjectConfig: "apiCompile")
 	external "com.github.samtools:htsjdk:${htsjdkVersion}"
+
+    BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:optionalModules:dataintegration", depProjectConfig: "published", depExtension: "module")
+    BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:LabDevKitModules:LDK", depProjectConfig: "published", depExtension: "module")
+    BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:DiscvrLabkeyModules:SequenceAnalysis", depProjectConfig: "published", depExtension: "module")
 }
