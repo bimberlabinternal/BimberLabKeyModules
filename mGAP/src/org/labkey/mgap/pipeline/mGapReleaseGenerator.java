@@ -871,7 +871,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             else
             {
                 SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
-                wrapper.execute(sourceGenome.getWorkingFastaFile(), primaryTrackVcf, noGenotypes, Arrays.asList("--sites_only"));
+                wrapper.execute(sourceGenome.getWorkingFastaFile(), primaryTrackVcf, noGenotypes, Arrays.asList("--sites-only-vcf-output"));
             }
 
             ctx.getFileManager().addIntermediateFile(noGenotypes);
@@ -1077,8 +1077,19 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                             "Significance: " + sig
                                     }, ",");
 
-                                    String allele = clnAlleles.get(i);
-                                    maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(j));
+                                    try
+                                    {
+                                        String allele = clnAlleles.get(i);
+                                        maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(j));
+
+                                    }
+                                    catch (IndexOutOfBoundsException e)
+                                    {
+                                        ctx.getLogger().warn("Problem parsing line: " + vc.toStringWithoutGenotypes());
+                                        ctx.getLogger().warn("Significance: " + sig + " / " + j);
+                                        ctx.getLogger().warn("Allele IDs: " + StringUtils.join(clnAlleleIds, ";"));
+                                        ctx.getLogger().warn("Disease: " + StringUtils.join(diseaseSplit, ";"));
+                                    }
                                 }
 
                                 j++;
