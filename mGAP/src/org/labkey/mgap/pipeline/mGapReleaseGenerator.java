@@ -871,7 +871,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             else
             {
                 SelectVariantsWrapper wrapper = new SelectVariantsWrapper(ctx.getLogger());
-                wrapper.execute(sourceGenome.getWorkingFastaFile(), primaryTrackVcf, noGenotypes, Arrays.asList("--sites_only"));
+                wrapper.execute(sourceGenome.getWorkingFastaFile(), primaryTrackVcf, noGenotypes, Arrays.asList("--sites-only-vcf-output"));
             }
 
             ctx.getFileManager().addIntermediateFile(noGenotypes);
