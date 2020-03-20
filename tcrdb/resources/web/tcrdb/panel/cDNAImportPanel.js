@@ -126,11 +126,18 @@ Ext4.define('TCRdb.panel.cDNAImportPanel', {
             checked: true
         },{
             xtype: 'ldk-simplecombo',
-            fieldLabel: '10x Barcode Series',
+            fieldLabel: '10x GEX/TCR Barcode Series',
             itemId: 'barcodeSeries',
             forceSelection: true,
             storeValues: ['SI-GA'],
             value: 'SI-GA'
+        },{
+            xtype: 'ldk-simplecombo',
+            fieldLabel: '10x Cite-Seq Barcode Series',
+            itemId: 'citeseqBarcodeSeries',
+            forceSelection: true,
+            storeValues: ['SI-NA'],
+            value: 'SI-NA'
         },{
             xtype: 'ldk-simplecombo',
             fieldLabel: 'Hashing Type',

@@ -390,7 +390,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                             if (row.plateId === p[0]) {
                                 if (p[1] === 'GEX') {
                                     if (includeWithData || row['readsetId/totalFiles'] === 0) {
-                                        if (row['readsetId/librarytype'] && row['readsetId/librarytype'].match('GEX')) {
+                                        if (row['readsetId'] && row['readsetId/librarytype'] && row['readsetId/librarytype'].match('GEX')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x GEX', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -399,7 +399,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'HTO') {
                                     if (includeWithData || row['hashingReadsetId/totalFiles'] === 0) {
-                                        if (row['hashingReadsetId/application'] && row['hashingReadsetId/application'].match('Cell Hashing')) {
+                                        if (row['hashingReadsetId'] && row['hashingReadsetId/application'] && row['hashingReadsetId/application'].match('Cell Hashing')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x HTO', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -408,7 +408,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'CITE') {
                                     if (includeWithData || row['citeseqReadsetId/totalFiles'] === 0) {
-                                        if (row['citeseqReadsetId/application'] && row['citeseqReadsetId/application'].match('CITE-Seq')) {
+                                        if (row['citeseqReadsetId'] && row['citeseqReadsetId/application'] && row['citeseqReadsetId/application'].match('CITE-Seq')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x CITE-Seq', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -417,7 +417,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 }
                                 else if (p[1] === 'VDJ') {
                                     if (includeWithData || row['enrichedReadsetId/totalFiles'] === 0) {
-                                        if (row['enrichedReadsetId/librarytype'].match('VDJ')) {
+                                        if (row['enrichedReadsetId'] && row['enrichedReadsetId/librarytype'].match('VDJ')) {
                                             sortedRows.push(Ext4.apply({targetApplication: '10x VDJ', laneAssignment: (p.length > 2 ? p[2] : null), plateAlias: (p.length > 3 ? p[3] : null)}, row));
                                             found = true;
                                             return false;
@@ -570,14 +570,19 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                             //allow for shared readsets across cDNAs (hashing, etc.)
                             readsetIds[r[fieldName]] = true;
 
-                            var barcode5s = r[fieldName + '/barcode5/sequence'].split(',');
+                            var cleanedName = r[fieldName] + '_' + r[fieldName + '/name'].replace(/ /g, '_');
+                            cleanedName = cleanedName.replace(/\//g, '-');
+                            var sampleName = getSampleName(simpleSampleNames, r[fieldName], r[fieldName + '/name']) + (suffix && instrument === 'Novogene' ? '' : '-' + suffix);
+
+                            var barcode5s = r[fieldName + '/barcode5/sequence'] ? r[fieldName + '/barcode5/sequence'].split(',') : [];
+                            if (!barcode5s) {
+                                LDK.Utils.logError('Sample missing barcode: ' + sampleName);
+                            }
+
                             barcodeCombosUsed.push([r[fieldName + '/barcode5'], '', r.laneAssignment || ''].join('/'));
                             Ext4.Array.forEach(barcode5s, function (bc, idx) {
-                                var cleanedName = r[fieldName] + '_' + r[fieldName + '/name'].replace(/ /g, '_');
-                                cleanedName = cleanedName.replace(/\//g, '-');
                                 bc = doRC ? doReverseComplement(bc) : bc;
 
-                                var sampleName = getSampleName(simpleSampleNames, r[fieldName], r[fieldName + '/name']) + (suffix && instrument === 'Novogene' ? '' : '-' + suffix);
                                 var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
                                 if (instrument === 'Novogene') {
                                     data = [sampleName];
@@ -608,8 +613,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                     Ext4.Array.forEach(sortedRows, function (r) {
                         processType(readsetIds, rows, r, 'readsetId', 'GEX', 500, 1, 'G');
                         processType(readsetIds, rows, r, 'enrichedReadsetId', 'TCR', 700, 1, 'T');
-                        processType(readsetIds, rows, r, 'hashingReadsetId', 'HTO', 182, 5, 'H', 'CITE-Seq, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
-                        processType(readsetIds, rows, r, 'citeseqReadsetId', 'CITE', 182, 5, 'C', 'Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
+                        processType(readsetIds, rows, r, 'hashingReadsetId', 'HTO', 182, 5, 'H', 'Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
+                        processType(readsetIds, rows, r, 'citeseqReadsetId', 'CITE', 182, 5, 'C', 'CITE-Seq, 190bp amplicon.  Please QC individually and pool in equal amounts per lane');
                     }, this);
 
                     //add missing barcodes:
