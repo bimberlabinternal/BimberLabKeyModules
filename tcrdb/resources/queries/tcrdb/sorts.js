@@ -38,6 +38,11 @@ function beforeUpsert(row, oldRow, errors){
         row.population = row.population.replace(/ï/g, 'i');
     }
 
+    //Tetramer/spaces:
+    if (row.population && row.population.match(/ Tet$/)){
+        row.population = row.population.replace(/ /g, '-');
+    }
+
     //check for duplicate plate/well
     oldRow = oldRow || {};
     var rowId = row.rowId || oldRow.rowId || rowIdx;
