@@ -128,6 +128,8 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         getPipelineCtx().getLogger().info("renaming samples in VCF");
 
         File outputFile = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(currentVCF.getName()) + ".renamed.vcf.gz");
+        getPipelineCtx().getLogger().debug("output: " + outputFile.getPath());
+
         if (indexExists(outputFile))
         {
             getPipelineCtx().getLogger().info("re-using existing output: " + outputFile.getPath());
@@ -137,7 +139,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             Map<String, String> sampleMap = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory(true)));
 
             VariantContextWriterBuilder builder = new VariantContextWriterBuilder();
-            builder.setReferenceDictionary(SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary()));
+            builder.setReferenceDictionary(SAMSequenceDictionaryExtractor.extractDictionary(genome.getSequenceDictionary().toPath()));
             builder.setOutputFile(outputFile);
             builder.setOption(Options.USE_ASYNC_IO);
 
