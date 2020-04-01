@@ -146,7 +146,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             try (VCFFileReader reader = new VCFFileReader(currentVCF); VariantContextWriter writer = builder.build())
             {
                 VCFHeader header = reader.getFileHeader();
-                List<String> samples = header.getSampleNamesInOrder();
+                List<String> samples = header.getGenotypeSamples();
                 getPipelineCtx().getLogger().debug("Original samples:" + StringUtils.join(samples, ","));
 
                 List<String> remappedSamples = new ArrayList<>();
