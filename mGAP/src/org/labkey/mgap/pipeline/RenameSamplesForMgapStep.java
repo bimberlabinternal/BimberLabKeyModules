@@ -147,6 +147,8 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             {
                 VCFHeader header = reader.getFileHeader();
                 List<String> samples = header.getSampleNamesInOrder();
+                getPipelineCtx().getLogger().debug("Original samples:" + StringUtils.join(samples, ","));
+
                 List<String> remappedSamples = new ArrayList<>();
 
                 for (String sample : samples)
@@ -166,6 +168,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                     throw new PipelineJobException("The number of renamed samples does not equal starting samples: " + samples.size() + " / " + remappedSamples.size());
                 }
 
+                getPipelineCtx().getLogger().debug("Renamed samples:" + StringUtils.join(remappedSamples, ","));
                 writer.writeHeader(new VCFHeader(header.getMetaDataInInputOrder(), remappedSamples));
                 if (intervals == null)
                 {
