@@ -19,6 +19,7 @@ import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 
 import java.io.File;
@@ -130,7 +131,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 }
 
                 //Copy file locally, plus index if exists:
-                File localCopy = new File(subdir, f.getName());
+                File localCopy = new File(subdir, name == null ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_"));
                 boolean doCopy = true;
                 if (localCopy.exists())
                 {
@@ -160,7 +161,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 File index = new File(f.getPath() + ".tbi");
                 if (index.exists())
                 {
-                    File indexLocal = new File(subdir, index.getName());
+                    File indexLocal = new File(localCopy.getPath() + ".tbi");
                     if (doCopy && indexLocal.exists())
                     {
                         getStatusLogger().info("deleting local copy of index since file was re-copied");
@@ -180,7 +181,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 {
                     d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
                     d.setDataFileURI(localCopy.toURI());
-                    d.setName(f.getName());
+                    d.setName(localCopy.getName());
                     d.save(getContainerUser().getUser());
                 }
 
