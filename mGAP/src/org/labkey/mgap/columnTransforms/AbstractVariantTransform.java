@@ -131,20 +131,42 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
                 //Copy file locally, plus index if exists:
                 File localCopy = new File(subdir, f.getName());
-                if (!localCopy.exists())
-                {
-                    getStatusLogger().info("copying file locally: " + localCopy.getPath());
-                    FileUtils.copyFile(f, localCopy);
-                }
-                else
+                boolean doCopy = true;
+                if (localCopy.exists())
                 {
                     getStatusLogger().info("file exists: " + localCopy.getPath());
+                    if (localCopy.lastModified() >= f.lastModified())
+                    {
+                        doCopy = false;
+                    }
+                    else
+                    {
+                        getStatusLogger().info("source file has been modified, deleting copy and re-syncing");
+                        localCopy.delete();
+                    }
+                }
+
+                if (doCopy)
+                {
+                    getStatusLogger().info("copying file locally: " + localCopy.getPath());
+                    if (localCopy.exists())
+                    {
+                        localCopy.delete();
+                    }
+
+                    FileUtils.copyFile(f, localCopy);
                 }
 
                 File index = new File(f.getPath() + ".tbi");
                 if (index.exists())
                 {
                     File indexLocal = new File(subdir, index.getName());
+                    if (doCopy && indexLocal.exists())
+                    {
+                        getStatusLogger().info("deleting local copy of index since file was re-copied");
+                        indexLocal.delete();
+                    }
+
                     if (!indexLocal.exists())
                     {
                         getStatusLogger().info("copying index locally: " + indexLocal.getPath());
