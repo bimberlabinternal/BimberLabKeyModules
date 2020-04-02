@@ -130,8 +130,10 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     subdir.mkdirs();
                 }
 
+                getStatusLogger().info("preparing to copy file: " + f.getPath());
+
                 //Copy file locally, plus index if exists:
-                File localCopy = new File(subdir, name == null ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_"));
+                File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v")? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
                 boolean doCopy = true;
                 if (localCopy.exists())
                 {
