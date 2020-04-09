@@ -19,6 +19,7 @@ import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 
 import java.io.File;
@@ -129,22 +130,46 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     subdir.mkdirs();
                 }
 
+                getStatusLogger().info("preparing to copy file: " + f.getPath());
+
                 //Copy file locally, plus index if exists:
-                File localCopy = new File(subdir, f.getName());
-                if (!localCopy.exists())
-                {
-                    getStatusLogger().info("copying file locally: " + localCopy.getPath());
-                    FileUtils.copyFile(f, localCopy);
-                }
-                else
+                File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v")? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
+                boolean doCopy = true;
+                if (localCopy.exists())
                 {
                     getStatusLogger().info("file exists: " + localCopy.getPath());
+                    if (localCopy.lastModified() >= f.lastModified())
+                    {
+                        doCopy = false;
+                    }
+                    else
+                    {
+                        getStatusLogger().info("source file has been modified, deleting copy and re-syncing");
+                        localCopy.delete();
+                    }
+                }
+
+                if (doCopy)
+                {
+                    getStatusLogger().info("copying file locally: " + localCopy.getPath());
+                    if (localCopy.exists())
+                    {
+                        localCopy.delete();
+                    }
+
+                    FileUtils.copyFile(f, localCopy);
                 }
 
                 File index = new File(f.getPath() + ".tbi");
                 if (index.exists())
                 {
-                    File indexLocal = new File(subdir, index.getName());
+                    File indexLocal = new File(localCopy.getPath() + ".tbi");
+                    if (doCopy && indexLocal.exists())
+                    {
+                        getStatusLogger().info("deleting local copy of index since file was re-copied");
+                        indexLocal.delete();
+                    }
+
                     if (!indexLocal.exists())
                     {
                         getStatusLogger().info("copying index locally: " + indexLocal.getPath());
@@ -158,7 +183,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 {
                     d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
                     d.setDataFileURI(localCopy.toURI());
-                    d.setName(f.getName());
+                    d.setName(localCopy.getName());
                     d.save(getContainerUser().getUser());
                 }
 

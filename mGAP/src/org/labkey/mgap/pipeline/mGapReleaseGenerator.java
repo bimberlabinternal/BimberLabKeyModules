@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.DbScope;
@@ -175,6 +176,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             toSelect.add(FieldKey.fromString("vcfId/dataId"));
             Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(releaseTracks, toSelect);
 
+            Set<File> allVcfs = new HashSet<>();
             Set<String> distinctTracks = new HashSet<>();
             File trackFile = getTrackListFile(outputDir);
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(trackFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
@@ -187,6 +189,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     ExpData d = ExperimentService.get().getExpData(rs.getInt(FieldKey.fromString("vcfId")));
                     support.cacheExpData(d);
+
+                    allVcfs.add(d.getFile());
 
                     writer.writeNext(new String[]{
                             rs.getString(FieldKey.fromString("trackName")),
@@ -220,6 +224,27 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             support.cacheObject(MMUL_GENOME, sourceGenome);
 
             AnnotationStep.findChainFile(genomeIds.iterator().next(), params.getInt(AnnotationStep.GRCH37), support, job);
+
+            //Read inputs, find all unique IDs.  Determine if we have data in mgap.subjectsSource for each mgap ID
+            Set<String> ids = new HashSet<>();
+            for (File vcf : allVcfs)
+            {
+                checkVcfAnnotationsAndSamples(vcf, true);
+
+                try (VCFFileReader reader = new VCFFileReader(vcf))
+                {
+                    ids.addAll(reader.getFileHeader().getSampleNamesInOrder());
+                }
+            }
+
+            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable("subjectsSource", null);
+            List<String> idsWithRecord = new TableSelector(ti, PageFlowUtil.set("subjectname"), new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN), null).getArrayList(String.class);
+
+            ids.removeAll(idsWithRecord);
+            if (!ids.isEmpty())
+            {
+                throw new PipelineJobException("Some ids are missing demographics data: " + StringUtils.join(ids, ","));
+            }
         }
 
         private File getTrackListFile(File outputDir)
