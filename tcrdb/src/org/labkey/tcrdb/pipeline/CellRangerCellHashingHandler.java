@@ -42,17 +42,37 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
     public CellRangerCellHashingHandler()
     {
-        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/CellRangerAggrTextarea.js")), Arrays.asList(
-                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
-                    put("checked", true);
-                }}, true),
-                ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
-                ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true),
-                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5),
+        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/CellRangerAggrTextarea.js")), getDefaultParams());
+    }
+
+    private static List<ToolParameterDescriptor> getDefaultParams()
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>(getDefaultHashingParams(true));
+        ret.add(
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
-                }}, false)
+                }}, true)
+        );
+
+        return ret;
+    }
+
+    public static List<ToolParameterDescriptor> getDefaultHashingParams(boolean includeExcludeFailedcDNA)
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>(Arrays.asList(
+            ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
+                put("checked", false);
+            }}, false),
+            ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 3),
+            ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5)
         ));
+
+        if (includeExcludeFailedcDNA)
+        {
+            ret.add(ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true));
+        }
+
+        return ret;
     }
 
     @Override

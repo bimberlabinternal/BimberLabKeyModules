@@ -32,6 +32,7 @@ import org.labkey.tcrdb.TCRdbModule;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +48,12 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
     public CellRangerSeuratHandler()
     {
-        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "Run Seurat", "This will run a standard seurat-based pipeline on the selected 10x/cellranger data and save the resulting Seurat object as an rds file for external use.", new LinkedHashSet<>(), Arrays.asList(
+        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "Run Seurat", "This will run a standard seurat-based pipeline on the selected 10x/cellranger data and save the resulting Seurat object as an rds file for external use.", new LinkedHashSet<>(), getDefaultParams());
+    }
+
+    private static List<ToolParameterDescriptor> getDefaultParams()
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>(Arrays.asList(
                 ToolParameterDescriptor.create("projectName", "Output Name", "This will be used as the final sample/file name.  If blank, the readset name will be used.  The latter cannot be used when merging multiple inputs.", "textfield", new JSONObject(){{
 
                 }}, null),
@@ -77,13 +83,12 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }}, true),
                 ToolParameterDescriptor.create("mergeMethod", "Merge Method", "This determines whether any batch correction will be applied when merging datasets.", "ldk-simplecombo", new JSONObject(){{
                     put("storeValues", "simple;cca");
-                }}, "simple"),
-                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances (Hashing)", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
-                    put("checked", true);
-                }}, true),
-                ToolParameterDescriptor.create("editDistance", "Edit Distance (Hashing)", null, "ldk-integerfield", null, 1),
-                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 3)
-            ));
+                }}, "simple")
+        ));
+
+        ret.addAll(CellRangerCellHashingHandler.getDefaultHashingParams(false));
+
+        return ret;
     }
 
     @Override
