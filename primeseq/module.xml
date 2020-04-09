@@ -3,8 +3,8 @@
         <dependency path="clientapi/ext4.lib.xml"/>
     </clientDependencies>
     <requiredModuleContext>
-        <requiredModule name="LDK" />
-        <requiredModule name="Laboratory" />
-        <requiredModule name="SequenceAnalysis" />
+        <module name="LDK" />
+        <module name="Laboratory" />
+        <module name="SequenceAnalysis" />
     </requiredModuleContext>
 </module>
