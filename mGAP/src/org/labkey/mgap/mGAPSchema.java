@@ -36,6 +36,7 @@ public class mGAPSchema
     public static final String TABLE_PEDIGREE_OVERRIDES = "pedigreeOverrides";
     public static final String TABLE_DEMOGRAPHICS = "demographics";
     public static final String TABLE_SUBJECT_SOURCE = "subjectsSource";
+    public static final String TABLE_SEQUENCE_DATASETS = "sequenceDatasets";
 
 
     public static mGAPSchema getInstance()
