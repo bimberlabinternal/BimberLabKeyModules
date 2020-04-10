@@ -102,7 +102,7 @@ public class CellRangerVDJUtils
         HashMap<Integer, Integer> readsetToHashingMap = new HashMap<>();
         try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(output), '\t', CSVWriter.NO_QUOTE_CHARACTER); CSVWriter bcWriter = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER))
         {
-            writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HTO_Name", "HTO_Seq", "HashingReadsetId", "HasHashingReads"});
+            writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HashingReadsetId", "HasHashingReads", "HTO_Name", "HTO_Seq"});
             List<Readset> cachedReadsets = support.getCachedReadsets();
             Set<String> distinctHTOs = new HashSet<>();
             Set<Boolean> hashingStatus = new HashSet<>();
@@ -123,10 +123,10 @@ public class CellRangerVDJUtils
                             results.getString(FieldKey.fromString("sortId/stimId/animalId")),
                             results.getString(FieldKey.fromString("sortId/stimId/stim")),
                             results.getString(FieldKey.fromString("sortId/population")),
-                            results.getString(FieldKey.fromString("sortId/hto")),
-                            results.getString(FieldKey.fromString("sortId/hto/sequence")),
                             String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("hashingReadsetId"))),
-                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("hashingReadsetId/totalFiles")) > 0)
+                            String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("hashingReadsetId/totalFiles")) > 0),
+                            results.getString(FieldKey.fromString("sortId/hto")),
+                            results.getString(FieldKey.fromString("sortId/hto/sequence"))
                     });
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
@@ -196,12 +196,22 @@ public class CellRangerVDJUtils
 
     public File getCDNAInfoFile()
     {
-        return new File(_sourceDir, "cDNAInfo.txt");
+        return getCDNAInfoFile(_sourceDir);
+    }
+
+    public static File getCDNAInfoFile(File sourceDir)
+    {
+        return new File(sourceDir, "cDNAInfo.txt");
     }
 
     public File getValidHashingBarcodeFile()
     {
-        return new File(_sourceDir, "validHashingBarcodes.csv");
+        return getValidHashingBarcodeFile(_sourceDir);
+    }
+
+    public static File getValidHashingBarcodeFile(File sourceDir)
+    {
+        return new File(sourceDir, "validHashingBarcodes.csv");
     }
 
     public File getValidCellIndexFile()
@@ -318,7 +328,7 @@ public class CellRangerVDJUtils
 
         //run CiteSeqCount.  this will use Multiseq to make calls per cell
         String basename = FileUtil.makeLegalName(rs.getName());
-        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, minCountPerCell, sourceDir, editDistance, scanEditDistances, rs, genomeId);
+        File hashtagCalls = SequencePipelineService.get().runCiteSeqCount(output, outputCategory, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, workingDir, basename, _log, extraParams, false, minCountPerCell, sourceDir, editDistance, scanEditDistances, rs, genomeId, true);
         if (!hashtagCalls.exists())
         {
             throw new PipelineJobException("Unable to find expected file: " + hashtagCalls.getPath());
@@ -421,7 +431,7 @@ public class CellRangerVDJUtils
                         continue;
                     }
 
-                    String htoName = StringUtils.trimToNull(line[5]);
+                    String htoName = StringUtils.trimToNull(line[7]);
 
                     CDNA cdna = CDNA.getRowId(Integer.parseInt(line[1]));
                     cDNAMap.put(Integer.parseInt(line[1]), cdna);

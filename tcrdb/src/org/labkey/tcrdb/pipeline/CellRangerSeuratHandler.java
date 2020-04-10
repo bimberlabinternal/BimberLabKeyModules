@@ -454,10 +454,10 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                         String[] line;
                         while ((line = reader.readNext()) != null)
                         {
-                            if (hashingReadsetId.toString().equals(line[7]))
+                            if (hashingReadsetId.toString().equals(line[5]))
                             {
                                 htosForReadset++;
-                                bcWriter.writeNext(new String[]{line[6], line[5]});
+                                bcWriter.writeNext(new String[]{line[8], line[7]});
                             }
                         }
                     }
@@ -469,7 +469,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     if (htosForReadset > 0)
                     {
                         ctx.getLogger().info("Total HTOs for readset: " + htosForReadset);
-                        finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, false, perReadsetHtos));
+                        finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, false, perReadsetHtos, true));
                     }
                     else
                     {

@@ -32,6 +32,7 @@ import org.labkey.tcrdb.pipeline.CellRangerVDJCellHashingHandler;
 import org.labkey.tcrdb.pipeline.CellRangerVDJWrapper;
 import org.labkey.tcrdb.pipeline.MiXCRAnalysis;
 import org.labkey.tcrdb.pipeline.SeuratCellHashingHandler;
+import org.labkey.tcrdb.pipeline.SeuratCiteSeqHandler;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -121,6 +122,7 @@ public class TCRdbModule extends ExtendedSimpleModule
                 SequenceAnalysisService.get().registerFileHandler(new CellRangerCellHashingHandler());
                 SequenceAnalysisService.get().registerFileHandler(new CellRangerVDJCellHashingHandler());
                 SequenceAnalysisService.get().registerFileHandler(new SeuratCellHashingHandler());
+                SequenceAnalysisService.get().registerFileHandler(new SeuratCiteSeqHandler());
                 SequenceAnalysisService.get().registerFileHandler(new CellRangerSeuratHandler());
 
                 _hasRegistered = true;

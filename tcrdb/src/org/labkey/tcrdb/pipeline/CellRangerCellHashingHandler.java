@@ -220,18 +220,23 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
     public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category) throws PipelineJobException
     {
-        CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
-        return processBarcodeFile(ctx, perCellTsv, rs, genomeId, action, commandArgs, writeLoupe, category, true, utils.getValidHashingBarcodeFile());
+        return processBarcodeFile(ctx, perCellTsv, rs, genomeId, action, commandArgs, writeLoupe, category, true);
     }
 
-    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean createOutputFiles, File htoBarcodeWhitelist) throws PipelineJobException
+    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean generateHtoCalls) throws PipelineJobException
+    {
+        CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
+        return processBarcodeFile(ctx, perCellTsv, rs, genomeId, action, commandArgs, writeLoupe, category, true, utils.getValidHashingBarcodeFile(), generateHtoCalls);
+    }
+
+    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean createOutputFiles, File htoBarcodeWhitelist, boolean generateHtoCalls) throws PipelineJobException
     {
         ctx.getLogger().debug("inspecting file: " + perCellTsv.getPath());
 
         CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
 
         Map<Integer, Integer> readsetToHashing = CellRangerVDJUtils.getCachedReadsetMap(ctx.getSequenceSupport());
-        ctx.getLogger().debug("total cached readset/HTO pairs: " + readsetToHashing.size());
+        ctx.getLogger().debug("total cached readset to hashing/citeseq pairs: " + readsetToHashing.size());
 
         //prepare whitelist of cell indexes
         File cellBarcodeWhitelist = utils.getValidCellIndexFile();
@@ -288,24 +293,29 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         Readset htoReadset = ctx.getSequenceSupport().getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
         if (htoReadset == null)
         {
-            throw new PipelineJobException("Unable to find HTO readset for readset: " + rs.getReadsetId());
+            throw new PipelineJobException("Unable to find Hashing/Cite-seq readset for GEX readset: " + rs.getReadsetId());
         }
 
-        //run CiteSeqCount.  this will use Multiseq to make calls per cell
+        //run CiteSeqCount.
         List<String> extraParams = new ArrayList<>();
         extraParams.addAll(commandArgs);
 
         boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
-        int editDistance = ctx.getParams().optInt("editDistance", 2);
+        int editDistance = ctx.getParams().optInt("editDistance", 3);
         int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
         String basename = FileUtil.makeLegalName(rs.getName());
-        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, minCountPerCell, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
+        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, minCountPerCell, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId, generateHtoCalls);
         ctx.getFileManager().addStepOutputs(action, output);
 
         ctx.getFileManager().addOutput(action, category, cellToHto);
-        ctx.getFileManager().addOutput(action, "Cell Hashing GEX Report", new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"));
+        File html = new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html");
+        if (html.exists())
+        {
+            ctx.getFileManager().addOutput(action, "Cell Hashing Report", html);
+        }
+
         File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
         ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
 
