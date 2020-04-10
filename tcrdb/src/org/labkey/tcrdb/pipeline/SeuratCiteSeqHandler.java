@@ -1,6 +1,7 @@
 package org.labkey.tcrdb.pipeline;
 
 import au.com.bytecode.opencsv.CSVWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.Container;
@@ -20,6 +21,7 @@ import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
+import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.PageFlowUtil;
@@ -39,6 +41,7 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
 {
     protected FileType _fileType = new FileType(".seurat.rds", false);
     public static final String CATEGORY = "Seurat CITE-Seq Count Matrix";
+    private static final String DEFAULT_TAG_GROUP = "TotalSeq-C";
 
     public SeuratCiteSeqHandler()
     {
@@ -46,6 +49,13 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                 ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 3),
                 ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true),
                 ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell (Cell Hashing)", null, "ldk-integerfield", null, 5),
+                ToolParameterDescriptor.create("tagGroup", "Tag List", null, "ldk-simplelabkeycombo", new JSONObject(){{
+                    put("schemaName", "sequenceanalysis");
+                    put("queryName", "barcode_groups");
+                    put("displayField", "group_name");
+                    put("valueField", "group_name");
+                    put("allowBlank", false);
+                }}, DEFAULT_TAG_GROUP),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately..", "checkbox", new JSONObject()
                 {{
                     put("checked", true);
@@ -111,8 +121,20 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
             );
 
             File barcodeOutput = CellRangerVDJUtils.getValidHashingBarcodeFile(outputDir);
-            String tagGroup = params.getString("tagGroup");
+            String tagGroup = StringUtils.trimToNull(params.getString("tagGroup"));
+            if (tagGroup == null)
+            {
+                throw new PipelineJobException("No barcode group supplied");
+            }
+
             SequenceAnalysisService.get().writeAllBarcodes(barcodeOutput, job.getUser(), job.getContainer(), tagGroup);
+
+            long barcodeCount = SequencePipelineService.get().getLineCount(barcodeOutput);
+            if (barcodeCount == 0)
+            {
+                throw new PipelineJobException("No barcodes found for group: " + tagGroup);
+            }
+            job.getLogger().info("Total CITE-seq barcodes written: " + barcodeCount);
 
             HashMap<Integer, Integer> readsetToCiteSeqMap = new HashMap<>();
             File output = CellRangerVDJUtils.getCDNAInfoFile(outputDir);
