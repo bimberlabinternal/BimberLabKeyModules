@@ -750,7 +750,7 @@
     </table>
     <table tableName="citeseq_antibodies" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
-        <tableTitle>CITE-Seq Panels</tableTitle>
+        <tableTitle>CITE-Seq Antibodies</tableTitle>
         <columns>
             <column columnName="rowid">
                 <columnTitle>Row Id</columnTitle>
@@ -760,7 +760,10 @@
                 <columnTitle>Antibody Name</columnTitle>
             </column>
             <column columnName="markerName">
-                <columnTitle>Marker/Antigen</columnTitle>
+                <columnTitle>Marker/Antigen Name</columnTitle>
+            </column>
+            <column columnName="markerLabel">
+                <columnTitle>Marker/Antigen Label</columnTitle>
             </column>
             <column columnName="cloneName">
                 <columnTitle>Clone Name</columnTitle>
