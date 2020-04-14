@@ -377,7 +377,7 @@
                 <columnTitle>Cite-Seq Panel</columnTitle>
                 <fk>
                     <fkDbSchema>tcrdb</fkDbSchema>
-                    <fkTable>citeseq_panels</fkTable>
+                    <fkTable>citeseq_panel_names</fkTable>
                     <fkColumnName>name</fkColumnName>
                     <fkDisplayColumnName useRawValue="true"/>
                 </fk>
