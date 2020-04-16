@@ -4,8 +4,10 @@ import au.com.bytecode.opencsv.CSVWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.ModuleLoader;
@@ -15,13 +17,11 @@ import org.labkey.api.pipeline.RecordedAction;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
-import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
-import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.PageFlowUtil;
@@ -33,15 +33,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     protected FileType _fileType = new FileType(".seurat.rds", false);
     public static final String CATEGORY = "Seurat CITE-Seq Count Matrix";
-    private static final String DEFAULT_TAG_GROUP = "TotalSeq-C";
 
     public SeuratCiteSeqHandler()
     {
@@ -49,13 +51,6 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                 ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 3),
                 ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true),
                 ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell (Cell Hashing)", null, "ldk-integerfield", null, 5),
-                ToolParameterDescriptor.create("tagGroup", "Tag List", null, "ldk-simplelabkeycombo", new JSONObject(){{
-                    put("schemaName", "sequenceanalysis");
-                    put("queryName", "barcode_groups");
-                    put("displayField", "group_name");
-                    put("valueField", "group_name");
-                    put("allowBlank", false);
-                }}, DEFAULT_TAG_GROUP),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately..", "checkbox", new JSONObject()
                 {{
                     put("checked", true);
@@ -117,30 +112,17 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                     FieldKey.fromString("sortId/population"),
                     FieldKey.fromString("citeseqReadsetId"),
                     FieldKey.fromString("citeseqReadsetId/totalFiles"),
+                    FieldKey.fromString("citeseqPanel"),
                     FieldKey.fromString("status"))
             );
 
-            File barcodeOutput = CellRangerVDJUtils.getValidHashingBarcodeFile(outputDir);
-            String tagGroup = StringUtils.trimToNull(params.getString("tagGroup"));
-            if (tagGroup == null)
-            {
-                throw new PipelineJobException("No barcode group supplied");
-            }
-
-            SequenceAnalysisService.get().writeAllBarcodes(barcodeOutput, job.getUser(), job.getContainer(), tagGroup);
-
-            long barcodeCount = SequencePipelineService.get().getLineCount(barcodeOutput);
-            if (barcodeCount == 0)
-            {
-                throw new PipelineJobException("No barcodes found for group: " + tagGroup);
-            }
-            job.getLogger().info("Total CITE-seq barcodes written: " + barcodeCount);
-
             HashMap<Integer, Integer> readsetToCiteSeqMap = new HashMap<>();
+            HashMap<Integer, Set<String>> gexToPanels = new HashMap<>();
+
             File output = CellRangerVDJUtils.getCDNAInfoFile(outputDir);
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(output), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "CiteSeqReadsetId", "HasCiteSeqReads"});
+                writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "CiteSeqReadsetId", "HasCiteSeqReads", "CiteseqPanel"});
                 List<Readset> cachedReadsets = support.getCachedReadsets();
                 for (Readset rs : cachedReadsets)
                 {
@@ -154,7 +136,8 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                                 results.getString(FieldKey.fromString("sortId/stimId/stim")),
                                 results.getString(FieldKey.fromString("sortId/population")),
                                 String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("citeseqReadsetId"))),
-                                String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("citeseqReadsetId/totalFiles")) > 0)
+                                String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("citeseqReadsetId/totalFiles")) > 0),
+                                results.getString(FieldKey.fromString("citeseqPanel")),
                         });
 
                         if (results.getObject(FieldKey.fromString("citeseqReadsetId")) == null)
@@ -162,6 +145,17 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                             hasError.set(true);
                             return;
                         }
+
+                        if (StringUtils.trimToNull(results.getString(FieldKey.fromString("citeseqPanel"))) == null)
+                        {
+                            job.getLogger().error("cDNA specifies cite-seq readset but does not list panel: " + results.getString(FieldKey.fromString("rowid")));
+                            hasError.set(true);
+                            return;
+                        }
+
+                        Set<String> panels = gexToPanels.getOrDefault(rs.getRowId(), new HashSet<>());
+                        panels.add(results.getString(FieldKey.fromString("citeseqPanel")));
+                        gexToPanels.put(rs.getRowId(), panels);
 
                         readsetToCiteSeqMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("citeseqReadsetId")));
                     });
@@ -179,6 +173,45 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
             {
                 throw new PipelineJobException(e);
             }
+
+            Map<FieldKey, ColumnInfo> barcodeColMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
+                FieldKey.fromString("antibody"),
+                FieldKey.fromString("antibody/adaptersequence")
+            ));
+
+            for (int gexReadsetId : gexToPanels.keySet())
+            {
+                job.getLogger().info("Writing all unique ADTs for readset: " + gexReadsetId);
+                File barcodeOutput = getValidCiteSeqBarcodeFile(outputDir, gexReadsetId);
+                try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER))
+                {
+                    AtomicInteger barcodeCount = new AtomicInteger();
+                    Set<String> found = new HashSet<>();
+                    new TableSelector(cDNAs, barcodeColMap.values(), new SimpleFilter(FieldKey.fromString("name"), gexToPanels.get(gexReadsetId), CompareType.IN), new Sort("antibody")).forEachResults(results -> {
+                        if (found.contains(results.getString(FieldKey.fromString("antibody/adaptersequence"))))
+                        {
+                            return;
+                        }
+
+                        found.add(results.getString(FieldKey.fromString("antibody/adaptersequence")));
+                        barcodeCount.getAndIncrement();
+
+                        writer.writeNext(new String[]{results.getString(FieldKey.fromString("antibody/adaptersequence")), results.getString(FieldKey.fromString("antibody"))});
+                    });
+
+                    job.getLogger().info("Total CITE-seq barcodes written: " + barcodeCount.get());
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
+
+        }
+
+        private File getValidCiteSeqBarcodeFile(File outputDir, int gexReadsetId)
+        {
+            return new File(outputDir, "validADTS." + gexReadsetId + ".csv");
         }
 
         @Override
@@ -208,7 +241,8 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                File citeSeqMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY, false);
+                File adtWhitelist = getValidCiteSeqBarcodeFile(ctx.getOutputDir(), so.getReadset());
+                File citeSeqMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY, true, adtWhitelist, false);
                 if (!citeSeqMatrix.exists())
                 {
                     throw new PipelineJobException("Unable to find expected file: " + citeSeqMatrix.getPath());
