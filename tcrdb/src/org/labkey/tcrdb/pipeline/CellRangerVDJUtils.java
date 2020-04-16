@@ -164,7 +164,7 @@ public class CellRangerVDJUtils
                 }
                 else if (hashingStatus.isEmpty())
                 {
-                    //This indicates hashing not used
+                    //This indicates there are no cDNA records associated with the data
                 }
             }
 
@@ -178,13 +178,15 @@ public class CellRangerVDJUtils
                 job.getLogger().info("There is only a single HTO in this pool, will not use hashing");
             }
 
-            boolean useCellHashing = hashingStatus.size() > 1 ? true : hashingStatus.iterator().next();
+            boolean useCellHashing = hashingStatus.isEmpty() ? false : hashingStatus.size() > 1 ? true : hashingStatus.iterator().next();
             if (useCellHashing && distinctHTOs.isEmpty())
             {
                 throw new PipelineJobException("Cell hashing was selected, but no HTOs were found");
             }
-
-            _log.info("distinct HTOs: " + distinctHTOs.size());
+            else
+            {
+                _log.info("distinct HTOs: " + distinctHTOs.size());
+            }
 
             support.cacheObject(READSET_TO_HASHING_MAP, readsetToHashingMap);
         }
