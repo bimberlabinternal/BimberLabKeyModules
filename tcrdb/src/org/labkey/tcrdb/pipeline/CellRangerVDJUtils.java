@@ -164,7 +164,7 @@ public class CellRangerVDJUtils
                 }
                 else if (hashingStatus.isEmpty())
                 {
-                    throw new PipelineJobException("There were no readsets found.");
+                    //This indicates hashing not used
                 }
             }
 
