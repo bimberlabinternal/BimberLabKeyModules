@@ -5,6 +5,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 import htsjdk.samtools.util.IOUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
@@ -155,7 +156,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }
             }
 
-            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingFilesIfNeeded(job, support,"readsetId", params.optBoolean("excludeFailedcDNA", true));
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support,"readsetId", params.optBoolean("excludeFailedcDNA", true));
         }
 
         @Override
@@ -399,93 +400,16 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
             if (utils.useCellHashing(ctx.getSequenceSupport()))
             {
-                File allCellBarcodes = new File(seuratObj.getParentFile(), seuratObj.getName().replaceAll("seurat.rds", "cellBarcodes.csv"));
-                Map<String, File> finalCalls = new HashMap<>();
-                if (!allCellBarcodes.exists())
-                {
-                    throw new PipelineJobException("Unable to find expected cell barcodes file.  This might indicate the seurat object was created with an older version of the pipeline.  Expected: " + allCellBarcodes.getPath());
-                }
+                runCellHashing(ctx, inputFiles, seuratObj, action, utils);
+            }
+            else
+            {
+                ctx.getLogger().info("Cell hashing was not used");
+            }
 
-                for (SequenceOutputFile so : inputFiles)
-                {
-                    String barcodePrefix = so.getRowid().toString();
-                    Readset rs = ctx.getSequenceSupport().getCachedReadset(so.getReadset());
-                    if (rs == null)
-                    {
-                        throw new PipelineJobException("Unable to find readset for outputfile: " + so.getRowid());
-                    }
-                    else if (rs.getReadsetId() == null)
-                    {
-                        throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
-                    }
-
-                    //Subset barcodes by dataset:
-                    File barcodes = new File(allCellBarcodes.getParentFile(), "cellBarcodeWhitelist." + barcodePrefix + ".txt");
-                    try (CSVReader reader = new CSVReader(Readers.getReader(allCellBarcodes), '\t'); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(barcodes), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-                    {
-                        String[] line;
-                        while ((line = reader.readNext()) != null)
-                        {
-                            String barcode = line[0];
-                            if (barcode.startsWith(barcodePrefix + "_"))
-                            {
-                                barcode = barcode.split("_")[1];
-                                writer.writeNext(new String[]{barcode});
-                            }
-                        }
-                    }
-                    catch (IOException e)
-                    {
-                        throw new PipelineJobException(e);
-                    }
-
-                    // write readset-specific HTO list
-                    Integer hashingReadsetId = CellRangerVDJUtils.getCachedReadsetMap(ctx.getSequenceSupport()).get(rs.getReadsetId());
-                    if (hashingReadsetId == null)
-                    {
-                        ctx.getLogger().info("No hashing readset for: " + rs.getReadsetId() + ", this probably indicates either hashing is not used or the hashing data is not available.");
-                        continue;
-                    }
-
-                    File perReadsetHtos = new File(allCellBarcodes.getParentFile(), "allowableHtos." + barcodePrefix + ".txt");
-                    int htosForReadset = 0;
-                    try (CSVReader reader = new CSVReader(Readers.getReader(utils.getCDNAInfoFile()), '\t'); CSVWriter bcWriter = new CSVWriter(PrintWriters.getPrintWriter(perReadsetHtos), ',', CSVWriter.NO_QUOTE_CHARACTER))
-                    {
-                        String[] line;
-                        while ((line = reader.readNext()) != null)
-                        {
-                            if (hashingReadsetId.toString().equals(line[5]))
-                            {
-                                htosForReadset++;
-                                bcWriter.writeNext(new String[]{line[8], line[7]});
-                            }
-                        }
-                    }
-                    catch (IOException e)
-                    {
-                        throw new PipelineJobException(e);
-                    }
-
-                    if (htosForReadset > 0)
-                    {
-                        ctx.getLogger().info("Total HTOs for readset: " + htosForReadset);
-                        finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, false, perReadsetHtos, true));
-                    }
-                    else
-                    {
-                        ctx.getLogger().info("No HTOs found for readset");
-                    }
-                }
-
-                if (!finalCalls.isEmpty())
-                {
-                    ctx.getLogger().info("Storing cell hashing calls in seurat object");
-                    appendCallsToSeurat(ctx, seuratObj, finalCalls);
-                }
-                else
-                {
-                    ctx.getLogger().info("Cell hashing was not used.  will not append to seurat");
-                }
+            if (utils.useCiteSeq(ctx.getSequenceSupport()))
+            {
+                runCiteSeq(ctx, inputFiles, seuratObj, action, utils);
             }
             else
             {
@@ -493,10 +417,320 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             }
         }
 
-        private void appendCallsToSeurat(JobContext ctx, File seuratObj, Map<String, File> finalCalls) throws PipelineJobException
+        private File getAllCellBarcodesFile(File seuratObj) throws PipelineJobException
+        {
+            File allCellBarcodes = new File(seuratObj.getParentFile(), seuratObj.getName().replaceAll("seurat.rds", "cellBarcodes.csv"));
+            if (!allCellBarcodes.exists())
+            {
+                throw new PipelineJobException("Unable to find expected cell barcodes file.  This might indicate the seurat object was created with an older version of the pipeline.  Expected: " + allCellBarcodes.getPath());
+            }
+
+            return allCellBarcodes;
+        }
+
+        private void runCiteSeq(JobContext ctx, List<SequenceOutputFile> inputFiles, File seuratObj, RecordedAction action, CellRangerVDJUtils utils) throws PipelineJobException
+        {
+            Map<String, File> citeSeqData = new HashMap<>();
+            Map<String, File> markerMetadata = new HashMap<>();
+            File allCellBarcodes = getAllCellBarcodesFile(seuratObj);
+
+            for (SequenceOutputFile so : inputFiles)
+            {
+                //This is the loupe file at this point
+                String barcodePrefix = so.getRowid().toString();
+                Readset rs = ctx.getSequenceSupport().getCachedReadset(so.getReadset());
+                if (rs == null)
+                {
+                    throw new PipelineJobException("Unable to find readset for outputfile: " + so.getRowid());
+                }
+                else if (rs.getReadsetId() == null)
+                {
+                    throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
+                }
+
+                File barcodes = subsetBarcodes(allCellBarcodes, barcodePrefix);
+
+                // write readset-specific HTO list
+                Integer citeseqReadsetId = CellRangerVDJUtils.getCachedCiteSeqReadsetMap(ctx.getSequenceSupport()).get(rs.getReadsetId());
+                if (citeseqReadsetId == null)
+                {
+                    ctx.getLogger().info("No cite-seq readset for: " + rs.getReadsetId() + ", this probably indicates either hashing is not used or the hashing data is not available.");
+                    continue;
+                }
+
+                Readset citeseqReadset = ctx.getSequenceSupport().getCachedReadset(citeseqReadsetId);
+                if (citeseqReadset == null)
+                {
+                    throw new PipelineJobException("Unable to find Cite-seq readset for GEX readset: " + rs.getReadsetId());
+                }
+
+                File perReadsetAdts = CellRangerVDJUtils.getValidCiteSeqBarcodeFile(allCellBarcodes.getParentFile(), rs.getReadsetId());
+                long adtsForReadset = !perReadsetAdts.exists() ? 0 : SequencePipelineService.get().getLineCount(perReadsetAdts) - 1;
+
+                if (adtsForReadset > 0)
+                {
+                    ctx.getLogger().info("Total ADTs for readset: " + adtsForReadset);
+                    File countMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, citeseqReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCiteSeqHandler.CATEGORY, false, perReadsetAdts, false);
+                    citeSeqData.put(barcodePrefix, countMatrix.getParentFile());
+                    File perReadsetAdtMetadata = CellRangerVDJUtils.getValidCiteSeqBarcodeMetadataFile(allCellBarcodes.getParentFile(), rs.getReadsetId());
+                    markerMetadata.put(barcodePrefix, perReadsetAdtMetadata);
+                }
+                else
+                {
+                    ctx.getLogger().info("No ADTs found for readset: " + rs.getReadsetId());
+                }
+            }
+
+            if (!citeSeqData.isEmpty())
+            {
+                ctx.getLogger().info("Storing cite-seq data in seurat object");
+                appendCiteSeqToSeurat(ctx, seuratObj, citeSeqData, markerMetadata);
+            }
+            else
+            {
+                ctx.getLogger().info("CITE-seq was not used.  Will not append to seurat");
+            }
+        }
+
+        private void runCellHashing(JobContext ctx, List<SequenceOutputFile> inputFiles, File seuratObj, RecordedAction action, CellRangerVDJUtils utils) throws PipelineJobException
+        {
+            Map<String, File> finalCalls = new HashMap<>();
+            File allCellBarcodes = getAllCellBarcodesFile(seuratObj);
+
+            for (SequenceOutputFile so : inputFiles)
+            {
+                //This is the loupe file at this point
+                String barcodePrefix = so.getRowid().toString();
+                Readset rs = ctx.getSequenceSupport().getCachedReadset(so.getReadset());
+                if (rs == null)
+                {
+                    throw new PipelineJobException("Unable to find readset for outputfile: " + so.getRowid());
+                }
+                else if (rs.getReadsetId() == null)
+                {
+                    throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
+                }
+
+                File barcodes = subsetBarcodes(allCellBarcodes, barcodePrefix);
+
+                // write readset-specific HTO list
+                Integer hashingReadsetId = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport()).get(rs.getReadsetId());
+                if (hashingReadsetId == null)
+                {
+                    ctx.getLogger().info("No hashing readset for: " + rs.getReadsetId() + ", this probably indicates either hashing is not used or the hashing data is not available.");
+                    continue;
+                }
+
+                Readset htoReadset = ctx.getSequenceSupport().getCachedReadset(hashingReadsetId);
+                if (htoReadset == null)
+                {
+                    throw new PipelineJobException("Unable to find hashing readset for GEX readset: " + rs.getReadsetId());
+                }
+
+                File perReadsetHtos = new File(allCellBarcodes.getParentFile(), "allowableHtos." + barcodePrefix + ".txt");
+                int htosForReadset = 0;
+                try (CSVReader reader = new CSVReader(Readers.getReader(utils.getCDNAInfoFile()), '\t'); CSVWriter bcWriter = new CSVWriter(PrintWriters.getPrintWriter(perReadsetHtos), ',', CSVWriter.NO_QUOTE_CHARACTER))
+                {
+                    String[] line;
+                    while ((line = reader.readNext()) != null)
+                    {
+                        if (hashingReadsetId.toString().equals(line[5]))
+                        {
+                            htosForReadset++;
+                            bcWriter.writeNext(new String[]{line[8], line[7]});
+                        }
+                    }
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+
+                if (htosForReadset > 0)
+                {
+                    ctx.getLogger().info("Total HTOs for readset: " + htosForReadset);
+                    finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, false, perReadsetHtos, true));
+                }
+                else
+                {
+                    ctx.getLogger().info("No HTOs found for readset");
+                }
+            }
+
+            if (!finalCalls.isEmpty())
+            {
+                ctx.getLogger().info("Storing cell hashing calls in seurat object");
+                appendHashingCallsToSeurat(ctx, seuratObj, finalCalls);
+            }
+            else
+            {
+                ctx.getLogger().info("Cell hashing was not used.  will not append to seurat");
+            }
+        }
+
+        private File subsetBarcodes(File allCellBarcodes, String barcodePrefix) throws PipelineJobException
+        {
+            //Subset barcodes by dataset:
+            File barcodes = new File(allCellBarcodes.getParentFile(), "cellBarcodeWhitelist." + barcodePrefix + ".txt");
+            try (CSVReader reader = new CSVReader(Readers.getReader(allCellBarcodes), '\t'); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(barcodes), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+            {
+                String[] line;
+                while ((line = reader.readNext()) != null)
+                {
+                    String barcode = line[0];
+                    if (barcode.startsWith(barcodePrefix + "_"))
+                    {
+                        barcode = barcode.split("_")[1];
+                        writer.writeNext(new String[]{barcode});
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            return barcodes;
+        }
+
+        private void appendCiteSeqToSeurat(JobContext ctx, File seuratObj, Map<String, File> citeseqData, Map<String, File> markerMetadata) throws PipelineJobException
+        {
+            File rScript = new File(seuratObj.getParentFile(), "appendCiteSeq.R");
+            File bashScript = new File(seuratObj.getParentFile(), "runDockerForCiteSeq.sh");
+
+            File featureTable = new File(seuratObj.getParentFile(), "");
+            File localRoot = seuratObj.getParentFile();
+
+            Set<File> toDelete = new HashSet<>();
+            try (PrintWriter rWriter = PrintWriters.getPrintWriter(rScript); PrintWriter bashWriter = PrintWriters.getPrintWriter(bashScript))
+            {
+                rWriter.println("library(OOSAP)");
+                rWriter.println("seuratObj <- readRDS('" + seuratObj.getName() + "')");
+                rWriter.println("initialCells <- ncol(seuratObj)");
+                rWriter.println("citeSeq <- list(");
+                int idx = 0;
+                for (String barcodePrefix : citeseqData.keySet()) {
+                    idx++;
+                    String localCopy = ensureLocalCopy(localRoot, toDelete, citeseqData.get(barcodePrefix), ctx.getLogger());
+                    rWriter.println("'" + barcodePrefix + "' = '" + localCopy + "'" + (idx < citeseqData.size() ? "," : ""));
+                }
+                rWriter.println(")");
+                rWriter.println("");
+
+                rWriter.println("markerMetadata <- list(");
+                idx = 0;
+                for (String barcodePrefix : markerMetadata.keySet()) {
+                    idx++;
+                    String localCopy = ensureLocalCopy(localRoot, toDelete, markerMetadata.get(barcodePrefix), ctx.getLogger());
+                    rWriter.println("'" + barcodePrefix + "' = '" + localCopy + "'" + (idx < citeseqData.size() ? "," : ""));
+                }
+                rWriter.println(")");
+                rWriter.println("");
+
+                rWriter.println("for (barcodePrefix in names(citeSeq)) {");
+                rWriter.println("   seuratObj <- OOSAP:::AppendCiteSeq(seuratObj = seuratObj, countMatrixDir = citeSeq[[barcodePrefix]], barcodePrefix = barcodePrefix, featureLabelTable = " + featureTable.getName() + ")");
+                rWriter.println("}");
+                rWriter.println("if (ncol(seuratObj) != initialCells) { stop('Cell count not equal after appending cite-seq calls!') }");
+                rWriter.println("saveRDS(seuratObj, file = '" + seuratObj.getName() + "')");
+
+                bashWriter.println("#!/bin/bash");
+                bashWriter.println("set -e");
+                bashWriter.println("set -x");
+                bashWriter.println("DOCKER=/opt/acc/sbin/exadocker");
+                bashWriter.println("WD=`pwd`");
+                bashWriter.println("HOME=`echo ~/`");
+
+                Integer maxRam = SequencePipelineService.get().getMaxRam();
+                String ramOpts = "";
+                if (maxRam != null)
+                {
+                    ramOpts = " --memory=" +maxRam  +"g ";
+                }
+
+                bashWriter.println("sudo $DOCKER pull bimberlab/oosap");
+                bashWriter.println("sudo $DOCKER run --rm=true " + ramOpts + "-v \"${WD}:/work\" -v \"${HOME}:/homeDir\" -u $UID -e USERID=$UID -w /work -e HOME=/homeDir bimberlab/oosap Rscript --vanilla " + rScript.getName());
+
+                SimpleScriptWrapper wrapper = new SimpleScriptWrapper(ctx.getLogger());
+                wrapper.setWorkingDir(seuratObj.getParentFile());
+                wrapper.execute(Arrays.asList("/bin/bash", bashScript.getName()));
+
+                for (File f : toDelete)
+                {
+                    if (f.isDirectory())
+                    {
+                        FileUtils.deleteDirectory(f);
+                    }
+                    else
+                    {
+                        f.delete();
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+
+        private String ensureLocalCopy(File localRoot, Set<File> toDelete, File toCopy, Logger log) throws PipelineJobException
+        {
+            log.info("copying file locally: " + toCopy.getPath());
+
+            if (toCopy.getPath().startsWith(localRoot.getPath()))
+            {
+                return FileUtil.relativePath(localRoot.getPath(), toCopy.getPath());
+            }
+
+            try
+            {
+                File localCopy;
+                if (toCopy.isDirectory())
+                {
+                    localCopy = new File(localRoot, toCopy.getName());
+
+                    File umiDir = new File(toCopy, "umi_count");
+                    if (!umiDir.exists())
+                    {
+                        throw new PipelineJobException("Missing umi_count dir: " + umiDir.getPath());
+                    }
+
+                    if (localCopy.exists())
+                    {
+                        log.info("local copy exists, skipping: " + localCopy.getPath());
+                    }
+                    else
+                    {
+                        FileUtils.copyDirectory(umiDir, localCopy);
+                    }
+                }
+                else
+                {
+                    localCopy = new File(localRoot, toCopy.getName());
+
+                    if (localCopy.exists())
+                    {
+                        log.info("local copy exists, skipping: " + localCopy.getPath());
+                    }
+                    else
+                    {
+                        FileUtils.copyFile(toCopy, localCopy);
+                    }
+                }
+
+                toDelete.add(localCopy);
+
+                return FileUtil.relativePath(localRoot.getPath(), localCopy.getPath());
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+
+        private void appendHashingCallsToSeurat(JobContext ctx, File seuratObj, Map<String, File> finalCalls) throws PipelineJobException
         {
             File rScript = new File(seuratObj.getParentFile(), "appendHashing.R");
-            File bashScript = new File(seuratObj.getParentFile(), "runDocker.sh");
+            File bashScript = new File(seuratObj.getParentFile(), "runDockerForHashing.sh");
 
             try (PrintWriter rWriter = PrintWriters.getPrintWriter(rScript); PrintWriter bashWriter = PrintWriters.getPrintWriter(bashScript))
             {

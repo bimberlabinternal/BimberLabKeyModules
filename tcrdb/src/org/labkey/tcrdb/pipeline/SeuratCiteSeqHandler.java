@@ -99,119 +99,7 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
-            UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
-            TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS, null);
-
-            job.getLogger().debug("preparing cDNA and CITE-seq files");
-
-            Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
-                    FieldKey.fromString("rowid"),
-                    FieldKey.fromString("sortId/stimId/animalId"),
-                    FieldKey.fromString("sortId/stimId/stim"),
-                    FieldKey.fromString("sortId/population"),
-                    FieldKey.fromString("citeseqReadsetId"),
-                    FieldKey.fromString("citeseqReadsetId/totalFiles"),
-                    FieldKey.fromString("citeseqPanel"),
-                    FieldKey.fromString("status"))
-            );
-
-            HashMap<Integer, Integer> readsetToCiteSeqMap = new HashMap<>();
-            HashMap<Integer, Set<String>> gexToPanels = new HashMap<>();
-
-            File output = CellRangerVDJUtils.getCDNAInfoFile(outputDir);
-            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(output), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-            {
-                writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "CiteSeqReadsetId", "HasCiteSeqReads", "CiteseqPanel"});
-                List<Readset> cachedReadsets = support.getCachedReadsets();
-                for (Readset rs : cachedReadsets)
-                {
-                    AtomicBoolean hasError = new AtomicBoolean(false);
-                    //find cDNA records using this readset
-                    new TableSelector(cDNAs, colMap.values(), new SimpleFilter(FieldKey.fromString("readsetid"), rs.getRowId()), null).forEachResults(results -> {
-                        writer.writeNext(new String[]{
-                                String.valueOf(rs.getRowId()),
-                                results.getString(FieldKey.fromString("rowid")),
-                                results.getString(FieldKey.fromString("sortId/stimId/animalId")),
-                                results.getString(FieldKey.fromString("sortId/stimId/stim")),
-                                results.getString(FieldKey.fromString("sortId/population")),
-                                String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("citeseqReadsetId"))),
-                                String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("citeseqReadsetId/totalFiles")) > 0),
-                                results.getString(FieldKey.fromString("citeseqPanel")),
-                        });
-
-                        if (results.getObject(FieldKey.fromString("citeseqReadsetId")) == null)
-                        {
-                            hasError.set(true);
-                            return;
-                        }
-
-                        if (StringUtils.trimToNull(results.getString(FieldKey.fromString("citeseqPanel"))) == null)
-                        {
-                            job.getLogger().error("cDNA specifies cite-seq readset but does not list panel: " + results.getString(FieldKey.fromString("rowid")));
-                            hasError.set(true);
-                            return;
-                        }
-
-                        Set<String> panels = gexToPanels.getOrDefault(rs.getRowId(), new HashSet<>());
-                        panels.add(results.getString(FieldKey.fromString("citeseqPanel")));
-                        gexToPanels.put(rs.getRowId(), panels);
-
-                        readsetToCiteSeqMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("citeseqReadsetId")));
-                    });
-
-                    if (hasError.get())
-                    {
-                        throw new PipelineJobException("No CITE-seq readset found for one or more cDNAs. see the file: " + output.getName());
-                    }
-                }
-
-                readsetToCiteSeqMap.forEach((readsetId, citeseqReadsetId) -> support.cacheReadset(citeseqReadsetId, job.getUser()));
-                support.cacheObject(CellRangerVDJUtils.READSET_TO_HASHING_MAP, readsetToCiteSeqMap);
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
-
-            Map<FieldKey, ColumnInfo> barcodeColMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
-                FieldKey.fromString("antibody"),
-                FieldKey.fromString("antibody/adaptersequence")
-            ));
-
-            for (int gexReadsetId : gexToPanels.keySet())
-            {
-                job.getLogger().info("Writing all unique ADTs for readset: " + gexReadsetId);
-                File barcodeOutput = getValidCiteSeqBarcodeFile(outputDir, gexReadsetId);
-                try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER))
-                {
-                    AtomicInteger barcodeCount = new AtomicInteger();
-                    Set<String> found = new HashSet<>();
-                    new TableSelector(cDNAs, barcodeColMap.values(), new SimpleFilter(FieldKey.fromString("name"), gexToPanels.get(gexReadsetId), CompareType.IN), new Sort("antibody")).forEachResults(results -> {
-                        if (found.contains(results.getString(FieldKey.fromString("antibody/adaptersequence"))))
-                        {
-                            return;
-                        }
-
-                        found.add(results.getString(FieldKey.fromString("antibody/adaptersequence")));
-                        barcodeCount.getAndIncrement();
-
-                        writer.writeNext(new String[]{results.getString(FieldKey.fromString("antibody/adaptersequence")), results.getString(FieldKey.fromString("antibody"))});
-                    });
-
-                    job.getLogger().info("Total CITE-seq barcodes written: " + barcodeCount.get());
-                }
-                catch (IOException e)
-                {
-                    throw new PipelineJobException(e);
-                }
-            }
-
-        }
-
-        private File getValidCiteSeqBarcodeFile(File outputDir, int gexReadsetId)
-        {
-            return new File(outputDir, "validADTS." + gexReadsetId + ".csv");
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support,"readsetId", params.optBoolean("excludeFailedcDNA", true));
         }
 
         @Override
@@ -224,6 +112,9 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
         public void processFilesRemote(List<SequenceOutputFile> inputFiles, SequenceOutputHandler.JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
             RecordedAction action = new RecordedAction(getName());
+
+            Map<Integer, Integer> readsetToCiteSeq = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport());
+            ctx.getLogger().debug("total cached readset to GEX/citeseq pairs: " + readsetToCiteSeq.size());
 
             for (SequenceOutputFile so : inputFiles)
             {
@@ -241,13 +132,18 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                File adtWhitelist = getValidCiteSeqBarcodeFile(ctx.getOutputDir(), so.getReadset());
-                File citeSeqMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY, true, adtWhitelist, false);
+                Readset citeseqReadset = ctx.getSequenceSupport().getCachedReadset(readsetToCiteSeq.get(rs.getReadsetId()));
+                if (citeseqReadset == null)
+                {
+                    throw new PipelineJobException("Unable to find Cite-seq readset for GEX readset: " + rs.getReadsetId());
+                }
+
+                File adtWhitelist = CellRangerVDJUtils.getValidCiteSeqBarcodeFile(ctx.getOutputDir(), so.getReadset());
+                File citeSeqMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, citeseqReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY, true, adtWhitelist, false);
                 if (!citeSeqMatrix.exists())
                 {
                     throw new PipelineJobException("Unable to find expected file: " + citeSeqMatrix.getPath());
                 }
-
             }
 
             ctx.addActions(action);

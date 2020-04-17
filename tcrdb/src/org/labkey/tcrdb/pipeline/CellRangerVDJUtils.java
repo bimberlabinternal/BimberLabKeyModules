@@ -11,6 +11,7 @@ import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
@@ -60,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CellRangerVDJUtils
 {
@@ -67,6 +69,7 @@ public class CellRangerVDJUtils
     private File _sourceDir;
 
     public static final String READSET_TO_HASHING_MAP = "readsetToHashingMap";
+    public static final String READSET_TO_CITESEQ_MAP = "readsetToCiteSeqMap";
     private static final String HASHING_CALLS = "Cell Hashing TCR Calls";
 
     public CellRangerVDJUtils(Logger log, File sourceDir)
@@ -75,7 +78,7 @@ public class CellRangerVDJUtils
         _sourceDir = sourceDir;
     }
 
-    public void prepareHashingFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support, String filterField, final boolean skipFailedCdna) throws PipelineJobException
+    public void prepareHashingAndCiteSeqFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support, String filterField, final boolean skipFailedCdna) throws PipelineJobException
     {
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
@@ -84,6 +87,7 @@ public class CellRangerVDJUtils
         _log.debug("preparing cDNA and cell hashing files");
 
         SequenceAnalysisService.get().writeAllCellHashingBarcodes(_sourceDir, job.getUser(), job.getContainer());
+        SequenceAnalysisService.get().writeAllCiteSeqBarcodes(_sourceDir, job.getUser(), job.getContainer());
 
         Map<FieldKey, ColumnInfo> colMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
                 FieldKey.fromString("rowid"),
@@ -94,18 +98,25 @@ public class CellRangerVDJUtils
                 FieldKey.fromString("sortId/hto/sequence"),
                 FieldKey.fromString("hashingReadsetId"),
                 FieldKey.fromString("hashingReadsetId/totalFiles"),
+                FieldKey.fromString("citeseqReadsetId"),
+                FieldKey.fromString("citeseqReadsetId/totalFiles"),
+                FieldKey.fromString("citeseqPanel"),
                 FieldKey.fromString("status"))
         );
 
         File output = getCDNAInfoFile();
         File barcodeOutput = getValidHashingBarcodeFile();
         HashMap<Integer, Integer> readsetToHashingMap = new HashMap<>();
+        HashMap<Integer, Integer> readsetToCiteSeqMap = new HashMap<>();
+        HashMap<Integer, Set<String>> gexToPanels = new HashMap<>();
+
         try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(output), '\t', CSVWriter.NO_QUOTE_CHARACTER); CSVWriter bcWriter = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER))
         {
-            writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HashingReadsetId", "HasHashingReads", "HTO_Name", "HTO_Seq"});
+            writer.writeNext(new String[]{"ReadsetId", "CDNA_ID", "AnimalId", "Stim", "Population", "HashingReadsetId", "HasHashingReads", "HTO_Name", "HTO_Seq", "CiteSeqReadsetId", "HasCiteSeqReads", "CiteSeqPanel"});
             List<Readset> cachedReadsets = support.getCachedReadsets();
             Set<String> distinctHTOs = new HashSet<>();
             Set<Boolean> hashingStatus = new HashSet<>();
+            Set<Boolean> citeseqStatus = new HashSet<>();
             for (Readset rs : cachedReadsets)
             {
                 AtomicBoolean hasError = new AtomicBoolean(false);
@@ -126,7 +137,10 @@ public class CellRangerVDJUtils
                             String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("hashingReadsetId"))),
                             String.valueOf(results.getObject(FieldKey.fromString("hashingReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("hashingReadsetId/totalFiles")) > 0),
                             results.getString(FieldKey.fromString("sortId/hto")),
-                            results.getString(FieldKey.fromString("sortId/hto/sequence"))
+                            results.getString(FieldKey.fromString("sortId/hto/sequence")),
+                            String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId")) == null ? "" : results.getInt(FieldKey.fromString("citeseqReadsetId"))),
+                            String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("citeseqReadsetId/totalFiles")) > 0),
+                            results.getString(FieldKey.fromString("citeseqPanel"))
                     });
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
@@ -151,6 +165,20 @@ public class CellRangerVDJUtils
                             hasError.set(true);
                         }
                     }
+
+                    boolean useCiteSeq = results.getObject(FieldKey.fromString("citeseqPanel")) != null;
+                    citeseqStatus.add(useCiteSeq);
+                    if (useCiteSeq && results.getObject(FieldKey.fromString("citeseqReadsetId")) == null)
+                    {
+                        job.getLogger().error("cDNA specifies cite-seq readset but does not list panel: " + results.getString(FieldKey.fromString("rowid")));
+                        hasError.set(true);
+                    }
+
+                    Set<String> panels = gexToPanels.getOrDefault(rs.getRowId(), new HashSet<>());
+                    panels.add(results.getString(FieldKey.fromString("citeseqPanel")));
+                    gexToPanels.put(rs.getRowId(), panels);
+
+                    readsetToCiteSeqMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("citeseqReadsetId")));
                 });
 
                 if (hasError.get())
@@ -162,10 +190,8 @@ public class CellRangerVDJUtils
                 {
                     _log.info("The selected readsets/cDNA records use a mixture of cell hashing and non-hashing.");
                 }
-                else if (hashingStatus.isEmpty())
-                {
-                    //This indicates there are no cDNA records associated with the data
-                }
+
+                //NOTE: hashingStatus.isEmpty() indicates there are no cDNA records associated with the data
             }
 
             // if distinct HTOs is 1, no point in running hashing.  note: presence of hashing readsets is a trigger downstream
@@ -189,10 +215,75 @@ public class CellRangerVDJUtils
             }
 
             support.cacheObject(READSET_TO_HASHING_MAP, readsetToHashingMap);
+            support.cacheObject(READSET_TO_CITESEQ_MAP, readsetToCiteSeqMap);
+            readsetToCiteSeqMap.forEach((readsetId, citeseqReadsetId) -> support.cacheReadset(citeseqReadsetId, job.getUser()));
         }
         catch (IOException e)
         {
             throw new PipelineJobException(e);
+        }
+
+        writeCiteSeqBarcodes(job, gexToPanels, _sourceDir);
+    }
+
+    public static File getValidCiteSeqBarcodeFile(File outputDir, int gexReadsetId)
+    {
+        return new File(outputDir, "validADTS." + gexReadsetId + ".csv");
+    }
+
+    public static File getValidCiteSeqBarcodeMetadataFile(File outputDir, int gexReadsetId)
+    {
+        return new File(outputDir, "validADTS." + gexReadsetId + ".metadata.txt");
+    }
+
+    private void writeCiteSeqBarcodes(PipelineJob job, Map<Integer, Set<String>> gexToPanels, File outputDir) throws PipelineJobException
+    {
+        Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
+        UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
+        TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS, null);
+
+        Map<FieldKey, ColumnInfo> barcodeColMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
+                FieldKey.fromString("antibody"),
+                FieldKey.fromString("antibody/markerName"),
+                FieldKey.fromString("antibody/markerLabel"),
+                FieldKey.fromString("markerLabel"),
+                FieldKey.fromString("antibody/adaptersequence")
+        ));
+
+        for (int gexReadsetId : gexToPanels.keySet())
+        {
+            job.getLogger().info("Writing all unique ADTs for readset: " + gexReadsetId);
+            File barcodeOutput = getValidCiteSeqBarcodeFile(outputDir, gexReadsetId);
+            File metadataOutput = getValidCiteSeqBarcodeMetadataFile(outputDir, gexReadsetId);
+            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(barcodeOutput), ',', CSVWriter.NO_QUOTE_CHARACTER);CSVWriter metaWriter = new CSVWriter(PrintWriters.getPrintWriter(metadataOutput), '\t', CSVWriter.NO_QUOTE_CHARACTER))
+            {
+                metaWriter.writeNext(new String[]{"tagname", "sequence", "markername", "markerlabel"});
+                AtomicInteger barcodeCount = new AtomicInteger();
+                Set<String> found = new HashSet<>();
+                new TableSelector(cDNAs, barcodeColMap.values(), new SimpleFilter(FieldKey.fromString("name"), gexToPanels.get(gexReadsetId), CompareType.IN), new org.labkey.api.data.Sort("antibody")).forEachResults(results -> {
+                    if (found.contains(results.getString(FieldKey.fromString("antibody/adaptersequence"))))
+                    {
+                        return;
+                    }
+
+                    found.add(results.getString(FieldKey.fromString("antibody/adaptersequence")));
+                    barcodeCount.getAndIncrement();
+
+                    writer.writeNext(new String[]{results.getString(FieldKey.fromString("antibody/adaptersequence")), results.getString(FieldKey.fromString("antibody"))});
+
+                    //allow aliasing based on DB
+                    String label = StringUtils.trimToNull(results.getString(FieldKey.fromString("markerLabel"))) == null ? results.getString(FieldKey.fromString("antibody/markerLabel")) : results.getString(FieldKey.fromString("markerLabel"));
+                    String name = StringUtils.trimToNull(results.getString(FieldKey.fromString("markerLabel"))) != null ? results.getString(FieldKey.fromString("markerLabel")) :
+                            StringUtils.trimToNull(results.getString(FieldKey.fromString("antibody/markerName"))) != null ? results.getString(FieldKey.fromString("antibody/markerName")) : results.getString(FieldKey.fromString("antibody"));
+                    writer.writeNext(new String[]{results.getString(FieldKey.fromString("antibody")), results.getString(FieldKey.fromString("antibody/adaptersequence")), name, label});
+                });
+
+                job.getLogger().info("Total CITE-seq barcodes written: " + barcodeCount.get());
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
     }
 
@@ -204,6 +295,16 @@ public class CellRangerVDJUtils
     public static File getCDNAInfoFile(File sourceDir)
     {
         return new File(sourceDir, "cDNAInfo.txt");
+    }
+
+    public File getValidCiteSeqBarcodeFile()
+    {
+        return getValidCiteSeqBarcodeFile(_sourceDir);
+    }
+
+    public static File getValidCiteSeqBarcodeFile(File sourceDir)
+    {
+        return new File(sourceDir, "validCiteSeqBarcodes.csv");
     }
 
     public File getValidHashingBarcodeFile()
@@ -228,7 +329,7 @@ public class CellRangerVDJUtils
 
     public File runRemoteCellHashingTasks(PipelineStepOutput output, String outputCategory, File perCellTsv, Readset rs, SequenceAnalysisJobSupport support, List<String> extraParams, File workingDir, File sourceDir, Integer editDistance, boolean scanEditDistances, Integer genomeId, Integer minCountPerCell) throws PipelineJobException
     {
-        Map<Integer, Integer> readsetToHashing = getCachedReadsetMap(support);
+        Map<Integer, Integer> readsetToHashing = getCachedHashingReadsetMap(support);
         if (readsetToHashing.isEmpty())
         {
             _log.info("No cached hashing readsets, skipping");
@@ -938,15 +1039,20 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static Map<Integer, Integer> getCachedReadsetMap(SequenceAnalysisJobSupport support) throws PipelineJobException
+    public static Map<Integer, Integer> getCachedHashingReadsetMap(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
         return support.getCachedObject(CellRangerVDJUtils.READSET_TO_HASHING_MAP, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, Integer.class, Integer.class));
+    }
+
+    public static Map<Integer, Integer> getCachedCiteSeqReadsetMap(SequenceAnalysisJobSupport support) throws PipelineJobException
+    {
+        return support.getCachedObject(CellRangerVDJUtils.READSET_TO_CITESEQ_MAP, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, Integer.class, Integer.class));
     }
 
     //NOTE: if readset ID is null, this will be interpreted as any readset using hashing
     public boolean useCellHashing(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
-        if (getCachedReadsetMap(support).isEmpty())
+        if (getCachedHashingReadsetMap(support).isEmpty())
             return false;
 
         File htoBarcodeWhitelist = getValidHashingBarcodeFile();
@@ -956,6 +1062,21 @@ public class CellRangerVDJUtils
         }
 
         return SequencePipelineService.get().getLineCount(htoBarcodeWhitelist) > 1;
+    }
+
+    //NOTE: if readset ID is null, this will be interpreted as any readset using hashing
+    public boolean useCiteSeq(SequenceAnalysisJobSupport support) throws PipelineJobException
+    {
+        if (getCachedCiteSeqReadsetMap(support).isEmpty())
+            return false;
+
+        File barcodeWhitelist = getValidCiteSeqBarcodeFile();
+        if (!barcodeWhitelist.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + barcodeWhitelist.getPath());
+        }
+
+        return SequencePipelineService.get().getLineCount(barcodeWhitelist) > 1;
     }
 
     public static class CDNA

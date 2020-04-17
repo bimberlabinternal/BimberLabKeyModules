@@ -17,6 +17,7 @@ import org.labkey.tcrdb.TCRdbModule;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
@@ -82,7 +83,7 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingFilesIfNeeded(job, support, "readsetId", params.optBoolean("excludeFailedcDNA", true));
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support, "readsetId", params.optBoolean("excludeFailedcDNA", true));
         }
 
         @Override
@@ -95,6 +96,8 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
         public void processFilesRemote(List<SequenceOutputFile> inputFiles, SequenceOutputHandler.JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
             RecordedAction action = new RecordedAction(getName());
+            Map<Integer, Integer> readsetToHashing = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport());
+            ctx.getLogger().debug("total cached readset to hashing pairs: " + readsetToHashing.size());
 
             for (SequenceOutputFile so : inputFiles)
             {
@@ -112,7 +115,13 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY);
+                Readset htoReadset = ctx.getSequenceSupport().getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
+                if (htoReadset == null)
+                {
+                    throw new PipelineJobException("Unable to find Hashing/Cite-seq readset for GEX readset: " + rs.getReadsetId());
+                }
+
+                CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY);
             }
 
             ctx.addActions(action);
