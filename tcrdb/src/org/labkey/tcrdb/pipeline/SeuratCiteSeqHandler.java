@@ -1,22 +1,10 @@
 package org.labkey.tcrdb.pipeline;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
-import org.labkey.api.data.ColumnInfo;
-import org.labkey.api.data.CompareType;
-import org.labkey.api.data.Container;
-import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.Sort;
-import org.labkey.api.data.TableInfo;
-import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
-import org.labkey.api.query.FieldKey;
-import org.labkey.api.query.QueryService;
-import org.labkey.api.query.UserSchema;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
@@ -24,21 +12,12 @@ import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.FileType;
-import org.labkey.api.util.PageFlowUtil;
-import org.labkey.api.writer.PrintWriters;
 import org.labkey.tcrdb.TCRdbModule;
-import org.labkey.tcrdb.TCRdbSchema;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
@@ -138,7 +117,7 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Unable to find Cite-seq readset for GEX readset: " + rs.getReadsetId());
                 }
 
-                File adtWhitelist = CellRangerVDJUtils.getValidCiteSeqBarcodeFile(ctx.getOutputDir(), so.getReadset());
+                File adtWhitelist = CellRangerVDJUtils.getValidCiteSeqBarcodeFile(ctx.getSourceDirectory(), so.getReadset());
                 File citeSeqMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, citeseqReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY, true, adtWhitelist, false);
                 if (!citeSeqMatrix.exists())
                 {

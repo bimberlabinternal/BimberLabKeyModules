@@ -462,6 +462,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }
 
                 File barcodes = subsetBarcodes(allCellBarcodes, barcodePrefix);
+                ctx.getFileManager().addIntermediateFile(barcodes);
 
                 // write readset-specific HTO list
                 Integer citeseqReadsetId = CellRangerVDJUtils.getCachedCiteSeqReadsetMap(ctx.getSequenceSupport()).get(rs.getReadsetId());
@@ -477,7 +478,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     throw new PipelineJobException("Unable to find Cite-seq readset for GEX readset: " + rs.getReadsetId());
                 }
 
-                File perReadsetAdts = CellRangerVDJUtils.getValidCiteSeqBarcodeFile(allCellBarcodes.getParentFile(), rs.getReadsetId());
+                File perReadsetAdts = CellRangerVDJUtils.getValidCiteSeqBarcodeFile(ctx.getSourceDirectory(), rs.getReadsetId());
                 long adtsForReadset = !perReadsetAdts.exists() ? 0 : SequencePipelineService.get().getLineCount(perReadsetAdts) - 1;
 
                 if (adtsForReadset > 0)
@@ -485,7 +486,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     ctx.getLogger().info("Total ADTs for readset: " + adtsForReadset);
                     File countMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, citeseqReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCiteSeqHandler.CATEGORY, false, perReadsetAdts, false);
                     citeSeqData.put(barcodePrefix, countMatrix.getParentFile());
-                    File perReadsetAdtMetadata = CellRangerVDJUtils.getValidCiteSeqBarcodeMetadataFile(allCellBarcodes.getParentFile(), rs.getReadsetId());
+                    File perReadsetAdtMetadata = CellRangerVDJUtils.getValidCiteSeqBarcodeMetadataFile(ctx.getSourceDirectory(), rs.getReadsetId());
                     markerMetadata.put(barcodePrefix, perReadsetAdtMetadata);
                 }
                 else
@@ -525,6 +526,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }
 
                 File barcodes = subsetBarcodes(allCellBarcodes, barcodePrefix);
+                ctx.getFileManager().addIntermediateFile(barcodes);
 
                 // write readset-specific HTO list
                 Integer hashingReadsetId = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport()).get(rs.getReadsetId());

@@ -246,14 +246,14 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static File getValidCiteSeqBarcodeFile(File outputDir, int gexReadsetId)
+    public static File getValidCiteSeqBarcodeFile(File sourceDir, int gexReadsetId)
     {
-        return new File(outputDir, "validADTS." + gexReadsetId + ".csv");
+        return new File(sourceDir, "validADTS." + gexReadsetId + ".csv");
     }
 
-    public static File getValidCiteSeqBarcodeMetadataFile(File outputDir, int gexReadsetId)
+    public static File getValidCiteSeqBarcodeMetadataFile(File sourceDir, int gexReadsetId)
     {
-        return new File(outputDir, "validADTS." + gexReadsetId + ".metadata.txt");
+        return new File(sourceDir, "validADTS." + gexReadsetId + ".metadata.txt");
     }
 
     private void writeCiteSeqBarcodes(PipelineJob job, Map<Integer, Set<String>> gexToPanels, File outputDir) throws PipelineJobException
