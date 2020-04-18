@@ -113,7 +113,7 @@ public class SeuratCiteSeqHandler extends AbstractParameterizedOutputHandler<Seq
         {
             RecordedAction action = new RecordedAction(getName());
 
-            Map<Integer, Integer> readsetToCiteSeq = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport());
+            Map<Integer, Integer> readsetToCiteSeq = CellRangerVDJUtils.getCachedCiteSeqReadsetMap(ctx.getSequenceSupport());
             ctx.getLogger().debug("total cached readset to GEX/citeseq pairs: " + readsetToCiteSeq.size());
 
             for (SequenceOutputFile so : inputFiles)
