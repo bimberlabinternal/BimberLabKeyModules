@@ -46,6 +46,7 @@ import java.util.Set;
 public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType("cloupe", false);
+    public static final String SEURAT_MAX_THREADS = "seuratMaxThreads";
 
     public CellRangerSeuratHandler()
     {
@@ -84,7 +85,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }}, true),
                 ToolParameterDescriptor.create("mergeMethod", "Merge Method", "This determines whether any batch correction will be applied when merging datasets.", "ldk-simplecombo", new JSONObject(){{
                     put("storeValues", "simple;cca");
-                }}, "simple")
+                }}, "simple"),
+                ToolParameterDescriptor.create(SEURAT_MAX_THREADS, "Seurat Max Threads", "Because seurat can behave badly with multiple threads, this allows a separate cap to be used from the main job.  This will allow CITE-Seq-Count and other tools to run with more threads.", "ldk-integerfield", null, 2)
         ));
 
         ret.addAll(CellRangerCellHashingHandler.getDefaultHashingParams(false));
@@ -350,6 +352,17 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             {
                 SimpleScriptWrapper wrapper = new SimpleScriptWrapper(ctx.getLogger());
                 wrapper.setWorkingDir(ctx.getWorkingDirectory());
+
+                Integer maxThreads = SequencePipelineService.get().getMaxThreads(ctx.getLogger());
+                if (maxThreads != null)
+                {
+                    if (ctx.getParams().get("seuratMaxThreads") != null)
+                    {
+                        maxThreads = Math.min(ctx.getParams().getInt(SEURAT_MAX_THREADS), maxThreads);
+                        wrapper.addToEnvironment("SEQUENCEANALYSIS_MAX_THREADS", maxThreads.toString());
+                    }
+                }
+
                 wrapper.execute(Arrays.asList("/bin/bash", wrapperScript.getName(), pr.getPath()));
 
                 try
