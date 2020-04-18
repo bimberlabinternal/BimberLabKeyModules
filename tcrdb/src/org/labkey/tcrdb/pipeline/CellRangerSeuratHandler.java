@@ -156,7 +156,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }
             }
 
-            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support,"readsetId", params.optBoolean("excludeFailedcDNA", true));
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support,"readsetId", params.optBoolean("excludeFailedcDNA", true), false, false);
         }
 
         @Override

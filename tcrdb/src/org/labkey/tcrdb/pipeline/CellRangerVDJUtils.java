@@ -78,7 +78,7 @@ public class CellRangerVDJUtils
         _sourceDir = sourceDir;
     }
 
-    public void prepareHashingAndCiteSeqFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support, String filterField, final boolean skipFailedCdna) throws PipelineJobException
+    public void prepareHashingAndCiteSeqFilesIfNeeded(PipelineJob job, SequenceAnalysisJobSupport support, String filterField, final boolean skipFailedCdna, boolean failIfNoHashing, boolean failIfNoCiteSeq) throws PipelineJobException
     {
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
@@ -224,6 +224,16 @@ public class CellRangerVDJUtils
         }
 
         writeCiteSeqBarcodes(job, gexToPanels, _sourceDir);
+
+        if (failIfNoHashing && readsetToHashingMap.isEmpty())
+        {
+            throw new PipelineJobException("Readsets do not use cell hashing");
+        }
+
+        if (failIfNoCiteSeq && readsetToCiteSeqMap.isEmpty())
+        {
+            throw new PipelineJobException("Readsets do not use CITE-seq");
+        }
     }
 
     public static File getValidCiteSeqBarcodeFile(File outputDir, int gexReadsetId)
