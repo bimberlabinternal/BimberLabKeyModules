@@ -240,9 +240,9 @@ public class CellRangerVDJUtils
     {
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         UserSchema tcr = QueryService.get().getUserSchema(job.getUser(), target, TCRdbSchema.NAME);
-        TableInfo cDNAs = tcr.getTable(TCRdbSchema.TABLE_CDNAS, null);
+        TableInfo panels = tcr.getTable(TCRdbSchema.TABLE_CITE_SEQ_PANELS, null);
 
-        Map<FieldKey, ColumnInfo> barcodeColMap = QueryService.get().getColumns(cDNAs, PageFlowUtil.set(
+        Map<FieldKey, ColumnInfo> barcodeColMap = QueryService.get().getColumns(panels, PageFlowUtil.set(
                 FieldKey.fromString("antibody"),
                 FieldKey.fromString("antibody/markerName"),
                 FieldKey.fromString("antibody/markerLabel"),
@@ -260,7 +260,7 @@ public class CellRangerVDJUtils
                 metaWriter.writeNext(new String[]{"tagname", "sequence", "markername", "markerlabel"});
                 AtomicInteger barcodeCount = new AtomicInteger();
                 Set<String> found = new HashSet<>();
-                new TableSelector(cDNAs, barcodeColMap.values(), new SimpleFilter(FieldKey.fromString("name"), gexToPanels.get(gexReadsetId), CompareType.IN), new org.labkey.api.data.Sort("antibody")).forEachResults(results -> {
+                new TableSelector(panels, barcodeColMap.values(), new SimpleFilter(FieldKey.fromString("name"), gexToPanels.get(gexReadsetId), CompareType.IN), new org.labkey.api.data.Sort("antibody")).forEachResults(results -> {
                     if (found.contains(results.getString(FieldKey.fromString("antibody/adaptersequence"))))
                     {
                         return;
