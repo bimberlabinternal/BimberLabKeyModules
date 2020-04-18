@@ -145,40 +145,50 @@ public class CellRangerVDJUtils
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
                     hashingStatus.add(useCellHashing);
-                    if (useCellHashing && results.getObject(FieldKey.fromString("hashingReadsetId")) == null)
+                    if (useCellHashing)
                     {
-                        hasError.set(true);
-                    }
-                    else if (useCellHashing)
-                    {
-                        readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
-
-                        String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
-                        if (!distinctHTOs.contains(hto) && !StringUtils.isEmpty(results.getString(FieldKey.fromString("sortId/hto/sequence"))))
+                        if (results.getObject(FieldKey.fromString("hashingReadsetId")) == null)
                         {
-                            distinctHTOs.add(hto);
-                            bcWriter.writeNext(new String[]{results.getString(FieldKey.fromString("sortId/hto/sequence")), results.getString(FieldKey.fromString("sortId/hto"))});
-                        }
-
-                        if (results.getObject(FieldKey.fromString("sortId/hto/sequence")) == null)
-                        {
+                            job.getLogger().error("cDNA specifies HTO, but does not list a hashing readset: " + results.getString(FieldKey.fromString("rowid")));
                             hasError.set(true);
+                        }
+                        else
+                        {
+                            readsetToHashingMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("hashingReadsetId")));
+
+                            String hto = results.getString(FieldKey.fromString("sortId/hto")) + "<>" + results.getString(FieldKey.fromString("sortId/hto/sequence"));
+                            if (!distinctHTOs.contains(hto) && !StringUtils.isEmpty(results.getString(FieldKey.fromString("sortId/hto/sequence"))))
+                            {
+                                distinctHTOs.add(hto);
+                                bcWriter.writeNext(new String[]{results.getString(FieldKey.fromString("sortId/hto/sequence")), results.getString(FieldKey.fromString("sortId/hto"))});
+                            }
+
+                            if (results.getObject(FieldKey.fromString("sortId/hto/sequence")) == null)
+                            {
+                                job.getLogger().error("Unable to find sequence for HTO: " + results.getString(FieldKey.fromString("sortId/hto")));
+                                hasError.set(true);
+                            }
                         }
                     }
 
                     boolean useCiteSeq = results.getObject(FieldKey.fromString("citeseqPanel")) != null;
                     citeseqStatus.add(useCiteSeq);
-                    if (useCiteSeq && results.getObject(FieldKey.fromString("citeseqReadsetId")) == null)
+                    if (useCiteSeq)
                     {
-                        job.getLogger().error("cDNA specifies cite-seq readset but does not list panel: " + results.getString(FieldKey.fromString("rowid")));
-                        hasError.set(true);
+                        if (results.getObject(FieldKey.fromString("citeseqReadsetId")) == null)
+                        {
+                            job.getLogger().error("cDNA specifies cite-seq readset but does not list panel: " + results.getString(FieldKey.fromString("rowid")));
+                            hasError.set(true);
+                        }
+                        else
+                        {
+                            Set<String> panels = gexToPanels.getOrDefault(rs.getRowId(), new HashSet<>());
+                            panels.add(results.getString(FieldKey.fromString("citeseqPanel")));
+                            gexToPanels.put(rs.getRowId(), panels);
+
+                            readsetToCiteSeqMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("citeseqReadsetId")));
+                        }
                     }
-
-                    Set<String> panels = gexToPanels.getOrDefault(rs.getRowId(), new HashSet<>());
-                    panels.add(results.getString(FieldKey.fromString("citeseqPanel")));
-                    gexToPanels.put(rs.getRowId(), panels);
-
-                    readsetToCiteSeqMap.put(rs.getReadsetId(), results.getInt(FieldKey.fromString("citeseqReadsetId")));
                 });
 
                 if (hasError.get())
