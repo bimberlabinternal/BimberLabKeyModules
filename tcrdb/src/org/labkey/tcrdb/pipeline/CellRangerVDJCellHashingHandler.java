@@ -282,7 +282,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         String delim = description.length() > 0 ? "\n" : "";
 
                         DecimalFormat fmt = new DecimalFormat("##.##%");
-                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionOfInputDiscordant", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative", "UniqueHtos", "UnknownHtoMatchingKnown"))
+                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionOfInputDiscordant", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative", "UniqueHtos", "UnknownTagMatchingKnown"))
                         {
                             if (valueMap.get(metricName) != null)
                             {
