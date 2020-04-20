@@ -36,6 +36,7 @@ import org.labkey.api.reader.FastaLoader;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepOutput;
@@ -315,16 +316,6 @@ public class CellRangerVDJUtils
     public static File getCDNAInfoFile(File sourceDir)
     {
         return new File(sourceDir, "cDNAInfo.txt");
-    }
-
-    public File getValidCiteSeqBarcodeFile()
-    {
-        return getValidCiteSeqBarcodeFile(_sourceDir);
-    }
-
-    public static File getValidCiteSeqBarcodeFile(File sourceDir)
-    {
-        return new File(sourceDir, "validCiteSeqBarcodes.csv");
     }
 
     public File getValidHashingBarcodeFile()
@@ -1085,18 +1076,21 @@ public class CellRangerVDJUtils
     }
 
     //NOTE: if readset ID is null, this will be interpreted as any readset using hashing
-    public boolean useCiteSeq(SequenceAnalysisJobSupport support) throws PipelineJobException
+    public boolean useCiteSeq(SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
     {
-        if (getCachedCiteSeqReadsetMap(support).isEmpty())
+        Map<Integer, Integer> gexToCiteMap = getCachedCiteSeqReadsetMap(support);
+        if (gexToCiteMap.isEmpty())
             return false;
 
-        File barcodeWhitelist = getValidCiteSeqBarcodeFile();
-        if (!barcodeWhitelist.exists())
+        for (SequenceOutputFile so : inputFiles)
         {
-            throw new PipelineJobException("Unable to find file: " + barcodeWhitelist.getPath());
+            if (gexToCiteMap.containsKey(so.getReadset()))
+            {
+                return true;
+            }
         }
 
-        return SequencePipelineService.get().getLineCount(barcodeWhitelist) > 1;
+        return false;
     }
 
     public static class CDNA

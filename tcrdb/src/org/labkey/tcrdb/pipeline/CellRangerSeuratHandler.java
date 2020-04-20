@@ -420,7 +420,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 ctx.getLogger().info("Cell hashing was not used");
             }
 
-            if (utils.useCiteSeq(ctx.getSequenceSupport()))
+            if (utils.useCiteSeq(ctx.getSequenceSupport(), inputFiles))
             {
                 runCiteSeq(ctx, inputFiles, seuratObj, action, utils);
             }
