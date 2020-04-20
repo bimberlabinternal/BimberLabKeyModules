@@ -1063,7 +1063,8 @@ public class CellRangerVDJUtils
     //NOTE: if readset ID is null, this will be interpreted as any readset using hashing
     public boolean useCellHashing(SequenceAnalysisJobSupport support) throws PipelineJobException
     {
-        if (getCachedHashingReadsetMap(support).isEmpty())
+        Map<Integer, Integer> gexToHashingMap = getCachedHashingReadsetMap(support);
+        if (gexToHashingMap == null || gexToHashingMap.isEmpty())
             return false;
 
         File htoBarcodeWhitelist = getValidHashingBarcodeFile();
@@ -1079,7 +1080,7 @@ public class CellRangerVDJUtils
     public boolean useCiteSeq(SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
     {
         Map<Integer, Integer> gexToCiteMap = getCachedCiteSeqReadsetMap(support);
-        if (gexToCiteMap.isEmpty())
+        if (gexToCiteMap == null || gexToCiteMap.isEmpty())
             return false;
 
         for (SequenceOutputFile so : inputFiles)
