@@ -665,6 +665,14 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 bashWriter.println("sudo $DOCKER pull bimberlab/oosap");
                 bashWriter.println("sudo $DOCKER run --rm=true " + ramOpts + "-v \"${WD}:/work\" -v \"${HOME}:/homeDir\" -u $UID -e USERID=$UID -w /work -e HOME=/homeDir bimberlab/oosap Rscript --vanilla " + rScript.getName());
 
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            try
+            {
                 SimpleScriptWrapper wrapper = new SimpleScriptWrapper(ctx.getLogger());
                 wrapper.setWorkingDir(seuratObj.getParentFile());
                 wrapper.execute(Arrays.asList("/bin/bash", bashScript.getName()));
