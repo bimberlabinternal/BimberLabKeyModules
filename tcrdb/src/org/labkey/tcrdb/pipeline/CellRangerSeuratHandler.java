@@ -608,12 +608,11 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             return barcodes;
         }
 
-        private void appendCiteSeqToSeurat(JobContext ctx, File seuratObj, Map<String, File> citeseqData, Map<String, File> markerMetadata) throws PipelineJobException
+        private void appendCiteSeqToSeurat(JobContext ctx, File seuratObj, Map<String, File> citeseqData, Map<String, File> perReadsetAdtMap) throws PipelineJobException
         {
             File rScript = new File(seuratObj.getParentFile(), "appendCiteSeq.R");
             File bashScript = new File(seuratObj.getParentFile(), "runDockerForCiteSeq.sh");
 
-            File featureTable = new File(seuratObj.getParentFile(), "");
             File localRoot = seuratObj.getParentFile();
 
             Set<File> toDelete = new HashSet<>();
@@ -632,18 +631,18 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 rWriter.println(")");
                 rWriter.println("");
 
-                rWriter.println("markerMetadata <- list(");
+                rWriter.println("perReadsetAdtMap <- list(");
                 idx = 0;
-                for (String barcodePrefix : markerMetadata.keySet()) {
+                for (String barcodePrefix : perReadsetAdtMap.keySet()) {
                     idx++;
-                    String localCopy = ensureLocalCopy(localRoot, toDelete, markerMetadata.get(barcodePrefix), ctx.getLogger());
+                    String localCopy = ensureLocalCopy(localRoot, toDelete, perReadsetAdtMap.get(barcodePrefix), ctx.getLogger());
                     rWriter.println("'" + barcodePrefix + "' = '" + localCopy + "'" + (idx < citeseqData.size() ? "," : ""));
                 }
                 rWriter.println(")");
                 rWriter.println("");
 
                 rWriter.println("for (barcodePrefix in names(citeSeq)) {");
-                rWriter.println("   seuratObj <- OOSAP:::AppendCiteSeq(seuratObj = seuratObj, countMatrixDir = citeSeq[[barcodePrefix]], barcodePrefix = barcodePrefix, featureLabelTable = " + featureTable.getName() + ")");
+                rWriter.println("   seuratObj <- OOSAP:::AppendCiteSeq(seuratObj = seuratObj, countMatrixDir = citeSeq[[barcodePrefix]], barcodePrefix = barcodePrefix, featureLabelTable = perReadsetAdtMap[[barcodePrefix]])");
                 rWriter.println("}");
                 rWriter.println("if (ncol(seuratObj) != initialCells) { stop('Cell count not equal after appending cite-seq calls!') }");
                 rWriter.println("saveRDS(seuratObj, file = '" + seuratObj.getName() + "')");
