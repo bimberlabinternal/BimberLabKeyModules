@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.citeseq_panels ADD markerLabel varchar(4000);

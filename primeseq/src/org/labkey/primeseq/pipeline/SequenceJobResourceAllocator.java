@@ -277,10 +277,32 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddSSD(job, engine, lines);
 
             possiblyAddGScratch(job, engine, lines);
+            possiblyAddCOVID(job, lines);
         }
         else
         {
             job.getLogger().error("This job type does not implement HasJobParams");
+        }
+    }
+
+    private void possiblyAddCOVID(PipelineJob job, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.covidRelated"));
+        if (val == null)
+        {
+            return;
+        }
+
+        boolean parsed = Boolean.parseBoolean(val);
+        if (parsed)
+        {
+            job.getLogger().info("Flagging as COVID-related");
+            String line = "#SBATCH --comment=COVID";
+            if (!lines.contains(line))
+            {
+                lines.add(line);
+            }
         }
     }
 

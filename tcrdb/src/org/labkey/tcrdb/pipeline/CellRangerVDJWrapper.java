@@ -218,7 +218,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             }
 
             boolean excludeFailedcDNA = getProvider().getParameterByName("excludeFailedcDNA").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, true);
-            getUtils().prepareHashingFilesIfNeeded(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport(), "enrichedReadsetId", excludeFailedcDNA);
+            getUtils().prepareHashingAndCiteSeqFilesIfNeeded(getPipelineCtx().getJob(), getPipelineCtx().getSequenceSupport(), "enrichedReadsetId", excludeFailedcDNA, false, false);
         }
 
         private File getGenomeFasta()

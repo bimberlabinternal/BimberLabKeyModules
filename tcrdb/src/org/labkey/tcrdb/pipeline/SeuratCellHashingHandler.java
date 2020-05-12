@@ -8,7 +8,6 @@ import org.labkey.api.pipeline.RecordedAction;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
-import org.labkey.api.sequenceanalysis.pipeline.CommandLineParam;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
@@ -16,8 +15,9 @@ import org.labkey.api.util.FileType;
 import org.labkey.tcrdb.TCRdbModule;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
@@ -26,18 +26,20 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
 
     public SeuratCellHashingHandler()
     {
-        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "Seurat GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the cell barcodes present in the saved Seurat object.", null, Arrays.asList(
-                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
-                    put("checked", true);
-                }}, true),
-                ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
-                ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true),
-                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell (Cell Hashing)", null, "ldk-integerfield", null, 5),
-                ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately..", "checkbox", new JSONObject()
-                {{
-                    put("checked", true);
-                }}, false)
-        ));
+        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "Seurat GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the cell barcodes present in the saved Seurat object.", null, getDefaultParams());
+    }
+
+    private static List<ToolParameterDescriptor> getDefaultParams()
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>();
+        ret.add(ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately..", "checkbox", new JSONObject()
+        {{
+            put("checked", true);
+        }}, false));
+
+        ret.addAll(CellRangerCellHashingHandler.getDefaultHashingParams(true));
+
+        return ret;
     }
 
     @Override
@@ -81,7 +83,7 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingFilesIfNeeded(job, support, "readsetId", params.optBoolean("excludeFailedcDNA", true));
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support, "readsetId", params.optBoolean("excludeFailedcDNA", true), true, false);
         }
 
         @Override
@@ -94,16 +96,14 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
         public void processFilesRemote(List<SequenceOutputFile> inputFiles, SequenceOutputHandler.JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
             RecordedAction action = new RecordedAction(getName());
+            Map<Integer, Integer> readsetToHashing = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport());
+            ctx.getLogger().debug("total cached readset to hashing pairs: " + readsetToHashing.size());
 
             for (SequenceOutputFile so : inputFiles)
             {
                 ctx.getLogger().info("processing file: " + so.getName());
 
-                File barcodes = new File(so.getFile().getParentFile(), so.getFile().getName().replaceAll("seurat.rds", "cellBarcodes.csv"));
-                if (!barcodes.exists())
-                {
-                    throw new PipelineJobException("Unable to find expected cell barcodes file.  This might indicate the seurat object was created with an older version of the pipeline.  Expected: " + barcodes.getPath());
-                }
+                File barcodes = getBarcodesFromSeurat(so.getFile());
 
                 Readset rs = ctx.getSequenceSupport().getCachedReadset(so.getReadset());
                 if (rs == null)
@@ -115,7 +115,13 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY);
+                Readset htoReadset = ctx.getSequenceSupport().getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
+                if (htoReadset == null)
+                {
+                    throw new PipelineJobException("Unable to find Hashing/Cite-seq readset for GEX readset: " + rs.getReadsetId());
+                }
+
+                CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, CATEGORY);
             }
 
             ctx.addActions(action);
@@ -132,5 +138,16 @@ public class SeuratCellHashingHandler extends AbstractParameterizedOutputHandler
                 }
             }
         }
+    }
+
+    public static File getBarcodesFromSeurat(File seuratObj) throws PipelineJobException
+    {
+        File barcodes = new File(seuratObj.getParentFile(), seuratObj.getName().replaceAll("seurat.rds", "cellBarcodes.csv"));
+        if (!barcodes.exists())
+        {
+            throw new PipelineJobException("Unable to find expected cell barcodes file.  This might indicate the seurat object was created with an older version of the pipeline.  Expected: " + barcodes.getPath());
+        }
+
+        return barcodes;
     }
 }
