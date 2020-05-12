@@ -48,21 +48,24 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
     public CellRangerVDJCellHashingHandler()
     {
-        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger VDJ Import", "This will either directly import data (if cell hashing is not used), or run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger VDJ and then import.", new LinkedHashSet<>(PageFlowUtil.set("tcrdb/field/AssaySelectorField.js")), Arrays.asList(
+        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger VDJ Import", "This will either directly import data (if cell hashing is not used), or run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger VDJ and then import.", new LinkedHashSet<>(PageFlowUtil.set("tcrdb/field/AssaySelectorField.js")), getDefaultParams());
+    }
+
+    private static List<ToolParameterDescriptor> getDefaultParams()
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>(Arrays.asList(
                 ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", null, null),
                 ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, true),
-                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
-                    put("checked", true);
-                }}, true),
-                ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
-                ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true),
-                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, false)
         ));
+
+        ret.addAll(CellRangerCellHashingHandler.getDefaultHashingParams(true));
+
+        return ret;
     }
 
     @Override
@@ -107,7 +110,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
-            utils.prepareHashingFilesIfNeeded(job, support, "enrichedReadsetId", params.optBoolean("excludeFailedcDNA", true));
+            utils.prepareHashingAndCiteSeqFilesIfNeeded(job, support, "enrichedReadsetId", params.optBoolean("excludeFailedcDNA", true), true, false);
         }
 
         @Override
@@ -279,7 +282,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         String delim = description.length() > 0 ? "\n" : "";
 
                         DecimalFormat fmt = new DecimalFormat("##.##%");
-                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionOfInputDiscordant", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative", "UniqueHtos", "UnknownHtoMatchingKnown"))
+                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionOfInputDiscordant", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative", "UniqueHtos", "UnknownTagMatchingKnown"))
                         {
                             if (valueMap.get(metricName) != null)
                             {

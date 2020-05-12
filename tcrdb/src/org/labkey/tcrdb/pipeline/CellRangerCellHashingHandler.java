@@ -42,17 +42,37 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
 
     public CellRangerCellHashingHandler()
     {
-        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/CellRangerAggrTextarea.js")), Arrays.asList(
-                ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
-                    put("checked", true);
-                }}, true),
-                ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 1),
-                ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true),
-                ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5),
+        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger GEX/Cell Hashing", "This will run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/CellRangerAggrTextarea.js")), getDefaultParams());
+    }
+
+    private static List<ToolParameterDescriptor> getDefaultParams()
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>(getDefaultHashingParams(true));
+        ret.add(
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
-                }}, false)
+                }}, true)
+        );
+
+        return ret;
+    }
+
+    public static List<ToolParameterDescriptor> getDefaultHashingParams(boolean includeExcludeFailedcDNA)
+    {
+        List<ToolParameterDescriptor> ret = new ArrayList<>(Arrays.asList(
+            ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
+                put("checked", false);
+            }}, false),
+            ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 3),
+            ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5)
         ));
+
+        if (includeExcludeFailedcDNA)
+        {
+            ret.add(ToolParameterDescriptor.create("excludeFailedcDNA", "Exclude Failed cDNA", "If selected, cDNAs with non-blank status fields will be omitted", "checkbox", null, true));
+        }
+
+        return ret;
     }
 
     @Override
@@ -96,7 +116,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingFilesIfNeeded(job, support, "readsetId", params.optBoolean("excludeFailedcDNA", true));
+            new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support, "readsetId", params.optBoolean("excludeFailedcDNA", true), true, false);
         }
 
         @Override
@@ -109,6 +129,8 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         public void processFilesRemote(List<SequenceOutputFile> inputFiles, SequenceOutputHandler.JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
             RecordedAction action = new RecordedAction(getName());
+            Map<Integer, Integer> readsetToHashing = CellRangerVDJUtils.getCachedHashingReadsetMap(ctx.getSequenceSupport());
+            ctx.getLogger().debug("total cached readset to hashing pairs: " + readsetToHashing.size());
 
             for (SequenceOutputFile so : inputFiles)
             {
@@ -179,7 +201,13 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
                     throw new PipelineJobException("Readset lacks a rowId for outputfile: " + so.getRowid());
                 }
 
-                processBarcodeFile(ctx, perCellTsv, rs, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), true, CATEGORY);
+                Readset htoReadset = ctx.getSequenceSupport().getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
+                if (htoReadset == null)
+                {
+                    throw new PipelineJobException("Unable to find Hashing/Cite-seq readset for GEX readset: " + rs.getReadsetId());
+                }
+
+                processBarcodeFile(ctx, perCellTsv, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), true, CATEGORY);
             }
 
             ctx.addActions(action);
@@ -198,20 +226,22 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         }
     }
 
-    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category) throws PipelineJobException
+    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, Readset htoOrCiteReadset, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category) throws PipelineJobException
     {
-        CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
-        return processBarcodeFile(ctx, perCellTsv, rs, genomeId, action, commandArgs, writeLoupe, category, true, utils.getValidHashingBarcodeFile());
+        return processBarcodeFile(ctx, perCellTsv, rs, htoOrCiteReadset, genomeId, action, commandArgs, writeLoupe, category, true);
     }
 
-    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean createOutputFiles, File htoBarcodeWhitelist) throws PipelineJobException
+    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, Readset htoOrCiteReadset, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean generateHtoCalls) throws PipelineJobException
+    {
+        CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
+        return processBarcodeFile(ctx, perCellTsv, rs, htoOrCiteReadset, genomeId, action, commandArgs, writeLoupe, category, true, utils.getValidHashingBarcodeFile(), generateHtoCalls);
+    }
+
+    public static File processBarcodeFile(SequenceOutputHandler.JobContext ctx, File perCellTsv, Readset rs, Readset htoOrCiteReadset, int genomeId, RecordedAction action, List<String> commandArgs, boolean writeLoupe, String category, boolean createOutputFiles, File htoBarcodeWhitelist, boolean generateHtoCalls) throws PipelineJobException
     {
         ctx.getLogger().debug("inspecting file: " + perCellTsv.getPath());
 
         CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
-
-        Map<Integer, Integer> readsetToHashing = CellRangerVDJUtils.getCachedReadsetMap(ctx.getSequenceSupport());
-        ctx.getLogger().debug("total cached readset/HTO pairs: " + readsetToHashing.size());
 
         //prepare whitelist of cell indexes
         File cellBarcodeWhitelist = utils.getValidCellIndexFile();
@@ -265,27 +295,26 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         }
         ctx.getFileManager().addIntermediateFile(htoBarcodeWhitelist);
 
-        Readset htoReadset = ctx.getSequenceSupport().getCachedReadset(readsetToHashing.get(rs.getReadsetId()));
-        if (htoReadset == null)
-        {
-            throw new PipelineJobException("Unable to find HTO readset for readset: " + rs.getReadsetId());
-        }
-
-        //run CiteSeqCount.  this will use Multiseq to make calls per cell
+        //run CiteSeqCount.
         List<String> extraParams = new ArrayList<>();
         extraParams.addAll(commandArgs);
 
         boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
-        int editDistance = ctx.getParams().optInt("editDistance", 2);
+        int editDistance = ctx.getParams().optInt("editDistance", 3);
         int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
         String basename = FileUtil.makeLegalName(rs.getName());
-        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, minCountPerCell, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId);
+        File cellToHto = SequencePipelineService.get().runCiteSeqCount(output, category, htoOrCiteReadset, htoBarcodeWhitelist, cellBarcodeWhitelist, ctx.getWorkingDirectory(), basename, ctx.getLogger(), extraParams, false, minCountPerCell, ctx.getSourceDirectory(), editDistance, scanEditDistances, rs, genomeId, generateHtoCalls);
         ctx.getFileManager().addStepOutputs(action, output);
 
         ctx.getFileManager().addOutput(action, category, cellToHto);
-        ctx.getFileManager().addOutput(action, "Cell Hashing GEX Report", new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html"));
+        File html = new File(cellToHto.getParentFile(), FileUtil.getBaseName(cellToHto.getName()) + ".html");
+        if (html.exists())
+        {
+            ctx.getFileManager().addOutput(action, "Cell Hashing Report", html);
+        }
+
         File citeSeqCountUnknownOutput = new File(cellToHto.getParentFile(), "citeSeqUnknownBarcodes.txt");
         ctx.getFileManager().addOutput(action,"CiteSeqCount Unknown Barcodes", citeSeqCountUnknownOutput);
 

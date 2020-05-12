@@ -30,6 +30,7 @@ public class TCRdbUserSchema extends SimpleUserSchema
 
         DefaultSchema.registerProvider(TCRdbSchema.NAME, new DefaultSchema.SchemaProvider(m)
         {
+            @Override
             public QuerySchema createSchema(final DefaultSchema schema, Module module)
             {
                 return new TCRdbUserSchema(schema.getUser(), schema.getContainer(), dbSchema);
@@ -44,15 +45,11 @@ public class TCRdbUserSchema extends SimpleUserSchema
         if (TCRdbSchema.TABLE_LIBRARIES.equalsIgnoreCase(name))
         {
             // TODO: assert cf is null or not default?
-            return new SharedDataTable(this, sourceTable).init();
+            return new SharedDataTable<>(this, sourceTable).init();
         }
         else if (TCRdbSchema.TABLE_CITE_SEQ_ANTIBODIES.equalsIgnoreCase(name))
         {
             return new ContainerScopedTable<>(this, sourceTable, cf, "antibodyName").init();
-        }
-        else if (TCRdbSchema.TABLE_CITE_SEQ_PANELS.equalsIgnoreCase(name))
-        {
-            return new ContainerScopedTable<>(this, sourceTable, cf, "name").init();
         }
 
         return super.createWrappedTable(name, sourceTable, cf);

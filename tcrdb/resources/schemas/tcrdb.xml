@@ -377,7 +377,7 @@
                 <columnTitle>Cite-Seq Panel</columnTitle>
                 <fk>
                     <fkDbSchema>tcrdb</fkDbSchema>
-                    <fkTable>citeseq_panels</fkTable>
+                    <fkTable>citeseq_panel_names</fkTable>
                     <fkColumnName>name</fkColumnName>
                     <fkDisplayColumnName useRawValue="true"/>
                 </fk>
@@ -721,6 +721,10 @@
                     <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
+            <column columnName="markerLabel">
+                <columnTitle>Marker/Antigen Label In Panel</columnTitle>
+                <description>If the desired label is different than the default label for this marker, enter a value</description>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>
@@ -750,7 +754,7 @@
     </table>
     <table tableName="citeseq_antibodies" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
-        <tableTitle>CITE-Seq Panels</tableTitle>
+        <tableTitle>CITE-Seq Antibodies</tableTitle>
         <columns>
             <column columnName="rowid">
                 <columnTitle>Row Id</columnTitle>
@@ -760,7 +764,10 @@
                 <columnTitle>Antibody Name</columnTitle>
             </column>
             <column columnName="markerName">
-                <columnTitle>Marker/Antigen</columnTitle>
+                <columnTitle>Marker/Antigen Name</columnTitle>
+            </column>
+            <column columnName="markerLabel">
+                <columnTitle>Marker/Antigen Label</columnTitle>
             </column>
             <column columnName="cloneName">
                 <columnTitle>Clone Name</columnTitle>
