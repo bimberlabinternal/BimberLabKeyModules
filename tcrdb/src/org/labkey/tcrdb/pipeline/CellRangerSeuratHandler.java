@@ -761,7 +761,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 rWriter.println("initialCells <- ncol(seuratObj)");
                 rWriter.println("callsFiles <- list(");
                 int idx = 0;
-                for (String barcodePrefix : finalCalls.keySet()) {
+                for (String barcodePrefix : finalCalls.keySet())
+                {
                     idx++;
                     rWriter.println("'" + barcodePrefix + "' = '" + finalCalls.get(barcodePrefix).getName() + "'" + (idx < finalCalls.size() ? "," : ""));
                 }
@@ -785,20 +786,20 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 String ramOpts = "";
                 if (maxRam != null)
                 {
-                    ramOpts = " --memory=" +maxRam  +"g ";
+                    ramOpts = " --memory=" + maxRam + "g ";
                 }
 
                 bashWriter.println("sudo $DOCKER pull bimberlab/oosap");
                 bashWriter.println("sudo $DOCKER run --rm=true " + ramOpts + "-v \"${WD}:/work\" -v \"${HOME}:/homeDir\" -u $UID -e USERID=$UID -w /work -e HOME=/homeDir bimberlab/oosap Rscript --vanilla " + rScript.getName());
-
-                SimpleScriptWrapper wrapper = new SimpleScriptWrapper(ctx.getLogger());
-                wrapper.setWorkingDir(seuratObj.getParentFile());
-                wrapper.execute(Arrays.asList("/bin/bash", bashScript.getName()));
             }
             catch (IOException e)
             {
                 throw new PipelineJobException(e);
             }
+
+            SimpleScriptWrapper wrapper = new SimpleScriptWrapper(ctx.getLogger());
+            wrapper.setWorkingDir(seuratObj.getParentFile());
+            wrapper.execute(Arrays.asList("/bin/bash", bashScript.getName()));
         }
 
         @Override
