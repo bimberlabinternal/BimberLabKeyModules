@@ -21,7 +21,7 @@ print('Updating future.globals.maxSize')
 options(future.globals.maxSize = Inf)
 
 print('Global variables: ')
-for (v in c('outPrefix', 'resolutionToUse', 'dimsToUse', 'minDimsToUse', 'doCellFilter', 'doCellCycle', 'useSCTransform', 'runSingleR', 'mergeMethod')){
+for (v in c('outPrefix', 'resolutionToUse', 'dimsToUse', 'minDimsToUse', 'doCellFilter', 'doCellCycle', 'useSCTransform', 'runSingleR', 'mergeMethod', 'skipProcessing')){
     if (exists(v)){
         print(paste0(v, ': ', get(v)))
     } else {
@@ -76,9 +76,13 @@ print(seuratObj)
 
 ```{r InitialProcessing}
 
-seuratObj <- ProcessSeurat1(seuratObj, variableGeneTable = paste0(outPrefix, '.variableGenes.txt'), doCellFilter = doCellFilter, doCellCycle = doCellCycle, useSCTransform = useSCTransform, saveFile = saveFile)
+if (!skipProcessing) {
+    seuratObj <- ProcessSeurat1(seuratObj, variableGeneTable = paste0(outPrefix, '.variableGenes.txt'), doCellFilter = doCellFilter, doCellCycle = doCellCycle, useSCTransform = useSCTransform, saveFile = saveFile)
 
-print(seuratObj)
+    print(seuratObj)
+} else {
+    print('Downstream processing will be skipped')
+}
 
 ```
 
@@ -86,11 +90,13 @@ print(seuratObj)
 
 ```{r DimRedux}
 
-seuratObj <- FindClustersAndDimRedux(seuratObj, dimsToUse = dimsToUse, minDimsToUse = minDimsToUse, saveFile = saveFile)
+if (!skipProcessing) {
+    seuratObj <- FindClustersAndDimRedux(seuratObj, dimsToUse = dimsToUse, minDimsToUse = minDimsToUse, saveFile = saveFile)
 
-Find_Markers(seuratObj, resolutionToUse = resolutionToUse, outFile = paste0(outPrefix, '.markers.txt'), saveFileMarkers = paste0(outPrefix, '.markers.rds'))
+    Find_Markers(seuratObj, resolutionToUse = resolutionToUse, outFile = paste0(outPrefix, '.markers.txt'), saveFileMarkers = paste0(outPrefix, '.markers.rds'))
 
-print(seuratObj)
+    print(seuratObj)
+}
 
 ```
 
@@ -98,7 +104,7 @@ print(seuratObj)
 
 ```{r SingleR}
 
-if (runSingleR) {
+if (!skipProcessing && runSingleR) {
     tryCatch({
         seuratObj <- RunSingleR(seuratObj = seuratObj, resultTableFile = paste0(outPrefix, '.singleR.txt'))
         saveRDS(seuratObj, file = saveFile)
@@ -123,18 +129,20 @@ if (runSingleR) {
 
 ```{r Phenotypes}
 
-PlotImmuneMarkers(seuratObj, reduction = 'tsne')
+if ( !skipProcessing ) {
+    PlotImmuneMarkers(seuratObj, reduction = 'tsne')
 
-PlotImmuneMarkers(seuratObj, reduction = 'umap')
+    PlotImmuneMarkers(seuratObj, reduction = 'umap')
 
-if (length(unique(seuratObj$BarcodePrefix)) > 1) {
-    print(Seurat::DimPlot(seuratObj, reduction = 'pca', group.by = 'BarcodePrefix', label = T))
-    print(Seurat::DimPlot(seuratObj, reduction = 'tsne', group.by = 'BarcodePrefix', label = T))
-    print(Seurat::DimPlot(seuratObj, reduction = 'umap', group.by = 'BarcodePrefix', label = T))
+    if (length(unique(seuratObj$BarcodePrefix)) > 1) {
+        print(Seurat::DimPlot(seuratObj, reduction = 'pca', group.by = 'BarcodePrefix', label = T))
+        print(Seurat::DimPlot(seuratObj, reduction = 'tsne', group.by = 'BarcodePrefix', label = T))
+        print(Seurat::DimPlot(seuratObj, reduction = 'umap', group.by = 'BarcodePrefix', label = T))
 
-    t <- table(Cluster = Seurat::Idents(seuratObj), Dataset = seuratObj$BarcodePrefix)
-    t <- round(t / colSums(t), 2)
-    knitr::kable(t)
+        t <- table(Cluster = Seurat::Idents(seuratObj), Dataset = seuratObj$BarcodePrefix)
+        t <- round(t / colSums(t), 2)
+        knitr::kable(t)
+    }
 }
 
 ```
@@ -143,8 +151,10 @@ if (length(unique(seuratObj$BarcodePrefix)) > 1) {
 
 ```{r ActivationScore}
 
-seuratObj <- ClassifySGSAndApply(seuratObj = seuratObj, geneSetName = 'HighlyActivated', geneList = OOSAP::Phenotyping_GeneList()$HighlyActivated, positivityThreshold = 0.5, saveFilePath = paste0(outPrefix, '.ha.txt'))
-saveRDS(seuratObj, file = saveFile)
+if ( !skipProcessing ) {
+    seuratObj <- ClassifySGSAndApply(seuratObj = seuratObj, geneSetName = 'HighlyActivated', geneList = OOSAP::Phenotyping_GeneList()$HighlyActivated, positivityThreshold = 0.5, saveFilePath = paste0(outPrefix, '.ha.txt'))
+    saveRDS(seuratObj, file = saveFile)
+}
 
 ```
 
@@ -157,7 +167,9 @@ unlink(rawDataSaveFile)
 
 WriteSummaryMetrics(seuratObj, file = paste0(outPrefix, '.summary.txt'))
 
-SaveDimRedux(seuratObj, file = paste0(outPrefix, '.DimReduxComps.csv'))
+if ( !skipProcessing ) {
+    SaveDimRedux(seuratObj, file = paste0(outPrefix, '.DimReduxComps.csv'))
+}
 
 WriteCellBarcodes(seuratObj, file = paste0(outPrefix, '.cellBarcodes.csv'))
 

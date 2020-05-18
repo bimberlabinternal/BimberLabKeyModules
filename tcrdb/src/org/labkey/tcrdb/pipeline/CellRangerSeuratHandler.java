@@ -62,6 +62,9 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 ToolParameterDescriptor.create("doSplitJobs", "Run Separately", "If checked, each input dataset will be run separately.  Otherwise they will be merged", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, false),
+                ToolParameterDescriptor.create("skipProcessing", "Skip Processing", "If checked, the initial merge and EmptyDrops processing will be run, but PCA, DimRux, etc. will be skipped.  The primary use of this is to created a merged seurat object for manual downstream processing", "checkbox", new JSONObject(){{
+                    put("checked", false);
+                }}, false),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", false);
                 }}, false),
@@ -281,6 +284,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
             File tmpScript = new File(ctx.getWorkingDirectory(), "script.R");
             File outHtml = new File(ctx.getWorkingDirectory(), outPrefix + ".html");
+            boolean skipProcessing = ctx.getParams().optBoolean("skipProcessing", false);
 
             try (PrintWriter writer = PrintWriters.getPrintWriter(tmpScript))
             {
@@ -319,6 +323,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
                 boolean doCellFilter = ctx.getParams().optBoolean("doCellFilter", true);
                 writer.println("doCellFilter <- " + String.valueOf(doCellFilter).toUpperCase());
+
+                writer.println("skipProcessing <- " + String.valueOf(skipProcessing).toUpperCase());
 
                 boolean runSingleR = ctx.getParams().optBoolean("runSingleR", true);
                 writer.println("runSingleR <- " + String.valueOf(runSingleR).toUpperCase());
@@ -394,7 +400,15 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     "Merge method: " + mergeMethod
             }, "\n");
 
-            ctx.getFileManager().addSequenceOutput(seuratObj, "Seurat Object: " + outPrefix, "Seurat Data", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), description);
+            if (skipProcessing)
+            {
+                ctx.getFileManager().addSequenceOutput(seuratObj, "Seurat Raw Counts: " + outPrefix, "Seurat Unprocessed Data", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), "Unprocessed Data");
+            }
+            else
+            {
+                ctx.getFileManager().addSequenceOutput(seuratObj, "Seurat Object: " + outPrefix, "Seurat Data", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), description);
+            }
+
             ctx.getFileManager().addOutput(action, "Seurat Object", seuratObj);
 
             if (!outHtml.exists())
@@ -402,8 +416,15 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 throw new PipelineJobException("Unable to find summary report");
             }
             ctx.getFileManager().addOutput(action, "Seurat Report", outHtml);
-            ctx.getFileManager().addSequenceOutput(outHtml, "Seurat Report: " + outPrefix, "Seurat Report", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), description);
 
+            if (skipProcessing)
+            {
+                ctx.getFileManager().addSequenceOutput(outHtml, "Seurat Report: " + outPrefix, "Seurat Report", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), "Unprocessed Data");
+            }
+            else
+            {
+                ctx.getFileManager().addSequenceOutput(outHtml, "Seurat Report: " + outPrefix, "Seurat Report", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), description);
+            }
             File seuratObjRaw = new File(ctx.getWorkingDirectory(), outPrefix + ".rawData.rds");
             if (seuratObjRaw.exists())
             {
