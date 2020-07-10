@@ -77,7 +77,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         transform: 'hto'
     },{
         name: 'cells',
-        labels: ['Cells', 'Cell #', 'Sort'],
+        labels: ['Cells', 'Cell #', 'Sort', 'Sort Cell Count'],
         allowRowSpan: false,
         allowBlank: false,
         transform: 'cells'
