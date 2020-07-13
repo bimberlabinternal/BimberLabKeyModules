@@ -94,7 +94,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         transform: 'htoIndex'
     },{
         name: 'hto_library_conc',
-        labels: ['HTO Library Conc', 'HTO Library Conc (ng/uL)', 'HTO (qubit) ng/uL', 'HTO (quibit) ng/uL', 'MS Library', 'MS Library (qubit) ng/uL', 'MS Library Conc (qubit) ng/uL'],
+        labels: ['HTO Library Conc', 'HTO Library Conc (ng/uL)', 'HTO (qubit) ng/uL', 'HTO (quibit) ng/uL', 'MultiSeq Library Conc', 'MultiSeq Library (qubit) ng/uL', 'MultiSeq Library Conc (qubit) ng/uL'],
         allowRowSpan: true
     },{
         name: 'citeseqpanel',
@@ -184,8 +184,8 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                         val = val.replace(/^MS(-)*/ig, 'MultiSeq-Idx-RP');
                     }
 
-                    val = val.replace(/^MS-Idx/ig, 'MultiSeq-Idx');
-                    val = val.replace(/^MultiSeq-Idx RP/ig, 'MultiSeq-Idx-RP');
+                    val = val.replace(/^MS[- ]Idx/ig, 'MultiSeq-Idx');
+                    val = val.replace(/^MultiSeq[- ]Idx[- ]RP/ig, 'MultiSeq-Idx-RP');
 
                     return val;
                 }
@@ -592,17 +592,22 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         var colNames = {};
         Ext4.Array.forEach(headerRow, function(headerText, idx){
             //replace common terms:
-            headerText = headerText.replace(/( )+(\()*ng\/ul(\))*/i, '');
-            headerText = headerText.replace(/( )+(\()*qubit(\))*/i, '');
+            if (headerText.match(/ng\/ul/i) || headerText.match(/qubit/i)) {
+                headerText = headerText.replace(/( )+(\()*ng\/ul(\))*/i, '');
+                headerText = headerText.replace(/( )+(\()*qubit(\))*/i, '');
+                headerText = Ext4.String.trim(headerText);
+                if (!headerText.match(/Conc/i)) {
+                    headerText = headerText + ' Conc';
+                }
+            }
             headerText = headerText.replace(/CiteSeq/i, 'Cite-Seq');
             headerText = headerText.replace(/Cite Seq/i, 'Cite-Seq');
+            headerText = headerText.replace(/^MS /i, 'MultiSeq ');
             headerText = headerText.replace(/Multi Seq/i, 'MultiSeq');
             headerText = headerText.replace(/Multi-Seq/i, 'MultiSeq');
             headerText = headerText.replace(/Library Index/i, 'Index');
-            headerText = headerText.replace(/Library Conc/i, 'Conc');
-            headerText = headerText.replace(/Conc\./i, 'Conc');
 
-            headerText = headerText.replace(/5'[- ]GEX/i, 'GEX');
+            headerText = headerText.replace(/5'[- ]*GEX/i, 'GEX');
             headerText = headerText.replace(/5[- ]GEX/i, 'GEX');
             headerText = Ext4.String.trim(headerText);
 
