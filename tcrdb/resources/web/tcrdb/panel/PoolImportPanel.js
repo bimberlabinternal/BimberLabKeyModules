@@ -42,6 +42,12 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
         transform: 'effector',
         allowBlank: false
     },{
+        name: 'tissue',
+        labels: ['Tissue', 'Tissue Sample'],
+        alwaysShow: false,
+        allowRowSpan: true,
+        allowBlank: true
+    },{
         name: 'stim',
         labels: ['Stim', 'Peptide Only Conditions'],
         allowRowSpan: false,
@@ -704,6 +710,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
                     date: row.sampleDate,
                     stim: row.stim,
                     effector: row.effector,
+                    tissue: row.tissue,
                     treatment: row.treatment || 'None',
                     objectId: guid,
                     workbook: row.workbook
