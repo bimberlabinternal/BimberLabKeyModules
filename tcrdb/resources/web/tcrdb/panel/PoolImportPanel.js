@@ -477,7 +477,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             itemId: 'hashingType',
             forceSelection: true,
             storeValues: ['CD298', 'MultiSeq'],
-            value: 'CD298'
+            value: 'MultiSeq'
         },{
             xtype: 'textarea',
             fieldLabel: 'Paste Data Below',
