@@ -319,6 +319,8 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
             return;
         }
 
+        plateIds = Ext4.unique(plateIds);
+
         var instrument = btn.up('tcrdb-libraryexportpanel').down('#instrument').getValue();
         var application = btn.up('tcrdb-libraryexportpanel').down('#application') ? btn.up('tcrdb-libraryexportpanel').down('#application').getValue() :  null;
         var defaultVolume = btn.up('tcrdb-libraryexportpanel').down('#defaultVolume') ? btn.up('tcrdb-libraryexportpanel').down('#defaultVolume').getValue() :  '';
