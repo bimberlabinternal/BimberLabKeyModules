@@ -99,7 +99,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 '235-2\tHTO\tHiSeq1\tBNB-HTO-1<br>' +
                                                 'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
                                                 '235-2\tHTO\tHiSeq2\tBNB-HTO-1<br>' +
-                                                'H235-2\tHiSeq1\tBNB-HTO-1' +
+                                                'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
                                                 'C235-2\tHiSeq1\tBNB-HTO-1' +
                                             '</pre>',
                                     border: false
