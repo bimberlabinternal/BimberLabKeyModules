@@ -344,7 +344,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
             }
             else if (readsetApplication === 'RNA-seq, Single Cell'){
                 application = rowLevelApplication || application;
-                return (libraryType === '10x 5\' GEX' && application === '10x GEX') || (libraryType === '10x 5\' VDJ (Rhesus A/B/G)' && application === '10x VDJ');
+                return (libraryType.match(/^10x [35]\' GEX/) && application === '10x GEX') || (libraryType.match(/^10x 5' VDJ/) && application === '10x VDJ');
             }
             else if (readsetApplication === 'Cell Hashing'){
                 application = rowLevelApplication || application;
