@@ -669,6 +669,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
 
     protected File getExe()
     {
-        return SequencePipelineService.get().getExeForPackage("CELLRANGERPATH", "cellranger");
+        //NOTE: cellranger 4 doesnt work w/ custom libraries currently. update to CR4 when fixed
+        return SequencePipelineService.get().getExeForPackage("CELLRANGERPATH", "cellranger-31");
     }
 }
