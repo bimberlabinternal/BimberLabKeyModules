@@ -1,5 +1,6 @@
 # Designed to keep develop branch as a perfect copy of LabKey fork
 on:
+  workflow_dispatch:
   schedule:
     - cron:  "5 */3 * * *"
 jobs:
