@@ -203,7 +203,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
             int editDistance = ctx.getParams().optInt("editDistance", 2);
 
-            File cellToHto = utils.runRemoteCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell);
+            File cellToHto = utils.runRemoteVdjCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell);
             if (utils.useCellHashing(ctx.getSequenceSupport()) && cellToHto == null)
             {
                 throw new PipelineJobException("Missing cell to HTO file");

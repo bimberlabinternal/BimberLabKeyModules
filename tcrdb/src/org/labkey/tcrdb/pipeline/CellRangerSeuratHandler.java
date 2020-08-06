@@ -425,6 +425,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             {
                 ctx.getFileManager().addSequenceOutput(outHtml, "Seurat Report: " + outPrefix, "Seurat Report", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), description);
             }
+
             File seuratObjRaw = new File(ctx.getWorkingDirectory(), outPrefix + ".rawData.rds");
             if (seuratObjRaw.exists())
             {
@@ -443,7 +444,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
             if (utils.useCiteSeq(ctx.getSequenceSupport(), inputFiles))
             {
-                runCiteSeq(ctx, inputFiles, seuratObj, action, utils);
+                runCiteSeq(ctx, inputFiles, seuratObj, action, outPrefix);
             }
             else
             {
@@ -462,8 +463,10 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             return allCellBarcodes;
         }
 
-        private void runCiteSeq(JobContext ctx, List<SequenceOutputFile> inputFiles, File seuratObj, RecordedAction action, CellRangerVDJUtils utils) throws PipelineJobException
+        private void runCiteSeq(JobContext ctx, List<SequenceOutputFile> inputFiles, File seuratObj, RecordedAction action, String outPrefix) throws PipelineJobException
         {
+            ctx.getLogger().info("Adding CITE-seq");
+
             Map<String, File> citeSeqData = new HashMap<>();
             Map<String, File> markerMetadata = new HashMap<>();
             File allCellBarcodes = getAllCellBarcodesFile(seuratObj);
@@ -519,7 +522,9 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             if (!citeSeqData.isEmpty())
             {
                 ctx.getLogger().info("Storing cite-seq data in seurat object");
-                appendCiteSeqToSeurat(ctx, seuratObj, citeSeqData, markerMetadata);
+                File outHtml = appendCiteSeqToSeurat(ctx, seuratObj, citeSeqData, markerMetadata);
+
+                ctx.getFileManager().addSequenceOutput(outHtml, "CITE-Seq Report: " + outPrefix, "CITE-Seq Report", (inputFiles.size() == 1 ? inputFiles.iterator().next().getReadset() : null), null, getGenomeId(inputFiles), null);
             }
             else
             {
@@ -529,6 +534,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
         private void runCellHashing(JobContext ctx, List<SequenceOutputFile> inputFiles, File seuratObj, RecordedAction action, CellRangerVDJUtils utils) throws PipelineJobException
         {
+            ctx.getLogger().info("Adding cell hashing");
+
             Map<String, File> finalCalls = new HashMap<>();
             File allCellBarcodes = getAllCellBarcodesFile(seuratObj);
 
@@ -629,17 +636,28 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             return barcodes;
         }
 
-        private void appendCiteSeqToSeurat(JobContext ctx, File seuratObj, Map<String, File> citeseqData, Map<String, File> perReadsetAdtMap) throws PipelineJobException
+        private File appendCiteSeqToSeurat(JobContext ctx, File seuratObj, Map<String, File> citeseqData, Map<String, File> perReadsetAdtMap) throws PipelineJobException
         {
-            File rScript = new File(seuratObj.getParentFile(), "appendCiteSeq.R");
+            File rScript = new File(seuratObj.getParentFile(), "appendCiteSeq.Rmd");
             File bashScript = new File(seuratObj.getParentFile(), "runDockerForCiteSeq.sh");
 
             File localRoot = seuratObj.getParentFile();
 
+            File outputHtml = new File(localRoot, FileUtil.getBaseName(seuratObj) + ".citeseq.html");
+
             Set<File> toDelete = new HashSet<>();
             try (PrintWriter rWriter = PrintWriters.getPrintWriter(rScript); PrintWriter bashWriter = PrintWriters.getPrintWriter(bashScript))
             {
+                rWriter.println("---");
+                rWriter.println("   title: 'CITE-seq'");
+                rWriter.println("---");
+
+                rWriter.println("```{r setup}");
                 rWriter.println("library(OOSAP)");
+                rWriter.println("```");
+                rWriter.println("");
+
+                rWriter.println("```{r citeseq}");
                 rWriter.println("seuratObj <- readRDS('" + seuratObj.getName() + "')");
                 rWriter.println("initialCells <- ncol(seuratObj)");
                 rWriter.println("citeSeq <- list(");
@@ -667,6 +685,16 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 rWriter.println("}");
                 rWriter.println("if (ncol(seuratObj) != initialCells) { stop('Cell count not equal after appending cite-seq calls!') }");
                 rWriter.println("saveRDS(seuratObj, file = '" + seuratObj.getName() + "')");
+                rWriter.println("```");
+
+                rWriter.println("```{r Plot}");
+                rWriter.println("OOSAP:::.PlotCiteSeqCountData(seuratObj)");
+                rWriter.println("```");
+
+                rWriter.println("```{r SessionInfo}");
+                rWriter.println("sessionInfo()");
+                rWriter.println("```");
+
 
                 bashWriter.println("#!/bin/bash");
                 bashWriter.println("set -e");
@@ -683,7 +711,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }
 
                 bashWriter.println("sudo $DOCKER pull bimberlab/oosap");
-                bashWriter.println("sudo $DOCKER run --rm=true " + ramOpts + "-v \"${WD}:/work\" -v \"${HOME}:/homeDir\" -u $UID -e USERID=$UID -w /work -e HOME=/homeDir bimberlab/oosap Rscript --vanilla " + rScript.getName());
+                bashWriter.println("sudo $DOCKER run --rm=true " + ramOpts + "-v \"${WD}:/work\" -v \"${HOME}:/homeDir\" -u $UID -e USERID=$UID -w /work -e HOME=/homeDir bimberlab/oosap Rscript -e \"" + "rmarkdown::render('" + rScript.getName() + "', output_file = '" + outputHtml.getName() + "')\"");
 
             }
             catch (IOException e)
@@ -699,6 +727,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
                 for (File f : toDelete)
                 {
+                    ctx.getLogger().debug("deleting local copy: " + f.getPath());
                     if (f.isDirectory())
                     {
                         FileUtils.deleteDirectory(f);
@@ -713,6 +742,8 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             {
                 throw new PipelineJobException(e);
             }
+
+            return outputHtml;
         }
 
         private String ensureLocalCopy(File localRoot, Set<File> toDelete, File toCopy, Logger log) throws PipelineJobException
@@ -760,6 +791,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     }
                 }
 
+                log.debug("destination: " + localCopy.getPath());
                 toDelete.add(localCopy);
 
                 return FileUtil.relativePath(localRoot.getPath(), localCopy.getPath());
@@ -833,39 +865,19 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     File metrics = new File(so.getFile().getPath().replaceAll(".seurat.rds", ".summary.txt"));
                     if (metrics.exists())
                     {
-                        job.getLogger().info("Loading metrics");
-                        TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
-                        int total = 0;
-                        try (CSVReader reader = new CSVReader(Readers.getReader(metrics), '\t'))
-                        {
-                            String[] line;
-                            while ((line = reader.readNext()) != null)
-                            {
-                                if ("Category".equals(line[0]))
-                                {
-                                    continue;
-                                }
-
-                                Map<String, Object> r = new HashMap<>();
-                                r.put("category", "Seurat");
-                                r.put("metricname", line[1]);
-                                r.put("metricvalue", line[2]);
-                                r.put("analysis_id", so.getAnalysis_id());
-                                r.put("dataid", so.getDataId());
-                                r.put("readset", so.getReadset());
-                                r.put("container", job.getContainer());
-                                r.put("createdby", job.getUser().getUserId());
-
-                                Table.insert(job.getUser(), ti, r);
-                                total++;
-                            }
-                        }
-                        catch (IOException e)
-                        {
-                            throw new PipelineJobException(e);
-                        }
-
-                        job.getLogger().info("total metrics: " + total);
+                        processMetricsFile(job, metrics, so);
+                    }
+                    else
+                    {
+                        job.getLogger().warn("Unable to find metrics file: " + metrics.getPath());
+                    }
+                }
+                else if (so.getFile() != null && so.getFile().getPath().endsWith(".calls.txt"))
+                {
+                    File metrics = new File(so.getFile().getPath().replaceAll(".calls.txt", ".metrics.txt"));
+                    if (metrics.exists())
+                    {
+                        processMetricsFile(job, metrics, so);
                     }
                     else
                     {
@@ -874,6 +886,43 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }
             }
         }
+    }
+
+    private void processMetricsFile(PipelineJob job, File metrics, SequenceOutputFile so) throws PipelineJobException
+    {
+        job.getLogger().info("Loading metrics");
+        TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
+        int total = 0;
+        try (CSVReader reader = new CSVReader(Readers.getReader(metrics), '\t'))
+        {
+            String[] line;
+            while ((line = reader.readNext()) != null)
+            {
+                if ("Category".equals(line[0]))
+                {
+                    continue;
+                }
+
+                Map<String, Object> r = new HashMap<>();
+                r.put("category", line[0]);
+                r.put("metricname", line[1]);
+                r.put("metricvalue", line[2]);
+                r.put("analysis_id", so.getAnalysis_id());
+                r.put("dataid", so.getDataId());
+                r.put("readset", so.getReadset());
+                r.put("container", job.getContainer());
+                r.put("createdby", job.getUser().getUserId());
+
+                Table.insert(job.getUser(), ti, r);
+                total++;
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+
+        job.getLogger().info("total metrics: " + total);
     }
 
     private Integer getGenomeId(List<SequenceOutputFile> inputFiles)
