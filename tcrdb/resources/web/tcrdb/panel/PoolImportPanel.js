@@ -606,6 +606,9 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
             headerText = headerText.replace(/Multi Seq/i, 'MultiSeq');
             headerText = headerText.replace(/Multi-Seq/i, 'MultiSeq');
             headerText = headerText.replace(/Library Index/i, 'Index');
+            headerText = headerText.replace(/ RP#/i, '');
+            headerText = headerText.replace(/:( )+10X Plate N Set A/i, '');
+            headerText = headerText.replace(/:( )+10X Plate T Kit A/i, '');
 
             headerText = headerText.replace(/5'[- ]*GEX/i, 'GEX');
             headerText = headerText.replace(/5[- ]GEX/i, 'GEX');
