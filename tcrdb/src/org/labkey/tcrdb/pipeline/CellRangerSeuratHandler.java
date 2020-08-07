@@ -66,7 +66,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     put("checked", false);
                 }}, false),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
-                    put("checked", false);
+                    put("checked", true);
                 }}, false),
                 ToolParameterDescriptor.create("dimsToUse", "PCs To Use", "If non-blank, this is the number of PCs that seurat will use for dim reduction steps.", "ldk-integerfield", new JSONObject(){{
 
