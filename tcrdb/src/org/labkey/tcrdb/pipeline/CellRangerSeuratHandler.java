@@ -508,7 +508,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 if (adtsForReadset > 0)
                 {
                     ctx.getLogger().info("Total ADTs for readset: " + adtsForReadset);
-                    File countMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, citeseqReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCiteSeqHandler.CATEGORY, false, perReadsetAdts, false);
+                    File countMatrix = CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, citeseqReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCiteSeqHandler.CATEGORY, true, perReadsetAdts, false);
                     citeSeqData.put(barcodePrefix, countMatrix.getParentFile());
                     File perReadsetAdtMetadata = CellRangerVDJUtils.getValidCiteSeqBarcodeMetadataFile(ctx.getSourceDirectory(), rs.getReadsetId());
                     markerMetadata.put(barcodePrefix, perReadsetAdtMetadata);
@@ -592,7 +592,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 if (htosForReadset > 0)
                 {
                     ctx.getLogger().info("Total HTOs for readset: " + htosForReadset);
-                    finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, false, perReadsetHtos, true));
+                    finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, true, perReadsetHtos, true));
                 }
                 else
                 {
