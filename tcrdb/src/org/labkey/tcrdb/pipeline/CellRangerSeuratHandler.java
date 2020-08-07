@@ -73,7 +73,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 }}, null),
                 ToolParameterDescriptor.create("minDimsToUse", "Minimum PCs To Use", "If non-blank, the pipeline will attempt to infer the number of PCs to use for dim reduction, but will not use fewer than this value.", "ldk-integerfield", new JSONObject(){{
 
-                }}, 10),
+                }}, 12),
                 ToolParameterDescriptor.create("doCellFilter", "Perform Cell Filtering", "If selected, cells will be filtered on pct.mito and number of unique genes.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, true),
