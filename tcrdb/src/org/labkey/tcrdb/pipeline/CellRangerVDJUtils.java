@@ -119,6 +119,7 @@ public class CellRangerVDJUtils
             Set<String> distinctHTOs = new HashSet<>();
             Set<Boolean> hashingStatus = new HashSet<>();
             Set<Boolean> citeseqStatus = new HashSet<>();
+            AtomicInteger totalWritten = new AtomicInteger(0);
             for (Readset rs : cachedReadsets)
             {
                 AtomicBoolean hasError = new AtomicBoolean(false);
@@ -144,6 +145,7 @@ public class CellRangerVDJUtils
                             String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("citeseqReadsetId/totalFiles")) > 0),
                             results.getString(FieldKey.fromString("citeseqPanel"))
                     });
+                    totalWritten.getAndIncrement();
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
                     hashingStatus.add(useCellHashing);
@@ -214,6 +216,11 @@ public class CellRangerVDJUtils
             else if (distinctHTOs.size() == 1)
             {
                 job.getLogger().info("There is only a single HTO in this pool, will not use hashing");
+            }
+
+            if (totalWritten.get() == 0)
+            {
+                throw new PipelineJobException("No matching cDNA records found");
             }
 
             boolean useCellHashing = hashingStatus.isEmpty() ? false : hashingStatus.size() > 1 ? true : hashingStatus.iterator().next();
