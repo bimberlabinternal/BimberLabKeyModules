@@ -317,8 +317,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         if (job instanceof HasJobParams && getGScratchValue((HasJobParams)job))
         {
             job.getLogger().info("Requiring using GScratch pilot as working space");
-            ret.put("WORK_BASEDIR", "/home/exacloud/gscratch/prime-seq/workDir/");
-
+            ret.put("USE_GSCRATCH", "1");
         }
 
         return ret;

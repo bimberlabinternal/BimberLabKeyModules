@@ -152,6 +152,17 @@
                     <fkColumnName>objectid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="gtf">
+                <nullable>true</nullable>
+                <isUserEditable>false</isUserEditable>
+                <isHidden>true</isHidden>
+                <columnTitle>GTF File</columnTitle>
+                <fk>
+                    <fkDbSchema>exp</fkDbSchema>
+                    <fkTable>data</fkTable>
+                    <fkColumnName>RowId</fkColumnName>
+                </fk>
+            </column>
             <column columnName="totalSubjects">
                 <columnTitle>Total Subjects</columnTitle>
             </column>

@@ -362,6 +362,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
 
         Ext4.Msg.wait('Loading cDNA data');
         LABKEY.Query.selectRows({
+            method: 'POST',
             containerPath: Laboratory.Utils.getQueryContainerPath(),
             schemaName: 'tcrdb',
             queryName: 'cdnas',

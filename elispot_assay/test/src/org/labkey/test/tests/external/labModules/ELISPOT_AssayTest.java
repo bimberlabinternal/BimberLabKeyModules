@@ -21,6 +21,7 @@ import org.junit.experimental.categories.Category;
 import org.labkey.test.Locator;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.components.ext4.Window;
 import org.labkey.test.util.DataRegionTable;
 import org.labkey.test.util.Ext4Helper;
 import org.labkey.test.util.ext4cmp.Ext4FieldRef;
@@ -155,7 +156,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         _helper.goToLabHome();
         _helper.clickNavPanelItem(ASSAY_NAME + ":", IMPORT_DATA_TEXT);
         click(Ext4Helper.Locators.menuItem("Prepare Run"));
-        waitForElement(Ext4Helper.Locators.window(IMPORT_DATA_TEXT));
+        new Window.WindowFinder(getDriver()).withTitle(IMPORT_DATA_TEXT).waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
 
         List<String> expectedCols = new ArrayList<>();
@@ -184,7 +185,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
 
         //the data are missing an ID
         click(Ext4Helper.Locators.ext4Button("Save"));
-        waitForElement(Ext4Helper.Locators.window("Error"));
+        new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
         assertTextPresent("One or more required fields are missing from the sample records");
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
 
@@ -193,7 +194,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         grid.setGridCell(1, "subjectId", "FakeId");
 
         click(Ext4Helper.Locators.ext4Button("Save"));
-        waitForElement(Ext4Helper.Locators.window("Error"));
+        new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
         assertTextPresent(
                 "Must provide at least 2 negative controls for each subjectId/date.",
                 "Missing for: FakeId / 2012-02-09");
