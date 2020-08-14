@@ -747,27 +747,27 @@ public class CellRangerVDJUtils
                     am = rows.get(key);
 
                     //These are not in the key, but are assumed to be identical if the key is identical:
-                    if (am.vHit != removeNone(line[6]))
+                    if (!am.vHit.equals(removeNone(line[6])))
                     {
                         throw new PipelineJobException("vHit not identical: " + removeNone(line[6]) + " / " + am.vHit);
                     }
 
-                    if (am.dHit != removeNone(line[7]))
+                    if (!am.dHit.equals(removeNone(line[7])))
                     {
                         throw new PipelineJobException("dHit not identical: " + removeNone(line[7]) + " / " + am.dHit);
                     }
 
-                    if (am.jHit != removeNone(line[8]))
+                    if (!am.jHit.equals(removeNone(line[8])))
                     {
                         throw new PipelineJobException("jHit not identical: " + removeNone(line[8]) + " / " + am.jHit);
                     }
 
-                    if (am.cHit != removeNone(line[9]))
+                    if (!am.cHit.equals(removeNone(line[9])))
                     {
                         throw new PipelineJobException("cHit not identical: " + removeNone(line[9]) + " / " + am.cHit);
                     }
 
-                    if (am.cdr3Nt != removeNone(line[13]))
+                    if (!am.cdr3Nt.equals(removeNone(line[13])))
                     {
                         throw new PipelineJobException("cdr3Nt not identical: " + removeNone(line[13]) + " / " + am.cdr3Nt);
                     }
