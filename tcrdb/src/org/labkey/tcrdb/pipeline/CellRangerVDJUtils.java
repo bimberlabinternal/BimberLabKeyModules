@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -495,6 +496,13 @@ public class CellRangerVDJUtils
             return;
         }
 
+        File allFasta = new File(outDir, "all_contig.fasta");
+        if (!allFasta.exists())
+        {
+            _log.warn("unable to find FASTA: " + allFasta.getPath());
+            return;
+        }
+
         _log.info("loading results into assay: " + assayId);
 
         if (runId == null)
@@ -505,29 +513,6 @@ public class CellRangerVDJUtils
         {
             job.getLogger().debug("Using supplied runId: " + runId);
         }
-
-        //first build map of distinct FL sequences:
-        _log.info("processing FASTA: " + consensusFasta.getPath());
-        Map<String, String> sequenceMap = new HashMap<>();
-        try (FastaDataLoader loader = new FastaDataLoader(consensusFasta, false))
-        {
-            loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
-
-            try (CloseableIterator<Map<String, Object>> i = loader.iterator())
-            {
-                while (i.hasNext())
-                {
-                    Map<String, Object> fastaRecord = i.next();
-                    sequenceMap.put((String) fastaRecord.get("header"), (String) fastaRecord.get("sequence"));
-                }
-            }
-        }
-        catch (IOException e)
-        {
-            throw new PipelineJobException(e);
-        }
-
-        _log.info("total sequences: " + sequenceMap.size());
 
         File cDNAFile = getCDNAInfoFile();
         Map<String, CDNA> htoNameToCDNAMap = new HashMap<>();
@@ -661,11 +646,13 @@ public class CellRangerVDJUtils
             job.getLogger().debug("Cell hashing is not used");
         }
 
-        Map<String, Map<Integer, Integer>> countMapBySample = new HashMap<>();
-        Map<String, AssayModel> rowsWithoutClonotype = new HashMap<>();
-        Map<Integer, Set<String>> totalCellsMapBySample = new HashMap<>();
+        Map<String, AssayModel> rows = new HashMap<>();
+        Map<Integer, Set<String>> totalCellsBySample = new HashMap<>();
+        Set<String> uniqueContigNames = new HashSet<>();
         _log.info("processing clonotype CSV: " + allCsv.getPath());
 
+        // use unfiltered data so we can apply demultiplex and also apply alternate filtering logic.
+        // also, 10x no longer reports TRD/TRG data in their consensus file
         //header: barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis	raw_clonotype_id	raw_consensus_id
         try (CSVReader reader = new CSVReader(Readers.getReader(allCsv), ','))
         {
@@ -675,7 +662,7 @@ public class CellRangerVDJUtils
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
-            int discordantSkipped= 0;
+            int discordantSkipped = 0;
             int hasCDR3NoClonotype = 0;
             Set<String> knownBarcodes = new HashSet<>();
             while ((line = reader.readNext()) != null)
@@ -725,23 +712,6 @@ public class CellRangerVDJUtils
                 String cdr3 = removeNone(line[12]);
                 if (clonotypeId == null && cdr3 != null && "TRUE".equalsIgnoreCase(line[10]))
                 {
-                    clonotypeId = StringUtils.join(new String[]{line[12], line[5], line[6], line[7], line[8], line[9], line[13]}, "<>");
-                    if (!rowsWithoutClonotype.containsKey(clonotypeId))
-                    {
-                        AssayModel am = new AssayModel();
-                        am.cloneId = clonotypeId;
-                        am.locus = line[5];
-                        am.vHit = removeNone(line[6]);
-                        am.dHit = removeNone(line[7]);
-                        am.jHit = removeNone(line[8]);
-                        am.cHit = removeNone(line[9]);
-                        am.cdr3 = removeNone(line[12]);
-                        am.cdr3Nt = removeNone(line[13]);
-                        am.consensusId = removeNone(line[17]);
-
-                        rowsWithoutClonotype.put(clonotypeId, am);
-                    }
-
                     hasCDR3NoClonotype++;
                 }
 
@@ -750,13 +720,65 @@ public class CellRangerVDJUtils
                     continue;
                 }
 
-                Map<Integer, Integer> countMap = countMapBySample.getOrDefault(clonotypeId, new HashMap<>());
-                countMap.put(cDNA, 1 + countMap.getOrDefault(cDNA, 0));
-                countMapBySample.put(clonotypeId, countMap);
+                //Preferentially use raw_consensus_id, but fall back to contig_id
+                String sequenceContigName = removeNone(line[17]) == null ? removeNone(line[2]) : removeNone(line[17]);
 
-                Set<String> cellbarcodesPerSample = totalCellsMapBySample.getOrDefault(cDNA, new HashSet<>());
+                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], line[5], clonotypeId, sequenceContigName}, "<>");
+                AssayModel am;
+                if (!rows.containsKey(key))
+                {
+                    am = new AssayModel();
+                    am.cdna = cDNA;
+                    am.cdr3 = removeNone(line[12]);
+                    am.locus = line[5];
+                    am.cloneId = clonotypeId;
+                    am.sequenceContigName = sequenceContigName;
+                    uniqueContigNames.add(am.sequenceContigName);
+
+                    am.vHit = removeNone(line[6]);
+                    am.dHit = removeNone(line[7]);
+                    am.jHit = removeNone(line[8]);
+                    am.cHit = removeNone(line[9]);
+                    am.cdr3Nt = removeNone(line[13]);
+                }
+                else
+                {
+                    am = rows.get(key);
+
+                    //These are not in the key, but are assumed to be identical if the key is identical:
+                    if (am.vHit != removeNone(line[6]))
+                    {
+                        throw new PipelineJobException("vHit not identical: " + removeNone(line[6]) + " / " + am.vHit);
+                    }
+
+                    if (am.dHit != removeNone(line[7]))
+                    {
+                        throw new PipelineJobException("dHit not identical: " + removeNone(line[7]) + " / " + am.dHit);
+                    }
+
+                    if (am.jHit != removeNone(line[8]))
+                    {
+                        throw new PipelineJobException("jHit not identical: " + removeNone(line[8]) + " / " + am.jHit);
+                    }
+
+                    if (am.cHit != removeNone(line[9]))
+                    {
+                        throw new PipelineJobException("cHit not identical: " + removeNone(line[9]) + " / " + am.cHit);
+                    }
+
+                    if (am.cdr3Nt != removeNone(line[13]))
+                    {
+                        throw new PipelineJobException("cdr3Nt not identical: " + removeNone(line[13]) + " / " + am.cdr3Nt);
+                    }
+                }
+
+                am.barcodes.add(barcode);
+                rows.put(key, am);
+
+                Set<String> cellbarcodesPerSample = totalCellsBySample.getOrDefault(cDNA, new HashSet<>());
                 cellbarcodesPerSample.add(barcode);
-                totalCellsMapBySample.put(cDNA, cellbarcodesPerSample);
+                totalCellsBySample.put(cDNA, cellbarcodesPerSample);
             }
 
             int totalCells = idx - nonCell;
@@ -768,7 +790,8 @@ public class CellRangerVDJUtils
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
-            _log.info("total clonotypes: " + countMapBySample.size());
+            _log.info("total clonotypes: " + rows.size());
+            _log.info("total sequences: " + uniqueContigNames.size());
             _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
 
         }
@@ -777,78 +800,50 @@ public class CellRangerVDJUtils
             throw new PipelineJobException(e);
         }
 
-        //header for consensus_annotations.csv
-        //clonotype_id	consensus_id	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis
-        List<Map<String, Object>> rows = new ArrayList<>();
-        int totalCells = 0;
-        _log.info("processing consensus CSV: " + consensusCsv.getPath());
-        try (CSVReader reader = new CSVReader(Readers.getReader(consensusCsv), ','))
+        //build map of distinct FL sequences:
+        Map<String, String> sequenceMap = new HashMap<>();
+        for (File f : Arrays.asList(consensusFasta, allFasta))
         {
-            String[] line;
-            Set<String> uniqueClones = new HashSet<>();
-            Set<String> clonesInspected = new HashSet<>();
-            Set<String> clonesWithoutCounts = new HashSet<>();
-            int idx = 0;
-            while ((line = reader.readNext()) != null)
+            _log.info("processing FASTA: " + f.getPath());
+            try (FastaDataLoader loader = new FastaDataLoader(f, false))
             {
-                idx++;
-                if (idx == 1)
+                loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
+                try (CloseableIterator<Map<String, Object>> i = loader.iterator())
                 {
-                    _log.debug("skipping header");
-                    continue;
-                }
-
-                String cloneId = line[0];
-                uniqueClones.add(cloneId);
-
-                Map<Integer, Integer> countData = countMapBySample.get(cloneId);
-                if (countData == null)
-                {
-                    if (!clonesWithoutCounts.contains(cloneId))
+                    while (i.hasNext())
                     {
-                        _log.warn("No count data for clone: " + cloneId);
-                        clonesWithoutCounts.add(cloneId);
+                        Map<String, Object> fastaRecord = i.next();
+                        String header = (String) fastaRecord.get("header");
+                        if (uniqueContigNames.contains(header))
+                        {
+                            sequenceMap.put(header, (String) fastaRecord.get("sequence"));
+                        }
                     }
-                    continue;
                 }
-
-                clonesInspected.add(cloneId);
-                AssayModel am = new AssayModel();
-                am.cloneId = line[0];
-                am.locus = line[3];
-                am.vHit = removeNone(line[4]);
-                am.dHit = removeNone(line[5]);
-                am.jHit = removeNone(line[6]);
-                am.cHit = removeNone(line[7]);
-                am.cdr3 = removeNone(line[10]);
-                am.cdr3Nt = removeNone(line[11]);
-                am.consensusId = removeNone(line[1]);
-
-                totalCells += processRow(countData, cDNAMap, model, runId, am, totalCellsMapBySample, sequenceMap, rows);
             }
-
-            _log.info("total clones without count data: " + clonesWithoutCounts.size() + " (" + (NumberFormat.getPercentInstance().format(clonesWithoutCounts.size() / (double)uniqueClones.size())) + ")");
-        }
-        catch (Exception e)
-        {
-            _log.error(e);
-            throw new PipelineJobException(e);
-        }
-
-        if (!rowsWithoutClonotype.isEmpty())
-        {
-            _log.debug("total clones with CDR3, but without sequence data: " + rowsWithoutClonotype.size());
-            for (String cloneId : rowsWithoutClonotype.keySet())
+            catch (IOException e)
             {
-                Map<Integer, Integer> countData = countMapBySample.get(cloneId);
-                AssayModel am = rowsWithoutClonotype.get(cloneId);
-                totalCells += processRow(countData, cDNAMap, model, runId, am, totalCellsMapBySample, sequenceMap, rows);
+                throw new PipelineJobException(e);
             }
+
+            _log.info("total sequences: " + sequenceMap.size());
         }
 
-        _log.info("total assay rows: " + rows.size());
+        List<Map<String, Object>> assayRows = new ArrayList<>();
+        int totalCells = 0;
+        Set<String> clonesInspected = new HashSet<>();
+        for (AssayModel m : rows.values())
+        {
+            clonesInspected.add(m.cloneId);
+            totalCells += m.barcodes.size();
+
+            assayRows.add(processRow(m, model, cDNAMap, runId, totalCellsBySample, sequenceMap));
+        }
+
+        _log.info("total added: " + clonesInspected.size());
+        _log.info("total assay rows: " + assayRows.size());
         _log.info("total cells: " + totalCells);
-        saveRun(job, protocol, model, rows, outDir, runId, deleteExisting);
+        saveRun(job, protocol, model, assayRows, outDir, runId, deleteExisting);
     }
 
     private File getCellToHtoFile(ExpRun run) throws PipelineJobException
@@ -883,63 +878,53 @@ public class CellRangerVDJUtils
         private String dHit;
         private String jHit;
         private String cHit;
-        private String consensusId;
+        private int cdna;
+
+        private Set<String> barcodes = new HashSet<>();
+        private String sequenceContigName;
     }
 
-    private int processRow(Map<Integer, Integer> countData, Map<Integer, CDNA> cDNAMap, AnalysisModel model, Integer runId, AssayModel assayModel, Map<Integer, Set<String>> totalCellsMapBySample, Map<String, String> sequenceMap, List<Map<String, Object>> rows) throws PipelineJobException
+    private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA> cDNAMap, Integer runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
     {
-        int totalCells = 0;
-        for (Integer cDNA : countData.keySet())
+        CDNA cDNARecord = cDNAMap.get(assayModel.cdna);
+        if (cDNARecord == null)
         {
-            CDNA cDNARecord = cDNAMap.get(cDNA);
-
-            Map<String, Object> row = new CaseInsensitiveHashMap<>();
-
-            if (cDNARecord == null)
-            {
-                throw new PipelineJobException("Unable to find cDNA for ID: " + cDNA);
-            }
-            else
-            {
-                row.put("sampleName", cDNARecord.getAssaySampleName());
-                row.put("subjectId", cDNARecord.getSortRecord().getStimRecord().getAnimalId());
-                row.put("sampleDate", cDNARecord.getSortRecord().getStimRecord().getDate());
-                row.put("cDNA", cDNA);
-            }
-
-            row.put("alignmentId", model.getAlignmentFile());
-            row.put("analysisId", model.getRowId());
-            row.put("pipelineRunId", runId);
-
-            row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? null : assayModel.cloneId);
-            row.put("locus", assayModel.locus);
-            row.put("vHit", assayModel.vHit);
-            row.put("dHit", assayModel.dHit);
-            row.put("jHit", assayModel.jHit);
-            row.put("cHit", assayModel.cHit);
-
-            row.put("cdr3", assayModel.cdr3);
-            row.put("cdr3_nt", assayModel.cdr3Nt);
-
-            row.put("count", countData.get(cDNA));
-            totalCells += countData.get(cDNA);
-
-            double fraction = countData.get(cDNA).doubleValue() / totalCellsMapBySample.get(cDNA).size();
-            row.put("fraction", fraction);
-
-            if (assayModel.consensusId != null && !sequenceMap.containsKey(assayModel.consensusId))
-            {
-                _log.warn("Unable to find sequence for: " + assayModel.consensusId);
-            }
-            else
-            {
-                row.put("sequence", sequenceMap.get(assayModel.consensusId));
-            }
-
-            rows.add(row);
+            throw new PipelineJobException("Unable to find cDNA for ID: " + assayModel.cdna);
         }
 
-        return totalCells;
+        Map<String, Object> row = new CaseInsensitiveHashMap<>();
+
+        row.put("sampleName", cDNARecord.getAssaySampleName());
+        row.put("subjectId", cDNARecord.getSortRecord().getStimRecord().getAnimalId());
+        row.put("sampleDate", cDNARecord.getSortRecord().getStimRecord().getDate());
+        row.put("cDNA", assayModel.cdna);
+
+        row.put("alignmentId", model.getAlignmentFile());
+        row.put("analysisId", model.getRowId());
+        row.put("pipelineRunId", runId);
+
+        row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? null : assayModel.cloneId);
+        row.put("locus", assayModel.locus);
+        row.put("vHit", assayModel.vHit);
+        row.put("dHit", assayModel.dHit);
+        row.put("jHit", assayModel.jHit);
+        row.put("cHit", assayModel.cHit);
+
+        row.put("cdr3", assayModel.cdr3);
+        row.put("cdr3_nt", assayModel.cdr3Nt);
+        row.put("count", assayModel.barcodes.size());
+
+        double fraction = (double)assayModel.barcodes.size() / totalCellsBySample.get(assayModel.cdna).size();
+        row.put("fraction", fraction);
+
+        if (!sequenceMap.containsKey(assayModel.sequenceContigName))
+        {
+            throw new PipelineJobException("Unable to find sequence for: " + assayModel.sequenceContigName);
+        }
+
+        row.put("sequence", sequenceMap.get(assayModel.sequenceContigName));
+
+        return row;
     }
 
     private String removeNone(String input)
