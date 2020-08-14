@@ -723,8 +723,8 @@ public class CellRangerVDJUtils
                 //Preferentially use raw_consensus_id, but fall back to contig_id
                 String sequenceContigName = removeNone(line[17]) == null ? removeNone(line[2]) : removeNone(line[17]);
 
-                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], line[5], clonotypeId, sequenceContigName}, "<>");
+                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], line[5], clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), removeNone(line[9]), removeNone(line[13])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
@@ -733,37 +733,6 @@ public class CellRangerVDJUtils
                 else
                 {
                     am = rows.get(key);
-
-                    //These are not in the key, but are assumed to be identical if the key is identical:
-                    if (am.vHit != null && !am.vHit.equals(removeNone(line[6])))
-                    {
-                        _log.info("vHit not identical: " + removeNone(line[6]) + " / " + am.vHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (am.dHit != null && !am.dHit.equals(removeNone(line[7])))
-                    {
-                        _log.info("dHit not identical: " + removeNone(line[7]) + " / " + am.dHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (am.jHit != null && !am.jHit.equals(removeNone(line[8])))
-                    {
-                        _log.info("jHit not identical: " + removeNone(line[8]) + " / " + am.jHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (am.cHit != null && !am.cHit.equals(removeNone(line[9])))
-                    {
-                        _log.info("cHit not identical: " + removeNone(line[9]) + " / " + am.cHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (!am.cdr3Nt.equals(removeNone(line[13])))
-                    {
-                        _log.info("cdr3Nt not identical: " + removeNone(line[13]) + " / " + am.cdr3Nt + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
                 }
 
                 uniqueContigNames.add(am.sequenceContigName);
