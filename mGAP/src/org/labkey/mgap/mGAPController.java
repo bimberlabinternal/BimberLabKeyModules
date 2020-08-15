@@ -631,8 +631,8 @@ public class mGAPController extends SpringActionController
                     }
 
                     MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
-                    mail.setEncodedHtmlContent("A support request was submitted from mGap by:" + form.getEmail() + "<br><br>Message:<br>" + form.getComment());
-                    mail.setFrom(getReplyEmail(getContainer()));
+                    mail.setEncodedHtmlContent("A support request was submitted from mGap by: " + form.getEmail() + "<br><br>Message:<br>" + form.getComment());
+                    mail.setFrom(form.getEmail());
                     mail.setSubject("mGap Help Request");
                     mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
 

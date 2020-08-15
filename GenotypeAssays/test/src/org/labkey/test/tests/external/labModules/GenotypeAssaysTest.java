@@ -32,6 +32,7 @@ import org.labkey.test.TestTimeoutException;
 import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.components.ext4.Window;
 import org.labkey.test.util.DataRegionTable;
 import org.labkey.test.util.Ext4Helper;
 import org.labkey.test.util.ext4cmp.Ext4CmpRef;
@@ -266,7 +267,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         String errorText = text.replaceAll("Positive", "NotRealResult");
         textarea.setValue(errorText);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
-        waitForElement(Ext4Helper.Locators.window("Upload Failed"));
+        new Window.WindowFinder(getDriver()).withTitle("Upload Failed").waitFor();
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
         assertTextPresent("There were errors in the upload");
         waitForText("Unknown value for result: NotRealResult for primer: TestPrimer2");

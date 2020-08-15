@@ -351,7 +351,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 int editDistance = getProvider().getParameterByName("editDistance").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class, 2);
                 int minCountPerCell = getProvider().getParameterByName("minCountPerCell").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class, 3);
 
-                getUtils().runRemoteCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances, referenceGenome.getGenomeId(), minCountPerCell);
+                getUtils().runRemoteVdjCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances, referenceGenome.getGenomeId(), minCountPerCell);
             }
             else
             {
@@ -669,6 +669,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
 
     protected File getExe()
     {
-        return SequencePipelineService.get().getExeForPackage("CELLRANGERPATH", "cellranger");
+        //NOTE: cellranger 4 doesnt work w/ custom libraries currently. update to CR4 when fixed
+        return SequencePipelineService.get().getExeForPackage("CELLRANGERPATH", "cellranger-31");
     }
 }

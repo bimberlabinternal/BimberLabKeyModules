@@ -1133,7 +1133,7 @@ public class TCRdbController extends SpringActionController
     @RequiresPermission(ReadPermission.class)
     public static class GetMatchingStimsAction extends ReadOnlyApiAction<SimpleApiJsonForm>
     {
-        final List<String> FIELDS = Arrays.asList("animalId", "date", "stim", "treatment");
+        final List<String> FIELDS = Arrays.asList("animalId", "date", "stim", "treatment", "tissue");
 
         @Override
         public Object execute(SimpleApiJsonForm form, BindException errors) throws Exception

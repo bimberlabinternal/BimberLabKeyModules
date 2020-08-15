@@ -22,6 +22,7 @@ import org.junit.experimental.categories.Category;
 import org.labkey.test.Locator;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.components.ext4.Window;
 import org.labkey.test.util.DataRegionTable;
 import org.labkey.test.util.Ext4Helper;
 import org.labkey.test.util.ext4cmp.Ext4CmpRef;
@@ -118,7 +119,7 @@ public class FlowAssaysTest extends AbstractLabModuleAssayTest
         Ext4CmpRef btn = _ext4Helper.queryOne("#upload", Ext4CmpRef.class);
         btn.waitForEnabled();
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
-        waitForElement(Ext4Helper.Locators.window("Upload Failed"));
+        new Window.WindowFinder(getDriver()).withTitle("Upload Failed").waitFor();
         click(Ext4Helper.Locators.ext4Button("OK"));
         assertTextPresent("There were errors in the upload");
         waitForText("Unknown value for population: NotRealPopulation");
@@ -126,7 +127,7 @@ public class FlowAssaysTest extends AbstractLabModuleAssayTest
         log("Saving valid data");
         textarea.setValue(text);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
-        waitForElement(Ext4Helper.Locators.window("Success"));
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
         waitForText("Import Samples");
 
@@ -186,7 +187,7 @@ public class FlowAssaysTest extends AbstractLabModuleAssayTest
         log("Saving valid data");
         textarea.setValue(text);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
-        waitForElement(Ext4Helper.Locators.window("Success"));
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
         waitForText("Import Samples");
 
@@ -248,7 +249,7 @@ public class FlowAssaysTest extends AbstractLabModuleAssayTest
         String errorText = text.replaceAll("CD14 Mono", "NotRealPopulation");
         textarea.setValue(errorText);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
-        waitForElement(Ext4Helper.Locators.window("Upload Failed"));
+        new Window.WindowFinder(getDriver()).withTitle("Upload Failed").waitFor();
         click(Ext4Helper.Locators.ext4Button("OK"));
         assertTextPresent("There were errors in the upload");
         waitForText("Unknown value for population: NotRealPopulation");
@@ -256,7 +257,7 @@ public class FlowAssaysTest extends AbstractLabModuleAssayTest
         log("Saving valid data");
         textarea.setValue(text);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
-        waitForElement(Ext4Helper.Locators.window("Success"));
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
         waitForText("Import Samples");
 
