@@ -666,6 +666,8 @@ public class CellRangerVDJUtils
             String[] line;
             int idx = 0;
             int noCDR3 = 0;
+            int noCGene = 0;
+            int notFullLength = 0;
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
@@ -691,6 +693,18 @@ public class CellRangerVDJUtils
                 if ("None".equals(line[12]))
                 {
                     noCDR3++;
+                    continue;
+                }
+
+                if ("None".equals(line[9]))
+                {
+                    noCGene++;
+                    continue;
+                }
+
+                if ("False".equals(line[10]))
+                {
+                    notFullLength++;
                     continue;
                 }
 
@@ -768,6 +782,8 @@ public class CellRangerVDJUtils
             _log.info("total rows not cells: " + nonCell);
             _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
+            _log.info("total clonotype rows discarded for no C-gene: " + noCGene);
+            _log.info("total clonotype rows discarded for not full length: " + notFullLength);
             _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
