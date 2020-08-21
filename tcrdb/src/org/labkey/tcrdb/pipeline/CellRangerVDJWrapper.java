@@ -576,6 +576,22 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
 
                     int totalAdded = 0;
                     TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
+
+                    //NOTE: if this job errored and restarted, we may have duplicate records:
+                    SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), model.getReadset());
+                    filter.addCondition(FieldKey.fromString("analysis_id"), model.getRowId(), CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("dataid"), model.getAlignmentFile(), CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("category"), "Cell Ranger VDJ", CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("container"), getPipelineCtx().getJob().getContainer().getId(), CompareType.EQUAL);
+                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowid"), filter, null);
+                    if (ts.exists())
+                    {
+                        getPipelineCtx().getLogger().info("Deleting existing QC metrics (probably from prior restarted job)");
+                        ts.getArrayList(Integer.class).forEach(rowid -> {
+                            Table.delete(ti, rowid);
+                        });
+                    }
+
                     for (int j = 0; j < header.length; j++)
                     {
                         Map<String, Object> toInsert = new CaseInsensitiveHashMap<>();

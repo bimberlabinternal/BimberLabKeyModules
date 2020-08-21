@@ -5,15 +5,19 @@ import org.apache.commons.beanutils.ConversionException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONObject;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
@@ -234,6 +238,21 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 job.getLogger().info("Loading metrics");
                 int total = 0;
                 TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
+
+                //NOTE: if this job errored and restarted, we may have duplicate records:
+                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), so.getReadset());
+                filter.addCondition(FieldKey.fromString("analysis_id"), so.getAnalysis_id(), CompareType.EQUAL);
+                filter.addCondition(FieldKey.fromString("dataid"), so.getDataId(), CompareType.EQUAL);
+                filter.addCondition(FieldKey.fromString("container"), job.getContainer().getId(), CompareType.EQUAL);
+                TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowid"), filter, null);
+                if (ts.exists())
+                {
+                    job.getLogger().info("Deleting existing QC metrics (probably from prior restarted job)");
+                    ts.getArrayList(Integer.class).forEach(rowid -> {
+                        Table.delete(ti, rowid);
+                    });
+                }
+
                 try (CSVReader reader = new CSVReader(Readers.getReader(metrics), '\t'))
                 {
                     String[] line;

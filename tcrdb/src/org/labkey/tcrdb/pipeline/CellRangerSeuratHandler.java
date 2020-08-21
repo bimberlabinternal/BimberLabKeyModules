@@ -7,14 +7,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
@@ -27,6 +31,7 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
+import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.tcrdb.TCRdbModule;
 
@@ -892,6 +897,21 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
     {
         job.getLogger().info("Loading metrics");
         TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
+
+        //NOTE: if this job errored and restarted, we may have duplicate records:
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), so.getReadset());
+        filter.addCondition(FieldKey.fromString("analysis_id"), so.getAnalysis_id(), CompareType.EQUAL);
+        filter.addCondition(FieldKey.fromString("dataid"), so.getDataId(), CompareType.EQUAL);
+        filter.addCondition(FieldKey.fromString("container"), job.getContainer().getId(), CompareType.EQUAL);
+        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowid"), filter, null);
+        if (ts.exists())
+        {
+            job.getLogger().info("Deleting existing QC metrics (probably from prior restarted job)");
+            ts.getArrayList(Integer.class).forEach(rowid -> {
+                Table.delete(ti, rowid);
+            });
+        }
+
         int total = 0;
         try (CSVReader reader = new CSVReader(Readers.getReader(metrics), '\t'))
         {
