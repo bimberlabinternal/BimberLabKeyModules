@@ -119,6 +119,7 @@ public class CellRangerVDJUtils
             Set<String> distinctHTOs = new HashSet<>();
             Set<Boolean> hashingStatus = new HashSet<>();
             Set<Boolean> citeseqStatus = new HashSet<>();
+            AtomicInteger totalWritten = new AtomicInteger(0);
             for (Readset rs : cachedReadsets)
             {
                 AtomicBoolean hasError = new AtomicBoolean(false);
@@ -144,6 +145,7 @@ public class CellRangerVDJUtils
                             String.valueOf(results.getObject(FieldKey.fromString("citeseqReadsetId/totalFiles")) != null && results.getInt(FieldKey.fromString("citeseqReadsetId/totalFiles")) > 0),
                             results.getString(FieldKey.fromString("citeseqPanel"))
                     });
+                    totalWritten.getAndIncrement();
 
                     boolean useCellHashing = results.getObject(FieldKey.fromString("sortId/hto")) != null;
                     hashingStatus.add(useCellHashing);
@@ -214,6 +216,11 @@ public class CellRangerVDJUtils
             else if (distinctHTOs.size() == 1)
             {
                 job.getLogger().info("There is only a single HTO in this pool, will not use hashing");
+            }
+
+            if (totalWritten.get() == 0)
+            {
+                throw new PipelineJobException("No matching cDNA records found");
             }
 
             boolean useCellHashing = hashingStatus.isEmpty() ? false : hashingStatus.size() > 1 ? true : hashingStatus.iterator().next();
@@ -659,11 +666,14 @@ public class CellRangerVDJUtils
             String[] line;
             int idx = 0;
             int noCDR3 = 0;
+            int noCGene = 0;
+            int notFullLength = 0;
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
             int discordantSkipped = 0;
             int hasCDR3NoClonotype = 0;
+            int multiChainConverted = 0;
             Set<String> knownBarcodes = new HashSet<>();
             while ((line = reader.readNext()) != null)
             {
@@ -683,6 +693,18 @@ public class CellRangerVDJUtils
                 if ("None".equals(line[12]))
                 {
                     noCDR3++;
+                    continue;
+                }
+
+                if ("None".equals(line[9]))
+                {
+                    noCGene++;
+                    continue;
+                }
+
+                if ("False".equals(line[10]))
+                {
+                    notFullLength++;
                     continue;
                 }
 
@@ -723,47 +745,27 @@ public class CellRangerVDJUtils
                 //Preferentially use raw_consensus_id, but fall back to contig_id
                 String sequenceContigName = removeNone(line[17]) == null ? removeNone(line[2]) : removeNone(line[17]);
 
-                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], line[5], clonotypeId, sequenceContigName}, "<>");
+                //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
+                String locus = line[5];
+                if (locus.equals("Multi") && removeNone(line[9]) != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
+                {
+                    if (removeNone(line[9]).contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
+                    {
+                        locus = "TRA";
+                        multiChainConverted++;
+                    }
+                }
+
+                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), removeNone(line[9]), removeNone(line[13])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
-                    am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
+                    am = createForRow(line, sequenceContigName, cDNA, clonotypeId, locus);
                 }
                 else
                 {
                     am = rows.get(key);
-
-                    //These are not in the key, but are assumed to be identical if the key is identical:
-                    if (am.vHit != null && !am.vHit.equals(removeNone(line[6])))
-                    {
-                        _log.info("vHit not identical: " + removeNone(line[6]) + " / " + am.vHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (am.dHit != null && !am.dHit.equals(removeNone(line[7])))
-                    {
-                        _log.info("dHit not identical: " + removeNone(line[7]) + " / " + am.dHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (am.jHit != null && !am.jHit.equals(removeNone(line[8])))
-                    {
-                        _log.info("jHit not identical: " + removeNone(line[8]) + " / " + am.jHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (am.cHit != null && !am.cHit.equals(removeNone(line[9])))
-                    {
-                        _log.info("cHit not identical: " + removeNone(line[9]) + " / " + am.cHit + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
-
-                    if (!am.cdr3Nt.equals(removeNone(line[13])))
-                    {
-                        _log.info("cdr3Nt not identical: " + removeNone(line[13]) + " / " + am.cdr3Nt + ", creating new record");
-                        am = createForRow(line, sequenceContigName, cDNA, clonotypeId);
-                    }
                 }
 
                 uniqueContigNames.add(am.sequenceContigName);
@@ -780,6 +782,8 @@ public class CellRangerVDJUtils
             _log.info("total rows not cells: " + nonCell);
             _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
+            _log.info("total clonotype rows discarded for no C-gene: " + noCGene);
+            _log.info("total clonotype rows discarded for not full length: " + notFullLength);
             _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
@@ -787,6 +791,7 @@ public class CellRangerVDJUtils
             _log.info("total clonotypes: " + rows.size());
             _log.info("total sequences: " + uniqueContigNames.size());
             _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
+            _log.info("total rows converted from Multi to TRA: " + multiChainConverted);
 
         }
         catch (IOException e)
@@ -840,12 +845,12 @@ public class CellRangerVDJUtils
         saveRun(job, protocol, model, assayRows, outDir, runId, deleteExisting);
     }
 
-    private AssayModel createForRow(String[] line, String sequenceContigName, Integer cDNA, String clonotypeId)
+    private AssayModel createForRow(String[] line, String sequenceContigName, Integer cDNA, String clonotypeId, String locus)
     {
         AssayModel am = new AssayModel();
         am.cdna = cDNA;
         am.cdr3 = removeNone(line[12]);
-        am.locus = line[5];
+        am.locus = locus;
         am.cloneId = clonotypeId;
         am.sequenceContigName = sequenceContigName;
 
