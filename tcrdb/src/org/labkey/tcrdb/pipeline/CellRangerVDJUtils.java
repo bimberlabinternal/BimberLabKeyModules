@@ -747,9 +747,9 @@ public class CellRangerVDJUtils
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
                 String locus = line[5];
-                if (locus.equals("Multi") && removeNone(line[9]) != null && removeNone(line[8]) != null && removeNone(line[7]) != null)
+                if (locus.equals("Multi") && removeNone(line[9]) != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
                 {
-                    if (removeNone(line[9]).contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[7]).contains("TRDV"))
+                    if (removeNone(line[9]).contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
                     {
                         locus = "TRA";
                         multiChainConverted++;
