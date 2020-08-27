@@ -182,6 +182,10 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                     r.push('');
                                                 }
                                             }
+
+                                            Ext4.Array.forEach(r, function(val, idx){
+                                                r[idx] = Ext4.String.trim(val);
+                                            }, this);
                                         }, this);
 
                                         if (hadError) {
@@ -226,14 +230,16 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                 listeners: {
                     change: function (field, val) {
                         var target = field.up('tcrdb-libraryexportpanel').down('#sourcePlates');
-                        var sql = 'SELECT distinct plateId as plateId from tcrdb.cdnas ' + (val ? '' : 'c WHERE c.allReadsetsHaveData = false');
-                        target.store.sql = sql;
-                        target.store.removeAll();
-                        target.store.load(function () {
-                            if (target.getPicker()) {
-                                target.getPicker().refresh();
-                            }
-                        }, this);
+                        if (target) {
+                            var sql = 'SELECT distinct plateId as plateId from tcrdb.cdnas ' + (val ? '' : 'c WHERE c.allReadsetsHaveData = false');
+                            target.store.sql = sql;
+                            target.store.removeAll();
+                            target.store.load(function () {
+                                if (target.getPicker()) {
+                                    target.getPicker().refresh();
+                                }
+                            }, this);
+                        }
                     }
                 }
             },{
@@ -251,17 +257,17 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                 handler: function(btn){
                     this.onSubmit(btn);
                 }
-            },{
+            }, {
                 text: 'Download Data',
                 itemId: 'downloadData',
                 disabled: true,
-                handler: function(btn){
+                handler: function (btn) {
                     var instrument = btn.up('tcrdb-libraryexportpanel').down('#instrument').getValue();
                     var plateId = btn.up('tcrdb-libraryexportpanel').down('#sourcePlates').getValue();
                     var delim = 'TAB';
                     var extention = 'txt';
                     var split = '\t';
-                    if (instrument !== 'NextSeq (MPSSR)'){
+                    if (instrument !== 'NextSeq (MPSSR)') {
                         delim = 'COMMA';
                         extention = 'csv';
                         split = ',';
@@ -274,6 +280,108 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                         fileName: plateId + '.' + extention,
                         rows: rows,
                         delim: delim
+                    });
+                }
+            },{
+                text: 'Assign Readsets To Batch',
+                itemId: 'readsetBatch',
+                disabled: true,
+                handler: function (btn) {
+                    var panel = btn.up('tcrdb-libraryexportpanel');
+                    var readsetIds = btn.readsetIds;
+                    if (!readsetIds) {
+                        Ext4.Msg.alert('Error', 'No Readset IDs Found');
+                        return;
+                    }
+
+                    Ext4.Msg.wait('Loading...');
+                    LABKEY.Query.selectRows({
+                        containerPath: Laboratory.Utils.getQueryContainerPath(),
+                        schemaName: 'sequenceanalysis',
+                        queryName: 'sequence_readsets',
+                        columns: 'rowid,container',
+                        filterArray: [LABKEY.Filter.create('rowid', readsetIds.join(';'), LABKEY.Filter.Types.IN)],
+                        scope: this,
+                        failure: LDK.Utils.getErrorCallback(),
+                        success: function (results) {
+                            Ext4.Msg.hide();
+
+                            if (!results || !results.rows || !results.rows.length) {
+                                Ext4.Msg.hide();
+                                Ext4.Msg.alert('Error', 'Readsets not found: ' + readsetIds.join(';'));
+                                return;
+                            }
+
+                            var readsetRows = results.rows;
+
+                            Ext4.create('Ext.window.Window', {
+                                title: 'Assign Readsets To Batch',
+                                width: 800,
+                                bodyStyle: 'padding: 10px;',
+                                readsetIds: readsetIds,
+                                items: [{
+                                    html: 'The following readsets will be assigned to an instrument run/batch: ' + readsetIds.join(', '),
+                                    style: 'padding-bottom: 10px;',
+                                    border: false
+                                }, {
+                                    xtype: 'textfield',
+                                    fieldLabel: 'Run/Batch Name',
+                                    labelWidth: 150,
+                                    itemId: 'batchName'
+                                }, {
+                                    xtype: 'ldk-integerfield',
+                                    fieldLabel: 'Target Workbook',
+                                    labelWidth: 150,
+                                    itemId: 'targetWorkbook'
+                                }],
+                                buttons: [{
+                                    text: 'Submit',
+                                    scope: this,
+                                    handler: function (btn) {
+                                        var win = btn.up('window');
+                                        var batchId = win.down('#batchName').getValue();
+                                        if (!batchId) {
+                                            Ext4.Msg.alert('Error', 'Must enter a batch name');
+                                            return;
+                                        }
+
+                                        var workbook = win.down('#targetWorkbook').getValue();
+                                        if (workbook) {
+                                            Ext4.Msg.wait('Loading...');
+                                            LABKEY.Query.selectRows({
+                                                containerPath: Laboratory.Utils.getQueryContainerPath(),
+                                                schemaName: 'core',
+                                                queryName: 'workbooks',
+                                                columns: 'EntityId',
+                                                filterArray: [LABKEY.Filter.create('workbookId/workbookId', workbook, LABKEY.Filter.Types.EQUAL)],
+                                                scope: this,
+                                                failure: LDK.Utils.getErrorCallback(),
+                                                success: function (results) {
+                                                    if (!results || !results.rows || !results.rows.length) {
+                                                        Ext4.Msg.hide();
+                                                        Ext4.Msg.alert('Error', 'Workbook not found: ' + workbook);
+                                                        return;
+                                                    }
+
+                                                    LDK.Assert.assertEquality('Expected single workbook to be returned', results.rows.length, 1);
+
+                                                    win.close();
+                                                    panel.createInstrumentRun(readsetRows, batchId, results.rows[0].EntityId);
+                                                }
+                                            });
+                                        }
+                                        else {
+                                            panel.createInstrumentRun(readsetRows, batchId);
+                                        }
+                                    }
+                                }, {
+                                    text: 'Cancel',
+                                    handler: function (btn) {
+                                        btn.up('window').close();
+                                    }
+                                }]
+                            }).show();
+                        }
                     });
                 }
             }]
@@ -301,13 +409,47 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
         });
     },
 
+    createInstrumentRun: function (readsetRows, batchId, containerId) {
+        containerId = containerId || Laboratory.Utils.getQueryContainerPath();
+        LABKEY.Query.insertRows({
+            containerPath: containerId,
+            schemaName: 'sequenceanalysis',
+            queryName: 'instrument_runs',
+            scope: this,
+            rows: [{
+                name: batchId
+            }],
+            failure: LDK.Utils.getErrorCallback(),
+            success: function (results) {
+                var runId = results.rows[0].rowId;
+                LDK.Assert.assertNotEmpty('Error creating instrument run', runId);
+
+                Ext4.Array.forEach(readsetRows, function (rs) {
+                    rs.instrument_run_id = runId
+                }, this);
+
+                LABKEY.Query.updateRows({
+                    containerPath: Laboratory.Utils.getQueryContainerPath(),
+                    schemaName: 'sequenceanalysis',
+                    queryName: 'sequence_readsets',
+                    rows: readsetRows,
+                    failure: LDK.Utils.getErrorCallback(),
+                    success: function (results) {
+                        Ext4.Msg.hide();
+                        Ext4.Msg.alert('Success', 'Readsets updated');
+                    }
+                });
+            }
+        });
+    },
+
     onSubmit: function(btn, expectedPairs){
         var plateIds = [];
 
         if (expectedPairs) {
             var hadError = false;
             Ext4.Array.forEach(expectedPairs, function(p){
-                plateIds.push(p[0]);
+                plateIds.push(Ext4.String.trim(p[0]));
             }, this);
         }
         else {
@@ -655,6 +797,10 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                 else {
                     btn.up('tcrdb-libraryexportpanel').down('#outputArea').setValue(rows.join('\n'));
                     btn.up('tcrdb-libraryexportpanel').down('#downloadData').setDisabled(false);
+
+                    var rsBtn = btn.up('tcrdb-libraryexportpanel').down('#readsetBatch');
+                    rsBtn.readsetIds = Ext4.Object.getKeys(readsetIds);
+                    rsBtn.setDisabled(false);
                 }
             }
         });
