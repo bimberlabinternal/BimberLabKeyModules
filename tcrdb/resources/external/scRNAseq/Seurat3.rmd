@@ -33,7 +33,7 @@ for (v in c('outPrefix', 'resolutionToUse', 'dimsToUse', 'minDimsToUse', 'doCell
 
 ## Prepare data
 
-```{r PreparingData, fig.width=10}
+```{r PreparingData, fig.width=12}
 
 rawDataSaveFile <- paste0(outPrefix, '.rawData.rds')
 seuratObjs <- list()
@@ -74,7 +74,7 @@ print(seuratObj)
 
 ## Initial Processing
 
-```{r InitialProcessing, fig.width=10}
+```{r InitialProcessing, fig.width=12}
 
 if (!skipProcessing) {
     seuratObj <- ProcessSeurat1(seuratObj, variableGeneTable = paste0(outPrefix, '.variableGenes.txt'), doCellFilter = doCellFilter, doCellCycle = doCellCycle, useSCTransform = useSCTransform, saveFile = saveFile)
@@ -88,7 +88,7 @@ if (!skipProcessing) {
 
 ## DimRedux
 
-```{r DimRedux, fig.width=10}
+```{r DimRedux, fig.width=12}
 
 if (!skipProcessing) {
     seuratObj <- FindClustersAndDimRedux(seuratObj, dimsToUse = dimsToUse, minDimsToUse = minDimsToUse, saveFile = saveFile)
@@ -102,7 +102,7 @@ if (!skipProcessing) {
 
 ## SingleR
 
-```{r SingleR, fig.width=10}
+```{r SingleR, fig.width=12}
 
 if (!skipProcessing && runSingleR) {
     tryCatch({
@@ -127,7 +127,7 @@ if (!skipProcessing && runSingleR) {
 
 ## Phenotypes
 
-```{r Phenotypes, fig.width=10}
+```{r Phenotypes, fig.width=12}
 
 if ( !skipProcessing ) {
     PlotImmuneMarkers(seuratObj, reductions = c('tsne', 'umap'))
