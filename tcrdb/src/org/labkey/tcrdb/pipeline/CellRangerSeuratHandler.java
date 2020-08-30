@@ -5,6 +5,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 import htsjdk.samtools.util.IOUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
@@ -926,7 +927,9 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 Map<String, Object> r = new HashMap<>();
                 r.put("category", line[0]);
                 r.put("metricname", line[1]);
-                r.put("metricvalue", line[2]);
+
+                String fieldName = NumberUtils.isCreatable(line[2]) ? "metricvalue" : "qualvalue";
+                r.put(fieldName, line[2]);
                 r.put("analysis_id", so.getAnalysis_id());
                 r.put("dataid", so.getDataId());
                 r.put("readset", so.getReadset());
