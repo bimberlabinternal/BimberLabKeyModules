@@ -477,46 +477,68 @@ public class mGAPController extends SpringActionController
         }
     }
 
+    private static Map<String, Object> getReleaseRow(User u, ReleaseForm form, Errors errors)
+    {
+        TableInfo ti = DbSchema.get(mGAPSchema.NAME, DbSchemaType.Module).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
+        Map<String, Object> row = new TableSelector(ti, new SimpleFilter(FieldKey.fromString("rowId"), form.getReleaseId()), null).getMap();
+        if (row == null)
+        {
+            errors.reject(ERROR_MSG, "Unknown release: " + form.getReleaseId());
+            return null;
+        }
+
+        Container rowContainer = ContainerManager.getForId((String)row.get("container"));
+        if (rowContainer == null)
+        {
+            errors.reject(ERROR_MSG, "Unknown row container: " + form.getReleaseId());
+            return null;
+        }
+        else if (!rowContainer.hasPermission(u, ReadPermission.class))
+        {
+            throw new UnauthorizedException("Cannot read the folder: " + rowContainer.getPath());
+        }
+
+        return row;
+    }
+
+    private static SequenceOutputFile getOutputFile(Map<String, Object> row, ReleaseForm form, Errors errors)
+    {
+        SequenceOutputFile so = SequenceOutputFile.getForId((Integer)row.get("vcfId"));
+        if (so == null)
+        {
+            errors.reject(ERROR_MSG, "Unknown VCF file ID: " + form.getReleaseId());
+            return null;
+        }
+        else if (so.getFile() == null || !so.getFile().exists())
+        {
+            errors.reject(ERROR_MSG, "VCF file does not exist: " + (so.getFile() == null ? form.getReleaseId() : so.getFile().getPath()));
+            return null;
+        }
+
+        return so;
+    }
+
     @RequiresPermission(ReadPermission.class)
     @IgnoresTermsOfUse
     public static class DownloadBundleAction extends ExportAction<DownloadBundleForm>
     {
         public void export(DownloadBundleForm form, HttpServletResponse response, BindException errors) throws Exception
         {
-            TableInfo ti = DbSchema.get(mGAPSchema.NAME, DbSchemaType.Module).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
-            Map<String, Object> row = new TableSelector(ti, new SimpleFilter(FieldKey.fromString("rowId"), form.getReleaseId()), null).getMap();
-            if (row == null)
+            Map<String, Object> row = getReleaseRow(getUser(), form, errors);
+            if (errors.hasErrors())
             {
-                errors.reject(ERROR_MSG, "Unknown release: " + form.getReleaseId());
                 return;
             }
 
-            Container rowContainer = ContainerManager.getForId((String)row.get("container"));
-            if (rowContainer == null)
+            SequenceOutputFile so = getOutputFile(row, form, errors);
+            if (errors.hasErrors())
             {
-                errors.reject(ERROR_MSG, "Unknown row container: " + form.getReleaseId());
                 return;
-            }
-            else if (!rowContainer.hasPermission(getUser(), ReadPermission.class))
-            {
-                throw new UnauthorizedException("Cannot read the folder: " + rowContainer.getPath());
             }
 
             Set<File> toZip = new HashSet<>();
             String zipName = "mGap_VariantCatalog_v" + FileUtil.makeLegalName((String)row.get("version"));
             zipName = zipName.replaceAll(" ", "_");
-
-            SequenceOutputFile so = SequenceOutputFile.getForId((Integer)row.get("vcfId"));
-            if (so == null)
-            {
-                errors.reject(ERROR_MSG, "Unknown VCF file ID: " + form.getReleaseId());
-                return;
-            }
-            else if (so.getFile() == null || !so.getFile().exists())
-            {
-                errors.reject(ERROR_MSG, "VCF file does not exist: " + (so.getFile() == null ? form.getReleaseId() : so.getFile().getPath()));
-                return;
-            }
 
             toZip.add(so.getFile());
             toZip.add(new File(so.getFile().getPath() + ".tbi"));
@@ -557,10 +579,9 @@ public class mGAPController extends SpringActionController
         }
     }
 
-    public static class DownloadBundleForm
+    public static class ReleaseForm
     {
         private Integer _releaseId;
-        private Boolean _includeGenome;
 
         public Integer getReleaseId()
         {
@@ -571,6 +592,11 @@ public class mGAPController extends SpringActionController
         {
             _releaseId = releaseId;
         }
+    }
+
+    public static class DownloadBundleForm extends ReleaseForm
+    {
+        private Boolean _includeGenome;
 
         public Boolean getIncludeGenome()
         {
