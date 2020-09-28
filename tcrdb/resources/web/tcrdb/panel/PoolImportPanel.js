@@ -1008,7 +1008,7 @@ Ext4.define('TCRdb.panel.PoolImportPanel', {
     },
 
     getStimKey: function(data){
-        return [data.stimId, data.animalId, data.stim, data.treatment, data.tissue].join('|');
+        return [data.stimId, data.animalId, data.stim, data.treatment, data.tissue, (Ext4.isDate(data.sampleDate) ? Ext4.Date.format(data.sampleDate, 'Y-m-d') : data.sampleDate)].join('|');
     },
 
     getSortKey: function(data){

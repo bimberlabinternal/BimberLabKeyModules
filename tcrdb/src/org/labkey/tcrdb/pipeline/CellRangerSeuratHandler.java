@@ -415,7 +415,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 IOUtil.copyFile(gtfFile, gtfCopy);
                 ctx.getFileManager().addIntermediateFile(gtfCopy);
 
-                writer.println("gtfFile <- " + gtfCopy.getName());
+                writer.println("gtfFile <- '" + gtfCopy.getName() + "'");
 
                 String mergeMethod = StringUtils.trimToNull(ctx.getParams().optString("mergeMethod"));
                 mergeMethod = mergeMethod == null ? "NULL" : "'" + mergeMethod + "'";
