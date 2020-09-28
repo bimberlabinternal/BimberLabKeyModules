@@ -136,7 +136,7 @@
                             }
 
                             this.searchNames(loc).then(function (loc, callee) {
-                                var url = loc.location ? loc.location.ref + ':' + loc.location.start + '..' + loc.location.end : null;
+                                var url = loc && loc.location ? loc.location.ref + ':' + loc.location.start + '..' + loc.location.end : null;
 
                                 if (!loc) {
                                     alert('Coordinates not found for this location.');

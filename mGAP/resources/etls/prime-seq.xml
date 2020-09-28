@@ -87,6 +87,7 @@
                     <column>dbSnpId</column>
                     <column>jbrowseId</column>
                     <column>variantTable</column>
+                    <column>gtf/DataFileUrl</column>
                     <column>liftedVcfId/dataid/DataFileUrl</column>
                     <column>liftedVcfId/name</column>
                     <column>liftedVcfId/library_id/name</column>

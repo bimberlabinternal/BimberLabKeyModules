@@ -439,6 +439,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         }
 
         output.addIntermediateFile(liftedToGRCh37Unzipped);
+        output.addIntermediateFile(new File(liftedToGRCh37Unzipped.getPath() + ".idx"));
         output.addIntermediateFile(liftedToGRCh37UnzippedDone);
 
         cassRunner.execute(liftedToGRCh37Unzipped, finalOutput, extraArgs);
