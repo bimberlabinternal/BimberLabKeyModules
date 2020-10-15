@@ -279,7 +279,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddSSD(job, engine, lines);
             possiblyAddExclusive(job, engine, lines);
 
-            possiblyAddGScratch(job, engine, lines);
             possiblyAddCOVID(job, lines);
         }
         else
@@ -314,10 +313,10 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     {
         Map<String, Object> ret = new HashMap<>();
 
-        if (job instanceof HasJobParams && getGScratchValue((HasJobParams)job))
+        if (job instanceof HasJobParams && getUseLustreValue((HasJobParams)job))
         {
-            job.getLogger().info("Requiring using GScratch pilot as working space");
-            ret.put("USE_GSCRATCH", "1");
+            job.getLogger().info("Requiring using original lustre as working space");
+            ret.put("USE_LUSTRE", "1");
         }
 
         return ret;
@@ -419,29 +418,16 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         }
     }
 
-    private boolean getGScratchValue(HasJobParams job)
+    private boolean getUseLustreValue(HasJobParams job)
     {
         Map<String, String> params = (job).getJobParams();
-        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useGScratch"));
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useLustre"));
         if (val == null)
         {
             return false;
         }
 
         return Boolean.parseBoolean(val);
-    }
-
-    private void possiblyAddGScratch(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
-    {
-        if (getGScratchValue((HasJobParams)job))
-        {
-            job.getLogger().info("Requiring infiniband node, because GScratch was selected as working space");
-            String line = "#SBATCH -C IB";
-            if (!lines.contains(line))
-            {
-                lines.add(line);
-            }
-        }
     }
 
     private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
