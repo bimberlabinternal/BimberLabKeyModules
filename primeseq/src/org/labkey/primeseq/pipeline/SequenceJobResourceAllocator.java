@@ -281,10 +281,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
             possiblyAddCOVID(job, lines);
         }
-        else
-        {
-            job.getLogger().error("This job type does not implement HasJobParams");
-        }
     }
 
     private void possiblyAddCOVID(PipelineJob job, List<String> lines)
