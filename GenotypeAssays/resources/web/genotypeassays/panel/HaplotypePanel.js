@@ -591,14 +591,14 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
                         }
                         else {
                             rankedPctMatches[totalPctPresent] = rankedPctMatches[totalPctPresent] || [];
-                            if (rankedPctMatches[totalPctPresent].indexOf(names) == -1) {
+                            if (rankedPctMatches[totalPctPresent].indexOf(names) === -1) {
                                 rankedPctMatches[totalPctPresent].push(names);
                             }
 
                             pctExplainedByMatch[names] = totalPctPresent;
 
                             rankedMatches[matchesUnion.length] = rankedMatches[matchesUnion.length] || [];
-                            if (rankedMatches[matchesUnion.length].indexOf(names) == -1) {
+                            if (rankedMatches[matchesUnion.length].indexOf(names) === -1) {
                                 rankedMatches[matchesUnion.length].push(names);
                             }
                         }
