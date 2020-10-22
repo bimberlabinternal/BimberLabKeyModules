@@ -293,7 +293,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             id = id.replaceAll("[^a-zA-z0-9_\\-]", "_");
             args.add("--id=" + id);
 
-            File indexDir = AlignerIndexUtil.getWebserverIndexDir(referenceGenome, getIndexCachedDirName(getPipelineCtx().getJob()));
+            File indexDir = AlignerIndexUtil.getIndexDir(referenceGenome, getIndexCachedDirName(getPipelineCtx().getJob()));
             args.add("--reference=" + indexDir.getPath());
 
             args.addAll(getClientCommandArgs("="));
