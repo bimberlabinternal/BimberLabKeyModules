@@ -278,7 +278,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddDisk(job, engine, lines);
             possiblyAddSSD(job, engine, lines);
             possiblyAddExclusive(job, engine, lines);
-
+            possiblyAddInfiniband(job, engine, lines);
             possiblyAddCOVID(job, lines);
         }
     }
@@ -407,6 +407,27 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             job.getLogger().info("Requiring local SSD scratch space");
             String line = "#SBATCH -C ssdscratch";
+            if (!lines.contains(line))
+            {
+                lines.add(line);
+            }
+        }
+    }
+
+    private void possiblyAddInfiniband(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams)job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.requireInfiniband"));
+        if (val == null)
+        {
+            return;
+        }
+
+        boolean parsed = Boolean.parseBoolean(val);
+        if (parsed)
+        {
+            job.getLogger().info("Requiring node with infiniband");
+            String line = "#SBATCH -C IB";
             if (!lines.contains(line))
             {
                 lines.add(line);
