@@ -350,8 +350,10 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                 boolean scanEditDistances = getProvider().getParameterByName("scanEditDistances").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
                 int editDistance = getProvider().getParameterByName("editDistance").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class, 2);
                 int minCountPerCell = getProvider().getParameterByName("minCountPerCell").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class, 3);
+                boolean useSeurat = getProvider().getParameterByName("useSeurat").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, true);
+                boolean useMultiSeq = getProvider().getParameterByName("useMultiSeq").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, true);
 
-                getUtils().runRemoteVdjCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances, referenceGenome.getGenomeId(), minCountPerCell);
+                getUtils().runRemoteVdjCellHashingTasks(output, CellRangerVDJCellHashingHandler.CATEGORY, getUtils().getPerCellCsv(output.getBAM().getParentFile()), rs, getPipelineCtx().getSequenceSupport(), null, getPipelineCtx().getWorkingDirectory(), getPipelineCtx().getSourceDirectory(), editDistance, scanEditDistances, referenceGenome.getGenomeId(), minCountPerCell, useSeurat, useMultiSeq);
             }
             else
             {

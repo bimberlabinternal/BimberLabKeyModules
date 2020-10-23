@@ -206,10 +206,12 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
             boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
+            boolean useSeurat = ctx.getParams().optBoolean("scanEditDistances", true);
+            boolean useMultiSeq = ctx.getParams().optBoolean("useMultiSeq", true);
             int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
             int editDistance = ctx.getParams().optInt("editDistance", 2);
 
-            File cellToHto = utils.runRemoteVdjCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell);
+            File cellToHto = utils.runRemoteVdjCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell, useSeurat, useMultiSeq);
             if (utils.useCellHashing(ctx.getSequenceSupport()) && cellToHto == null)
             {
                 throw new PipelineJobException("Missing cell to HTO file");
