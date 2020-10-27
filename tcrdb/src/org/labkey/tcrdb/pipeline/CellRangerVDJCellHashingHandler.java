@@ -206,7 +206,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
             boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
-            boolean useSeurat = ctx.getParams().optBoolean("scanEditDistances", true);
+            boolean useSeurat = ctx.getParams().optBoolean("useSeurat", true);
             boolean useMultiSeq = ctx.getParams().optBoolean("useMultiSeq", true);
             int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
             int editDistance = ctx.getParams().optInt("editDistance", 2);

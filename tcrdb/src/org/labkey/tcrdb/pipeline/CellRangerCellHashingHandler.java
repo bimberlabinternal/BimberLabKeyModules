@@ -66,7 +66,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 3),
             ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5),
             ToolParameterDescriptor.create("useSeurat", "Use Seurat Calling", "If checked, the seurat HTO calling algorithm will be used.", "checkbox", null, true),
-            ToolParameterDescriptor.create("useSeurat", "Use MultiSeq Calling", "If checked, the MultiSeq HTO calling algorithm will be used.", "checkbox", null, true)
+            ToolParameterDescriptor.create("useMultiSeq", "Use MultiSeq Calling", "If checked, the MultiSeq HTO calling algorithm will be used.", "checkbox", null, true)
         ));
 
         if (includeExcludeFailedcDNA)
@@ -304,7 +304,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
         int editDistance = ctx.getParams().optInt("editDistance", 3);
         int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
-        boolean useSeurat = ctx.getParams().optBoolean("scanEditDistances", true);
+        boolean useSeurat = ctx.getParams().optBoolean("useSeurat", true);
         boolean useMultiSeq = ctx.getParams().optBoolean("useMultiSeq", true);
 
         PipelineStepOutput output = new DefaultPipelineStepOutput();
