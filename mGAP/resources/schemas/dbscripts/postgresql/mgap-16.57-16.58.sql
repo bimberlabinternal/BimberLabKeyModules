@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.demographics ADD lsid LsidType;
