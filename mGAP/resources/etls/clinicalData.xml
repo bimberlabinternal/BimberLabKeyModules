@@ -13,6 +13,7 @@
                     <column>result</column>
                     <column>units</column>
                     <column>runid</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="chemistryResults" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -30,6 +31,7 @@
                     <column>birth</column>
                     <column>death</column>
                     <column>avgKinship</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="demographics" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -46,6 +48,7 @@
                     <column>organism</column>
                     <column>quantity</column>
                     <column>runid</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="microbiology" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -59,6 +62,7 @@
                     <column>date</column>
                     <column>ageAtTime</column>
                     <column>weight</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -77,6 +81,7 @@
                     <column>servicerequested</column>
                     <column>collectionMethod</column>
                     <column>method</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="clinpathRuns" bulkLoad="true" targetOption="merge">
@@ -93,6 +98,7 @@
                     <column>result</column>
                     <column>units</column>
                     <column>runid</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="hematologyResults" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -107,6 +113,7 @@
                     <column>ageAtTime</column>
                     <column>sort_order</column>
                     <column>codes</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="pathologyDiagnoses" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -122,6 +129,7 @@
                     <column>sort_order</column>
                     <column>tissue</column>
                     <column>codes</column>
+                    <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="histology" targetOption="merge" bulkLoad="true" batchSize="2500">
@@ -129,7 +137,7 @@
             </destination>
         </transform>
     </transforms>
-    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified"/>
+    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" pkColumnName="objectid"/>
     <schedule>
         <cron expression="0 30 1 * * ?"/>
     </schedule>
