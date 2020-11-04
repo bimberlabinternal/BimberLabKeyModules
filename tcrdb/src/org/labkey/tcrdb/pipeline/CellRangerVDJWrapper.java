@@ -86,9 +86,10 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--disable--ui"), "disable--ui", "Disable UI", "If checked, this will run cellranger with the optional web-based UI disabled.", "checkbox", new JSONObject(){{
                         put("checked", true);
                     }}, true),
-                    ToolParameterDescriptor.create(INNER_ENRICHMENT_PRIMERS, "Inner Enrichment Primers", "An option comma-separated list of the inner primers used for TCR enrichment. These will be used for trimming.", "textfield", new JSONObject(){{
-
-                    }}, true),
+                    ToolParameterDescriptor.create(INNER_ENRICHMENT_PRIMERS, "Inner Enrichment Primers", "An option comma-separated list of the inner primers used for TCR enrichment. These will be used for trimming.", "textarea", new JSONObject(){{
+                        put("height", 100);
+                        put("width", 400);
+                    }}, null),
                     ToolParameterDescriptor.create(TARGET_ASSAY, "Target Assay", "Results will be loaded into this assay.  If no assay is selected, a table will be created with nothing in the DB.", "tcr-assayselectorfield", new JSONObject(){{
                         put("autoSelectAssay", false);
                     }}, null),
@@ -306,6 +307,9 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
             String primers = StringUtils.trimToNull(getProvider().getParameterByName(INNER_ENRICHMENT_PRIMERS).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
             if (primers != null)
             {
+                primers = primers.replaceAll("\\s+", ",");
+                primers = primers.replaceAll(",+", ",");
+
                 File primerFile = new File(outputDirectory, "primers.txt");
                 try (PrintWriter writer = PrintWriters.getPrintWriter(primerFile))
                 {
