@@ -83,7 +83,7 @@ public class CellRangerVDJWrapper extends AbstractCommandWrapper
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--force-cells"), "force-cells", "Force Cells", "Force pipeline to use this number of cells, bypassing the cell detection algorithm. Use this if the number of cells estimated by Cell Ranger is not consistent with the barcode rank plot.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
                     }}, null),
-                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--disable--ui"), "disable--ui", "Disable UI", "If checked, this will run cellranger with the optional web-based UI disabled.", "checkbox", new JSONObject(){{
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--disable--ui"), "disable--ui", "Disable UI", "If checked, this will run cellranger with the optional web-based UI disabled.", "checkbox", new JSONObject(){{
                         put("checked", true);
                     }}, true),
                     ToolParameterDescriptor.create(INNER_ENRICHMENT_PRIMERS, "Inner Enrichment Primers", "An option comma-separated list of the inner primers used for TCR enrichment. These will be used for trimming.", "textarea", new JSONObject(){{
