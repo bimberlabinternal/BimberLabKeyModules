@@ -447,7 +447,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 writer.println();
                 writer.println("setwd('/work')");
 
-                writer.println("rmarkdown::render('" + rmdScript.getName() + "', clean=TRUE, output_file='" + outHtml.getName() + "')");
+                writer.println("rmarkdown::render('" + rmdScript.getName() + "', clean=TRUE, output_format = 'html_document', output_file='" + outHtml.getName() + "')");
             }
             catch (IOException e)
             {
