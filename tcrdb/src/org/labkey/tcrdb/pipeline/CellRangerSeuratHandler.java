@@ -187,6 +187,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             {
                 job.getLogger().info("attempting to infer GTF:");
 
+                //TODO: collapse by filepath
                 Set<Integer> gtfIds = new HashSet<>();
                 for (SequenceOutputFile so : inputFiles)
                 {
