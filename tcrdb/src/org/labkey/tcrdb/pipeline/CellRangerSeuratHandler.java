@@ -692,10 +692,14 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     throw new PipelineJobException(e);
                 }
 
-                if (htosForReadset > 0)
+                if (htosForReadset > 1)
                 {
                     ctx.getLogger().info("Total HTOs for readset: " + htosForReadset);
                     finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, true, perReadsetHtos, true));
+                }
+                else if (htosForReadset == 1)
+                {
+                    ctx.getLogger().info("Only single HTO used for lane, skipping cell hashing calling");
                 }
                 else
                 {
