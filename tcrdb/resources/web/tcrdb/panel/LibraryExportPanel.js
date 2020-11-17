@@ -88,7 +88,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     border: false
                                 },
                                 items: [{
-                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, CITE, or HTO).  These can either be one column (i.e. G234-1, C234-1, H234-1, or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional next column is the lane assignment (i.e. Novaseq1, HiSeq1, HiSeq2). Finally, an optional final column can be used to provide the alias for this pool. This is mostly used for CITE-Seq/HTOs, where multiple libraries are pre-pooled.  See these examples:<br>' +
+                                    html: 'Add an ordered list of plates, using tab-delimited columns.  The first column(s) are plate ID and library type (GEX, VDJ, CITE, or HTO).  These can either be one column (i.e. G234-1, C234-1, H234-1, or T234-1), or as two columns (234-1 GEX or 234-1    HTO). An optional next column is the lane assignment (i.e. Novaseq1, HiSeq1, HiSeq2). Finally, an optional final column can be used to provide the alias for this pool. This is mostly used for CITE-Seq/HTOs, where multiple libraries are pre-pooled.  Note, a wildcard can be used to specify all plates beginning with that prefix. See these examples:<br>' +
                                             '<pre>' +
                                                 '234-2\tGEX<br>' +
                                                 '234-2\tVDJ<br>' +
@@ -101,6 +101,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 '235-2\tHTO\tHiSeq2\tBNB-HTO-1<br>' +
                                                 'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
                                                 'C235-2\tHiSeq1\tBNB-HTO-1' +
+                                                'C235-*\tHiSeq2\tBNB-HTO-2' +
                                             '</pre>',
                                     border: false
                                 },{
@@ -171,6 +172,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                         }, this);
 
                                         var hadError = false;
+                                        var wildcards = {};
                                         Ext4.Array.forEach(text, function(r){
                                             if (r.length < 2){
                                                 hadError = true;
@@ -186,6 +188,12 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                             Ext4.Array.forEach(r, function(val, idx){
                                                 r[idx] = Ext4.String.trim(val);
                                             }, this);
+
+                                            if (r[0].match('\\*$')) {
+                                                var m = r[0].match('\\*$');
+                                                var val = r[0].substr(0, m.index);
+                                                wildcards[val] = r;
+                                            }
                                         }, this);
 
                                         if (hadError) {
@@ -193,7 +201,58 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                             return;
                                         }
 
-                                        this.onSubmit(btn, text);
+                                        if (!Ext4.Object.isEmpty(wildcards)) {
+                                            LABKEY.Query.selectRows({
+                                                method: 'POST',
+                                                containerPath: Laboratory.Utils.getQueryContainerPath(),
+                                                schemaName: 'tcrdb',
+                                                queryName: 'cdnas',
+                                                columns: 'rowid,plateId',
+                                                filterArray: [LABKEY.Filter.create('plateId', Ext4.Object.getKeys(wildcards).join(';'), LABKEY.Filter.Types.CONTAINS_ONE_OF)],
+                                                scope: this,
+                                                failure: LDK.Utils.getErrorCallback(),
+                                                success: function (results) {
+                                                    if (results.rows.length) {
+                                                        var prefixToPlate = {};
+                                                        Ext4.Array.forEach(results.rows, function (row) {
+                                                            Ext4.Array.forEach(Ext4.Object.getKeys(wildcards), function (prefix) {
+                                                                if (row.plateId && row.plateId.includes(prefix)) {
+                                                                    prefix = prefix + '*';
+                                                                    prefixToPlate[prefix] = prefixToPlate[prefix] || [];
+                                                                    prefixToPlate[prefix].push(row.plateId);
+                                                                }
+                                                            }, this);
+                                                        }, this);
+
+                                                        Ext4.Array.forEach(Ext4.Object.getKeys(prefixToPlate), function (prefix) {
+                                                            prefixToPlate[prefix] = Ext4.unique(prefixToPlate[prefix]);
+                                                        }, this);
+
+                                                        var updatedText = [];
+                                                        var prefixes = Ext4.Object.getKeys(prefixToPlate);
+                                                        Ext4.Array.forEach(text, function (r, idx) {
+                                                            var plateId = r[0];
+                                                            if (prefixes.indexOf(plateId) == -1) {
+                                                                updatedText.push(r);
+                                                            }
+                                                            else {
+                                                                Ext4.Array.forEach(prefixToPlate[plateId], function(newPlate){
+                                                                    var r2 = [].concat(r);
+                                                                    r2[0] = newPlate;
+                                                                    updatedText.push(r2);
+                                                                }, this);
+                                                            }
+                                                        }, this);
+
+                                                        text = updatedText;
+                                                    }
+
+                                                    this.onSubmit(btn, text);
+                                                }
+                                            });
+                                        } else {
+
+                                        }
                                     }
                                 }]
                             });
