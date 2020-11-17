@@ -251,7 +251,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 }
                                             });
                                         } else {
-
+                                            this.onSubmit(btn, text);
                                         }
                                     }
                                 }]
