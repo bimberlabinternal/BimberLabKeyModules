@@ -816,10 +816,10 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
 
                     var delim = instrument === 'Novogene' ? '\t' : ',';
                     Ext4.Array.forEach(sortedRows, function (r) {
-                        processType(readsetIds, rows, r, 'readsetId', 'GEX', 500, 1, 'G', null, false);
-                        processType(readsetIds, rows, r, 'enrichedReadsetId', 'TCR', 700, 1, 'T', null, false);
-                        processType(readsetIds, rows, r, 'hashingReadsetId', 'HTO', 182, 5, 'H', 'Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane', true);
-                        processType(readsetIds, rows, r, 'citeseqReadsetId', 'CITE', 182, 5, 'C', 'CITE-Seq, 190bp amplicon.  Please QC individually and pool in equal amounts per lane', false);
+                        processType(readsetIds, rows, r, 'readsetId', 'GEX', 500, 0.01, 'G', null, false);
+                        processType(readsetIds, rows, r, 'enrichedReadsetId', 'TCR', 700, 0.01, 'T', null, false);
+                        processType(readsetIds, rows, r, 'hashingReadsetId', 'HTO', 182, 0.05, 'H', 'Cell hashing, 190bp amplicon.  Please QC individually and pool in equal amounts per lane', true);
+                        processType(readsetIds, rows, r, 'citeseqReadsetId', 'CITE', 182, 0.05, 'C', 'CITE-Seq, 190bp amplicon.  Please QC individually and pool in equal amounts per lane', false);
                     }, this);
 
                     //add missing barcodes:
