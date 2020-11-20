@@ -324,11 +324,11 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                     var instrument = btn.up('tcrdb-libraryexportpanel').down('#instrument').getValue();
                     var plateId = btn.up('tcrdb-libraryexportpanel').down('#sourcePlates').getValue();
                     var delim = 'TAB';
-                    var extention = 'txt';
+                    var extension = 'txt';
                     var split = '\t';
                     if (instrument !== 'NextSeq (MPSSR)') {
                         delim = 'COMMA';
-                        extention = 'csv';
+                        extension = 'csv';
                         split = ',';
                     }
 
@@ -336,7 +336,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                     var rows = LDK.Utils.CSVToArray(Ext4.String.trim(val), split);
 
                     LABKEY.Utils.convertToTable({
-                        fileName: plateId + '.' + extention,
+                        fileName: plateId + '.' + extension,
                         rows: rows,
                         delim: delim
                     });
