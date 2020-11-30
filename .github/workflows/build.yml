@@ -1,5 +1,7 @@
 name: Build DISCVR
-on: [ push, pull_request ]
+on:
+  push:
+  pull_request:
 jobs:
   build-modules:
     # See: https://help.github.com/en/actions/reference/contexts-and-expression-syntax-for-github-actions#github-context
