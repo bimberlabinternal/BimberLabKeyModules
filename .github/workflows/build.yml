@@ -1,8 +1,7 @@
 name: Build DISCVR
-on:
-  [ push, pull_request ]
+on: [ push, pull_request ]
 jobs:
-  sync-release-branches:
+  build-modules:
     # See: https://help.github.com/en/actions/reference/contexts-and-expression-syntax-for-github-actions#github-context
     # https://help.github.com/en/actions/configuring-and-managing-workflows/using-environment-variables#default-environment-variables
     if: github.repository == 'BimberLabInternal/BimberLabKeyModules'
