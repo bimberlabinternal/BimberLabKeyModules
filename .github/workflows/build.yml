@@ -1,9 +1,6 @@
 name: Build DISCVR
 on:
-  push:
-    branches: [ * ]
-  pull_request:
-    branches: [ * ]
+  [ push, pull_request ]
 jobs:
   sync-release-branches:
     # See: https://help.github.com/en/actions/reference/contexts-and-expression-syntax-for-github-actions#github-context
