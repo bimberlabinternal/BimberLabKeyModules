@@ -60,6 +60,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 {
     private FileType _fileType = new FileType("cloupe", false);
     public static final String SEURAT_MAX_THREADS = "seuratMaxThreads";
+    private static final String GTF_FILE_ID = "gtfFileId";
 
     public CellRangerSeuratHandler()
     {
@@ -103,11 +104,11 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     put("storeValues", "simple;cca");
                 }}, "simple"),
                 ToolParameterDescriptor.create(SEURAT_MAX_THREADS, "Seurat Max Threads", "Because seurat can behave badly with multiple threads, this allows a separate cap to be used from the main job.  This will allow CITE-Seq-Count and other tools to run with more threads.", "ldk-integerfield", null, 1),
-                ToolParameterDescriptor.createExpDataParam("gtfFile", "Gene File", "This is the ID of a GTF file containing genes from this genome.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
+                ToolParameterDescriptor.createExpDataParam(GTF_FILE_ID, "Gene File", "This is the ID of a GTF file containing genes from this genome.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
                 {{
                     put("extensions", Arrays.asList("gtf"));
                     put("width", 400);
-                    put("allowBlank", false);
+                    put("allowBlank", true);
                 }}, null)
         ));
 
@@ -165,8 +166,6 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
     public class Processor implements SequenceOutputProcessor
     {
-        private static final String GTF_FILE_ID = "gtfFileIf";
-
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
@@ -184,19 +183,17 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
 
             new CellRangerVDJUtils(job.getLogger(), outputDir).prepareHashingAndCiteSeqFilesIfNeeded(job, support,"readsetId", params.optBoolean("excludeFailedcDNA", true), false, false);
 
-            Set<Integer> gtfIds = new HashSet<>();
-            for (SequenceOutputFile so : inputFiles)
+            if (params.get(GTF_FILE_ID) == null)
             {
-                ExpData gtf = null;
-                ExpRun run = ExperimentService.get().getExpRun(so.getRunId());
-                if (run != null)
+                job.getLogger().info("attempting to infer GTF:");
+
+                //TODO: collapse by filepath
+                Set<Integer> gtfIds = new HashSet<>();
+                for (SequenceOutputFile so : inputFiles)
                 {
-                    List<? extends ExpData> gtfDatas = run.getInputDatas("GTF File", null);
-                    if (!gtfDatas.isEmpty())
-                    {
-                        gtf = gtfDatas.get(0);
-                    }
-                    else
+                    ExpData gtf = null;
+                    ExpRun run = ExperimentService.get().getExpRun(so.getRunId());
+                    if (run != null)
                     {
                         //Because existing runs didnt explicitly track GTF as an input, try to infer:
                         PipelineStatusFile sf = PipelineService.get().getStatusFile(run.getJobId());
@@ -226,23 +223,23 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                             }
                         }
                     }
+
+                    if (gtf == null)
+                    {
+                        throw new PipelineJobException("Unable to find GTF for output: " + so.getRowid());
+                    }
+
+                    gtfIds.add(gtf.getRowId());
                 }
 
-                if (gtf == null)
+                if (gtfIds.size() != 1)
                 {
-                    throw new PipelineJobException("Unable to find GTF for output: " + so.getRowid());
+                    throw new PipelineJobException("All inputs must use the same GTF file, found: " + StringUtils.join(gtfIds, ","));
                 }
 
-                gtfIds.add(gtf.getRowId());
+                support.cacheExpData(ExperimentService.get().getExpData(gtfIds.iterator().next()));
+                support.cacheObject(GTF_FILE_ID, gtfIds.iterator().next());
             }
-
-            if (gtfIds.size() != 1)
-            {
-                throw new PipelineJobException("All inputs must use the same GTF file, found: " + StringUtils.join(gtfIds, ","));
-            }
-
-            support.cacheExpData(ExperimentService.get().getExpData(gtfIds.iterator().next()));
-            support.cacheObject(GTF_FILE_ID, gtfIds.iterator().next());
         }
 
         @Override
@@ -257,7 +254,13 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
             RecordedAction action = new RecordedAction(getName());
             ctx.addActions(action);
 
-            int gtfId = ctx.getSequenceSupport().getCachedObject(GTF_FILE_ID, Integer.class);
+            int gtfId = ctx.getParams().optInt(GTF_FILE_ID, -1);
+            if (gtfId == -1)
+            {
+                ctx.getLogger().debug("GTF file was not specified, defaulting to inferred file");
+                gtfId = ctx.getSequenceSupport().getCachedObject(GTF_FILE_ID, Integer.class);
+            }
+
             File gtfFile = ctx.getSequenceSupport().getCachedData(gtfId);
             if (!gtfFile.exists())
             {
@@ -447,7 +450,7 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                 writer.println();
                 writer.println("setwd('/work')");
 
-                writer.println("rmarkdown::render('" + rmdScript.getName() + "', clean=TRUE, output_file='" + outHtml.getName() + "')");
+                writer.println("rmarkdown::render('" + rmdScript.getName() + "', clean=TRUE, output_format = 'html_document', output_file='" + outHtml.getName() + "')");
             }
             catch (IOException e)
             {
@@ -689,10 +692,14 @@ public class CellRangerSeuratHandler extends AbstractParameterizedOutputHandler<
                     throw new PipelineJobException(e);
                 }
 
-                if (htosForReadset > 0)
+                if (htosForReadset > 1)
                 {
                     ctx.getLogger().info("Total HTOs for readset: " + htosForReadset);
                     finalCalls.put(barcodePrefix, CellRangerCellHashingHandler.processBarcodeFile(ctx, barcodes, rs, htoReadset, so.getLibrary_id(), action, getClientCommandArgs(ctx.getParams()), false, SeuratCellHashingHandler.CATEGORY, true, perReadsetHtos, true));
+                }
+                else if (htosForReadset == 1)
+                {
+                    ctx.getLogger().info("Only single HTO used for lane, skipping cell hashing calling");
                 }
                 else
                 {
