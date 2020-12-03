@@ -63,7 +63,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
             ToolParameterDescriptor.create("scanEditDistances", "Scan Edit Distances", "If checked, CITE-seq-count will be run using edit distances from 0-3 and the iteration with the highest singlets will be used.", "checkbox", new JSONObject(){{
                 put("checked", false);
             }}, false),
-            ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 3),
+            ToolParameterDescriptor.create("editDistance", "Edit Distance", null, "ldk-integerfield", null, 2),
             ToolParameterDescriptor.create("minCountPerCell", "Min Reads/Cell", null, "ldk-integerfield", null, 5),
             ToolParameterDescriptor.create("useSeurat", "Use Seurat Calling", "If checked, the seurat HTO calling algorithm will be used.", "checkbox", null, true),
             ToolParameterDescriptor.create("useMultiSeq", "Use MultiSeq Calling", "If checked, the MultiSeq HTO calling algorithm will be used.", "checkbox", null, true)
@@ -248,7 +248,7 @@ public class CellRangerCellHashingHandler extends AbstractParameterizedOutputHan
         //prepare whitelist of cell indexes
         File cellBarcodeWhitelist = utils.getValidCellIndexFile();
         Set<String> uniqueBarcodes = new HashSet<>();
-        ctx.getLogger().debug("writing cell barcodes");
+        ctx.getLogger().debug("writing cell barcodes, using file: " + perCellTsv.getPath());
         try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER);CSVReader reader = new CSVReader(IOUtil.openFileForBufferedUtf8Reading(perCellTsv), '\t'))
         {
             int rowIdx = 0;
