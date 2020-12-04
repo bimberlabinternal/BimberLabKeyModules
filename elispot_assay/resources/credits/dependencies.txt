@@ -1,0 +1,2 @@
+# direct external dependencies for project :server:modules:BimberLabKeyModules:elispot_assay
+commons-math3-3.6.1.jar
