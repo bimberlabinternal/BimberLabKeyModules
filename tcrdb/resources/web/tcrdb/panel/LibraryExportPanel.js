@@ -100,7 +100,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
                                                 '235-2\tHTO\tHiSeq2\tBNB-HTO-1<br>' +
                                                 'H235-2\tHiSeq1\tBNB-HTO-1<br>' +
-                                                'C235-2\tHiSeq1\tBNB-HTO-1' +
+                                                'C235-2\tHiSeq1\tBNB-HTO-1<br>' +
                                                 'C235-*\tHiSeq2\tBNB-HTO-2' +
                                             '</pre>',
                                     border: false
@@ -212,7 +212,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                 containerPath: Laboratory.Utils.getQueryContainerPath(),
                                                 schemaName: 'tcrdb',
                                                 queryName: 'cdnas',
-                                                columns: 'rowid,plateId',
+                                                columns: 'rowid,plateId,hashingReadsetId,citeseqReadsetId',
                                                 filterArray: [LABKEY.Filter.create('plateId', Ext4.Object.getKeys(wildcards).join(';'), LABKEY.Filter.Types.CONTAINS_ONE_OF)],
                                                 scope: this,
                                                 failure: LDK.Utils.getErrorCallback(),
@@ -223,28 +223,33 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                                             Ext4.Array.forEach(Ext4.Object.getKeys(wildcards), function (prefix) {
                                                                 if (row.plateId && row.plateId.includes(prefix)) {
                                                                     prefix = prefix + '*';
-                                                                    prefixToPlate[prefix] = prefixToPlate[prefix] || [];
-                                                                    prefixToPlate[prefix].push(row.plateId);
+                                                                    prefixToPlate[prefix] = prefixToPlate[prefix] || {};
+                                                                    prefixToPlate[prefix][row.plateId] = prefixToPlate[prefix][row.plateId] || {}
+                                                                    if (row.hashingReadsetId) {
+                                                                        prefixToPlate[prefix][row.plateId].HTO = true;
+                                                                    }
+
+                                                                    if (row.citeseqReadsetId) {
+                                                                        prefixToPlate[prefix][row.plateId].CITE = true;
+                                                                    }
                                                                 }
                                                             }, this);
-                                                        }, this);
-
-                                                        Ext4.Array.forEach(Ext4.Object.getKeys(prefixToPlate), function (prefix) {
-                                                            prefixToPlate[prefix] = Ext4.unique(prefixToPlate[prefix]);
                                                         }, this);
 
                                                         var updatedText = [];
                                                         var prefixes = Ext4.Object.getKeys(prefixToPlate);
                                                         Ext4.Array.forEach(text, function (r, idx) {
                                                             var plateId = r[0];
-                                                            if (prefixes.indexOf(plateId) == -1) {
+                                                            if (prefixes.indexOf(plateId) === -1) {
                                                                 updatedText.push(r);
                                                             }
                                                             else {
-                                                                Ext4.Array.forEach(prefixToPlate[plateId], function(newPlate){
-                                                                    var r2 = [].concat(r);
-                                                                    r2[0] = newPlate;
-                                                                    updatedText.push(r2);
+                                                                Ext4.Array.forEach(Ext4.Object.getKeys(prefixToPlate[plateId]), function(newPlateId){
+                                                                    if (Ext4.Object.getKeys(prefixToPlate[plateId][newPlateId]).indexOf(r[1]) > -1) {
+                                                                        var r2 = [].concat(r);
+                                                                        r2[0] = newPlateId;
+                                                                        updatedText.push(r2);
+                                                                    }
                                                                 }, this);
                                                             }
                                                         }, this);
