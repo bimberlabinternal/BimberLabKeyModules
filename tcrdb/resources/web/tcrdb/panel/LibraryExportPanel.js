@@ -48,7 +48,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                 forceSelection: true,
                                 editable: false,
                                 labelWidth: 160,
-                                storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List (MedGenome)', '10x Sample Sheet', 'Novogene']
+                                storeValues: ['NextSeq (MPSSR)', 'MiSeq (ONPRC)', 'Basic List (MedGenome)', '10x Sample Sheet', 'Novogene', 'Novogene-New']
                             },{
                                 xtype: 'ldk-simplecombo',
                                 itemId: 'application',
@@ -105,9 +105,14 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                             '</pre>',
                                     border: false
                                 },{
-                                    xtype: 'hidden',
+                                    xtype: 'ldk-simplecombo',
                                     itemId: 'instrument',
-                                    value: 'Novogene'
+                                    value: 'Novogene-New',
+                                    fieldLabel: 'Format',
+                                    forceSelection: true,
+                                    editable: true,
+                                    allowBlank: true,
+                                    storeValues: ['Novogene', 'Novogene-New']
                                 },{
                                     xtype: 'textarea',
                                     itemId: 'plateList',
@@ -759,7 +764,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                         }, this);
                     }
                 }
-                else if (instrument === '10x Sample Sheet' || instrument === 'Novogene') {
+                else if (instrument === '10x Sample Sheet' || instrument === 'Novogene' || instrument === 'Novogene-New') {
                     //we make the default assumption that we're using 10x primers, which are listed in the sample-sheet orientation
                     var doRC = false;
                     var rows = [];
@@ -777,7 +782,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
 
                             var cleanedName = r[fieldName] + '_' + r[fieldName + '/name'].replace(/ /g, '_');
                             cleanedName = cleanedName.replace(/\//g, '-');
-                            var sampleName = getSampleName(simpleSampleNames, r[fieldName], r[fieldName + '/name']) + (suffix && instrument === 'Novogene' ? '' : '-' + suffix);
+                            var sampleName = getSampleName(simpleSampleNames, r[fieldName], r[fieldName + '/name']) + (suffix && instrument.startsWith('Novogene') ? '' : '-' + suffix);
 
                             var barcode5s = r[fieldName + '/barcode5/sequence'] ? r[fieldName + '/barcode5/sequence'].split(',') : [];
                             if (!barcode5s) {
@@ -785,10 +790,22 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                             }
 
                             barcodeCombosUsed.push([r[fieldName + '/barcode5'], '', r.laneAssignment || ''].join('/'));
+
+                            //The new format requires one/line
+                            if (instrument === 'Novogene-New') {
+                                if (doRC && barcode5s.length > 1) {
+                                    var msg =  'Did not expect Novogene-New, reverse complement and multiple barcodes';
+                                    LDK.Utils.logError(msg);
+                                    Ext4.Msg.alert('Error', msg);
+                                    return;
+                                }
+                                barcode5s = [barcode5s.join(',')];
+                            }
+
                             Ext4.Array.forEach(barcode5s, function (bc, idx) {
                                 bc = doRC ? doReverseComplement(bc) : bc;
 
-                                var data = [sampleName, (instrument === 'Novogene' ? '' : cleanedName), bc, ''];
+                                var data = [sampleName, (instrument.startsWith('Novogene') ? '' : cleanedName), bc, ''];
                                 if (instrument === 'Novogene') {
                                     data = [sampleName];
                                     if (r.plateAlias) {
@@ -809,12 +826,33 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push(r.laneAssignment || '');
                                     data.push(comment || 'Please QC individually and pool in equal amounts per lane');
                                 }
+                                else if (instrument === 'Novogene-New') {
+                                    data = ['Premade-10X transcriptome library'];
+                                    data.push(r.plateAlias ? r.plateAlias : samplePrefix + r.plateId.replace(/-/g, '_'));
+                                    data.push(sampleName);
+                                    data.push('Partial lane sequencing-With Demultiplexing');  //TODO: HiSeq?
+                                    data.push(bc);
+                                    data.push(''); //P5
+                                    data.push(size);
+                                    data.push('Others'); //Library Status
+                                    data.push('ddH2O');
+                                    data.push('Partial Lane sequencing-lib QC');
+                                    data.push(200); //Total data
+                                    data.push('M raw reads');
+                                    data.push(r[fieldName + '/concentration'] || '');
+                                    data.push(defaultVolume);
+                                    data.push(comment || 'Please QC individually and pool in equal amounts per lane');
+
+                                    //data.push(phiX);  //PhiX
+                                    //data.push(r.laneAssignment || '');
+
+                                }
                                 rows.push(data.join(delim));
                             }, this);
                         }
                     };
 
-                    var delim = instrument === 'Novogene' ? '\t' : ',';
+                    var delim = instrument.startsWith('Novogene') ? '\t' : ',';
                     Ext4.Array.forEach(sortedRows, function (r) {
                         processType(readsetIds, rows, r, 'readsetId', 'GEX', 500, 0.01, 'G', null, false);
                         processType(readsetIds, rows, r, 'enrichedReadsetId', 'TCR', 700, 0.01, 'T', null, false);
@@ -823,7 +861,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                     }, this);
 
                     //add missing barcodes:
-                    if (includeBlanks && instrument !== 'Novogene') {
+                    if (includeBlanks && !instrument.startsWith('Novogene')) {
                         var blankIdx = 0;
                         Ext4.Array.forEach(TCRdb.panel.LibraryExportPanel.TENX_BARCODES, function (barcode5) {
                             if (barcodeCombosUsed.indexOf(barcode5) === -1) {
