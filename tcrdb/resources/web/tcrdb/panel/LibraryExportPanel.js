@@ -844,7 +844,7 @@ Ext4.define('TCRdb.panel.LibraryExportPanel', {
                                     data.push(comment || 'Please QC individually and pool in equal amounts per lane');
 
                                     //data.push(phiX);  //PhiX
-                                    //data.push(r.laneAssignment || '');
+                                    data.push(r.laneAssignment || '');
 
                                 }
                                 rows.push(data.join(delim));
