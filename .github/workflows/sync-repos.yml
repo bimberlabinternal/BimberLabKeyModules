@@ -31,4 +31,4 @@ jobs:
           source_repo: "labkey/BimberLabKeyModules"
           source_branch: "develop"
           destination_branch: "develop"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PAT }}
