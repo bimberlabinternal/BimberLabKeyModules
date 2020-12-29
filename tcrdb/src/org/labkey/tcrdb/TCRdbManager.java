@@ -69,7 +69,7 @@ public class TCRdbManager
 
     public void createGenomeFromMixcrDb(int mixcrRowId, User u, Container c) throws Exception
     {
-        MixcrLibrary lib = new TableSelector(TCRdbSchema.getInstance().getSchema().getTable(TCRdbSchema.TABLE_LIBRARIES)).getObject(mixcrRowId, MixcrLibrary.class);
+        MixcrLibrary lib = new TableSelector(TCRdbSchema.getInstance().getSchema().getTable(TCRdbSchema.TABLE_MIXCR_LIBRARIES)).getObject(mixcrRowId, MixcrLibrary.class);
         if (lib == null)
         {
             throw new IllegalArgumentException("Unable to find MiXCR library: " + mixcrRowId);
@@ -308,7 +308,7 @@ public class TCRdbManager
         {
             if (_mixcrId != null)
             {
-                TableInfo ti = QueryService.get().getUserSchema(u, c, TCRdbSchema.NAME).getTable(TCRdbSchema.TABLE_LIBRARIES);
+                TableInfo ti = QueryService.get().getUserSchema(u, c, TCRdbSchema.NAME).getTable(TCRdbSchema.TABLE_MIXCR_LIBRARIES);
                 List<Map<String, Object>> rows = new ArrayList<>();
                 List<Map<String, Object>> oldKeys = new ArrayList<>();
                 Map<String, Object> row = new CaseInsensitiveHashMap<>();

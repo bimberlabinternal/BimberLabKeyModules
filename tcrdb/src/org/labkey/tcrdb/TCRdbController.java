@@ -22,32 +22,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.labkey.api.action.ApiSimpleResponse;
-import org.labkey.api.action.ApiUsageException;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
-import org.labkey.api.action.MutatingApiAction;
-import org.labkey.api.action.ReadOnlyApiAction;
-import org.labkey.api.action.SimpleApiJsonForm;
 import org.labkey.api.action.SimpleViewAction;
 import org.labkey.api.action.SpringActionController;
-import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
-import org.labkey.api.data.ContainerManager;
-import org.labkey.api.data.ContainerType;
-import org.labkey.api.data.DbScope;
-import org.labkey.api.data.Selector;
 import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.StopIteratingException;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.pipeline.PipelineJobException;
-import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryAction;
 import org.labkey.api.query.QueryService;
@@ -56,7 +43,6 @@ import org.labkey.api.reader.Readers;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.AdminPermission;
-import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.sequenceanalysis.RefNtSequenceModel;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -78,7 +64,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringWriter;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -967,239 +952,6 @@ public class TCRdbController extends SpringActionController
         }
     }
 
-    @RequiresPermission(InsertPermission.class)
-    public static class ImportTenXAction extends MutatingApiAction<SimpleApiJsonForm>
-    {
-        @Override
-        public Object execute(SimpleApiJsonForm form, BindException errors) throws Exception
-        {
-            List<Map<String, Object>> stimRows = parseRows(form, "stimRows", getContainer());
-            List<Map<String, Object>> sortRows = parseRows(form, "sortRows", getContainer());
-            List<Map<String, Object>> readsetRows = parseRows(form, "readsetRows", getContainer());
-            List<Map<String, Object>> cDNARows = parseRows(form, "cDNARows", getContainer());
-
-            UserSchema tcrdb = QueryService.get().getUserSchema(getUser(), getContainer(), TCRdbSchema.NAME);
-            UserSchema sequenceAnalysis = QueryService.get().getUserSchema(getUser(), getContainer(), "sequenceanalysis");
-
-            try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
-            {
-                BatchValidationException bve = new BatchValidationException();
-
-                Map<String, Integer> stimMap = new HashMap<>();
-                final List<Map<String, Object>> stimRowsToInsert = new ArrayList<>();
-                stimRows.forEach(r -> {
-                    if (r.get("objectId") == null)
-                    {
-                        throw new ApiUsageException("Missing objectId for stim row");
-                    }
-
-                    if (r.get("rowId") != null && StringUtils.trimToNull(r.get("rowId").toString()) != null)
-                    {
-                        stimMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
-                    }
-                    else
-                    {
-                        stimRowsToInsert.add(r);
-                    }
-                });
-
-
-                List<Map<String, Object>> insertedStimRows = tcrdb.getTable(TCRdbSchema.TABLE_STIMS, null).getUpdateService().insertRows(getUser(), getContainer(), stimRowsToInsert, bve, null, new HashMap<>());
-                if (bve.hasErrors())
-                {
-                    throw bve;
-                }
-
-                insertedStimRows.forEach(r -> {
-                    if (r.get("rowId") == null)
-                    {
-                        throw new ApiUsageException("Missing rowId for inserted stim row");
-                    }
-
-                    stimMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
-                });
-
-                Map<String, Integer> sortMap = new HashMap<>();
-                final List<Map<String, Object>> sortRowsToInsert = new ArrayList<>();
-                sortRows.forEach(r -> {
-                    if (stimMap.get(r.get("stimGUID")) == null)
-                    {
-                        throw new ApiUsageException("Unable to find stimId for row");
-                    }
-
-                    if (r.get("rowId") != null && StringUtils.trimToNull(r.get("rowId").toString()) != null)
-                    {
-                        sortMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
-                    }
-                    else
-                    {
-                        r.put("stimId", stimMap.get(r.get("stimGUID")));
-                        sortRowsToInsert.add(r);
-                    }
-                });
-
-                sortRows = tcrdb.getTable(TCRdbSchema.TABLE_SORTS, null).getUpdateService().insertRows(getUser(), getContainer(), sortRowsToInsert, bve, null, new HashMap<>());
-                if (bve.hasErrors())
-                {
-                    throw bve;
-                }
-
-                sortRows.forEach(r -> {
-                    if (r.get("objectId") == null)
-                    {
-                        throw new ApiUsageException("Missing objectId for sort row");
-                    }
-
-                    sortMap.put((String) r.get("objectId"), (Integer) r.get("rowId"));
-                });
-
-                readsetRows = sequenceAnalysis.getTable("sequence_readsets", null).getUpdateService().insertRows(getUser(), getContainer(), readsetRows, bve, null, new HashMap<>());
-                if (bve.hasErrors())
-                {
-                    throw bve;
-                }
-
-                Map<String, Integer> readsetMap = new HashMap<>();
-                readsetRows.forEach(r -> {
-                    if (r.get("objectId") == null)
-                    {
-                        throw new ApiUsageException("Missing objectId for readset row");
-                    }
-
-                    readsetMap.put((String)r.get("objectId"), (Integer)r.get("rowId"));
-                });
-
-                cDNARows.forEach(r -> {
-                    if (sortMap.get(r.get("sortGUID")) == null)
-                    {
-                        throw new ApiUsageException("Unable to find sortId for row");
-                    }
-                    r.put("sortId", sortMap.get((String)r.get("sortGUID")));
-                });
-                cDNARows.forEach(r -> r.put("readsetId", readsetMap.get((String)r.get("readsetGUID"))));
-                cDNARows.forEach(r -> r.put("hashingReadsetId", readsetMap.get((String)r.get("hashingReadsetGUID"))));
-                cDNARows.forEach(r -> r.put("enrichedReadsetId", readsetMap.get((String)r.get("enrichedReadsetGUID"))));
-                cDNARows.forEach(r -> r.put("citeseqReadsetId", readsetMap.get((String)r.get("citeseqReadsetGUID"))));
-                tcrdb.getTable(TCRdbSchema.TABLE_CDNAS, null).getUpdateService().insertRows(getUser(), getContainer(), cDNARows, bve, null, new HashMap<>());
-                if (bve.hasErrors())
-                {
-                    throw bve;
-                }
-
-                transaction.commit();
-            }
-
-            return new ApiSimpleResponse("success", true);
-        }
-    }
-
-    private static List<Map<String, Object>> parseRows(SimpleApiJsonForm form, String propName, Container container) throws ApiUsageException
-    {
-        if (!form.getJsonObject().containsKey(propName))
-        {
-            throw new ApiUsageException("Missing property: " + propName);
-        }
-
-        JSONArray arr = form.getJsonObject().getJSONArray(propName);
-
-        List<Map<String, Object>> ret = new ArrayList<>();
-        Arrays.stream(arr.toJSONObjectArray()).forEach(m -> {
-            Map<String, Object> map = new CaseInsensitiveHashMap<>();
-            map.putAll(m);
-
-            if (map.containsKey("workbook"))
-            {
-                Container parent = container.getContainerFor(ContainerType.DataType.folderManagement);
-                Container workbook = ContainerManager.getForPath(parent.getPath() + "/" + map.get("workbook").toString());
-                if (workbook == null)
-                {
-                    throw new IllegalArgumentException("Unable to identify matching workbook for: " + map.get("workbook"));
-                }
-
-                map.put("container", workbook == null ? null : workbook.getId());
-            }
-            ret.add(map);
-        });
-
-        return ret;
-    }
-
-    @RequiresPermission(ReadPermission.class)
-    public static class GetMatchingStimsAction extends ReadOnlyApiAction<SimpleApiJsonForm>
-    {
-        final List<String> FIELDS = Arrays.asList("animalId", "date", "stim", "treatment", "tissue");
-
-        @Override
-        public Object execute(SimpleApiJsonForm form, BindException errors) throws Exception
-        {
-            ApiSimpleResponse resp = new ApiSimpleResponse();
-
-            List<Map<String, Object>> stimRows = parseRows(form, "stimRows", getContainer());
-
-            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), TCRdbSchema.NAME);
-            if (us == null)
-            {
-                throw new ApiUsageException("Unable to find schema: " + TCRdbSchema.NAME);
-            }
-
-            TableInfo ti = us.getTable(TCRdbSchema.TABLE_STIMS, null);
-            TableInfo tiSort = us.getTable(TCRdbSchema.TABLE_SORTS, null);
-
-            List<String> retErrors = new ArrayList<>();
-            Map<Object, Integer> stimRowMap = new HashMap<>();
-            Map<Object, Integer> sortRowMap = new HashMap<>();
-            stimRows.forEach(r -> {
-                List<Object> keys = new ArrayList<>();
-                SimpleFilter filter = new SimpleFilter();
-                FIELDS.forEach(f -> {
-                    if (r.get(f) != null)
-                    {
-                        filter.addCondition(FieldKey.fromString(f), r.get(f), ("date".equals(f) ? CompareType.DATE_EQUAL : CompareType.EQUAL));
-                        keys.add(r.get(f));
-                    }
-                });
-
-                if (!filter.isEmpty())
-                {
-                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowId"), filter, null);
-                    long count = ts.getRowCount();
-                    if (count == 1)
-                    {
-                        int rowId = ts.getObject(Integer.class);
-                        stimRowMap.put(r.get("objectId"), rowId);
-
-                        if (r.get("population") != null)
-                        {
-                            SimpleFilter sortFilter = new SimpleFilter(FieldKey.fromString("stimId"), rowId);
-                            sortFilter.addCondition(FieldKey.fromString("population"), r.get("population"));
-                            TableSelector tsSort = new TableSelector(tiSort, PageFlowUtil.set("rowId"), sortFilter, null);
-                            long countSort = tsSort.getRowCount();
-                            if (countSort == 1)
-                            {
-                                int sortRowId = tsSort.getObject(Integer.class);
-                                sortRowMap.put(r.get("objectId"), sortRowId);
-                            }
-                            else if (countSort > 1)
-                            {
-                                retErrors.add("More than one matching sort found: " + StringUtils.join(keys, "|") + "|" + r.get("population"));
-                            }
-                        }
-                    }
-                    else if (count > 1 && filter.getClauses().size() == FIELDS.size())
-                    {
-                        retErrors.add("More than one matching stim found: " + StringUtils.join(keys, "|"));
-                    }
-                }
-            });
-
-            resp.put("stimMap", stimRowMap);
-            resp.put("sortMap", sortRowMap);
-            resp.put("recordErrors", retErrors);
-
-            return resp;
-        }
-    }
-
     @RequiresPermission(AdminPermission.class)
     public class CreateGenomeFromMixcrAction extends ConfirmAction<CreateGenomeFromMixcrForm>
     {
@@ -1241,7 +993,7 @@ public class TCRdbController extends SpringActionController
         @Override
         public URLHelper getSuccessURL(CreateGenomeFromMixcrForm form)
         {
-            return QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, TCRdbSchema.NAME, TCRdbSchema.TABLE_LIBRARIES);
+            return QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, TCRdbSchema.NAME, TCRdbSchema.TABLE_MIXCR_LIBRARIES);
         }
     }
 

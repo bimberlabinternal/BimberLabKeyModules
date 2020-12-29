@@ -2,10 +2,10 @@
     <columns>
         <column name="rowId" />
         <column name="sortId" />
-        <column name="sortId/stimId/animalId" />
-        <column name="sortId/stimId/date" />
+        <column name="sortId/stimId/subjectId" />
+        <column name="sortId/stimId/sampledate" />
         <column name="sortId/stimId/stim" />
-        <column name="sortId/stimId/treatment" />
+        <column name="sortId/stimId/assaytype" />
         <column name="sortId/population" />
         <column name="sortId/replicate" />
         <column name="sortId/cells" />
@@ -13,7 +13,7 @@
         <column name="plateId" />
         <column name="well" />
         <column name="readsetId" />
-        <column name="enrichedReadsetId" />
+        <column name="tcrReadsetId" />
         <column name="hashingReadsetId" />
         <column name="citeseqReadsetId" />
         <column name="comment" />
