@@ -1,24 +1,12 @@
 package org.labkey.tcrdb.pipeline;
 
-import au.com.bytecode.opencsv.CSVReader;
-import org.apache.commons.beanutils.ConversionException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONObject;
-import org.labkey.api.data.CompareType;
 import org.labkey.api.data.ConvertHelper;
-import org.labkey.api.data.DbSchema;
-import org.labkey.api.data.DbSchemaType;
-import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.Table;
-import org.labkey.api.data.TableInfo;
-import org.labkey.api.data.TableSelector;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
-import org.labkey.api.query.FieldKey;
-import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
@@ -27,27 +15,24 @@ import org.labkey.api.sequenceanalysis.pipeline.AlignmentOutputImpl;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
+import org.labkey.api.singlecell.CellHashingService;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.tcrdb.TCRdbModule;
 
 import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-
-import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.DELETE_EXISTING_ASSAY_DATA;
-import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.TARGET_ASSAY;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
     private FileType _fileType = new FileType("vloupe", false);
     public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
+
+    public static final String TARGET_ASSAY = "targetAssay";
+    public static final String DELETE_EXISTING_ASSAY_DATA = "deleteExistingAssayData";
 
     public CellRangerVDJCellHashingHandler()
     {
@@ -66,7 +51,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }}, false)
         ));
 
-        ret.addAll(CellRangerCellHashingHandler.getDefaultHashingParams(true));
+        ret.addAll(CellHashingService.get().getDefaultHashingParams(true));
 
         return ret;
     }
@@ -112,10 +97,8 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         @Override
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), outputDir);
-
             //NOTE: this is the pathway to import assay data, whether hashing is used or not
-            utils.prepareHashingAndCiteSeqFilesIfNeeded(job, support, "enrichedReadsetId", params.optBoolean("excludeFailedcDNA", true), false, false);
+            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(outputDir, job, support, "tcrReadsetId", params.optBoolean("excludeFailedcDNA", true), false, false);
         }
 
         @Override
@@ -131,11 +114,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             {
                 if (CATEGORY.equals(so.getCategory()))
                 {
-                    processMetrics(so, job, true);
+                    CellHashingService.get().processMetrics(so, job, true);
                 }
             }
 
-            CellRangerVDJUtils utils = new CellRangerVDJUtils(job.getLogger(), job.getLogFile().getParentFile());
             if (StringUtils.trimToNull(job.getParameters().get(TARGET_ASSAY)) == null)
             {
                 job.getLogger().info("No assay selected, will not import");
@@ -157,7 +139,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    utils.importAssayData(job, model, so.getFile().getParentFile(), assayId, null, deleteExistingData);
+                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, so.getFile().getParentFile(), assayId, null, deleteExistingData);
                 }
             }
         }
@@ -165,15 +147,13 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         @Override
         public void processFilesRemote(List<SequenceOutputFile> inputFiles, JobContext ctx) throws UnsupportedOperationException, PipelineJobException
         {
-            CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
             RecordedAction action = new RecordedAction(getName());
-
             for (SequenceOutputFile so : inputFiles)
             {
                 ctx.getLogger().info("processing file: " + so.getName());
 
                 //find TSV:
-                File perCellTsv = utils.getPerCellCsv(so.getFile().getParentFile());
+                File perCellTsv = CellRangerVDJUtils.getPerCellCsv(so.getFile().getParentFile());
                 if (!perCellTsv.exists())
                 {
                     throw new PipelineJobException("Unable to find file: " + perCellTsv.getPath());
@@ -197,8 +177,6 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
         private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action, Integer genomeId) throws PipelineJobException
         {
-            CellRangerVDJUtils utils = new CellRangerVDJUtils(ctx.getLogger(), ctx.getSourceDirectory());
-
             List<String> extraParams = new ArrayList<>();
             extraParams.addAll(getClientCommandArgs(ctx.getParams()));
 
@@ -210,8 +188,8 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
             int editDistance = ctx.getParams().optInt("editDistance", 2);
 
-            File cellToHto = utils.runRemoteVdjCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell, useSeurat, useMultiSeq);
-            if (utils.useCellHashing(ctx.getSequenceSupport()) && cellToHto == null)
+            File cellToHto = CellHashingService.get().runRemoteVdjCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell, useSeurat, useMultiSeq);
+            if (CellHashingService.get().usesCellHashing(ctx.getSequenceSupport(), ctx.getSourceDirectory()) && cellToHto == null)
             {
                 throw new PipelineJobException("Missing cell to HTO file");
 
@@ -219,133 +197,6 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
             ctx.getFileManager().addStepOutputs(action, output);
 
-        }
-    }
-
-    private static File getMetricsFile(File callFile)
-    {
-        return new File(callFile.getPath().replaceAll(".calls.txt", ".metrics.txt"));
-    }
-
-    public static void processMetrics(SequenceOutputFile so, PipelineJob job, boolean updateDescription) throws PipelineJobException
-    {
-        if (so.getFile() != null)
-        {
-            Map<String, String> valueMap = new HashMap<>();
-
-            File metrics = getMetricsFile(so.getFile());
-            if (metrics.exists())
-            {
-                job.getLogger().info("Loading metrics");
-                int total = 0;
-                TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("quality_metrics");
-
-                //NOTE: if this job errored and restarted, we may have duplicate records:
-                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), so.getReadset());
-                filter.addCondition(FieldKey.fromString("analysis_id"), so.getAnalysis_id(), CompareType.EQUAL);
-                filter.addCondition(FieldKey.fromString("dataid"), so.getDataId(), CompareType.EQUAL);
-                filter.addCondition(FieldKey.fromString("container"), job.getContainer().getId(), CompareType.EQUAL);
-                TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowid"), filter, null);
-                if (ts.exists())
-                {
-                    job.getLogger().info("Deleting existing QC metrics (probably from prior restarted job)");
-                    ts.getArrayList(Integer.class).forEach(rowid -> {
-                        Table.delete(ti, rowid);
-                    });
-                }
-
-                try (CSVReader reader = new CSVReader(Readers.getReader(metrics), '\t'))
-                {
-                    String[] line;
-                    while ((line = reader.readNext()) != null)
-                    {
-                        if ("Category".equals(line[0]))
-                        {
-                            continue;
-                        }
-
-                        Map<String, Object> r = new HashMap<>();
-                        r.put("category", line[0]);
-                        r.put("metricname", line[1]);
-
-                        //NOTE: R saves NaN as NA.  This is fixed in the R code, but add this check here to let existing jobs import
-                        String value = line[2];
-                        if ("NA".equals(value))
-                        {
-                            value = "0";
-                        }
-
-                        String fieldName = NumberUtils.isCreatable(value) ? "metricvalue" : "qualvalue";
-                        r.put(fieldName, value);
-
-                        r.put("analysis_id", so.getAnalysis_id());
-                        r.put("dataid", so.getDataId());
-                        r.put("readset", so.getReadset());
-                        r.put("container", job.getContainer());
-                        r.put("createdby", job.getUser().getUserId());
-
-                        Table.insert(job.getUser(), ti, r);
-                        total++;
-
-                        valueMap.put(line[1], value);
-                    }
-
-                    job.getLogger().info("total metrics: " + total);
-
-                    if (updateDescription)
-                    {
-                        job.getLogger().debug("Updating description");
-                        StringBuilder description = new StringBuilder();
-                        if (StringUtils.trimToNull(so.getDescription()) != null)
-                        {
-                            description.append(StringUtils.trimToNull(so.getDescription()));
-                        }
-
-                        String delim = description.length() > 0 ? "\n" : "";
-
-                        DecimalFormat fmt = new DecimalFormat("##.##%");
-                        for (String metricName : Arrays.asList("InputBarcodes", "TotalCalled", "TotalCounts", "TotalSinglet", "FractionOfInputCalled", "FractionOfInputSinglet", "FractionOfInputDoublet", "FractionOfInputDiscordant", "FractionCalledNotInInput", "SeuratNonNegative", "MultiSeqNonNegative", "UniqueHtos", "UnknownTagMatchingKnown"))
-                        {
-                            if (valueMap.get(metricName) != null)
-                            {
-                                Double d = null;
-                                if (metricName.startsWith("Fraction"))
-                                {
-                                    try
-                                    {
-                                        d = ConvertHelper.convert(valueMap.get(metricName), Double.class);
-                                    }
-                                    catch (ConversionException | IllegalArgumentException e)
-                                    {
-                                        job.getLogger().error("Unable to convert to double: " + valueMap.get(metricName));
-                                        throw e;
-                                    }
-                                }
-
-                                description.append(delim).append(metricName).append(": ").append(d == null ? valueMap.get(metricName) : fmt.format(d));
-                                delim = ",\n";
-                            }
-                        }
-
-                        so.setDescription(description.toString());
-
-                        TableInfo tableOutputs = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("outputfiles");
-                        Table.update(job.getUser(), tableOutputs, so, so.getRowid());
-                    }
-                }
-                catch (IOException e)
-                {
-                    throw new PipelineJobException(e);
-                }
-            }
-            else
-            {
-                job.getLogger().warn("Unable to find metrics file: " + metrics.getPath());
-            }
-        }
-        else
-        {
-            job.getLogger().warn("Unable to update metrics, file id is null: " + so.getName());
         }
     }
 }

@@ -6,7 +6,6 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.TableInfo;
-import org.labkey.api.ldk.table.ContainerScopedTable;
 import org.labkey.api.ldk.table.SharedDataTable;
 import org.labkey.api.module.Module;
 import org.labkey.api.query.DefaultSchema;
@@ -42,14 +41,10 @@ public class TCRdbUserSchema extends SimpleUserSchema
     @Nullable
     protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable, ContainerFilter cf)
     {
-        if (TCRdbSchema.TABLE_LIBRARIES.equalsIgnoreCase(name))
+        if (TCRdbSchema.TABLE_MIXCR_LIBRARIES.equalsIgnoreCase(name))
         {
             // TODO: assert cf is null or not default?
             return new SharedDataTable<>(this, sourceTable).init();
-        }
-        else if (TCRdbSchema.TABLE_CITE_SEQ_ANTIBODIES.equalsIgnoreCase(name))
-        {
-            return new ContainerScopedTable<>(this, sourceTable, cf, "antibodyName").init();
         }
 
         return super.createWrappedTable(name, sourceTable, cf);

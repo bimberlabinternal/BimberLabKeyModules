@@ -13,6 +13,7 @@ import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
@@ -25,6 +26,7 @@ import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.query.ValidationException;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.FileResource;
@@ -76,8 +78,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
-import static org.labkey.tcrdb.pipeline.CellRangerVDJWrapper.DELETE_EXISTING_ASSAY_DATA;
-
 
 /**
  * Created by bimber on 5/10/2016.
@@ -126,7 +126,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     {{
                         put("value", "ALL");
                     }}, true),
-                    ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
+                    ToolParameterDescriptor.create(CellRangerVDJCellHashingHandler.DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
                         put("checked", true);
                     }}, true),
                     ToolParameterDescriptor.create(FLAG_MISSENSE, "Flag Missense CDR3", "If checked, if a sample has duplicate CDR3 clones from the same locus, and and one of these is missense, that clone will be flagged and excluded from many reports.", "checkbox", new JSONObject()
@@ -1215,6 +1215,12 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
     }
 
+    private TableInfo getCdnaTable()
+    {
+        Container target = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
+        return QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), target, TCRdbSchema.SINGLE_CELL).getTable(TCRdbSchema.TABLE_CDNAS);
+    }
+
     private void parseCloneOutput(Map<String, RunData> runMap, File table, AnalysisModel model, File inputBam) throws PipelineJobException
     {
         Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
@@ -1223,6 +1229,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         List<? extends ExpData> cloneDatas = run.getInputDatas(CLONES_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
         List<? extends ExpData> vdjDatas = run.getInputDatas(FINAL_VDJ_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
 
+        TableInfo cDNATable = getCdnaTable();
         try (CSVReader reader = new CSVReader(Readers.getReader(table), '\t'))
         {
             int lineNo = 0;
@@ -1235,7 +1242,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
                     continue;
                 }
 
-                Map<String, Object> row = getBaseRow(model, runId);
+                Map<String, Object> row = getBaseRow(model, runId, cDNATable);
 
                 if (line.length != (FIELDS.size() + TOTAL_EXPORTED_FIELDS_NOT_IN_DB))  //this includes one additional field appended to the end
                 {
@@ -1323,7 +1330,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
     }
 
-    private Map<String, Object> getBaseRow(AnalysisModel model, Integer runId) throws PipelineJobException
+    private Map<String, Object> getBaseRow(AnalysisModel model, Integer runId, TableInfo cDNATable) throws PipelineJobException
     {
         Map<String, Object> row = new CaseInsensitiveHashMap<>();
         if (model.getReadset() != null)
@@ -1356,13 +1363,12 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         row.put("analysisId", model.getRowId());
 
         //attempt to locate cDNA:
-        TableInfo cDNATable = TCRdbSchema.getInstance().getSchema().getTable(TCRdbSchema.TABLE_CDNAS);
         if (model.getReadset() != null)
         {
             SimpleFilter filter = new SimpleFilter();
             filter.addClause(new SimpleFilter.OrClause(
                 new CompareType.CompareClause(FieldKey.fromString("readsetId"), CompareType.EQUAL, model.getReadset()),
-                new CompareType.CompareClause(FieldKey.fromString("enrichedReadsetId"), CompareType.EQUAL, model.getReadset())
+                new CompareType.CompareClause(FieldKey.fromString("tcrReadsetId"), CompareType.EQUAL, model.getReadset())
             ));
 
             TableSelector ts1 = new TableSelector(cDNATable, PageFlowUtil.set("rowId"), filter, null);
@@ -1592,7 +1598,8 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         if (rd.rows.isEmpty())
         {
             //NOTE: we need to add a placeholder row since assay import will die w/ a run-only import:
-            Map<String, Object> row = getBaseRow(model, runId);
+            TableInfo cDNATable = getCdnaTable();
+            Map<String, Object> row = getBaseRow(model, runId, cDNATable);
             row.put("species", rd.species);
             row.put("libraryId", rd.libraryId);
             row.put("locus", "None");
@@ -1602,7 +1609,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         getPipelineCtx().getLogger().debug("saving assay file to: " + assayTmp.getPath());
 
         AssayProvider ap = AssayService.get().getProvider(protocol);
-        boolean deleteExistingAssayData = getProvider().getParameterByName(DELETE_EXISTING_ASSAY_DATA).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+        boolean deleteExistingAssayData = getProvider().getParameterByName(CellRangerVDJCellHashingHandler.DELETE_EXISTING_ASSAY_DATA).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
         if (deleteExistingAssayData)
         {
             if (model.getReadset() == null)

@@ -19,9 +19,7 @@ import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
-import org.labkey.api.query.QueryForeignKey;
 import org.labkey.api.query.QueryService;
-import org.labkey.api.query.UserSchema;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,27 +32,19 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         if (table instanceof AbstractTableInfo)
         {
             AbstractTableInfo ti = (AbstractTableInfo) table;
-            if (matches(ti, "sequenceanalysis", "sequence_analyses"))
+            if (matches(ti, TCRdbSchema.SEQUENCE_ANALYSIS, "sequence_analyses"))
             {
                 addAssayFieldsToAnalyses(ti);
             }
-            else if (matches(ti, "sequenceanalysis", "sequence_readsets"))
+            else if (matches(ti, TCRdbSchema.SEQUENCE_ANALYSIS, "sequence_readsets"))
             {
                 customizeReadsets(ti);
             }
-            else if (matches(ti, "tcrdb", "stims"))
-            {
-                customizeStims(ti);
-            }
-            else if (matches(ti, "tcrdb", "sorts"))
-            {
-                customizeSorts(ti);
-            }
-            else if (matches(ti, "tcrdb", "cdnas"))
+            else if (matches(ti, TCRdbSchema.SINGLE_CELL, TCRdbSchema.TABLE_CDNAS))
             {
                 customizeCdnas(ti);
             }
-            else if (matches(ti, "tcrdb", "clones"))
+            else if (matches(ti, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES))
             {
                 customizeClones(ti);
             }
@@ -67,130 +57,12 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
 
     private void customizeCdnas(AbstractTableInfo ti)
     {
-        String name = "hasReadsetWithData";
-        if (ti.getColumn(name) == null)
-        {
-            SQLFragment sql = new SQLFragment("CASE " +
-                    " WHEN (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".readsetId) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() +
-                    " WHEN (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() +
-                    " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END");
-
-            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.BOOLEAN, ti.getColumn("readsetId"), ti.getColumn("enrichedReadsetId"));
-            newCol.setLabel("Has Any Readset With Data?");
-            ti.addColumn(newCol);
-        }
-
-        String name2 = "allReadsetsHaveData";
-        if (ti.getColumn(name2) == null)
-        {
-            SQLFragment sql = new SQLFragment("CASE " +
-                    " WHEN (" + ExprColumn.STR_TABLE_ALIAS + ".readsetId IS NOT NULL AND (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".readsetId) = 0) THEN " + ti.getSqlDialect().getBooleanFALSE() +
-                    " WHEN (" + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId IS NOT NULL AND (select count(*) as expr FROM sequenceanalysis.sequence_readsets r JOIN sequenceanalysis.readdata d ON (r.rowid = d.readset) WHERE r.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".enrichedReadsetId) = 0) THEN " + ti.getSqlDialect().getBooleanFALSE() +
-                    " ELSE " + ti.getSqlDialect().getBooleanTRUE() + " END");
-
-            ExprColumn newCol = new ExprColumn(ti, name2, sql, JdbcType.BOOLEAN, ti.getColumn("readsetId"), ti.getColumn("enrichedReadsetId"));
-            newCol.setLabel("All Readsets Have Data?");
-            ti.addColumn(newCol);
-        }
-
         addAssayFieldsToCDnas(ti);
-
-        LDKService.get().applyNaturalSort(ti, "plateId");
-    }
-
-    private void customizeSorts(AbstractTableInfo ti)
-    {
-        LDKService.get().applyNaturalSort(ti, "plateId");
-        LDKService.get().applyNaturalSort(ti, "hto");
-
-        String name = "numLibraries";
-        if (ti.getColumn(name) == null)
-        {
-            DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=cdnas&query.sortId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
-
-            SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " s WHERE s.sortId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
-            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol.setLabel("# cDNA Libraries");
-            newCol.setURL(details);
-            ti.addColumn(newCol);
-        }
-
-        name = "maxCellsForPlate";
-        if (ti.getColumn(name) == null)
-        {
-            SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " s WHERE s.plateId = " + ExprColumn.STR_TABLE_ALIAS + ".plateId AND s.container = " + ExprColumn.STR_TABLE_ALIAS + ".container)");
-            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.INTEGER, ti.getColumn("plateId"), ti.getColumn("container"));
-            newCol.setLabel("Max Cells/Well In Plate");
-            ti.addColumn(newCol);
-        }
-
-        name = "processingRequested";
-        if (ti.getColumn(name) == null)
-        {
-            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("p.type"), true, true)).append(new SQLFragment(" as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_PROCESSING + " p WHERE p.plateId = " + ExprColumn.STR_TABLE_ALIAS + ".plateId AND p.container = " + ExprColumn.STR_TABLE_ALIAS + ".container)"));
-            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.VARCHAR, ti.getColumn("plateId"), ti.getColumn("container"));
-            newCol.setLabel("Processing Requested");
-            ti.addColumn(newCol);
-        }
-    }
-
-    private void customizeStims(AbstractTableInfo ti)
-    {
-        String name = "numSorts";
-        if (ti.getColumn(name) == null)
-        {
-            DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=sorts&query.stimId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
-
-            SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " s WHERE s.stimId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
-            ExprColumn newCol = new ExprColumn(ti, "numSorts", sql, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol.setLabel("# Sorts");
-            newCol.setURL(details);
-            ti.addColumn(newCol);
-        }
-
-        name = "numLibraries";
-        if (ti.getColumn(name) == null)
-        {
-            DetailsURL details = DetailsURL.fromString("/query/executeQuery.view?schemaName=tcrdb&query.queryName=cdnas&query.sortId/stimId~eq=${rowid}", (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()));
-
-            SQLFragment sql = new SQLFragment("(select count(c.rowid) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_SORTS + " so JOIN " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c ON (so.rowid = c.sortId) WHERE so.stimId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
-            ExprColumn newCol = new ExprColumn(ti, "numLibraries", sql, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol.setLabel("# cDNA Libraries");
-            newCol.setURL(details);
-            ti.addColumn(newCol);
-        }
     }
 
     private void customizeReadsets(AbstractTableInfo ti)
     {
         addAssayFieldsToTable(ti, "analysisId/readset", "LEFT JOIN sequenceanalysis.sequence_analyses a2 ON (a.analysisId = a2.rowId) WHERE a2.readset = " + ExprColumn.STR_TABLE_ALIAS + ".rowid", "rowid");
-
-        String name = "numTCRLibraries";
-        if (ti.getColumn(name) == null)
-        {
-            SQLFragment sql = new SQLFragment("(select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid)");
-            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol.setLabel("# TCR Libraries");
-            ti.addColumn(newCol);
-        }
-
-        String cDNA = "cDNA";
-        if (ti.getColumn(cDNA) == null)
-        {
-            SQLFragment sql = new SQLFragment("(CASE" +
-                    " WHEN ((select count(*) as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) > 0) " +
-                    " THEN (select max(c.rowid) FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CDNAS + " c WHERE c.readsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid OR c.enrichedReadsetId = " + ExprColumn.STR_TABLE_ALIAS + ".rowid) " +
-                    " ELSE null " +
-                    "END)");
-            ExprColumn newCol = new ExprColumn(ti, cDNA, sql, JdbcType.INTEGER, ti.getColumn("rowid"));
-            newCol.setLabel("cDNA Library");
-            UserSchema us = QueryService.get().getUserSchema(ti.getUserSchema().getUser(), (ti.getUserSchema().getContainer().isWorkbook() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer()), TCRdbSchema.NAME);
-            newCol.setFk(QueryForeignKey.from(us, ti.getContainerFilter())
-                    .table(TCRdbSchema.TABLE_CDNAS)
-                    .key("rowid")
-                    .display("rowid"));
-            ti.addColumn(newCol);
-        }
     }
 
     private void addAssayFieldsToAnalyses(AbstractTableInfo ti)
