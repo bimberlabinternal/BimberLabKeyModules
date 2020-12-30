@@ -69,8 +69,8 @@
                     </column>
                     <column columnName="cDNA">
                         <fk>
-                            <fkDbSchema>tcrdb</fkDbSchema>
-                            <fkTable>cdnas</fkTable>
+                            <fkDbSchema>singlecell</fkDbSchema>
+                            <fkTable>cdna_libraries</fkTable>
                             <fkColumnName>rowid</fkColumnName>
                             <fkDisplayColumnName>rowid</fkDisplayColumnName>
                         </fk>

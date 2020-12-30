@@ -24,16 +24,13 @@ public class TCRdbSchema
 {
     private static final TCRdbSchema _instance = new TCRdbSchema();
     public static final String NAME = "tcrdb";
-    public static final String SEQUENCE_ANALYSIS = "sequenceanalysis";
 
-    public static final String TABLE_LIBRARIES = "mixcr_libraries";
-    public static final String TABLE_SORTS = "sorts";
-    public static final String TABLE_STIMS = "stims";
-    public static final String TABLE_CDNAS = "cdnas";
+    public static final String TABLE_MIXCR_LIBRARIES = "mixcr_libraries";
     public static final String TABLE_CLONES = "clones";
-    public static final String TABLE_CITE_SEQ_ANTIBODIES = "citeseq_antibodies";
-    public static final String TABLE_CITE_SEQ_PANELS = "citeseq_panels";
-    public static final String TABLE_PROCESSING = "plate_processing";
+
+    public static final String SEQUENCE_ANALYSIS = "sequenceanalysis";
+    public static final String SINGLE_CELL = "singlecell";
+    public static final String TABLE_CDNAS = "cdna_libraries";
 
     public static TCRdbSchema getInstance()
     {

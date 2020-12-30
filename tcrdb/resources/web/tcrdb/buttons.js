@@ -1,9 +1,6 @@
 Ext4.ns('TCRdb.buttons');
 
-
 TCRdb.buttons = new function(){
-
-
     return {
         createMixcrGenome: function(dataRegionName) {
             var dataRegion = LABKEY.DataRegions[dataRegionName];

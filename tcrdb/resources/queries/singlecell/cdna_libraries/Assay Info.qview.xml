@@ -1,0 +1,32 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+    <columns>
+        <column name="rowId" />
+        <column name="sortId" />
+        <column name="sortId/stimId/subjectId" />
+        <column name="sortId/stimId/sampledate" />
+        <column name="sortId/stimId/stim" />
+        <column name="sortId/stimId/assaytype" />
+        <column name="sortId/population" />
+        <column name="sortId/replicate" />
+        <column name="sortId/cells" />
+        <column name="sortId/hto" />
+        <column name="plateId" />
+        <column name="well" />
+        <column name="readsetId" />
+        <column name="tcrReadsetId" />
+        <column name="hashingReadsetId" />
+        <column name="citeseqReadsetId" />
+        <column name="comment" />
+        <column name="status" />
+        <!--<column name="numTcrRunsTCREnriched" />-->
+        <column name="numTcrTrbResultsTCREnriched" />
+        <column name="numCellsTrbTCREnriched" />
+        <column name="numTcrRunsFullTranscript" />
+        <column name="numTcrResultsFullTranscript" />
+        <column name="workbook" />
+    </columns>
+    <sorts>
+        <sort column="plateId" descending="false"/>
+        <sort column="well/addressByColumn"/>
+    </sorts>
+</customView>
