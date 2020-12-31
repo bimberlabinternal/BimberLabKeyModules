@@ -188,7 +188,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         throw new SQLException("No VCF found for track: " + rs.getObject(FieldKey.fromString("trackName")));
                     }
 
-                    ExpData d = ExperimentService.get().getExpData(rs.getInt(FieldKey.fromString("vcfId")));
+                    SequenceOutputFile so = SequenceOutputFile.getForId(rs.getInt(FieldKey.fromString("vcfId")));
+                    ExpData d = ExperimentService.get().getExpData(so.getDataId());
                     support.cacheExpData(d);
 
                     allVcfs.add(d.getFile());
