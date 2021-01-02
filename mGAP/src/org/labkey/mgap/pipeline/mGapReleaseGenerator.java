@@ -239,7 +239,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable("subjectsSource", null);
+            Container c = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
+            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), c, mGAPSchema.NAME).getTable("subjectsSource", null);
             List<String> idsWithRecord = new TableSelector(ti, PageFlowUtil.set("subjectname"), new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN), null).getArrayList(String.class);
 
             ids.removeAll(idsWithRecord);
