@@ -166,7 +166,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
         public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             job.getLogger().info("writing track/subset data to file");
-            TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), (job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
+            Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
+            TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
 
             Set<FieldKey> toSelect = new HashSet<>();
             toSelect.add(FieldKey.fromString("trackName"));
@@ -239,8 +240,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            Container c = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
-            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), c, mGAPSchema.NAME).getTable("subjectsSource", null);
+            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), target, mGAPSchema.NAME).getTable("subjectsSource", null);
             List<String> idsWithRecord = new TableSelector(ti, PageFlowUtil.set("subjectname"), new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN), null).getArrayList(String.class);
 
             ids.removeAll(idsWithRecord);
