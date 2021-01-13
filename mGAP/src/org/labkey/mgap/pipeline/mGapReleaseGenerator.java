@@ -307,6 +307,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             boolean testOnly = StringUtils.isEmpty(job.getParameters().get("testOnly")) ? false : ConvertHelper.convert(job.getParameters().get("testOnly"), boolean.class);
 
+            if (outputVCFMap.isEmpty())
+            {
+                throw new PipelineJobException("No releases were found");
+            }
+
             String releaseId = new GUID().toString();
             for (String release : outputVCFMap.keySet())
             {
