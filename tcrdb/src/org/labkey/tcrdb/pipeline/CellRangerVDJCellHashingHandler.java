@@ -1,5 +1,7 @@
 package org.labkey.tcrdb.pipeline;
 
+import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.labkey.api.data.ConvertHelper;
@@ -7,6 +9,7 @@ import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedAction;
+import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.AnalysisModel;
 import org.labkey.api.sequenceanalysis.model.Readset;
@@ -17,14 +20,19 @@ import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.singlecell.CellHashingService;
 import org.labkey.api.util.FileType;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.writer.PrintWriters;
 import org.labkey.tcrdb.TCRdbModule;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
@@ -177,18 +185,15 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
         private void processVloupeFile(JobContext ctx, File perCellTsv, Readset rs, RecordedAction action, Integer genomeId) throws PipelineJobException
         {
-            List<String> extraParams = new ArrayList<>();
-            extraParams.addAll(getClientCommandArgs(ctx.getParams()));
-
-            //prepare whitelist of cell indexes
             AlignmentOutputImpl output = new AlignmentOutputImpl();
-            boolean scanEditDistances = ctx.getParams().optBoolean("scanEditDistances", false);
-            boolean useSeurat = ctx.getParams().optBoolean("useSeurat", true);
-            boolean useMultiSeq = ctx.getParams().optBoolean("useMultiSeq", true);
-            int minCountPerCell = ctx.getParams().optInt("minCountPerCell", 3);
-            int editDistance = ctx.getParams().optInt("editDistance", 2);
 
-            File cellToHto = CellHashingService.get().runRemoteVdjCellHashingTasks(output, CATEGORY, perCellTsv, rs, ctx.getSequenceSupport(), extraParams, ctx.getWorkingDirectory(), ctx.getSourceDirectory(), editDistance, scanEditDistances, genomeId, minCountPerCell, useSeurat, useMultiSeq);
+            CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getParams(), null, rs);
+            parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
+            parameters.genomeId = genomeId;
+            parameters.outputCategory = CATEGORY;
+            parameters.basename = FileUtil.makeLegalName(rs.getName());
+
+            File cellToHto = CellHashingService.get().processCellHashingOrCiteSeqForParent(rs, output, ctx, parameters);
             if (CellHashingService.get().usesCellHashing(ctx.getSequenceSupport(), ctx.getSourceDirectory()) && cellToHto == null)
             {
                 throw new PipelineJobException("Missing cell to HTO file");
@@ -196,7 +201,84 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             }
 
             ctx.getFileManager().addStepOutputs(action, output);
+        }
 
+        private File createCellbarcodeWhitelist(JobContext ctx, File perCellTsv, boolean allowCellsLackingCDR3) throws PipelineJobException
+        {
+            //prepare whitelist of cell indexes based on TCR calls:
+            File cellBarcodeWhitelist = new File(ctx.getSourceDirectory(), "validCellIndexes.csv");
+            Set<String> uniqueBarcodes = new HashSet<>();
+            Set<String> uniqueBarcodesIncludingNoCDR3 = new HashSet<>();
+            ctx.getLogger().debug("writing cell barcodes, using file: " + perCellTsv.getPath());
+            ctx.getLogger().debug("allow cells lacking CDR3: " + allowCellsLackingCDR3);
+            try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
+            {
+                int rowIdx = 0;
+                int noCallRows = 0;
+                int nonCell = 0;
+                String[] row;
+                while ((row = reader.readNext()) != null)
+                {
+                    //skip header
+                    rowIdx++;
+                    if (rowIdx > 1)
+                    {
+                        if ("False".equalsIgnoreCase(row[1]))
+                        {
+                            nonCell++;
+                            continue;
+                        }
+
+                        //NOTE: allow these to pass for cell-hashing under some conditions
+                        boolean hasCDR3 = !"None".equals(row[12]);
+                        if (!hasCDR3)
+                        {
+                            noCallRows++;
+                        }
+
+                        //NOTE: 10x appends "-1" to barcodes
+                        String barcode = row[0].split("-")[0];
+                        if (hasCDR3 && !uniqueBarcodes.contains(barcode))
+                        {
+                            writer.writeNext(new String[]{barcode});
+                            uniqueBarcodes.add(barcode);
+                        }
+
+                        uniqueBarcodesIncludingNoCDR3.add(barcode);
+                    }
+                }
+
+                ctx.getLogger().debug("rows inspected: " + (rowIdx - 1));
+                ctx.getLogger().debug("rows without CDR3: " + noCallRows);
+                ctx.getLogger().debug("rows not called as cells: " + nonCell);
+                ctx.getLogger().debug("unique cell barcodes (with CDR3): " + uniqueBarcodes.size());
+                ctx.getLogger().debug("unique cell barcodes (including no CDR3): " + uniqueBarcodesIncludingNoCDR3.size());
+                ctx.getFileManager().addIntermediateFile(cellBarcodeWhitelist);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            if (uniqueBarcodes.size() < 500 && uniqueBarcodesIncludingNoCDR3.size() > uniqueBarcodes.size())
+            {
+                ctx.getLogger().info("Total cell barcodes with CDR3s is low, so cell hashing will be performing using an input that includes valid cells that lacked CDR3 data.");
+                try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER))
+                {
+                    for (String barcode : uniqueBarcodesIncludingNoCDR3)
+                    {
+                        writer.writeNext(new String[]{barcode});
+                    }
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
+
+            //TODO: consider looking up GEX data?
+
+            return cellBarcodeWhitelist;
         }
     }
 }
