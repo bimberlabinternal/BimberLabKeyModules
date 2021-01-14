@@ -19,14 +19,9 @@ package org.labkey.mcc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
-import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
-import org.labkey.api.module.DefaultModule;
 import org.labkey.api.module.ModuleContext;
-import org.labkey.api.query.DetailsURL;
-import org.labkey.api.resource.Resource;
 import org.labkey.api.view.WebPartFactory;
-import org.labkey.api.view.template.ClientDependency;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -89,7 +84,7 @@ public class MccModule extends ExtendedSimpleModule
 
     private void registerEHRResources()
     {
-        EHRService.get().registerModule(this);
+//        EHRService.get().registerModule(this);
         //EHRService.get().registerTableCustomizer(this, ONPRC_EHRCustomizer.class);
 
         //Resource r = getModuleResource("/scripts/mcc/mcc_triggers.js");
