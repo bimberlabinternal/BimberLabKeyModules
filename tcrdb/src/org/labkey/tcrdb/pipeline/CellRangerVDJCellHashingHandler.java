@@ -187,20 +187,35 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         {
             AlignmentOutputImpl output = new AlignmentOutputImpl();
 
-            CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getParams(), null, rs);
-            parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
-            parameters.genomeId = genomeId;
-            parameters.outputCategory = CATEGORY;
-            parameters.basename = FileUtil.makeLegalName(rs.getName());
-
-            File cellToHto = CellHashingService.get().processCellHashingOrCiteSeqForParent(rs, output, ctx, parameters);
-            if (CellHashingService.get().usesCellHashing(ctx.getSequenceSupport(), ctx.getSourceDirectory()) && cellToHto == null)
+            List<String> htosPerReadset = CellHashingService.get().getHtosForParentReadset(rs.getReadsetId(), ctx.getSourceDirectory(), ctx.getSequenceSupport());
+            if (htosPerReadset.size() > 1)
             {
-                throw new PipelineJobException("Missing cell to HTO file");
+                ctx.getLogger().info("Total HTOs for readset: " + htosPerReadset.size());
 
+                CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getSourceDirectory(), ctx.getParams(), null, rs, null);
+                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
+                parameters.genomeId = genomeId;
+                parameters.outputCategory = CATEGORY;
+                parameters.basename = FileUtil.makeLegalName(rs.getName());
+                parameters.allowableHtoOrCiteseqBarcodes = htosPerReadset;
+
+                File cellToHto = CellHashingService.get().processCellHashingOrCiteSeqForParent(rs, output, ctx, parameters);
+                if (CellHashingService.get().usesCellHashing(ctx.getSequenceSupport(), ctx.getSourceDirectory()) && cellToHto == null)
+                {
+                    throw new PipelineJobException("Missing cell to HTO file");
+
+                }
+
+                ctx.getFileManager().addStepOutputs(action, output);
             }
-
-            ctx.getFileManager().addStepOutputs(action, output);
+            else if (htosPerReadset.size() == 1)
+            {
+                ctx.getLogger().info("Only single HTO used for lane, skipping cell hashing calling");
+            }
+            else
+            {
+                ctx.getLogger().info("No HTOs found for readset");
+            }
         }
 
         private File createCellbarcodeWhitelist(JobContext ctx, File perCellTsv, boolean allowCellsLackingCDR3) throws PipelineJobException
@@ -238,7 +253,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
                         //NOTE: 10x appends "-1" to barcodes
                         String barcode = row[0].split("-")[0];
-                        if (hasCDR3 && !uniqueBarcodes.contains(barcode))
+                        if ((allowCellsLackingCDR3 || hasCDR3) && !uniqueBarcodes.contains(barcode))
                         {
                             writer.writeNext(new String[]{barcode});
                             uniqueBarcodes.add(barcode);
