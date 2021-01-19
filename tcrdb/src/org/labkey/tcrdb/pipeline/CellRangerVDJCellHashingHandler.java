@@ -29,9 +29,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
@@ -41,6 +43,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
     public static final String TARGET_ASSAY = "targetAssay";
     public static final String DELETE_EXISTING_ASSAY_DATA = "deleteExistingAssayData";
+    public static final String USE_GEX_BARCODES = "useGexBarcodes";
 
     public CellRangerVDJCellHashingHandler()
     {
@@ -55,6 +58,9 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     put("checked", true);
                 }}, true),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
+                    put("checked", true);
+                }}, false),
+                ToolParameterDescriptor.create(USE_GEX_BARCODES, "Use GEX and TCR Cell Barcodes", "If checked, the cell barcode whitelist used for cell hashing will be the union of TCR and GEX cell barcodes. If T-cells are a rare component of total cells, this might enhance the effectiveness of the callers by providing more positive signal.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, false)
         ));
@@ -106,7 +112,14 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             //NOTE: this is the pathway to import assay data, whether hashing is used or not
-            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(outputDir, job, support, "tcrReadsetId", params.optBoolean("excludeFailedcDNA", true), false, false);
+            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", ctx.getParams().optBoolean("excludeFailedcDNA", true), false, false);
+
+            if (ctx.getParams().optBoolean(USE_GEX_BARCODES, false))
+            {
+                ctx.getJob().getLogger().info("The union of TCR and GEX cell barcodes will be used for calling");
+                Map<Integer, File> vLoupeIdToGexBarcodeDir = new HashMap<>();
+
+            }
         }
 
         @Override
@@ -191,6 +204,8 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             if (htosPerReadset.size() > 1)
             {
                 ctx.getLogger().info("Total HTOs for readset: " + htosPerReadset.size());
+
+                //TODO: allow union of GEX and TCR cell barcodes for whitelist!
 
                 CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getSourceDirectory(), ctx.getParams(), null, rs, null);
                 parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
