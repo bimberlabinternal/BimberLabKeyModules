@@ -1000,7 +1000,7 @@
                 </fk>
             </column>
             <column columnName="gender">
-                <columnTitle>Gender</columnTitle>
+                <columnTitle>Sex</columnTitle>
                 <fk>
                     <fkDbSchema>laboratory</fkDbSchema>
                     <fkTable>genders</fkTable>

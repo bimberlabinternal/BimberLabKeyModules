@@ -68,6 +68,8 @@ public class mGAPDemographicsSource implements DemographicsSource
                     map.put(field, rs.getObject(FieldKey.fromString(field)));
                 }
             }
+
+            ret.put(subject, map);
         });
 
         return ret;
@@ -77,7 +79,7 @@ public class mGAPDemographicsSource implements DemographicsSource
     public LinkedHashMap<String, String> getFields()
     {
         LinkedHashMap<String, String> ret = new LinkedHashMap<>();
-        ret.put("gender", "Gender");
+        ret.put("gender", "Sex");
         ret.put("species", "Species");
         ret.put("center", "Center");
         ret.put("geographic_origin", "Geographic Origin");
