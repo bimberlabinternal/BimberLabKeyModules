@@ -77,16 +77,16 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
     public class Processor implements SequenceOutputProcessor
     {
         @Override
-        public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             for (ToolParameterDescriptor pd : getParameters())
             {
-                if (params.containsKey(pd.getName()) && !StringUtils.isEmpty(params.getString(pd.getName())))
+                if (ctx.getParams().containsKey(pd.getName()) && !StringUtils.isEmpty(ctx.getParams().getString(pd.getName())))
                 {
-                    ExpData d = ExperimentService.get().getExpData(params.getInt(pd.getName()));
+                    ExpData d = ExperimentService.get().getExpData(ctx.getParams().getInt(pd.getName()));
                     if (d != null)
                     {
-                        support.cacheExpData(d);
+                        ctx.getSequenceSupport().cacheExpData(d);
                     }
                 }
             }
@@ -95,7 +95,7 @@ public class MendelianAnalysisHandler extends AbstractParameterizedOutputHandler
             {
                 if (f.getLibrary_id() != null)
                 {
-                    support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(f.getLibrary_id(), job.getUser()));
+                    ctx.getSequenceSupport().cacheGenome(SequenceAnalysisService.get().getReferenceGenome(f.getLibrary_id(), ctx.getJob().getUser()));
                 }
             }
         }

@@ -163,11 +163,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
         }
 
         @Override
-        public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
-            job.getLogger().info("writing track/subset data to file");
-            Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
-            TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
+            ctx.getJob().getLogger().info("writing track/subset data to file");
+            Container target = ctx.getJob().getContainer().isWorkbook() ? ctx.getJob().getContainer().getParent() : ctx.getJob().getContainer();
+            TableInfo releaseTracks = QueryService.get().getUserSchema(ctx.getJob().getUser(), target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
 
             Set<FieldKey> toSelect = new HashSet<>();
             toSelect.add(FieldKey.fromString("trackName"));
@@ -180,7 +180,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             Set<File> allVcfs = new HashSet<>();
             Set<String> distinctTracks = new HashSet<>();
-            File trackFile = getTrackListFile(outputDir);
+            File trackFile = getTrackListFile(ctx.getOutputDir());
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(trackFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 new TableSelector(releaseTracks, colMap.values(), null, null).forEachResults(rs -> {
@@ -191,7 +191,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     SequenceOutputFile so = SequenceOutputFile.getForId(rs.getInt(FieldKey.fromString("vcfId")));
                     ExpData d = ExperimentService.get().getExpData(so.getDataId());
-                    support.cacheExpData(d);
+                    ctx.getSequenceSupport().cacheExpData(d);
 
                     allVcfs.add(d.getFile());
 
@@ -211,9 +211,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException(e);
             }
 
-            job.getLogger().info("total tracks: " + distinctTracks.size());
+            ctx.getJob().getLogger().info("total tracks: " + distinctTracks.size());
 
-            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(params.getInt(AnnotationStep.GRCH37), job.getUser()));
+            ctx.getSequenceSupport().cacheGenome(SequenceAnalysisService.get().getReferenceGenome(ctx.getParams().getInt(AnnotationStep.GRCH37), ctx.getJob().getUser()));
 
             //find chain files:
             Set<Integer> genomeIds = new HashSet<>();
@@ -223,10 +223,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException("Expected all inputs to use the same genome");
             }
             int sourceGenome = genomeIds.iterator().next();
-            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(sourceGenome, job.getUser()));
-            support.cacheObject(MMUL_GENOME, sourceGenome);
+            ctx.getSequenceSupport().cacheGenome(SequenceAnalysisService.get().getReferenceGenome(sourceGenome, ctx.getJob().getUser()));
+            ctx.getSequenceSupport().cacheObject(MMUL_GENOME, sourceGenome);
 
-            AnnotationStep.findChainFile(genomeIds.iterator().next(), params.getInt(AnnotationStep.GRCH37), support, job);
+            AnnotationStep.findChainFile(genomeIds.iterator().next(), ctx.getParams().getInt(AnnotationStep.GRCH37), ctx.getSequenceSupport(), ctx.getJob());
 
             //Read inputs, find all unique IDs.  Determine if we have data in mgap.subjectsSource for each mgap ID
             Set<String> ids = new HashSet<>();
@@ -240,7 +240,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), target, mGAPSchema.NAME).getTable("subjectsSource", null);
+            TableInfo ti = QueryService.get().getUserSchema(ctx.getJob().getUser(), target, mGAPSchema.NAME).getTable("subjectsSource", null);
             List<String> idsWithRecord = new TableSelector(ti, PageFlowUtil.set("subjectname"), new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN), null).getArrayList(String.class);
 
             ids.removeAll(idsWithRecord);

@@ -103,7 +103,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
     public class Processor implements SequenceOutputHandler.SequenceOutputProcessor
     {
         @Override
-        public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             //NOTE: this is the pathway to import assay data, whether hashing is used or not
             CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(outputDir, job, support, "tcrReadsetId", params.optBoolean("excludeFailedcDNA", true), false, false);
