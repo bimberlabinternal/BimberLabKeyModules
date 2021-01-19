@@ -61,7 +61,7 @@ public class mGAPDemographicsSource implements DemographicsSource
             {
                 if ("datatypes".equalsIgnoreCase(field))
                 {
-                    map.put("datatypes", (dataTypeMap.containsKey(subject) ? StringUtils.join(dataTypeMap.get(subject)) : null));
+                    map.put("datatypes", (dataTypeMap.containsKey(subject) ? StringUtils.join(dataTypeMap.get(subject), ",") : null));
                 }
                 else
                 {
