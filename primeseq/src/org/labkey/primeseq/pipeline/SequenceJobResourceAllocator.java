@@ -203,22 +203,22 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             Map<String, String> params = job.getParameters();
             if (params != null)
             {
-                if (params.containsKey(PipelineStep.StepType.analysis.name()) && params.get(PipelineStep.StepType.analysis.name()).contains("HaplotypeCallerAnalysis"))
+                if (params.containsKey(PipelineStep.CorePipelineStepTypes.analysis.name()) && params.get(PipelineStep.CorePipelineStepTypes.analysis.name()).contains("HaplotypeCallerAnalysis"))
                 {
                     hasHaplotypeCaller = true;
                 }
 
-                if (params.containsKey(PipelineStep.StepType.alignment.name()) && params.get(PipelineStep.StepType.alignment.name()).contains("STAR"))
+                if (params.containsKey(PipelineStep.CorePipelineStepTypes.alignment.name()) && params.get(PipelineStep.CorePipelineStepTypes.alignment.name()).contains("STAR"))
                 {
                     hasStar = true;
                 }
 
-                if (params.containsKey(PipelineStep.StepType.alignment.name()) && params.get(PipelineStep.StepType.alignment.name()).contains("Bismark"))
+                if (params.containsKey(PipelineStep.CorePipelineStepTypes.alignment.name()) && params.get(PipelineStep.CorePipelineStepTypes.alignment.name()).contains("Bismark"))
                 {
                     hasBismark = true;
                 }
 
-                if (params.containsKey(PipelineStep.StepType.alignment.name()) && params.get(PipelineStep.StepType.alignment.name()).contains("Bowtie2"))
+                if (params.containsKey(PipelineStep.CorePipelineStepTypes.alignment.name()) && params.get(PipelineStep.CorePipelineStepTypes.alignment.name()).contains("Bowtie2"))
                 {
                     hasBowtie2 = true;
                 }

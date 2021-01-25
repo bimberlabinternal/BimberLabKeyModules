@@ -14,6 +14,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.FileResource;
@@ -550,6 +551,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 try
                 {
                     getPipelineCtx().getLogger().debug("preparing for JBrowse");
+                    getPipelineCtx().getJob().setStatus(PipelineJob.TaskStatus.running, "Preparing for JBrowse");
                     JBrowseService.get().prepareOutputFile(getPipelineCtx().getJob().getUser(), getPipelineCtx().getLogger(), so.getRowid(), true, additionalConfig);
                 }
                 catch (IOException e)
