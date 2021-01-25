@@ -86,19 +86,5 @@ public class MccModule extends ExtendedSimpleModule
     private void registerEHRResources()
     {
         EHRService.get().registerModule(this);
-        //EHRService.get().registerTableCustomizer(this, ONPRC_EHRCustomizer.class);
-
-        //Resource r = getModuleResource("/scripts/mcc/mcc_triggers.js");
-        //assert r != null;
-        //EHRService.get().registerTriggerScript(this, r);
-
-        //EHRService.get().registerClientDependency(ClientDependency.supplierFromPath("Ext4"), this);
-        //EHRService.get().registerClientDependency(ClientDependency.supplierFromPath("onprc_ehr/panel/BloodSummaryPanel.js"), this);
-
-        //EHRService.get().registerReportLink(EHRService.REPORT_LINK_TYPE.housing, "List Single Housed Animals", this, DetailsURL.fromString("/query/executeQuery.view?schemaName=study&query.queryName=demographicsPaired&query.viewName=Single Housed"), "Commonly Used Queries");
-        //EHRService.get().registerReportLink(EHRService.REPORT_LINK_TYPE.moreReports, "Clinical Snapshot Printable Report", this, DetailsURL.fromString("/onprc_ehr/SnapshotPrintableReport.view"), "Clinical");
-
-        //EHRService.get().registerDemographicsProvider(new ActiveCasesDemographicsProvider(this));
-        //EHRService.get().registerHistoryDataSource(new DefaultSustainedReleaseDatasource(this));
     }
 }
