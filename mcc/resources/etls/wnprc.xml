@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <etl xmlns="http://labkey.org/etl/xml">
-    <name>SNPRC_Data</name>
-    <description>SNPRC Clinical/Demographics Data</description>
+    <name>WNPRC_Data</name>
+    <description>WNPRC Clinical/Demographics Data</description>
     <transforms>
         <transform type="RemoteQueryTransformStep" id="step1">
             <description>Copy to target</description>
@@ -13,7 +13,7 @@
     <!--species~eq=Marmoset-->
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" />
     <schedule>
-        <!--11PM-->
-        <cron expression="0 0 23 * * ?"/>
+        <!--101PM-->
+        <cron expression="0 0 20 * * ?"/>
     </schedule>
 </etl>

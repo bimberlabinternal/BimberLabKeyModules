@@ -156,7 +156,7 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
     public class Processor implements SequenceOutputProcessor
     {
         @Override
-        public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles, JSONObject params, File outputDir, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
+        public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             //find genome
             Set<Integer> ids = new HashSet<>();
@@ -166,7 +166,7 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
 
                 try
                 {
-                    SequenceAnalysisService.get().ensureVcfIndex(f.getFile(), job.getLogger());
+                    SequenceAnalysisService.get().ensureVcfIndex(f.getFile(), ctx.getJob().getLogger());
                 }
                 catch (IOException e)
                 {
@@ -179,13 +179,13 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
                 throw new PipelineJobException("The selected files use more than 1 genome.  All VCFs must use the same genome");
             }
 
-            support.cacheGenome(SequenceAnalysisService.get().getReferenceGenome(ids.iterator().next(), job.getUser()));
+            ctx.getSequenceSupport().cacheGenome(SequenceAnalysisService.get().getReferenceGenome(ids.iterator().next(), ctx.getJob().getUser()));
 
             //make ped file
-            List<PedigreeRecord> pedigreeRecords = generatePedigree(job, params);
+            List<PedigreeRecord> pedigreeRecords = generatePedigree(ctx.getJob(), ctx.getParams());
 
-            File gatkPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "gatkPed.ped");
-            File morganPed = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "morgan.ped");
+            File gatkPed = new File(ctx.getJob().getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "gatkPed.ped");
+            File morganPed = new File(ctx.getSourceDirectory(), "morgan.ped");
             try (PrintWriter gatkWriter = PrintWriters.getPrintWriter(gatkPed); PrintWriter morganWriter = PrintWriters.getPrintWriter(morganPed))
             {
                 morganWriter.write("input pedigree size " + pedigreeRecords.size() + '\n');
@@ -204,39 +204,39 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
                 throw new PipelineJobException(e);
             }
 
-            ExpData frameworkMarkers = ExperimentService.get().getExpData(params.getInt("frameworkFile"));
+            ExpData frameworkMarkers = ExperimentService.get().getExpData(ctx.getParams().getInt("frameworkFile"));
             if (frameworkMarkers == null || !frameworkMarkers.getFile().exists())
             {
-                throw new PipelineJobException("Unable to find framework markers file: " + params.getInt("frameworkFile"));
+                throw new PipelineJobException("Unable to find framework markers file: " + ctx.getParams().getInt("frameworkFile"));
             }
-            job.getLogger().info("using framework markers file: " + frameworkMarkers.getFile().getPath());
-            support.cacheExpData(frameworkMarkers);
+            ctx.getJob().getLogger().info("using framework markers file: " + frameworkMarkers.getFile().getPath());
+            ctx.getSequenceSupport().cacheExpData(frameworkMarkers);
 
-            ExpData denseMarkers = ExperimentService.get().getExpData(params.getInt("denseFile"));
+            ExpData denseMarkers = ExperimentService.get().getExpData(ctx.getParams().getInt("denseFile"));
             if (denseMarkers == null || !denseMarkers.getFile().exists())
             {
-                throw new PipelineJobException("Unable to find dense markers file: " + params.getInt("denseFile"));
+                throw new PipelineJobException("Unable to find dense markers file: " + ctx.getParams().getInt("denseFile"));
             }
-            job.getLogger().info("using dense markers file: " + denseMarkers.getFile().getPath());
-            support.cacheExpData(denseMarkers);
+            ctx.getJob().getLogger().info("using dense markers file: " + denseMarkers.getFile().getPath());
+            ctx.getSequenceSupport().cacheExpData(denseMarkers);
 
-            ExpData alleleFrequencyFile = ExperimentService.get().getExpData(params.getInt("alleleFrequencyFile"));
+            ExpData alleleFrequencyFile = ExperimentService.get().getExpData(ctx.getParams().getInt("alleleFrequencyFile"));
             if (alleleFrequencyFile == null || !alleleFrequencyFile.getFile().exists())
             {
-                throw new PipelineJobException("Unable to find allele frequency file: " + params.getInt("alleleFrequencyFile"));
+                throw new PipelineJobException("Unable to find allele frequency file: " + ctx.getParams().getInt("alleleFrequencyFile"));
             }
-            job.getLogger().info("using allele frequency file: " + alleleFrequencyFile.getFile().getPath());
-            support.cacheExpData(alleleFrequencyFile);
+            ctx.getJob().getLogger().info("using allele frequency file: " + alleleFrequencyFile.getFile().getPath());
+            ctx.getSequenceSupport().cacheExpData(alleleFrequencyFile);
 
-            if (StringUtils.trimToNull(params.getString("blacklistFile")) != null)
+            if (StringUtils.trimToNull(ctx.getParams().getString("blacklistFile")) != null)
             {
-                ExpData blacklist = ExperimentService.get().getExpData(params.getInt("blacklistFile"));
+                ExpData blacklist = ExperimentService.get().getExpData(ctx.getParams().getInt("blacklistFile"));
                 if (blacklist == null || !blacklist.getFile().exists())
                 {
-                    throw new PipelineJobException("Unable to find blacklist file: " + params.getInt("blacklistFile"));
+                    throw new PipelineJobException("Unable to find blacklist file: " + ctx.getParams().getInt("blacklistFile"));
                 }
-                job.getLogger().info("using blacklist: " + blacklist.getFile().getPath());
-                support.cacheExpData(blacklist);
+                ctx.getJob().getLogger().info("using blacklist: " + blacklist.getFile().getPath());
+                ctx.getSequenceSupport().cacheExpData(blacklist);
             }
         }
 
