@@ -13,7 +13,7 @@
     <!--species~eq=Marmoset-->
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" />
     <schedule>
-        <!--101PM-->
+        <!--8PM-->
         <cron expression="0 0 20 * * ?"/>
     </schedule>
 </etl>
