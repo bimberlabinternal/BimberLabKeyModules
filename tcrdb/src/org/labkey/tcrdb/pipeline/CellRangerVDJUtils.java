@@ -56,6 +56,8 @@ import java.util.Set;
 
 public class CellRangerVDJUtils
 {
+    public static final String TCR_HASHING_CALLS = "Cell Hashing TCR Calls";
+
     private Logger _log;
 
     public CellRangerVDJUtils(Logger log)
@@ -459,7 +461,7 @@ public class CellRangerVDJUtils
 
     private File getCellToHtoFile(ExpRun run) throws PipelineJobException
     {
-        List<? extends ExpData> datas = run.getInputDatas(CellHashingService.HASHING_CALLS, ExpProtocol.ApplicationType.ExperimentRunOutput);
+        List<? extends ExpData> datas = run.getInputDatas(TCR_HASHING_CALLS, ExpProtocol.ApplicationType.ExperimentRunOutput);
         if (datas.isEmpty())
         {
             throw new PipelineJobException("Unable to find hashing calls output");

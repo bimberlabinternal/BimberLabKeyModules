@@ -221,6 +221,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
                 }
 
+                action.addOutput(cellToHto, CellRangerVDJUtils.TCR_HASHING_CALLS, false);
                 ctx.getFileManager().addStepOutputs(action, output);
             }
             else if (htosPerReadset.size() == 1)
