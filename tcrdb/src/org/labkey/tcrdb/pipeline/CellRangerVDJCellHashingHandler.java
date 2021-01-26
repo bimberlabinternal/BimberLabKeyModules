@@ -160,7 +160,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, job.getLogFile().getParentFile(), assayId, null, deleteExistingData);
+                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, so.getFile(), job.getLogFile().getParentFile(), assayId, null, deleteExistingData);
                 }
             }
         }

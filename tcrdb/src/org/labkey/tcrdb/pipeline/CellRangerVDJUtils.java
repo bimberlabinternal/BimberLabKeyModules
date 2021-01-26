@@ -63,8 +63,10 @@ public class CellRangerVDJUtils
         _log = log;
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
     {
+        File cellRangerOutDir = vLoupeFile.getParentFile();
+
         if (assayId == null)
         {
             _log.info("No assay selected, will not import");
@@ -77,32 +79,29 @@ public class CellRangerVDJUtils
             throw new PipelineJobException("Unable to find protocol: " + assayId);
         }
 
-        File allCsv = getPerCellCsv(outDir);
+        File allCsv = getPerCellCsv(cellRangerOutDir);
         if (!allCsv.exists())
         {
             _log.warn("unable to find consensus contigs: " + allCsv .getPath());
             return;
         }
 
-        File consensusCsv = new File(outDir, "consensus_annotations.csv");
+        File consensusCsv = new File(cellRangerOutDir, "consensus_annotations.csv");
         if (!consensusCsv .exists())
         {
-            _log.warn("unable to find consensus contigs: " + consensusCsv .getPath());
-            return;
+            throw new PipelineJobException("unable to find consensus contigs: " + consensusCsv .getPath());
         }
 
-        File consensusFasta = new File(outDir, "consensus.fasta");
+        File consensusFasta = new File(cellRangerOutDir, "consensus.fasta");
         if (!consensusFasta.exists())
         {
-            _log.warn("unable to find FASTA: " + consensusFasta.getPath());
-            return;
+            throw new PipelineJobException("unable to find FASTA: " + consensusFasta.getPath());
         }
 
-        File allFasta = new File(outDir, "all_contig.fasta");
+        File allFasta = new File(cellRangerOutDir, "all_contig.fasta");
         if (!allFasta.exists())
         {
-            _log.warn("unable to find FASTA: " + allFasta.getPath());
-            return;
+            throw new PipelineJobException("unable to find FASTA: " + allFasta.getPath());
         }
 
         _log.info("loading results into assay: " + assayId);
@@ -647,8 +646,8 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static File getPerCellCsv(File outDir)
+    public static File getPerCellCsv(File cellRangerOutDir)
     {
-        return new File(outDir, "all_contig_annotations.csv");
+        return new File(cellRangerOutDir, "all_contig_annotations.csv");
     }
 }
