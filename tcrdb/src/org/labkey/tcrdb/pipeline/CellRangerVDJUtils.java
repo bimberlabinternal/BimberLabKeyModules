@@ -292,10 +292,15 @@ public class CellRangerVDJUtils
                     continue;
                 }
 
-                if ("None".equals(line[9]))
+                String cGene = removeNone(line[9]);
+                if (cGene == null)
                 {
-                    noCGene++;
-                    continue;
+                    // Only discard these if chain type doesnt match between JGene and VGene.
+                    if (!line[8].substring(0, 3).equals(line[6].substring(0,3)))
+                    {
+                        noCGene++;
+                        continue;
+                    }
                 }
 
                 if ("False".equals(line[10]))
@@ -343,9 +348,9 @@ public class CellRangerVDJUtils
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
                 String locus = line[5];
-                if (locus.equals("Multi") && removeNone(line[9]) != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
+                if (locus.equals("Multi") && cGene != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
                 {
-                    if (removeNone(line[9]).contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
+                    if (cGene.contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
                     {
                         locus = "TRA";
                         multiChainConverted++;
@@ -353,7 +358,7 @@ public class CellRangerVDJUtils
                 }
 
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), removeNone(line[9]), removeNone(line[13])}, "<>");
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), cGene, removeNone(line[13])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
