@@ -203,4 +203,47 @@ public class PrimeseqController extends SpringActionController
         }
     }
 
+    @RequiresSiteAdmin
+    public class SyncMhcAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Sync MHC Data from PRIMe");
+
+            return new HtmlView(HtmlString.of("This will attempt to sync MHC typing data from PRIMe to the current folder, creating all sequence records and workbooks.  Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            try
+            {
+                MhcMigration mhc = new MhcMigration(getContainer(), getUser(), "PRIMe", "ONPRC/Core Facilities/Genetics Core/MHC_Typing/");
+                mhc.doWork();
+            }
+            catch (Exception e)
+            {
+                _log.error(e);
+                errors.reject(ERROR_MSG, e.getMessage());
+                return false;
+
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
 }
