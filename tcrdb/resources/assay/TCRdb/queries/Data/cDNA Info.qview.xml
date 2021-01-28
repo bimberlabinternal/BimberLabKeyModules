@@ -2,9 +2,9 @@
    <columns>
        <column name="analysisId" />
        <column name="sampleName" />
-       <column name="cDNA/sortId/stimId/animalId" />
-       <column name="cDNA/sortId/stimId/date" />
-       <column name="cDNA/sortId/stimId/stim" />
+       <column name="cDNA/sortId/sampleId/subjectId" />
+       <column name="cDNA/sortId/sampleId/sampledate" />
+       <column name="cDNA/sortId/sampleId/stim" />
        <column name="cDNA/sortId/population" />
        <column name="calculatedPopulation" />
        <column name="locus" />
