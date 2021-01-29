@@ -856,6 +856,10 @@ public class MhcMigration
                     {
                         filepath = filepath.replace("illuminaImport", "@files/illuminaImport");
                     }
+                    else if (filepath.contains("sequenceAnalysis"))
+                    {
+                        filepath = filepath.replace("sequenceAnalysis", "@files/sequenceAnalysis");
+                    }
                     else
                     {
                         _log.error("Unexpected filepath: " + pj.getValue("FilePath"));
