@@ -30,6 +30,8 @@ import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.ContainerType;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipeRoot;
+import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
@@ -39,6 +41,7 @@ import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
+import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -219,8 +222,9 @@ public class PrimeseqController extends SpringActionController
         {
             try
             {
-                MhcMigration mhc = new MhcMigration(getContainer(), getUser(), "PRIMe", "ONPRC/Core Facilities/Genetics Core/MHC_Typing/");
-                mhc.doWork();
+                PipeRoot pipelineRoot = PipelineService.get().findPipelineRoot(getContainer());
+                MhcMigrationPipelineJob job = new MhcMigrationPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, "PRIMe", "ONPRC/Core Facilities/Genetics Core/MHC_Typing/");
+                PipelineService.get().queueJob(job);
             }
             catch (Exception e)
             {
