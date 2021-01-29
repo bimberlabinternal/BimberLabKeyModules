@@ -200,7 +200,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         {
             AlignmentOutputImpl output = new AlignmentOutputImpl();
 
-            List<String> htosPerReadset = CellHashingService.get().getHtosForParentReadset(rs.getReadsetId(), ctx.getSourceDirectory(), ctx.getSequenceSupport());
+            Set<String> htosPerReadset = CellHashingService.get().getHtosForParentReadset(rs.getReadsetId(), ctx.getSourceDirectory(), ctx.getSequenceSupport());
             if (htosPerReadset.size() > 1)
             {
                 ctx.getLogger().info("Total HTOs for readset: " + htosPerReadset.size());
