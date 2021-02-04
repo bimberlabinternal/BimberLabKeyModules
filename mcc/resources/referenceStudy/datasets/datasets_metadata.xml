@@ -135,32 +135,11 @@
             <column columnName="sire">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="room">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="cage">
-                <datatype>varchar</datatype>
-            </column>
             <column columnName="date_type">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="birth_condition">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="teeth">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="conception">
-                <datatype>timestamp</datatype>
-            </column>
-            <column columnName="conceptualDay">
-                <datatype>integer</datatype>
-            </column>
             <column columnName="type">
                 <datatype>varchar</datatype>
-            </column>
-            <column columnName="arrival_date">
-                <datatype>timestamp</datatype>
             </column>
             <column columnName="objectid">
                 <datatype>varchar</datatype>
@@ -207,36 +186,6 @@
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
                 <isKeyField>true</isKeyField>
             </column>
-            <column columnName="vetreview">
-                <datatype>varchar</datatype>
-                <propertyURI>urn:ehr.labkey.org/#VetReview</propertyURI>
-            </column>
-            <column columnName="vetreviewdate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#VetReviewDate</propertyURI>
-            </column>
-            <column columnName="title">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="chargetype">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="assistingstaff">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="caseno">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="daterequested">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#DateRequested</propertyURI>
-            </column>
-            <column columnName="instructions">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="caseid">
-                <datatype>varchar</datatype>
-            </column>
             <column columnName="procedureid">
                 <datatype>integer</datatype>
             </column>
@@ -264,6 +213,9 @@
                 <datatype>integer</datatype>
                 <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
             </column>
+            <column columnName="remark">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="category">
                 <datatype>varchar</datatype>
             </column>
@@ -272,35 +224,6 @@
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
                 <isKeyField>true</isKeyField>
             </column>
-            <column columnName="vetreview">
-                <datatype>varchar</datatype>
-                <propertyURI>urn:ehr.labkey.org/#VetReview</propertyURI>
-            </column>
-            <column columnName="vetreviewdate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#VetReviewDate</propertyURI>
-            </column>
-            <column columnName="hx">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="s">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="a">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="o">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="p">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="p2">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="caseid">
-                <datatype>varchar</datatype>
-            </column>
             <column columnName="enddate">
                 <datatype>timestamp</datatype>
                 <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
@@ -308,16 +231,10 @@
             <column columnName="datefinalized">
                 <datatype>timestamp</datatype>
             </column>
-            <column columnName="assignedVet">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="CEG_Plan">
-                <datatype>varchar</datatype>
-            </column>
         </columns>
         <tableTitle>Clinical Remarks</tableTitle>
     </table>
-    <table tableName="medicationAdministation" tableDbType="TABLE">
+    <table tableName="medicationAdministration" tableDbType="TABLE">
         <columns>
             <column columnName="Id">
                 <datatype>varchar</datatype>
@@ -387,12 +304,6 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="treatmentid">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="timeordered">
-                <datatype>timestamp</datatype>
-            </column>
-            <column columnName="qualifier">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -503,7 +414,7 @@
         </columns>
         <tableTitle>Weight</tableTitle>
     </table>
-    <table tableName="clinpathRuns" tableDbType="TABLE">
+    <table tableName="labwork" tableDbType="TABLE">
         <columns>
             <column columnName="Id">
                 <datatype>varchar</datatype>
@@ -524,32 +435,14 @@
             <column columnName="type">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="tissue">
-                <datatype>varchar</datatype>
-            </column>
             <column columnName="project">
                 <datatype>integer</datatype>
                 <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
-            </column>
-            <column columnName="instructions">
-                <datatype>varchar</datatype>
             </column>
             <column columnName="objectid">
                 <datatype>entityid</datatype>
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
                 <isKeyField>true</isKeyField>
-            </column>
-            <column columnName="units">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="servicerequested">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="collectedBy">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="sampleId">
-                <datatype>varchar</datatype>
             </column>
             <column columnName="sampletype">
                 <datatype>varchar</datatype>
@@ -566,16 +459,13 @@
             <column columnName="quantityUnits">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="chargetype">
-                <datatype>varchar</datatype>
-            </column>
             <column columnName="datefinalized">
                 <datatype>timestamp</datatype>
             </column>
         </columns>
-        <tableTitle>Clinpath Runs</tableTitle>
+        <tableTitle>Labwork</tableTitle>
     </table>
-    <table tableName="hematologyResults" tableDbType="TABLE">
+    <table tableName="labworkResults" tableDbType="TABLE">
         <columns>
             <column columnName="Id">
                 <datatype>varchar</datatype>
@@ -630,132 +520,9 @@
                 <datatype>varchar</datatype>
             </column>
         </columns>
-        <tableTitle>Hematology Results</tableTitle>
+        <tableTitle>Lab Results</tableTitle>
     </table>
-    <table tableName="parasitologyResults" tableDbType="TABLE">
-        <columns>
-            <column columnName="Id">
-                <datatype>varchar</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
-                <importAliases>
-                    <importAlias>ptid</importAlias>
-                </importAliases>
-            </column>
-            <column columnName="date">
-                <datatype>timestamp</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
-                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
-            </column>
-            <column columnName="organism">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="objectid">
-                <datatype>entityid</datatype>
-                <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
-                <isKeyField>true</isKeyField>
-            </column>
-            <column columnName="runid">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="project">
-                <datatype>integer</datatype>
-                <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
-            </column>
-            <column columnName="enddate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
-            </column>
-            <column columnName="result">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="units">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="sampletype">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="qualresult">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="method">
-                <datatype>varchar</datatype>
-            </column>
-        </columns>
-        <tableTitle>Parasitology Results</tableTitle>
-    </table>
-    <table tableName="urinalysisResults" tableDbType="TABLE">
-        <columns>
-            <column columnName="Id">
-                <datatype>varchar</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
-                <importAliases>
-                    <importAlias>ptid</importAlias>
-                </importAliases>
-            </column>
-            <column columnName="date">
-                <datatype>timestamp</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
-                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
-            </column>
-            <column columnName="testid">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="result">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="resultOORIndicator">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="resultNumber">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="resultInRange">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="rangeMax">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="units">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="qualresult">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="objectid">
-                <datatype>entityid</datatype>
-                <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
-                <isKeyField>true</isKeyField>
-            </column>
-            <column columnName="project">
-                <datatype>integer</datatype>
-                <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
-            </column>
-            <column columnName="enddate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
-            </column>
-            <column columnName="method">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="quantity">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="quantityOORIndicator">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="quantityNumber">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="quantityInRange">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="runid">
-                <datatype>varchar</datatype>
-            </column>
-        </columns>
-        <tableTitle>Urinalysis Results</tableTitle>
-    </table>
-    <table tableName="arrival" tableDbType="TABLE">
+    <table tableName="transfers" tableDbType="TABLE">
         <columns>
             <column columnName="Id">
                 <datatype>varchar</datatype>
@@ -791,45 +558,6 @@
             <column columnName="estimated">
                 <datatype>boolean</datatype>
             </column>
-            <column columnName="initialRoom">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="initialCage">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="species">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="dam">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="sire">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="gender">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="geographic_origin">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="AcquisitionType">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="RearingType">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="originalId">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="arrivalId">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="cites">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="customsDate">
-                <datatype>timestamp</datatype>
-            </column>
         </columns>
         <tableTitle>Arrival</tableTitle>
     </table>
@@ -860,34 +588,10 @@
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
                 <isKeyField>true</isKeyField>
             </column>
-            <column columnName="projectedRelease">
-                <datatype>timestamp</datatype>
-            </column>
-            <column columnName="assignCondition">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="releaseCondition">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="projectedReleaseCondition">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="releaseType">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="datefinalized">
-                <datatype>timestamp</datatype>
-            </column>
-            <column columnName="enddatefinalized">
-                <datatype>timestamp</datatype>
-            </column>
-            <column columnName="assignmentType">
-                <datatype>varchar</datatype>
-            </column>
         </columns>
         <tableTitle>Assignment</tableTitle>
     </table>
-    <table tableName="animal_group_members" tableDbType="TABLE">
+    <table tableName="animalGroupMembership" tableDbType="TABLE">
         <columns>
             <column columnName="Id">
                 <datatype>varchar</datatype>
@@ -913,9 +617,6 @@
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
                 <isKeyField>true</isKeyField>
             </column>
-            <column columnName="releaseType">
-                <datatype>varchar</datatype>
-            </column>
         </columns>
         <tableTitle>Animal Group Members</tableTitle>
     </table>
@@ -936,9 +637,6 @@
             <column columnName="cause">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="necropsy">
-                <datatype>varchar</datatype>
-            </column>
             <column columnName="objectid">
                 <datatype>varchar</datatype>
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
@@ -950,21 +648,6 @@
             <column columnName="enddate">
                 <datatype>timestamp</datatype>
                 <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
-            </column>
-            <column columnName="roomattime">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="cageattime">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="manner">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="dam">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="notAtCenter">
-                <datatype>boolean</datatype>
             </column>
         </columns>
         <tableTitle>Deaths</tableTitle>
@@ -1013,151 +696,10 @@
             <column columnName="calculated_status">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="global_id">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Demographics</tableTitle>
-    </table>
-    <table tableName="departure" tableDbType="TABLE">
-        <columns>
-            <column columnName="Id">
-                <datatype>varchar</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
-                <importAliases>
-                    <importAlias>ptid</importAlias>
-                </importAliases>
-            </column>
-            <column columnName="date">
-                <datatype>timestamp</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
-                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
-            </column>
-            <column columnName="authorize">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="destination">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="objectid">
-                <datatype>entityid</datatype>
-                <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
-                <isKeyField>true</isKeyField>
-            </column>
-            <column columnName="project">
-                <datatype>integer</datatype>
-                <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
-            </column>
-            <column columnName="enddate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
-            </column>
-        </columns>
-        <tableTitle>Departure</tableTitle>
-    </table>
-    <table tableName="housing" tableDbType="TABLE">
-        <columns>
-            <column columnName="Id">
-                <datatype>varchar</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
-                <importAliases>
-                    <importAlias>ptid</importAlias>
-                </importAliases>
-            </column>
-            <column columnName="date">
-                <datatype>timestamp</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
-                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
-            </column>
-            <column columnName="enddate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
-            </column>
-            <column columnName="room">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="cage">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="divider">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="housingCondition">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="housingType">
-                <datatype>integer</datatype>
-            </column>
-            <column columnName="objectid">
-                <datatype>entityid</datatype>
-                <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
-                <isKeyField>true</isKeyField>
-            </column>
-            <column columnName="reason">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="project">
-                <datatype>integer</datatype>
-                <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
-            </column>
-        </columns>
-        <tableTitle>Housing</tableTitle>
-    </table>
-    <table tableName="tissue_samples" tableDbType="TABLE">
-        <columns>
-            <column columnName="Id">
-                <datatype>varchar</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
-                <importAliases>
-                    <importAlias>ptid</importAlias>
-                </importAliases>
-            </column>
-            <column columnName="date">
-                <datatype>timestamp</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
-                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
-            </column>
-            <column columnName="tissue">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="tissueCondition">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="objectid">
-                <datatype>entityid</datatype>
-                <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
-                <isKeyField>true</isKeyField>
-            </column>
-            <column columnName="project">
-                <datatype>integer</datatype>
-                <propertyURI>urn:ehr.labkey.org/#Project</propertyURI>
-            </column>
-            <column columnName="enddate">
-                <datatype>timestamp</datatype>
-                <propertyURI>urn:ehr.labkey.org/#EndDate</propertyURI>
-            </column>
-            <!--<column columnName="recipient">-->
-                <!--<datatype>varchar</datatype>-->
-            <!--</column>-->
-            <!--<column columnName="preservation">-->
-                <!--<datatype>varchar</datatype>-->
-            <!--</column>-->
-            <column columnName="preparation">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="qualifier">
-                <datatype>varchar</datatype>
-            </column>
-            <column columnName="quantity">
-                <datatype>varchar</datatype>
-            </column>
-            <!--<column columnName="container_type">-->
-                <!--<datatype>varchar</datatype>-->
-            <!--</column>-->
-            <column columnName="weight">
-                <datatype>double</datatype>
-            </column>
-            <column columnName="noWeight">
-                <datatype>boolean</datatype>
-            </column>
-        </columns>
-        <tableTitle>Tissue Samples</tableTitle>
     </table>
 </tables>
