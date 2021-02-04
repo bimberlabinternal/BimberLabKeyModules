@@ -65,7 +65,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }}, false)
         ));
 
-        ret.addAll(CellHashingService.get().getDefaultHashingParams(true));
+        ret.addAll(CellHashingService.get().getDefaultHashingParams(true, CellHashingService.BARCODE_TYPE.hashing));
 
         return ret;
     }
