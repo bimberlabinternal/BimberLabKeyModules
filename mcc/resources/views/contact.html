@@ -7,7 +7,7 @@
                 border: false
             },
             items: [{
-                html: 'Please use the form below or email <a href="mailto:mgap@ohsu.edu">mgap@ohsu.edu</a> for any questions, comments or suggestions about the site:',
+                html: 'Please use the form below or email <a href="mailto:mcc@ohsu.edu">mcc@ohsu.edu</a> for any questions, comments or suggestions about the site:',
                 width: 550,
                 style: 'padding-bottom: 20px;'
             },{
@@ -43,7 +43,7 @@
 
                     LABKEY.Ajax.request({
                         method: 'POST',
-                        url: LABKEY.ActionURL.buildURL('mgap', 'requestHelp', '/'),
+                        url: LABKEY.ActionURL.buildURL('mcc', 'requestHelp', '/'),
                         jsonData: values,
                         scope: this,
                         success: function(response){

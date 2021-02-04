@@ -1,0 +1,10 @@
+<view xmlns="http://labkey.org/data/xml/view" title="The Marmoset Coordination Center (MCC)">
+    <permissions>
+        <permission name="read"/>
+    </permissions>
+    <dependencies>
+        <dependency path="ldk.context"/>
+        <!--<dependency path="internal/jQuery"/>-->
+        <!--<dependency path="https://cdn.plot.ly/plotly-latest.min.js"/>-->
+    </dependencies>
+</view>
