@@ -85,6 +85,10 @@
                     <location>body</location>
                 </webPart>
                 <webPart>
+                    <name>mGAP Release Notes</name>
+                    <location>body</location>
+                </webPart>
+                <webPart>
                     <name>mGAP Gene Search</name>
                     <location>right</location>
                 </webPart>
