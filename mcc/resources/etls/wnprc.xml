@@ -17,7 +17,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="Demographics" targetOption="merge" bulkLoad="true">
+            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
 
             </destination>
 
@@ -35,7 +35,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="parentage" targetOption="merge" bulkLoad="true">
+            <destination schemaName="study" queryName="parentage" targetOption="truncate" bulkLoad="true">
 
             </destination>
 
@@ -55,7 +55,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true">
+            <destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">
 
             </destination>
 
@@ -71,7 +71,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true">
+            <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">
 
             </destination>
 
@@ -87,17 +87,16 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="deaths" targetOption="merge" bulkLoad="true">
+            <destination schemaName="study" queryName="deaths" targetOption="truncate" bulkLoad="true">
 
             </destination>
 
         </transform>
     </transforms>
 
-    <!--TODO: species~eq=Marmoset-->
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" />
     <schedule>
-        <!--8PM-->
-        <cron expression="0 0 20 * * ?"/>
+        <!--9PM-->
+        <cron expression="0 0 21 * * ?"/>
     </schedule>
 </etl>
