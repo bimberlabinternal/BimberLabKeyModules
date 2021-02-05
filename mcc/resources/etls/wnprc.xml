@@ -3,14 +3,98 @@
     <name>WNPRC_Data</name>
     <description>WNPRC Clinical/Demographics Data</description>
     <transforms>
-        <transform type="RemoteQueryTransformStep" id="step1">
+        <transform type="RemoteQueryTransformStep" id="demographics">
             <description>Copy to target</description>
-            <source remoteSource="wnprcEHR" schemaName="study" queryName="Demographics"/>
-            <destination schemaName="study" queryName="Demographics" targetOption="merge"/>
+            <source remoteSource="wnprc" schemaName="study" queryName="Demographics">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>gender</column>
+                    <column>geographic_origin</column>
+                    <column>birth</column>
+                    <column>death</column>
+                    <column>species</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="Demographics" targetOption="merge" bulkLoad="true">
+
+            </destination>
+
+        </transform>
+
+        <transform type="RemoteQueryTransformStep" id="parentage">
+            <description>Copy to target</description>
+            <source remoteSource="wnprc" schemaName="study" queryName="parentage">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>parent</column>
+                    <column>relationship</column>
+                    <column>method</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="parentage" targetOption="merge" bulkLoad="true">
+
+            </destination>
+
+        </transform>
+
+        <transform type="RemoteQueryTransformStep" id="birth">
+            <description>Copy to target</description>
+            <source remoteSource="wnprc" schemaName="study" queryName="birth">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>gender</column>
+                    <column>species</column>
+                    <column>geographic_origin</column>
+                    <column>dam</column>
+                    <column>sire</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true">
+
+            </destination>
+
+        </transform>
+
+        <transform type="RemoteQueryTransformStep" id="weight">
+            <description>Copy to target</description>
+            <source remoteSource="wnprc" schemaName="study" queryName="weight">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>weight</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true">
+
+            </destination>
+
+        </transform>
+
+        <transform type="RemoteQueryTransformStep" id="deaths">
+            <description>Copy to target</description>
+            <source remoteSource="wnprc" schemaName="study" queryName="deaths">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>cause</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="deaths" targetOption="merge" bulkLoad="true">
+
+            </destination>
 
         </transform>
     </transforms>
-    <!--species~eq=Marmoset-->
+
+    <!--TODO: species~eq=Marmoset-->
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" />
     <schedule>
         <!--8PM-->
