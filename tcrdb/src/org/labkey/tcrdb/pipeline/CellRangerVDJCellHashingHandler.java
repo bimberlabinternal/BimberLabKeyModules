@@ -38,7 +38,9 @@ import java.util.Set;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
-    private FileType _fileType = new FileType("vloupe", false);
+    private FileType _vloupeFileType = new FileType("vloupe", false);
+    private FileType _htmlFileType = new FileType("html", false);
+
     public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
 
     public static final String TARGET_ASSAY = "targetAssay";
@@ -73,7 +75,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
     @Override
     public boolean canProcess(SequenceOutputFile o)
     {
-        return o.getFile() != null && _fileType.isType(o.getFile());
+        return o.getFile() != null && (_vloupeFileType.isType(o.getFile()) || (_htmlFileType.isType(o.getFile()) && "10x Run Summary".equals(o.getCategory()) && o.getName().contains("VDJ Summary")));
     }
 
     @Override
