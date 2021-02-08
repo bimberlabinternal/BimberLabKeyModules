@@ -244,6 +244,8 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             Set<String> uniqueBarcodesIncludingNoCDR3 = new HashSet<>();
             ctx.getLogger().debug("writing cell barcodes, using file: " + perCellTsv.getPath());
             ctx.getLogger().debug("allow cells lacking CDR3: " + allowCellsLackingCDR3);
+
+            int totalBarcodeWritten = 0;
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
             {
                 int rowIdx = 0;
@@ -275,6 +277,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         {
                             writer.writeNext(new String[]{barcode});
                             uniqueBarcodes.add(barcode);
+                            totalBarcodeWritten++;
                         }
 
                         uniqueBarcodesIncludingNoCDR3.add(barcode);
@@ -301,12 +304,18 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     for (String barcode : uniqueBarcodesIncludingNoCDR3)
                     {
                         writer.writeNext(new String[]{barcode});
+                        totalBarcodeWritten++;
                     }
                 }
                 catch (IOException e)
                 {
                     throw new PipelineJobException(e);
                 }
+            }
+
+            if (totalBarcodeWritten == 0)
+            {
+                throw new PipelineJobException("No valid cell barcodes found!");
             }
 
             //TODO: consider looking up GEX data?
