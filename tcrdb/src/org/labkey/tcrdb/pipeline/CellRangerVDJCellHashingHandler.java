@@ -67,7 +67,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }}, false)
         ));
 
-        ret.addAll(CellHashingService.get().getDefaultHashingParams(true, CellHashingService.BARCODE_TYPE.hashing));
+        ret.addAll(CellHashingService.get().getHashingCallingParams());
 
         return ret;
     }
@@ -114,7 +114,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             //NOTE: this is the pathway to import assay data, whether hashing is used or not
-            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", ctx.getParams().optBoolean("excludeFailedcDNA", false), false, false);
+            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", false, false);
 
             if (ctx.getParams().optBoolean(USE_GEX_BARCODES, false))
             {
@@ -210,17 +210,17 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 //TODO: allow union of GEX and TCR cell barcodes for whitelist!
 
                 CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getSourceDirectory(), ctx.getParams(), null, rs, null);
-                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
                 parameters.genomeId = genomeId;
                 parameters.outputCategory = CATEGORY;
                 parameters.basename = FileUtil.makeLegalName(rs.getName());
                 parameters.allowableHtoOrCiteseqBarcodes = htosPerReadset;
+                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
+                File existingCountMatrixUmiDir = CellHashingService.get().getExistingFeatureBarcodeCountDir(rs, CellHashingService.BARCODE_TYPE.hashing, ctx.getSequenceSupport());
 
-                File cellToHto = CellHashingService.get().processCellHashingOrCiteSeqForParent(rs, output, ctx, parameters);
+                File cellToHto = CellHashingService.get().generateHashingCallsForRawMatrix(rs, output, ctx, parameters, existingCountMatrixUmiDir);
                 if (CellHashingService.get().usesCellHashing(ctx.getSequenceSupport(), ctx.getSourceDirectory()) && cellToHto == null)
                 {
                     throw new PipelineJobException("Missing cell to HTO file");
-
                 }
 
                 action.addOutput(cellToHto, CellRangerVDJUtils.TCR_HASHING_CALLS, false);

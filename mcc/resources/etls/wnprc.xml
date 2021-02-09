@@ -5,7 +5,7 @@
     <transforms>
         <transform type="RemoteQueryTransformStep" id="demographics">
             <description>Copy to target</description>
-            <source remoteSource="wnprc" schemaName="study" queryName="Demographics">
+            <source remoteSource="WNPRC" schemaName="study" queryName="Demographics">
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
