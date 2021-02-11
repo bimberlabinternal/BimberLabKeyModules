@@ -25,7 +25,7 @@
 
         <transform type="RemoteQueryTransformStep" id="parentage">
             <description>Copy to target</description>
-            <source remoteSource="wnprc" schemaName="study" queryName="parentage">
+            <source remoteSource="WNPRC" schemaName="study" queryName="parentage">
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
@@ -43,7 +43,7 @@
 
         <transform type="RemoteQueryTransformStep" id="birth">
             <description>Copy to target</description>
-            <source remoteSource="wnprc" schemaName="study" queryName="birth">
+            <source remoteSource="WNPRC" schemaName="study" queryName="birth">
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
@@ -63,7 +63,7 @@
 
         <transform type="RemoteQueryTransformStep" id="weight">
             <description>Copy to target</description>
-            <source remoteSource="wnprc" schemaName="study" queryName="weight">
+            <source remoteSource="WNPRC" schemaName="study" queryName="weight">
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
@@ -79,7 +79,7 @@
 
         <transform type="RemoteQueryTransformStep" id="deaths">
             <description>Copy to target</description>
-            <source remoteSource="wnprc" schemaName="study" queryName="deaths">
+            <source remoteSource="WNPRC" schemaName="study" queryName="deaths">
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>

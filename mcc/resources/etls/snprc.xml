@@ -29,7 +29,7 @@
 
         <!--<transform type="RemoteQueryTransformStep" id="parentage">-->
             <!--<description>Copy to target</description>-->
-            <!--<source remoteSource="snprc" schemaName="study" queryName="parentage">-->
+            <!--<source remoteSource="SNPRC" schemaName="study" queryName="parentage">-->
                 <!--<sourceColumns>-->
                     <!--<column>AnimalId</column>-->
                     <!--<column>date</column>-->
@@ -49,7 +49,7 @@
 
         <transform type="RemoteQueryTransformStep" id="birth">
             <description>Copy to target</description>
-            <source remoteSource="snprc" schemaName="study" queryName="Demographics">
+            <source remoteSource="SNPRC" schemaName="study" queryName="Demographics">
                 <sourceColumns>
                     <column>AnimalId</column>
                     <column>birth</column>
@@ -71,7 +71,7 @@
 
         <transform type="RemoteQueryTransformStep" id="weight">
             <description>Copy to target</description>
-            <source remoteSource="snprc" schemaName="study" queryName="weight">
+            <source remoteSource="SNPRC" schemaName="study" queryName="weight">
                 <sourceColumns>
                     <column>AnimalId</column>
                     <column>date</column>
@@ -89,7 +89,7 @@
 
         <!--<transform type="RemoteQueryTransformStep" id="deaths">-->
             <!--<description>Copy to target</description>-->
-            <!--<source remoteSource="snprc" schemaName="study" queryName="deaths">-->
+            <!--<source remoteSource="SNPRC" schemaName="study" queryName="deaths">-->
                 <!--<sourceColumns>-->
                     <!--<column>AnimalId</column>-->
                     <!--<column>date</column>-->
