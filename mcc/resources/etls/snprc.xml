@@ -47,27 +47,28 @@
 
         <!--</transform>-->
 
-        <transform type="RemoteQueryTransformStep" id="birth">
-            <description>Copy to target</description>
-            <source remoteSource="SNPRC" schemaName="study" queryName="Demographics">
-                <sourceColumns>
-                    <column>AnimalId</column>
-                    <column>birth</column>
-                    <column>gender</column>
-                    <column>species</column>
-                    <column>dam</column>
-                    <column>sire</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">
-                <columnTransforms>
-                    <column source="AnimalId" target="Id"/>
-                    <column source="birth" target="date" />
-                </columnTransforms>
-            </destination>
+        <!--NOTE: restore once we can filter on date is not null-->
+        <!--<transform type="RemoteQueryTransformStep" id="birth">-->
+            <!--<description>Copy to target</description>-->
+            <!--<source remoteSource="SNPRC" schemaName="study" queryName="Demographics">-->
+                <!--<sourceColumns>-->
+                    <!--<column>AnimalId</column>-->
+                    <!--<column>birth</column>-->
+                    <!--<column>gender</column>-->
+                    <!--<column>species</column>-->
+                    <!--<column>dam</column>-->
+                    <!--<column>sire</column>-->
+                    <!--<column>objectid</column>-->
+                <!--</sourceColumns>-->
+            <!--</source>-->
+            <!--<destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">-->
+                <!--<columnTransforms>-->
+                    <!--<column source="AnimalId" target="Id"/>-->
+                    <!--<column source="birth" target="date" />-->
+                <!--</columnTransforms>-->
+            <!--</destination>-->
 
-        </transform>
+        <!--</transform>-->
 
         <transform type="RemoteQueryTransformStep" id="weight">
             <description>Copy to target</description>
