@@ -18,7 +18,9 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
-
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
 
         </transform>
@@ -36,7 +38,9 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="parentage" targetOption="truncate" bulkLoad="true">
-
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
 
         </transform>
@@ -56,7 +60,9 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">
-
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
 
         </transform>
@@ -72,9 +78,10 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">
-
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
-
         </transform>
 
         <transform type="RemoteQueryTransformStep" id="deaths">
@@ -88,9 +95,10 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="deaths" targetOption="truncate" bulkLoad="true">
-
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
-
         </transform>
     </transforms>
 

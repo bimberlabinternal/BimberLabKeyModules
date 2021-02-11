@@ -23,6 +23,9 @@
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
 
         </transform>
@@ -84,6 +87,9 @@
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
             </destination>
 
         </transform>
@@ -102,6 +108,9 @@
                 <!--<columnTransforms>-->
                     <!--<column source="AnimalId" target="Id"/>-->
                 <!--</columnTransforms>-->
+                <!--<alternateKeys>-->
+                    <!--<column name="objectid"/>-->
+                <!--</alternateKeys>-->
             <!--</destination>-->
 
         <!--</transform>-->
