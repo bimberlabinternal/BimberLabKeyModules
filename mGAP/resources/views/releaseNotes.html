@@ -1,0 +1,12 @@
+<h4>Release 2.0:</h4>
+<ul>
+    <li>Substantial revamp of all data. All samples have been realigned to the <a href="https://www.ncbi.nlm.nih.gov/assembly/GCF_003339765.1/">MMul_10 reference genome</a>, followed by our <a href="mgap-dataProcessing.view">standard GenotypeGVCFs pipeline</a>. The MMul_10 is the most complete rhesus macaque assembly to date, and we expect this should improve accuracy of variant calls. Further, because our data are now aligned to the same assembly as NCBI/Ensembl, it should be easier to translate between mGAP and other databases.</li>
+    <li>Our internal variant calling process has switched to use GATK's GenomicsDB to pre-aggregate data prior to calling with GenotypeGVCFs, as opposed to CombineGVCFs, which was used in prior releases. This should be a purely technical difference with no change in the resulting data</li>
+</ul>
+
+<h4>Future Plans:</h4>
+<ul>
+    <li>We expect to upgrade the genome browser to use the redesigned <a href="https://jbrowse.org/jb2/">JBrowse 2</a> browser. This should provide general performance improvements and will make future mGAP-specific customization easier.</li>
+    <li>We will support other modes of viewing and downloading variant data, in particular tabular views by gene.</li>
+    <li>We recognize that the mGAP release VCF can be enormous, particularly because of all the site-specific functional annotation. To support different types of users, upcoming releases will include 'slim' versions of the data, which will be downloadable files with certain information removed to save file size.</li>
+</ul>

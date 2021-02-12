@@ -30,6 +30,8 @@ import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.ContainerType;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipeRoot;
+import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
@@ -39,6 +41,7 @@ import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
+import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -68,7 +71,7 @@ public class PrimeseqController extends SpringActionController
         {
             Map<String, Object> resultProperties = new HashMap<>();
 
-            resultProperties.put("collaborations", getSection("/Public/Collaborations"));
+            resultProperties.put("collaborations", getSection("/Labs/Bimber/Collaborations"));
             resultProperties.put("internal", getSection("/Internal"));
             resultProperties.put("labs", getSection("/Labs"));
 
@@ -125,12 +128,6 @@ public class PrimeseqController extends SpringActionController
             {
                 for (Container c : mainContainer.getChildren())
                 {
-                    //NOTE: unlike EHR, omit children if the current user cannot read them
-                    if (!c.hasPermission(getUser(), ReadPermission.class))
-                    {
-                        continue;
-                    }
-
                     JSONObject json = new JSONObject();
                     json.put("name", c.getName());
                     json.put("title", c.getTitle());
@@ -203,4 +200,48 @@ public class PrimeseqController extends SpringActionController
         }
     }
 
+    @RequiresSiteAdmin
+    public class SyncMhcAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Sync MHC Data from PRIMe");
+
+            return new HtmlView(HtmlString.of("This will attempt to sync MHC typing data from PRIMe to the current folder, creating all sequence records and workbooks.  Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            try
+            {
+                PipeRoot pipelineRoot = PipelineService.get().findPipelineRoot(getContainer());
+                MhcMigrationPipelineJob job = new MhcMigrationPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, "PRIMe", "ONPRC/Core Facilities/Genetics Core/MHC_Typing/");
+                PipelineService.get().queueJob(job);
+            }
+            catch (Exception e)
+            {
+                _log.error(e);
+                errors.reject(ERROR_MSG, e.getMessage());
+                return false;
+
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
 }

@@ -1,0 +1,21 @@
+<module xmlns="http://labkey.org/moduleProperties/xml/">
+    <properties>
+        <propertyDescriptor name="MCCContainer">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is the path to the container holding the primary MCC Study.  Use of slashes is very important - it should be in the format '/myProject/mcc'</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
+        <propertyDescriptor name="MCCContactUsers">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is a comma separated list of LabKey user names of users that should be notified by email when requests are submitted through MCC.</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
+    </properties>
+    <clientDependencies>
+
+    </clientDependencies>
+</module>
