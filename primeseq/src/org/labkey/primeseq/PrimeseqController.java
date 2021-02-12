@@ -71,7 +71,7 @@ public class PrimeseqController extends SpringActionController
         {
             Map<String, Object> resultProperties = new HashMap<>();
 
-            resultProperties.put("collaborations", getSection("/Public/Collaborations"));
+            resultProperties.put("collaborations", getSection("/Labs/Bimber/Collaborations"));
             resultProperties.put("internal", getSection("/Internal"));
             resultProperties.put("labs", getSection("/Labs"));
 
@@ -128,12 +128,6 @@ public class PrimeseqController extends SpringActionController
             {
                 for (Container c : mainContainer.getChildren())
                 {
-                    //NOTE: unlike EHR, omit children if the current user cannot read them
-                    if (!c.hasPermission(getUser(), ReadPermission.class))
-                    {
-                        continue;
-                    }
-
                     JSONObject json = new JSONObject();
                     json.put("name", c.getName());
                     json.put("title", c.getTitle());
