@@ -56,6 +56,8 @@ import java.util.Set;
 
 public class CellRangerVDJUtils
 {
+    public static final String TCR_HASHING_CALLS = "Cell Hashing TCR Calls";
+
     private Logger _log;
 
     public CellRangerVDJUtils(Logger log)
@@ -63,8 +65,10 @@ public class CellRangerVDJUtils
         _log = log;
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
     {
+        File cellRangerOutDir = vLoupeFile.getParentFile();
+
         if (assayId == null)
         {
             _log.info("No assay selected, will not import");
@@ -77,32 +81,29 @@ public class CellRangerVDJUtils
             throw new PipelineJobException("Unable to find protocol: " + assayId);
         }
 
-        File allCsv = getPerCellCsv(outDir);
+        File allCsv = getPerCellCsv(cellRangerOutDir);
         if (!allCsv.exists())
         {
             _log.warn("unable to find consensus contigs: " + allCsv .getPath());
             return;
         }
 
-        File consensusCsv = new File(outDir, "consensus_annotations.csv");
+        File consensusCsv = new File(cellRangerOutDir, "consensus_annotations.csv");
         if (!consensusCsv .exists())
         {
-            _log.warn("unable to find consensus contigs: " + consensusCsv .getPath());
-            return;
+            throw new PipelineJobException("unable to find consensus contigs: " + consensusCsv .getPath());
         }
 
-        File consensusFasta = new File(outDir, "consensus.fasta");
+        File consensusFasta = new File(cellRangerOutDir, "consensus.fasta");
         if (!consensusFasta.exists())
         {
-            _log.warn("unable to find FASTA: " + consensusFasta.getPath());
-            return;
+            throw new PipelineJobException("unable to find FASTA: " + consensusFasta.getPath());
         }
 
-        File allFasta = new File(outDir, "all_contig.fasta");
+        File allFasta = new File(cellRangerOutDir, "all_contig.fasta");
         if (!allFasta.exists())
         {
-            _log.warn("unable to find FASTA: " + allFasta.getPath());
-            return;
+            throw new PipelineJobException("unable to find FASTA: " + allFasta.getPath());
         }
 
         _log.info("loading results into assay: " + assayId);
@@ -291,10 +292,15 @@ public class CellRangerVDJUtils
                     continue;
                 }
 
-                if ("None".equals(line[9]))
+                String cGene = removeNone(line[9]);
+                if (cGene == null)
                 {
-                    noCGene++;
-                    continue;
+                    // Only discard these if chain type doesnt match between JGene and VGene.
+                    if (!line[8].substring(0, 3).equals(line[6].substring(0,3)))
+                    {
+                        noCGene++;
+                        continue;
+                    }
                 }
 
                 if ("False".equals(line[10]))
@@ -342,9 +348,9 @@ public class CellRangerVDJUtils
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
                 String locus = line[5];
-                if (locus.equals("Multi") && removeNone(line[9]) != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
+                if (locus.equals("Multi") && cGene != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
                 {
-                    if (removeNone(line[9]).contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
+                    if (cGene.contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
                     {
                         locus = "TRA";
                         multiChainConverted++;
@@ -352,7 +358,7 @@ public class CellRangerVDJUtils
                 }
 
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), removeNone(line[9]), removeNone(line[13])}, "<>");
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), cGene, removeNone(line[13])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
@@ -460,7 +466,7 @@ public class CellRangerVDJUtils
 
     private File getCellToHtoFile(ExpRun run) throws PipelineJobException
     {
-        List<? extends ExpData> datas = run.getInputDatas(CellHashingService.HASHING_CALLS, ExpProtocol.ApplicationType.ExperimentRunOutput);
+        List<? extends ExpData> datas = run.getInputDatas(TCR_HASHING_CALLS, ExpProtocol.ApplicationType.ExperimentRunOutput);
         if (datas.isEmpty())
         {
             throw new PipelineJobException("Unable to find hashing calls output");
@@ -647,8 +653,8 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static File getPerCellCsv(File outDir)
+    public static File getPerCellCsv(File cellRangerOutDir)
     {
-        return new File(outDir, "all_contig_annotations.csv");
+        return new File(cellRangerOutDir, "all_contig_annotations.csv");
     }
 }

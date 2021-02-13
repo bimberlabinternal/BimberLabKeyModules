@@ -2,10 +2,10 @@
     <columns>
         <column name="rowId" />
         <column name="sortId" />
-        <column name="sortId/stimId/subjectId" />
-        <column name="sortId/stimId/sampledate" />
-        <column name="sortId/stimId/stim" />
-        <column name="sortId/stimId/assaytype" />
+        <column name="sortId/sampleId/subjectId" />
+        <column name="sortId/sampleId/sampledate" />
+        <column name="sortId/sampleId/stim" />
+        <column name="sortId/sampleId/assaytype" />
         <column name="sortId/population" />
         <column name="sortId/replicate" />
         <column name="sortId/cells" />

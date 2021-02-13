@@ -25,6 +25,8 @@ public class MccSchema
     private static final MccSchema _instance = new MccSchema();
     public static final String NAME = "mcc";
 
+    public static final String TABLE_USER_REQUESTS = "userRequests";
+
     public static MccSchema getInstance()
     {
         return _instance;

@@ -17,4 +17,92 @@
 
  -->
 <tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\schemas\tableInfo.xsd"
-        xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+        xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <table tableName="userRequests" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.mcc.query.UserRequestCustomizer" />
+        <tableUrl />
+        <insertUrl />
+        <updateUrl />
+        <importUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Requests For Logins</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <isHidden>false</isHidden>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Request Id</columnTitle>
+            </column>
+            <column columnName="email">
+                <columnTitle>Email</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="firstName">
+                <columnTitle>First Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="lastName">
+                <columnTitle>Last Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="title">
+                <columnTitle>Title</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="institution">
+                <columnTitle>Institution</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="reason">
+                <columnTitle>Reason For Request</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="userId">
+                <isUnselectable>false</isUnselectable>
+                <fk>
+                    <fkDbSchema>core</fkDbSchema>
+                    <fkTable>Users</fkTable>
+                    <fkColumnName>UserId</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <includeScript>/mcc/Security.js</includeScript>
+            <item permission="ADMIN" requiresSelection="true" text="Approve Requests">
+                <onClick>MCC.Security.approveUserRequests(dataRegionName);</onClick>
+            </item>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+        </buttonBarOptions>
+    </table>
+
+</tables>

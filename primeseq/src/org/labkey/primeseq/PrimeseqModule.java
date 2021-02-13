@@ -23,6 +23,7 @@ import org.labkey.api.cluster.ClusterService;
 import org.labkey.api.data.Container;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
@@ -36,6 +37,7 @@ import org.labkey.primeseq.pipeline.BismarkWrapper;
 import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
 import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
+import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
 import org.labkey.primeseq.pipeline.SequenceJobResourceAllocator;
 
 import java.util.Collection;
@@ -74,6 +76,8 @@ public class PrimeseqModule extends ExtendedSimpleModule
 
         ClusterService.get().registerResourceAllocator(new BlastPipelineJobResourceAllocator.Factory());
         ClusterService.get().registerResourceAllocator(new SequenceJobResourceAllocator.Factory());
+
+        PipelineService.get().registerPipelineProvider(new MhcMigrationPipelineJob.Provider(this));
 
         //register resources
         new PipelineStartup();

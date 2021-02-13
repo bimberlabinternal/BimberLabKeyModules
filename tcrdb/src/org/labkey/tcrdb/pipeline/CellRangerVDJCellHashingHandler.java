@@ -38,7 +38,9 @@ import java.util.Set;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
-    private FileType _fileType = new FileType("vloupe", false);
+    private FileType _vloupeFileType = new FileType("vloupe", false);
+    private FileType _htmlFileType = new FileType("html", false);
+
     public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
 
     public static final String TARGET_ASSAY = "targetAssay";
@@ -47,7 +49,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
     public CellRangerVDJCellHashingHandler()
     {
-        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger VDJ Import", "This will either directly import data (if cell hashing is not used), or run CiteSeqCount/MultiSeqClassifier to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger VDJ and then import.", new LinkedHashSet<>(PageFlowUtil.set("tcrdb/field/AssaySelectorField.js")), getDefaultParams());
+        super(ModuleLoader.getInstance().getModule(TCRdbModule.class), "CellRanger VDJ Import", "This will either directly import data (if cell hashing is not used), or run cellhashR on the hashing count matrix to generate a sample-to-cellbarcode TSV based on the filtered barcodes from CellRanger VDJ and then import.", new LinkedHashSet<>(PageFlowUtil.set("tcrdb/field/AssaySelectorField.js")), getDefaultParams());
     }
 
     private static List<ToolParameterDescriptor> getDefaultParams()
@@ -65,7 +67,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }}, false)
         ));
 
-        ret.addAll(CellHashingService.get().getDefaultHashingParams(true));
+        ret.addAll(CellHashingService.get().getHashingCallingParams());
 
         return ret;
     }
@@ -73,7 +75,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
     @Override
     public boolean canProcess(SequenceOutputFile o)
     {
-        return o.getFile() != null && _fileType.isType(o.getFile());
+        return o.getFile() != null && (_vloupeFileType.isType(o.getFile()) || (_htmlFileType.isType(o.getFile()) && "10x Run Summary".equals(o.getCategory()) && o.getName().contains("VDJ Summary")));
     }
 
     @Override
@@ -112,7 +114,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             //NOTE: this is the pathway to import assay data, whether hashing is used or not
-            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", ctx.getParams().optBoolean("excludeFailedcDNA", true), false, false);
+            CellHashingService.get().prepareHashingAndCiteSeqFilesIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", false, false);
 
             if (ctx.getParams().optBoolean(USE_GEX_BARCODES, false))
             {
@@ -160,7 +162,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, job.getLogFile().getParentFile(), assayId, null, deleteExistingData);
+                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, so.getFile(), job.getLogFile().getParentFile(), assayId, null, deleteExistingData);
                 }
             }
         }
@@ -200,27 +202,28 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         {
             AlignmentOutputImpl output = new AlignmentOutputImpl();
 
-            List<String> htosPerReadset = CellHashingService.get().getHtosForParentReadset(rs.getReadsetId(), ctx.getSourceDirectory(), ctx.getSequenceSupport());
+            Set<String> htosPerReadset = CellHashingService.get().getHtosForParentReadset(rs.getReadsetId(), ctx.getSourceDirectory(), ctx.getSequenceSupport());
             if (htosPerReadset.size() > 1)
             {
                 ctx.getLogger().info("Total HTOs for readset: " + htosPerReadset.size());
 
                 //TODO: allow union of GEX and TCR cell barcodes for whitelist!
 
-                CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getSourceDirectory(), ctx.getParams(), null, rs, null);
-                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
+                CellHashingService.CellHashingParameters parameters = CellHashingService.CellHashingParameters.createFromJson(CellHashingService.BARCODE_TYPE.hashing, ctx.getSourceDirectory(), ctx.getParams(), null, rs);
                 parameters.genomeId = genomeId;
                 parameters.outputCategory = CATEGORY;
                 parameters.basename = FileUtil.makeLegalName(rs.getName());
-                parameters.allowableHtoOrCiteseqBarcodes = htosPerReadset;
+                parameters.allowableHtoBarcodes = htosPerReadset;
+                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
+                File existingCountMatrixUmiDir = CellHashingService.get().getExistingFeatureBarcodeCountDir(rs, CellHashingService.BARCODE_TYPE.hashing, ctx.getSequenceSupport());
 
-                File cellToHto = CellHashingService.get().processCellHashingOrCiteSeqForParent(rs, output, ctx, parameters);
+                File cellToHto = CellHashingService.get().generateHashingCallsForRawMatrix(rs, output, ctx, parameters, existingCountMatrixUmiDir);
                 if (CellHashingService.get().usesCellHashing(ctx.getSequenceSupport(), ctx.getSourceDirectory()) && cellToHto == null)
                 {
                     throw new PipelineJobException("Missing cell to HTO file");
-
                 }
 
+                action.addOutput(cellToHto, CellRangerVDJUtils.TCR_HASHING_CALLS, false);
                 ctx.getFileManager().addStepOutputs(action, output);
             }
             else if (htosPerReadset.size() == 1)
@@ -241,6 +244,8 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             Set<String> uniqueBarcodesIncludingNoCDR3 = new HashSet<>();
             ctx.getLogger().debug("writing cell barcodes, using file: " + perCellTsv.getPath());
             ctx.getLogger().debug("allow cells lacking CDR3: " + allowCellsLackingCDR3);
+
+            int totalBarcodeWritten = 0;
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
             {
                 int rowIdx = 0;
@@ -272,6 +277,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         {
                             writer.writeNext(new String[]{barcode});
                             uniqueBarcodes.add(barcode);
+                            totalBarcodeWritten++;
                         }
 
                         uniqueBarcodesIncludingNoCDR3.add(barcode);
@@ -298,12 +304,18 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     for (String barcode : uniqueBarcodesIncludingNoCDR3)
                     {
                         writer.writeNext(new String[]{barcode});
+                        totalBarcodeWritten++;
                     }
                 }
                 catch (IOException e)
                 {
                     throw new PipelineJobException(e);
                 }
+            }
+
+            if (totalBarcodeWritten == 0)
+            {
+                throw new PipelineJobException("No valid cell barcodes found!");
             }
 
             //TODO: consider looking up GEX data?

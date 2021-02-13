@@ -1,0 +1,75 @@
+<script type="text/javascript">
+    Ext4.onReady(function(){
+        var panel = Ext4.create('Ext.form.Panel', {
+            border: false,
+            style: 'padding: 5px;',
+            defaults: {
+                border: false
+            },
+            items: [{
+                html: 'Please use the form below or email <a href="mailto:mcc@ohsu.edu">mcc@ohsu.edu</a> for any questions, comments or suggestions about the site:',
+                width: 550,
+                style: 'padding-bottom: 20px;'
+            },{
+                xtype: 'textfield',
+                labelWidth: 130,
+                fieldLabel: 'Email',
+                name: 'email',
+                vtype: 'email',
+                width: 500,
+                allowBlank: false
+            },{
+                xtype: 'textarea',
+                labelAlign: 'top',
+                width: 500,
+                height: 200,
+                fieldLabel: 'Question/Comment',
+                name: 'comment',
+                style: 'margin-top: 20px;',
+                allowBlank: false
+            }],
+            width: 800,
+            buttonAlign: 'left',
+            buttons: [{
+                text: 'Submit',
+                handler: function(btn){
+                    var form = btn.up('form');
+                    if (!form.isValid()){
+                        Ext4.Msg.alert('Error', 'One or more fields is missing data or invalid');
+                        return;
+                    }
+
+                    var values = form.getValues();
+
+                    LABKEY.Ajax.request({
+                        method: 'POST',
+                        url: LABKEY.ActionURL.buildURL('mcc', 'requestHelp', '/'),
+                        jsonData: values,
+                        scope: this,
+                        success: function(response){
+                            console.log(response);
+
+                            Ext4.Msg.alert('Success', 'Your request has been sent. You should receive a reply shortly.', function(){
+                                window.location = LABKEY.ActionURL.getContextPath() + '/';
+                            });
+                        },
+                        failure: LDK.Utils.getErrorCallback({
+                            logToServer: false,
+                            showAlertOnError: false,
+                            scope: this,
+                            callback: function(responseObj){
+                                if (responseObj.errorMsg){
+                                    Ext4.Msg.alert('Error', responseObj.errorMsg);
+                                }
+                            }
+                        })
+                    });
+                }
+            }]
+        });
+
+        var webpart = <%=webpartContext%>;
+        panel.render(webpart.wrapperDivId);
+    });
+
+</script>

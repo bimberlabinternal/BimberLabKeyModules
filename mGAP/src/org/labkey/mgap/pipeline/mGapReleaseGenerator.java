@@ -953,7 +953,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
             try (VCFFileReader reader = new VCFFileReader(vcfInput); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "CADD_PH"});
+                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "Identifier", "CADD_PH"});
                 while (it.hasNext())
                 {
                     Set<List<String>> queuedLines = new LinkedHashSet<>();
@@ -1113,7 +1113,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     try
                                     {
                                         String allele = clnAlleles.get(i);
-                                        maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(j));
+                                        maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
 
                                     }
                                     catch (IndexOutOfBoundsException e)
