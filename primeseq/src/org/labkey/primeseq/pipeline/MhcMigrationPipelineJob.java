@@ -1,8 +1,6 @@
 package org.labkey.primeseq.pipeline;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -10,6 +8,7 @@ import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbScope;
+import org.labkey.api.data.Results;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
 import org.labkey.api.data.Table;
@@ -58,6 +57,7 @@ import org.labkey.remoteapi.query.SelectRowsResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -205,9 +205,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createAnalyses();
                 createOutputFiles();
 
+                createAlignmentSummary();
+
                 //TODO:
                 //samples
-                //alignment_summary
+
                 //alignment_summary_junction
                 //quality_metrics
                 //subjects
@@ -223,6 +225,75 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
 
             return new RecordedActionSet();
+        }
+
+        private void createAlignmentSummary() throws PipelineJobException
+        {
+            try
+            {
+                TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
+                TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
+
+                SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "alignment_summary");
+                sr.setColumns(Arrays.asList("rowid", "analysis_id", "file_id", "total", "total_forward", "total_reverse", "valid_pairs", "workbook/workbookId"));
+
+                SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder);
+
+                Map<Integer, Integer> alignmentSummaryMap = new HashMap<>();
+                srr.getRowset().forEach(rs -> {
+                    CaseInsensitiveHashMap<Object> map = new CaseInsensitiveHashMap<>();
+                    Integer localId = analysisMap.get(rs.getValue("analysis_id"));
+                    if (localId == null)
+                    {
+                        throw new RuntimeException("Unable to find analysis: " + rs.getValue("analysis_id"));
+                    }
+                    map.put("analysis_id", localId);
+                    map.put("file_id", analysisToFileMap.get(localId));
+
+                    map.put("total", rs.getValue("total"));
+                    map.put("total_forward", rs.getValue("total_forward"));
+                    map.put("total_reverse", rs.getValue("total_reverse"));
+                    map.put("valid_pairs", rs.getValue("valid_pairs"));
+
+                    Container c = workbookMap.get((int)rs.getValue("workbook/workbookId"));
+                    map.put("container", c.getId());
+
+                    map = Table.insert(getJob().getUser(), alignmentSummary, map);
+                    alignmentSummaryMap.put((int)rs.getValue("rowid"), (int)map.get("rowid"));
+                });
+
+                SelectRowsCommand sr2 = new SelectRowsCommand("sequenceanalysis", "alignment_summary_junction");
+                sr2.setColumns(Arrays.asList("analysis_id", "alignment_id", "ref_nt_id", "analysis_id/workbook/workbookId"));
+
+                SelectRowsResponse srr2 = sr2.execute(getConnection(), getPipelineJob().remoteServerFolder);
+                srr2.getRowset().forEach(rs -> {
+                    CaseInsensitiveHashMap<Object> map = new CaseInsensitiveHashMap<>();
+                    Integer localId = analysisMap.get(rs.getValue("analysis_id"));
+                    if (localId == null)
+                    {
+                        throw new RuntimeException("Unable to find analysis: " + rs.getValue("analysis_id"));
+                    }
+                    map.put("analysis_id", localId);
+
+                    Integer localNT = sequenceMap.get(rs.getValue("ref_nt_id"));
+                    if (localNT == null)
+                    {
+                        throw new RuntimeException("Unable to find ref_nt_id: " + rs.getValue("ref_nt_id"));
+                    }
+                    map.put("ref_nt_id", localNT);
+
+                    map.put("alignment_id", alignmentSummaryMap.get("alignment_id"));
+
+                    Container c = workbookMap.get((int)rs.getValue("analysis_id/workbook/workbookId"));
+                    map.put("container", c.getId());
+
+                    map = Table.insert(getJob().getUser(), alignmentSummaryJunction, map);
+                });
+            }
+            catch (CommandException | IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
 
         private void replaceEntireTable(String schema, String query, List<String> columns, String workbookColName, boolean truncateExisting) throws Exception
@@ -298,6 +369,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private final Map<Integer, Integer> readsetMap = new HashMap<>();
         private final Map<Integer, Integer> readdataMap = new HashMap<>();
         private final Map<Integer, Integer> analysisMap = new HashMap<>();
+        private final Map<Integer, Integer> analysisToFileMap = new HashMap<>(); //local analysis_id -> alignment file
         private final Map<Integer, Integer> libraryMap = new HashMap<>();
         private final Map<Integer, Integer> outputFileMap = new HashMap<>();
         private final Map<Integer, Integer> sequenceMap = new HashMap<>();
@@ -392,7 +464,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     ts.forEachResults(rs -> {
                         if (rs.getInt(FieldKey.fromString("seqLength")) < seqLength)
                         {
-                            getJob().getLogger().warn("length doesnt match for " + name + ", expected: " + seqLength);
+                            getJob().getLogger().warn("length doesnt match for " + name + ", expected: " + seqLength + ", was: " + rs.getInt(FieldKey.fromString("seqLength")));
                             return;
                         }
 
@@ -526,11 +598,19 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         throw new IllegalArgumentException("Unable to find genome for remote id: " + remoteLibrary);
                     }
 
-                    int remoteAnalysis = Integer.parseInt(String.valueOf(rd.getValue("analysis_id")));
-                    Integer localAnalysis = analysisMap.get(remoteAnalysis);
-                    if (localAnalysis == null)
+                    Integer localAnalysis;
+                    if (rd.getValue("analysis_id") != null)
                     {
-                        throw new IllegalArgumentException("Unable to find analysis for remote id: " + remoteAnalysis);
+                        int remoteAnalysis = Integer.parseInt(String.valueOf(rd.getValue("analysis_id")));
+                        localAnalysis = analysisMap.get(remoteAnalysis);
+                        if (localAnalysis == null)
+                        {
+                            throw new IllegalArgumentException("Unable to find analysis for remote id: " + remoteAnalysis);
+                        }
+                    }
+                    else
+                    {
+                        localAnalysis = null;
                     }
 
                     Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
@@ -649,10 +729,19 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     filter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
                     filter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
 
-                    TableSelector tsAnalyses = new TableSelector(analysisTable, PageFlowUtil.set("rowid"), filter, null);
+                    TableSelector tsAnalyses = new TableSelector(analysisTable, PageFlowUtil.set("rowid", "alignmentfile"), filter, null);
                     if (tsAnalyses.exists())
                     {
-                        analysisMap.put(remoteId, tsAnalyses.getObject(Integer.class));
+                        Results results = tsAnalyses.getResults();
+                        try
+                        {
+                            analysisMap.put(remoteId, results.getInt("rowid"));
+                            analysisToFileMap.put(results.getInt("rowid"), results.getInt("alignmentfile"));
+                        }
+                        catch (SQLException e)
+                        {
+                            throw new RuntimeException(e);
+                        }
                     }
                     else
                     {
