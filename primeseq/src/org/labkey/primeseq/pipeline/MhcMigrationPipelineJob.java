@@ -640,6 +640,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                         try
                         {
+                            if (rd.getValue("runid/JobId") == null)
+                            {
+                                throw new PipelineJobException("Output missing runId");
+                            }
+
                             int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
                             int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
                             PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
