@@ -397,6 +397,13 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                     int remoteSeqId = Integer.parseInt(String.valueOf(rd.getValue("ref_nt_id")));
                     String name = String.valueOf(rd.getValue("ref_nt_id/name"));
+
+                    //Skip all pigtail MHC.
+                    if (name.startsWith("Mane"))
+                    {
+                        return;
+                    }
+
                     int localSeqId = getOrCreateSequence(remoteSeqId, name, seqLength, refNtTable);
 
                     int remoteLibraryId = Integer.parseInt(String.valueOf(rd.getValue("library_id")));
