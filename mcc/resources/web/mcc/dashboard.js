@@ -2,7 +2,7 @@ var MCC = {};
 
 MCC.Dashboard = new function() {
     return {
-        loadData: function () {
+        loadDataAndRender: function (wrapperDivId) {
             LABKEY.Query.selectRows({
                 schemaName: 'study',
                 queryName: 'demographics',
@@ -10,7 +10,9 @@ MCC.Dashboard = new function() {
                 success: function(results) {
                     console.log(results.rows);
                 },
-                error: LDK.Utils.getErrorCallback(),
+                failure: function(response) {
+                    alert('It didnt work!');
+                },
                 scope: this
             });
         }

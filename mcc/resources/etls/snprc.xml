@@ -19,7 +19,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="Demographics" targetOption="merge" bulkLoad="true">
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
@@ -64,7 +64,7 @@
                     <!--<column>objectid</column>-->
                 <!--</sourceColumns>-->
             <!--</source>-->
-            <!--<destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">-->
+            <!--<destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true">-->
                 <!--<columnTransforms>-->
                     <!--<column source="AnimalId" target="Id"/>-->
                     <!--<column source="birth" target="date" />-->
@@ -83,7 +83,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true">
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
@@ -115,7 +115,7 @@
 
         <!--</transform>-->
     </transforms>
-    
+
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" />
     <schedule>
         <!--11PM-->
