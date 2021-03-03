@@ -1,8 +1,6 @@
 package org.labkey.primeseq.pipeline;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -10,6 +8,7 @@ import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbScope;
+import org.labkey.api.data.Results;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
 import org.labkey.api.data.Table;
@@ -58,6 +57,7 @@ import org.labkey.remoteapi.query.SelectRowsResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,8 +68,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MhcMigrationPipelineJob extends PipelineJob
 {
-    private static final Logger _log = LogManager.getLogger(MhcMigrationPipelineJob.class);
-
     private String remoteServerFolder;
     private String remoteConnectionName;
 
@@ -123,7 +121,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
     @Override
     public String getDescription()
     {
-        return "Find Orphan Sequence Files";
+        return "Migrate MHC Data";
     }
 
     @Override
@@ -184,7 +182,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         private Connection getConnection()
         {
-            DataIntegrationService.RemoteConnection rc = DataIntegrationService.get().getRemoteConnection(getPipelineJob().remoteConnectionName, getPipelineJob().targetContainer, _log);
+            DataIntegrationService.RemoteConnection rc = DataIntegrationService.get().getRemoteConnection(getPipelineJob().remoteConnectionName, getPipelineJob().targetContainer, getJob().getLogger());
 
             return(rc.connection);
         }
@@ -207,9 +205,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createAnalyses();
                 createOutputFiles();
 
+                createAlignmentSummary();
+
                 //TODO:
                 //samples
-                //alignment_summary
+
                 //alignment_summary_junction
                 //quality_metrics
                 //subjects
@@ -225,6 +225,75 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
 
             return new RecordedActionSet();
+        }
+
+        private void createAlignmentSummary() throws PipelineJobException
+        {
+            try
+            {
+                TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
+                TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
+
+                SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "alignment_summary");
+                sr.setColumns(Arrays.asList("rowid", "analysis_id", "file_id", "total", "total_forward", "total_reverse", "valid_pairs", "workbook/workbookId"));
+
+                SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder);
+
+                Map<Integer, Integer> alignmentSummaryMap = new HashMap<>();
+                srr.getRowset().forEach(rs -> {
+                    CaseInsensitiveHashMap<Object> map = new CaseInsensitiveHashMap<>();
+                    Integer localId = analysisMap.get(rs.getValue("analysis_id"));
+                    if (localId == null)
+                    {
+                        throw new RuntimeException("Unable to find analysis: " + rs.getValue("analysis_id"));
+                    }
+                    map.put("analysis_id", localId);
+                    map.put("file_id", analysisToFileMap.get(localId));
+
+                    map.put("total", rs.getValue("total"));
+                    map.put("total_forward", rs.getValue("total_forward"));
+                    map.put("total_reverse", rs.getValue("total_reverse"));
+                    map.put("valid_pairs", rs.getValue("valid_pairs"));
+
+                    Container c = workbookMap.get((int)rs.getValue("workbook/workbookId"));
+                    map.put("container", c.getId());
+
+                    map = Table.insert(getJob().getUser(), alignmentSummary, map);
+                    alignmentSummaryMap.put((int)rs.getValue("rowid"), (int)map.get("rowid"));
+                });
+
+                SelectRowsCommand sr2 = new SelectRowsCommand("sequenceanalysis", "alignment_summary_junction");
+                sr2.setColumns(Arrays.asList("analysis_id", "alignment_id", "ref_nt_id", "analysis_id/workbook/workbookId"));
+
+                SelectRowsResponse srr2 = sr2.execute(getConnection(), getPipelineJob().remoteServerFolder);
+                srr2.getRowset().forEach(rs -> {
+                    CaseInsensitiveHashMap<Object> map = new CaseInsensitiveHashMap<>();
+                    Integer localId = analysisMap.get(rs.getValue("analysis_id"));
+                    if (localId == null)
+                    {
+                        throw new RuntimeException("Unable to find analysis: " + rs.getValue("analysis_id"));
+                    }
+                    map.put("analysis_id", localId);
+
+                    Integer localNT = sequenceMap.get(rs.getValue("ref_nt_id"));
+                    if (localNT == null)
+                    {
+                        throw new RuntimeException("Unable to find ref_nt_id: " + rs.getValue("ref_nt_id"));
+                    }
+                    map.put("ref_nt_id", localNT);
+
+                    map.put("alignment_id", alignmentSummaryMap.get("alignment_id"));
+
+                    Container c = workbookMap.get((int)rs.getValue("analysis_id/workbook/workbookId"));
+                    map.put("container", c.getId());
+
+                    map = Table.insert(getJob().getUser(), alignmentSummaryJunction, map);
+                });
+            }
+            catch (CommandException | IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
 
         private void replaceEntireTable(String schema, String query, List<String> columns, String workbookColName, boolean truncateExisting) throws Exception
@@ -300,6 +369,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private final Map<Integer, Integer> readsetMap = new HashMap<>();
         private final Map<Integer, Integer> readdataMap = new HashMap<>();
         private final Map<Integer, Integer> analysisMap = new HashMap<>();
+        private final Map<Integer, Integer> analysisToFileMap = new HashMap<>(); //local analysis_id -> alignment file
         private final Map<Integer, Integer> libraryMap = new HashMap<>();
         private final Map<Integer, Integer> outputFileMap = new HashMap<>();
         private final Map<Integer, Integer> sequenceMap = new HashMap<>();
@@ -308,7 +378,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         private void createLibraryMembers()
         {
-            _log.info("Creating library members");
+            getJob().getLogger().info("Creating library members");
 
             final UserSchema us = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis");
             final TableInfo ti = us.getTable("reference_library_members");
@@ -327,6 +397,13 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                     int remoteSeqId = Integer.parseInt(String.valueOf(rd.getValue("ref_nt_id")));
                     String name = String.valueOf(rd.getValue("ref_nt_id/name"));
+
+                    //Skip all pigtail MHC.
+                    if (name.startsWith("Mane"))
+                    {
+                        return;
+                    }
+
                     int localSeqId = getOrCreateSequence(remoteSeqId, name, seqLength, refNtTable);
 
                     int remoteLibraryId = Integer.parseInt(String.valueOf(rd.getValue("library_id")));
@@ -360,14 +437,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     }
                     catch (Exception e)
                     {
-                        _log.error(e.getMessage(), e);
+                        getJob().getLogger().error(e.getMessage(), e);
                         throw new RuntimeException(e);
                     }
                 });
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
@@ -387,14 +464,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 {
                     if (ts.getRowCount() > 1)
                     {
-                        _log.info("Duplicate ref name: " + name);
+                        getJob().getLogger().info("Duplicate ref name: " + name);
                     }
 
                     AtomicInteger localId = new AtomicInteger(-1);
                     ts.forEachResults(rs -> {
                         if (rs.getInt(FieldKey.fromString("seqLength")) < seqLength)
                         {
-                            _log.warn("length doesnt match for " + name + ", expected: " + seqLength);
+                            getJob().getLogger().warn("length doesnt match for " + name + ", expected: " + seqLength + ", was: " + rs.getInt(FieldKey.fromString("seqLength")));
                             return;
                         }
 
@@ -410,7 +487,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                 //TODO: Create sequence?
                 //throw new IllegalStateException("Expected sequence to exist: " + name);
-                _log.error("Sequence missing: " + name);
+                getJob().getLogger().error("Sequence missing: " + name);
                 return -1;
             }
         }
@@ -426,7 +503,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         private void createLibraries()
         {
-            _log.info("Creating libraries");
+            getJob().getLogger().info("Creating libraries");
             try
             {
                 final TableInfo libraryTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("reference_libraries");
@@ -469,8 +546,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 localJobRootFile.getParentFile().mkdirs();
                             }
 
-                            _log.info(remoteJobRoot);
-                            _log.info(localJobRoot.getPath());
+                            getJob().getLogger().info(remoteJobRoot);
+                            getJob().getLogger().info(localJobRoot.getPath());
                             File remoteJobRootFile = new File(remoteJobRoot);
                             if (remoteJobRootFile.exists())
                             {
@@ -495,14 +572,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
 
         private void createOutputFiles()
         {
-            _log.info("Creating outputfiles");
+            getJob().getLogger().info("Creating outputfiles");
             try
             {
                 final TableInfo outputTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("outputfiles");
@@ -528,11 +605,19 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         throw new IllegalArgumentException("Unable to find genome for remote id: " + remoteLibrary);
                     }
 
-                    int remoteAnalysis = Integer.parseInt(String.valueOf(rd.getValue("analysis_id")));
-                    Integer localAnalysis = analysisMap.get(remoteAnalysis);
-                    if (localAnalysis == null)
+                    Integer localAnalysis;
+                    if (rd.getValue("analysis_id") != null)
                     {
-                        throw new IllegalArgumentException("Unable to find analysis for remote id: " + remoteAnalysis);
+                        int remoteAnalysis = Integer.parseInt(String.valueOf(rd.getValue("analysis_id")));
+                        localAnalysis = analysisMap.get(remoteAnalysis);
+                        if (localAnalysis == null)
+                        {
+                            throw new IllegalArgumentException("Unable to find analysis for remote id: " + remoteAnalysis);
+                        }
+                    }
+                    else
+                    {
+                        localAnalysis = null;
                     }
 
                     Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
@@ -562,6 +647,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                         try
                         {
+                            if (rd.getValue("runid/JobId") == null)
+                            {
+                                throw new PipelineJobException("Output missing runId");
+                            }
+
                             int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
                             int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
                             PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
@@ -580,7 +670,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                _log.error("output missing runid: " + remoteId);
+                                getJob().getLogger().error("output missing runid: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -601,14 +691,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
 
         private void createAnalyses()
         {
-            _log.info("Creating analyses");
+            getJob().getLogger().info("Creating analyses");
             try
             {
                 final TableInfo analysisTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("sequence_analyses");
@@ -622,7 +712,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     int remoteId = Integer.parseInt(String.valueOf(rd.getValue("rowid")));
                     if (rd.getValue("readset") == null)
                     {
-                        _log.warn("analysis lacks readset, skipping: " + remoteId);
+                        getJob().getLogger().warn("analysis lacks readset, skipping: " + remoteId);
                         return;
                     }
 
@@ -651,10 +741,19 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     filter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
                     filter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
 
-                    TableSelector tsAnalyses = new TableSelector(analysisTable, PageFlowUtil.set("rowid"), filter, null);
+                    TableSelector tsAnalyses = new TableSelector(analysisTable, PageFlowUtil.set("rowid", "alignmentfile"), filter, null);
                     if (tsAnalyses.exists())
                     {
-                        analysisMap.put(remoteId, tsAnalyses.getObject(Integer.class));
+                        Results results = tsAnalyses.getResults();
+                        try
+                        {
+                            analysisMap.put(remoteId, results.getInt("rowid"));
+                            analysisToFileMap.put(results.getInt("rowid"), results.getInt("alignmentfile"));
+                        }
+                        catch (SQLException e)
+                        {
+                            throw new RuntimeException(e);
+                        }
                     }
                     else
                     {
@@ -675,7 +774,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         {
                             if (rd.getValue("runid/JobId") == null)
                             {
-                                _log.info("skipping analysis without runid: " + remoteId);
+                                getJob().getLogger().info("skipping analysis without runid: " + remoteId);
                                 return;
                             }
 
@@ -703,7 +802,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                _log.error("analysis missing runid: " + remoteId);
+                                getJob().getLogger().error("analysis missing runid: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -724,14 +823,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
 
         private void createReaddata()
         {
-            _log.info("Creating read data");
+            getJob().getLogger().info("Creating read data");
             try
             {
                 final TableInfo readdataTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("readdata");
@@ -802,7 +901,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                _log.error("readddata missing jobid: " + remoteId);
+                                getJob().getLogger().error("readddata missing jobid: " + remoteId);
                             }
 
                             //Create run:
@@ -815,7 +914,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                _log.error("readddata missing runid: " + remoteId);
+                                getJob().getLogger().error("readddata missing runid: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -836,7 +935,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
@@ -856,7 +955,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         private void createReadsets()
         {
-            _log.info("Creating readsets");
+            getJob().getLogger().info("Creating readsets");
             try
             {
                 final UserSchema us = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis");
@@ -920,7 +1019,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                _log.error("readset missing run id: " + remoteId);
+                                getJob().getLogger().error("readset missing run id: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -941,7 +1040,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
@@ -981,7 +1080,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         else
                         {
-                            _log.error("Unexpected filepath: " + pj.getValue("FilePath"));
+                            getJob().getLogger().error("Unexpected filepath: " + pj.getValue("FilePath"));
                         }
                     }
 
@@ -1015,14 +1114,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                     if (localDir.exists())
                     {
-                        _log.info("Directory exists, will not re-copy: " + localDir.getPath());
+                        getJob().getLogger().info("Directory exists, will not re-copy: " + localDir.getPath());
                         return;
                     }
 
                     try
                     {
-                        _log.info(remoteDir.getPath());
-                        _log.info(localDir.getPath());
+                        getJob().getLogger().info(remoteDir.getPath());
+                        getJob().getLogger().info(localDir.getPath());
 
                         if (!localDir.getParentFile().exists())
                         {
@@ -1035,7 +1134,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         else
                         {
-                            _log.error("source folder not found: " + remoteDir.getPath());
+                            getJob().getLogger().error("source folder not found: " + remoteDir.getPath());
                         }
                     }
                     catch (Exception e)
@@ -1050,7 +1149,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
             catch (Exception e)
             {
-                _log.error(e.getMessage(), e);
+                getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
         }
@@ -1072,7 +1171,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         private void createWorkbooks()
         {
-            _log.info("Creating workbooks");
+            getJob().getLogger().info("Creating workbooks");
             try
             {
                 TableInfo containers = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "core").getTable("containers");
