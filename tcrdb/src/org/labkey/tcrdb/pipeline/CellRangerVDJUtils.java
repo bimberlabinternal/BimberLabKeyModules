@@ -198,24 +198,23 @@ public class CellRangerVDJUtils
                 int negative = 0;
 
                 int consensusIdx = -1;
-
                 while ((line = reader.readNext()) != null)
                 {
-                    if (line.length == 0)
+                    if (line.length < 3)
                     {
-                        throw new PipelineJobException("Line was empty");
+                        throw new PipelineJobException("Line too short");
                     }
 
                     //header
                     if ("cellbarcode".equalsIgnoreCase(line[0]))
                     {
                         consensusIdx = Arrays.asList(line).indexOf("consensuscall");
-                        if (consensusIdx == -1)
-                        {
-                            throw new PipelineJobException("consensuscall column not found");
-                        }
-
                         continue;
+                    }
+
+                    if (consensusIdx == -1)
+                    {
+                        throw new PipelineJobException("consensuscall column not found");
                     }
 
                     String hto = line[consensusIdx];
