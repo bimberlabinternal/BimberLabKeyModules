@@ -3,6 +3,8 @@
         <permission name="read"/>
     </permissions>
     <dependencies>
+        <dependency path="LDK.context"/>
+
         <!--Put dependencies/libraries here:-->
         <dependency path="mcc/dashboard.js"/>
     </dependencies>
