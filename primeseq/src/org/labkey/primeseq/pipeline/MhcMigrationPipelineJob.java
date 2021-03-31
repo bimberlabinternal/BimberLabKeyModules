@@ -244,6 +244,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
             AssayProvider ap = AssayService.get().getProvider(providerName);
             for (Integer wb : workbookMap.keySet())
             {
+                getJob().getLogger().info("processing workbook: " + wb);
+
                 List<ExpProtocol> protocols = AssayService.get().getAssayProtocols(workbookMap.get(wb), ap);
                 ExpProtocol protocol = protocols.get(0);
 
@@ -288,6 +290,12 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         {
                             SelectRowsResponse srr2 = sr2.execute(getConnection(), getPipelineJob().remoteServerFolder + wb);
                             List<Map<String, Object>> resultRows = srr2.getRows();
+                            if (resultRows.isEmpty())
+                            {
+                                getJob().getLogger().info("No results, skipping: " + run.get("Name"));
+                                return;
+                            }
+
                             resultRows.forEach(x -> {
                                 if (x.get("analysisId") != null)
                                 {
