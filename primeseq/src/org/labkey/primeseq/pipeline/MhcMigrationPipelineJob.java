@@ -203,26 +203,31 @@ public class MhcMigrationPipelineJob extends PipelineJob
             try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
                 createWorkbooks();
+                transaction.commitAndKeepConnection();
 
                 replaceEntireTable("laboratory", "samples", Arrays.asList("samplename", "subjectid", "sampledate", "sampletype", "samplesubtype", "samplesource", "location", "freezer", "cane", "box", "box_row", "box_column", "comment", "workbook/workbookId", "samplespecies", "processdate", "concentration", "concentration_units", "quantity", "quantity_units", "ratio"), "workbook/workbookId", true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
                 replaceEntireTable("laboratory", "subjects", Arrays.asList("subjectname", "species"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                transaction.commitAndKeepConnection();
 
                 createLibraries();
-                //createLibraryMembers(); //TODO: restore this
+                createLibraryMembers();
+                transaction.commitAndKeepConnection();
 
                 createReadsets();
                 transaction.commitAndKeepConnection();
 
-                //createReaddata();  //TODO: restore this
+                createReaddata();
+                transaction.commitAndKeepConnection();
 
                 createAnalyses();
                 createOutputFiles();
+                transaction.commitAndKeepConnection();
 
                 createQualityMetrics();
                 transaction.commitAndKeepConnection();
 
                 //create assay runs, including data and haplotypes
-                syncAssay("GenotypeAssay", "Genotype", Arrays.asList("Name", "Comments", "performedBy", "runDate", "instrument", "assayType", "barcode"), Arrays.asList("subjectId", "date", "marker", "result", "qual_result", "sampleId", "category", "plate", "well", "parentId", "comment", "requestid", "qcflag", "analysisId", "DataId", "sampleType", "statusflag", "rawResult"));
+                syncAssay("GenotypeAssay", "Genotype", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate", "instrument", "assayType", "barcode"), Arrays.asList("subjectId", "date", "marker", "result", "qual_result", "sampleId", "category", "plate", "well", "parentId", "comment", "requestid", "qcflag", "analysisId", "DataId", "sampleType", "statusflag", "rawResult"));
                 transaction.commitAndKeepConnection();
 
                 createAlignmentSummary();
@@ -264,7 +269,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     File assayTmp = File.createTempFile("assay-upload", ".txt").getAbsoluteFile();
                     ViewBackgroundInfo info = getJob().getInfo();
                     ViewContext vc = ViewContext.getMockViewContext(info.getUser(), workbookMap.get(wb), info.getURL(), false);
-
+                    final Set<Object> missingAnalyses = new HashSet<>();
                     srr.getRows().forEach(run -> {
                         if (existingRunNames.contains(run.get("Name")))
                         {
@@ -277,12 +282,12 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                         SelectRowsCommand sr2 = new SelectRowsCommand("assay." + ap.getName() + "." + protocol.getName(), "Data");
                         sr2.setColumns(resultColumns);
+                        sr2.addFilter(new Filter("Run", run.get("RowId")));
 
                         try
                         {
                             SelectRowsResponse srr2 = sr2.execute(getConnection(), getPipelineJob().remoteServerFolder + wb);
                             List<Map<String, Object>> resultRows = srr2.getRows();
-                            final Set<Object> missingAnalyses = new HashSet<>();
                             resultRows.forEach(x -> {
                                 if (x.get("analysisId") != null)
                                 {
@@ -600,8 +605,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                 SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder);
 
+                List<Map<String, Object>> sequencesToCreate = new ArrayList<>();
                 srr.getRowset().forEach(rd -> {
-                    int remoteId = Integer.parseInt(String.valueOf(rd.getValue("rowid")));
                     int seqLength = Integer.parseInt(String.valueOf(rd.getValue("ref_nt_id/seqLength")));
 
                     int remoteSeqId = Integer.parseInt(String.valueOf(rd.getValue("ref_nt_id")));
@@ -634,22 +639,19 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     Map<String, Object> toCreate = new CaseInsensitiveHashMap<>();
                     toCreate.put("library_id", localLibraryId);
                     toCreate.put("ref_nt_id", localSeqId);
-
-                    try
-                    {
-                        BatchValidationException bve = new BatchValidationException();
-                        List<Map<String, Object>> created = ti.getUpdateService().insertRows(getJob().getUser(), getPipelineJob().targetContainer, Arrays.asList(toCreate), bve, null, null);
-                        if (bve.hasErrors())
-                        {
-                            throw new RuntimeException(bve);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        getJob().getLogger().error(e.getMessage(), e);
-                        throw new RuntimeException(e);
-                    }
+                    sequencesToCreate.add(toCreate);
                 });
+
+                getJob().getLogger().info("Total sequences to create: " + sequencesToCreate.size());
+                if (!sequencesToCreate.isEmpty())
+                {
+                    BatchValidationException bve = new BatchValidationException();
+                    List<Map<String, Object>> created = ti.getUpdateService().insertRows(getJob().getUser(), getPipelineJob().targetContainer, sequencesToCreate, bve, null, null);
+                    if (bve.hasErrors())
+                    {
+                        throw new RuntimeException(bve);
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -1049,119 +1051,134 @@ public class MhcMigrationPipelineJob extends PipelineJob
             getJob().getLogger().info("Creating read data");
             try
             {
-                final TableInfo readdataTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("readdata");
+                for (Integer workbookId : workbookMap.keySet())
+                {
+                    final TableInfo readdataTable = QueryService.get().getUserSchema(getJob().getUser(), workbookMap.get(workbookId), "sequenceanalysis").getTable("readdata");
 
-                SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "readdata");
-                sr.setColumns(Arrays.asList("rowid", "readset", "platformUnit", "centerName", "date", "fileid1", "fileid1/DataFileUrl", "fileid2", "fileid2/DataFileUrl", "fileid1/Name", "description", "sra_accession", "runid", "runid/jobid", "runid/Name", "readset/workbook/workbookId", "runid/JobId", "runid/Name", "runid/JobId/FilePath", "runid/JobId/Description"));
+                    SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "readdata");
+                    sr.setColumns(Arrays.asList("rowid", "readset", "platformUnit", "centerName", "date", "fileid1", "fileid1/DataFileUrl", "fileid2", "fileid2/DataFileUrl", "fileid1/Name", "description", "sra_accession", "runid", "runid/jobid", "runid/Name", "readset/workbook/workbookId", "runid/JobId", "runid/Name", "runid/JobId/FilePath", "runid/JobId/Description"));
 
-                SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder);
+                    SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder + workbookId + "/");
 
-                srr.getRowset().forEach(rd -> {
-                    int remoteId = Integer.parseInt(String.valueOf(rd.getValue("rowid")));
-                    int remoteReadset = Integer.parseInt(String.valueOf(rd.getValue("readset")));
-                    Integer localReadset = readsetMap.get(remoteReadset);
-                    if (localReadset == null)
+                    long existing = new TableSelector(readdataTable).getRowCount();
+                    if (srr.getRowCount().longValue() == existing)
                     {
-                        throw new IllegalArgumentException("Unable to find readset for remote id: " + remoteReadset);
+                        getJob().getLogger().info("Readdata count identical, skipping: " + workbookId);
+                        continue;
+                    }
+                    else if (srr.getRowCount().intValue() == 0)
+                    {
+                        getJob().getLogger().info("No readdata records, skipping: " + workbookId);
+                        continue;
                     }
 
-                    Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
-                    Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
-
-                    SimpleFilter rdFilter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
-                    rdFilter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
-                    rdFilter.addCondition(FieldKey.fromString("fileid1/Name"), rd.getValue("fileid1/Name"));
-                    rdFilter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
-
-                    if (rd.getValue("platformUnit") != null)
-                    {
-                        rdFilter.addCondition(FieldKey.fromString("platformUnit"), rd.getValue("platformUnit"));
-                    }
-
-                    TableSelector tsReaddata = new TableSelector(readdataTable, PageFlowUtil.set("rowid"), rdFilter, null);
-                    if (tsReaddata.exists())
-                    {
-                        readdataMap.put(remoteId, tsReaddata.getObject(Integer.class));
-                    }
-                    else
-                    {
-                        if (rd.getValue("fileid1/DataFileUrl") == null)
+                    srr.getRowset().forEach(rd -> {
+                        int remoteId = Integer.parseInt(String.valueOf(rd.getValue("rowid")));
+                        int remoteReadset = Integer.parseInt(String.valueOf(rd.getValue("readset")));
+                        Integer localReadset = readsetMap.get(remoteReadset);
+                        if (localReadset == null)
                         {
-                            getJob().getLogger().warn("readddata missing files, skipping: " + remoteId);
-                            return;
+                            throw new IllegalArgumentException("Unable to find readset for remote id: " + remoteReadset);
                         }
 
-                        Map<String, Object> toCreate = new CaseInsensitiveHashMap<>();
-                        toCreate.put("readset", rs.getRowId());
-                        toCreate.put("platformUnit", rd.getValue("platformUnit"));
-                        toCreate.put("centerName", rd.getValue("centerName"));
-                        toCreate.put("date", rd.getValue("date"));
-                        toCreate.put("description", rd.getValue("description"));
-                        toCreate.put("sra_accession", rd.getValue("sra_accession"));
-                        try
+                        Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
+                        Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
+
+                        SimpleFilter rdFilter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
+                        rdFilter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
+                        rdFilter.addCondition(FieldKey.fromString("fileid1/Name"), rd.getValue("fileid1/Name"));
+                        rdFilter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
+
+                        if (rd.getValue("platformUnit") != null)
                         {
-                            if (rd.getValue("runid/JobId") != null)
-                            {
-                                int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
-                                int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
-                                PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
-
-                                String localJobRoot = getParent(sf.getFilePath());
-                                String remoteJobRoot = getParent(URI.create(String.valueOf(rd.getValue("runid/JobId/FilePath")).replaceAll(" ", "%20")).getPath());
-
-                                if (rd.getValue("fileid1/DataFileUrl") != null)
-                                {
-                                    URI newFile1 = translateURI(String.valueOf(rd.getValue("fileid1/DataFileUrl")), remoteJobRoot, localJobRoot);
-                                    toCreate.put("fileid1", getOrCreateExpData(newFile1, targetWorkbook));
-                                }
-
-                                if (rd.getValue("fileid2/DataFileUrl") != null)
-                                {
-                                    URI newFile2 = translateURI(String.valueOf(rd.getValue("fileid2/DatafileUrl")), remoteJobRoot, localJobRoot);
-                                    toCreate.put("fileid2", getOrCreateExpData(newFile2, targetWorkbook));
-                                }
-                            }
-                            else
-                            {
-                                if (rd.getValue("fileid1/DataFileUrl") != null)
-                                {
-                                    getJob().getLogger().error("readddata missing jobid: " + remoteId);
-                                }
-                            }
-
-                            //Create run:
-                            if (rd.getValue("runid") != null && rd.getValue("runid/JobId") != null)
-                            {
-                                int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
-                                int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
-                                int runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
-                                toCreate.put("runid", runId);
-                            }
-                            else
-                            {
-                                if (rd.getValue("fileid1/DataFileUrl") != null)
-                                {
-                                    getJob().getLogger().error("readddata missing runid: " + remoteId);
-                                }
-                            }
-
-                            BatchValidationException bve = new BatchValidationException();
-                            List<Map<String, Object>> created = readdataTable.getUpdateService().insertRows(getJob().getUser(), getPipelineJob().targetContainer, Arrays.asList(toCreate), bve, null, null);
-                            if (bve.hasErrors())
-                            {
-                                throw new RuntimeException(bve);
-                            }
-
-                            readdataMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
+                            rdFilter.addCondition(FieldKey.fromString("platformUnit"), rd.getValue("platformUnit"));
                         }
-                        catch (Exception e)
+
+                        TableSelector tsReaddata = new TableSelector(readdataTable, PageFlowUtil.set("rowid"), rdFilter, null);
+                        if (tsReaddata.exists())
                         {
-                            throw new RuntimeException(e);
+                            readdataMap.put(remoteId, tsReaddata.getObject(Integer.class));
                         }
-                    }
-                });
+                        else
+                        {
+                            if (rd.getValue("fileid1/DataFileUrl") == null)
+                            {
+                                getJob().getLogger().warn("readddata missing files, skipping: " + remoteId);
+                                return;
+                            }
+
+                            Map<String, Object> toCreate = new CaseInsensitiveHashMap<>();
+                            toCreate.put("readset", rs.getRowId());
+                            toCreate.put("platformUnit", rd.getValue("platformUnit"));
+                            toCreate.put("centerName", rd.getValue("centerName"));
+                            toCreate.put("date", rd.getValue("date"));
+                            toCreate.put("description", rd.getValue("description"));
+                            toCreate.put("sra_accession", rd.getValue("sra_accession"));
+                            try
+                            {
+                                if (rd.getValue("runid/JobId") != null)
+                                {
+                                    int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
+                                    int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
+                                    PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
+
+                                    String localJobRoot = getParent(sf.getFilePath());
+                                    String remoteJobRoot = getParent(URI.create(String.valueOf(rd.getValue("runid/JobId/FilePath")).replaceAll(" ", "%20")).getPath());
+
+                                    if (rd.getValue("fileid1/DataFileUrl") != null)
+                                    {
+                                        URI newFile1 = translateURI(String.valueOf(rd.getValue("fileid1/DataFileUrl")), remoteJobRoot, localJobRoot);
+                                        toCreate.put("fileid1", getOrCreateExpData(newFile1, targetWorkbook));
+                                    }
+
+                                    if (rd.getValue("fileid2/DataFileUrl") != null)
+                                    {
+                                        URI newFile2 = translateURI(String.valueOf(rd.getValue("fileid2/DatafileUrl")), remoteJobRoot, localJobRoot);
+                                        toCreate.put("fileid2", getOrCreateExpData(newFile2, targetWorkbook));
+                                    }
+                                }
+                                else
+                                {
+                                    if (rd.getValue("fileid1/DataFileUrl") != null)
+                                    {
+                                        getJob().getLogger().error("readddata missing jobid: " + remoteId);
+                                    }
+                                }
+
+                                //Create run:
+                                if (rd.getValue("runid") != null && rd.getValue("runid/JobId") != null)
+                                {
+                                    int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
+                                    int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
+                                    int runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
+                                    toCreate.put("runid", runId);
+                                }
+                                else
+                                {
+                                    if (rd.getValue("fileid1/DataFileUrl") != null)
+                                    {
+                                        getJob().getLogger().error("readddata missing runid: " + remoteId);
+                                    }
+                                }
+
+                                BatchValidationException bve = new BatchValidationException();
+                                List<Map<String, Object>> created = readdataTable.getUpdateService().insertRows(getJob().getUser(), getPipelineJob().targetContainer, Arrays.asList(toCreate), bve, null, null);
+                                if (bve.hasErrors())
+                                {
+                                    throw new RuntimeException(bve);
+                                }
+
+                                readdataMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
+                            }
+                            catch (Exception e)
+                            {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    });
+                }
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
