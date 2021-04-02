@@ -205,12 +205,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createWorkbooks();
                 transaction.commitAndKeepConnection();
 
+                replaceEntireTable("genotypeassays", "primer_pairs", Arrays.asList("primername", "ref_nt_name", "ref_nt_id", "shortname"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+
                 replaceEntireTable("laboratory", "samples", Arrays.asList("samplename", "subjectid", "sampledate", "sampletype", "samplesubtype", "samplesource", "location", "freezer", "cane", "box", "box_row", "box_column", "comment", "workbook/workbookId", "samplespecies", "processdate", "concentration", "concentration_units", "quantity", "quantity_units", "ratio"), "workbook/workbookId", true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
                 replaceEntireTable("laboratory", "subjects", Arrays.asList("subjectname", "species"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
                 transaction.commitAndKeepConnection();
 
-                createLibraries();
-                createLibraryMembers();
+                Set<String> preExisting = createLibraries();
+                createLibraryMembers(preExisting);
                 transaction.commitAndKeepConnection();
 
                 createReadsets();
@@ -616,9 +618,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private final Map<Integer, Integer> runIdMap = new HashMap<>();
         private final Map<Integer, Integer> jobIdMap = new HashMap<>();
 
-        private void createLibraryMembers()
+        private void createLibraryMembers(Set<String> preExisting)
         {
             getJob().getLogger().info("Creating library members");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
 
             final UserSchema us = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis");
             final TableInfo ti = us.getTable("reference_library_members");
@@ -663,6 +667,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     if (new TableSelector(ti, PageFlowUtil.set("rowid"), filter, null).exists())
                     {
                         //Already exists:
+                        totalExisting.getAndIncrement();
                         return;
                     }
 
@@ -677,6 +682,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 {
                     BatchValidationException bve = new BatchValidationException();
                     List<Map<String, Object>> created = ti.getUpdateService().insertRows(getJob().getUser(), getPipelineJob().targetContainer, sequencesToCreate, bve, null, null);
+                    totalCreated.getAndAdd(sequencesToCreate.size());
                     if (bve.hasErrors())
                     {
                         throw new RuntimeException(bve);
@@ -688,6 +694,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
+
+            getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
         }
 
         private int getOrCreateSequence(int remoteSeqId, String name, int seqLength, TableInfo refNtTable)
@@ -744,9 +752,13 @@ public class MhcMigrationPipelineJob extends PipelineJob
             return path.substring(0, index);
         }
 
-        private void createLibraries()
+        private Set<String> createLibraries()
         {
             getJob().getLogger().info("Creating libraries");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
+            Set<String> preExisting = new HashSet<>();
+
             try
             {
                 final TableInfo libraryTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("reference_libraries");
@@ -766,7 +778,10 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     TableSelector ts = new TableSelector(libraryTable, PageFlowUtil.set("rowid"), filter, null);
                     if (ts.exists())
                     {
+                        getJob().getLogger().info("Library exists: " + rd.getValue("name"));
+                        preExisting.add(String.valueOf(rd.getValue("name")));
                         libraryMap.put(remoteId, ts.getObject(Integer.class));
+                        totalExisting.getAndIncrement();
                     }
                     else
                     {
@@ -808,6 +823,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
 
                             libraryMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
+                            totalCreated.getAndIncrement();
                         }
                         catch (Exception e)
                         {
@@ -821,11 +837,18 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
+
+            getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
+
+            return preExisting;
         }
 
         private void createOutputFiles()
         {
             getJob().getLogger().info("Creating outputfiles");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
+
             try
             {
                 final TableInfo outputTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("outputfiles");
@@ -879,6 +902,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     if (tsOutputFiles.exists())
                     {
                         outputFileMap.put(remoteId, tsOutputFiles.getObject(Integer.class));
+                        totalExisting.getAndIncrement();
                     }
                     else
                     {
@@ -927,6 +951,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
 
                             outputFileMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
+                            totalCreated.getAndIncrement();
                         }
                         catch (Exception e)
                         {
@@ -940,11 +965,16 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
+
+            getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
         }
 
         private void createAnalyses()
         {
             getJob().getLogger().info("Creating analyses");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
+
             try
             {
                 final TableInfo analysisTable = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis").getTable("sequence_analyses");
@@ -990,13 +1020,26 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     TableSelector tsAnalyses = new TableSelector(analysisTable, PageFlowUtil.set("rowid", "alignmentfile"), filter, null);
                     if (tsAnalyses.exists())
                     {
-                        Results results = tsAnalyses.getResults();
                         try
                         {
-                            analysisMap.put(remoteId, results.getInt("rowid"));
-                            analysisToFileMap.put(results.getInt("rowid"), results.getInt("alignmentfile"));
+                            tsAnalyses.forEachResults(results -> {
+                                try
+                                {
+                                    analysisMap.put(remoteId, results.getInt("rowid"));
+                                    if (results.getObject("alignmentfile") != null)
+                                    {
+                                        analysisToFileMap.put(results.getInt("rowid"), results.getInt("alignmentfile"));
+                                    }
+                                }
+                                catch (IndexOutOfBoundsException e)
+                                {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+
+                            totalExisting.getAndIncrement();
                         }
-                        catch (SQLException e)
+                        catch (Exception e)
                         {
                             throw new RuntimeException(e);
                         }
@@ -1062,6 +1105,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                             analysisMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
                             analysisToJobPath.put(Integer.parseInt(String.valueOf(created.get(0).get("rowid"))), remoteJobRoot);
+                            if (toCreate.get("alignmentfile") != null)
+                            {
+                                analysisToFileMap.put(remoteId, (int)toCreate.get("alignmentfile"));
+                            }
+                            totalCreated.getAndIncrement();
                         }
                         catch (Exception e)
                         {
@@ -1075,11 +1123,16 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
+
+            getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
         }
 
         private void createReaddata()
         {
             getJob().getLogger().info("Creating read data");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
+
             try
             {
                 for (Integer workbookId : workbookMap.keySet())
@@ -1088,6 +1141,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                     SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "readdata");
                     sr.setColumns(Arrays.asList("rowid", "readset", "platformUnit", "centerName", "date", "fileid1", "fileid1/DataFileUrl", "fileid1/Name", "fileid2", "fileid2/DataFileUrl", "fileid2/Name", "description", "sra_accession", "runid", "runid/jobid", "runid/Name", "readset/workbook/workbookId", "runid/JobId", "runid/Name", "runid/JobId/FilePath", "runid/JobId/Description"));
+                    sr.addFilter(new Filter("fileid1/DataFileUrl", null, Filter.Operator.NONBLANK));
 
                     SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder + workbookId + "/");
 
@@ -1095,6 +1149,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     if (srr.getRowCount().longValue() == existing)
                     {
                         getJob().getLogger().info("Readdata count identical, skipping: " + workbookId);
+                        totalExisting.getAndAdd(srr.getRowCount().intValue());
                         continue;
                     }
                     else if (srr.getRowCount().intValue() == 0)
@@ -1129,6 +1184,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         if (tsReaddata.exists())
                         {
                             readdataMap.put(remoteId, tsReaddata.getObject(Integer.class));
+                            totalExisting.getAndIncrement();
                         }
                         else
                         {
@@ -1202,6 +1258,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 }
 
                                 readdataMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
+                                totalCreated.getAndIncrement();
                             }
                             catch (Exception e)
                             {
@@ -1216,6 +1273,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
             }
+
+            getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
         }
 
         private int getOrCreateExpData(URI file, Container workbook, String fileName)
@@ -1223,9 +1282,24 @@ public class MhcMigrationPipelineJob extends PipelineJob
             ExpData ret = ExperimentService.get().getExpDataByURL(new File(file), workbook);
             if (ret == null)
             {
-                ret = ExperimentService.get().createData(workbook, new DataType("Data"), fileName);
-                ret.setDataFileURI(file);
-                ret.save(getJob().getUser());
+                String lsid = ExperimentService.get().generateLSID(workbook, new DataType("Data"), file.getPath());
+                List<? extends ExpData> datas = ExperimentService.get().getExpDatasByLSID(Collections.singleton(lsid));
+                if (!datas.isEmpty())
+                {
+                    ret = datas.get(0);
+                    if (!workbook.equals(ret.getContainer()))
+                    {
+                        throw new IllegalArgumentException("Expected datas to be from the same container: " + lsid);
+                    }
+                }
+
+                if (ret == null)
+                {
+                    ret = ExperimentService.get().createData(workbook, new DataType("Data"), fileName);
+                    ret.setDataFileURI(file);
+                    ret.setLSID(lsid);
+                    ret.save(getJob().getUser());
+                }
             }
 
             return ret.getRowId();
@@ -1234,6 +1308,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private void createReadsets()
         {
             getJob().getLogger().info("Creating readsets");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
+
             try
             {
                 final UserSchema us = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis");
@@ -1264,6 +1341,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     if (tsReadset.exists())
                     {
                         readsetMap.put(remoteId, tsReadset.getObject(Integer.class));
+                        totalExisting.getAndIncrement();
                     }
                     else
                     {
@@ -1308,6 +1386,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
 
                             readsetMap.put(remoteId, Integer.parseInt(String.valueOf(created.get(0).get("rowid"))));
+                            totalCreated.getAndIncrement();
                         }
                         catch (Exception e)
                         {
@@ -1315,6 +1394,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                     }
                 });
+
+                getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
             }
             catch (Exception e)
             {
@@ -1461,6 +1542,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private void createWorkbooks()
         {
             getJob().getLogger().info("Creating workbooks");
+            AtomicInteger totalCreated = new AtomicInteger(0);
+            AtomicInteger totalExisting = new AtomicInteger(0);
+
             try
             {
                 TableInfo containers = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "core").getTable("containers");
@@ -1477,6 +1561,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     {
                         Container workbook = ContainerManager.getForRowId(ts.getObject(Integer.class));
                         workbookMap.put(Integer.parseInt(String.valueOf(wb.getValue("Name"))), workbook);
+                        totalExisting.getAndIncrement();
                     }
                     else
                     {
@@ -1488,6 +1573,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         Container workbook = ContainerManager.createContainer(getPipelineJob().targetContainer, null, localTitle, description, WorkbookContainerType.NAME, getJob().getUser());
                         workbook.setFolderType(FolderTypeManager.get().getFolderType("Expt Workbook"), getJob().getUser());
                         workbookMap.put(Integer.parseInt(String.valueOf(wb.getValue("Name"))), workbook);
+                        totalCreated.getAndIncrement();
 
                         File sourceDir = new File("/home/groups/miSeqLK/Production/MHC_Typing", wb.getValue("Name") + "/@files");
                         File targetDir = pr.getRootPath();
@@ -1513,6 +1599,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
             {
                 throw new RuntimeException(e);
             }
+
+            getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
         }
 
         private URI translateURI(String databaseURI, String remoteFolderRoot, String localFolderRoot)
