@@ -45,5 +45,8 @@
         <dataset name="demographics" id="1012" category="Colony Management" demographicData="true" type="Standard">
             <tags/>
         </dataset>
+        <dataset name="departure" id="1013" category="Colony Management" type="Standard">
+            <tags/>
+        </dataset>
     </datasets>
 </datasets>
