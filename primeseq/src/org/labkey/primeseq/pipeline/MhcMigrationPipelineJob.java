@@ -73,6 +73,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -312,7 +313,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     {
                                         if (!missingAnalyses.contains(x.get("analysisId")))
                                         {
-                                            getJob().getLogger().error("Unable to find analysis to match: " + x.get("analysisId"));
+                                            getJob().getLogger().warn("Unable to find analysis to match: " + x.get("analysisId"));
                                             missingAnalyses.add(x.get("analysisId"));
                                         }
                                     }
@@ -356,8 +357,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                 SelectRowsResponse srrWB = srWB.execute(getConnection(), getPipelineJob().remoteServerFolder);
                 List<Object> workbooks = srrWB.getRows().stream().map(x -> x.get("Name")).collect(Collectors.toList());
-                for (Object workbook : workbooks)
+                for (Object name : workbooks)
                 {
+                    Integer workbook = Integer.parseInt(String.valueOf(name));
+                    if (!workbookMap.containsKey(workbook))
+                    {
+                        throw new IllegalArgumentException("Unable to find workbook: " + workbook);
+                    }
+
                     getJob().getLogger().info("importing alignments for workbook: " + workbook);
 
                     SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "alignment_summary");
@@ -527,7 +534,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     }
                                     else
                                     {
-                                        getJob().getLogger().error("Missing path: " + r.getValue("dataid/DatafileUrl"));
+                                        getJob().getLogger().warn("Missing path: " + r.getValue("dataid/DatafileUrl"));
                                         return;
                                     }
                                 }
@@ -541,7 +548,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 }
                                 else
                                 {
-                                    getJob().getLogger().error("Missing path: " + r.getValue("dataid/DatafileUrl"));
+                                    getJob().getLogger().warn("Missing path: " + r.getValue("dataid/DatafileUrl"));
                                     return;
                                 }
                             }
@@ -558,7 +565,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                getJob().getLogger().error("Unable to find job root: " + r.getValue("dataid/DatafileUrl"));
+                                getJob().getLogger().warn("Unable to find job root: " + r.getValue("dataid/DatafileUrl"));
                                 return;
                             }
                         }
@@ -606,7 +613,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
         }
 
         //All of these map remote Id to local Id
-        private final Map<Integer, Container> workbookMap = new HashMap<>();
+        private final Map<Integer, Container> workbookMap = new TreeMap<>();
         private final Map<Integer, Integer> readsetMap = new HashMap<>();
         private final Map<Integer, Integer> readdataMap = new HashMap<>();
         private final Map<Integer, Integer> analysisMap = new HashMap<>();
@@ -734,7 +741,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     }
                 }
 
-                getJob().getLogger().error("Sequence missing: " + name);
+                getJob().getLogger().warn("Sequence missing: " + name);
                 return -1;
             }
         }
@@ -940,7 +947,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                getJob().getLogger().error("output missing runid: " + remoteId);
+                                getJob().getLogger().warn("output missing runid: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -1093,7 +1100,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                getJob().getLogger().error("analysis missing runid: " + remoteId);
+                                getJob().getLogger().warn("analysis missing runid: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -1230,7 +1237,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 {
                                     if (rd.getValue("fileid1/DataFileUrl") != null)
                                     {
-                                        getJob().getLogger().error("readddata missing jobid: " + remoteId);
+                                        getJob().getLogger().warn("readddata missing jobid: " + remoteId);
                                     }
                                 }
 
@@ -1246,7 +1253,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 {
                                     if (rd.getValue("fileid1/DataFileUrl") != null)
                                     {
-                                        getJob().getLogger().error("readddata missing runid: " + remoteId);
+                                        getJob().getLogger().warn("readddata missing runid: " + remoteId);
                                     }
                                 }
 
@@ -1375,7 +1382,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             }
                             else
                             {
-                                getJob().getLogger().error("readset missing run id: " + remoteId);
+                                getJob().getLogger().warn("readset missing run id: " + remoteId);
                             }
 
                             BatchValidationException bve = new BatchValidationException();
@@ -1439,7 +1446,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         else
                         {
-                            getJob().getLogger().error("Unexpected filepath: " + pj.getValue("FilePath"));
+                            getJob().getLogger().warn("Unexpected filepath: " + pj.getValue("FilePath"));
                         }
                     }
 
@@ -1504,7 +1511,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         else
                         {
-                            getJob().getLogger().error("source folder not found: " + remoteDir.getPath());
+                            getJob().getLogger().warn("source folder not found: " + remoteDir.getPath());
                         }
                     }
                     catch (Exception e)
@@ -1590,7 +1597,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         else
                         {
-                            getJob().getLogger().error("source folder not found: " + sourceDir.getPath());
+                            getJob().getLogger().warn("source folder not found: " + sourceDir.getPath());
                         }
                     }
                 });
