@@ -242,6 +242,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 getJob().getLogger().info("Total ExpData created: " + createdExpData);
                 getJob().getLogger().info("Total existing ExpData found by URI: " + existingExpData);
                 getJob().getLogger().info("Total existing ExpData found by LSID: " + existingExpDataByLsid);
+                getJob().getLogger().info("Total existing ExpData found in cache: " + expDataCacheHits);
             }
 
             return new RecordedActionSet();
@@ -537,7 +538,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     }
                                     else
                                     {
-                                        getJob().getLogger().warn("Missing path: " + r.getValue("dataid/DatafileUrl"));
+                                        getJob().getLogger().warn("Missing path in analysisToJobPath: " + r.getValue("dataid/DatafileUrl"));
                                         return;
                                     }
                                 }
@@ -551,7 +552,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 }
                                 else
                                 {
-                                    getJob().getLogger().warn("Missing path: " + r.getValue("dataid/DatafileUrl"));
+                                    getJob().getLogger().warn("Missing record of job path: " + r.getValue("dataid/DatafileUrl"));
                                     return;
                                 }
                             }
@@ -625,8 +626,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private final Map<Integer, Integer> libraryMap = new HashMap<>();
         private final Map<Integer, Integer> outputFileMap = new HashMap<>();
         private final Map<Integer, Integer> sequenceMap = new HashMap<>();
-        private final Map<Integer, Integer> runIdMap = new HashMap<>();
-        private final Map<Integer, Integer> jobIdMap = new HashMap<>();
+        private final Map<Integer, Integer> runIdMap = new HashMap<>(5000);
+        private final Map<Integer, Integer> jobIdMap = new HashMap<>(5000);
+        private final Map<URI, Integer> expDataMap = new HashMap<>(10000);
 
         private void createLibraryMembers(Set<String> preExisting)
         {
@@ -1027,6 +1029,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     filter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
                     filter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
 
+                    String remoteJobRoot = getParent(URI.create(String.valueOf(rd.getValue("runid/JobId/FilePath")).replaceAll(" ", "%20")).getPath());
+
                     TableSelector tsAnalyses = new TableSelector(analysisTable, PageFlowUtil.set("rowid", "alignmentfile"), filter, null);
                     if (tsAnalyses.exists())
                     {
@@ -1040,6 +1044,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     {
                                         analysisToFileMap.put(results.getInt("rowid"), results.getInt("alignmentfile"));
                                     }
+
+                                    analysisToJobPath.put(results.getInt("rowid"), remoteJobRoot);
                                 }
                                 catch (IndexOutOfBoundsException e)
                                 {
@@ -1084,7 +1090,6 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
 
                             String localJobRoot = getParent(sf.getFilePath());
-                            String remoteJobRoot = getParent(URI.create(String.valueOf(rd.getValue("runid/JobId/FilePath")).replaceAll(" ", "%20")).getPath());
 
                             URI newFileAlignment = translateURI(String.valueOf(rd.getValue("alignmentfile/DatafileUrl")), remoteJobRoot, localJobRoot);
                             toCreate.put("alignmentfile", getOrCreateExpData(newFileAlignment, targetWorkbook, String.valueOf(rd.getValue("alignmentfile/Name"))));
@@ -1290,9 +1295,21 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private int existingExpData = 0;
         private int existingExpDataByLsid = 0;
         private int createdExpData = 0;
+        private int expDataCacheHits = 0;
 
         private int getOrCreateExpData(URI uri, Container workbook, String fileName)
         {
+            if (uri.toString().contains("/C:/"))
+            {
+                throw new IllegalArgumentException("Improper URI!!");
+            }
+
+            if (expDataMap.containsKey(uri))
+            {
+                expDataCacheHits++;
+                return expDataMap.get(uri);
+            }
+
             ExpData ret = ExperimentService.get().getExpDataByURL(uri.toString(), workbook);
             if (ret == null)
             {
@@ -1323,6 +1340,8 @@ public class MhcMigrationPipelineJob extends PipelineJob
             {
                 existingExpData++;
             }
+
+            expDataMap.put(uri, ret.getRowId());
 
             return ret.getRowId();
         }
@@ -1647,6 +1666,10 @@ public class MhcMigrationPipelineJob extends PipelineJob
             if (localFolderRoot.startsWith("C:"))
             {
                 localFolderRoot = localFolderRoot.replaceAll("^C:", "");
+            }
+            else if (localFolderRoot.contains("/C:/"))
+            {
+                localFolderRoot = localFolderRoot.replaceAll("/C:/", "/");
             }
 
             databaseURI = databaseURI.replace(remoteFolderRoot, localFolderRoot);
