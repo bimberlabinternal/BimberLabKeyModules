@@ -206,11 +206,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createWorkbooks();
                 transaction.commitAndKeepConnection();
 
-                replaceEntireTable("genotypeassays", "primer_pairs", Arrays.asList("primername", "ref_nt_name", "ref_nt_id", "shortname"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                //replaceEntireTable("genotypeassays", "primer_pairs", Arrays.asList("primername", "ref_nt_name", "ref_nt_id", "shortname"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
 
-                replaceEntireTable("laboratory", "samples", Arrays.asList("samplename", "subjectid", "sampledate", "sampletype", "samplesubtype", "samplesource", "location", "freezer", "cane", "box", "box_row", "box_column", "comment", "workbook/workbookId", "samplespecies", "processdate", "concentration", "concentration_units", "quantity", "quantity_units", "ratio"), "workbook/workbookId", true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
-                replaceEntireTable("laboratory", "subjects", Arrays.asList("subjectname", "species"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
-                transaction.commitAndKeepConnection();
+                //replaceEntireTable("laboratory", "samples", Arrays.asList("samplename", "subjectid", "sampledate", "sampletype", "samplesubtype", "samplesource", "location", "freezer", "cane", "box", "box_row", "box_column", "comment", "workbook/workbookId", "samplespecies", "processdate", "concentration", "concentration_units", "quantity", "quantity_units", "ratio"), "workbook/workbookId", true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                //replaceEntireTable("laboratory", "subjects", Arrays.asList("subjectname", "species"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                //transaction.commitAndKeepConnection();
 
                 Set<String> preExisting = createLibraries();
                 //createLibraryMembers(preExisting);
@@ -219,15 +219,15 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createReadsets();
                 transaction.commitAndKeepConnection();
 
-                createReaddata();
-                transaction.commitAndKeepConnection();
+                //createReaddata();
+                //transaction.commitAndKeepConnection();
 
                 createAnalyses();
                 createOutputFiles();
                 transaction.commitAndKeepConnection();
 
-                createQualityMetrics();
-                transaction.commitAndKeepConnection();
+                //createQualityMetrics();
+                //transaction.commitAndKeepConnection();
 
                 //create assay runs, including data and haplotypes
                 //syncAssay("GenotypeAssay", "Genotype", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate", "instrument", "assayType", "barcode"), Arrays.asList("subjectId", "date", "marker", "result", "qual_result", "sampleId", "category", "plate", "well", "parentId", "comment", "requestid", "qcflag", "analysisId", "DataId", "sampleType", "statusflag", "rawResult"));
@@ -236,7 +236,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 //syncAssay("SSP_assay", "SSP", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate"), Arrays.asList("subjectId", "date", "laneNumber", "method", "sampleType", "primerPair", "result", "comment", "qcflag", "statusflag"));
                 //transaction.commitAndKeepConnection();
 
-                createAlignmentSummary();
+                //createAlignmentSummary();
 
                 transaction.commit();
 
@@ -347,7 +347,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             // 191 / 115
             // 203 / 129
             // 215 / 140
-            List<Integer> toUpdate = Arrays.asList(12, 115, 129, 140);
+            List<Integer> toUpdate = Arrays.asList(12);
             for (int workbook : toUpdate)
             {
                 replaceEntireTable("sequenceanalysis", "quality_metrics", Arrays.asList("dataid", "dataid/DatafileUrl", "dataid/Name", "runid/JobId/FilePath", "category", "metricname", "metricvalue", "qualvalue", "analysis_id", "readset", "readset/runid/JobId", "readset/runid/JobId/FilePath", "dataid/Run/JobId/FilePath"), null, true, workbookMap.get(workbook), getPipelineJob().remoteServerFolder + workbook + "/");
@@ -950,6 +950,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         toCreate.put("library_id", localLibrary);
                         toCreate.put("name", rd.getValue("name"));
                         toCreate.put("category", rd.getValue("category"));
+                        toCreate.put("container", targetWorkbook.getId());
 
                         try
                         {
