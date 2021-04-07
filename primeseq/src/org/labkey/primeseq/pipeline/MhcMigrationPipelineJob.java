@@ -829,7 +829,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             {
                                 if (!localJobRootFile.exists())
                                 {
-                                    throw new PipelineJobException("Expected folder to have been copied: " + remoteJobRootFile.getPath() + " to " + localJobRootFile.getPath());
+                                    getJob().getLogger().warn("Expected folder genome to have been copied: " + remoteJobRootFile.getPath() + " to " + localJobRootFile.getPath());
                                 }
                             }
 
