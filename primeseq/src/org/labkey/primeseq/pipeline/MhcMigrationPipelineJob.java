@@ -1028,9 +1028,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                     }
 
-                    Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
-                    Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
+                    Container targetWorkbook = workbookMap.get(rd.getValue("workbook/workbookId"));
 
+                    Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
                     SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
                     filter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
                     filter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
@@ -1625,14 +1625,13 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     }
                     else
                     {
-                        PipeRoot pr = PipelineService.get().getPipelineRootSetting(getJob().getContainer());
-
                         Container workbook = ContainerManager.createContainer(getPipelineJob().targetContainer, null, localTitle, description, WorkbookContainerType.NAME, getJob().getUser());
                         workbook.setFolderType(FolderTypeManager.get().getFolderType("Expt Workbook"), getJob().getUser());
                         workbookMap.put(Integer.parseInt(String.valueOf(wb.getValue("Name"))), workbook);
                         totalCreated.getAndIncrement();
 
                         File sourceDir = new File("/home/groups/miSeqLK/Production/MHC_Typing", wb.getValue("Name") + "/@files");
+                        PipeRoot pr = PipelineService.get().getPipelineRootSetting(workbook);
                         File targetDir = pr.getRootPath();
                         if (sourceDir.exists())
                         {
