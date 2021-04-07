@@ -212,7 +212,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 transaction.commitAndKeepConnection();
 
                 Set<String> preExisting = createLibraries();
-                createLibraryMembers(preExisting);
+                //createLibraryMembers(preExisting);
                 transaction.commitAndKeepConnection();
 
                 createReadsets();
@@ -1364,7 +1364,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 final TableInfo readsetTable = us.getTable("sequence_readsets");
 
                 SelectRowsCommand sr = new SelectRowsCommand("sequenceanalysis", "sequence_readsets");
-                sr.setColumns(Arrays.asList("rowid", "name", "platform", "application", "librarytype", "chemistry", "comments", "status", "subjectid", "subjectdate", "sampletype", "sampleid", "barcode5", "barcode3", "runid", "runid/jobid", "runid/Name", "workbook/workbookId", "runid/JobId", "runid/Name", "runid/JobId/FilePath"));
+                sr.setColumns(Arrays.asList("rowid", "name", "platform", "application", "librarytype", "chemistry", "comments", "status", "subjectid", "subjectdate", "sampletype", "sampleid", "barcode5", "barcode3", "runid", "runid/jobid", "runid/Name", "workbook/workbookId", "runid/JobId", "runid/Name", "runid/JobId/FilePath", "totalForwardReads"));
 
                 SelectRowsResponse srr = sr.execute(getConnection(), getPipelineJob().remoteServerFolder);
 
@@ -1420,8 +1420,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 int runid = createExpRun(Integer.parseInt(String.valueOf(rs.getValue("runid"))), targetWorkbook, String.valueOf(rs.getValue("runid/Name")), jobId);
                                 toCreate.put("runid", runid);
                             }
-                            else
+                            else if (rs.getValue("totalForwardReads") != null)
                             {
+                                //Dont warn if this simply doesnt have data imported yet
                                 getJob().getLogger().warn("readset missing run id: " + remoteId);
                             }
 
@@ -1537,11 +1538,6 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     {
                         getJob().getLogger().info(remoteDir.getPath());
                         getJob().getLogger().info(localDir.getPath());
-
-                        if (!localDir.getParentFile().exists())
-                        {
-                            localDir.getParentFile().mkdirs();
-                        }
 
                         if (remoteDir.exists())
                         {
