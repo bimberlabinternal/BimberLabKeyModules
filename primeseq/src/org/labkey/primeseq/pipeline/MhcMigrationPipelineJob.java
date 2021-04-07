@@ -580,7 +580,13 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         Object workbookId = r.getValue(workbookColName);
                         if (workbookId != null)
                         {
-                            row.put("container", workbookMap.get(Integer.parseInt(String.valueOf(workbookId))).getId());
+                            int wbId = Integer.parseInt(String.valueOf(workbookId));
+                            if (!workbookMap.containsKey(wbId))
+                            {
+                                throw new IllegalArgumentException("Unable to find workbook: " + wbId);
+                            }
+
+                            row.put("container", workbookMap.get(wbId).getId());
                         }
                     }
 
