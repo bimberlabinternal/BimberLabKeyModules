@@ -908,7 +908,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     }
 
                     Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
-                    Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
+                    Container targetWorkbook = workbookMap.get(rd.getValue("workbook/workbookId"));
 
                     SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
                     filter.addCondition(FieldKey.fromString("name"), rd.getValue("name"));
