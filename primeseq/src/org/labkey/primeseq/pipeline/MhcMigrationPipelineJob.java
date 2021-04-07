@@ -782,7 +782,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             int index = path.lastIndexOf(separatorChar);
             if (index == -1)
             {
-                throw new IllegalArgumentException("Missing slash");
+                throw new IllegalArgumentException("Missing slash: " + path);
             }
 
             return path.substring(0, index);
@@ -1244,6 +1244,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             try
                             {
                                 Integer jobId = null;
+                                File remoteLogFile = null;
 
                                 if (rd.getValue("runid/JobId") != null)
                                 {
@@ -1256,10 +1257,10 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     String path = String.valueOf(rd.getValue("fileid1/DataFileUrl"));
                                     if (path.contains("SequenceImport_"))
                                     {
-                                        File putativeLog = inferLogForFile(path);
-                                        if (putativeLog != null)
+                                        remoteLogFile = inferLogForFile(path);
+                                        if (remoteLogFile != null)
                                         {
-                                            jobId = getOrCreateJobByLog(putativeLog, workbook, "Sequence Pipeline");
+                                            jobId = getOrCreateJobByLog(remoteLogFile, workbook, "Sequence Pipeline");
                                         }
                                     }
                                 }
@@ -1269,7 +1270,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
 
                                     String localJobRoot = getParent(sf.getFilePath());
-                                    String remoteJobRoot = getParent(URI.create(String.valueOf(rd.getValue("runid/JobId/FilePath")).replaceAll(" ", "%20")).getPath());
+
+                                    String remoteLogPath = remoteLogFile == null ? String.valueOf(rd.getValue("runid/JobId/FilePath")) : remoteLogFile.getPath();
+                                    String remoteJobRoot = getParent(URI.create(remoteLogPath.replaceAll(" ", "%20")).getPath());
 
                                     if (rd.getValue("fileid1/DataFileUrl") != null)
                                     {
