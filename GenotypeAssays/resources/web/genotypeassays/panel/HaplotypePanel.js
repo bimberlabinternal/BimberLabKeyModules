@@ -119,13 +119,20 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
                         var ret = [];
                         Ext4.Array.forEach(record.get('allLineagesInAnalysis').sort(), function (lineage) {
                             var pctFromLocus = record.get('lineagePctMap')[lineage].percent_from_locus;
-                            lineage = lineage.split(';');
-
                             var line = [];
-                            Ext4.Array.forEach(lineage, function (l) {
-                                var present = (record.get('haplotypeMatch1') && record.get('haplotypeMatch1').isPresentFromAnalysis(l)) || (record.get('haplotypeMatch2') && record.get('haplotypeMatch2').isPresentFromAnalysis(l));
-                                line.push('<span style="' + (present ? '' : 'text-decoration: line-through;') + '">' + l + '</span>');
-                            }, this);
+
+                            // NOTE: this could occur is a multi-lineage group was matched by allele
+                            var present = (record.get('haplotypeMatch1') && record.get('haplotypeMatch1').isPresentFromAnalysis(lineage)) || (record.get('haplotypeMatch2') && record.get('haplotypeMatch2').isPresentFromAnalysis(lineage));
+                            if (present) {
+                                line.push('<span style="' + (present ? '' : 'text-decoration: line-through;') + '">' + lineage + '</span>');
+                            }
+                            else {
+                                lineage = lineage.split(';');
+                                Ext4.Array.forEach(lineage, function (l) {
+                                    var present = (record.get('haplotypeMatch1') && record.get('haplotypeMatch1').isPresentFromAnalysis(l)) || (record.get('haplotypeMatch2') && record.get('haplotypeMatch2').isPresentFromAnalysis(l));
+                                    line.push('<span style="' + (present ? '' : 'text-decoration: line-through;') + '">' + l + '</span>');
+                                }, this);
+                            }
 
                             ret.push(line.join(';') + ' (' + Ext4.util.Format.number(pctFromLocus, '0.00') + '%)</span>');
                         }, this);

@@ -50,6 +50,7 @@ import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
+import org.labkey.api.util.GUID;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.ViewBackgroundInfo;
@@ -205,11 +206,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createWorkbooks();
                 transaction.commitAndKeepConnection();
 
-                replaceEntireTable("genotypeassays", "primer_pairs", Arrays.asList("primername", "ref_nt_name", "ref_nt_id", "shortname"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                //replaceEntireTable("genotypeassays", "primer_pairs", Arrays.asList("primername", "ref_nt_name", "ref_nt_id", "shortname"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
 
-                replaceEntireTable("laboratory", "samples", Arrays.asList("samplename", "subjectid", "sampledate", "sampletype", "samplesubtype", "samplesource", "location", "freezer", "cane", "box", "box_row", "box_column", "comment", "workbook/workbookId", "samplespecies", "processdate", "concentration", "concentration_units", "quantity", "quantity_units", "ratio"), "workbook/workbookId", true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
-                replaceEntireTable("laboratory", "subjects", Arrays.asList("subjectname", "species"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
-                transaction.commitAndKeepConnection();
+                //replaceEntireTable("laboratory", "samples", Arrays.asList("samplename", "subjectid", "sampledate", "sampletype", "samplesubtype", "samplesource", "location", "freezer", "cane", "box", "box_row", "box_column", "comment", "workbook/workbookId", "samplespecies", "processdate", "concentration", "concentration_units", "quantity", "quantity_units", "ratio"), "workbook/workbookId", true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                //replaceEntireTable("laboratory", "subjects", Arrays.asList("subjectname", "species"), null, true, getJob().getContainer(), getPipelineJob().remoteServerFolder);
+                //transaction.commitAndKeepConnection();
 
                 Set<String> preExisting = createLibraries();
                 //createLibraryMembers(preExisting);
@@ -218,24 +219,24 @@ public class MhcMigrationPipelineJob extends PipelineJob
                 createReadsets();
                 transaction.commitAndKeepConnection();
 
-                createReaddata();
-                transaction.commitAndKeepConnection();
+                //createReaddata();
+                //transaction.commitAndKeepConnection();
 
                 createAnalyses();
                 createOutputFiles();
                 transaction.commitAndKeepConnection();
 
-                createQualityMetrics();
-                transaction.commitAndKeepConnection();
+                //createQualityMetrics();
+                //transaction.commitAndKeepConnection();
 
                 //create assay runs, including data and haplotypes
-                syncAssay("GenotypeAssay", "Genotype", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate", "instrument", "assayType", "barcode"), Arrays.asList("subjectId", "date", "marker", "result", "qual_result", "sampleId", "category", "plate", "well", "parentId", "comment", "requestid", "qcflag", "analysisId", "DataId", "sampleType", "statusflag", "rawResult"));
-                transaction.commitAndKeepConnection();
+                //syncAssay("GenotypeAssay", "Genotype", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate", "instrument", "assayType", "barcode"), Arrays.asList("subjectId", "date", "marker", "result", "qual_result", "sampleId", "category", "plate", "well", "parentId", "comment", "requestid", "qcflag", "analysisId", "DataId", "sampleType", "statusflag", "rawResult"));
+                //transaction.commitAndKeepConnection();
 
-                syncAssay("SSP_assay", "SSP", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate"), Arrays.asList("subjectId", "date", "laneNumber", "method", "sampleType", "primerPair", "result", "comment", "qcflag", "statusflag"));
-                transaction.commitAndKeepConnection();
+                //syncAssay("SSP_assay", "SSP", Arrays.asList("RowId", "Name", "Comments", "performedBy", "runDate"), Arrays.asList("subjectId", "date", "laneNumber", "method", "sampleType", "primerPair", "result", "comment", "qcflag", "statusflag"));
+                //transaction.commitAndKeepConnection();
 
-                createAlignmentSummary();
+                //createAlignmentSummary();
 
                 transaction.commit();
 
@@ -342,7 +343,12 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         private void createQualityMetrics() throws PipelineJobException
         {
-            for (int workbook : workbookMap.keySet())
+            // 195 / 12
+            // 191 / 115
+            // 203 / 129
+            // 215 / 140
+            List<Integer> toUpdate = Arrays.asList(12);
+            for (int workbook : toUpdate)
             {
                 replaceEntireTable("sequenceanalysis", "quality_metrics", Arrays.asList("dataid", "dataid/DatafileUrl", "dataid/Name", "runid/JobId/FilePath", "category", "metricname", "metricvalue", "qualvalue", "analysis_id", "readset", "readset/runid/JobId", "readset/runid/JobId/FilePath", "dataid/Run/JobId/FilePath"), null, true, workbookMap.get(workbook), getPipelineJob().remoteServerFolder + workbook + "/");
             }
@@ -354,6 +360,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
             {
                 TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
                 TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
+
+                final UserSchema us = QueryService.get().getUserSchema(getJob().getUser(), getPipelineJob().targetContainer, "sequenceanalysis");
+                final TableInfo refNtTable = us.getTable("ref_nt_sequences");
 
                 //NOTE: split by workbook to avoid huge API calls:
                 SelectRowsCommand srWB = new SelectRowsCommand("core", "workbooks");
@@ -417,7 +426,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     });
 
                     SelectRowsCommand sr2 = new SelectRowsCommand("sequenceanalysis", "alignment_summary_junction");
-                    sr2.setColumns(Arrays.asList("analysis_id", "alignment_id", "ref_nt_id", "status", "analysis_id/workbook/workbookId", "ref_nt_id/name"));
+                    sr2.setColumns(Arrays.asList("analysis_id", "alignment_id", "ref_nt_id", "status", "analysis_id/workbook/workbookId", "ref_nt_id/name", "ref_nt_id/seqLength"));
                     sr2.addFilter(new Filter("analysis_id/workbook/workbookId", workbook));
 
                     SelectRowsResponse srr2 = sr2.execute(getConnection(), getPipelineJob().remoteServerFolder + workbook + "/");
@@ -431,8 +440,10 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         map.put("analysis_id", localId);
 
-                        Integer localNT = sequenceMap.get(rs.getValue("ref_nt_id"));
-                        if (localNT == null)
+                        int seqLength = Integer.parseInt(String.valueOf(rs.getValue("ref_nt_id/seqLength")));
+                        String seqName = String.valueOf(rs.getValue("ref_nt_id/name"));
+                        Integer localNT = getOrCreateSequence((Integer)rs.getValue("ref_nt_id"), seqName, seqLength, refNtTable);
+                        if (localNT == null || localNT == -1)
                         {
                             throw new RuntimeException("Unable to find ref_nt_id: " + rs.getValue("ref_nt_id") + " / " + rs.getValue("ref_nt_id/name"));
                         }
@@ -465,14 +476,14 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
                 TableInfo ti = QueryService.get().getUserSchema(getJob().getUser(), targetContainer, schema).getTable(query);
                 long existing = new TableSelector(ti).getRowCount();
-                if (srr.getRowCount().longValue() == existing)
-                {
-                    getJob().getLogger().info("Row counts identical, assuming has been synced: " + query);
-                    return;
-                }
-                else if (srr.getRowCount().equals(0))
+                if (srr.getRowCount().equals(0))
                 {
                     getJob().getLogger().info("No rows, skipping: " + query);
+                    return;
+                }
+                else if (srr.getRowCount().longValue() == existing)
+                {
+                    getJob().getLogger().info("Row counts identical, assuming has been synced: " + query);
                     return;
                 }
 
@@ -526,7 +537,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         else if ("dataid/DatafileUrl".equalsIgnoreCase(colName) && r.getValue("dataid/DatafileUrl") != null)
                         {
-                            String remoteJobRoot;
+                            String remoteJobRoot = null;
                             if (r.getValue("runid/JobId/FilePath") == null)
                             {
                                 if (r.getValue("analysis_id") != null)
@@ -539,7 +550,6 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                     else
                                     {
                                         getJob().getLogger().warn("Missing path in analysisToJobPath: " + r.getValue("dataid/DatafileUrl"));
-                                        return;
                                     }
                                 }
                                 else if (r.getValue("readset/runid/JobId/FilePath") != null)
@@ -552,8 +562,16 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 }
                                 else
                                 {
-                                    getJob().getLogger().warn("Missing record of job path: " + r.getValue("dataid/DatafileUrl"));
-                                    return;
+                                    String remoteFilePath = String.valueOf(r.getValue("dataid/DatafileUrl"));
+                                    if (remoteFilePath.contains("fastq.gz"))
+                                    {
+                                        remoteJobRoot = getParent(URI.create(remoteFilePath.replaceAll(" ", "%20")).getPath());
+                                    }
+
+                                    if (remoteJobRoot == null)
+                                    {
+                                        getJob().getLogger().warn("Missing record of job path: " + r.getValue("dataid/DatafileUrl"));
+                                    }
                                 }
                             }
                             else
@@ -764,7 +782,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             int index = path.lastIndexOf(separatorChar);
             if (index == -1)
             {
-                throw new IllegalArgumentException("Missing slash");
+                throw new IllegalArgumentException("Missing slash: " + path);
             }
 
             return path.substring(0, index);
@@ -908,7 +926,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     }
 
                     Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
-                    Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
+                    Container targetWorkbook = workbookMap.get(rd.getValue("workbook/workbookId"));
 
                     SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
                     filter.addCondition(FieldKey.fromString("name"), rd.getValue("name"));
@@ -932,6 +950,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         toCreate.put("library_id", localLibrary);
                         toCreate.put("name", rd.getValue("name"));
                         toCreate.put("category", rd.getValue("category"));
+                        toCreate.put("container", targetWorkbook.getId());
 
                         try
                         {
@@ -1028,9 +1047,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                     }
 
-                    Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
-                    Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
+                    Container targetWorkbook = workbookMap.get(rd.getValue("workbook/workbookId"));
 
+                    Readset rs = SequenceAnalysisService.get().getReadset(localReadset, getJob().getUser());
                     SimpleFilter filter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
                     filter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
                     filter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
@@ -1192,7 +1211,6 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         Container targetWorkbook = ContainerManager.getForId(rs.getContainer());
 
                         SimpleFilter rdFilter = new SimpleFilter(FieldKey.fromString("readset"), rs.getRowId());
-                        rdFilter.addCondition(FieldKey.fromString("runid/JobId/Description"), rd.getValue("runid/JobId/Description"));
                         rdFilter.addCondition(FieldKey.fromString("fileid1/Name"), rd.getValue("fileid1/Name"));
                         rdFilter.addCondition(FieldKey.fromString("container"), targetWorkbook.getId(), CompareType.EQUAL);
 
@@ -1226,14 +1244,36 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             toCreate.put("sra_accession", rd.getValue("sra_accession"));
                             try
                             {
+                                Integer jobId = null;
+                                File remoteLogFile = null;
+
                                 if (rd.getValue("runid/JobId") != null)
                                 {
                                     int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
-                                    int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
+                                    jobId = getOrCreateJob(remoteJobId, targetWorkbook);
+                                }
+                                else
+                                {
+                                    //Attempt to infer job log:
+                                    String path = String.valueOf(rd.getValue("fileid1/DataFileUrl"));
+                                    if (path.contains("SequenceImport_"))
+                                    {
+                                        remoteLogFile = inferLogForFile(path);
+                                        if (remoteLogFile != null)
+                                        {
+                                            jobId = getOrCreateJobByLog(remoteLogFile, workbook, "Sequence Pipeline");
+                                        }
+                                    }
+                                }
+
+                                if (jobId != null)
+                                {
                                     PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
 
                                     String localJobRoot = getParent(sf.getFilePath());
-                                    String remoteJobRoot = getParent(URI.create(String.valueOf(rd.getValue("runid/JobId/FilePath")).replaceAll(" ", "%20")).getPath());
+
+                                    String remoteLogPath = remoteLogFile == null ? String.valueOf(rd.getValue("runid/JobId/FilePath")) : remoteLogFile.getPath();
+                                    String remoteJobRoot = getParent(URI.create(remoteLogPath.replaceAll(" ", "%20")).getPath());
 
                                     if (rd.getValue("fileid1/DataFileUrl") != null)
                                     {
@@ -1249,17 +1289,12 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 }
                                 else
                                 {
-                                    if (rd.getValue("fileid1/DataFileUrl") != null)
-                                    {
-                                        getJob().getLogger().warn("readddata missing jobid: " + remoteId);
-                                    }
+                                    getJob().getLogger().warn("readddata missing jobid: " + remoteId);
                                 }
 
                                 //Create run:
-                                if (rd.getValue("runid") != null && rd.getValue("runid/JobId") != null)
+                                if (rd.getValue("runid") != null && jobId != null)
                                 {
-                                    int remoteJobId = Integer.parseInt(String.valueOf(rd.getValue("runid/JobId")));
-                                    int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
                                     int runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
                                     toCreate.put("runid", runId);
                                 }
@@ -1296,6 +1331,29 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
 
             getJob().getLogger().info("total created: " + totalCreated.get() + ", total existing: " + totalExisting.get());
+        }
+
+        private File inferLogForFile(String path)
+        {
+            path = path.replaceAll("file://", "");
+            File jobDir = new File(path).getParentFile();
+            if (jobDir.exists())
+            {
+                File[] putativeLogs = jobDir.listFiles(x ->{
+                    return x.getName().endsWith(".log");
+                });
+
+                if (putativeLogs.length == 1)
+                {
+                    return putativeLogs[0];
+                }
+                else
+                {
+                    getJob().getLogger().warn("log not found in: " + jobDir.getPath());
+                }
+            }
+
+            return null;
         }
 
         private int existingExpData = 0;
@@ -1449,6 +1507,52 @@ public class MhcMigrationPipelineJob extends PipelineJob
             {
                 getJob().getLogger().error(e.getMessage(), e);
                 throw new RuntimeException(e);
+            }
+        }
+
+        private int getOrCreateJobByLog(File remoteJobLog, Container targetWorkbook, String provider)
+        {
+            TableInfo ti = DbSchema.get("pipeline", DbSchemaType.Module).getTable("StatusFiles");
+            File fr = PipelineService.get().getPipelineRootSetting(targetWorkbook).getRootPath();
+
+            File localDir = new File(fr, remoteJobLog.getPath().split("@files")[1]);
+            if (!localDir.exists())
+            {
+                getJob().getLogger().warn("Missing expected pipeline folder: " + localDir.getPath());
+            }
+            //Check for existing row:
+            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("RowId"), new SimpleFilter(FieldKey.fromString("FilePath"), localDir.getPath()), null);
+            if (ts.exists())
+            {
+                return ts.getObject(Integer.class);
+            }
+            else
+            {
+                ts = new TableSelector(ti, PageFlowUtil.set("RowId"), new SimpleFilter(FieldKey.fromString("FilePath"), localDir.getPath()), null);
+                if (ts.exists())
+                {
+                    return ts.getObject(Integer.class);
+                }
+                else
+                {
+                    getJob().getLogger().info("Creating pipeline job: " + remoteJobLog.getPath());
+                    Map<String, Object> toCreate = new CaseInsensitiveHashMap<>();
+                    toCreate.put("Info", null);
+                    toCreate.put("FilePath", localDir.getPath());
+                    toCreate.put("Email", getJob().getUser().getEmail());
+                    toCreate.put("Description", FileUtil.getBaseName(remoteJobLog.getName()));
+                    toCreate.put("DataUrl", null);
+                    toCreate.put("Status", "COMPLETE");
+                    toCreate.put("Job", new GUID().toString());
+                    toCreate.put("Provider", provider);
+                    toCreate.put("HadError", false);
+                    toCreate.put("ActiveTaskId", null);
+                    toCreate.put("Container", targetWorkbook.getId());
+
+                    toCreate = Table.insert(getJob().getUser(), ti, toCreate);
+
+                    return (int) toCreate.get("RowId");
+                }
             }
         }
 
@@ -1625,14 +1729,13 @@ public class MhcMigrationPipelineJob extends PipelineJob
                     }
                     else
                     {
-                        PipeRoot pr = PipelineService.get().getPipelineRootSetting(getJob().getContainer());
-
                         Container workbook = ContainerManager.createContainer(getPipelineJob().targetContainer, null, localTitle, description, WorkbookContainerType.NAME, getJob().getUser());
                         workbook.setFolderType(FolderTypeManager.get().getFolderType("Expt Workbook"), getJob().getUser());
                         workbookMap.put(Integer.parseInt(String.valueOf(wb.getValue("Name"))), workbook);
                         totalCreated.getAndIncrement();
 
                         File sourceDir = new File("/home/groups/miSeqLK/Production/MHC_Typing", wb.getValue("Name") + "/@files");
+                        PipeRoot pr = PipelineService.get().getPipelineRootSetting(workbook);
                         File targetDir = pr.getRootPath();
                         if (sourceDir.exists())
                         {
