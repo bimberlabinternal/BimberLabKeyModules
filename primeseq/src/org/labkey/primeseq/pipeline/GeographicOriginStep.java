@@ -111,7 +111,7 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
         public File execute(File inputVCF, File referenceFasta, File outputTable, List<String> options) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
-            args.add("VariantQC");
+            args.add("VariantConcordanceScore");
             args.add("-R");
             args.add(referenceFasta.getPath());
             args.add("-V");
