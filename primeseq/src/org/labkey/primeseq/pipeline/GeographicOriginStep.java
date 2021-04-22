@@ -36,16 +36,12 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
         public Provider()
         {
             super("GeographicOriginStep", "Geographic Origin", "", "This will run VariantConcordanceScore to score samples in the input VCF against reference VCFs with marker alleles for Indian-origin and Chinese-origin rhesus macaques", Arrays.asList(
-                    ToolParameterDescriptor.createExpDataParam(INDIAN_MARKERS, "Indian-origin Markers", "This is the ID of a VCF file with markers of indian-origin.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
+                    ToolParameterDescriptor.createExpDataParam(INDIAN_MARKERS, "Indian-origin Markers", "This is the ID of a VCF file with markers of indian-origin.", "ldk-expdatafield", new JSONObject()
                     {{
-                        put("extensions", Arrays.asList("vcf"));
-                        put("width", 400);
                         put("allowBlank", false);
                     }}, null),
-                    ToolParameterDescriptor.createExpDataParam(CHINESE_MARKERS, "Chinese-origin Markers", "This is the ID of a VCF file with markers of chinese-origin.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
+                    ToolParameterDescriptor.createExpDataParam(CHINESE_MARKERS, "Chinese-origin Markers", "This is the ID of a VCF file with markers of chinese-origin.", "ldk-expdatafield", new JSONObject()
                     {{
-                        put("extensions", Arrays.asList("vcf"));
-                        put("width", 400);
                         put("allowBlank", false);
                     }}, null)
             ), null, "https://bimberlab.github.io/DISCVRSeq/");
