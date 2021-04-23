@@ -16,6 +16,9 @@
                     <column>species</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="species" operator="eq" value="Marmoset"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
                 <alternateKeys>
@@ -25,24 +28,60 @@
 
         </transform>
 
-        <transform type="RemoteQueryTransformStep" id="parentage">
+        <transform type="SimpleQueryTransformStep" id="parentageSire">
             <description>Copy to target</description>
-            <source remoteSource="WNPRC" schemaName="study" queryName="parentage">
+            <source remoteSource="WNPRC" schemaName="study" queryName="demographics">
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
-                    <column>parent</column>
-                    <column>relationship</column>
-                    <column>method</column>
+                    <column>sire</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="species" operator="eq" value="Marmoset"/>
+                    <sourceFilter column="sire" operator="isnonblank" value=""/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="parentage" targetOption="truncate" bulkLoad="true">
+                <columnTransforms>
+                    <column source="sire" target="parent"/>
+                    <column source="objectid" target="objectid" transformClass="org.labkey.mcc.etl.ParentageObjectIdTransform"/>
+                </columnTransforms>
+                <constants>
+                    <column name="relationship" type="VARCHAR" value="Sire"/>
+                </constants>
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
             </destination>
+        </transform>
 
+        <transform type="SimpleQueryTransformStep" id="parentageDam">
+            <description>Copy to target</description>
+            <source remoteSource="WNPRC" schemaName="study" queryName="demographics">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>dam</column>
+                    <column>objectid</column>
+                </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="species" operator="eq" value="Marmoset"/>
+                    <sourceFilter column="dam" operator="isnonblank" value=""/>
+                </sourceFilters>
+            </source>
+            <destination schemaName="study" queryName="parentage" targetOption="append" bulkLoad="true">
+                <columnTransforms>
+                    <column source="dam" target="parent"/>
+                    <column source="objectid" target="objectid" transformClass="org.labkey.mcc.etl.ParentageObjectIdTransform"/>
+                </columnTransforms>
+                <constants>
+                    <column name="relationship" type="VARCHAR" value="Dam"/>
+                </constants>
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
         </transform>
 
         <transform type="RemoteQueryTransformStep" id="birth">
@@ -58,6 +97,9 @@
                     <column>sire</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="species" operator="eq" value="Marmoset"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">
                 <alternateKeys>
@@ -76,6 +118,9 @@
                     <column>weight</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="species" operator="eq" value="Marmoset"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">
                 <alternateKeys>
@@ -102,7 +147,9 @@
         </transform>
     </transforms>
 
-    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" />
+    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified">
+
+    </incrementalFilter>
     <schedule>
         <!--9PM-->
         <cron expression="0 0 21 * * ?"/>
