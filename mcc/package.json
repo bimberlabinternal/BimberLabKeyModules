@@ -11,8 +11,8 @@
     "test": "cross-env NODE_ENV=test jest"
   },
   "dependencies": {
-    "@labkey/components": "^2.15.2",
-    "chart.js": "^3.0.2"
+    "@labkey/components": "^2.24.4",
+    "chart.js": "^3.1.1"
   },
   "devDependencies": {
     "@labkey/build": "^2.1.0",
@@ -21,7 +21,7 @@
     "enzyme-adapter-react-16": "^1.15.6",
     "jest": "^26.6.3",
     "jest-cli": "^26.6.3",
-    "ts-jest": "^26.5.4"
+    "ts-jest": "^26.5.5"
   },
   "jest": {
     "globals": {
