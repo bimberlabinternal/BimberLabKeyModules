@@ -11,7 +11,9 @@
     "test": "cross-env NODE_ENV=test jest"
   },
   "dependencies": {
-    "@labkey/components": "^2.27.0",
+    "@labkey/api": "^1.0.0",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
     "chart.js": "^3.2.1"
   },
   "devDependencies": {
