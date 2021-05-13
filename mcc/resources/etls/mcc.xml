@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <etl xmlns="http://labkey.org/etl/xml">
-    <name>WNPRC_Data</name>
-    <description>WNPRC Clinical/Demographics Data</description>
+    <name>MCC_Aggregation</name>
+    <description>Aggregate MCC Data</description>
     <transforms>
         <transform type="SimpleQueryTransformStep" id="demographics">
             <description>Copy to target</description>
