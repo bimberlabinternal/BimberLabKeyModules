@@ -21,9 +21,6 @@
                     <column>currentColony</column>
                     <column>objectid</column>
                 </sourceColumns>
-                <sourceFilters>
-                    <sourceFilter column="species" operator="eq" value="Marmoset"/>
-                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
                 <constants>
@@ -105,9 +102,6 @@
                     <!--<column>sire</column>-->
                     <!--<column>objectid</column>-->
                 <!--</sourceColumns>-->
-                <!--<sourceFilters>-->
-                    <!--<sourceFilter column="species" operator="eq" value="Marmoset"/>-->
-                <!--</sourceFilters>-->
             <!--</source>-->
             <!--<destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">-->
                 <!--<alternateKeys>-->
@@ -126,9 +120,6 @@
                     <!--<column>weight</column>-->
                     <!--<column>objectid</column>-->
                 <!--</sourceColumns>-->
-                <!--<sourceFilters>-->
-                    <!--<sourceFilter column="species" operator="eq" value="Marmoset"/>-->
-                <!--</sourceFilters>-->
             <!--</source>-->
             <!--<destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">-->
                 <!--<alternateKeys>-->
