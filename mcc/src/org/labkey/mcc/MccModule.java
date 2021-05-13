@@ -23,6 +23,7 @@ import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.mcc.query.MccEhrCustomizer;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -86,5 +87,7 @@ public class MccModule extends ExtendedSimpleModule
     private void registerEHRResources()
     {
         EHRService.get().registerModule(this);
+        EHRService.get().registerTableCustomizer(this, MccEhrCustomizer.class);
+
     }
 }

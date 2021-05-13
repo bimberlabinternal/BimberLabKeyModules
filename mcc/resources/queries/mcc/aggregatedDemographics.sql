@@ -6,6 +6,8 @@ SELECT
   d.birth,
   d.death,
   d.colony,
+  d.dam,
+  d.sire,
   d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
   d.objectid
 
@@ -21,6 +23,8 @@ SELECT
   d.birth,
   d.death,
   d.colony,
+  d.dam,
+  d.sire,
   d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
   d.objectid
 
