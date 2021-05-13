@@ -1,5 +1,6 @@
 SELECT
   d.Id,
+  d.date,
   d.species,
   d.gender,
   d.birth,
@@ -14,6 +15,7 @@ UNION ALL
 
 SELECT
   d.Id,
+  d.date,
   d.species,
   d.gender,
   d.birth,
