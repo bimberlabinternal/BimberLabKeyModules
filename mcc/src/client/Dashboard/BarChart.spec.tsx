@@ -4,7 +4,7 @@ import { mocked } from 'ts-jest/utils';
 import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 
 import { Chart } from 'chart.js';
-import GenderChart from './GenderChart';
+import BarChart from './BarChart';
 
 jest.mock('chart.js');
 const MockChart = mocked(Chart, true);
@@ -21,14 +21,14 @@ const mockData = [
     }
 ];
 
-describe('GenderChart', () => {
+describe('BarChart', () => {
     test('it has a canvas element', () => {
-        const wrapper = shallow(<GenderChart demographics={mockData} />);
+        const wrapper = shallow(<BarChart fieldName = "gender" demographics={mockData} />);
         expect(wrapper.find('canvas')).toHaveLength(1);
     });
 
     test('it renders a chart when mounted', () => {
-        mount(<GenderChart demographics={mockData} />);
+        mount(<BarChart fieldName = "gender" demographics={mockData} />);
         expect(MockChart).toHaveBeenCalledTimes(1);
     });
 });

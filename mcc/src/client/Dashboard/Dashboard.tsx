@@ -3,7 +3,8 @@ import './dashboard.css';
 import React, { useState, useEffect } from 'react';
 import { Query } from '@labkey/api';
 
-import GenderChart from './GenderChart';
+import PieChart from './PieChart';
+import BarChart from './BarChart';
 
 export function Dashboard() {
     const [demographics, setDemographics] = useState(null);
@@ -12,9 +13,8 @@ export function Dashboard() {
         Query.selectRows({
                 schemaName: 'study',
                 queryName: 'demographics',
-                columns: 'Id,birth,death,gender,species,Id/age/AgeFriendly',
+                columns: 'Id,birth,death,gender,species,colony,status,Id/age/AgeFriendly,Id/ageClass/label',
                 success: function(results) {
-                    console.log(results.rows);
                     setDemographics(results.rows);
                 },
                 failure: function(response) {
@@ -48,7 +48,25 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Gender</div>
                         <div className="panel-body">
-                            <GenderChart demographics={demographics} />
+                            <PieChart fieldName = "gender" demographics={demographics} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col-md-6">
+                    <div className="panel panel-default">
+                        <div className="panel-heading">Age</div>
+                        <div className="panel-body">
+                            <PieChart fieldName = "Id/ageClass/label" demographics={demographics} />
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-6">
+                    <div className="panel panel-default">
+                        <div className="panel-heading">Center</div>
+                        <div className="panel-body">
+                            <BarChart fieldName = "colony" demographics={demographics} />
                         </div>
                     </div>
                 </div>

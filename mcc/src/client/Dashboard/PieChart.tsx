@@ -17,27 +17,18 @@ const colors = [
     'rgb(194, 192, 210)'
 ];
 
-export default function GenderChart(props) {
+export default function PieChart(props) {
     const canvas = useRef(null);
 
     const { demographics } = props;
-    const mapGender = (gender) => {
-        switch (gender) {
-            case 'M':
-                return 'Male';
-            case 'F':
-                return 'Female';
-            default:
-                return 'Unknown';
-        }
-    };
+    const { fieldName } = props;
 
     const collectedData = demographics.reduce((acc, curr) => {
-        const gender = mapGender(curr.gender);
-        if (acc[gender]) {
-            acc[gender] = acc[gender] + 1;
+        const value = curr[fieldName] === null ? curr[fieldName] : curr[fieldName];
+        if (acc[value]) {
+            acc[value] = acc[value] + 1;
         } else {
-            acc[gender] = 1;
+            acc[value] = 1;
         }
 
         return acc;
@@ -46,7 +37,7 @@ export default function GenderChart(props) {
     const data = labels.map(label => collectedData[label]);
 
     useEffect(() => {
-        const chart = new Chart<'pie', number[], string>(canvas.current, {
+        const chart = new Chart(canvas.current, {
             type: 'pie',
             data: {
                 labels,

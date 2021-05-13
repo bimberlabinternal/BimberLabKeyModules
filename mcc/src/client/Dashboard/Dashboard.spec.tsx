@@ -53,8 +53,8 @@ describe('Dashboard', () => {
 
     test('it renders a grid of cards', () => {
         const wrapper = mount(<Dashboard />);
-        expect(wrapper.find('.row')).toHaveLength(1);
-        expect(wrapper.find('.panel')).toHaveLength(2);
+        expect(wrapper.find('.row')).toHaveLength(2);
+        expect(wrapper.find('.panel')).toHaveLength(4);
     });
 
     test('it displays the result count', () => {
