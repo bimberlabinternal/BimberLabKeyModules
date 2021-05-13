@@ -78,7 +78,7 @@
 
         <transform type="RemoteQueryTransformStep" id="weight">
             <description>Copy to target</description>
-            <source remoteSource="SNPRC" schemaName="study" queryName="weight">
+            <source remoteSource="SNPRC" schemaName="study" queryName="weight" sourceTimeout="0">
                 <sourceColumns>
                     <column>AnimalId</column>
                     <column>date</column>
