@@ -640,6 +640,9 @@
             <column columnName="global_id">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="center">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Demographics</tableTitle>
     </table>

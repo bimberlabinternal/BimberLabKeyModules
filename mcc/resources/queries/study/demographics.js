@@ -15,9 +15,34 @@ function onInit(event, helper){
 }
 
 function onUpsert(helper, scriptErrors, row, oldRow){
-    //NOTE: this should be getting set by the birth, death, arrival & departure tables
-    //ALSO: it should be rare to insert directly into this table.  usually this record will be created by inserting into either birth or arrival
-    if (!row.calculated_status && !helper.isETL()){
-        row.calculated_status = helper.getJavaHelper().getCalculatedStatusValue(row.Id);
+    if (!row.calculated_status){
+        row.calculated_status = row.status;
+
+    }
+
+    if (row.death) {
+        row.calculated_status = 'Dead';
+    }
+
+    if (row.gender) {
+        switch (row.gender) {
+            case 'M':
+            case 'm':
+                row.gender = 'Male';
+                break;
+            case 'F':
+            case 'f':
+                row.gender = 'Female';
+                break;
+        }
+    }
+
+    if (row.species) {
+        switch (row.species) {
+            case 'CJ':
+            case 'cj':
+                row.species = 'CJ';
+                break;
+        }
     }
 }

@@ -1,0 +1,32 @@
+:root {
+    --dash-background-green: rgb(240, 246, 233);
+    --dash-bright-green: rgb(92, 169, 84);
+    --dash-dark-blue: rgb(42, 49, 116);
+    --dash-medium-blue: rgb(75, 77, 135);
+    --dash-lavender: rgb(110, 107, 155);
+    --dash-light-lavender: rgb(147, 145, 181);
+    --dash-lightest-lavender: rgb(194, 192, 210);
+}
+
+.loading {
+    height: 50vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.count-panel-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.count-panel-text {
+    color: var(--dash-dark-blue);
+    font-size: 10rem;
+    font-weight: bold;
+    line-height: 1.0;
+    letter-spacing: -0.05rem;
+}
