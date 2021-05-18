@@ -37,6 +37,7 @@ import org.labkey.primeseq.pipeline.BismarkWrapper;
 import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
 import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
+import org.labkey.primeseq.pipeline.GeographicOriginStep;
 import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
 import org.labkey.primeseq.pipeline.SequenceJobResourceAllocator;
 
@@ -112,6 +113,8 @@ public class PrimeseqModule extends ExtendedSimpleModule
 
                 SequenceAnalysisService.get().registerFileHandler(new MethylationRateComparisonHandler());
                 SequenceAnalysisService.get().registerFileHandler(new CombineMethylationRatesHandler());
+
+                SequencePipelineService.get().registerPipelineStep(new GeographicOriginStep.Provider());
 
                 _hasRegistered = true;
             }

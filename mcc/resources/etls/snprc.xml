@@ -20,6 +20,9 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="Demographics" targetOption="merge" bulkLoad="true">
+                <constants>
+                    <column name="colony" type="VARCHAR" value="SNPRC"/>
+                </constants>
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
@@ -75,7 +78,7 @@
 
         <transform type="RemoteQueryTransformStep" id="weight">
             <description>Copy to target</description>
-            <source remoteSource="SNPRC" schemaName="study" queryName="weight">
+            <source remoteSource="SNPRC" schemaName="study" queryName="weight" sourceTimeout="0">
                 <sourceColumns>
                     <column>AnimalId</column>
                     <column>date</column>

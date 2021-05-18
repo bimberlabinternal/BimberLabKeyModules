@@ -26,6 +26,8 @@ public class MccSchema
     public static final String NAME = "mcc";
 
     public static final String TABLE_USER_REQUESTS = "userRequests";
+    public static final String TABLE_ETL_TRANSLATIONS = "etltranslations";
+
 
     public static MccSchema getInstance()
     {

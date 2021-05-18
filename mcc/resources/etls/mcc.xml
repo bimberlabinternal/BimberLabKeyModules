@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>MCC_Aggregation</name>
+    <description>Aggregate MCC Data</description>
+    <transforms>
+        <transform type="SimpleQueryTransformStep" id="demographics">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedDemographics" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>gender</column>
+                    <column>birth</column>
+                    <column>death</column>
+                    <column>species</column>
+                    <column>status</column>
+                    <column>calculated_status</column>
+                    <column>mostRecentWeight</column>
+                    <column>colony</column>
+                    <column>dam</column>
+                    <column>sire</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+    </transforms>
+    <schedule>
+        <!--11PM-->
+        <cron expression="0 0 23 * * ?"/>
+    </schedule>
+</etl>
