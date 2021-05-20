@@ -28,11 +28,11 @@ function onUpsert(helper, scriptErrors, row, oldRow){
         switch (row.gender) {
             case 'M':
             case 'm':
-                row.gender = 'Male';
+                row.gender = 'm';
                 break;
             case 'F':
             case 'f':
-                row.gender = 'Female';
+                row.gender = 'f';
                 break;
         }
     }
