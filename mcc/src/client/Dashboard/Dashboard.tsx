@@ -8,13 +8,15 @@ import BarChart from './BarChart';
 
 export function Dashboard() {
     const [demographics, setDemographics] = useState(null);
+    const [living, setLiving] = useState(null);
 
     useEffect(() => {
         Query.selectRows({
                 schemaName: 'study',
                 queryName: 'demographics',
-                columns: 'Id,birth,death,gender,species,colony,status,Id/age/AgeFriendly,Id/ageClass/label',
+                columns: 'Id,birth,death,gender/meaning,species,colony,calculated_status,Id/age/AgeFriendly,Id/ageClass/label',
                 success: function(results) {
+                    setLiving(results.rows.filter(row => row.calculated_status === 'Alive'));
                     setDemographics(results.rows);
                 },
                 failure: function(response) {
@@ -35,7 +37,7 @@ export function Dashboard() {
     return (
         <>
             <div className="row">
-                <div className="col-md-6">
+                <div className="col-md-4">
                     <div className="panel panel-default">
                         <div className="panel-heading">Count</div>
                         <div className="panel-body count-panel-body">
@@ -44,29 +46,29 @@ export function Dashboard() {
                         </div>
                     </div>
                 </div>
-                <div className="col-md-6">
+                <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Gender</div>
+                        <div className="panel-heading">Center (Living Animals)</div>
                         <div className="panel-body">
-                            <PieChart fieldName = "gender" demographics={demographics} />
+                            <PieChart fieldName = "colony" demographics={demographics} cutout = "30%" />
                         </div>
                     </div>
                 </div>
             </div>
             <div className="row">
-                <div className="col-md-6">
+                <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Age</div>
+                        <div className="panel-heading">Age (Living Animals)</div>
                         <div className="panel-body">
-                            <PieChart fieldName = "Id/ageClass/label" demographics={demographics} />
+                            <BarChart fieldName = "Id/ageClass/label" demographics={demographics} />
                         </div>
                     </div>
                 </div>
-                <div className="col-md-6">
+                <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Center</div>
+                        <div className="panel-heading">Sex (Living Animals)</div>
                         <div className="panel-body">
-                            <BarChart fieldName = "colony" demographics={demographics} />
+                            <PieChart fieldName = "gender/meaning" demographics={demographics} />
                         </div>
                     </div>
                 </div>
