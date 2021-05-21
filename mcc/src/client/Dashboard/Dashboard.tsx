@@ -48,7 +48,7 @@ export function Dashboard() {
                 </div>
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Center (Living Animals)</div>
+                        <div className="panel-heading">Center (All Animals)</div>
                         <div className="panel-body">
                             <PieChart fieldName = "colony" demographics={demographics} cutout = "30%" />
                         </div>
@@ -60,7 +60,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Age (Living Animals)</div>
                         <div className="panel-body">
-                            <BarChart fieldName = "Id/ageClass/label" demographics={demographics} />
+                            <BarChart fieldName = "Id/ageClass/label" demographics={living} />
                         </div>
                     </div>
                 </div>
@@ -68,7 +68,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Sex (Living Animals)</div>
                         <div className="panel-body">
-                            <PieChart fieldName = "gender/meaning" demographics={demographics} />
+                            <PieChart fieldName = "gender/meaning" demographics={living} />
                         </div>
                     </div>
                 </div>

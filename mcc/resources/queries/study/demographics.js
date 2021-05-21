@@ -15,9 +15,8 @@ function onInit(event, helper){
 }
 
 function onUpsert(helper, scriptErrors, row, oldRow){
-    if (!row.calculated_status){
+    if (!row.calculated_status && row.status){
         row.calculated_status = row.status;
-
     }
 
     if (row.death) {
