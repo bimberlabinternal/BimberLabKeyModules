@@ -22,9 +22,10 @@ export default function PieChart(props) {
 
     const { demographics } = props;
     const { fieldName } = props;
+    const { cutout } = props || 0;
 
     const collectedData = demographics.reduce((acc, curr) => {
-        const value = curr[fieldName] === null ? curr[fieldName] : curr[fieldName];
+        const value = curr[fieldName] === null ? 'Unknown' : curr[fieldName];
         if (acc[value]) {
             acc[value] = acc[value] + 1;
         } else {
@@ -33,7 +34,7 @@ export default function PieChart(props) {
 
         return acc;
     }, {});
-    const labels = Object.keys(collectedData);
+    const labels = Object.keys(collectedData).sort();
     const data = labels.map(label => collectedData[label]);
 
     useEffect(() => {
@@ -51,6 +52,7 @@ export default function PieChart(props) {
             options: {
                 responsive: true,
                 aspectRatio: 2,
+                cutout: cutout,
                 plugins: {
                     legend: {
                         position: 'right'

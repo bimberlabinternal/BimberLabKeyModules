@@ -15,9 +15,8 @@ function onInit(event, helper){
 }
 
 function onUpsert(helper, scriptErrors, row, oldRow){
-    if (!row.calculated_status){
+    if (!row.calculated_status && row.status){
         row.calculated_status = row.status;
-
     }
 
     if (row.death) {
@@ -28,11 +27,11 @@ function onUpsert(helper, scriptErrors, row, oldRow){
         switch (row.gender) {
             case 'M':
             case 'm':
-                row.gender = 'Male';
+                row.gender = 'm';
                 break;
             case 'F':
             case 'f':
-                row.gender = 'Female';
+                row.gender = 'f';
                 break;
         }
     }

@@ -16,6 +16,7 @@
                     <column>birth</column>
                     <column>death</column>
                     <column>species</column>
+                    <column>status</column>
                     <column>objectid</column>
                 </sourceColumns>
             </source>
@@ -25,6 +26,7 @@
                 </constants>
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
+                    <column source="status" target="calculated_status"/>
                 </columnTransforms>
                 <alternateKeys>
                     <column name="objectid"/>
