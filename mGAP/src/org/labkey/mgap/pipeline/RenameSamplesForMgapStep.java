@@ -250,13 +250,37 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             }
 
             TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
-            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN), null);
+            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN), null);
             ts.forEachResults(new Selector.ForEachBlock<Results>()
             {
                 @Override
                 public void exec(Results rs) throws SQLException
                 {
                     sampleNameMap.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
+
+                    if (rs.getObject(FieldKey.fromString("otherNames")) != null)
+                    {
+                        String val = StringUtils.trimToNull(rs.getString(FieldKey.fromString("otherNames")));
+                        if (val != null)
+                        {
+                            String[] tokens = val.split(",");
+                            for (String name : tokens)
+                            {
+                                name = StringUtils.trimToNull(name);
+                                if (name == null)
+                                {
+                                    continue;
+                                }
+
+                                if (sampleNameMap.containsKey(name) && !sampleNameMap.get(name).equals(rs.getString(FieldKey.fromString("externalAlias"))))
+                                {
+                                    throw new IllegalStateException("Improper data in mgap.aliases table. Dual/conflicting aliases: " + name + ": " + rs.getString(FieldKey.fromString("externalAlias")) + " / " + sampleNameMap.get(name));
+                                }
+
+                                sampleNameMap.put(name, rs.getString(FieldKey.fromString("externalAlias")));
+                            }
+                        }
+                    }
                 }
             });
 
