@@ -50,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RenameSamplesForMgapStep extends AbstractPipelineStep implements VariantProcessingStep
 {
@@ -294,6 +295,15 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             if (!sampleNames.isEmpty())
             {
                 throw new PipelineJobException("mGAP Aliases were not found for all IDs.  Missing: " + StringUtils.join(sampleNames, ", "));
+            }
+
+            //Now ensure we dont have duplicate mappings:
+            List<String> translated = new ArrayList<>(sampleNames.stream().map(sampleNameMap::get).collect(Collectors.toList()));
+            Set<String> unique = new HashSet<>();
+            List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).collect(Collectors.toList());
+            if (!duplicates.isEmpty())
+            {
+                throw new PipelineJobException("There were duplicate mGAP IDs are translation. They were: " + StringUtils.join(duplicates, ","));
             }
         }
 
