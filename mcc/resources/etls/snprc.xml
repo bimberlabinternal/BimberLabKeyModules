@@ -90,7 +90,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true">
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="2500">
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
