@@ -14,11 +14,7 @@ public class ParentageObjectIdTransform extends ColumnTransform
 
         String objectId = String.valueOf(inputValue);
 
-        if (getInputValue("relationship") != null)
-        {
-            objectId = objectId + "-" + getInputValue("relationship");
-        }
-        else if (getInputValue("dam") != null)
+        if (getInputValue("dam") != null)
         {
             objectId = objectId + "-Dam";
         }

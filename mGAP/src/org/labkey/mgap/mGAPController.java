@@ -54,6 +54,8 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.UserSchema;
+import org.labkey.api.security.Group;
+import org.labkey.api.security.GroupManager;
 import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
@@ -82,6 +84,7 @@ import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
 import org.labkey.mgap.pipeline.mGapReleaseGenerator;
+import org.labkey.security.xml.GroupEnumType;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -425,15 +428,19 @@ public class mGAPController extends SpringActionController
                 transaction.commit();
             }
 
+            Set<User> allUsers = new HashSet<>();
+            allUsers.addAll(existingUsersGivenAccess);
+
             //send emails:
             for (SecurityManager.NewUserStatus st : newUserStatusList)
             {
                 SecurityManager.sendRegistrationEmail(getViewContext(), st.getEmail(), null, st, null);
+                allUsers.add(st.getUser());
             }
 
+            Container mGapContainer = mGAPManager.get().getMGapContainer();
             for (User u : existingUsersGivenAccess)
             {
-                Container mGapContainer = mGAPManager.get().getMGapContainer();
                 boolean isLDAP = SecurityManager.isLdapEmail(new ValidEmail(u.getEmail()));
 
                 MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
@@ -444,6 +451,14 @@ public class mGAPController extends SpringActionController
 
                 MailHelper.send(mail, getUser(), getContainer());
             }
+
+            Group g = GroupManager.getGroup(mGapContainer, mGAPManager.GROUP_NAME, GroupEnumType.SITE);
+            if (g == null)
+            {
+                g = SecurityManager.createGroup(ContainerManager.getRoot(), mGAPManager.GROUP_NAME);
+            }
+
+            SecurityManager.addMembers(g, allUsers);
 
             response.put("success", !errors.hasErrors());
 
