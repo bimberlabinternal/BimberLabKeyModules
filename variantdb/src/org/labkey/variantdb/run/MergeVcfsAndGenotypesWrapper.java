@@ -39,6 +39,8 @@ public class MergeVcfsAndGenotypesWrapper extends AbstractDiscvrSeqWrapper
         args.add("-O");
         args.add(outputVcf.getPath());
 
+        args.add("--ignore-variants-starting-outside-interval");
+
         execute(args);
         if (!outputVcf.exists())
         {
