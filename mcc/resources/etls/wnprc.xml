@@ -41,6 +41,7 @@
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
+                    <column>dam</column>
                     <column>sire</column>
                     <column>objectid</column>
                 </sourceColumns>
@@ -69,6 +70,7 @@
                     <column>Id</column>
                     <column>date</column>
                     <column>dam</column>
+                    <column>sire</column>
                     <column>objectid</column>
                 </sourceColumns>
                 <sourceFilters>
