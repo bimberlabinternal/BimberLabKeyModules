@@ -139,6 +139,7 @@
                     <column>omim</column>
                     <column>omim_phenotype</column>
                     <column>identifier</column>
+                    <column>cadd</column>
                     <column>objectId</column>
                     <column>af</column>
                 </sourceColumns>
