@@ -39,4 +39,4 @@ CREATE TABLE covidseq.samples (
   modifiedby int,
 
   constraint PK_samples PRIMARY KEY (rowid)
-)
+);
