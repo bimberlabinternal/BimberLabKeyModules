@@ -1,4 +1,20 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <!--<column name="releaseId" />-->
+        <column name="contig" />
+        <column name="position" />
+        <column name="reference" />
+        <column name="allele" />
+        <column name="af" />
+        <column name="cadd" />
+        <column name="source" />
+        <column name="reason" />
+        <column name="overlappingGenes" />
+        <column name="omim_phenotype" />
+        <column name="omim" />
+        <column name="description" />
+        <column name="jbrowse" />
+    </columns>
     <sorts>
         <sort column="contig" descending="false"/>
         <sort column="position" descending="false"/>

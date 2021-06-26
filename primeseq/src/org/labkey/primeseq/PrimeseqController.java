@@ -33,19 +33,15 @@ import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SqlExecutor;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
-import org.labkey.api.pipeline.PipeRoot;
-import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
-import org.labkey.api.security.permissions.AdminPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
-import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -188,51 +184,6 @@ public class PrimeseqController extends SpringActionController
             {
                 processContainer(child);
             }
-        }
-
-        @Override
-        public void validateCommand(Object o, Errors errors)
-        {
-
-        }
-
-        @NotNull
-        @Override
-        public URLHelper getSuccessURL(Object o)
-        {
-            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
-        }
-    }
-
-    @RequiresPermission(AdminPermission.class)
-    public class SyncMhcAction extends ConfirmAction<Object>
-    {
-        @Override
-        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
-        {
-            setTitle("Sync MHC Data from PRIMe");
-
-            return new HtmlView(HtmlString.of("This will attempt to sync MHC typing data from PRIMe to the current folder, creating all sequence records and workbooks.  Do you want to continue?"));
-        }
-
-        @Override
-        public boolean handlePost(Object o, BindException errors) throws Exception
-        {
-            try
-            {
-                PipeRoot pipelineRoot = PipelineService.get().findPipelineRoot(getContainer());
-                MhcMigrationPipelineJob job = new MhcMigrationPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, "PRIMe", "ONPRC/Core Facilities/Genetics Core/MHC_Typing/");
-                PipelineService.get().queueJob(job);
-            }
-            catch (Exception e)
-            {
-                _log.error(e);
-                errors.reject(ERROR_MSG, e.getMessage());
-                return false;
-
-            }
-
-            return true;
         }
 
         @Override
