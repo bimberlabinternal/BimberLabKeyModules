@@ -472,6 +472,7 @@
             </column>
             <column columnName="description">
                 <columnTitle>Description</columnTitle>
+                <displayWidth>150</displayWidth>
                 <displayColumnFactory>
                     <className>org.labkey.mgap.query.VariantDescriptionDisplayColumnFactory</className>
                 </displayColumnFactory>

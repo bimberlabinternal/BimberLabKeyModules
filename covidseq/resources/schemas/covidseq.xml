@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+
+ * Copyright (c) 2021 LabKey Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+
+ -->
+<tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\schemas\tableInfo.xsd"
+        xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <table tableName="samples" tableDbType="TABLE" useColumnOrder="true">
+        <tableTitle>Samples</tableTitle>
+        <javaCustomizer class="org.labkey.laboratory.query.SamplesCustomizer" />
+        <auditLogging>DETAILED</auditLogging>
+        <importTemplates>
+            <template label="Default Template" url="/query/exportExcelTemplate.view?schemaName=laboratory&amp;query.queryName=samples&amp;captionType=Label&amp;filenamePrefix=samples"/>
+            <template label="DNA Samples Template" url="/query/exportExcelTemplate.view?schemaName=laboratory&amp;query.queryName=samples&amp;captionType=Label&amp;filenamePrefix=samples&amp;query.viewName=DNA Samples"/>
+        </importTemplates>
+        <pkColumnName>rowid</pkColumnName>
+        <titleColumn>freezerid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <columnTitle>Row Id</columnTitle>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+            </column>
+            <column columnName="samplename">
+                <nullable>true</nullable>
+                <columnTitle>Sample Name</columnTitle>
+            </column>
+            <column columnName="patientid">
+                <nullable>true</nullable>
+                <columnTitle>Patient Id</columnTitle>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+            </column>
+            <column columnName="sampledate">
+                <columnTitle>Sample Date</columnTitle>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+            </column>
+            <column columnName="sampletype">
+                <nullable>true</nullable>
+                <columnTitle>Sample Type</columnTitle>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>sample_type</fkTable>
+                    <fkColumnName>type</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="samplesource">
+                <nullable>true</nullable>
+                <columnTitle>Sample Source</columnTitle>
+            </column>
+            <column columnName="status">
+                <columnTitle>Status</columnTitle>
+            </column>
+            <column columnName="gisaidId">
+                <nullable>true</nullable>
+                <columnTitle>GISAID ID</columnTitle>
+            </column>
+            <column columnName="county">
+                <nullable>true</nullable>
+                <columnTitle>County/Location</columnTitle>
+            </column>
+            <column columnName="country">
+                <nullable>true</nullable>
+                <columnTitle>Country</columnTitle>
+                <defaultValue>US</defaultValue>
+            </column>
+            <column columnName="comment">
+                <nullable>true</nullable>
+                <columnTitle>Comment</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+</tables>

@@ -1,3 +1,10 @@
+<h4>Release 2.1:</h4>
+<ul>
+    <li>This is an iterative improvement to the dataset, adding 275 additional animals.</li>
+    <li>We removed 2 animals (m05247 and m03764), which we believe are poor quality/contaminated samples.</li>
+    <li>There was an update to how all whole exome data is processed, applied across all data. We now run MarkDuplicates on the BAM file, to mark/ignore duplicate reads prior to variant calling. This should also remove some previous artifacts from the dataset.</li>
+</ul>
+
 <h4>Release 2.0:</h4>
 <ul>
     <li>Substantial revamp of all data. All samples have been realigned to the <a href="https://www.ncbi.nlm.nih.gov/assembly/GCF_003339765.1/">MMul_10 reference genome</a>, followed by our <a href="mgap-dataProcessing.view">standard GenotypeGVCFs pipeline</a>. The MMul_10 is the most complete rhesus macaque assembly to date, and we expect this should improve accuracy of variant calls. Further, because our data are now aligned to the same assembly as NCBI/Ensembl, it should be easier to translate between mGAP and other databases.</li>
