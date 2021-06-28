@@ -10,7 +10,11 @@ SELECT
   d.sire,
   d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
   d.objectid,
-  d.calculated_status
+  d.calculated_status,
+  CASE
+    WHEN (SELECT COUNT(f.flag.value) as total FROM study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
+    ELSE false
+  END as u24_status
 
 FROM "/data/Colonies/SNPRC/".study.demographics d
 
@@ -28,6 +32,10 @@ SELECT
   d.sire,
   d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
   d.objectid,
-  d.calculated_status
+  d.calculated_status,
+  CASE
+    WHEN (SELECT COUNT(f.flag.value) as total FROM study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
+    ELSE false
+  END as u24_status
 
 FROM "/data/Colonies/WNPRC/".study.demographics d

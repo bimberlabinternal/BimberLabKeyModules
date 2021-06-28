@@ -637,6 +637,9 @@
             <column columnName="calculated_status">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="u24_status">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="global_id">
                 <datatype>varchar</datatype>
             </column>
