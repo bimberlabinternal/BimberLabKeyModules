@@ -118,7 +118,7 @@
 
     </transforms>
 
-    <!--<incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified">-->
-        <!--<deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>-->
-    <!--</incrementalFilter>-->
+    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified">
+        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>
+    </incrementalFilter>
 </etl>

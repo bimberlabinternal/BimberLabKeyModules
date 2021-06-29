@@ -90,7 +90,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="2500">
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="500">
                 <columnTransforms>
                     <column source="AnimalId" target="Id"/>
                 </columnTransforms>
@@ -149,7 +149,7 @@
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >
-        <!--<deletedRowsSource schemaName="snprc_r24" queryName="RowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" remoteSource="SNPRC" timestampColumnName="modified" />-->
+        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>
     </incrementalFilter>
     <schedule>
         <!--11PM-->

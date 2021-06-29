@@ -5,7 +5,7 @@
     <transforms>
         <transform type="RemoteQueryTransformStep" id="deletes">
             <description>Copy to target</description>
-            <source remoteSource="SNPRC" schemaName="snprc_u24" queryName="RowsToDelete">
+            <source remoteSource="SNPRC" schemaName="snprc_r24" queryName="RowsToDelete">
                 <sourceColumns>
                     <column>modified</column>
                     <column>objectid</column>
