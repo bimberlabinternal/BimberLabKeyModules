@@ -3,7 +3,7 @@
     <name>SNPRC_Datasets</name>
     <!--NOTE: folder is: /Marmoset R24-->
     <!--See also: https://github.com/LabKey/snprcEHRModules/blob/develop/snprc_r24/resources/referenceStudy/datasets/datasets_metadata.xml-->
-    <description>SNPRC Clinical/Demographics Data</description>
+    <description>SNPRC Dataset Data</description>
     <transforms>
         <transform type="RemoteQueryTransformStep" id="demographics">
             <description>Copy to target</description>

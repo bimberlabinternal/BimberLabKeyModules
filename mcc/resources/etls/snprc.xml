@@ -21,7 +21,7 @@
             </taskref>
         </transform>
 
-        <transform id="datasets" type="TaskrefTransformStep">
+        <transform id="parentage" type="TaskrefTransformStep">
             <taskref ref="org.labkey.di.steps.QueueJobTask">
                 <settings>
                     <setting name="transformId" value="{MCC}/snprc-parentage"/>
