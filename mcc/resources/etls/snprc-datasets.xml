@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <etl xmlns="http://labkey.org/etl/xml" standalone="false">
-    <name>SNPRC_Data</name>
+    <name>SNPRC_Datasets</name>
     <!--NOTE: folder is: /Marmoset R24-->
     <!--See also: https://github.com/LabKey/snprcEHRModules/blob/develop/snprc_r24/resources/referenceStudy/datasets/datasets_metadata.xml-->
     <description>SNPRC Clinical/Demographics Data</description>
