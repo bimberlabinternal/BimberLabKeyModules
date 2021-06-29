@@ -173,14 +173,17 @@
         <columns>
             <column columnName="objectid">
                 <isUserEditable>false</isUserEditable>
+                <isHidden>false</isHidden>
                 <columnTitle>Key</columnTitle>
+                <shownInDetailsView>true</shownInDetailsView>
             </column>
             <column columnName="source_modified">
                 <isUserEditable>false</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>
                 <shownInUpdateView>false</shownInUpdateView>
-                <nullable>true</nullable>
-                <isHidden>true</isHidden>
+                <shownInDetailsView>true</shownInDetailsView>
+                <nullable>false</nullable>
+                <isHidden>false</isHidden>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
