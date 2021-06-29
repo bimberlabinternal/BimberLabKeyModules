@@ -31,7 +31,8 @@
                     <column source="status" target="calculated_status"/>
                 </columnTransforms>
                 <alternateKeys>
-                    <column name="objectid"/>
+                    <!--NOTE: this is a LK bug-->
+                    <column name="participantid"/>
                 </alternateKeys>
             </destination>
 
@@ -149,7 +150,8 @@
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >
-        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectid" deletedSourceKeyColumnName="objectid" timestampColumnName="source_modified"/>
+        <!--TODO: need to fix LK FilterStrategy.init() bug before this can be enabled-->
+        <!--<deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectid" deletedSourceKeyColumnName="objectid" timestampColumnName="source_modified"/>-->
     </incrementalFilter>
     <schedule>
         <!--11PM-->

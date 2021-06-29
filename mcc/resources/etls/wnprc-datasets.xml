@@ -23,7 +23,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="Demographics" targetOption="merge" bulkLoad="true">
                 <constants>
                     <column name="colony" type="VARCHAR" value="WNPRC"/>
                 </constants>
@@ -31,7 +31,8 @@
                     <column source="status" target="calculated_status"/>
                 </columnTransforms>
                 <alternateKeys>
-                    <column name="objectid"/>
+                    <!--Note: this is a LK bug-->
+                    <column name="participantid"/>
                 </alternateKeys>
             </destination>
         </transform>
@@ -50,7 +51,7 @@
         <!--<column>objectid</column>-->
         <!--</sourceColumns>-->
         <!--</source>-->
-        <!--<destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true">-->
+        <!--<destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true">-->
         <!--<alternateKeys>-->
         <!--<column name="objectid"/>-->
         <!--</alternateKeys>-->
@@ -89,7 +90,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="flags" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="flags" targetOption="merge" bulkLoad="true">
                 <columnTransforms>
                     <column source="title" target="flag" transformClass="org.labkey.mcc.etl.ProjectAssignmentTransform"/>
                 </columnTransforms>
@@ -109,7 +110,7 @@
         <!--<column>objectid</column>-->
         <!--</sourceColumns>-->
         <!--</source>-->
-        <!--<destination schemaName="study" queryName="deaths" targetOption="truncate" bulkLoad="true">-->
+        <!--<destination schemaName="study" queryName="deaths" targetOption="merge" bulkLoad="true">-->
         <!--<alternateKeys>-->
         <!--<column name="objectid"/>-->
         <!--</alternateKeys>-->
@@ -119,6 +120,7 @@
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified">
-        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>
+        <!--TODO: need to fix LK FilterStrategy.init() bug before this can be enabled-->
+        <!--<deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>-->
     </incrementalFilter>
 </etl>
