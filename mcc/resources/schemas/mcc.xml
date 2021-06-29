@@ -166,10 +166,10 @@
     </table>
 
     <table tableName="rowsToDelete" tableDbType="TABLE" useColumnOrder="true">
-        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
-        <pkColumnName>rowid</pkColumnName>
+        <!--<javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />-->
+        <pkColumnName>objectid</pkColumnName>
         <tableTitle>ETL Rows To Delete</tableTitle>
-        <auditLogging>DETAILED</auditLogging>
+        <auditLogging>NONE</auditLogging>
         <columns>
             <column columnName="objectid">
                 <isUserEditable>false</isUserEditable>

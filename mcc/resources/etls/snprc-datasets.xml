@@ -149,7 +149,7 @@
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >
-        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>
+        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectid" deletedSourceKeyColumnName="objectid" timestampColumnName="source_modified"/>
     </incrementalFilter>
     <schedule>
         <!--11PM-->
