@@ -106,7 +106,7 @@
             <description>Copy to target</description>
             <source remoteSource="SNPRC" schemaName="study" queryName="AccountAssignments">
                 <sourceColumns>
-                    <column>Id</column>
+                    <column>AnimalId</column>
                     <column>date</column>
                     <column>enddate</column>
                     <column>assignment</column>
