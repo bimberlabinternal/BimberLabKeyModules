@@ -81,27 +81,6 @@
 
         <!--</transform>-->
 
-        <transform type="RemoteQueryTransformStep" id="weight">
-            <description>Copy to target</description>
-            <source remoteSource="SNPRC" schemaName="study" queryName="weight" sourceTimeout="0">
-                <sourceColumns>
-                    <column>AnimalId</column>
-                    <column>date</column>
-                    <column>weight</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="500">
-                <columnTransforms>
-                    <column source="AnimalId" target="Id"/>
-                </columnTransforms>
-                <alternateKeys>
-                    <column name="objectid"/>
-                </alternateKeys>
-            </destination>
-
-        </transform>
-
         <transform type="RemoteQueryTransformStep" id="assignment">
             <description>Copy to target</description>
             <source remoteSource="SNPRC" schemaName="study" queryName="AccountAssignments">
@@ -147,6 +126,28 @@
             <!--</destination>-->
 
         <!--</transform>-->
+
+        <transform type="RemoteQueryTransformStep" id="weight">
+            <description>Copy to target</description>
+            <source remoteSource="SNPRC" schemaName="study" queryName="weight" sourceTimeout="0">
+                <sourceColumns>
+                    <column>AnimalId</column>
+                    <column>date</column>
+                    <column>weight</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="20000">
+                <columnTransforms>
+                    <column source="AnimalId" target="Id"/>
+                </columnTransforms>
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+
+        </transform>
+
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >
