@@ -59,25 +59,22 @@
 
         <!--</transform>-->
 
-        <!--<transform type="RemoteQueryTransformStep" id="weight">-->
-        <!--<description>Copy to target</description>-->
-        <!--<source remoteSource="WNPRC" schemaName="wnprc_u24" queryName="WeightStaging">-->
-        <!--<sourceColumns>-->
-        <!--<column>AnimalId</column>-->
-        <!--<column>date</column>-->
-        <!--<column>weight</column>-->
-        <!--<column>objectid</column>-->
-        <!--</sourceColumns>-->
-        <!--</source>-->
-        <!--<destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true">-->
-        <!--<columnTransforms>-->
-        <!--<column source="AnimalId" target="Id"/>-->
-        <!--</columnTransforms>-->
-        <!--<alternateKeys>-->
-        <!--<column name="objectid"/>-->
-        <!--</alternateKeys>-->
-        <!--</destination>-->
-        <!--</transform>-->
+        <transform type="RemoteQueryTransformStep" id="weight">
+            <description>Copy to target</description>
+            <source remoteSource="WNPRC" schemaName="study" queryName="weight">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>weight</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
 
         <transform type="RemoteQueryTransformStep" id="assignment">
             <description>Copy to target</description>
