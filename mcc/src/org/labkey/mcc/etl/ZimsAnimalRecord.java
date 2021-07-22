@@ -431,6 +431,24 @@ public class ZimsAnimalRecord
 
         }
 
+        @JacksonXmlProperty(localName = "MeasurementDateTime")
+        public Date _measurementDateTime;
+
+        @JacksonXmlProperty(localName = "EstimateFlag")
+        @JsonDeserialize(using = CaseInsensitiveBoolean.class)
+        public boolean _estimateFlag = false;
+
+        @JacksonXmlProperty(localName = "MedicalRecordFlag")
+        @JsonDeserialize(using = CaseInsensitiveBoolean.class)
+        public boolean _medicalRecordFlag = true;
+
+        @JacksonXmlProperty(localName = "ProvisionalFlag")
+        @JsonDeserialize(using = CaseInsensitiveBoolean.class)
+        public boolean _provisionalFlag = false;
+
+        @JacksonXmlProperty(localName = "UOMAbbr")
+        public String _uOMAbbr;
+
         @JacksonXmlProperty(localName = "MeasurementValue")
         public Double _measurementValue;
 
@@ -443,10 +461,66 @@ public class ZimsAnimalRecord
         {
             _measurementValue = measurementValue;
         }
+
+        public Date getMeasurementDateTime()
+        {
+            return _measurementDateTime;
+        }
+
+        public void setMeasurementDateTime(Date measurementDateTime)
+        {
+            _measurementDateTime = measurementDateTime;
+        }
+
+        public boolean getEstimateFlag()
+        {
+            return _estimateFlag;
+        }
+
+        public void setEstimateFlag(boolean estimateFlag)
+        {
+            _estimateFlag = estimateFlag;
+        }
+
+        public boolean getMedicalRecordFlag()
+        {
+            return _medicalRecordFlag;
+        }
+
+        public void setMedicalRecordFlag(boolean medicalRecordFlag)
+        {
+            _medicalRecordFlag = medicalRecordFlag;
+        }
+
+        public boolean getProvisionalFlag()
+        {
+            return _provisionalFlag;
+        }
+
+        public void setProvisionalFlag(boolean provisionalFlag)
+        {
+            _provisionalFlag = provisionalFlag;
+        }
+
+        public String getuOMAbbr()
+        {
+            return _uOMAbbr;
+        }
+
+        public void setuOMAbbr(String uOMAbbr)
+        {
+            _uOMAbbr = uOMAbbr;
+        }
+
+        @JsonIgnore
+        public boolean shouldInclude()
+        {
+            return !(_provisionalFlag || !_medicalRecordFlag || _estimateFlag);
+        }
     }
 
     @JsonIgnore
-    private String getLocalId()
+    public String getLocalId()
     {
         if (_identifiers == null)
         {
@@ -611,7 +685,7 @@ public class ZimsAnimalRecord
         public Boolean deserialize(JsonParser p, DeserializationContext ctxt) throws IOException
         {
             String val = p.getText();
-            return p == null ? null : Boolean.parseBoolean(val.toLowerCase());
+            return val == null || val.isEmpty() ? null : Boolean.parseBoolean(val.toLowerCase());
         }
     }
 

@@ -3,6 +3,7 @@ package org.labkey.mcc.etl;
 import com.google.common.io.Files;
 import org.apache.xmlbeans.XmlException;
 import org.jetbrains.annotations.NotNull;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.PropertyManager;
@@ -91,8 +92,13 @@ public class ZimsImportTask implements TaskRefTask
 
         Date lastRun = getLastRun(job.getContainer());
         List<Map<String, Object>> demographicsToInsert = new ArrayList<>();
+        List<Map<String, Object>> weightToInsert = new ArrayList<>();
 
         Set<String> skippedFiles = new HashSet<>();
+        Set<String> weightSkipped = new HashSet<>();
+        Set<String> weightNotKg = new HashSet<>();
+        Set<String> unknownUnits = new HashSet<>();
+
         File[] xmls = dir.listFiles(x -> x.getName().endsWith(".xml"));
         for (File x : xmls)
         {
@@ -107,6 +113,33 @@ public class ZimsImportTask implements TaskRefTask
             try
             {
                 demographicsToInsert.add(r.toDemographicsRecord());
+
+                if (r.getWeights() != null)
+                {
+                    for (ZimsAnimalRecord.WeightRecord wr : r.getWeights())
+                    {
+                        if (!wr.shouldInclude())
+                        {
+                            weightSkipped.add(x.getName());
+                            continue;
+                        }
+
+                        if (!"kg".equalsIgnoreCase(wr.getuOMAbbr()))
+                        {
+                            weightNotKg.add(x.getName());
+                            unknownUnits.add(wr.getuOMAbbr());
+                            continue;
+                        }
+
+                        Map<String, Object> m = new CaseInsensitiveHashMap<>();
+                        m.put("Id", r.getLocalId());
+                        m.put("date", wr.getMeasurementDateTime());
+                        m.put("weight", wr.getMeasurementValue());
+                        m.put("QCStateLabel", "Completed");
+
+                        weightToInsert.add(m);
+                    }
+                }
             }
             catch (IllegalStateException e)
             {
@@ -125,34 +158,16 @@ public class ZimsImportTask implements TaskRefTask
             }
         }
 
-        job.getLogger().info("Total records to update: " + demographicsToInsert.size());
+        job.getLogger().info("Total demographics records to update: " + demographicsToInsert.size());
         if (!demographicsToInsert.isEmpty())
         {
-            TableInfo ti = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), "study").getTable("demographics");
-            try
-            {
-                Map<String, Object> configParams = new HashMap<>();
-                configParams.put("dataSource", "etl");
+            insertDatasetRecords(job, demographicsToInsert, "demographics");
+        }
 
-                Set<String> uniqueIds = demographicsToInsert.stream().map(x -> x.get("Id")).map(Object::toString).collect(Collectors.toSet());
-                Map<String, Object>[] existing = new TableSelector(ti, PageFlowUtil.set("lsid", "Id"), new SimpleFilter(FieldKey.fromString("Id"), uniqueIds, CompareType.IN), null).getMapArray();
-                if (existing.length > 0)
-                {
-                    List<Map<String, Object>> toDelete = Arrays.stream(existing).collect(Collectors.toList());
-                    ti.getUpdateService().deleteRows(job.getUser(), job.getContainer(), toDelete, null, configParams);
-                }
-
-                BatchValidationException errors = new BatchValidationException();
-                ti.getUpdateService().insertRows(job.getUser(), job.getContainer(), demographicsToInsert, errors, null, configParams);
-                if (errors.hasErrors())
-                {
-                    throw errors;
-                }
-            }
-            catch (InvalidKeyException | DuplicateKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
-            {
-                throw new PipelineJobException(e);
-            }
+        job.getLogger().info("Total weight records to update: " + weightToInsert.size());
+        if (!weightToInsert.isEmpty())
+        {
+            insertDatasetRecords(job, weightToInsert, "weight");
         }
 
         if (!skippedFiles.isEmpty())
@@ -161,10 +176,57 @@ public class ZimsImportTask implements TaskRefTask
             skippedFiles.forEach(x -> job.getLogger().info(x));
         }
 
+        if (!weightSkipped.isEmpty())
+        {
+            job.getLogger().info("The following files had weight records that could not be processed and were skipped:");
+            weightSkipped.forEach(x -> job.getLogger().info(x));
+        }
+
+        if (!weightNotKg.isEmpty())
+        {
+            job.getLogger().info("The following files had weights that were not in kilograms and were skipped:");
+            weightNotKg.forEach(x -> job.getLogger().info(x));
+        }
+
+        if (!unknownUnits.isEmpty())
+        {
+            job.getLogger().info("The following weight units were encountered and not in kilograms:");
+            unknownUnits.forEach(x -> job.getLogger().info(x));
+        }
+
         job.setStatus(PipelineJob.TaskStatus.running);
         saveLastRun(job.getContainer(), jobStart);
 
         return new RecordedActionSet();
+    }
+
+    private void insertDatasetRecords(PipelineJob job, List<Map<String, Object>> toInsert, String datasetName) throws PipelineJobException
+    {
+        TableInfo ti = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), "study").getTable(datasetName);
+        try
+        {
+            Map<String, Object> configParams = new HashMap<>();
+            configParams.put("dataSource", "etl");
+
+            Set<String> uniqueIds = toInsert.stream().map(x -> x.get("Id")).map(Object::toString).collect(Collectors.toSet());
+            Map<String, Object>[] existing = new TableSelector(ti, PageFlowUtil.set("lsid", "Id"), new SimpleFilter(FieldKey.fromString("Id"), uniqueIds, CompareType.IN), null).getMapArray();
+            if (existing.length > 0)
+            {
+                List<Map<String, Object>> toDelete = Arrays.stream(existing).collect(Collectors.toList());
+                ti.getUpdateService().deleteRows(job.getUser(), job.getContainer(), toDelete, null, configParams);
+            }
+
+            BatchValidationException errors = new BatchValidationException();
+            ti.getUpdateService().insertRows(job.getUser(), job.getContainer(), toInsert, errors, null, configParams);
+            if (errors.hasErrors())
+            {
+                throw errors;
+            }
+        }
+        catch (InvalidKeyException | DuplicateKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+        {
+            throw new PipelineJobException(e);
+        }
     }
 
     public static void saveLastRun(Container container, Date jobStart)
