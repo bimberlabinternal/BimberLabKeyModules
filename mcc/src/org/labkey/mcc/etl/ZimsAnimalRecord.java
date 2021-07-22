@@ -715,24 +715,4 @@ public class ZimsAnimalRecord
             throw new PipelineJobException(e);
         }
     }
-
-    public static class TestCase extends Assert
-    {
-        private static final Logger _log = LogManager.getLogger(TestCase.class);
-
-        @Test
-        public void testParse() throws Exception
-        {
-            File f = new File("/users/Bimber/Downloads/ZIMS/Animal/5511605.xml");
-
-            ZimsAnimalRecord rec = ZimsAnimalRecord.processAnimal(f, _log);
-            String id = rec.getBasicInfo().getGan();
-            Map<String, Object> record = rec.toDemographicsRecord();
-
-            Assert.assertEquals("5511605", id);
-        }
-    }
-
-
-
 }

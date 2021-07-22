@@ -15,6 +15,10 @@ function onInit(event, helper){
 }
 
 function onUpsert(helper, scriptErrors, row, oldRow){
+    if (row.status && row.status.match(/Undetermined/)) {
+        row.status = 'Undetermined';
+    }
+
     if (!row.calculated_status && row.status){
         row.calculated_status = row.status;
     }
@@ -34,6 +38,9 @@ function onUpsert(helper, scriptErrors, row, oldRow){
             case 'f':
             case 'Female':
                 row.gender = 'f';
+                break;
+            case 'Undetermined':
+                row.gender = 'Unknown';
                 break;
         }
     }

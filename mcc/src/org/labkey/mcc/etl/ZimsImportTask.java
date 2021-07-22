@@ -161,7 +161,9 @@ public class ZimsImportTask implements TaskRefTask
             skippedFiles.forEach(x -> job.getLogger().info(x));
         }
 
+        job.setStatus(PipelineJob.TaskStatus.running);
         saveLastRun(job.getContainer(), jobStart);
+
         return new RecordedActionSet();
     }
 

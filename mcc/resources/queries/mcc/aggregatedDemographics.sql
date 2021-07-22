@@ -39,3 +39,22 @@ SELECT
   END as u24_status
 
 FROM "/data/Colonies/WNPRC/".study.demographics d
+
+UNION ALL
+
+SELECT
+    d.Id,
+    d.date,
+    d.species,
+    d.gender,
+    d.birth,
+    d.death,
+    'U NEB' as colony,
+    d.dam,
+    d.sire,
+    d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
+    d.objectid,
+    d.calculated_status,
+    false as u24_status
+
+FROM "/data/Colonies/UNO/".study.demographics d
