@@ -68,7 +68,7 @@ function reducer(coInvestigators, action: Action) {
         </div>
 
         <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-          <Input id="investigator-email" placeholder="Email Address" value={tempInstitution} onChange={(e) => setTempInstitution(e.currentTarget.value)} />
+          <Input id="investigator-email" placeholder="Institution" value={tempInstitution} onChange={(e) => setTempInstitution(e.currentTarget.value)} />
         </div>
 
         <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
