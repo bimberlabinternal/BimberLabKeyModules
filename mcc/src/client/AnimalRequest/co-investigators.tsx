@@ -31,7 +31,7 @@ function reducer(coInvestigators, action: Action) {
     return [...coInvestigators]
   }
   
-  export default function CoInvestigators() {
+  export default function CoInvestigators(props) {
     const [tempFirstName, setTempFirstName] = useState("")
     const [tempLastName, setTempLastName] = useState("")
     const [tempMI, setTempMI] = useState("")
@@ -76,7 +76,7 @@ function reducer(coInvestigators, action: Action) {
         </div>
 
         <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-          <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-px-4 tw-border-none tw-rounded" onClick={addInvestigator} value="Add" />
+          <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={addInvestigator} value="Add" />
         </div>
 
         <CoInvestigatorTable coInvestigators={coInvestigators} onRemove={(index) => dispatch({type: "REMOVE", index})}/>

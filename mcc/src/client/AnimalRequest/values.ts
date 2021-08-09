@@ -1,5 +1,14 @@
 export const earlyInvestigatorTooltip = "An Early Stage Investigator (ESI) is a new investigator that has completed his or her terminal research degree or medical residency—whichever date is later—within the past 10 years and has not yet competed successfully for a substantial, competing NIH research grant."
 
+export const experimentalRationalePlaceholder = "Experimental rationale and justification for the selection of marmosets"
+export const otherCharacteristicsPlaceholder = "Other characteristics (ie. Sex, age, disease state, genotype...)"
+export const methodsProposedPlaceholder = "Methods proposed and investigators' experience in the methods"
+export const collaborationsPlaceholder = "Any collaborations, pilot studies, and/or publications"
+export const ofInterestCentersPlaceholder = "Of interest NIH Institutes(s)/Center(s)"
+export const animalWellfarePlaceholder = "Animal welfare (proposed care and use)"
+
+export const certificationLabel = "I certify and I have obtained approval for this study from my institution."
+
 export const institutionTypeOptions = [
     { value: 'minority-serving', label: 'Minority serving institution' },
     { value: 'non-profit', label: 'Non-profit/not-for-profit research institution' },
@@ -28,4 +37,10 @@ export const researchAreaOptions = [
     {value: 'new-colony-trans', label: 'Set up new breeding colony—transgenics'},
     {value: 'new-colony-non-trans', label: 'Set up new breeding colony—not transgenics'},
     {value: 'other', label: 'Other (specify)'},
+]
+
+export const IACUCApprovalOptions = [
+    { value: 'not-started', label: 'Not Started' },
+    { value: 'provisional', label: 'Provisional' },
+    { value: 'approved', label: 'Approved' },
 ]
