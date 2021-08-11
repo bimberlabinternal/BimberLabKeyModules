@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Query } from '@labkey/api';
 
 import Tooltip from './tooltip'
@@ -21,24 +21,30 @@ import {
 } from './values'
 
 
+function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    const data = new FormData(e.currentTarget)
+    console.log(data.get("investigator-last-name"))
+}
+
 
 export function AnimalRequest() {
      return (
-        <>
-        <form className="tw-w-full tw-max-w-4xl">
+        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit}>
             <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                 <Title text="1. Principal Investigator*"/>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-last-name" placeholder="Last Name"/>
+                    <Input id="investigator-last-name" required={true} placeholder="Last Name"/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-first-name" placeholder="First Name"/>
+                    <Input id="investigator-first-name" required={true} placeholder="First Name"/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-middle-initial" placeholder="Middle Initial"/>
+                    <Input id="investigator-middle-initial" required={true} placeholder="Middle Initial"/>
                 </div>
             </div>
 
@@ -52,7 +58,7 @@ export function AnimalRequest() {
 
 
                 <div className="tw-w-full tw-px-3 tw-mt-6">
-                    <YesNoRadio id="is-principal-investigator" />
+                    <YesNoRadio id="is-principal-investigator" required={true}/>
                 </div>
             </div>
 
@@ -60,19 +66,19 @@ export function AnimalRequest() {
                 <Title text="3. Affiliated research institution*"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-name" placeholder="Name"/>
+                    <Input id="institution-name" placeholder="Name" required={true}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-city" placeholder="City"/>
+                    <Input id="institution-city" placeholder="City" required={true}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-state" placeholder="State"/>
+                    <Input id="institution-state" placeholder="State" required={true}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-country" placeholder="Country"/>
+                    <Input id="institution-country" placeholder="Country" required={true}/>
                 </div>
             </div>
 
@@ -88,15 +94,15 @@ export function AnimalRequest() {
                 <Title text="5. Institution Signing Official*"/>
 
                 <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="official-last-name" placeholder="Last Name"/>
+                    <Input id="official-last-name" placeholder="Last Name" required={true}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="official-first-name" placeholder="First Name"/>
+                    <Input id="official-first-name" placeholder="First Name" required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="official-email" placeholder="Email Address"/>
+                    <Input id="official-email" placeholder="Email Address" required={true}/>
                 </div>
             </div>
 
@@ -110,7 +116,7 @@ export function AnimalRequest() {
                 <Title text="7. Existing or proposed funding source*"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Select id="funding-source" options={fundingSourceOptions} />
+                    <Select id="funding-source" options={fundingSourceOptions} required={true}/>
                 </div>
             </div>
              
@@ -118,24 +124,24 @@ export function AnimalRequest() {
                 <Title text="8. Research Use Statement*"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <TextArea id="experiment-rationale" placeholder={experimentalRationalePlaceholder}/>
+                    <TextArea id="experiment-rationale" placeholder={experimentalRationalePlaceholder} required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <Title text="Number of animals needed:&nbsp;&nbsp;&nbsp;&nbsp;"/>
-                    <InputNumber id="number-of-animals"/>
+                    <InputNumber id="number-of-animals" required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <TextArea id="other-characteristics" placeholder={otherCharacteristicsPlaceholder}/>
+                    <TextArea id="other-characteristics" placeholder={otherCharacteristicsPlaceholder} required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <TextArea id="methods-proposed" placeholder={methodsProposedPlaceholder}/>
+                    <TextArea id="methods-proposed" placeholder={methodsProposedPlaceholder} required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <TextArea id="collaborations" placeholder={collaborationsPlaceholder}/>
+                    <TextArea id="collaborations" placeholder={collaborationsPlaceholder} required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6 tw-mt-6">
@@ -144,12 +150,12 @@ export function AnimalRequest() {
                     </div>
 
                     <div className="tw-mb-6">
-                        <YesNoRadio id="is-planning-to-breed-animals" />
+                        <YesNoRadio id="is-planning-to-breed-animals" required={true}/>
                     </div>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <TextArea id="of-interest-centers" placeholder={ofInterestCentersPlaceholder}/>
+                    <TextArea id="of-interest-centers" placeholder={ofInterestCentersPlaceholder} required={true}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -166,24 +172,24 @@ export function AnimalRequest() {
 
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                         <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <input type="radio" name="existing-marmoset-colony" value="existing"/>
+                            <input type="radio" name="existing-marmoset-colony" value="existing" required/>
                             <label className="tw-text-gray-700 ml-1">Existing marmoset colony</label>
                         </div>
 
                         <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <input type="radio" name="existing-marmoset-colony" value="not-existing"/>
+                            <input type="radio" name="existing-marmoset-colony" value="not-existing" required/>
                             <label className="tw-text-gray-700 ml-1">No existing marmoset colony</label>
                         </div>
                     </div>
 
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                         <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <input type="radio" name="existing-nhp-facilities" value="existing"/>
+                            <input type="radio" name="existing-nhp-facilities" value="existing" required/>
                             <label className="tw-text-gray-700 ml-1">Existing NHP facilities</label>
                         </div>
 
                         <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <input type="radio" name="existing-nhp-facilities" value="not-existing"/>
+                            <input type="radio" name="existing-nhp-facilities" value="not-existing" required/>
                             <label className="tw-text-gray-700 ml-1">No existing NHP facilities</label>
                         </div>
                     </div>
@@ -191,11 +197,11 @@ export function AnimalRequest() {
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="animal-welfare" placeholder={animalWellfarePlaceholder}/>
+                        <TextArea id="animal-welfare" placeholder={animalWellfarePlaceholder} required={true}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <input type="checkbox" name="certify"/>
+                        <input type="checkbox" name="certify" required={true}/>
                         <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
                     </div>
                 </div>
@@ -204,15 +210,15 @@ export function AnimalRequest() {
                     <Title text="Attending veterinarian"/>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-last-name" placeholder="Last Name"/>
+                        <Input id="vet-last-name" placeholder="Last Name" required={true}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-first-name" placeholder="First Name"/>
+                        <Input id="vet-first-name" placeholder="First Name" required={true}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-email" placeholder="Email Address"/>
+                        <Input id="vet-email" placeholder="Email Address" required={true}/>
                     </div>
                 </div>
 
@@ -220,7 +226,7 @@ export function AnimalRequest() {
                     <Title text="IACUC Approval"/>
 
                     <div className="tw-w-full tw-px-3 md:tw-mb-0">
-                        <Select id="iacuc-approval" options={IACUCApprovalOptions} />
+                        <Select id="iacuc-approval" options={IACUCApprovalOptions} required={true}/>
                     </div>
                 </div>
             </div>
@@ -229,6 +235,5 @@ export function AnimalRequest() {
                 <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded">Submit</button>
             </div>
         </form>
-        </>
      )
 }
