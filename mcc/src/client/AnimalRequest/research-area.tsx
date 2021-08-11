@@ -10,8 +10,6 @@ export default function ResearchArea(props) {
     const [displayOther, setDisplayOther] = useState(false);
 
     function setDisplayOtherField(value) {
-        console.log(value)
-        console.log(displayOther)
         if(value == "other") {
             setDisplayOther(true)
         } else {

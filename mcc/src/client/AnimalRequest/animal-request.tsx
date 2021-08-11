@@ -114,7 +114,7 @@ export function AnimalRequest() {
                 </div>
             </div>
              
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+            <div className="tw-flex tw-flex-wrap tw-mx-2">
                 <Title text="8. Research Use Statement*"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -214,16 +214,18 @@ export function AnimalRequest() {
                     </div>
                 </div>
 
-                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                <div className="tw-flex tw-flex-wrap tw-mx-2">
                     <Title text="IACUC Approval"/>
 
-                    <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                    <div className="tw-w-full tw-px-3 md:tw-mb-0">
                         <Select id="iacuc-approval" options={IACUCApprovalOptions} />
                     </div>
                 </div>
             </div>
 
-            <button className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded">Submit</button>
+            <div className="tw-flex tw-flex-wrap tw-mx-2">
+                <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded">Submit</button>
+            </div>
         </form>
         </>
      )
