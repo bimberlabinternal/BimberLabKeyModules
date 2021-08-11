@@ -25,7 +25,47 @@ function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     const data = new FormData(e.currentTarget)
+
     console.log(data.get("investigator-last-name"))
+    console.log(data.get("investigator-first-name"))
+    console.log(data.get("investigator-middle-initial"))
+
+    console.log(data.get("is-principal-investigator"))
+
+    console.log(data.get("institution-name"))
+    console.log(data.get("institution-city"))
+    console.log(data.get("institution-state"))
+    console.log(data.get("institution-country"))
+
+    console.log(data.get("institution-type"))
+    
+    console.log(data.get("official-last-name"))
+    console.log(data.get("official-first-name"))
+    console.log(data.get("official-email"))
+
+    console.log(data.get("funding-source"))
+
+    console.log(data.get("experiment-rationale"))
+    console.log(data.get("number-of-animals"))
+    console.log(data.get("other-characteristics"))
+    console.log(data.get("methods-proposed"))
+    console.log(data.get("collaborations"))
+    console.log(data.get("is-planning-to-breed-animals"))
+    console.log(data.get("of-interest-centers"))
+
+    console.log(data.get("research-area-other-specify"))
+    console.log(data.get("existing-marmoset-colony"))
+    console.log(data.get("existing-nhp-facilities"))
+
+    console.log(data.get("animal-welfare"))
+    console.log(data.get("certify"))
+
+
+    console.log(data.get("vet-last-name"))
+    console.log(data.get("vet-first-name"))
+    console.log(data.get("vet-email"))
+
+    console.log(data.get("iacuc-approval"))
 }
 
 

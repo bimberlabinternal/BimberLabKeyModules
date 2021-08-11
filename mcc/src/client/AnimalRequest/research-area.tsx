@@ -15,6 +15,8 @@ export default function ResearchArea(props) {
         } else {
             setDisplayOther(false)
         }
+        console.log(value)
+        console.log(displayOther)
     }
 
     return (
@@ -24,7 +26,7 @@ export default function ResearchArea(props) {
             </div>
 
             <div className="tw-w-full tw-px-3 tw-mb-6">
-                <Input id="other-specify" placeholder="Please specify" display={displayOther} required={displayOther}/>
+                <Input id={props.id + "-other-specify"} placeholder="Please specify" display={displayOther} required={displayOther}/>
             </div>
         </>
     )
