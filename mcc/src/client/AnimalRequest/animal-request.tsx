@@ -51,7 +51,7 @@ export function AnimalRequest() {
                 </div>
 
 
-                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0 tw-mt-6">
+                <div className="tw-w-full tw-px-3 tw-mt-6">
                     <YesNoRadio id="is-principal-investigator" />
                 </div>
             </div>
@@ -138,12 +138,14 @@ export function AnimalRequest() {
                     <TextArea id="collaborations" placeholder={collaborationsPlaceholder}/>
                 </div>
 
-                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0 tw-mt-6">
+                <div className="tw-w-full tw-px-3 tw-mb-6 tw-mt-6">
                     <div className="tw-mb-6">
                         <Title text="Do you plan to breed animals?"/>
                     </div>
 
-                    <YesNoRadio id="is-planning-to-breed-animals" />
+                    <div className="tw-mb-6">
+                        <YesNoRadio id="is-planning-to-breed-animals" />
+                    </div>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
