@@ -5,7 +5,7 @@ import Input from './input'
 import Title from './title'
 
 export default function CoInvestigators(props) {
-  const [coInvestigators, setCoInvestigators] = useState(new Set([nanoid()]))
+  const [coInvestigators, setCoInvestigators] = useState(new Set())
  
   function addInvestigator() {
     coInvestigators.add(nanoid())
@@ -13,7 +13,6 @@ export default function CoInvestigators(props) {
   }
 
   function removeCoInvestigator(uuid) {
-    console.log(uuid)
     coInvestigators.delete(uuid)
     setCoInvestigators(new Set(coInvestigators))
   }
@@ -28,9 +27,7 @@ export default function CoInvestigators(props) {
             </div>
 
             <div className="tw-flex tw-flex-wrap tw-w-full md:tw-w-1/2 md:tw-mb-0">
-              {coInvestigators.size > 1 && 
                 <input type="button" className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-2 tw-px-4 tw-border-none tw-rounded" onClick={() => removeCoInvestigator(uuid)} value="Remove" />
-              }
             </div>
           </div>
 
