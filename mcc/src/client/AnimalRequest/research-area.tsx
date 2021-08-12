@@ -15,8 +15,6 @@ export default function ResearchArea(props) {
         } else {
             setDisplayOther(false)
         }
-        console.log(value)
-        console.log(displayOther)
     }
 
     return (

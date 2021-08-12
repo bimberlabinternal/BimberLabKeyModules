@@ -43,6 +43,8 @@ function handleSubmit(e: FormEvent) {
     console.log(data.get("official-first-name"))
     console.log(data.get("official-email"))
 
+    console.log(data.get("coinvestigators-0-lastName"))
+
     console.log(data.get("funding-source"))
 
     console.log(data.get("experiment-rationale"))
@@ -66,6 +68,10 @@ function handleSubmit(e: FormEvent) {
     console.log(data.get("vet-email"))
 
     console.log(data.get("iacuc-approval"))
+
+    /*Query.saveRows({
+        
+      })*/
 }
 
 
