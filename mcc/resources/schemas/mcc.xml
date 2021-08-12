@@ -342,6 +342,32 @@
             <nullable>false</nullable>
           </column>
         </columns>
+
+        <column columnName="container">
+                <isHidden>true</isHidden>
+        </column>
+        <column columnName="createdby">
+            <isHidden>true</isHidden>
+        </column>
+        <column columnName="created">
+            <isUserEditable>false</isUserEditable>
+            <shownInInsertView>false</shownInInsertView>
+            <shownInUpdateView>false</shownInUpdateView>
+            <nullable>true</nullable>
+            <scale>29</scale>
+            <isHidden>true</isHidden>
+        </column>
+        <column columnName="modifiedby">
+            <isHidden>true</isHidden>
+        </column>
+        <column columnName="modified">
+            <isUserEditable>false</isUserEditable>
+            <shownInInsertView>false</shownInInsertView>
+            <shownInUpdateView>false</shownInUpdateView>
+            <nullable>true</nullable>
+            <scale>29</scale>
+            <isHidden>true</isHidden>
+        </column>
     </table>
     <table tableName="coinvestigators" tableDbType="TABLE">
         <pkColumnName>rowid</pkColumnName>
@@ -377,5 +403,31 @@
             <nullable>false</nullable>
           </column>
         </columns>
+        
+        <column columnName="container">
+                <isHidden>true</isHidden>
+        </column>
+        <column columnName="createdby">
+            <isHidden>true</isHidden>
+        </column>
+        <column columnName="created">
+            <isUserEditable>false</isUserEditable>
+            <shownInInsertView>false</shownInInsertView>
+            <shownInUpdateView>false</shownInUpdateView>
+            <nullable>true</nullable>
+            <scale>29</scale>
+            <isHidden>true</isHidden>
+        </column>
+        <column columnName="modifiedby">
+            <isHidden>true</isHidden>
+        </column>
+        <column columnName="modified">
+            <isUserEditable>false</isUserEditable>
+            <shownInInsertView>false</shownInInsertView>
+            <shownInUpdateView>false</shownInUpdateView>
+            <nullable>true</nullable>
+            <scale>29</scale>
+            <isHidden>true</isHidden>
+        </column>
     </table>
 </tables>
