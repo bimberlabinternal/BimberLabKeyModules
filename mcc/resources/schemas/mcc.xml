@@ -307,7 +307,7 @@
           </column>
           <column columnName="otherjustification">
             <columnTitle>Justification if "other" picked on Research Area</columnTitle>
-            <nullable>false</nullable>
+            <nullable>true</nullable>
           </column>
           <column columnName="existingmarmosetcolony">
             <columnTitle>Existing marmoset colony?</columnTitle>
@@ -319,6 +319,10 @@
           </column>
           <column columnName="animalwelfare">
             <columnTitle>Animal Welfare</columnTitle>
+            <nullable>false</nullable>
+          </column>
+          <column columnName="certify">
+            <columnTitle>Request Certified Checkbox Status</columnTitle>
             <nullable>false</nullable>
           </column>
           <column columnName="vetlastname">
