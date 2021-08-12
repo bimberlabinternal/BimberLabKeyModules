@@ -32,9 +32,9 @@ CREATE TABLE mcc.animalRequests (
 	vetEmail VARCHAR(1000),
 	iacucApproval VARCHAR(50),
 	container ENTITYID,
-	created datetime,
+	created TIMESTAMP,
 	createdby int,
-	modified datetime,
+	modified TIMESTAMP,
 	modifiedby int,
 
 	CONSTRAINT PK_animalRequests PRIMARY KEY (rowid)
@@ -49,9 +49,9 @@ CREATE TABLE mcc.coinvestigators (
 	middleInitial VARCHAR(10),
 	institutionName VARCHAR(1000),
 	container ENTITYID,
-	created datetime,
+	created TIMESTAMP,
 	createdby int,
-	modified datetime,
+	modified TIMESTAMP,
 	modifiedby int,
 
 	CONSTRAINT PK_coinvestigators PRIMARY KEY (rowid)
