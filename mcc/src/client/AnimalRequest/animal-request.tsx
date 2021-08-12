@@ -69,6 +69,7 @@ function handleSubmit(e: FormEvent) {
 
     console.log(data.get("iacuc-approval"))
 
+    alert("Your request was submitted.")
 }
 
 export function AnimalRequest() {
