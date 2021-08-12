@@ -69,11 +69,7 @@ function handleSubmit(e: FormEvent) {
 
     console.log(data.get("iacuc-approval"))
 
-    /*Query.saveRows({
-        
-      })*/
 }
-
 
 export function AnimalRequest() {
      return (

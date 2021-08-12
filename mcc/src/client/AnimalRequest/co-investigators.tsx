@@ -12,6 +12,12 @@ export default function CoInvestigators(props) {
     setCoInvestigators(new Set(coInvestigators))
   }
 
+  function removeCoInvestigator(uuid) {
+    console.log(uuid)
+    coInvestigators.delete(uuid)
+    setCoInvestigators(new Set(coInvestigators))
+  }
+
   return (
     <>
       {[...coInvestigators].map((uuid, index) => (
@@ -31,6 +37,12 @@ export default function CoInvestigators(props) {
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Input id={"coinvestigators-" + index + "-" + "institution"} placeholder="Institution" />
           </div>
+
+          {coInvestigators.size > 1 && 
+            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+              <input type="button" className="tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={() => removeCoInvestigator(uuid)} value="Remove" />
+            </div>
+          }
         </div>
       ))}
 
