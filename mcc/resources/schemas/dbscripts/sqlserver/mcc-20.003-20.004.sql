@@ -25,7 +25,7 @@ CREATE TABLE mcc.animalRequests (
 	otherJustification VARCHAR(255),
 	existingMarmosetColony BOOLEAN,
 	existingNHPFacilities BOOLEAN,
-	animalWellfare VARCHAR(4000),
+	animalWelfare VARCHAR(4000),
 	vetLastName VARCHAR(1000),
 	vetFirstName VARCHAR(1000),
 	vetEmail VARCHAR(1000),
