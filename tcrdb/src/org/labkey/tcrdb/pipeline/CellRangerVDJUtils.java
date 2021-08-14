@@ -65,7 +65,7 @@ public class CellRangerVDJUtils
         _log = log;
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting, boolean allowGDRecovery) throws PipelineJobException
     {
         File cellRangerOutDir = vLoupeFile.getParentFile();
 
@@ -277,6 +277,7 @@ public class CellRangerVDJUtils
             int noCDR3 = 0;
             int noCGene = 0;
             int notFullLength = 0;
+            int recoveredGD = 0;
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
@@ -295,8 +296,17 @@ public class CellRangerVDJUtils
 
                 if ("False".equalsIgnoreCase(line[1]))
                 {
-                    nonCell++;
-                    continue;
+                    //NOTE: cellranger marks TRG/TRD rows as non-productive. therefore, gamma/delta cells will tend to be marked non-cell, since the cell lacks productive A/B
+                    // Allow recovery of these cells if the row is TRD/TRG, has a CDR3 and is full-length:
+                    if (allowGDRecovery && ("TRD".equals(line[5]) || "TRG".equals(line[5])) && !"None".equals(line[12]) && !"False".equals(line[10]))
+                    {
+                        recoveredGD++;
+                    }
+                    else
+                    {
+                        nonCell++;
+                        continue;
+                    }
                 }
 
                 if ("None".equals(line[12]))
@@ -398,6 +408,7 @@ public class CellRangerVDJUtils
             _log.info("total clonotype rows without CDR3: " + noCDR3);
             _log.info("total clonotype rows discarded for no C-gene: " + noCGene);
             _log.info("total clonotype rows discarded for not full length: " + notFullLength);
+            _log.info("total gamma/delta clonotype rows recovered: " + recoveredGD);
             _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
