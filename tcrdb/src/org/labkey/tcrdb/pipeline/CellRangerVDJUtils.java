@@ -107,6 +107,7 @@ public class CellRangerVDJUtils
         }
 
         _log.info("loading results into assay: " + assayId);
+        _log.info("allow gamma/delta recovery: " + allowGDRecovery);
 
         if (runId == null)
         {
