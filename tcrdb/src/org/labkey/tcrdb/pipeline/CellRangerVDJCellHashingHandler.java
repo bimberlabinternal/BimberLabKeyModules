@@ -224,7 +224,9 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 parameters.outputCategory = CATEGORY;
                 parameters.basename = FileUtil.makeLegalName(rs.getName());
                 parameters.allowableHtoBarcodes = htosPerReadset;
-                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
+
+                boolean allowGDRecovery = ctx.getParams().optBoolean(ALLOW_GD_RECOVERY, false);
+                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true, allowGDRecovery);
                 File existingCountMatrixUmiDir = CellHashingService.get().getExistingFeatureBarcodeCountDir(rs, CellHashingService.BARCODE_TYPE.hashing, ctx.getSequenceSupport());
 
                 File cellToHto = CellHashingService.get().generateHashingCallsForRawMatrix(rs, output, ctx, parameters, existingCountMatrixUmiDir);
@@ -246,7 +248,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             }
         }
 
-        private File createCellbarcodeWhitelist(JobContext ctx, File perCellTsv, boolean allowCellsLackingCDR3) throws PipelineJobException
+        private File createCellbarcodeWhitelist(JobContext ctx, File perCellTsv, boolean allowCellsLackingCDR3, boolean allowGDRecovery) throws PipelineJobException
         {
             //prepare whitelist of cell indexes based on TCR calls:
             File cellBarcodeWhitelist = new File(ctx.getSourceDirectory(), "validCellIndexes.csv");
@@ -254,6 +256,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             Set<String> uniqueBarcodesIncludingNoCDR3 = new HashSet<>();
             ctx.getLogger().debug("writing cell barcodes, using file: " + perCellTsv.getPath());
             ctx.getLogger().debug("allow cells lacking CDR3: " + allowCellsLackingCDR3);
+            ctx.getLogger().debug("allow gamma/delta recovery: " + allowGDRecovery);
 
             int totalBarcodeWritten = 0;
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
@@ -261,6 +264,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 int rowIdx = 0;
                 int noCallRows = 0;
                 int nonCell = 0;
+                int recoveredGD = 0;
                 String[] row;
                 while ((row = reader.readNext()) != null)
                 {
@@ -270,8 +274,15 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     {
                         if ("False".equalsIgnoreCase(row[1]))
                         {
-                            nonCell++;
-                            continue;
+                            if (allowGDRecovery && CellRangerVDJUtils.shouldRecoverGammaDeltaRow(row))
+                            {
+                                recoveredGD++;
+                            }
+                            else
+                            {
+                                nonCell++;
+                                continue;
+                            }
                         }
 
                         //NOTE: allow these to pass for cell-hashing under some conditions
@@ -297,6 +308,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 ctx.getLogger().debug("rows inspected: " + (rowIdx - 1));
                 ctx.getLogger().debug("rows without CDR3: " + noCallRows);
                 ctx.getLogger().debug("rows not called as cells: " + nonCell);
+                ctx.getLogger().debug("gamma/delta clonotype rows recovered: " + recoveredGD);
                 ctx.getLogger().debug("unique cell barcodes (with CDR3): " + uniqueBarcodes.size());
                 ctx.getLogger().debug("unique cell barcodes (including no CDR3): " + uniqueBarcodesIncludingNoCDR3.size());
                 ctx.getFileManager().addIntermediateFile(cellBarcodeWhitelist);

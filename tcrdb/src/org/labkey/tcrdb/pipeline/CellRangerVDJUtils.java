@@ -299,7 +299,7 @@ public class CellRangerVDJUtils
                 {
                     //NOTE: cellranger marks TRG/TRD rows as non-productive. therefore, gamma/delta cells will tend to be marked non-cell, since the cell lacks productive A/B
                     // Allow recovery of these cells if the row is TRD/TRG, has a CDR3 and is full-length:
-                    if (allowGDRecovery && ("TRD".equals(line[5]) || "TRG".equals(line[5])) && !"None".equals(line[12]) && !"False".equals(line[10]))
+                    if (allowGDRecovery && shouldRecoverGammaDeltaRow(line))
                     {
                         recoveredGD++;
                     }
@@ -681,5 +681,10 @@ public class CellRangerVDJUtils
     public static File getPerCellCsv(File cellRangerOutDir)
     {
         return new File(cellRangerOutDir, "all_contig_annotations.csv");
+    }
+
+    public static boolean shouldRecoverGammaDeltaRow(String[] line)
+    {
+        return ("TRD".equals(line[5]) || "TRG".equals(line[5])) && !"None".equals(line[12]) && !"False".equals(line[10]);
     }
 }
