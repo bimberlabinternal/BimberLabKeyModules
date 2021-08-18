@@ -40,7 +40,6 @@ export const researchAreaOptions = [
 ]
 
 export const IACUCApprovalOptions = [
-    { value: 'not-started', label: 'Not Started' },
     { value: 'provisional', label: 'Provisional' },
     { value: 'approved', label: 'Approved' },
 ]

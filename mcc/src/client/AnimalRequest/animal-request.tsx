@@ -1,5 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { Query } from '@labkey/api';
+import { nanoid } from 'nanoid'
 
 import Tooltip from './tooltip'
 import Title from './title'
@@ -21,55 +22,89 @@ import {
 } from './values'
 
 
+function get_coinvestigator_commands(data, objectId) {
+    let coinvestigators = []
+    let i = 0
+
+    while(data.get("coinvestigators-" + i + "-lastName")) {
+        coinvestigators.push({
+            command: "insert",
+            schemaName: "mcc",
+            queryName: "coinvestigators",
+            rows: [{
+                "requestId": objectId,
+                "lastname": data.get("coinvestigators-" + i + "-lastName"),
+                "firstname": data.get("coinvestigators-" + i + "-firstName"),
+                "middleinitial": data.get("coinvestigators-" + i + "-middleInitial"),
+                "institutionname": data.get("coinvestigators-" + i + "-institution"),
+            }]
+        })
+
+        i++
+    }
+
+    return coinvestigators
+}
+
+
 function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     const data = new FormData(e.currentTarget)
 
-    console.log(data.get("investigator-last-name"))
-    console.log(data.get("investigator-first-name"))
-    console.log(data.get("investigator-middle-initial"))
+    const objectId = nanoid()
+    let coinvestigatorCommands = get_coinvestigator_commands(data, objectId)
 
-    console.log(data.get("is-principal-investigator"))
-
-    console.log(data.get("institution-name"))
-    console.log(data.get("institution-city"))
-    console.log(data.get("institution-state"))
-    console.log(data.get("institution-country"))
-
-    console.log(data.get("institution-type"))
-    
-    console.log(data.get("official-last-name"))
-    console.log(data.get("official-first-name"))
-    console.log(data.get("official-email"))
-
-    console.log(data.get("coinvestigators-0-lastName"))
-
-    console.log(data.get("funding-source"))
-
-    console.log(data.get("experiment-rationale"))
-    console.log(data.get("number-of-animals"))
-    console.log(data.get("other-characteristics"))
-    console.log(data.get("methods-proposed"))
-    console.log(data.get("collaborations"))
-    console.log(data.get("is-planning-to-breed-animals"))
-    console.log(data.get("of-interest-centers"))
-
-    console.log(data.get("research-area-other-specify"))
-    console.log(data.get("existing-marmoset-colony"))
-    console.log(data.get("existing-nhp-facilities"))
-
-    console.log(data.get("animal-welfare"))
-    console.log(data.get("certify"))
-
-
-    console.log(data.get("vet-last-name"))
-    console.log(data.get("vet-first-name"))
-    console.log(data.get("vet-email"))
-
-    console.log(data.get("iacuc-approval"))
-
-    alert("Your request was submitted.")
+    Query.saveRows({
+        commands: [
+            {
+                command: "insert",
+                schemaName: "mcc",
+                queryName: "animalrequests",
+                rows: [{
+                    "objectId": objectId,
+                    "lastname": data.get("investigator-last-name"),
+                    "firstname": data.get("investigator-first-name"),
+                    "middleinitial": data.get("investigator-middle-initial"),
+                    "isprincipalinvestigator": data.get("is-principal-investigator"),
+                    "institutionname": data.get("institution-name"),
+                    "institutioncity": data.get("institution-city"),
+                    "institutionstate": data.get("institution-state"),
+                    "institutioncountry": data.get("institution-country"),
+                    "institutiontype": data.get("institution-type"),
+                    "officiallastname": data.get("official-last-name"),
+                    "officialfirstname": data.get("official-first-name"),
+                    "officialemail": data.get("official-email"),
+                    "fundingsource": data.get("funding-source"),
+                    "experimentalrationale": data.get("experiment-rationale"),
+                    "numberofanimals": data.get("number-of-animals"),
+                    "othercharacteristics": data.get("other-characteristics"),
+                    "methodsproposed": data.get("methods-proposed"),
+                    "collaborations": data.get("collaborations"),
+                    "isbreedinganimals": data.get("is-planning-to-breed-animals"),
+                    "ofinterestcenters": data.get("of-interest-centers"),
+                    "researcharea": data.get("research-area"),
+                    "otherjustification": data.get("research-area-other-specify"),
+                    "existingmarmosetcolony": data.get("existing-marmoset-colony"),
+                    "existingnhpfacilities": data.get("existing-nhp-facilities"),
+                    "animalwelfare": data.get("animal-welfare"),
+                    "certify": data.get("certify"),
+                    "vetlastname": data.get("vet-last-name"),
+                    "vetfirstname": data.get("vet-first-name"),
+                    "vetemail": data.get("vet-email"),
+                    "iacucapproval": data.get("iacuc-approval")
+                }]
+            },
+            ...coinvestigatorCommands
+        ],
+        success: function(data) {
+            alert("Your data was saved successfully.")
+        },
+        failure: function(data) {
+            alert("Your data could not be saved.")
+            console.log(data)
+        }
+    })
 }
 
 export function AnimalRequest() {
