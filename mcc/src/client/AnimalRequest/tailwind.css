@@ -6,8 +6,20 @@
   border-color: rgba(229, 231, 235, var(--tw-border-opacity));
 }
 
+textarea::placeholder {
+  font-size: 1.25rem;
+}
+
+textarea {
+  font-size: 1.5rem !important;
+}
+
 .tw-container {
   width: 100%;
+}
+
+.tw-invalid:invalid {
+  border:1px solid #ff0000 !important;
 }
 
 @media (min-width: 640px) {
