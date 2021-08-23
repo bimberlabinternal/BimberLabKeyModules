@@ -17,5 +17,7 @@ dependencies {
     BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:ehrModules:ehr", depProjectConfig: 'published', depExtension: 'module')
 
     external("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    external("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}")
+    external("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}") {
+        exclude group: 'jakarta.activation', module: 'jakarta.activation-api'
+    }
 }
