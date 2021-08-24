@@ -222,6 +222,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         clickAndWait(Locator.linkWithText("Enter Results").findElement(templates.findCell(0, 0)));
 
         //use the same data included with this assay
+        Ext4FieldRef.getForLabel(this, "Instrument").waitForEnabled();
         assertEquals("Incorrect value for field", "AID Plate Reader", Ext4FieldRef.getForLabel(this, "Instrument").getValue());
         assertEquals("Incorrect value for field", Double.valueOf(0.05), Ext4FieldRef.getForLabel(this, "Positivity Threshold").getValue());
 

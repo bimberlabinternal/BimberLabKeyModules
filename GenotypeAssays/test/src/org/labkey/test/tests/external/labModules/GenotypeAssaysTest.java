@@ -456,6 +456,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         Ext4FieldRef field = Ext4FieldRef.getForBoxLabel(this, "UC Davis STR");
         field.setChecked(true);
 
+        Ext4FieldRef.getForLabel(this, "Run Description").waitForEnabled();
         Ext4FieldRef.getForLabel(this, "Run Description").setValue("Description");
 
         //assertEquals("Incorrect value for field", "LC480", Ext4FieldRef.getForLabel(this, "Instrument").getValue());
