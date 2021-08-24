@@ -455,15 +455,11 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         //switch import method
         Ext4FieldRef field = Ext4FieldRef.getForBoxLabel(this, "UC Davis STR");
         field.setChecked(true);
-        Locator btn = Locator.linkContainingText("Download Example Data");
-        waitForElement(btn);
 
         Ext4FieldRef.getForLabel(this, "Run Description").setValue("Description");
 
         //assertEquals("Incorrect value for field", "LC480", Ext4FieldRef.getForLabel(this, "Instrument").getValue());
-        waitAndClick(btn);
-
-        String text = _helper.getExampleData();
+        String text = _helper.clickAndGetExampleData();
 
         log("Trying to save invalid data");
         String errorText = text.replaceAll("13294", ",");
