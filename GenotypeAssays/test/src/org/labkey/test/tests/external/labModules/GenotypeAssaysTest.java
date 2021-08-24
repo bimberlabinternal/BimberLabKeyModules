@@ -463,11 +463,11 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         //assertEquals("Incorrect value for field", "LC480", Ext4FieldRef.getForLabel(this, "Instrument").getValue());
         waitAndClick(btn);
 
-        Ext4FieldRef textarea = _ext4Helper.queryOne("#fileContent", Ext4FieldRef.class);
         String text = _helper.getExampleData();
 
         log("Trying to save invalid data");
         String errorText = text.replaceAll("13294", ",");
+        Ext4FieldRef textarea = _ext4Helper.queryOne("#fileContent", Ext4FieldRef.class);
         textarea.setValue(errorText);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
         waitForElement(Ext4Helper.Locators.window("Upload Failed"));

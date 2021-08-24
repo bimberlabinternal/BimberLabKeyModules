@@ -229,11 +229,11 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         assertEquals("Incorrect value for field", Double.valueOf(0.05), Ext4FieldRef.getForLabel(this, "Positivity Threshold").getValue());
         waitAndClick(btn);
 
-        Ext4FieldRef textarea = _ext4Helper.queryOne("#fileContent", Ext4FieldRef.class);
         String text = _helper.getExampleData();
         Assert.assertNotNull("Unable to retrieve example data", StringUtils.trimToNull(text));
 
         log("Trying to save data");
+        Ext4FieldRef textarea = _ext4Helper.queryOne("#fileContent", Ext4FieldRef.class);
         textarea.setValue(text);
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
         waitForElement(Ext4Helper.Locators.window("Success"), WAIT_FOR_PAGE);
