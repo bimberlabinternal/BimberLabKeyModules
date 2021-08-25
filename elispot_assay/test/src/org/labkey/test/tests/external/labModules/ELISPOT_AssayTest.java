@@ -221,6 +221,10 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         DataRegionTable templates = new DataRegionTable("query", this);
         clickAndWait(Locator.linkWithText("Enter Results").findElement(templates.findCell(0, 0)));
 
+        //Wait for grid to load:
+        waitForElement(Locator.tagWithText("span", "Sample Records"));
+        waitForElement(Locator.tagWithClass("div", "x4-grid-cell-inner").containing("A1"));
+
         //use the same data included with this assay
         Ext4FieldRef.waitForField(this, "Instrument");
         Ext4FieldRef.getForLabel(this, "Instrument").waitForEnabled();
