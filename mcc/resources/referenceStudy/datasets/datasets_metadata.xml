@@ -644,6 +644,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="u24_status">
+                <datatype>boolean</datatype>
+            </column>
+            <column columnName="colony">
                 <datatype>varchar</datatype>
             </column>
             <column columnName="global_id">
