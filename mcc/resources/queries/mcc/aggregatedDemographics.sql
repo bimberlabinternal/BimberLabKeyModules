@@ -58,3 +58,22 @@ SELECT
     false as u24_status
 
 FROM "/data/Colonies/UNO/".study.demographics d
+
+UNION ALL
+
+SELECT
+    d.Id,
+    d.date,
+    d.species,
+    d.gender,
+    d.birth,
+    d.death,
+    'UCSD' as colony,
+    d.dam,
+    d.sire,
+    d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
+    d.objectid,
+    d.calculated_status,
+    u24_status as u24_status
+
+FROM "/data/Colonies/UCSD/".study.demographics d

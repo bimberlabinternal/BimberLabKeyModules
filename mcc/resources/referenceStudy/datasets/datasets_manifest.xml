@@ -21,6 +21,9 @@
         <dataset name="medicationOrders" id="1037" category="Clinical" type="Standard">
             <tags/>
         </dataset>
+        <dataset name="treatment_order" id="5056" category="Clinical" type="Standard">
+            <tags/>
+        </dataset>
         <dataset name="clinremarks" id="1047" category="Clinical" type="Standard">
             <tags/>
         </dataset>
@@ -46,6 +49,15 @@
             <tags/>
         </dataset>
         <dataset name="departure" id="1013" category="Colony Management" type="Standard">
+            <tags/>
+        </dataset>
+        <dataset name="assignment" id="1002" category="Colony Management" type="Standard">
+            <tags/>
+        </dataset>
+        <dataset name="problem" id="1030" category="Clinical" type="Standard">
+            <tags/>
+        </dataset>
+        <dataset name="housing" id="1018" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
     </datasets>
