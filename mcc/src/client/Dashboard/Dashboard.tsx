@@ -62,13 +62,13 @@ export function Dashboard() {
                             </div>
                         </div>
                         <div className="row mcc-col-centered">
-                            <div className="col-md-2">
+                            <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
                                     <div className="count-panel-text-small">{living.length}</div>
                                     <div className="small text-muted text-center">Living</div>
                                 </div>
                             </div>
-                            <div className="col-md-2">
+                            <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
                                     <div className="count-panel-text-small">{u24Assigned.length}</div>
                                     <div className="small text-muted text-center">U24 Assigned</div>
