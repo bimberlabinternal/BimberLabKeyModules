@@ -16,7 +16,10 @@ function onInit(event, helper){
 
 function onUpsert(helper, scriptErrors, row, oldRow){
     if (row.status && row.status.match(/Undetermined/)) {
-        row.status = 'Undetermined';
+        row.status = 'Unknown';
+    }
+    else if (row.status && row.status.match(/Pending Confirmation/)) {
+        row.status = 'Unknown';
     }
 
     if (!row.calculated_status && row.status){
