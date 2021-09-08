@@ -68,12 +68,12 @@ SELECT
     d.gender,
     d.birth,
     d.death,
-    'UCSD' as colony,
+    d.center as colony,
     d.dam,
     d.sire,
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,
-    u24_status as u24_status
+    d.u24_status
 
 FROM "/data/Colonies/UCSD/".study.demographics d
