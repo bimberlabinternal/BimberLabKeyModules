@@ -12,7 +12,7 @@ SELECT
   d.objectid,
   d.calculated_status,
   CASE
-    WHEN (SELECT COUNT(f.flag.value) as total FROM study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
+    WHEN (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status
 
@@ -34,7 +34,7 @@ SELECT
   d.objectid,
   d.calculated_status,
   CASE
-    WHEN (SELECT COUNT(f.flag.value) as total FROM study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
+    WHEN (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status
 
