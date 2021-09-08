@@ -10,6 +10,7 @@ import BarChart from './BarChart';
 export function Dashboard() {
     const [demographics, setDemographics] = useState(null);
     const [living, setLiving] = useState(null);
+    const [u24Assigned, setu24Assigned] = useState(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;
@@ -29,6 +30,7 @@ export function Dashboard() {
                 columns: 'Id,birth,death,gender/meaning,species,colony,calculated_status,Id/age/AgeFriendly,Id/ageClass/label',
                 success: function(results) {
                     setLiving(results.rows.filter(row => row.calculated_status === 'Alive'));
+                    setu24Assigned(results.rows.filter(row => row.u24_status === true));
                     setDemographics(results.rows);
                 },
                 failure: function(response) {
@@ -52,10 +54,26 @@ export function Dashboard() {
             <div className="row">
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Count</div>
-                        <div className="panel-body count-panel-body">
-                            <div className="count-panel-text">{demographics.length}</div>
-                            <div className="small text-muted">Marmosets tracked by MCC</div>
+                        <div className="panel-heading">Census</div>
+                        <div className="row">
+                            <div className="panel-body count-panel-body">
+                                <div className="count-panel-text">{demographics.length}</div>
+                                <div className="small text-muted">Marmosets tracked by MCC</div>
+                            </div>
+                        </div>
+                        <div className="row mcc-col-centered">
+                            <div className="col-md-2">
+                                <div className="panel-body count-panel-body">
+                                    <div className="count-panel-text-small">{living.length}</div>
+                                    <div className="small text-muted text-center">Living</div>
+                                </div>
+                            </div>
+                            <div className="col-md-2">
+                                <div className="panel-body count-panel-body">
+                                    <div className="count-panel-text-small">{u24Assigned.length}</div>
+                                    <div className="small text-muted text-center">U24 Assigned</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
