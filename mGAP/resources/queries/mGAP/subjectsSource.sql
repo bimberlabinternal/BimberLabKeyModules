@@ -7,7 +7,8 @@ SELECT
     WHEN d.center IS NOT NULL THEN d.center
     WHEN s.subjectname IS NOT NULL THEN 'ONPRC'
     ELSE NULL END as center,
-  d.status as status
+  d.status as status,
+  m.subjectname as originalId
 
 FROM mgap.animalMapping m
 LEFT JOIN laboratory.subjects s ON (m.subjectname = s.subjectname)
