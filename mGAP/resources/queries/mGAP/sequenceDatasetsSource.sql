@@ -4,7 +4,7 @@ SELECT
   r.totalForwardReads as totalReads,
   r.sraRuns as sraAccession,
   r.subjectId as originalId,
-  (SELECT s.center FROM mgap.subjectsource s WHERE s.subjectName = am.externalAlias) as center
+  (SELECT s.center FROM mgap.subjectssource s WHERE s.subjectName = am.externalAlias) as center
 
 FROM sequenceanalysis.sequence_readsets r
 JOIN mgap.animalMapping am ON (r.subjectId = am.subjectname)
