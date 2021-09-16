@@ -87,8 +87,6 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                     dbRow.put("description", null);
                     dbRow.put("libraryId", getLibraryId());
                     dbRow.put("temporary", false);
-                    dbRow.put("primarydb", false);
-                    dbRow.put("createOwnIndex", false);
                     dbRow.put("container", getContainerUser().getContainer().getId());
                     dbRow.put("created", new Date());
                     dbRow.put("createdby", getContainerUser().getUser().getUserId());
@@ -129,7 +127,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         DbScope.getLabKeyScope().addCommitTask(() -> {
             try
             {
-                JBrowseService.get().reprocessDatabase(getContainerUser().getContainer(), getContainerUser().getUser(), databaseId);
+                JBrowseService.get().reprocessDatabase(getContainerUser().getUser(), databaseId);
             }
             catch (PipelineValidationException e)
             {
