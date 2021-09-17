@@ -23,11 +23,23 @@
     justify-content: center;
 }
 
-
 .count-panel-text {
     color: var(--dash-dark-blue);
     font-size: 10rem;
     font-weight: bold;
     line-height: 1.0;
     letter-spacing: -0.05rem;
+}
+
+.count-panel-text-small {
+    color: var(--dash-dark-blue);
+    font-size: 6rem;
+    font-weight: bold;
+    line-height: 1.0;
+    letter-spacing: -0.05rem;
+}
+
+.mcc-col-centered {
+    justify-content: center;
+    display: flex;
 }
