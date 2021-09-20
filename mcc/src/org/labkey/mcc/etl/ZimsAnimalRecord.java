@@ -273,6 +273,11 @@ public class ZimsAnimalRecord
 
         public void setAnimalStatus(String animalStatus)
         {
+            if (animalStatus.contains("Undetermined") || animalStatus.contains("Pending Confirmation"))
+            {
+                animalStatus = "Unknown";
+            }
+
             _animalStatus = animalStatus;
         }
 
