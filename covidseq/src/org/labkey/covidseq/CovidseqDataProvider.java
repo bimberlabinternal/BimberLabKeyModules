@@ -52,7 +52,7 @@ public class CovidseqDataProvider extends AbstractDataProvider
         QueryCache cache = new QueryCache();
 
         return Arrays.asList(
-            new QueryImportNavItem(this, CovidseqSchema.NAME, CovidseqSchema.TABLE_SAMPLES, LaboratoryService.NavItemCategory.samples, "Samples", cache)
+            new QueryImportNavItem(this, CovidseqSchema.NAME, CovidseqSchema.TABLE_SAMPLES, "COVID Samples", LaboratoryService.NavItemCategory.samples, "Samples", cache)
         );
     }
 
