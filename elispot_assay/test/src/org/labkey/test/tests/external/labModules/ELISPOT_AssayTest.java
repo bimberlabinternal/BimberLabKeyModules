@@ -157,7 +157,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
     {
         _helper.goToLabHome();
         _helper.clickNavPanelItem(ASSAY_NAME + ":", IMPORT_DATA_TEXT);
-        click(Ext4Helper.Locators.menuItem("Prepare Run"));
+        waitAndClick(Ext4Helper.Locators.menuItem("Prepare Run"));
         new Window.WindowFinder(getDriver()).withTitle(IMPORT_DATA_TEXT).waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
 
@@ -186,7 +186,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         assertElementPresent(_helper.getAssayWell("H11", LabModuleHelper.UNKNOWN_COLOR));
 
         //the data are missing an ID
-        click(Ext4Helper.Locators.ext4Button("Save"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Save"));
         new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
         assertTextPresent("One or more required fields are missing from the sample records");
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
@@ -195,7 +195,7 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         Ext4GridRef grid = _ext4Helper.queryOne("grid", Ext4GridRef.class);
         grid.setGridCell(1, "subjectId", "FakeId");
 
-        click(Ext4Helper.Locators.ext4Button("Save"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Save"));
         new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
         assertTextPresent(
                 "Must provide at least 2 negative controls for each subjectId/date.",

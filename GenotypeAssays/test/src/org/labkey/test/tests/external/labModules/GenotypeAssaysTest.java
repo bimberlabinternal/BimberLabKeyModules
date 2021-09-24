@@ -194,7 +194,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
         waitForElement(Ext4Helper.Locators.window("Success"));
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
-        waitForText("Import Samples");
+        waitForElement(_helper.toolIcon("Import Samples"));
 
         log("Verifying results");
         _helper.clickNavPanelItemAndWait(SNP_ASSAY_NAME + " Runs:", 1);
@@ -277,7 +277,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
         waitForElement(Ext4Helper.Locators.window("Success"));
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
-        waitForText("Import Samples");
+        waitForElement(_helper.toolIcon("Import Samples"));
 
         log("Verifying results");
         _helper.clickNavPanelItemAndWait(SSP_ASSAY_NAME + " Runs:", 1);
@@ -411,7 +411,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
         waitForElement(Ext4Helper.Locators.window("Success"));
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
-        waitForText("Import Samples");
+        waitForElement(_helper.toolIcon("Import Samples"));
 
         log("Verifying results");
         _helper.clickNavPanelItemAndWait(SSP_ASSAY_NAME + " Runs:", 1);
@@ -476,7 +476,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
         waitAndClick(Ext4Helper.Locators.ext4Button("Upload"));
         waitForElement(Ext4Helper.Locators.window("Success"), WAIT_FOR_PAGE * 2);
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
-        waitForText("Import Samples");
+        waitForElement(_helper.toolIcon("Import Samples"));
 
         log("Verifying results");
         _helper.clickNavPanelItemAndWait(ASSAY_NAME + " Runs:", 1);
