@@ -20,11 +20,11 @@ export default function ResearchArea(props) {
     return (
         <>
             <div className="tw-w-full tw-px-3 tw-mb-6">
-                <Select id={props.id} options={researchAreaOptions} onChange={(e) => setDisplayOtherField(e.currentTarget.value)} required/>
+                <Select id={props.id} options={researchAreaOptions} isSubmitting={props.isSubmitting} onChange={(e) => setDisplayOtherField(e.currentTarget.value)} required/>
             </div>
 
             <div className="tw-w-full tw-px-3 tw-mb-6">
-                <Input id={props.id + "-other-specify"} placeholder="Please specify" display={displayOther} required={displayOther}/>
+                <Input id={props.id + "-other-specify"} isSubmitting={props.isSubmitting} placeholder="Please specify" display={displayOther} required={displayOther}/>
             </div>
         </>
     )
