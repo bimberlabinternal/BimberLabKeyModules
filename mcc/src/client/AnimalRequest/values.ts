@@ -39,8 +39,17 @@ export const researchAreaOptions = [
     {value: 'other', label: 'Other (specify)'},
 ]
 
+export const existingMarmosetColonyOptions = [
+    {value: 'existing', label: 'Existing marmoset colony'},
+    {value: 'no-existing', label: 'No existing marmoset colony'},
+]
+
+export const existingNHPFacilityOptions = [
+    {value: 'existing', label: 'Existing NHP facilities'},
+    {value: 'no-existing', label: 'No existing NHP facilities'},
+]
+
 export const IACUCApprovalOptions = [
-    { value: 'not-started', label: 'Not Started' },
     { value: 'provisional', label: 'Provisional' },
     { value: 'approved', label: 'Approved' },
 ]

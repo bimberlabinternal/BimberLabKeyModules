@@ -32,19 +32,19 @@ export default function CoInvestigators(props) {
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "lastName"} placeholder="Last Name" />
+            <Input id={"coinvestigators-" + index + "-" + "lastName"} isSubmitting={props.isSubmitting} placeholder="Last Name" required={true} />
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "firstName"} placeholder="First Name" />
+            <Input id={"coinvestigators-" + index + "-" + "firstName"} isSubmitting={props.isSubmitting} placeholder="First Name" required={true}/>
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "middleInitial"} placeholder="Middle Initial" />
+            <Input id={"coinvestigators-" + index + "-" + "middleInitial"} isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={true}/>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "institution"} placeholder="Institution" />
+            <Input id={"coinvestigators-" + index + "-" + "institution"} isSubmitting={props.isSubmitting} placeholder="Institution" required={true}/>
           </div>
         </div>
       ))}
