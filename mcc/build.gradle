@@ -40,9 +40,6 @@ dependencies {
                     "Parsing XML Data"
             )
     )
-    external("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}") {
-        exclude group: 'jakarta.activation', module: 'jakarta.activation-api'
-    }
     BuildUtils.addExternalDependency(
             project,
             new ExternalDependency(
@@ -53,6 +50,9 @@ dependencies {
                     ExternalDependency.APACHE_2_LICENSE_NAME,
                     ExternalDependency.APACHE_2_LICENSE_URL,
                     "Parsing XML Data"
-            )
+            ),
+            {
+                exclude group: 'jakarta.activation', module: 'jakarta.activation-api'
+            }
     )
 }
