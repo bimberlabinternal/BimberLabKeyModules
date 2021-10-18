@@ -550,18 +550,6 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 SequencePipelineService.get().updateOutputFile(so, getPipelineCtx().getJob(), runId, model.getRowId());
                 so = Table.insert(getPipelineCtx().getJob().getUser(), ti, so);
 
-                //then force jbrowse processing
-                try
-                {
-                    getPipelineCtx().getLogger().debug("preparing for JBrowse");
-                    getPipelineCtx().getJob().setStatus(PipelineJob.TaskStatus.running, "Preparing for JBrowse");
-                    JBrowseService.get().prepareOutputFile(getPipelineCtx().getJob().getUser(), getPipelineCtx().getLogger(), so.getRowid(), true, additionalConfig);
-                }
-                catch (IOException e)
-                {
-                    throw new PipelineJobException(e);
-                }
-
                 sot.getOutputsToCreate().remove(so);
             }
             getPipelineCtx().getLogger().debug("total job outputs remaining: " + sot.getOutputsToCreate().size());
