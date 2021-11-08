@@ -7,7 +7,7 @@
         <column name="sortId/sampleId/stim" />
         <column name="sortId/sampleId/assaytype" />
         <column name="sortId/population" />
-        <column name="sortId/replicate" />
+        <column name="sortId/sampleId/tissue" />
         <column name="sortId/cells" />
         <column name="sortId/hto" />
         <column name="plateId" />
