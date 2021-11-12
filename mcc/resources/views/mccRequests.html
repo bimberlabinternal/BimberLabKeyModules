@@ -7,12 +7,14 @@
             return;
 
         Ext4.get(webpart.wrapperDivId).update(
-            '<a class="labkey-text-link" href="<%=contextPath%>/mcc' + ctx['MCCRequestContainer'] + '/animalRequest.view">Submit New Animal Request</a>' +
+            'Investigators interested in requesting marmosets for their research can submit applications via the animal request portal. Investigators must already have user access to the password protected MCC site to submit these applications. The animal request review process (submission to approval) takes about 10 business days. (Please note that applications are not being accepted yet).' +
+            '<p></p>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/mcc' + ctx['MCCRequestContainer'] + '/animalRequest.view">Submit New Animal Request</a><br>' +
+            '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
             '<p></p>' +
             '<div id="' + webpart.wrapperDivId + '-webpart">'
         );
 
-        var webpart = <%=webpartContext%>;
         LDK.Utils.getBasicQWP({
             title: 'My Animal Requests',
             frame: 'left-nav',

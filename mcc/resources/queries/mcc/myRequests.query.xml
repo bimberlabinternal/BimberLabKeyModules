@@ -8,6 +8,7 @@
                 <columns>
                     <column columnName="edit" wrappedColumnName="rowid">
                         <columnTitle>Edit</columnTitle>
+                        <isHidden>true</isHidden>
                     </column>
                 </columns>
                 <buttonBarOptions includeStandardButtons="true">
