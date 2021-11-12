@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react'
-import { Query } from '@labkey/api'
+import { Query, ActionURL } from '@labkey/api'
 import { nanoid } from 'nanoid'
 
 import Tooltip from './tooltip'
@@ -17,7 +17,7 @@ import {
     isPrincipalInvestigatorOptions, fundingSourceOptions,
     experimentalRationalePlaceholder, otherCharacteristicsPlaceholder,
     methodsProposedPlaceholder, collaborationsPlaceholder,
-    ofInterestCentersPlaceholder, animalWellfarePlaceholder,
+    animalWellfarePlaceholder, signingOfficialHelper,
     certificationLabel, existingMarmosetColonyOptions,
     existingNHPFacilityOptions, IACUCApprovalOptions
 } from './values'
@@ -100,16 +100,24 @@ function handleSubmit(e: FormEvent) {
         ],
         success: function(data) {
             alert("Your data was saved successfully.")
+            //TODO: navigate after user clicks OK
+            //window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
         },
         failure: function(data) {
+            //TODO: we should have a standard way to handle errors. Examples of this in LabKey are:
+            // https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/util/utils.ts#L627
+            // or ErrorBoundary: https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/components/error/ErrorBoundary.tsx
             alert("Your data could not be saved.")
-            console.log(data)
+            console.error(data)
         }
     })
 }
 
 export function AnimalRequest() {
      const [isSubmitting, setIsSubmitting] = useState(false);
+
+     // TODO: we should scan the URL for requestId=XXXX. If this is provided, make a loading indicator and query LabKey to
+     // populate this form with the values from that saved request.
 
      return (
          <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
@@ -173,6 +181,9 @@ export function AnimalRequest() {
 
             <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                 <Title text="5. Institution Signing Official*"/>
+                <Tooltip id="signing-official-helper"
+                         text={signingOfficialHelper}
+                />
 
                 <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
                     <Input id="official-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={true}/>
@@ -199,23 +210,32 @@ export function AnimalRequest() {
                 <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
                     <Select id="funding-source" isSubmitting={isSubmitting} options={fundingSourceOptions} required={true}/>
                 </div>
+
+                {/*TODO: if secured, need to capture grant #. If no funding, ask about application due date*/}
+                {/*<div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">*/}
+                {/*    <Select id="grant-number" isSubmitting={isSubmitting} placeholder="Grant Number(s)" required={false}/>*/}
+                {/*</div>*/}
             </div>
              
             <div className="tw-flex tw-flex-wrap tw-mx-2">
+                {/*TODO: info popup with more guidance*/}
                 <Title text="8. Research Use Statement*"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-10">
                     <TextArea id="experiment-rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={true}/>
                 </div>
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <Title text="Number of animals needed:&nbsp;&nbsp;&nbsp;&nbsp;"/>
-                    <InputNumber id="number-of-animals" isSubmitting={isSubmitting} required={true}/>
-                </div>
+                {/*TODO: this should require at least one animal cohort to be added*/}
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="other-characteristics" isSubmitting={isSubmitting} placeholder={otherCharacteristicsPlaceholder} required={true}/>
-                </div>
+                {/*Treat more like Co-investigators, which is a 1:many relationship. I created the table mcc.requestcohorts. Per cohort, capture discrete: number, sex, characteristics*/}
+                {/*<div className="tw-w-full tw-px-3 tw-mb-10">*/}
+                {/*    <Title text="Number of animals needed:&nbsp;&nbsp;&nbsp;&nbsp;"/>*/}
+                {/*    <InputNumber id="number-of-animals" isSubmitting={isSubmitting} required={true}/>*/}
+                {/*</div>*/}
+
+                {/*<div className="tw-w-full tw-px-3 tw-mb-10">*/}
+                {/*    <TextArea id="other-characteristics" isSubmitting={isSubmitting} placeholder={otherCharacteristicsPlaceholder} required={true}/>*/}
+                {/*</div>*/}
 
                 <div className="tw-w-full tw-px-3 tw-mb-10">
                     <TextArea id="methods-proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={true}/>
@@ -233,10 +253,11 @@ export function AnimalRequest() {
                     <div className="tw-mb-6">
                         <YesNoRadio id="is-planning-to-breed-animals" required={true}/>
                     </div>
-                </div>
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="of-interest-centers" isSubmitting={isSubmitting} placeholder={ofInterestCentersPlaceholder} required={true}/>
+                    {/*If is-planning-to-breed-animals is true, show field asking for free-text description of purpose*/}
+                    {/*<div className="tw-mb-6">*/}
+
+                    {/*</div>*/}
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -248,7 +269,7 @@ export function AnimalRequest() {
 
                 <div className="tw-w-full tw-px-3">
                     <div className="tw-mb-6">
-                        <Title text="Animal Facilities and Capabilities"/>
+                        <Title text="Institutional Animal Facilities and Capabilities"/>
                     </div>
 
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
@@ -295,11 +316,21 @@ export function AnimalRequest() {
                     <div className="tw-w-full tw-px-3 md:tw-mb-0">
                         <Select id="iacuc-approval" isSubmitting={isSubmitting} options={IACUCApprovalOptions} required={true}/>
                     </div>
+
+                    {/*TODO: this is required if iacuc-approval == approved. It's a free-text field*/}
+                    {/*<div className="tw-w-full tw-px-3 md:tw-mb-0">*/}
+                    {/*    <Select id="iacuc-protocol" isSubmitting={isSubmitting} placeholder="IACUC Protocol Number" required={false}/>*/}
+                    {/*</div>*/}
                 </div>
             </div>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
+                {/*TODO the spacing is weird here*/}
                 <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => setIsSubmitting(true)}>Submit</button>
+                <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => {
+                    //TODO: make some kind of 'Are you sure you want exit?' confirmation, and if the user picks yes, then:
+                    window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                }}>Cancel</button>
             </div>
         </form>
      )

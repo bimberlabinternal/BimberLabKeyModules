@@ -1,10 +1,11 @@
 export const earlyInvestigatorTooltip = "An Early Stage Investigator (ESI) is a new investigator that has completed his or her terminal research degree or medical residency—whichever date is later—within the past 10 years and has not yet competed successfully for a substantial, competing NIH research grant."
+//TODO
+export const signingOfficialHelper = "This will hold an explanation of the signing official"
 
 export const experimentalRationalePlaceholder = "Experimental rationale and justification for the selection of marmosets"
 export const otherCharacteristicsPlaceholder = "Other characteristics (ie. Sex, age, disease state, genotype...)"
 export const methodsProposedPlaceholder = "Methods proposed and investigators' experience in the methods"
 export const collaborationsPlaceholder = "Any collaborations, pilot studies, and/or publications"
-export const ofInterestCentersPlaceholder = "Of interest NIH Institutes(s)/Center(s)"
 export const animalWellfarePlaceholder = "Animal welfare (proposed care and use)"
 
 export const certificationLabel = "I certify and I have obtained approval for this study from my institution."
