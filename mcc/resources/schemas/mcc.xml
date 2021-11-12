@@ -212,6 +212,9 @@
     </table>
 
     <table tableName="animalrequests" tableDbType="TABLE">
+        <importUrl>mcc/animalRequests.view</importUrl>
+        <insertUrl>mcc/animalRequests.view</insertUrl>
+        <updateUrl>mcc/animalRequests.view?requestId=${objectid}</updateUrl>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
@@ -341,6 +344,9 @@
             <column columnName="iacucapproval">
                 <columnTitle>IACUC Approval Status</columnTitle>
                 <nullable>false</nullable>
+            </column>
+            <column columnName="status">
+
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>

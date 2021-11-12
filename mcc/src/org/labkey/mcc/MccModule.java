@@ -18,12 +18,17 @@ package org.labkey.mcc;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.labkey.api.data.Container;
 import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.query.DefaultSchema;
+import org.labkey.api.query.QuerySchema;
+import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.mcc.query.MccEhrCustomizer;
+import org.labkey.mcc.security.MccDataAdminRole;
+import org.labkey.mcc.security.MccRequesterRole;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +47,7 @@ public class MccModule extends ExtendedSimpleModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.004;
+        return 20.005;
     }
 
     @Override
@@ -62,19 +67,15 @@ public class MccModule extends ExtendedSimpleModule
     protected void init()
     {
         addController(MccController.NAME, MccController.class);
+
+        RoleManager.registerRole(new MccRequesterRole());
+        RoleManager.registerRole(new MccDataAdminRole());
     }
 
     @Override
     protected void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
         registerEHRResources();
-    }
-
-    @Override
-    @NotNull
-    public Collection<String> getSummary(Container c)
-    {
-        return Collections.emptyList();
     }
 
     @Override
@@ -88,6 +89,18 @@ public class MccModule extends ExtendedSimpleModule
     {
         EHRService.get().registerModule(this);
         EHRService.get().registerTableCustomizer(this, MccEhrCustomizer.class);
+    }
 
+    @Override
+    public void registerSchemas()
+    {
+        DefaultSchema.registerProvider(MccSchema.NAME, new DefaultSchema.SchemaProvider(this)
+        {
+            @Override
+            public QuerySchema createSchema(final DefaultSchema schema, Module module)
+            {
+                return new MccUserSchema(schema.getUser(), schema.getContainer(), MccSchema.getInstance().getSchema());
+            }
+        });
     }
 }

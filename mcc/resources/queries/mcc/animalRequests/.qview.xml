@@ -1,0 +1,12 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="rowid"/>
+        <column name="lastname"/>
+        <column name="firstname"/>
+        <column name="institutionname"/>
+        <column name="status"/>
+    </columns>
+    <sorts>
+        <sort column="rowid" descending="true"/>
+    </sorts>
+</customView>

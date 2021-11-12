@@ -1,0 +1,27 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
+
+        Ext4.get(webpart.wrapperDivId).update(
+            'Below is a list of ....' +
+            '<p/>' +
+            '<div id="' + webpart.wrapperDivId + '-webpart">'
+        );
+
+        var webpart = <%=webpartContext%>;
+        LDK.Utils.getReadOnlyQWP({
+            frame: 'none',
+            title: 'My Animal Requests',
+            schemaName: 'mcc',
+            queryName: 'myRequests',
+            showRecordSelectors: false,
+            showDetailsColumn: false,
+            buttonBar: {position: 'none', includeStandardButtons: false, items: []}
+        }).render(webpart.wrapperDivId + '-webpart');
+
+    });
+</script>
