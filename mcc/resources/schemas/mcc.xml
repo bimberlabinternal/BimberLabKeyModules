@@ -278,16 +278,12 @@
                 <columnTitle>Funding Source</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="grantnumber">
+                <columnTitle>Grant Number(s)</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="experimentalrationale">
                 <columnTitle>Experimental Rationale</columnTitle>
-                <nullable>true</nullable>
-            </column>
-            <column columnName="numberofanimals">
-                <columnTitle>Number of Animals</columnTitle>
-                <nullable>true</nullable>
-            </column>
-            <column columnName="othercharacteristics">
-                <columnTitle>Other Characteristics</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="methodsproposed">
@@ -302,8 +298,8 @@
                 <columnTitle>Breeding Animals?</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="ofinterestcenters">
-                <columnTitle>Of Interest NIH centers</columnTitle>
+            <column columnName="breedingpurpose">
+                <columnTitle>Detail on Breeding</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="researcharea">
@@ -344,6 +340,10 @@
             </column>
             <column columnName="iacucapproval">
                 <columnTitle>IACUC Approval Status</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="iacucprotocol">
+                <columnTitle>IACUC Protocol #</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="status">
@@ -408,6 +408,61 @@
             <column columnName="institutionname">
                 <columnTitle>Institution Name</columnTitle>
                 <nullable>false</nullable>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="requestcohorts" tableDbType="TABLE">
+        <pkColumnName>rowid</pkColumnName>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Cohort Id</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="requestid">
+                <columnTitle>Request ID</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>mcc</fkDbSchema>
+                    <fkTable>animalrequests</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="numberofanimals">
+                <columnTitle>Number of Animals</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="sex">
+                <columnTitle>Sex</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="othercharacteristics">
+                <columnTitle>Other Characteristics</columnTitle>
+                <nullable>true</nullable>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
