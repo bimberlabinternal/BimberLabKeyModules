@@ -7,7 +7,7 @@ ALTER TABLE mcc.animalRequests DROP COLUMN numberofanimals;
 ALTER TABLE mcc.animalRequests DROP COLUMN othercharacteristics;
 
 CREATE TABLE mcc.requestcohorts (
-    rowid int SERIAL,
+    rowid SERIAL,
     requestid VARCHAR(40),
     numberofanimals int,
     sex VARCHAR(100),
