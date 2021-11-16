@@ -7,11 +7,11 @@ ALTER TABLE mcc.animalRequests DROP COLUMN numberofanimals;
 ALTER TABLE mcc.animalRequests DROP COLUMN othercharacteristics;
 
 CREATE TABLE mcc.requestcohorts (
-    rowid int SERIAL,
+    rowid SERIAL,
     requestid VARCHAR(40),
     numberofanimals int,
     sex VARCHAR(100),
-    othercharacteristics VARCHAR(max),
+    othercharacteristics VARCHAR(4000),
 
     container ENTITYID,
     created timestamp,
