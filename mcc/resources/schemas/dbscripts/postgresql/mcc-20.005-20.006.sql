@@ -11,7 +11,7 @@ CREATE TABLE mcc.requestcohorts (
     requestid VARCHAR(40),
     numberofanimals int,
     sex VARCHAR(100),
-    othercharacteristics VARCHAR(max),
+    othercharacteristics VARCHAR(4000),
 
     container ENTITYID,
     created timestamp,
