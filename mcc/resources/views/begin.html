@@ -1,0 +1,27 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
+
+        Ext4.get(webpart.wrapperDivId).update(
+                'This is the future home of the BRAIN Initiative Marmoset Coordinating Center. This site is currently under active development - please come back soon!' +
+                '<p></p>' +
+                '<a href="<%=contextPath%>/mcc' + ctx['MCCRequestContainer'] + '/mccRequests.view">' +
+                '<div class="ehr-tool-icon-wrapper-lg">' +
+                    '<div class="ehr-tool-icon-lg">' +
+                        '<img src="<%=contextPath%>/mcc/img/mcc-request-white.png">Animal Requests' +
+                    '</div>' +
+                '</div></a>' +
+                '<a href="<%=contextPath%>/project' + ctx['MCCContainer'] + '/begin.view">' +
+                '<div class="ehr-tool-icon-wrapper-lg">' +
+                    '<div class="ehr-tool-icon-lg">' +
+                        '<img src="<%=contextPath%>/mcc/img/mcc-animal-white.png">MCC Data' +
+                    '</div>' +
+                '</div></a>'
+        );
+
+    });
+</script>

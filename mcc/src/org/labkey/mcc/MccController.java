@@ -321,7 +321,6 @@ public class MccController extends SpringActionController
         public Object execute(ApproveUserRequestsForm form, BindException errors) throws Exception
         {
             ApiSimpleResponse response = new ApiSimpleResponse();
-            MutableSecurityPolicy policy = new MutableSecurityPolicy(MccManager.get().getMCCContainer().getPolicy());
             List<SecurityManager.NewUserStatus> newUserStatusList = new ArrayList<>();
             List<User> existingUsersGivenAccess = new ArrayList<>();
             try (DbScope.Transaction transaction = CoreSchema.getInstance().getScope().ensureTransaction())
@@ -370,18 +369,7 @@ public class MccController extends SpringActionController
                     row.put("rowId", requestId);
                     row.put("userId", u.getUserId());
                     Table.update(getUser(), ti, row, requestId);
-
-                    if (!policy.hasPermission(u, ReadPermission.class))
-                    {
-                        policy.addRoleAssignment(u, ReaderRole.class);
-                    }
-                    else
-                    {
-                        _log.info("user already has read permission on MCC container: " + u.getDisplayName(getUser()));
-                    }
                 }
-
-                SecurityPolicyManager.savePolicy(policy);
 
                 transaction.commit();
             }
@@ -410,10 +398,10 @@ public class MccController extends SpringActionController
                 MailHelper.send(mail, getUser(), getContainer());
             }
 
-            Group g = GroupManager.getGroup(mccContainer, MccManager.GROUP_NAME, GroupEnumType.SITE);
+            Group g = GroupManager.getGroup(mccContainer, MccManager.REQUEST_GROUP_NAME, GroupEnumType.SITE);
             if (g == null)
             {
-                g = SecurityManager.createGroup(ContainerManager.getRoot(), MccManager.GROUP_NAME);
+                g = SecurityManager.createGroup(ContainerManager.getRoot(), MccManager.REQUEST_GROUP_NAME);
             }
 
             SecurityManager.addMembers(g, allUsers);
