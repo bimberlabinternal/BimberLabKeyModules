@@ -3,6 +3,7 @@
         <permission name="none"/>
     </permissions>
     <dependencies>
+        <dependency path="internal/jQuery"/>
         <dependency path="login.css"/>
         <dependency path="login.js"/>
     </dependencies>
