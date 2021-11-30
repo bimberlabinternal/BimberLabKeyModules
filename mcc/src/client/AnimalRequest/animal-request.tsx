@@ -455,13 +455,14 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
-                    {/*TODO the spacing is weird here*/}
-                    <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => setIsSubmitting(true)}>Submit</button>
-                    <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => {
+                    <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
+                        e.preventDefault()
+
                         if (confirm("You are about to leave this page.")) {
                             window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
                         }
                     }}>Cancel</button>
+                    <button className="tw-ml-16 tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => setIsSubmitting(true)}>Submit</button>
                 </div>
             </form>
          )
