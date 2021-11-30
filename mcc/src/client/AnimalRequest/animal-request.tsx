@@ -238,9 +238,6 @@ export function AnimalRequest() {
 
     }
 
-    // TODO: we should scan the URL for requestId=XXXX. If this is provided, make a loading indicator and query LabKey to
-    // populate this form with the values from that saved request.
-
     if (requestId && (animalRequests.returned === false || coinvestigators.returned === false)) {
         if (isFormQueried === false) {
             fillForm()
@@ -461,8 +458,9 @@ export function AnimalRequest() {
                     {/*TODO the spacing is weird here*/}
                     <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => setIsSubmitting(true)}>Submit</button>
                     <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => {
-                        //TODO: make some kind of 'Are you sure you want exit?' confirmation, and if the user picks yes, then:
-                        window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        if (confirm("You are about to leave this page.")) {
+                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        }
                     }}>Cancel</button>
                 </div>
             </form>
