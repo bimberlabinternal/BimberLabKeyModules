@@ -47,6 +47,11 @@ export function AnimalRequest() {
         "data": [new Set([{"uuid": nanoid()}])]
     })
     
+
+    function handleFailure(data) {
+        console.error(data)
+    }
+
     
     function getRequired() {
         switch (animalRequests.data.status) {
@@ -307,13 +312,7 @@ export function AnimalRequest() {
             success: function(data) {
                 window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
             },
-            failure: function(data) {
-                //TODO: we should have a standard way to handle errors. Examples of this in LabKey are:
-                // https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/util/utils.ts#L627
-                // or ErrorBoundary: https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/components/error/ErrorBoundary.tsx
-                alert("Your data could not be saved.")
-                console.error(data)
-            }
+            failure: handleFailure
         })
     }
 
@@ -374,13 +373,7 @@ export function AnimalRequest() {
                     "data": returnedData
                 })
             },
-            failure: function(data) {
-                //TODO: we should have a standard way to handle errors. Examples of this in LabKey are:
-                // https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/util/utils.ts#L627
-                // or ErrorBoundary: https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/components/error/ErrorBoundary.tsx
-                alert("Your data could not be selected.")
-                console.error(data)
-            }
+            failure: handleFailure
         })
 
 
@@ -405,13 +398,7 @@ export function AnimalRequest() {
                     "data": returnedData
                 })
             },
-            failure: function(data) {
-                //TODO: we should have a standard way to handle errors. Examples of this in LabKey are:
-                // https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/util/utils.ts#L627
-                // or ErrorBoundary: https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/components/error/ErrorBoundary.tsx
-                alert("Your data could not be selected.")
-                console.error(data)
-            }
+            failure: handleFailure
         })
 
 
@@ -448,7 +435,6 @@ export function AnimalRequest() {
 
 
     if (requestId && (animalRequests.returned === false || coinvestigators.returned === false || animalCohorts.returned === false)) {
-        //TODO Styling
         if (isFormQueried === false) {
             fillForm()
         }
