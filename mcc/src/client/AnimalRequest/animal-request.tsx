@@ -174,7 +174,8 @@ export function AnimalRequest() {
             }
         }
 
-        while(data.get("coinvestigators-" + i + "-lastName")) {
+        while(data.get("coinvestigators-" + i + "-lastName") || data.get("coinvestigators-" + i + "-firstName") ||
+              data.get("coinvestigators-" + i + "-middleInitial") || data.get("coinvestigators-" + i + "-institution")) {
             commands.push({
                 command: "insert",
                 schemaName: "mcc",
@@ -212,7 +213,8 @@ export function AnimalRequest() {
             }
         }
 
-        while(data.get("animal-cohorts-" + i + "-numberofanimals")) {
+        while(data.get("animal-cohorts-" + i + "-numberofanimals") || data.get("animal-cohorts-" + i + "-sex") ||
+              data.get("animal-cohorts-" + i + "-othercharacteristics")) {
             commands.push({
                 command: "insert",
                 schemaName: "mcc",
@@ -366,6 +368,7 @@ export function AnimalRequest() {
             ],
             success: function(resp) {
                 let returnedData = resp.rows[0]
+
                 setAnimalRequests({
                     "returned": true,
                     "data": returnedData
@@ -445,8 +448,6 @@ export function AnimalRequest() {
 
 
     if (requestId && (animalRequests.returned === false || coinvestigators.returned === false || animalCohorts.returned === false)) {
-        //TODO Don't crash if the requestId doesn't exist
-        //TODO Values
         //TODO Styling
         if (isFormQueried === false) {
             fillForm()
@@ -457,6 +458,8 @@ export function AnimalRequest() {
              <div style={{ borderBottom: "2px solid #3495d2" }} className="tw-animate-spin tw-rounded-full tw-h-32 tw-w-32"></div>
            </div>
         )
+    } else if (requestId && animalRequests.returned === true && animalRequests.data === undefined) {
+        return(<Title text="No such request."/>)
     } else {
         return (
             <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">

@@ -7,7 +7,7 @@ import { animalBreedingPlaceholder } from './values'
 
 export default function AnimalBreeding(props) {
 
-    const [displayPurpose, setDisplayPurpose] = useState(false);
+    const [displayPurpose, setDisplayPurpose] = useState(props.defaultValue.isbreedinganimals === true ? true : false)
 
     function setDisplayPurposeField(value) {
         if(value == "yes") {

@@ -7,7 +7,7 @@ import { IACUCApprovalOptions } from './values'
 
 export default function IACUCProtocol(props) {
 
-    const [displayProtocol, setDisplayProtocol] = useState(false);
+    const [displayProtocol, setDisplayProtocol] = useState(props.defaultValue.iacucapproval == "approved" ? true : false)
 
     function setDisplayProtocolField(value) {
         if(value == "approved") {

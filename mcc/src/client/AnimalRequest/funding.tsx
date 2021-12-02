@@ -9,7 +9,7 @@ import { fundingSourceOptions } from './values'
 
 export default function Funding(props) {
 
-    const [displayApplicationDate, setDisplayApplicationDate] = useState(props.defaultValue.fundingsource == "no-funding" ? true : false);
+    const [displayApplicationDate, setDisplayApplicationDate] = useState(props.defaultValue.fundingsource == "no-funding" ? true : false)
 
     function setDisplayApplicationDateField(value) {
         if(value == "no-funding") {

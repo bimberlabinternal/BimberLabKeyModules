@@ -7,7 +7,7 @@ import { researchAreaOptions } from './values'
 
 export default function ResearchArea(props) {
 
-    const [displayOther, setDisplayOther] = useState(false);
+    const [displayOther, setDisplayOther] = useState(props.defaultValue.researcharea == "other" ? true : false)
 
     function setDisplayOtherField(value) {
         if(value == "other") {
