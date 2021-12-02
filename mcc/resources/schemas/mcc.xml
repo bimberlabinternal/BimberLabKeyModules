@@ -228,11 +228,11 @@
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="firstname">
                 <columnTitle>First Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="middleinitial">
                 <columnTitle>Middle Initial</columnTitle>
@@ -395,19 +395,19 @@
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="firstname">
                 <columnTitle>First Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="middleinitial">
                 <columnTitle>Middle Initial</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="institutionname">
                 <columnTitle>Institution Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
