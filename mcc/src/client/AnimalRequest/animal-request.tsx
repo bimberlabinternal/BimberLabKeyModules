@@ -47,37 +47,6 @@ export function AnimalRequest() {
         "data": [new Set([{"uuid": nanoid()}])]
     })
     
-    function getSubmitButtonText() {
-        switch (animalRequests.data.status) {
-            case "draft":
-                return "Submit"
-            case "submitting":
-                return "Submit"
-            case "under-review-local":
-                return "Approve Request"
-            case "under-review":
-                return "Approve"
-            default:
-                "Submit"
-        }
-    } 
-
-
-    function getSaveButtonText() {
-        switch (animalRequests.data.status) {
-            case "draft":
-                return "Save"
-            case "submitting":
-                return "Save"
-            case "under-review-local":
-                return "Save"
-            case "under-review":
-                return "Reject"
-            default:
-                "Save"
-        }
-    }
-    
     
     function getRequired() {
         switch (animalRequests.data.status) {
@@ -85,12 +54,105 @@ export function AnimalRequest() {
                 return false
             case "submitting":
                 return true
-            case "under-review-local":
+            case "submitted":
                 return false
+            case "approving":
+                return true
             case "under-review":
+                return true
+            case "approving-final":
+                return true
+            case "rejecting":
                 return true
             default:
                 return false
+        }
+    }
+
+
+    function handleNextStateSubmitButton() {
+        setIsSubmitting(true);
+
+        if (animalRequests.data.status === "draft") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"submitting" }
+            });
+        } else if (animalRequests.data.status === "submitted") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"approving" }
+            });
+        } else if (animalRequests.data.status === "under-review") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"approving-final" }
+            });
+        }
+    }
+
+    function getSubmitButtonText() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return "Submit"
+            case "submitting":
+                return "Submit"
+            case "submitted":
+                return "Approve Request"
+            case "approving":
+                return "Approve Request"
+            case "under-review":
+                return "Approve"
+            case "approving-final":
+                return "Approve"
+            case "rejecting":
+                return "Approve"
+            default:
+                "Submit"
+        }
+    } 
+
+
+    function handleNextStateSaveButton() {
+        setIsSubmitting(false);
+
+        if (animalRequests.data.status === "submitting") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"draft" }
+            });
+        } else if (animalRequests.data.status === "approving") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"submitted" }
+            });
+        } else if (animalRequests.data.status === "under-review") {
+            setIsSubmitting(true);
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"rejecting" }
+            });
+        }
+    }
+
+    function getSaveButtonText() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return "Save"
+            case "submitting":
+                return "Save"
+            case "submitted":
+                return "Save"
+            case "approving": 
+                return "Save"
+            case "under-review":
+                return "Reject"
+            case "approving-final":
+                return "Reject"
+            case "rejecting":
+                return "Reject"
+            default:
+                "Save"
         }
     }
 
@@ -174,7 +236,13 @@ export function AnimalRequest() {
         e.preventDefault()
 
         if(animalRequests.data.status === "submitting") {
-            animalRequests.data.status = "under-review-local"
+            animalRequests.data.status = "submitted"
+        } else if(animalRequests.data.status === "approving") {
+            animalRequests.data.status = "under-review"
+        } else if(animalRequests.data.status === "approving-final") {
+            animalRequests.data.status = "approved"
+        } else if(animalRequests.data.status === "rejecting") {
+            animalRequests.data.status = "rejected"
         }
 
         const data = new FormData(e.currentTarget)
@@ -584,15 +652,13 @@ export function AnimalRequest() {
                         }
                     }}>Cancel</button>
 
-                    <Button text={getSaveButtonText()}/>
+                    <Button onClick={() => {
+                        handleNextStateSaveButton();
+                     }} text={getSaveButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
 
                     <Button onClick={() => {
-                        setIsSubmitting(true);
-                        setAnimalRequests({
-                            "returned": true,
-                            "data": { ...animalRequests.data, status:"submitting" }
-                        });
-                     }} text={getSubmitButtonText()}/>
+                        handleNextStateSubmitButton();
+                     }} text={getSubmitButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
                 </div>
             </form>
          )
