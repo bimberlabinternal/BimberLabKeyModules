@@ -66,7 +66,7 @@ export default function AnimalCohorts(props) {
         </div>
       ))}
 
-      <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+      <div className="tw-w-full tw-px-3 tw-mb-10 md:tw-mb-0">
         <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={addCohort} value="Add Cohort" />
       </div>
     </>
