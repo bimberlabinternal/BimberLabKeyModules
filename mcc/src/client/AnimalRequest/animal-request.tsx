@@ -9,23 +9,25 @@ import Select from './select'
 import CoInvestigators from './co-investigators'
 import TextArea from './text-area'
 import YesNoRadio from './yes-no-radio'
-import InputNumber from './input-number'
+import AnimalBreeding from './animal-breeding'
+import IACUCProtocol from './iacuc-protocol'
+import Funding from './funding'
 import ResearchArea from './research-area'
+import AnimalCohorts from './animal-cohort'
 
 import {
     earlyInvestigatorTooltip, institutionTypeOptions, 
-    isPrincipalInvestigatorOptions, fundingSourceOptions,
-    experimentalRationalePlaceholder, otherCharacteristicsPlaceholder,
+    experimentalRationalePlaceholder,
     methodsProposedPlaceholder, collaborationsPlaceholder,
-    animalWellfarePlaceholder, signingOfficialHelper,
+    animalWellfarePlaceholder, signingOfficialTooltip,
     certificationLabel, existingMarmosetColonyOptions,
-    existingNHPFacilityOptions, IACUCApprovalOptions
+    existingNHPFacilityOptions,
+    researchUseStatementTooltip
 } from './values'
 
 
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
-    const [rowId, setRowId] = useState(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // On submit, state is managed by the FormData object in handleSubmit. These hooks are only used to propagate values
@@ -38,6 +40,10 @@ export function AnimalRequest() {
     const [coinvestigators, setCoinvestigators] = useState({
         "returned": false,
         "data": []
+    })
+    const [animalCohorts, setAnimalCohorts] = useState({
+        "returned": false,
+        "data": [new Set([{"uuid": nanoid()}])]
     })
 
 
@@ -79,6 +85,43 @@ export function AnimalRequest() {
     }
 
 
+    function get_animal_cohort_commands(data, objectId) {
+        let commands = []
+        let i = 0
+
+        if(requestId && animalCohorts.data.length > 0) {
+            for(const cohort of animalCohorts.data) {
+                commands.push({
+                    command: "delete",
+                    schemaName: "mcc",
+                    queryName: "requestcohorts",
+                    rows: [{
+                        "rowid": cohort.rowid,
+                    }]
+                })
+            }
+        }
+
+        while(data.get("animal-cohorts-" + i + "-numberofanimals")) {
+            commands.push({
+                command: "insert",
+                schemaName: "mcc",
+                queryName: "requestcohorts",
+                rows: [{
+                    "requestId": objectId,
+                    "numberofanimals": data.get("animal-cohorts-" + i + "-numberofanimals"),
+                    "sex": data.get("animal-cohorts-" + i + "-sex"),
+                    "othercharacteristics": data.get("animal-cohorts-" + i + "-othercharacteristics"),
+                }]
+            })
+
+            i++
+        }
+
+        return commands
+    }
+
+
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
 
@@ -86,6 +129,7 @@ export function AnimalRequest() {
 
         const objectId = requestId || nanoid()
         let coinvestigatorCommands = get_coinvestigator_commands(data, objectId)
+        let cohortCommands = get_animal_cohort_commands(data, objectId)
 
         let rowId = requestId ? {"rowid": animalRequests.data.rowid} : {}
         console.log(rowId)
@@ -116,7 +160,8 @@ export function AnimalRequest() {
                         "othercharacteristics": data.get("other-characteristics"),
                         "methodsproposed": data.get("methods-proposed"),
                         "collaborations": data.get("collaborations"),
-                        "isbreedinganimals": data.get("is-planning-to-breed-animals"),
+                        "isbreedinganimals": data.get("animal-breeding-is-planning-to-breed-animals"),
+                        "breedingpurpose": data.get("animal-breeding-purpose"),
                         "ofinterestcenters": data.get("of-interest-centers"),
                         "researcharea": data.get("research-area"),
                         "otherjustification": data.get("research-area-other-specify"),
@@ -128,10 +173,14 @@ export function AnimalRequest() {
                         "vetfirstname": data.get("vet-first-name"),
                         "vetemail": data.get("vet-email"),
                         "iacucapproval": data.get("iacuc-approval"),
+                        "iacucprotocol": data.get("iacuc-protocol"),
+                        "grantnumber" : data.get("funding-grant-number"),
+                        "applicationduedate": data.get("funding-application-due-date"),
                         ...rowId
                     }]
                 },
-                ...coinvestigatorCommands
+                ...coinvestigatorCommands,
+                ...cohortCommands
             ],
             success: function(data) {
                 window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
@@ -175,6 +224,7 @@ export function AnimalRequest() {
                 "methodsproposed",
                 "collaborations",
                 "isbreedinganimals",
+                "breedingpurpose",
                 "ofinterestcenters",
                 "researcharea",
                 "otherjustification",
@@ -185,7 +235,10 @@ export function AnimalRequest() {
                 "vetlastname",
                 "vetfirstname",
                 "vetemail",
-                "iacucapproval"
+                "iacucapproval",
+                "iacucprotocol",
+                "grantnumber",
+                "applicationduedate"
             ],
             filterArray: [
               Filter.create('objectId', requestId)
@@ -205,6 +258,7 @@ export function AnimalRequest() {
                 console.error(data)
             }
         })
+
 
         Query.selectRows({
             schemaName: "mcc",
@@ -236,9 +290,44 @@ export function AnimalRequest() {
             }
         })
 
+
+        Query.selectRows({
+            schemaName: "mcc",
+            queryName: "requestcohorts",
+            columns: [ 
+                "rowid",
+                "requestId",
+                "numberofanimals",
+                "sex",
+                "othercharacteristics",
+            ],
+            filterArray: [
+              Filter.create('requestId', requestId)
+            ],
+            success: function(resp) {
+                let returnedData = resp.rows
+                setAnimalCohorts({
+                    "returned": true,
+                    "data": returnedData
+                })
+            },
+            failure: function(data) {
+                //TODO: we should have a standard way to handle errors. Examples of this in LabKey are:
+                // https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/util/utils.ts#L627
+                // or ErrorBoundary: https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/components/error/ErrorBoundary.tsx
+                alert("Your data could not be selected.")
+                console.error(data)
+            }
+        })
+
     }
 
-    if (requestId && (animalRequests.returned === false || coinvestigators.returned === false)) {
+
+    if (requestId && (animalRequests.returned === false || coinvestigators.returned === false || animalCohorts.returned === false)) {
+        //TODO Status flag
+        //TODO Don't crash if the requestId doesn't exist
+        //TODO Values
+        //TODO Styling
         if (isFormQueried === false) {
             fillForm()
         }
@@ -310,12 +399,14 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="5. Institution Signing Official*"/>
-                    <Tooltip id="signing-official-helper"
-                             text={signingOfficialHelper}
-                    />
+                    <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                        <Title text="5. Institution Signing Official*&nbsp;"/>
+                        <Tooltip id="signing-official-helper"
+                             text={signingOfficialTooltip}
+                        />
+                    </div>
 
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0 tw-mt-6">
                         <Input id="official-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={true} defaultValue={animalRequests.data.officiallastname}/>
                     </div>
 
@@ -337,35 +428,26 @@ export function AnimalRequest() {
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <Title text="7. Existing or proposed funding source*"/>
 
-                    <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Select id="funding-source" isSubmitting={isSubmitting} options={fundingSourceOptions} required={true} defaultValue={animalRequests.data.fundingsource}/>
-                    </div>
-
-                    {/*TODO: if secured, need to capture grant #. If no funding, ask about application due date*/}
-                    {/*<div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">*/}
-                    {/*    <Select id="grant-number" isSubmitting={isSubmitting} placeholder="Grant Number(s)" required={false}/>*/}
-                    {/*</div>*/}
+                    <Funding id="funding" isSubmitting={isSubmitting} defaultValue={animalRequests.data}/>
                 </div>
                  
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
-                    {/*TODO: info popup with more guidance*/}
-                    <Title text="8. Research Use Statement*"/>
+                    <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                        <Title text="8. Research Use Statement*&nbsp;"/>
+                        <Tooltip id="research-use-statement-helper"
+                           text={researchUseStatementTooltip}
+                        />
+                    </div>
 
-                    <div className="tw-w-full tw-px-3 tw-mb-10">
+                    <div className="tw-w-full tw-px-3 tw-mb-6 tw-mt-6">
                         <TextArea id="experiment-rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={true} defaultValue={animalRequests.data.experimentalrationale}/>
                     </div>
 
-                    {/*TODO: this should require at least one animal cohort to be added*/}
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
+                        <Title text="Animal Cohorts"/>
 
-                    {/*Treat more like Co-investigators, which is a 1:many relationship. I created the table mcc.requestcohorts. Per cohort, capture discrete: number, sex, characteristics*/}
-                    {/*<div className="tw-w-full tw-px-3 tw-mb-10">*/}
-                    {/*    <Title text="Number of animals needed:&nbsp;&nbsp;&nbsp;&nbsp;"/>*/}
-                    {/*    <InputNumber id="number-of-animals" isSubmitting={isSubmitting} required={true}/>*/}
-                    {/*</div>*/}
-
-                    {/*<div className="tw-w-full tw-px-3 tw-mb-10">*/}
-                    {/*    <TextArea id="other-characteristics" isSubmitting={isSubmitting} placeholder={otherCharacteristicsPlaceholder} required={true}/>*/}
-                    {/*</div>*/}
+                        <AnimalCohorts isSubmitting={isSubmitting} defaultValue={animalCohorts.data}/>
+                    </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-10">
                         <TextArea id="methods-proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={true} defaultValue={animalRequests.data.methodsproposed}/>
@@ -375,19 +457,11 @@ export function AnimalRequest() {
                         <TextArea id="collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={true} defaultValue={animalRequests.data.collaborations}/>
                     </div>
 
-                    <div className="tw-w-full tw-px-3 tw-mb-10">
+                    <div className="tw-w-full tw-px-3 tw-mb-4">
                         <div className="tw-mb-6">
                             <Title text="Do you plan to breed animals?"/>
                         </div>
-
-                        <div className="tw-mb-6">
-                            <YesNoRadio id="is-planning-to-breed-animals" required={true} defaultValue={animalRequests.data.isbreedinganimals}/>
-                        </div>
-
-                        {/*If is-planning-to-breed-animals is true, show field asking for free-text description of purpose*/}
-                        {/*<div className="tw-mb-6">*/}
-
-                        {/*</div>*/}
+                        <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={animalRequests.data}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -444,13 +518,8 @@ export function AnimalRequest() {
                         <Title text="IACUC Approval"/>
 
                         <div className="tw-w-full tw-px-3 md:tw-mb-0">
-                            <Select id="iacuc-approval" isSubmitting={isSubmitting} options={IACUCApprovalOptions} required={true} defaultValue={animalRequests.data.iacucapproval}/>
+                            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={true} defaultValue={animalRequests.data}/>
                         </div>
-
-                        {/*TODO: this is required if iacuc-approval == approved. It's a free-text field*/}
-                        {/*<div className="tw-w-full tw-px-3 md:tw-mb-0">*/}
-                        {/*    <Select id="iacuc-protocol" isSubmitting={isSubmitting} placeholder="IACUC Protocol Number" required={false}/>*/}
-                        {/*</div>*/}
                     </div>
                 </div>
 
