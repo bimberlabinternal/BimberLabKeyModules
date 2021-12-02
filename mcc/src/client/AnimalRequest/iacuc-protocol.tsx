@@ -20,13 +20,13 @@ export default function IACUCProtocol(props) {
     return (
         <>
             <div className="tw-w-full tw-mb-6">
-                <Select id={props.id + "-approval"} isSubmitting={props.isSubmitting} options={IACUCApprovalOptions} required={true}
+                <Select id={props.id + "-approval"} isSubmitting={props.isSubmitting} options={IACUCApprovalOptions} required={props.required}
                  defaultValue={props.defaultValue.iacucapproval} onChange={(e) => setDisplayProtocolField(e.currentTarget.value)}/>
             </div>
 
             <div className="tw-mb-6">
                 <Input id={props.id + "-protocol"} isSubmitting={props.isSubmitting} placeholder={"IACUC Protocol Number"}
-                    display={displayProtocol} required={displayProtocol} defaultValue={props.defaultValue.iacucprotocol}/>
+                    display={displayProtocol} required={displayProtocol && props.required} defaultValue={props.defaultValue.iacucprotocol}/>
             </div>
         </>
     )

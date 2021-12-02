@@ -20,13 +20,13 @@ export default function AnimalBreeding(props) {
     return (
         <>
             <div className="tw-mb-6">
-                <YesNoRadio id={props.id + "-is-planning-to-breed-animals"} required={true} defaultValue={props.defaultValue.isbreedinganimals} 
+                <YesNoRadio id={props.id + "-is-planning-to-breed-animals"} required={props.required} defaultValue={props.defaultValue.isbreedinganimals} 
                  onChange={(e) => setDisplayPurposeField(e.currentTarget.value)}/>
             </div>
 
             <div className="tw-mb-6">
                 <TextArea id={props.id + "-purpose"} isSubmitting={props.isSubmitting} placeholder={animalBreedingPlaceholder}
-                    display={displayPurpose} required={displayPurpose} defaultValue={props.defaultValue.breedingpurpose}/>
+                    display={displayPurpose} required={displayPurpose && props.required} defaultValue={props.defaultValue.breedingpurpose}/>
             </div>
         </>
     )

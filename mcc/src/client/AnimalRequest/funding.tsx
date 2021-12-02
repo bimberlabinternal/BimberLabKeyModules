@@ -22,13 +22,13 @@ export default function Funding(props) {
     return (
         <>
         <div className="tw-w-full tw-px-3 tw-mb-6">
-            <Select id={props.id + "-source"} isSubmitting={props.isSubmitting} options={fundingSourceOptions} onChange={(e) => setDisplayApplicationDateField(e.currentTarget.value)} required={true} defaultValue={props.defaultValue.fundingsource} />
+            <Select id={props.id + "-source"} isSubmitting={props.isSubmitting} options={fundingSourceOptions} onChange={(e) => setDisplayApplicationDateField(e.currentTarget.value)} required={props.required} defaultValue={props.defaultValue.fundingsource} />
         </div>
 
         <div className="tw-w-full tw-px-3">
-            <Input id={props.id + "-grant-number"} isSubmitting={props.isSubmitting} placeholder="Grant Number(s)" display={!displayApplicationDate} required={!displayApplicationDate} defaultValue={props.defaultValue.grantnumber}/>
+            <Input id={props.id + "-grant-number"} isSubmitting={props.isSubmitting} placeholder="Grant Number(s)" display={!displayApplicationDate} required={!displayApplicationDate && props.required} defaultValue={props.defaultValue.grantnumber}/>
             <Title text="Application Date" display={displayApplicationDate}/>
-            <Date id={props.id + "-application-due-date"} isSubmitting={props.isSubmitting} placeholder="Application due date" display={displayApplicationDate} required={displayApplicationDate} defaultValue={props.defaultValue.applicationduedate}/>
+            <Date id={props.id + "-application-due-date"} isSubmitting={props.isSubmitting} placeholder="Application due date" display={displayApplicationDate} required={displayApplicationDate && props.required} defaultValue={props.defaultValue.applicationduedate}/>
         </div>
         </>
     )

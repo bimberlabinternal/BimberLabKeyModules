@@ -33,7 +33,7 @@ export default function AnimalCohorts(props) {
   return (
     <>
       {[...cohorts].map((cohort, index) => (
-        <div className="tw-flex tw-flex-wrap tw-w-full tw-mx-2 tw-mb-1" key={cohort.uuid}>
+        <div className="tw-flex tw-flex-wrap tw-w-full tw-mx-2 tw-mb-10" key={cohort.uuid}>
           <div className="tw-flex tw-flex-wrap tw-w-full tw-mb-6">
             <div className="tw-w-1/2 md:tw-mb-0">
               <Title text={ "Cohort " + (index + 1)} />
@@ -48,20 +48,20 @@ export default function AnimalCohorts(props) {
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Title text="Number of animals&nbsp;&nbsp;&nbsp;" />
             <div className="tw-mb-4">
-              <InputNumber id={"animal-cohorts-" + index + "-" + "numberofanimals"} isSubmitting={props.isSubmitting} placeholder="Number of animals" required={true} defaultValue={cohort.numberofanimals}/>
+              <InputNumber id={"animal-cohorts-" + index + "-" + "numberofanimals"} isSubmitting={props.isSubmitting} placeholder="Number of animals" required={props.required} defaultValue={cohort.numberofanimals}/>
             </div>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Title text="Cohort sex&nbsp;&nbsp;&nbsp;" />
             <div className="tw-mb-6">
-              <Select id={"animal-cohorts-" + index + "-" + "sex"} isSubmitting={props.isSubmitting} options={animalSexes} defaultValue={cohort.sex}/>
+              <Select id={"animal-cohorts-" + index + "-" + "sex"} isSubmitting={props.isSubmitting} options={animalSexes} defaultValue={cohort.sex} required={props.required}/>
             </div>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <TextArea id={"animal-cohorts-" + index + "-" + "othercharacteristics"} isSubmitting={props.isSubmitting} placeholder={otherCharacteristicsPlaceholder} 
-             required={true} defaultValue={cohort.othercharacteristics}/>
+             required={props.required} defaultValue={cohort.othercharacteristics}/>
           </div>
         </div>
       ))}

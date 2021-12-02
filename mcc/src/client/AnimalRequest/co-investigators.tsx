@@ -39,19 +39,19 @@ export default function CoInvestigators(props) {
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "lastName"} isSubmitting={props.isSubmitting} placeholder="Last Name" required={true} defaultValue={coInvestigator.lastname}/>
+            <Input id={"coinvestigators-" + index + "-" + "lastName"} isSubmitting={props.isSubmitting} placeholder="Last Name" required={props.required} defaultValue={coInvestigator.lastname}/>
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "firstName"} isSubmitting={props.isSubmitting} placeholder="First Name" required={true} defaultValue={coInvestigator.firstname}/>
+            <Input id={"coinvestigators-" + index + "-" + "firstName"} isSubmitting={props.isSubmitting} placeholder="First Name" required={props.required} defaultValue={coInvestigator.firstname}/>
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "middleInitial"} isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={true} defaultValue={coInvestigator.middleinitial}/>
+            <Input id={"coinvestigators-" + index + "-" + "middleInitial"} isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={props.required} defaultValue={coInvestigator.middleinitial}/>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "institution"} isSubmitting={props.isSubmitting} placeholder="Institution" required={true} defaultValue={coInvestigator.institutionname}/>
+            <Input id={"coinvestigators-" + index + "-" + "institution"} isSubmitting={props.isSubmitting} placeholder="Institution" required={props.required} defaultValue={coInvestigator.institutionname}/>
           </div>
         </div>
       ))}
@@ -61,4 +61,4 @@ export default function CoInvestigators(props) {
       </div>
     </>
   )
-}':wait'
+}

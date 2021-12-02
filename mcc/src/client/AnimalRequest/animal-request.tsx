@@ -1,4 +1,4 @@
-import React, { useState, useRef, FormEvent } from 'react'
+import React, { useState, FormEvent } from 'react'
 import { Query, ActionURL, Filter } from '@labkey/api'
 import { nanoid } from 'nanoid'
 
@@ -14,6 +14,7 @@ import IACUCProtocol from './iacuc-protocol'
 import Funding from './funding'
 import ResearchArea from './research-area'
 import AnimalCohorts from './animal-cohort'
+import Button from './button'
 
 import {
     earlyInvestigatorTooltip, institutionTypeOptions, 
@@ -35,7 +36,7 @@ export function AnimalRequest() {
     const [isFormQueried, setIsFormQueried] = useState(false)
     const [animalRequests, setAnimalRequests] = useState({
         "returned": false,
-        "data": {}
+        "data": {"status": "draft"}
     })
     const [coinvestigators, setCoinvestigators] = useState({
         "returned": false,
@@ -45,6 +46,53 @@ export function AnimalRequest() {
         "returned": false,
         "data": [new Set([{"uuid": nanoid()}])]
     })
+    
+    function getSubmitButtonText() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return "Submit"
+            case "submitting":
+                return "Submit"
+            case "under-review-local":
+                return "Approve Request"
+            case "under-review":
+                return "Approve"
+            default:
+                "Submit"
+        }
+    } 
+
+
+    function getSaveButtonText() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return "Save"
+            case "submitting":
+                return "Save"
+            case "under-review-local":
+                return "Save"
+            case "under-review":
+                return "Reject"
+            default:
+                "Save"
+        }
+    }
+    
+    
+    function getRequired() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return false
+            case "submitting":
+                return true
+            case "under-review-local":
+                return false
+            case "under-review":
+                return true
+            default:
+                return false
+        }
+    }
 
 
     function get_coinvestigator_commands(data, objectId) {
@@ -125,6 +173,10 @@ export function AnimalRequest() {
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
 
+        if(animalRequests.data.status === "submitting") {
+            animalRequests.data.status = "under-review-local"
+        }
+
         const data = new FormData(e.currentTarget)
 
         const objectId = requestId || nanoid()
@@ -132,7 +184,6 @@ export function AnimalRequest() {
         let cohortCommands = get_animal_cohort_commands(data, objectId)
 
         let rowId = requestId ? {"rowid": animalRequests.data.rowid} : {}
-        console.log(rowId)
 
         Query.saveRows({
             commands: [
@@ -176,6 +227,7 @@ export function AnimalRequest() {
                         "iacucprotocol": data.get("iacuc-protocol"),
                         "grantnumber" : data.get("funding-grant-number"),
                         "applicationduedate": data.get("funding-application-due-date"),
+                        "status": animalRequests.data.status,
                         ...rowId
                     }]
                 },
@@ -238,7 +290,8 @@ export function AnimalRequest() {
                 "iacucapproval",
                 "iacucprotocol",
                 "grantnumber",
-                "applicationduedate"
+                "applicationduedate",
+                "status"
             ],
             filterArray: [
               Filter.create('objectId', requestId)
@@ -324,7 +377,6 @@ export function AnimalRequest() {
 
 
     if (requestId && (animalRequests.returned === false || coinvestigators.returned === false || animalCohorts.returned === false)) {
-        //TODO Status flag
         //TODO Don't crash if the requestId doesn't exist
         //TODO Values
         //TODO Styling
@@ -344,15 +396,15 @@ export function AnimalRequest() {
                     <Title text="1. Principal Investigator*"/>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="investigator-last-name" isSubmitting={isSubmitting} required={true} placeholder="Last Name" defaultValue={animalRequests.data.lastname}/>
+                        <Input id="investigator-last-name" isSubmitting={isSubmitting} required={getRequired()} placeholder="Last Name" defaultValue={animalRequests.data.lastname}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="investigator-first-name" isSubmitting={isSubmitting} required={true} placeholder="First Name" defaultValue={animalRequests.data.firstname}/>
+                        <Input id="investigator-first-name" isSubmitting={isSubmitting} required={getRequired()} placeholder="First Name" defaultValue={animalRequests.data.firstname}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={true} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial}/>
+                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={getRequired()} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial}/>
                     </div>
                 </div>
 
@@ -366,7 +418,7 @@ export function AnimalRequest() {
 
 
                     <div className="tw-w-full tw-px-3 tw-mt-6">
-                        <YesNoRadio id="is-principal-investigator" required={true} defaultValue={animalRequests.data.isprincipalinvestigator}/>
+                        <YesNoRadio id="is-principal-investigator" required={getRequired()} defaultValue={animalRequests.data.isprincipalinvestigator}/>
                     </div>
                 </div>
 
@@ -374,19 +426,19 @@ export function AnimalRequest() {
                     <Title text="3. Affiliated research institution*"/>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="institution-name" isSubmitting={isSubmitting} placeholder="Name" required={true} defaultValue={animalRequests.data.institutionname}/>
+                        <Input id="institution-name" isSubmitting={isSubmitting} placeholder="Name" required={getRequired()} defaultValue={animalRequests.data.institutionname}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="institution-city" isSubmitting={isSubmitting} placeholder="City" required={true} defaultValue={animalRequests.data.institutioncity}/>
+                        <Input id="institution-city" isSubmitting={isSubmitting} placeholder="City" required={getRequired()} defaultValue={animalRequests.data.institutioncity}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="institution-state" isSubmitting={isSubmitting} placeholder="State" required={true} defaultValue={animalRequests.data.institutionstate}/>
+                        <Input id="institution-state" isSubmitting={isSubmitting} placeholder="State" required={getRequired()} defaultValue={animalRequests.data.institutionstate}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="institution-country" isSubmitting={isSubmitting} placeholder="Country" required={true} defaultValue={animalRequests.data.institutioncountry}/>
+                        <Input id="institution-country" isSubmitting={isSubmitting} placeholder="Country" required={getRequired()} defaultValue={animalRequests.data.institutioncountry}/>
                     </div>
                 </div>
 
@@ -394,7 +446,7 @@ export function AnimalRequest() {
                     <Title text="4. Institution Type*"/>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Select id="institution-type" isSubmitting={isSubmitting} options={institutionTypeOptions} defaultValue={animalRequests.data.institutiontype}/>
+                        <Select id="institution-type" isSubmitting={isSubmitting} options={institutionTypeOptions} defaultValue={animalRequests.data.institutiontype} required={getRequired()}/>
                     </div>
                 </div>
 
@@ -407,28 +459,28 @@ export function AnimalRequest() {
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0 tw-mt-6">
-                        <Input id="official-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={true} defaultValue={animalRequests.data.officiallastname}/>
+                        <Input id="official-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={animalRequests.data.officiallastname}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={true} defaultValue={animalRequests.data.officialfirstname}/>
+                        <Input id="official-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={getRequired()} defaultValue={animalRequests.data.officialfirstname}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-email" isSubmitting={isSubmitting} placeholder="Email Address" required={true} defaultValue={animalRequests.data.officialemail}/>
+                        <Input id="official-email" isSubmitting={isSubmitting} placeholder="Email Address" required={getRequired()} defaultValue={animalRequests.data.officialemail}/>
                     </div>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <Title text="6. Co-investigators"/>
 
-                    <CoInvestigators isSubmitting={isSubmitting} defaultValue={coinvestigators.data}/>
+                    <CoInvestigators isSubmitting={isSubmitting} defaultValue={coinvestigators.data} required={getRequired()}/>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <Title text="7. Existing or proposed funding source*"/>
 
-                    <Funding id="funding" isSubmitting={isSubmitting} defaultValue={animalRequests.data}/>
+                    <Funding id="funding" isSubmitting={isSubmitting} defaultValue={animalRequests.data} required={getRequired()}/>
                 </div>
                  
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
@@ -440,7 +492,7 @@ export function AnimalRequest() {
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 tw-mt-6">
-                        <TextArea id="experiment-rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={true} defaultValue={animalRequests.data.experimentalrationale}/>
+                        <TextArea id="experiment-rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={getRequired()} defaultValue={animalRequests.data.experimentalrationale}/>
                     </div>
 
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
@@ -450,18 +502,18 @@ export function AnimalRequest() {
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-10">
-                        <TextArea id="methods-proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={true} defaultValue={animalRequests.data.methodsproposed}/>
+                        <TextArea id="methods-proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={getRequired()} defaultValue={animalRequests.data.methodsproposed}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-10">
-                        <TextArea id="collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={true} defaultValue={animalRequests.data.collaborations}/>
+                        <TextArea id="collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={getRequired()} defaultValue={animalRequests.data.collaborations}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-4">
                         <div className="tw-mb-6">
                             <Title text="Do you plan to breed animals?"/>
                         </div>
-                        <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={animalRequests.data}/>
+                        <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={animalRequests.data} required={getRequired()}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -478,22 +530,22 @@ export function AnimalRequest() {
 
                         <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                             <Title text="Does your institution have an existing marmoset colony?"/>
-                            <Select id="existing-marmoset-colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={animalRequests.data.existingmarmosetcolony}/>
+                            <Select id="existing-marmoset-colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={animalRequests.data.existingmarmosetcolony} required={getRequired()}/>
                         </div>
 
                         <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                             <Title text="Does your institution have existing NHP facilities?"/>
-                            <Select id="existing-nhp-facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} defaultValue={animalRequests.data.existingnhpfacilities}/>
+                            <Select id="existing-nhp-facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} defaultValue={animalRequests.data.existingnhpfacilities} required={getRequired()}/>
                         </div>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6">
                         <div className="tw-w-full tw-px-3 tw-mb-6">
-                            <TextArea id="animal-welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={true} defaultValue={animalRequests.data.animalwelfare}/>
+                            <TextArea id="animal-welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={getRequired()} defaultValue={animalRequests.data.animalwelfare}/>
                         </div>
 
                         <div className="tw-w-full tw-px-3 tw-mb-6">
-                            <input type="checkbox" name="certify" required={true} defaultChecked={animalRequests.data.certify}/>
+                            <input type="checkbox" name="certify" required={getRequired()} defaultChecked={animalRequests.data.certify}/>
                             <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
                         </div>
                     </div>
@@ -502,15 +554,15 @@ export function AnimalRequest() {
                         <Title text="Attending veterinarian"/>
 
                         <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <Input id="vet-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={true} defaultValue={animalRequests.data.vetlastname}/>
+                            <Input id="vet-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={animalRequests.data.vetlastname}/>
                         </div>
 
                         <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <Input id="vet-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={true} defaultValue={animalRequests.data.vetfirstname}/>
+                            <Input id="vet-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={getRequired()} defaultValue={animalRequests.data.vetfirstname}/>
                         </div>
 
                         <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                            <Input id="vet-email" isSubmitting={isSubmitting} placeholder="Email Address" required={true} defaultValue={animalRequests.data.vetemail}/>
+                            <Input id="vet-email" isSubmitting={isSubmitting} placeholder="Email Address" required={getRequired()} defaultValue={animalRequests.data.vetemail}/>
                         </div>
                     </div>
 
@@ -518,20 +570,29 @@ export function AnimalRequest() {
                         <Title text="IACUC Approval"/>
 
                         <div className="tw-w-full tw-px-3 md:tw-mb-0">
-                            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={true} defaultValue={animalRequests.data}/>
+                            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={getRequired()} defaultValue={animalRequests.data}/>
                         </div>
                     </div>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
-                    <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
+                    <button className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
                         e.preventDefault()
 
                         if (confirm("You are about to leave this page.")) {
                             window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
                         }
                     }}>Cancel</button>
-                    <button className="tw-ml-16 tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => setIsSubmitting(true)}>Submit</button>
+
+                    <Button text={getSaveButtonText()}/>
+
+                    <Button onClick={() => {
+                        setIsSubmitting(true);
+                        setAnimalRequests({
+                            "returned": true,
+                            "data": { ...animalRequests.data, status:"submitting" }
+                        });
+                     }} text={getSubmitButtonText()}/>
                 </div>
             </form>
          )
