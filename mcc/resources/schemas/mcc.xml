@@ -282,6 +282,10 @@
                 <columnTitle>Grant Number(s)</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="applicationduedate">
+                <columnTitle>Application Due Date</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="experimentalrationale">
                 <columnTitle>Experimental Rationale</columnTitle>
                 <nullable>true</nullable>
