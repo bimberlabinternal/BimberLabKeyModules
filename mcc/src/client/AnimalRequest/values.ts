@@ -2,7 +2,7 @@ export const earlyInvestigatorTooltip = "An Early Stage Investigator (ESI) is a 
 
 //TODO these two tooltips
 export const researchUseStatementTooltip = "This will hold an explanation of the research use statement"
-export const signingOfficialTooltip = "This will hold an explanation of the signing official"
+export const signingOfficialTooltip = "An SO has institutional authority to legally bind the institution in grant-administration matters by providing signature approval on grant application submissions. The SO monitors grant related activities within the extramural organization and may have a number of titles. The SO can also create additional accounts for personnel at their institution, including new signing official accounts."
 
 export const experimentalRationalePlaceholder = "Experimental rationale and justification for the selection of marmosets"
 export const otherCharacteristicsPlaceholder = "Other characteristics (ie. Sex, age, disease state, genotype...)"
