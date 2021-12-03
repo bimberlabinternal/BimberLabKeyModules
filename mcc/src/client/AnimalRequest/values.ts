@@ -62,4 +62,5 @@ export const IACUCApprovalOptions = [
 export const animalSexes = [
     { value: 'male', label: 'Male' },
     { value: 'female', label: 'Female' },
+    { value: 'either', label: 'Either' }
 ]

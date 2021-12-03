@@ -357,7 +357,7 @@ export function AnimalRequest() {
                 "status"
             ],
             filterArray: [
-              Filter.create('objectId', requestId)
+              Filter.create('rowId', requestId)
             ],
             success: function(resp) {
                 let returnedData = resp.rows[0]

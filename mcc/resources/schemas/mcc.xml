@@ -214,7 +214,7 @@
     <table tableName="animalrequests" tableDbType="TABLE">
         <importUrl>mcc/animalRequest.view</importUrl>
         <insertUrl></insertUrl>
-        <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
+        <updateUrl>mcc/animalRequest.view?requestId=${rowid}</updateUrl>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">

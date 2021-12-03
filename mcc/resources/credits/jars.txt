@@ -1,6 +1,0 @@
-{table}
-Filename|Component|Source|License|Purpose
-htsjdk-2.21.3.jar|htsjdk|{link:htsjdk|http://samtools.github.io/htsjdk/}|{link:MIT|http://www.opensource.org/licenses/mit-license.php}|A Java API for high-throughput sequencing data (HTS) formats
-jackson-databind-2.11.3.jar|jackson-databind|{link:jackson-databind|https://github.com/FasterXML/jackson-databind}|{link:Apache 2.0|http://www.apache.org/licenses/LICENSE-2.0}|Parsing XML Data
-jackson-dataformat-xml-2.11.3.jar|jackson-dataformat-xml|{link:jackson-dataformat-xml|https://github.com/FasterXML/jackson-dataformat-xml}|{link:Apache 2.0|http://www.apache.org/licenses/LICENSE-2.0}|Parsing XML Data
-{table}
