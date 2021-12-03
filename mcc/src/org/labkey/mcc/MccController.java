@@ -398,13 +398,20 @@ public class MccController extends SpringActionController
                 MailHelper.send(mail, getUser(), getContainer());
             }
 
-            Group g = GroupManager.getGroup(mccContainer, MccManager.REQUEST_GROUP_NAME, GroupEnumType.SITE);
-            if (g == null)
+            Group g1 = GroupManager.getGroup(mccContainer, MccManager.MCC_GROUP_NAME, GroupEnumType.SITE);
+            if (g1 == null)
             {
-                g = SecurityManager.createGroup(ContainerManager.getRoot(), MccManager.REQUEST_GROUP_NAME);
+                g1 = SecurityManager.createGroup(ContainerManager.getRoot(), MccManager.MCC_GROUP_NAME);
             }
 
-            SecurityManager.addMembers(g, allUsers);
+            Group g2 = GroupManager.getGroup(mccContainer, MccManager.REQUEST_GROUP_NAME, GroupEnumType.SITE);
+            if (g2 == null)
+            {
+                g2 = SecurityManager.createGroup(ContainerManager.getRoot(), MccManager.REQUEST_GROUP_NAME);
+            }
+
+            SecurityManager.addMembers(g1, allUsers);
+            SecurityManager.addMembers(g2, allUsers);
 
             response.put("success", !errors.hasErrors());
 

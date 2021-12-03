@@ -1,0 +1,74 @@
+<div class="mcc-nav-menu-panel"></div>
+
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        Ext4.QuickTips.init();
+
+        var webpart = <%=webpartContext%>;
+        var div = Ext4.get(webpart.wrapperDivId).down('.mcc-nav-menu-panel');
+
+        var parent = Ext4.get(webpart.wrapperDivId).up('.lk-custom-dropdown-menu');
+        if (parent) {
+            parent.setStyle('padding', '0px 0px 0px 0px');
+        }
+
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
+
+        var panel = Ext4.create('Ext.view.View', {
+            renderTo: div.id,
+            cls: 'labkey-iconpanel',
+            width: 300,
+            itemId: 'menuPanel',
+            style: {
+                padding: '10px'
+            },
+            defaults: {
+                overItemCls: 'x4-item-over',
+                trackOver: true
+            },
+            tpl: [
+                '<tpl for=".">',
+                '<tpl if="visible">',
+                    '<div style="width: 300px;font-weight: bold;height: auto;" class="thumb-wrap thumb-wrap-side">',
+                    '<a href="{url}">',
+                    '<span style="text-align: left;font-weight: bold" class="thumb-label-side">{label:htmlEncode}</span>',
+                    '</a>',
+                    '</div>',
+                '</tpl>',
+                '</tpl>',
+                '<div class="x-clear"></div>'
+            ],
+            store: {
+                type: 'store',
+                fields: ['label', 'name', 'url', 'visible'],
+                data: [{
+                    label: 'Site Home',
+                    name: 'siteHome',
+                    url: LABKEY.ActionURL.buildURL('project', 'begin', 'home'),
+                    visible: true
+                }, {
+                    label: 'Animal Requests',
+                    name: 'requests',
+                    url: LABKEY.ActionURL.buildURL('mcc', 'mccRequests', ctx['MCCRequestContainer']),
+                    visible: true
+                }, {
+                    label: 'Animal Data',
+                    name: 'animalData',
+                    url: LABKEY.ActionURL.buildURL('project', 'begin', ctx['MCCContainer']),
+                    visible: true
+                }, {
+                    label: 'Request Help / Contact',
+                    name: 'help',
+                    url: LABKEY.ActionURL.buildURL('mcc', 'contact', 'home'),
+                    visible: true
+                }]
+            },
+            border: true,
+            minHeight: 50
+        });
+    });
+
+</script>
