@@ -282,13 +282,10 @@ export function AnimalRequest() {
                         "officialemail": data.get("official-email"),
                         "fundingsource": data.get("funding-source"),
                         "experimentalrationale": data.get("experiment-rationale"),
-                        "numberofanimals": data.get("number-of-animals"),
-                        "othercharacteristics": data.get("other-characteristics"),
                         "methodsproposed": data.get("methods-proposed"),
                         "collaborations": data.get("collaborations"),
                         "isbreedinganimals": data.get("animal-breeding-is-planning-to-breed-animals"),
                         "breedingpurpose": data.get("animal-breeding-purpose"),
-                        "ofinterestcenters": data.get("of-interest-centers"),
                         "researcharea": data.get("research-area"),
                         "otherjustification": data.get("research-area-other-specify"),
                         "existingmarmosetcolony": data.get("existing-marmoset-colony"),
@@ -340,13 +337,10 @@ export function AnimalRequest() {
                 "officialemail",
                 "fundingsource",
                 "experimentalrationale",
-                "numberofanimals",
-                "othercharacteristics",
                 "methodsproposed",
                 "collaborations",
                 "isbreedinganimals",
                 "breedingpurpose",
-                "ofinterestcenters",
                 "researcharea",
                 "otherjustification",
                 "existingmarmosetcolony",
@@ -422,13 +416,7 @@ export function AnimalRequest() {
                     "data": returnedData
                 })
             },
-            failure: function(data) {
-                //TODO: we should have a standard way to handle errors. Examples of this in LabKey are:
-                // https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/util/utils.ts#L627
-                // or ErrorBoundary: https://github.com/LabKey/labkey-ui-components/blob/fa00d0c3f9/packages/components/src/internal/components/error/ErrorBoundary.tsx
-                alert("Your data could not be selected.")
-                console.error(data)
-            }
+            failure: handleFailure
         })
 
     }
@@ -605,7 +593,7 @@ export function AnimalRequest() {
                         </div>
 
                         <div className="tw-w-full tw-px-3 tw-mb-6">
-                            <input type="checkbox" name="certify" required={getRequired()} defaultChecked={animalRequests.data.certify}/>
+                            <input type="checkbox" id="certify" name="certify" required={getRequired()} defaultChecked={animalRequests.data.certify}/>
                             <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
                         </div>
                     </div>
