@@ -15,6 +15,7 @@ import Funding from './funding'
 import ResearchArea from './research-area'
 import AnimalCohorts from './animal-cohort'
 import Button from './button'
+import SavingOverlay from './saving-overlay'
 
 import {
     earlyInvestigatorTooltip, institutionTypeOptions, 
@@ -30,6 +31,7 @@ import {
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [displayOverlay, setDisplayOverlay] = useState(false)
 
     // On submit, state is managed by the FormData object in handleSubmit. These hooks are only used to propagate values
     // from the database into the form via fillForm if there is a requestId
@@ -241,6 +243,7 @@ export function AnimalRequest() {
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
+        setDisplayOverlay(true)
 
         if(animalRequests.data.status === "submitting") {
             animalRequests.data.status = "submitted"
@@ -436,6 +439,7 @@ export function AnimalRequest() {
         return(<Title text="No such request."/>)
     } else {
         return (
+            <>
             <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <Title text="1. Principal Investigator*"/>
@@ -641,6 +645,9 @@ export function AnimalRequest() {
                      }} text={getSubmitButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
                 </div>
             </form>
+
+            <SavingOverlay display={displayOverlay} />
+            </>
          )
      }
 }
