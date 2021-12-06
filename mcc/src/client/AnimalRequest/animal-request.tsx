@@ -360,7 +360,7 @@ export function AnimalRequest() {
                 "status"
             ],
             filterArray: [
-              Filter.create('rowId', requestId)
+              Filter.create('objectId', requestId)
             ],
             success: function(resp) {
                 let returnedData = resp.rows[0]
