@@ -928,7 +928,9 @@ public class mGAPController extends SpringActionController
                 throw new NotFoundException("No databaseId provided");
             }
 
-            String trackString = "";
+            Map<String, String[]> params = new HashMap<>(getViewContext().getRequest().getParameterMap());
+            params.put("database", new String[]{jbrowseDatabaseId});
+
             String trackName = StringUtils.trimToNull(form.getTrackName());
             if (trackName != null)
             {
@@ -937,11 +939,18 @@ public class mGAPController extends SpringActionController
                 Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
                 if (!trackIDs.isEmpty())
                 {
-                    trackString = "&tracks=" + StringUtils.join(trackIDs, ",");
+                    params.put("tracks", new String[]{StringUtils.join(trackIDs, ",")});
                 }
             }
 
-            return DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseDatabaseId + trackString, target).getActionURL();
+            DetailsURL ret = DetailsURL.fromString("/jbrowse/browser.view", target);
+            params.forEach((key, value) -> {
+                Arrays.stream(value).forEach(v -> {
+                    ret.addParameter(key, v);
+                });
+            });
+
+            return ret.getActionURL();
         }
 
         public Collection<String> getTracks(Container target, String jbrowseSession, String releaseId, List<String> trackNames)
