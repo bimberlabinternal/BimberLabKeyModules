@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react'
-import { Query } from '@labkey/api'
+import { Query, ActionURL, Filter } from '@labkey/api'
 import { nanoid } from 'nanoid'
 
 import Tooltip from './tooltip'
@@ -9,298 +9,645 @@ import Select from './select'
 import CoInvestigators from './co-investigators'
 import TextArea from './text-area'
 import YesNoRadio from './yes-no-radio'
-import InputNumber from './input-number'
+import AnimalBreeding from './animal-breeding'
+import IACUCProtocol from './iacuc-protocol'
+import Funding from './funding'
 import ResearchArea from './research-area'
+import AnimalCohorts from './animal-cohort'
+import Button from './button'
+import SavingOverlay from './saving-overlay'
 
 import {
     earlyInvestigatorTooltip, institutionTypeOptions, 
-    isPrincipalInvestigatorOptions, fundingSourceOptions,
-    experimentalRationalePlaceholder, otherCharacteristicsPlaceholder,
+    experimentalRationalePlaceholder,
     methodsProposedPlaceholder, collaborationsPlaceholder,
-    ofInterestCentersPlaceholder, animalWellfarePlaceholder,
+    animalWellfarePlaceholder, signingOfficialTooltip,
     certificationLabel, existingMarmosetColonyOptions,
-    existingNHPFacilityOptions, IACUCApprovalOptions
+    existingNHPFacilityOptions,
+    researchUseStatementTooltip
 } from './values'
 
 
-function get_coinvestigator_commands(data, objectId) {
-    let coinvestigators = []
-    let i = 0
+export function AnimalRequest() {
+    const requestId = (new URLSearchParams(window.location.search)).get("requestId")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [displayOverlay, setDisplayOverlay] = useState(false)
 
-    while(data.get("coinvestigators-" + i + "-lastName")) {
-        coinvestigators.push({
-            command: "insert",
-            schemaName: "mcc",
-            queryName: "coinvestigators",
-            rows: [{
-                "requestId": objectId,
-                "lastname": data.get("coinvestigators-" + i + "-lastName"),
-                "firstname": data.get("coinvestigators-" + i + "-firstName"),
-                "middleinitial": data.get("coinvestigators-" + i + "-middleInitial"),
-                "institutionname": data.get("coinvestigators-" + i + "-institution"),
-            }]
-        })
+    // On submit, state is managed by the FormData object in handleSubmit. These hooks are only used to propagate values
+    // from the database into the form via fillForm if there is a requestId
+    const [isFormQueried, setIsFormQueried] = useState(false)
+    const [animalRequests, setAnimalRequests] = useState({
+        "returned": false,
+        "data": {"status": "draft"}
+    })
+    const [coinvestigators, setCoinvestigators] = useState({
+        "returned": false,
+        "data": []
+    })
+    const [animalCohorts, setAnimalCohorts] = useState({
+        "returned": false,
+        "data": [new Set([{"uuid": nanoid()}])]
+    })
+    
 
-        i++
+    function handleFailure(data) {
+        console.error(data)
     }
 
-    return coinvestigators
-}
+    
+    function getRequired() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return false
+            case "submitting":
+                return true
+            case "submitted":
+                return false
+            case "approving":
+                return true
+            case "under-review":
+                return true
+            case "approving-final":
+                return true
+            case "rejecting":
+                return true
+            default:
+                return false
+        }
+    }
 
 
-function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+    function handleNextStateSubmitButton() {
+        setIsSubmitting(true);
 
-    const data = new FormData(e.currentTarget)
+        if (animalRequests.data.status === "draft") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"submitting" }
+            });
+        } else if (animalRequests.data.status === "submitted") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"approving" }
+            });
+        } else if (animalRequests.data.status === "under-review") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"approving-final" }
+            });
+        }
+    }
 
-    const objectId = nanoid()
-    let coinvestigatorCommands = get_coinvestigator_commands(data, objectId)
+    function getSubmitButtonText() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return "Submit"
+            case "submitting":
+                return "Submit"
+            case "submitted":
+                return "Approve Request"
+            case "approving":
+                return "Approve Request"
+            case "under-review":
+                return "Approve"
+            case "approving-final":
+                return "Approve"
+            case "rejecting":
+                return "Approve"
+            default:
+                "Submit"
+        }
+    } 
 
-    Query.saveRows({
-        commands: [
-            {
+
+    function handleNextStateSaveButton() {
+        setIsSubmitting(false);
+
+        if (animalRequests.data.status === "submitting") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"draft" }
+            });
+        } else if (animalRequests.data.status === "approving") {
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"submitted" }
+            });
+        } else if (animalRequests.data.status === "under-review") {
+            setIsSubmitting(true);
+            setAnimalRequests({
+                    "returned": true,
+                    "data": { ...animalRequests.data, status:"rejecting" }
+            });
+        }
+    }
+
+    function getSaveButtonText() {
+        switch (animalRequests.data.status) {
+            case "draft":
+                return "Save"
+            case "submitting":
+                return "Save"
+            case "submitted":
+                return "Save"
+            case "approving": 
+                return "Save"
+            case "under-review":
+                return "Reject"
+            case "approving-final":
+                return "Reject"
+            case "rejecting":
+                return "Reject"
+            default:
+                "Save"
+        }
+    }
+
+
+    function get_coinvestigator_commands(data, objectId) {
+        let commands = []
+        let i = 0
+
+        if(requestId && coinvestigators.data.length > 0) {
+            for(const coinvestigator of coinvestigators.data) {
+                commands.push({
+                    command: "delete",
+                    schemaName: "mcc",
+                    queryName: "coinvestigators",
+                    rows: [{
+                        "rowid": coinvestigator.rowid,
+                    }]
+                })
+            }
+        }
+
+        while(data.get("coinvestigators-" + i + "-lastName") || data.get("coinvestigators-" + i + "-firstName") ||
+              data.get("coinvestigators-" + i + "-middleInitial") || data.get("coinvestigators-" + i + "-institution")) {
+            commands.push({
                 command: "insert",
                 schemaName: "mcc",
-                queryName: "animalrequests",
+                queryName: "coinvestigators",
                 rows: [{
-                    "objectId": objectId,
-                    "lastname": data.get("investigator-last-name"),
-                    "firstname": data.get("investigator-first-name"),
-                    "middleinitial": data.get("investigator-middle-initial"),
-                    "isprincipalinvestigator": data.get("is-principal-investigator"),
-                    "institutionname": data.get("institution-name"),
-                    "institutioncity": data.get("institution-city"),
-                    "institutionstate": data.get("institution-state"),
-                    "institutioncountry": data.get("institution-country"),
-                    "institutiontype": data.get("institution-type"),
-                    "officiallastname": data.get("official-last-name"),
-                    "officialfirstname": data.get("official-first-name"),
-                    "officialemail": data.get("official-email"),
-                    "fundingsource": data.get("funding-source"),
-                    "experimentalrationale": data.get("experiment-rationale"),
-                    "numberofanimals": data.get("number-of-animals"),
-                    "othercharacteristics": data.get("other-characteristics"),
-                    "methodsproposed": data.get("methods-proposed"),
-                    "collaborations": data.get("collaborations"),
-                    "isbreedinganimals": data.get("is-planning-to-breed-animals"),
-                    "ofinterestcenters": data.get("of-interest-centers"),
-                    "researcharea": data.get("research-area"),
-                    "otherjustification": data.get("research-area-other-specify"),
-                    "existingmarmosetcolony": data.get("existing-marmoset-colony"),
-                    "existingnhpfacilities": data.get("existing-nhp-facilities"),
-                    "animalwelfare": data.get("animal-welfare"),
-                    "certify": data.get("certify"),
-                    "vetlastname": data.get("vet-last-name"),
-                    "vetfirstname": data.get("vet-first-name"),
-                    "vetemail": data.get("vet-email"),
-                    "iacucapproval": data.get("iacuc-approval")
+                    "requestId": objectId,
+                    "lastname": data.get("coinvestigators-" + i + "-lastName"),
+                    "firstname": data.get("coinvestigators-" + i + "-firstName"),
+                    "middleinitial": data.get("coinvestigators-" + i + "-middleInitial"),
+                    "institutionname": data.get("coinvestigators-" + i + "-institution"),
                 }]
-            },
-            ...coinvestigatorCommands
-        ],
-        success: function(data) {
-            alert("Your data was saved successfully.")
-        },
-        failure: function(data) {
-            alert("Your data could not be saved.")
-            console.log(data)
+            })
+
+            i++
         }
-    })
-}
 
-export function AnimalRequest() {
-     const [isSubmitting, setIsSubmitting] = useState(false);
-
-     return (
-         <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="1. Principal Investigator*"/>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-last-name" isSubmitting={isSubmitting} required={true} placeholder="Last Name"/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-first-name" isSubmitting={isSubmitting} required={true} placeholder="First Name"/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={true} placeholder="Middle Initial"/>
-                </div>
-            </div>
-
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                    <Title text="2. Are you an early-stage investigator?&nbsp;"/>
-                    <Tooltip id="early-stage-investigator-helper"
-                       text={earlyInvestigatorTooltip}
-                    />
-                </div>
+        return commands
+    }
 
 
-                <div className="tw-w-full tw-px-3 tw-mt-6">
-                    <YesNoRadio id="is-principal-investigator" required={true}/>
-                </div>
-            </div>
+    function get_animal_cohort_commands(data, objectId) {
+        let commands = []
+        let i = 0
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="3. Affiliated research institution*"/>
+        if(requestId && animalCohorts.data.length > 0) {
+            for(const cohort of animalCohorts.data) {
+                commands.push({
+                    command: "delete",
+                    schemaName: "mcc",
+                    queryName: "requestcohorts",
+                    rows: [{
+                        "rowid": cohort.rowid,
+                    }]
+                })
+            }
+        }
 
-                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-name" isSubmitting={isSubmitting} placeholder="Name" required={true}/>
-                </div>
+        while(data.get("animal-cohorts-" + i + "-numberofanimals") || data.get("animal-cohorts-" + i + "-sex") ||
+              data.get("animal-cohorts-" + i + "-othercharacteristics")) {
+            commands.push({
+                command: "insert",
+                schemaName: "mcc",
+                queryName: "requestcohorts",
+                rows: [{
+                    "requestId": objectId,
+                    "numberofanimals": data.get("animal-cohorts-" + i + "-numberofanimals"),
+                    "sex": data.get("animal-cohorts-" + i + "-sex"),
+                    "othercharacteristics": data.get("animal-cohorts-" + i + "-othercharacteristics"),
+                }]
+            })
 
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-city" isSubmitting={isSubmitting} placeholder="City" required={true}/>
-                </div>
+            i++
+        }
 
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-state" isSubmitting={isSubmitting} placeholder="State" required={true}/>
-                </div>
+        return commands
+    }
 
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-country" isSubmitting={isSubmitting} placeholder="Country" required={true}/>
-                </div>
-            </div>
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="4. Institution Type*"/>
+    function handleSubmit(e: FormEvent) {
+        e.preventDefault()
+        setDisplayOverlay(true)
 
-                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Select id="institution-type" isSubmitting={isSubmitting} options={institutionTypeOptions} />
-                </div>
-            </div>
+        if(animalRequests.data.status === "submitting") {
+            animalRequests.data.status = "submitted"
+        } else if(animalRequests.data.status === "approving") {
+            animalRequests.data.status = "under-review"
+        } else if(animalRequests.data.status === "approving-final") {
+            animalRequests.data.status = "approved"
+        } else if(animalRequests.data.status === "rejecting") {
+            animalRequests.data.status = "rejected"
+        }
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="5. Institution Signing Official*"/>
+        const data = new FormData(e.currentTarget)
 
-                <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="official-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={true}/>
-                </div>
+        const objectId = requestId || nanoid()
+        let coinvestigatorCommands = get_coinvestigator_commands(data, objectId)
+        let cohortCommands = get_animal_cohort_commands(data, objectId)
 
-                <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="official-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={true}/>
-                </div>
+        let rowId = requestId ? {"rowid": animalRequests.data.rowid} : {}
 
-                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="official-email" isSubmitting={isSubmitting} placeholder="Email Address" required={true}/>
-                </div>
-            </div>
+        Query.saveRows({
+            commands: [
+                {
+                    command: requestId ? "update" : "insert",
+                    schemaName: "mcc",
+                    queryName: "animalrequests",
+                    rows: [{
+                        "objectId": objectId,
+                        "lastname": data.get("investigator-last-name"),
+                        "firstname": data.get("investigator-first-name"),
+                        "middleinitial": data.get("investigator-middle-initial"),
+                        "isprincipalinvestigator": data.get("is-principal-investigator"),
+                        "institutionname": data.get("institution-name"),
+                        "institutioncity": data.get("institution-city"),
+                        "institutionstate": data.get("institution-state"),
+                        "institutioncountry": data.get("institution-country"),
+                        "institutiontype": data.get("institution-type"),
+                        "officiallastname": data.get("official-last-name"),
+                        "officialfirstname": data.get("official-first-name"),
+                        "officialemail": data.get("official-email"),
+                        "fundingsource": data.get("funding-source"),
+                        "experimentalrationale": data.get("experiment-rationale"),
+                        "methodsproposed": data.get("methods-proposed"),
+                        "collaborations": data.get("collaborations"),
+                        "isbreedinganimals": data.get("animal-breeding-is-planning-to-breed-animals"),
+                        "breedingpurpose": data.get("animal-breeding-purpose"),
+                        "researcharea": data.get("research-area"),
+                        "otherjustification": data.get("research-area-other-specify"),
+                        "existingmarmosetcolony": data.get("existing-marmoset-colony"),
+                        "existingnhpfacilities": data.get("existing-nhp-facilities"),
+                        "animalwelfare": data.get("animal-welfare"),
+                        "certify": data.get("certify"),
+                        "vetlastname": data.get("vet-last-name"),
+                        "vetfirstname": data.get("vet-first-name"),
+                        "vetemail": data.get("vet-email"),
+                        "iacucapproval": data.get("iacuc-approval"),
+                        "iacucprotocol": data.get("iacuc-protocol"),
+                        "grantnumber" : data.get("funding-grant-number"),
+                        "applicationduedate": data.get("funding-application-due-date"),
+                        "status": animalRequests.data.status,
+                        ...rowId
+                    }]
+                },
+                ...coinvestigatorCommands,
+                ...cohortCommands
+            ],
+            success: function(data) {
+                window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
+            },
+            failure: handleFailure
+        })
+    }
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="6. Co-investigators"/>
 
-                <CoInvestigators isSubmitting={isSubmitting}/>
-            </div>
+    function fillForm() {
+        setIsFormQueried(true)
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="7. Existing or proposed funding source*"/>
+        Query.selectRows({
+            schemaName: "mcc",
+            queryName: "animalrequests",
+            columns: [ 
+                "rowid",
+                "objectId",
+                "lastname",
+                "firstname",
+                "middleinitial",
+                "isprincipalinvestigator",
+                "institutionname",
+                "institutioncity",
+                "institutionstate",
+                "institutioncountry",
+                "institutiontype",
+                "officiallastname",
+                "officialfirstname",
+                "officialemail",
+                "fundingsource",
+                "experimentalrationale",
+                "methodsproposed",
+                "collaborations",
+                "isbreedinganimals",
+                "breedingpurpose",
+                "researcharea",
+                "otherjustification",
+                "existingmarmosetcolony",
+                "existingnhpfacilities",
+                "animalwelfare",
+                "certify",
+                "vetlastname",
+                "vetfirstname",
+                "vetemail",
+                "iacucapproval",
+                "iacucprotocol",
+                "grantnumber",
+                "applicationduedate",
+                "status"
+            ],
+            filterArray: [
+              Filter.create('objectId', requestId)
+            ],
+            success: function(resp) {
+                let returnedData = resp.rows[0]
 
-                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Select id="funding-source" isSubmitting={isSubmitting} options={fundingSourceOptions} required={true}/>
-                </div>
-            </div>
-             
-            <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <Title text="8. Research Use Statement*"/>
+                setAnimalRequests({
+                    "returned": true,
+                    "data": returnedData
+                })
+            },
+            failure: handleFailure
+        })
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="experiment-rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={true}/>
-                </div>
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <Title text="Number of animals needed:&nbsp;&nbsp;&nbsp;&nbsp;"/>
-                    <InputNumber id="number-of-animals" isSubmitting={isSubmitting} required={true}/>
-                </div>
+        Query.selectRows({
+            schemaName: "mcc",
+            queryName: "coinvestigators",
+            columns: [ 
+                "rowid",
+                "requestId",
+                "lastname",
+                "firstname",
+                "middleinitial",
+                "institutionname",
+            ],
+            filterArray: [
+              Filter.create('requestId', requestId)
+            ],
+            success: function(resp) {
+                let returnedData = resp.rows
+                setCoinvestigators({
+                    "returned": true,
+                    "data": returnedData
+                })
+            },
+            failure: handleFailure
+        })
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="other-characteristics" isSubmitting={isSubmitting} placeholder={otherCharacteristicsPlaceholder} required={true}/>
-                </div>
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="methods-proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={true}/>
-                </div>
+        Query.selectRows({
+            schemaName: "mcc",
+            queryName: "requestcohorts",
+            columns: [ 
+                "rowid",
+                "requestId",
+                "numberofanimals",
+                "sex",
+                "othercharacteristics",
+            ],
+            filterArray: [
+              Filter.create('requestId', requestId)
+            ],
+            success: function(resp) {
+                let returnedData = resp.rows
+                setAnimalCohorts({
+                    "returned": true,
+                    "data": returnedData
+                })
+            },
+            failure: handleFailure
+        })
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={true}/>
-                </div>
+    }
 
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <div className="tw-mb-6">
-                        <Title text="Do you plan to breed animals?"/>
+
+    if (requestId && (animalRequests.returned === false || coinvestigators.returned === false || animalCohorts.returned === false)) {
+        if (isFormQueried === false) {
+            fillForm()
+        }
+
+        return (
+           <div className="tw-flex tw-justify-center tw-items-center">
+             <div style={{ borderBottom: "2px solid #3495d2" }} className="tw-animate-spin tw-rounded-full tw-h-32 tw-w-32"></div>
+           </div>
+        )
+    } else if (requestId && animalRequests.returned === true && animalRequests.data === undefined) {
+        return(<Title text="No such request."/>)
+    } else {
+        return (
+            <>
+            <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <Title text="1. Principal Investigator*"/>
+
+                    <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Input id="investigator-last-name" isSubmitting={isSubmitting} required={getRequired()} placeholder="Last Name" defaultValue={animalRequests.data.lastname}/>
                     </div>
 
-                    <div className="tw-mb-6">
-                        <YesNoRadio id="is-planning-to-breed-animals" required={true}/>
-                    </div>
-                </div>
-
-                <div className="tw-w-full tw-px-3 tw-mb-10">
-                    <TextArea id="of-interest-centers" isSubmitting={isSubmitting} placeholder={ofInterestCentersPlaceholder} required={true}/>
-                </div>
-
-                <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <div className="tw-mb-6">
-                        <Title text="Research Area"/>
-                    </div>
-                    <ResearchArea id="research-area" isSubmitting={isSubmitting} />
-                </div>
-
-                <div className="tw-w-full tw-px-3">
-                    <div className="tw-mb-6">
-                        <Title text="Animal Facilities and Capabilities"/>
+                    <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Input id="investigator-first-name" isSubmitting={isSubmitting} required={getRequired()} placeholder="First Name" defaultValue={animalRequests.data.firstname}/>
                     </div>
 
-                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                        <Title text="Does your institution have an existing marmoset colony?"/>
-                        <Select id="existing-marmoset-colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} />
-                    </div>
-
-                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                        <Title text="Does your institution have existing NHP facilities?"/>
-                        <Select id="existing-nhp-facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} />
-                    </div>
-                </div>
-
-                <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="animal-welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={true}/>
-                    </div>
-
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <input type="checkbox" name="certify" required={true}/>
-                        <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
+                    <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={getRequired()} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial}/>
                     </div>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="Attending veterinarian"/>
-
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={true}/>
+                    <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                        <Title text="2. Are you an early-stage investigator?&nbsp;"/>
+                        <Tooltip id="early-stage-investigator-helper"
+                           text={earlyInvestigatorTooltip}
+                        />
                     </div>
 
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={true}/>
+
+                    <div className="tw-w-full tw-px-3 tw-mt-6">
+                        <YesNoRadio id="is-principal-investigator" required={getRequired()} defaultValue={animalRequests.data.isprincipalinvestigator}/>
                     </div>
+                </div>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <Title text="3. Affiliated research institution*"/>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-email" isSubmitting={isSubmitting} placeholder="Email Address" required={true}/>
+                        <Input id="institution-name" isSubmitting={isSubmitting} placeholder="Name" required={getRequired()} defaultValue={animalRequests.data.institutionname}/>
+                    </div>
+
+                    <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Input id="institution-city" isSubmitting={isSubmitting} placeholder="City" required={getRequired()} defaultValue={animalRequests.data.institutioncity}/>
+                    </div>
+
+                    <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Input id="institution-state" isSubmitting={isSubmitting} placeholder="State" required={getRequired()} defaultValue={animalRequests.data.institutionstate}/>
+                    </div>
+
+                    <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Input id="institution-country" isSubmitting={isSubmitting} placeholder="Country" required={getRequired()} defaultValue={animalRequests.data.institutioncountry}/>
+                    </div>
+                </div>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <Title text="4. Institution Type*"/>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                        <Select id="institution-type" isSubmitting={isSubmitting} options={institutionTypeOptions} defaultValue={animalRequests.data.institutiontype} required={getRequired()}/>
+                    </div>
+                </div>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                        <Title text="5. Institution Signing Official*&nbsp;"/>
+                        <Tooltip id="signing-official-helper"
+                             text={signingOfficialTooltip}
+                        />
+                    </div>
+
+
+                    <div className="tw-flex tw-flex-wrap tw-mt-6">
+                        <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="official-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={animalRequests.data.officiallastname}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="official-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={getRequired()} defaultValue={animalRequests.data.officialfirstname}/>
+                        </div>
+
+                        <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="official-email" isSubmitting={isSubmitting} placeholder="Email Address" required={getRequired()} defaultValue={animalRequests.data.officialemail}/>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <Title text="6. Co-investigators"/>
+
+                    <CoInvestigators isSubmitting={isSubmitting} defaultValue={coinvestigators.data} required={getRequired()}/>
+                </div>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <Title text="7. Existing or proposed funding source*"/>
+
+                    <Funding id="funding" isSubmitting={isSubmitting} defaultValue={animalRequests.data} required={getRequired()}/>
+                </div>
+                 
+                <div className="tw-flex tw-flex-wrap tw-mx-2">
+                    <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                        <Title text="8. Research Use Statement*&nbsp;"/>
+                        <Tooltip id="research-use-statement-helper"
+                           text={researchUseStatementTooltip}
+                        />
+                    </div>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-6 tw-mt-6">
+                        <TextArea id="experiment-rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={getRequired()} defaultValue={animalRequests.data.experimentalrationale}/>
+                    </div>
+
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
+                        <Title text="Animal Cohorts"/>
+
+                        <AnimalCohorts isSubmitting={isSubmitting} defaultValue={animalCohorts.data}/>
+                    </div>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-10">
+                        <TextArea id="methods-proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={getRequired()} defaultValue={animalRequests.data.methodsproposed}/>
+                    </div>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-10">
+                        <TextArea id="collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={getRequired()} defaultValue={animalRequests.data.collaborations}/>
+                    </div>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-4">
+                        <div className="tw-mb-6">
+                            <Title text="Do you plan to breed animals?"/>
+                        </div>
+                        <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={animalRequests.data} required={getRequired()}/>
+                    </div>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <div className="tw-mb-6">
+                            <Title text="Research Area"/>
+                        </div>
+                        <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={animalRequests.data}/>
+                    </div>
+
+                    <div className="tw-w-full tw-px-3">
+                        <div className="tw-mb-6">
+                            <Title text="Institutional Animal Facilities and Capabilities"/>
+                        </div>
+
+                        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                            <Title text="Does your institution have an existing marmoset colony?"/>
+                            <Select id="existing-marmoset-colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={animalRequests.data.existingmarmosetcolony} required={getRequired()}/>
+                        </div>
+
+                        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                            <Title text="Does your institution have existing NHP facilities?"/>
+                            <Select id="existing-nhp-facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} defaultValue={animalRequests.data.existingnhpfacilities} required={getRequired()}/>
+                        </div>
+                    </div>
+
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <div className="tw-w-full tw-px-3 tw-mb-6">
+                            <TextArea id="animal-welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={getRequired()} defaultValue={animalRequests.data.animalwelfare}/>
+                        </div>
+
+                        <div className="tw-w-full tw-px-3 tw-mb-6">
+                            <input type="checkbox" id="certify" name="certify" required={getRequired()} defaultChecked={animalRequests.data.certify}/>
+                            <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
+                        </div>
+                    </div>
+
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                        <Title text="Attending veterinarian"/>
+
+                        <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="vet-last-name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={animalRequests.data.vetlastname}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="vet-first-name" isSubmitting={isSubmitting} placeholder="First Name" required={getRequired()} defaultValue={animalRequests.data.vetfirstname}/>
+                        </div>
+
+                        <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="vet-email" isSubmitting={isSubmitting} placeholder="Email Address" required={getRequired()} defaultValue={animalRequests.data.vetemail}/>
+                        </div>
+                    </div>
+
+                    <div className="tw-flex tw-flex-wrap tw-mx-2">
+                        <Title text="IACUC Approval"/>
+
+                        <div className="tw-w-full tw-px-3 md:tw-mb-0">
+                            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={getRequired()} defaultValue={animalRequests.data}/>
+                        </div>
                     </div>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
-                    <Title text="IACUC Approval"/>
+                    <button className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
+                        e.preventDefault()
 
-                    <div className="tw-w-full tw-px-3 md:tw-mb-0">
-                        <Select id="iacuc-approval" isSubmitting={isSubmitting} options={IACUCApprovalOptions} required={true}/>
-                    </div>
+                        if (confirm("You are about to leave this page.")) {
+                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        }
+                    }}>Cancel</button>
+
+                    <Button onClick={() => {
+                        handleNextStateSaveButton();
+                     }} text={getSaveButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
+
+                    <Button onClick={() => {
+                        handleNextStateSubmitButton();
+                     }} text={getSubmitButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
                 </div>
-            </div>
+            </form>
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <button className="tw-ml-auto tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={() => setIsSubmitting(true)}>Submit</button>
-            </div>
-        </form>
-     )
+            <SavingOverlay display={displayOverlay} />
+            </>
+         )
+     }
 }

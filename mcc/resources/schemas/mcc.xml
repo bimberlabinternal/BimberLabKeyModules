@@ -212,9 +212,9 @@
     </table>
 
     <table tableName="animalrequests" tableDbType="TABLE">
-        <importUrl>mcc/animalRequests.view</importUrl>
-        <insertUrl>mcc/animalRequests.view</insertUrl>
-        <updateUrl>mcc/animalRequests.view?requestId=${objectid}</updateUrl>
+        <importUrl>mcc/animalRequest.view</importUrl>
+        <insertUrl></insertUrl>
+        <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
@@ -228,11 +228,11 @@
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="firstname">
                 <columnTitle>First Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="middleinitial">
                 <columnTitle>Middle Initial</columnTitle>
@@ -280,6 +280,10 @@
             </column>
             <column columnName="grantnumber">
                 <columnTitle>Grant Number(s)</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="applicationduedate">
+                <columnTitle>Application Due Date</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="experimentalrationale">
@@ -395,19 +399,19 @@
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="firstname">
                 <columnTitle>First Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="middleinitial">
                 <columnTitle>Middle Initial</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="institutionname">
                 <columnTitle>Institution Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
