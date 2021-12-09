@@ -71,4 +71,4 @@ export default function AnimalCohorts(props) {
       </div>
     </>
   )
-}':wait'
+}
