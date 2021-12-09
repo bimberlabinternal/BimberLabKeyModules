@@ -18,7 +18,7 @@ import Button from './button'
 import SavingOverlay from './saving-overlay'
 
 import {
-    earlyInvestigatorTooltip, institutionTypeOptions, 
+    earlyInvestigatorTooltip,
     experimentalRationalePlaceholder,
     methodsProposedPlaceholder, collaborationsPlaceholder,
     animalWellfarePlaceholder, signingOfficialTooltip,
@@ -492,16 +492,8 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="4. Institution Type*"/>
-
-                    <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Select id="institution-type" isSubmitting={isSubmitting} options={institutionTypeOptions} defaultValue={animalRequests.data.institutiontype} required={getRequired()}/>
-                    </div>
-                </div>
-
-                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                        <Title text="5. Institution Signing Official*&nbsp;"/>
+                        <Title text="4. Institution Signing Official*&nbsp;"/>
                         <Tooltip id="signing-official-helper"
                              text={signingOfficialTooltip}
                         />
@@ -524,22 +516,22 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="6. Co-investigators"/>
+                    <Title text="5. Co-investigators"/>
 
                     <CoInvestigators isSubmitting={isSubmitting} defaultValue={coinvestigators.data} required={getRequired()}/>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="7. Existing or proposed funding source*"/>
+                    <Title text="6. Existing or proposed funding source*"/>
 
                     <Funding id="funding" isSubmitting={isSubmitting} defaultValue={animalRequests.data} required={getRequired()}/>
                 </div>
                  
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
                     <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                        <Title text="8. Research Use Statement*&nbsp;"/>
+                        <Title text="7. Research Use Statement*&nbsp;"/>
                         <Tooltip id="research-use-statement-helper"
-                           text={researchUseStatementTooltip}
+                           text={experimentalRationalePlaceholder}
                         />
                     </div>
 
