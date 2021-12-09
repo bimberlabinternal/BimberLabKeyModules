@@ -7,19 +7,19 @@
     "start": "cross-env NODE_ENV=development LK_MODULE_CONTAINER=BimberLabKeyModules LK_MODULE=mcc webpack serve --config node_modules/@labkey/build/webpack/watch.config.js",
     "build-dev": "npm run clean && cross-env NODE_ENV=development LK_MODULE_CONTAINER=BimberLabKeyModules LK_MODULE=mcc webpack --config node_modules/@labkey/build/webpack/dev.config.js",
     "build-prod": "npm run clean && cross-env NODE_ENV=production PROD_SOURCE_MAP=source-map LK_MODULE_CONTAINER=BimberLabKeyModules LK_MODULE=mcc webpack --config node_modules/@labkey/build/webpack/prod.config.js --progress --profile",
-    "clean": "rimraf resources/web/mcc/gen",
+    "clean": "rimraf resources/web/mcc/gen && rimraf resources/web/gen",
     "test": "cross-env NODE_ENV=test jest"
   },
   "dependencies": {
-    "@labkey/api": "^1.7.0",
-    "chart.js": "^3.2.1",
+    "@labkey/api": "^1.0.0",
+    "chart.js": "^3.6.2",
     "nanoid": "^3.1.24",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-tooltip": "^4.2.21"
   },
   "devDependencies": {
-    "@labkey/build": "^4.0.1",
+    "@labkey/build": "^3.0.0",
     "@types/jest": "^26.0.23",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.6",
