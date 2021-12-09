@@ -69,7 +69,7 @@ export function AnimalRequest() {
     })
     const [animalCohorts, setAnimalCohorts] = useState({
         "returned": false,
-        "data": [{"uuid": nanoid(), "rowid": undefined}]
+        "data": [{uuid: nanoid(), rowid: undefined, othercharacteristics: undefined}]
     })
     
 
@@ -278,7 +278,7 @@ export function AnimalRequest() {
             animalRequests.data.status = "rejected"
         }
 
-        const data = new FormData(e.currentTarget)
+        const data = new FormData(e.currentTarget as HTMLFormElement)
 
         const objectId = requestId || nanoid()
         let coinvestigatorCommands = get_coinvestigator_commands(data, objectId)
