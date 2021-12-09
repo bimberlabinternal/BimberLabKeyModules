@@ -442,7 +442,7 @@ export function AnimalRequest() {
             <>
             <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="1. Principal Investigator*"/>
+                    <Title text="Principal Investigator*"/>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
                         <Input id="investigator-last-name" isSubmitting={isSubmitting} required={getRequired()} placeholder="Last Name" defaultValue={animalRequests.data.lastname}/>
@@ -459,7 +459,7 @@ export function AnimalRequest() {
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                        <Title text="2. Are you an early-stage investigator?&nbsp;"/>
+                        <Title text="Are you an early-stage investigator?&nbsp;"/>
                         <Tooltip id="early-stage-investigator-helper"
                            text={earlyInvestigatorTooltip}
                         />
@@ -472,7 +472,7 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="3. Affiliated research institution*"/>
+                    <Title text="Affiliated research institution*"/>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
                         <Input id="institution-name" isSubmitting={isSubmitting} placeholder="Name" required={getRequired()} defaultValue={animalRequests.data.institutionname}/>
@@ -493,7 +493,7 @@ export function AnimalRequest() {
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                     <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                        <Title text="4. Institution Signing Official*&nbsp;"/>
+                        <Title text="Institution Signing Official*&nbsp;"/>
                         <Tooltip id="signing-official-helper"
                              text={signingOfficialTooltip}
                         />
@@ -516,20 +516,20 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="5. Co-investigators"/>
+                    <Title text="Co-investigators"/>
 
                     <CoInvestigators isSubmitting={isSubmitting} defaultValue={coinvestigators.data} required={getRequired()}/>
                 </div>
 
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                    <Title text="6. Existing or proposed funding source*"/>
+                    <Title text="Existing or proposed funding source*"/>
 
                     <Funding id="funding" isSubmitting={isSubmitting} defaultValue={animalRequests.data} required={getRequired()}/>
                 </div>
                  
                 <div className="tw-flex tw-flex-wrap tw-mx-2">
                     <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                        <Title text="7. Research Use Statement*&nbsp;"/>
+                        <Title text="Research Use Statement*&nbsp;"/>
                         <Tooltip id="research-use-statement-helper"
                            text={experimentalRationalePlaceholder}
                         />
