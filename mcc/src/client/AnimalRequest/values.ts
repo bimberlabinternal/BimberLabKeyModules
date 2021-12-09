@@ -13,12 +13,6 @@ export const animalWellfarePlaceholder = "Animal welfare (proposed care and use)
 
 export const certificationLabel = "I certify and I have obtained approval for this study from my institution."
 
-export const institutionTypeOptions = [
-    { value: 'minority-serving', label: 'Minority serving institution' },
-    { value: 'non-profit', label: 'Non-profit/not-for-profit research institution' },
-    { value: 'for-profit', label: 'For-profit/private organization' },
-]
-
 export const isPrincipalInvestigatorOptions = [
     { value: 'yes', label: 'Yes' },
     { value: 'no', label: 'No' },
