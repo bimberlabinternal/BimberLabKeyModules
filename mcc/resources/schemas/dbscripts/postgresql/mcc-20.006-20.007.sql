@@ -1,0 +1,1 @@
+ALTER TABLE mcc.animalRequests ADD COLUMN applicationduedate VARCHAR(200);

@@ -7,6 +7,7 @@ import org.labkey.api.data.TableCustomizer;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.query.ExprColumn;
+import org.labkey.mcc.MccManager;
 
 public class UserRequestCustomizer implements TableCustomizer
 {
@@ -31,9 +32,9 @@ public class UserRequestCustomizer implements TableCustomizer
 
         ExprColumn col = new ExprColumn(ti, colName, new SQLFragment("(CASE WHEN (exists (" +
                 "select u.rowid from mcc.userrequests u " +
-                "left join core.RoleAssignments ra " +
-                "on (u.userid = ra.UserId AND u.container = ra.ResourceId) " +
-                "WHERE ra.Role = 'org.labkey.api.security.roles.ReaderRole' AND u.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".rowid " +
+                "left join core.Members m " +
+                "on (u.userid = m.UserId) " +
+                "WHERE m.GroupId = (select p.UserId from core.Principals p WHERE p.type = 'g' AND p.Name = '" + MccManager.MCC_GROUP_NAME + "') AND u.rowid = " + ExprColumn.STR_TABLE_ALIAS + ".rowid " +
                 ")) THEN " + ti.getSqlDialect().getBooleanTRUE() + " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END)"), JdbcType.BOOLEAN, ti.getColumn("userId"));
         col.setLabel("Has MCC Access?");
         col.setReadOnly(true);

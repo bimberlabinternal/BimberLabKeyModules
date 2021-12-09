@@ -63,7 +63,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         public Provider()
         {
             super("AnnotateVariants", "Annotate VCF for mGAP", "VCF Annotation", "This will annotate an input NHP VCF using human ClinVar and Cassandra annotations.  This jobs will automatically look for chain files based on the source VCF genome and GRCh37/38 targets and will fail if these are not found.", Arrays.asList(
-                    ToolParameterDescriptor.createExpDataParam(CLINVAR_VCF, "Clinvar 2.0 VCF (GRCh37)", "If selected, only variants of the type SNV will be included.", "ldk-expdatafield", new JSONObject()
+                    ToolParameterDescriptor.createExpDataParam(CLINVAR_VCF, "Clinvar 2.0 VCF (GRCh37)", "This is the DataId of the VCF containing human Clinvar variants, which should use the GRCh37 genome. After liftover of the rhesus data, any matching variants are annotated.", "ldk-expdatafield", new JSONObject()
                     {{
                         put("allowBlank", false);
                     }}, null),
