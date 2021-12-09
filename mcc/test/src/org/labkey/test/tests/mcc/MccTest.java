@@ -85,12 +85,6 @@ public class MccTest extends BaseWebDriverTest
         WebElement institutionCountryElement = institutionCountry.findElement(getDriver());
         institutionCountryElement.sendKeys("institution country");
 
-        Locator institutionType = Locator.tagWithId("select", "institution-type");
-        waitForElement(institutionType);
-        waitAndClick(institutionType);
-        WebElement institutionTypeElement = institutionType.findElement(getDriver());
-        institutionTypeElement.sendKeys(Keys.ARROW_DOWN);
-
         Locator officialLastName = Locator.tagWithId("input", "official-last-name");
         waitForElement(officialLastName);
         WebElement officialLastNameElement = officialLastName.findElement(getDriver());
