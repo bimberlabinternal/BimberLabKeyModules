@@ -38,7 +38,30 @@ export function AnimalRequest() {
     const [isFormQueried, setIsFormQueried] = useState(false)
     const [animalRequests, setAnimalRequests] = useState({
         "returned": false,
-        "data": {"status": "draft"}
+        "data": {"status": "draft",
+            middleinitial: undefined,
+            lastname: undefined,
+            firstname: undefined,
+            isprincipalinvestigator: undefined,
+            institutionname: undefined,
+            institutioncity: undefined,
+            institutionstate: undefined,
+            institutioncountry: undefined,
+            officiallastname: undefined,
+            officialfirstname: undefined,
+            officialemail: undefined,
+            experimentalrationale: undefined,
+            methodsproposed: undefined,
+            collaborations: undefined,
+            existingmarmosetcolony: undefined,
+            existingnhpfacilities: undefined,
+            rowid: undefined,
+            certify: false,
+            animalwelfare: undefined,
+            vetlastname: undefined,
+            vetemail: undefined,
+            vetfirstname: undefined
+        }
     })
     const [coinvestigators, setCoinvestigators] = useState({
         "returned": false,
@@ -46,7 +69,7 @@ export function AnimalRequest() {
     })
     const [animalCohorts, setAnimalCohorts] = useState({
         "returned": false,
-        "data": [new Set([{"uuid": nanoid()}])]
+        "data": [{"uuid": nanoid(), "rowid": undefined}]
     })
     
 
