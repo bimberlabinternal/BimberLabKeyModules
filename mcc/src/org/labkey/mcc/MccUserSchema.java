@@ -20,8 +20,6 @@ public class MccUserSchema extends SimpleUserSchema
     @Nullable
     protected TableInfo createWrappedTable(String name, @NotNull TableInfo schemaTable, ContainerFilter cf)
     {
-
-
         return super.createWrappedTable(name, schemaTable, cf);
     }
 }
