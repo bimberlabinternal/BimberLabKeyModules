@@ -169,6 +169,9 @@
                 <nullable>true</nullable>
                 <columnTitle>Age (years)</columnTitle>
             </column>
+            <column columnName="gender">
+                <columnTitle>Gender</columnTitle>
+            </column>
 
             <column columnName="container">
                 <isHidden>true</isHidden>
