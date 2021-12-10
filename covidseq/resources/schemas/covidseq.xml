@@ -21,14 +21,12 @@
 
     <table tableName="samples" tableDbType="TABLE" useColumnOrder="true">
         <tableTitle>Samples</tableTitle>
-        <javaCustomizer class="org.labkey.laboratory.query.SamplesCustomizer" />
+<!--        <javaCustomizer class="org.labkey.laboratory.query.SamplesCustomizer" />-->
+        <insertUrl></insertUrl>
+        <importUrl>/covidseq/sampleImport.view</importUrl>
         <auditLogging>DETAILED</auditLogging>
-        <importTemplates>
-            <template label="Default Template" url="/query/exportExcelTemplate.view?schemaName=laboratory&amp;query.queryName=samples&amp;captionType=Label&amp;filenamePrefix=samples"/>
-            <template label="DNA Samples Template" url="/query/exportExcelTemplate.view?schemaName=laboratory&amp;query.queryName=samples&amp;captionType=Label&amp;filenamePrefix=samples&amp;query.viewName=DNA Samples"/>
-        </importTemplates>
         <pkColumnName>rowid</pkColumnName>
-        <titleColumn>freezerid</titleColumn>
+        <titleColumn>samplename</titleColumn>
         <columns>
             <column columnName="rowid">
                 <isAutoInc>true</isAutoInc>
@@ -39,15 +37,21 @@
             </column>
             <column columnName="samplename">
                 <nullable>true</nullable>
-                <columnTitle>Sample Name</columnTitle>
+                <columnTitle>CODED Sample Name</columnTitle>
             </column>
             <column columnName="patientid">
                 <nullable>true</nullable>
                 <columnTitle>Patient Id</columnTitle>
+                <phi>PHI</phi>
+                <fk>
+                    <fkDbSchema>covidseq</fkDbSchema>
+                    <fkTable>patients</fkTable>
+                    <fkColumnName>patientid</fkColumnName>
+                </fk>
                 <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
             </column>
             <column columnName="sampledate">
-                <columnTitle>Sample Date</columnTitle>
+                <columnTitle>Collection Date</columnTitle>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
             <column columnName="sampletype">
@@ -71,6 +75,87 @@
                 <nullable>true</nullable>
                 <columnTitle>GISAID ID</columnTitle>
             </column>
+            <column columnName="comment">
+                <nullable>true</nullable>
+                <columnTitle>Comment</columnTitle>
+                <datatype>varchar</datatype>
+            </column>
+
+            <column columnName="assayType">
+                <columnTitle>Assay Type</columnTitle>
+            </column>
+            <column columnName="N1_or_S">
+                <columnTitle>N1/S</columnTitle>
+            </column>
+            <column columnName="N2_orN">
+                <columnTitle>N2/N</columnTitle>
+            </column>
+            <column columnName="RP_or_ORF1ab">
+                <columnTitle>RP/ORF1ab</columnTitle>
+            </column>
+            <column columnName="MS2">
+                <columnTitle>MS2</columnTitle>
+            </column>
+            <column columnName="cDNA_Plate_ID">
+                <columnTitle>cDNA_Plate_ID</columnTitle>
+            </column>
+            <column columnName="cDNA_Plate_Location">
+                <columnTitle>cDNA_Plate_Location</columnTitle>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
+    <table tableName="patients" tableDbType="TABLE" useColumnOrder="true">
+        <tableTitle>Patients</tableTitle>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <auditLogging>DETAILED</auditLogging>
+        <pkColumnName>patientId</pkColumnName>
+        <titleColumn>rowid</titleColumn>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <columnTitle>Row Id</columnTitle>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+            </column>
+            <column columnName="identifier">
+                <nullable>true</nullable>
+                <columnTitle>Patient Identifier</columnTitle>
+            </column>
+            <column columnName="patientid">
+                <nullable>true</nullable>
+                <columnTitle>Patient Id</columnTitle>
+                <phi>PHI</phi>
+            </column>
+            <column columnName="state">
+                <nullable>true</nullable>
+                <columnTitle>State</columnTitle>
+            </column>
             <column columnName="county">
                 <nullable>true</nullable>
                 <columnTitle>County/Location</columnTitle>
@@ -78,12 +163,11 @@
             <column columnName="country">
                 <nullable>true</nullable>
                 <columnTitle>Country</columnTitle>
-                <defaultValue>US</defaultValue>
+                <defaultValue>USA</defaultValue>
             </column>
-            <column columnName="comment">
+            <column columnName="age">
                 <nullable>true</nullable>
-                <columnTitle>Comment</columnTitle>
-                <datatype>varchar</datatype>
+                <columnTitle>Age (years)</columnTitle>
             </column>
 
             <column columnName="container">
