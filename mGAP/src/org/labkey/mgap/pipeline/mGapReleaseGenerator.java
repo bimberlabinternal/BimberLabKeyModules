@@ -331,28 +331,13 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 //find basic stats:
                 job.getLogger().info("inspecting file: " + so.getName());
                 int totalSubjects;
-                long totalVariants = 0;
                 try (VCFFileReader reader = new VCFFileReader(so.getFile()))
                 {
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
-                    try (CloseableIterator<VariantContext> it = reader.iterator())
-                    {
-                        while (it.hasNext())
-                        {
-                            VariantContext vc = it.next();
-                            if (vc.isFiltered())
-                            {
-                                throw new PipelineJobException("The published VCF should not contain filtered sites");
-                            }
-
-                            totalVariants++;
-                            if (totalVariants % 1000000 == 0)
-                            {
-                                job.getLogger().info("processed " + totalVariants + " sites");
-                            }
-                        }
-                    }
                 }
+
+                // NOTE: this can be rather slow. Consider caching remotely or using VCF index?
+                String totalVariants = SequenceAnalysisService.get().getVCFLineCount(so.getFile(), job.getLogger(), true);
 
                 //actually create release record
                 Map<String, Object> row = new CaseInsensitiveHashMap<>();
