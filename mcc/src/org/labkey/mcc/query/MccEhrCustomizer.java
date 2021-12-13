@@ -5,7 +5,12 @@ import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.data.WrappedColumn;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
+import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.LookupForeignKey;
+import org.labkey.api.query.UserSchema;
+import org.labkey.mcc.MccSchema;
 
 public class MccEhrCustomizer extends AbstractTableCustomizer
 {
@@ -37,6 +42,28 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             {
                 ti.removeColumn(ci);
             }
+        }
+
+        String mccId = "mccAlias";
+        if (ti.getColumn(mccId) == null)
+        {
+            WrappedColumn ci = new WrappedColumn(ti.getColumn("Id"), mccId);
+            ci.setFieldKey(FieldKey.fromParts(mccId));
+            final UserSchema us = getUserSchema(ti, MccSchema.NAME);
+            LookupForeignKey fk = new LookupForeignKey("subjectname")
+            {
+                @Override
+                public TableInfo getLookupTableInfo()
+                {
+                    return us.getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+                }
+            };
+            fk.addJoin(FieldKey.fromString("Id"), "subjectname", false);
+
+            ci.setFk(fk);
+            ci.setUserEditable(false);
+            ci.setLabel("MCC Alias");
+            ti.addColumn(ci);
         }
     }
 }
