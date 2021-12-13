@@ -70,9 +70,9 @@ public class PopulateIdsStep implements TaskRefTask
                 for (Container c : toAdd.keySet())
                 {
                     job.getLogger().info("Total IDs to alias for " + c.getPath() + ": " + toAdd.get(c).size());
-                    TableInfo ti = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+                    TableInfo ti = QueryService.get().getUserSchema(_containerUser.getUser(), c, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
                     BatchValidationException bve = new BatchValidationException();
-                    ti.getUpdateService().insertRows(_containerUser.getUser(), _containerUser.getContainer(), toAdd.get(c), bve, null, null);
+                    ti.getUpdateService().insertRows(_containerUser.getUser(), c, toAdd.get(c), bve, null, null);
                     if (bve.hasErrors())
                     {
                         throw bve;
