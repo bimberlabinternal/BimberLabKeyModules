@@ -6,7 +6,7 @@ var triggerHelper = new org.labkey.mcc.query.TriggerHelper(LABKEY.Security.curre
 function beforeInsert(row, errors){
     // NOTE: in limited cases allow the user to specify the alias themselves. the use-case is two different real IDs that each map to the same animal. we would want them pointing to the same alias.
     if (row.externalAlias) {
-        if (!triggerHelper.isAliasInUse(row.externalAlias)) {
+        if (triggerHelper.isAliasInUse(row.externalAlias)) {
             errors.externalAlias = 'An external alias can only be provided when this alias is already in use'
         }
     }
