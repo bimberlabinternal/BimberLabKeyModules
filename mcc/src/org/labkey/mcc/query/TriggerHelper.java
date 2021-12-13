@@ -46,7 +46,7 @@ public class TriggerHelper
     {
         DbSequence sequence = DbSequenceManager.get((ContainerManager.getRoot()), SEQUENCE_NAME);
 
-        return "mcc" + StringUtils.leftPad(String.valueOf(sequence.next()), 5, "0");
+        return "MCC" + StringUtils.leftPad(String.valueOf(sequence.next()), 5, "0");
     }
 
 
