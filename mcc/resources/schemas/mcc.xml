@@ -495,4 +495,63 @@
             </column>
         </columns>
     </table>
+    <table tableName="animalMapping" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Animal ID Mapping</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="subjectname">
+                <columnTitle>Subject Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="externalAlias">
+                <columnTitle>mGAP Alias</columnTitle>
+                <nullable>false</nullable>
+                <isUserEditable>true</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+            </column>
+            <column columnName="otherNames">
+                <columnTitle>Other Names</columnTitle>
+                <description>A comma-separated list of alternate names</description>
+                <nullable>true</nullable>
+                <isUserEditable>true</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+            </column>
+            <column columnName="biosample_accession">
+                <columnTitle>BioSample Accession</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
 </tables>
