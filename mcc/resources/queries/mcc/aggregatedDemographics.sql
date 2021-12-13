@@ -77,3 +77,22 @@ SELECT
     d.u24_status
 
 FROM "/data/Colonies/UCSD/".study.demographics d
+
+UNION ALL
+
+SELECT
+    d.Id,
+    d.date,
+    d.species,
+    d.gender,
+    d.birth,
+    d.death,
+    d.colony,
+    d.dam,
+    d.sire,
+    d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
+    d.objectid,
+    d.calculated_status,
+    d.u24_status
+
+FROM "/data/Colonies/Other/".study.demographics d

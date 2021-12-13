@@ -60,5 +60,8 @@
         <dataset name="housing" id="1018" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
+        <dataset name="clinical_observations" id="5006" showByDefault="false" category="Clinical" type="Standard">
+            <tags/>
+        </dataset>
     </datasets>
 </datasets>
