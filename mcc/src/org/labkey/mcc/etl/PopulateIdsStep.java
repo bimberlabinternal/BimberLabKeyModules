@@ -50,7 +50,7 @@ public class PopulateIdsStep implements TaskRefTask
             throw new PipelineJobException("Unable to find table: aggregatedDemographics");
         }
 
-        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set("originalId", "container"), new SimpleFilter(FieldKey.fromString("Id"), CompareType.ISBLANK, null), null);
+        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set("originalId", "container"), new SimpleFilter(FieldKey.fromString("Id"), null, CompareType.ISBLANK), null);
         if (ts.exists())
         {
             final Map<Container, List<Map<String, Object>>> toAdd = new HashMap<>();

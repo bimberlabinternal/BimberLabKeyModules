@@ -1,5 +1,5 @@
 SELECT
-  d.mccId as Id,
+  d.Id.mccAlias.externalAlias as Id,
   d.Id as originalId,
   d.date,
   d.species,
@@ -23,7 +23,7 @@ FROM "/data/Colonies/SNPRC/".study.demographics d
 UNION ALL
 
 SELECT
-  d.mccId as Id,
+  d.Id.mccAlias.externalAlias as Id,
   d.Id as originalId,
   d.date,
   d.species,
@@ -47,7 +47,7 @@ FROM "/data/Colonies/WNPRC/".study.demographics d
 UNION ALL
 
 SELECT
-    d.mccId as Id,
+    d.Id.mccAlias.externalAlias as Id,
     d.Id as originalId,
     d.date,
     d.species,
@@ -68,7 +68,7 @@ FROM "/data/Colonies/UNO/".study.demographics d
 UNION ALL
 
 SELECT
-    d.mccId as Id,
+    d.Id.mccAlias.externalAlias as Id,
     d.Id as originalId,
     d.date,
     d.species,
@@ -89,7 +89,7 @@ FROM "/data/Colonies/UCSD/".study.demographics d
 UNION ALL
 
 SELECT
-    d.mccId as Id,
+    d.Id.mccAlias.externalAlias as Id,
     d.Id as originalId,
     d.date,
     d.species,
