@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
+import org.labkey.api.action.Action;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
@@ -81,6 +82,7 @@ import org.labkey.api.util.GUID;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
+import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
@@ -929,7 +931,7 @@ public class mGAPController extends SpringActionController
             }
 
             Map<String, String[]> params = new HashMap<>(getViewContext().getRequest().getParameterMap());
-            params.put("database", new String[]{jbrowseDatabaseId});
+            params.put("session", new String[]{jbrowseDatabaseId});
 
             String trackName = StringUtils.trimToNull(form.getTrackName());
             if (trackName != null)
@@ -943,14 +945,14 @@ public class mGAPController extends SpringActionController
                 }
             }
 
-            DetailsURL ret = DetailsURL.fromString("/jbrowse/browser.view", target);
+            ActionURL ret = DetailsURL.fromString("/jbrowse/browser.view", target).getActionURL();
             params.forEach((key, value) -> {
                 Arrays.stream(value).forEach(v -> {
                     ret.addParameter(key, v);
                 });
             });
 
-            return ret.getActionURL();
+            return ret;
         }
 
         public Collection<String> getTracks(Container target, String jbrowseSession, String releaseId, List<String> trackNames)
