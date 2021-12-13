@@ -3,6 +3,13 @@
     <name>MCC_Aggregation</name>
     <description>Aggregate MCC Data</description>
     <transforms>
+        <!--This will create MCC aliases as-needed-->
+        <transform id="step0" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.PopulateIdsStep">
+                <settings>
+                </settings>
+            </taskref>
+        </transform>
         <transform type="SimpleQueryTransformStep" id="demographics">
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedDemographics" >

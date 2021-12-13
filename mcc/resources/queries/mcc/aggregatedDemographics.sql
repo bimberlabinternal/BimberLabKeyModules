@@ -1,5 +1,6 @@
 SELECT
-  d.Id,
+  d.mccId as Id,
+  d.Id as originalId,
   d.date,
   d.species,
   d.gender,
@@ -14,14 +15,16 @@ SELECT
   CASE
     WHEN (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
-  END as u24_status
+  END as u24_status,
+  d.container
 
 FROM "/data/Colonies/SNPRC/".study.demographics d
 
 UNION ALL
 
 SELECT
-  d.Id,
+  d.mccId as Id,
+  d.Id as originalId,
   d.date,
   d.species,
   d.gender,
@@ -36,14 +39,16 @@ SELECT
   CASE
     WHEN (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
-  END as u24_status
+  END as u24_status,
+  d.container
 
 FROM "/data/Colonies/WNPRC/".study.demographics d
 
 UNION ALL
 
 SELECT
-    d.Id,
+    d.mccId as Id,
+    d.Id as originalId,
     d.date,
     d.species,
     d.gender,
@@ -55,14 +60,16 @@ SELECT
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,
-    false as u24_status
+    false as u24_status,
+    d.container
 
 FROM "/data/Colonies/UNO/".study.demographics d
 
 UNION ALL
 
 SELECT
-    d.Id,
+    d.mccId as Id,
+    d.Id as originalId,
     d.date,
     d.species,
     d.gender,
@@ -74,14 +81,16 @@ SELECT
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,
-    d.u24_status
+    d.u24_status,
+    d.container
 
 FROM "/data/Colonies/UCSD/".study.demographics d
 
 UNION ALL
 
 SELECT
-    d.Id,
+    d.mccId as Id,
+    d.Id as originalId,
     d.date,
     d.species,
     d.gender,
@@ -93,6 +102,7 @@ SELECT
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,
-    d.u24_status
+    d.u24_status,
+    d.container
 
 FROM "/data/Colonies/Other/".study.demographics d
