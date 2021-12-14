@@ -1,7 +1,7 @@
 <script type="text/javascript">
     +function() {
         const ctx = LABKEY.getModuleContext('mgap') || {};
-        const sessionId = ctx.mgapReleaseGUID
+        const sessionId = ctx.mgapJBrowse
         LABKEY.App.loadApp('jbrowseSearchWebpart', <%=webpartContext%>.wrapperDivId, sessionId);
     }();
 </script>
