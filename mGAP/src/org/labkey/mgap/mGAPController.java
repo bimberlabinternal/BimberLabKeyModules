@@ -948,7 +948,15 @@ public class mGAPController extends SpringActionController
             ActionURL ret = DetailsURL.fromString("/jbrowse/browser.view", target).getActionURL();
             params.forEach((key, value) -> {
                 Arrays.stream(value).forEach(v -> {
-                    ret.addParameter(key, v);
+                    String theKey = key;
+
+                    // This is a convenience to allow shorter URLs for active sample filters:
+                    if (theKey.startsWith("mgap:"))
+                    {
+                        theKey = theKey.replaceAll("mgap:", "mGAP Release:");
+                    }
+
+                    ret.addParameter(theKey, v);
                 });
             });
 
