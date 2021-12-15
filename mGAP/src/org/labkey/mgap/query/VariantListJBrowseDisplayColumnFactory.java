@@ -55,7 +55,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 String jbrowseId = StringUtils.trimToNull(ctx.get(getBoundKey("releaseId/jbrowseId"), String.class));
-                Integer jbrowseTrackId = ctx.get(getBoundKey("releaseId/vcfId"), Integer.class);
+                String primaryTrack = ctx.get(getBoundKey("releaseId/primaryTrack"), String.class);
                 String containerId = ctx.get(getBoundKey("container"), String.class);
                 String contig = StringUtils.trimToNull(ctx.get(getBoundKey("contig"), String.class));
                 String ref = ctx.get(getBoundKey("reference"), String.class);
@@ -71,10 +71,10 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                     delim = "<br>";
                 }
 
-                if (jbrowseTrackId != null)
+                if (primaryTrack != null)
                 {
                     out.write(delim);
-                    DetailsURL url = DetailsURL.fromString("/jbrowse/genotypeTable.view?trackId=data-" + jbrowseTrackId + "&chr=" + contig + "&start=" + position + "&stop=" + position, ContainerManager.getForId(containerId));
+                    DetailsURL url = DetailsURL.fromString("/jbrowse/genotypeTable.view?trackId=" + primaryTrack + "&chr=" + contig + "&start=" + position + "&stop=" + position, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View Genotypes At Position</a>");
                     delim = "<br>";
                 }
