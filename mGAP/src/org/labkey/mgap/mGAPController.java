@@ -24,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
-import org.labkey.api.action.Action;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
@@ -948,15 +947,21 @@ public class mGAPController extends SpringActionController
             ActionURL ret = DetailsURL.fromString("/jbrowse/browser.view", target).getActionURL();
             params.forEach((key, value) -> {
                 Arrays.stream(value).forEach(v -> {
-                    String theKey = key;
-
                     // This is a convenience to allow shorter URLs for active sample filters:
-                    if (theKey.startsWith("mgap:"))
+                    if (key.equals("sampleFilters"))
                     {
-                        theKey = theKey.replaceAll("mgap:", "mGAP Release:");
-                    }
+                        String newVal = v;
+                        if (newVal.startsWith("mgap:"))
+                        {
+                            newVal = newVal.replaceAll("^mgap:", "mGAP Release:");
+                        }
 
-                    ret.addParameter(theKey, v);
+                        ret.addParameter(key, newVal);
+                    }
+                    else
+                    {
+                        ret.addParameter(key, v);
+                    }
                 });
             });
 
