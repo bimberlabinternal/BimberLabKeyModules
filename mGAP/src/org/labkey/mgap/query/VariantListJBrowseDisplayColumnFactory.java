@@ -31,7 +31,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
             {
                 super.addQueryFieldKeys(keys);
                 keys.add(getBoundKey("releaseId/jbrowseId"));
-                keys.add(getBoundKey("releaseId/vcfId"));
+                keys.add(getBoundKey("releaseId/primaryTrack"));
                 keys.add(getBoundKey("container"));
                 keys.add(getBoundKey("contig"));
                 keys.add(getBoundKey("reference"));
