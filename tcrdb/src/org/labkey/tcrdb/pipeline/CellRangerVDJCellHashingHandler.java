@@ -71,7 +71,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }}, false)
         ));
 
-        ret.addAll(CellHashingService.get().getHashingCallingParams());
+        ret.addAll(CellHashingService.get().getHashingCallingParams(false));
 
         return ret;
     }
@@ -118,7 +118,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         public void init(JobContext ctx, List<SequenceOutputFile> inputFiles, List<RecordedAction> actions, List<SequenceOutputFile> outputsToCreate) throws UnsupportedOperationException, PipelineJobException
         {
             //NOTE: this is the pathway to import assay data, whether hashing is used or not
-            CellHashingService.get().prepareHashingIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", false);
+            CellHashingService.get().prepareHashingForVdjIfNeeded(ctx.getOutputDir(), ctx.getJob(), ctx.getSequenceSupport(), "tcrReadsetId", false);
 
             if (ctx.getParams().optBoolean(USE_GEX_BARCODES, false))
             {

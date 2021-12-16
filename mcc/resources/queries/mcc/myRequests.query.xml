@@ -1,0 +1,22 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="myRequests" tableDbType="TABLE">
+                <javaCustomizer class="org.labkey.mcc.query.MccEhrCustomizer" />
+                <updateUrl>/mcc/animalRequest.view?requestId=${rowid}</updateUrl>
+                <titleColumn>rowid</titleColumn>
+                <columns>
+                    <column columnName="edit" wrappedColumnName="rowid">
+                        <columnTitle>Edit</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                </columns>
+                <buttonBarOptions includeStandardButtons="true">
+                    <item hidden="true">
+                        <originalText>Charts</originalText>
+                    </item>
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>

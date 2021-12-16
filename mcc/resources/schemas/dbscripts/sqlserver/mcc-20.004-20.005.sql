@@ -1,0 +1,1 @@
+ALTER TABLE mcc.animalRequests ADD status VARCHAR(200);

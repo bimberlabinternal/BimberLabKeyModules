@@ -4,6 +4,5 @@
     </permissions>
     <dependencies>
         <dependency path="ldk.context"/>
-        <dependency path="/jbrowse/window/GenomeBrowserHelpWindow.js"/>
     </dependencies>
 </view>

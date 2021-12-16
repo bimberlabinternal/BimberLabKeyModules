@@ -31,7 +31,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
             {
                 super.addQueryFieldKeys(keys);
                 keys.add(getBoundKey("releaseId/jbrowseId"));
-                keys.add(getBoundKey("releaseId/vcfId"));
+                keys.add(getBoundKey("releaseId/primaryTrack"));
                 keys.add(getBoundKey("container"));
                 keys.add(getBoundKey("contig"));
                 keys.add(getBoundKey("reference"));
@@ -55,7 +55,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 String jbrowseId = StringUtils.trimToNull(ctx.get(getBoundKey("releaseId/jbrowseId"), String.class));
-                Integer jbrowseTrackId = ctx.get(getBoundKey("releaseId/vcfId"), Integer.class);
+                String primaryTrack = ctx.get(getBoundKey("releaseId/primaryTrack"), String.class);
                 String containerId = ctx.get(getBoundKey("container"), String.class);
                 String contig = StringUtils.trimToNull(ctx.get(getBoundKey("contig"), String.class));
                 String ref = ctx.get(getBoundKey("reference"), String.class);
@@ -66,15 +66,15 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                 int length = ref.length();
                 if (jbrowseId != null)
                 {
-                    DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&loc=" + contig + ":" + start + ".." + stop + "&highlight=" + contig + ":" + position + ".." + (position + length - 1), ContainerManager.getForId(containerId));
+                    DetailsURL url = DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseId + "&location=" + contig + ":" + start + ".." + stop + "&highlight=" + contig + ":" + position + ".." + (position + length - 1), ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View In Genome Browser</a>");
                     delim = "<br>";
                 }
 
-                if (jbrowseTrackId != null)
+                if (primaryTrack != null)
                 {
                     out.write(delim);
-                    DetailsURL url = DetailsURL.fromString("/jbrowse/genotypeTable.view?trackId=data-" + jbrowseTrackId + "&chr=" + contig + "&start=" + position + "&stop=" + position, ContainerManager.getForId(containerId));
+                    DetailsURL url = DetailsURL.fromString("/jbrowse/genotypeTable.view?trackId=" + primaryTrack + "&chr=" + contig + "&start=" + position + "&stop=" + position, ContainerManager.getForId(containerId));
                     out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().getURIString() + "\");\">View Genotypes At Position</a>");
                     delim = "<br>";
                 }
@@ -110,7 +110,7 @@ public class VariantListJBrowseDisplayColumnFactory implements DisplayColumnFact
                 //Ensembl does use chr or padded names.
                 String contigE = contig.replaceAll("chr", "");
                 contigE = contigE.replaceAll("^0", "");
-                String url = "https://jul2019.archive.ensembl.org/Macaca_mulatta/Location/View?db=core;r=" + contigE + ":" + start +"-" + stop;
+                String url = "https://ensembl.org/Macaca_mulatta/Location/View?db=core;r=" + contigE + ":" + start +"-" + stop;
                 out.write(delim);
                 out.write("<a class=\"labkey-text-link\" href=\"" + url + "\");\">View Region in Ensembl</a>");
             }

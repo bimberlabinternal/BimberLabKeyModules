@@ -40,7 +40,9 @@ public class MccManager
     public static final String NotifyPropName = "MCCContactUsers";
     public static final String ZIMSImportPath = "ZIMSImportPath";
 
-    public static final String GROUP_NAME = "MCC Users";
+    public static final String MCC_GROUP_NAME = "MCC Users";
+    public static final String ANIMAL_GROUP_NAME = "MCC Animal Data Access";
+    public static final String REQUEST_GROUP_NAME = "MCC Animal Requestors";
 
     private static final MccManager _instance = new MccManager();
 

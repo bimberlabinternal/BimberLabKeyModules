@@ -81,7 +81,7 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
             @Override
             public Set<ClientDependency> getClientDependencies()
             {
-                return Collections.singleton(ClientDependency.fromPath("mgap/DownloadWindow.js"));
+                return PageFlowUtil.set(ClientDependency.fromPath("Ext4"), ClientDependency.fromPath("mgap/DownloadWindow.js"));
             }
 
             @Override
