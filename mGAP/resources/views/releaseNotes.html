@@ -1,3 +1,14 @@
+<h4>Release 2.2:</h4>
+<ul>
+    <li>This is an additional 103 animals over the prior version.</li>
+    <li>We made two changes to how variants are filters:</li>
+    <ol>
+        <li>We now use the official NCBI RepeatMasker data to mask variants in repetitive regions, instead of a custom RepeatMasker file generated in-house for version 2.1 and lower. In practice the result should be very similar.</li>
+        <li>We removed the SnpCluster filter from processing. In previous versions, any SNPs falling into a window with at least 3 SNPs in a 10bp window were filtered. As the dataset grew, this captured too many valid variants. This change resulted in a sizable increase in passing variants in this release</li>
+    </ol>
+    <li>We upgraded the mGAP website to use JBrowse 2, a faster, more powerful version of the JBrowse 1 browser used in prior versions. Please use the help link to ask any questions or report issues.</li>
+</ul>
+
 <h4>Release 2.1:</h4>
 <ul>
     <li>This is an iterative improvement to the dataset, adding 275 additional animals.</li>
@@ -13,7 +24,6 @@
 
 <h4>Future Plans:</h4>
 <ul>
-    <li>We expect to upgrade the genome browser to use the redesigned <a href="https://jbrowse.org/jb2/">JBrowse 2</a> browser. This should provide general performance improvements and will make future mGAP-specific customization easier.</li>
     <li>We will support other modes of viewing and downloading variant data, in particular tabular views by gene.</li>
     <li>We recognize that the mGAP release VCF can be enormous, particularly because of all the site-specific functional annotation. To support different types of users, upcoming releases will include 'slim' versions of the data, which will be downloadable files with certain information removed to save file size.</li>
 </ul>

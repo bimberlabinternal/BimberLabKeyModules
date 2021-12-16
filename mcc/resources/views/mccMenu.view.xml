@@ -1,0 +1,8 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Site Navigation">
+    <dependencies>
+        <dependency path="laboratory.context"/>
+        <dependency path="extWidgets/IconPanel.css" />
+        <dependency path="mcc.context" />
+        <dependency path="mcc/utils.js" />
+    </dependencies>
+</view>

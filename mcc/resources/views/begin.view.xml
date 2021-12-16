@@ -1,0 +1,8 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Welcome to the Marmoset Coordinating Center">
+    <dependencies>
+        <dependency path="ldk.context" />
+        <dependency path="mcc.context" />
+        <dependency path="/ehr/stylesheet.css" />
+        <dependency path="/mcc/utils.js" />
+    </dependencies>
+</view>

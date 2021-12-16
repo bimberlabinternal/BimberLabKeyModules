@@ -3,11 +3,7 @@
         <permission name="read"/>
     </permissions>
     <dependencies>
+        <dependency path="gen/jbrowse2SearchWebpart.lib.xml"/>
         <dependency path="LDK.context"/>
-        <dependency path="jbrowse/css/search.css" />
-        <dependency path="jbrowseApp/src/dijit/themes/tundra/tundra.css" />
-        <dependency path="internal/jQuery"/>
-        <dependency path="https://cdn.plot.ly/plotly-latest.min.js"/>
-        <dependency path="mgap/Utils.js" />
     </dependencies>
 </view>

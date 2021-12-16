@@ -1,0 +1,11 @@
+<view xmlns="http://labkey.org/data/xml/view" title="MCC Animal Request Admin">
+    <permissionClasses>
+        <permissionClass name="org.labkey.mcc.security.MccRequestAdminPermission"/>
+    </permissionClasses>
+    <dependencies>
+        <dependency path="ldk.context" />
+        <dependency path="mcc.context" />
+        <dependency path="/ehr/stylesheet.css" />
+        <dependency path="/mcc/utils.js" />
+    </dependencies>
+</view>

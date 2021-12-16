@@ -331,27 +331,58 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 //find basic stats:
                 job.getLogger().info("inspecting file: " + so.getName());
                 int totalSubjects;
-                long totalVariants = 0;
                 try (VCFFileReader reader = new VCFFileReader(so.getFile()))
                 {
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
-                    try (CloseableIterator<VariantContext> it = reader.iterator())
-                    {
-                        while (it.hasNext())
-                        {
-                            VariantContext vc = it.next();
-                            if (vc.isFiltered())
-                            {
-                                throw new PipelineJobException("The published VCF should not contain filtered sites");
-                            }
+                }
 
-                            totalVariants++;
-                            if (totalVariants % 1000000 == 0)
+                // NOTE: this can be rather slow. Consider caching remotely or using VCF index?
+                String totalVariants = null;
+                try
+                {
+                    File releaseStats = new File(so.getFile().getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(so.getFile().getName()) + ".summaryByField.txt");
+                    if (releaseStats.exists())
+                    {
+                        try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(releaseStats), '\t'))
+                        {
+                            String[] line;
+                            int lineNo = 0;
+                            while ((line = reader.readNext()) != null)
                             {
-                                job.getLogger().info("processed " + totalVariants + " sites");
+                                lineNo++;
+                                if (lineNo == 1)
+                                {
+                                    continue; //header
+                                }
+
+                                if ("TotalVariants".equals(line[1]))
+                                {
+                                    totalVariants = line[2];
+                                }
+
+                                Map<String, Object> map = new CaseInsensitiveHashMap<>();
+                                map.put("releaseId", releaseId);
+                                map.put("category", line[0]);
+                                map.put("metricName", line[1]);
+                                map.put("value", line[2]);
+                                map.put("objectId", new GUID().toString());
+                                releaseStatsRows.add(map);
                             }
                         }
                     }
+                    else
+                    {
+                        job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
+                    }
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+
+                if (totalVariants == null)
+                {
+                    throw new PipelineJobException("Unable to find total variant from stats file!");
                 }
 
                 //actually create release record
@@ -409,36 +440,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     else
                     {
                         job.getLogger().error("unable to find release stats file: " + variantTable.getPath());
-                    }
-
-                    File releaseStats = new File(so.getFile().getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(so.getFile().getName()) + ".summaryByField.txt");
-                    if (releaseStats.exists())
-                    {
-                        try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(releaseStats), '\t'))
-                        {
-                            String[] line;
-                            int lineNo = 0;
-                            while ((line = reader.readNext()) != null)
-                            {
-                                lineNo++;
-                                if (lineNo == 1)
-                                {
-                                    continue; //header
-                                }
-
-                                Map<String, Object> map = new CaseInsensitiveHashMap<>();
-                                map.put("releaseId", releaseId);
-                                map.put("category", line[0]);
-                                map.put("metricName", line[1]);
-                                map.put("value", line[2]);
-                                map.put("objectId", new GUID().toString());
-                                releaseStatsRows.add(map);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
                     }
 
                     //also tracks:

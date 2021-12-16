@@ -7,6 +7,13 @@
                 <permission>ADMIN</permission>
             </editPermissions>
         </propertyDescriptor>
+        <propertyDescriptor name="MCCRequestContainer">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is the path to the container used to manage MCC animal requests. Use of slashes is very important - it should be in the format '/myProject/mcc'</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
         <propertyDescriptor name="MCCContactUsers">
             <canSetPerContainer>false</canSetPerContainer>
             <description>This is a comma separated list of LabKey user names of users that should be notified by email when requests are submitted through MCC.</description>

@@ -81,6 +81,7 @@ import org.labkey.api.util.GUID;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
+import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
@@ -928,7 +929,9 @@ public class mGAPController extends SpringActionController
                 throw new NotFoundException("No databaseId provided");
             }
 
-            String trackString = "";
+            Map<String, String[]> params = new HashMap<>(getViewContext().getRequest().getParameterMap());
+            params.put("session", new String[]{jbrowseDatabaseId});
+
             String trackName = StringUtils.trimToNull(form.getTrackName());
             if (trackName != null)
             {
@@ -937,11 +940,32 @@ public class mGAPController extends SpringActionController
                 Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
                 if (!trackIDs.isEmpty())
                 {
-                    trackString = "&tracks=" + StringUtils.join(trackIDs, ",");
+                    params.put("tracks", new String[]{StringUtils.join(trackIDs, ",")});
                 }
             }
 
-            return DetailsURL.fromString("/jbrowse/browser.view?database=" + jbrowseDatabaseId + trackString, target).getActionURL();
+            ActionURL ret = DetailsURL.fromString("/jbrowse/browser.view", target).getActionURL();
+            params.forEach((key, value) -> {
+                Arrays.stream(value).forEach(v -> {
+                    // This is a convenience to allow shorter URLs for active sample filters:
+                    if (key.equals("sampleFilters"))
+                    {
+                        String newVal = v;
+                        if (newVal.startsWith("mgap:"))
+                        {
+                            newVal = newVal.replaceAll("^mgap:", "mGAP Release:");
+                        }
+
+                        ret.addParameter(key, newVal);
+                    }
+                    else
+                    {
+                        ret.addParameter(key, v);
+                    }
+                });
+            });
+
+            return ret;
         }
 
         public Collection<String> getTracks(Container target, String jbrowseSession, String releaseId, List<String> trackNames)
