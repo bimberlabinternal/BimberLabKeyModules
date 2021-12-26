@@ -1,1 +1,1 @@
-ALTER TABLE mGAP.variantReleases ADD sitesOnlyVcfId int;
+ALTER TABLE mGAP.variantCatalogReleases ADD sitesOnlyVcfId int;
