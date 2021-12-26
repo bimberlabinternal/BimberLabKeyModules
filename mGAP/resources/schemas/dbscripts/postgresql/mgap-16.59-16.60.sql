@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.variantReleases ADD sitesOnlyVcfId int;

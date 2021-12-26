@@ -266,6 +266,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             Map<String, SequenceOutputFile> outputVCFMap = new HashMap<>();
             Map<String, SequenceOutputFile> outputTableMap = new HashMap<>();
             Map<String, SequenceOutputFile> liftedVcfMap = new HashMap<>();
+            Map<String, SequenceOutputFile> sitesOnlyVcfMap = new HashMap<>();
             Map<String, SequenceOutputFile> trackVCFMap = new HashMap<>();
 
             for (SequenceOutputFile so : outputsCreated)
@@ -284,6 +285,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 {
                     String name = so.getName().replaceAll(" Lifted to Human", "");
                     liftedVcfMap.put(name, so);
+                }
+                else if (so.getCategory().contains("mGAP Release: Sites Only"))
+                {
+                    String name = so.getName().replaceAll(": Sites Only", "");
+                    sitesOnlyVcfMap.put(name, so);
                 }
                 else if (so.getCategory().endsWith("Release"))
                 {
@@ -326,6 +332,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 if (liftedVcf == null)
                 {
                     throw new PipelineJobException("Unable to find lifted VCF for release: " + release);
+                }
+
+                SequenceOutputFile sitesOnlyVcf = sitesOnlyVcfMap.get(release);
+                if (sitesOnlyVcf == null)
+                {
+                    throw new PipelineJobException("Unable to find sites-only VCF for release: " + release);
                 }
 
                 //find basic stats:
@@ -391,6 +403,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 row.put("releaseDate", new Date());
                 row.put("vcfId", so.getRowid());
                 row.put("liftedVcfId", liftedVcf.getRowid());
+                row.put("sitesOnlyVcfId", sitesOnlyVcf.getRowid());
                 row.put("variantTable", so2.getRowid());
                 row.put("genomeId", so.getLibrary_id());
                 row.put("totalSubjects", totalSubjects);
@@ -908,8 +921,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 wrapper.execute(sourceGenome.getWorkingFastaFile(), primaryTrackVcf, noGenotypes, Arrays.asList("--sites-only-vcf-output"));
             }
 
-            ctx.getFileManager().addIntermediateFile(noGenotypes);
-            ctx.getFileManager().addIntermediateFile(new File(noGenotypes.getPath() + ".tbi"));
+            SequenceOutputFile output = new SequenceOutputFile();
+            output.setFile(noGenotypes);
+            output.setName(primaryTrackVcf.getName() + ": Sites Only");
+            output.setCategory("mGAP Release: Sites Only");
+            output.setLibrary_id(sourceGenome.getGenomeId());
+            ctx.getFileManager().addSequenceOutput(output);
 
             //lift to target genome
             Integer chainFileId = ctx.getSequenceSupport().getCachedObject(AnnotationStep.CHAIN_FILE, Integer.class);
