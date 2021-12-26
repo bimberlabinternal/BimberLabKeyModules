@@ -560,7 +560,7 @@ public class CellRangerVDJUtils
 
     private String removeNone(String input)
     {
-        return "None".equals(input) ? null : input;
+        return "None".equals(input) ? null : StringUtils.trimToNull(input);
     }
 
     private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId, boolean deleteExisting) throws PipelineJobException
