@@ -269,7 +269,11 @@ public class CellRangerVDJUtils
 
         // use unfiltered data so we can apply demultiplex and also apply alternate filtering logic.
         // also, 10x no longer reports TRD/TRG data in their consensus file
-        //header: barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis	raw_clonotype_id	raw_consensus_id
+        //header for 3.x and lower:
+        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis	raw_clonotype_id	raw_consensus_id
+
+        //header for 6.x:
+        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	fwr1	fwr1_nt	cdr1	cdr1_nt	fwr2	fwr2_nt	cdr2	cdr2_nt	fwr3	fwr3_nt	cdr3	cdr3_nt	fwr4	fwr4_nt	reads	umis	raw_clonotype_id	raw_consensus_id	exact_subclonotype_id
         try (CSVReader reader = new CSVReader(Readers.getReader(allCsv), ','))
         {
             String[] line;
@@ -284,46 +288,49 @@ public class CellRangerVDJUtils
             int hasCDR3NoClonotype = 0;
             int multiChainConverted = 0;
             Set<String> knownBarcodes = new HashSet<>();
+
+            Map<HEADER_FIELD, Integer> headerToIdx = null;
             while ((line = reader.readNext()) != null)
             {
                 idx++;
                 if (idx == 1)
                 {
                     _log.debug("skipping header, length: " + line.length);
+                    headerToIdx = inferFieldIdx(line);
                     continue;
                 }
 
-                if ("False".equalsIgnoreCase(line[1]))
+                if ("False".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.IS_CELL)]))
                 {
                     nonCell++;
                     continue;
                 }
 
-                if ("None".equals(line[12]))
+                if ("None".equals(line[headerToIdx.get(HEADER_FIELD.CDR3)]))
                 {
                     noCDR3++;
                     continue;
                 }
 
-                String cGene = removeNone(line[9]);
+                String cGene = removeNone(line[headerToIdx.get(HEADER_FIELD.C_GENE)]);
                 if (cGene == null)
                 {
                     // Only discard these if chain type doesnt match between JGene and VGene.
-                    if (!line[8].substring(0, 3).equals(line[6].substring(0,3)))
+                    if (!line[headerToIdx.get(HEADER_FIELD.J_GENE)].substring(0, 3).equals(line[headerToIdx.get(HEADER_FIELD.V_GENE)].substring(0,3)))
                     {
                         noCGene++;
                         continue;
                     }
                 }
 
-                if ("False".equals(line[10]))
+                if ("False".equals(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     notFullLength++;
                     continue;
                 }
 
                 //NOTE: 10x appends "-1" to barcode sequences
-                String barcode = line[0].split("-")[0];
+                String barcode = line[headerToIdx.get(HEADER_FIELD.CELL_BARCODE)].split("-")[0];
                 Integer cDNA = useCellHashing ? cellBarcodeToCDNAMap.get(barcode) : defaultCDNA;
                 if (cDNA == null)
                 {
@@ -344,9 +351,9 @@ public class CellRangerVDJUtils
                 }
                 knownBarcodes.add(barcode);
 
-                String clonotypeId = removeNone(line[16]);
-                String cdr3 = removeNone(line[12]);
-                if (clonotypeId == null && cdr3 != null && "TRUE".equalsIgnoreCase(line[10]))
+                String clonotypeId = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID)]);
+                String cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
+                if (clonotypeId == null && cdr3 != null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     hasCDR3NoClonotype++;
                 }
@@ -357,13 +364,13 @@ public class CellRangerVDJUtils
                 }
 
                 //Preferentially use raw_consensus_id, but fall back to contig_id
-                String sequenceContigName = removeNone(line[17]) == null ? removeNone(line[2]) : removeNone(line[17]);
+                String sequenceContigName = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]) == null ? removeNone(line[headerToIdx.get(HEADER_FIELD.CONTIG_ID)]) : removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]);
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
-                String locus = line[5];
-                if (locus.equals("Multi") && cGene != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
+                String locus = line[headerToIdx.get(HEADER_FIELD.CHAIN)];
+                if (locus.equals("Multi") && cGene != null && removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]) != null && removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]) != null)
                 {
-                    if (cGene.contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
+                    if (cGene.contains("TRAC") && removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]).contains("TRAJ") && removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]).contains("TRDV"))
                     {
                         locus = "TRA";
                         multiChainConverted++;
@@ -371,11 +378,22 @@ public class CellRangerVDJUtils
                 }
 
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), cGene, removeNone(line[13])}, "<>");
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[headerToIdx.get(HEADER_FIELD.CDR3)], locus, clonotypeId, sequenceContigName, removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]), cGene, removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
-                    am = createForRow(line, sequenceContigName, cDNA, clonotypeId, locus);
+                    am = new AssayModel();
+                    am.cdna = cDNA;
+                    am.cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
+                    am.locus = locus;
+                    am.cloneId = clonotypeId;
+                    am.sequenceContigName = sequenceContigName;
+
+                    am.vHit = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
+                    am.dHit = removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]);
+                    am.jHit = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
+                    am.cHit = removeNone(line[headerToIdx.get(HEADER_FIELD.C_GENE)]);
+                    am.cdr3Nt = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)]);
                 }
                 else
                 {
@@ -457,24 +475,6 @@ public class CellRangerVDJUtils
         _log.info("total assay rows: " + assayRows.size());
         _log.info("total cells: " + totalCells);
         saveRun(job, protocol, model, assayRows, outDir, runId, deleteExisting);
-    }
-
-    private AssayModel createForRow(String[] line, String sequenceContigName, Integer cDNA, String clonotypeId, String locus)
-    {
-        AssayModel am = new AssayModel();
-        am.cdna = cDNA;
-        am.cdr3 = removeNone(line[12]);
-        am.locus = locus;
-        am.cloneId = clonotypeId;
-        am.sequenceContigName = sequenceContigName;
-
-        am.vHit = removeNone(line[6]);
-        am.dHit = removeNone(line[7]);
-        am.jHit = removeNone(line[8]);
-        am.cHit = removeNone(line[9]);
-        am.cdr3Nt = removeNone(line[13]);
-
-        return am;
     }
 
     private File getCellToHtoFile(ExpRun run) throws PipelineJobException
@@ -671,8 +671,45 @@ public class CellRangerVDJUtils
         return new File(cellRangerOutDir, "all_contig_annotations.csv");
     }
 
-    public static boolean shouldRecoverGammaDeltaRow(String[] line)
+    private Map<HEADER_FIELD, Integer> inferFieldIdx(String[] line)
     {
-        return ("TRD".equals(line[5]) || "TRG".equals(line[5])) && !"None".equals(line[12]) && !"False".equals(line[10]);
+        Map<HEADER_FIELD, Integer> ret = new HashMap<>();
+        List<String> header = Arrays.asList(line);
+        for (HEADER_FIELD hf : HEADER_FIELD.values())
+        {
+            int idx = header.indexOf(hf.headerStr);
+            if (idx == -1)
+            {
+                throw new IllegalStateException("Missing expected header field: " + hf.headerStr);
+            }
+
+            ret.put(hf, idx);
+        }
+
+        return ret;
+    }
+
+    private enum HEADER_FIELD
+    {
+        CELL_BARCODE("barcode"),
+        IS_CELL("is_cell"),
+        CONTIG_ID("contig_id"),
+        CHAIN("chain"),
+        V_GENE("v_gene"),
+        D_GENE("d_gene"),
+        J_GENE("j_gene"),
+        C_GENE("c_gene"),
+        FULL_LENGTH("full_length"),
+        CDR3("cdr3"),
+        CDR3_NT("cdr3_nt"),
+        RAW_CLONOTYPE_ID("raw_clonotype_id"),
+        RAW_CONSENSUS_ID("raw_consensus_id");
+
+        String headerStr;
+
+        HEADER_FIELD(String headerStr)
+        {
+            this.headerStr = headerStr;
+        }
     }
 }
