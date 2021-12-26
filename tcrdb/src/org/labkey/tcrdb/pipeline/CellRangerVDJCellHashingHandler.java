@@ -38,8 +38,8 @@ import java.util.Set;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
-    private FileType _vloupeFileType = new FileType("vloupe", false);
-    private FileType _htmlFileType = new FileType("html", false);
+    private final FileType _vloupeFileType = new FileType("vloupe", false);
+    private final FileType _htmlFileType = new FileType("html", false);
 
     public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
 
@@ -61,10 +61,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }}, true),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
-                }}, false),
-                ToolParameterDescriptor.create(USE_GEX_BARCODES, "Use GEX and TCR Cell Barcodes", "If checked, the cell barcode whitelist used for cell hashing will be the union of TCR and GEX cell barcodes. If T-cells are a rare component of total cells, this might enhance the effectiveness of the callers by providing more positive signal.", "checkbox", new JSONObject(){{
-                    put("checked", true);
                 }}, false)
+//                ToolParameterDescriptor.create(USE_GEX_BARCODES, "Use GEX and TCR Cell Barcodes", "If checked, the cell barcode whitelist used for cell hashing will be the union of TCR and GEX cell barcodes. If T-cells are a rare component of total cells, this might enhance the effectiveness of the callers by providing more positive signal.", "checkbox", new JSONObject(){{
+//                    put("checked", true);
+//                }}, false)
         ));
 
         ret.addAll(CellHashingService.get().getHashingCallingParams(false));
@@ -247,6 +247,9 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             ctx.getLogger().debug("allow cells lacking CDR3: " + allowCellsLackingCDR3);
 
             int totalBarcodeWritten = 0;
+            int cellbarcodeIdx = 0;
+            int notCellIdx = 1;
+            int cdr3Idx = -1;
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
             {
                 int rowIdx = 0;
@@ -257,23 +260,32 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 {
                     //skip header
                     rowIdx++;
-                    if (rowIdx > 1)
+                    if (rowIdx == 1)
                     {
-                        if ("False".equalsIgnoreCase(row[1]))
+                        List<String> header = Arrays.asList(row);
+                        cdr3Idx = header.indexOf("cdr3");
+                        if (cdr3Idx == -1)
+                        {
+                            throw new PipelineJobException("Unable to find CDR3 field in header: " + perCellTsv.getPath());
+                        }
+                    }
+                    else
+                    {
+                        if ("False".equalsIgnoreCase(row[notCellIdx]))
                         {
                             nonCell++;
                             continue;
                         }
 
                         //NOTE: allow these to pass for cell-hashing under some conditions
-                        boolean hasCDR3 = !"None".equals(row[12]);
+                        boolean hasCDR3 = !"None".equals(row[cdr3Idx]);
                         if (!hasCDR3)
                         {
                             noCallRows++;
                         }
 
                         //NOTE: 10x appends "-1" to barcodes
-                        String barcode = row[0].split("-")[0];
+                        String barcode = row[cellbarcodeIdx].split("-")[0];
                         if ((allowCellsLackingCDR3 || hasCDR3) && !uniqueBarcodes.contains(barcode))
                         {
                             writer.writeNext(new String[]{barcode});
