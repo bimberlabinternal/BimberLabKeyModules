@@ -306,7 +306,8 @@ public class CellRangerVDJUtils
                     continue;
                 }
 
-                if ("None".equals(line[headerToIdx.get(HEADER_FIELD.CDR3)]))
+                String cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
+                if (cdr3 == null)
                 {
                     noCDR3++;
                     continue;
@@ -316,14 +317,16 @@ public class CellRangerVDJUtils
                 if (cGene == null)
                 {
                     // Only discard these if chain type doesnt match between JGene and VGene.
-                    if (!line[headerToIdx.get(HEADER_FIELD.J_GENE)].substring(0, 3).equals(line[headerToIdx.get(HEADER_FIELD.V_GENE)].substring(0,3)))
+                    String vGene = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
+                    String jGene = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
+                    if (vGene == null || jGene == null || !jGene.substring(0, 3).equals(vGene.substring(0,3)))
                     {
                         noCGene++;
                         continue;
                     }
                 }
 
-                if ("False".equals(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
+                if ("False".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     notFullLength++;
                     continue;
@@ -352,8 +355,7 @@ public class CellRangerVDJUtils
                 knownBarcodes.add(barcode);
 
                 String clonotypeId = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID)]);
-                String cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
-                if (clonotypeId == null && cdr3 != null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
+                if (clonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     hasCDR3NoClonotype++;
                 }
