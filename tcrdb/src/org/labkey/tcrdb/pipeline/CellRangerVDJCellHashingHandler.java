@@ -278,7 +278,8 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                         }
 
                         //NOTE: allow these to pass for cell-hashing under some conditions
-                        boolean hasCDR3 = !"None".equals(row[cdr3Idx]);
+                        String cdr3String = StringUtils.trimToNull(row[cdr3Idx]);
+                        boolean hasCDR3 = cdr3String != null && !"None".equals(cdr3String);
                         if (!hasCDR3)
                         {
                             noCallRows++;

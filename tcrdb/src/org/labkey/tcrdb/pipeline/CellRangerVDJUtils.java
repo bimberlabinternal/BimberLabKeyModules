@@ -285,7 +285,8 @@ public class CellRangerVDJUtils
             int totalSkipped = 0;
             int doubletSkipped = 0;
             int discordantSkipped = 0;
-            int hasCDR3NoClonotype = 0;
+            int noConsensusClonotype = 0;
+            int fullLengthNoClonotype = 0;
             int multiChainConverted = 0;
             Set<String> knownBarcodes = new HashSet<>();
 
@@ -354,33 +355,42 @@ public class CellRangerVDJUtils
                 }
                 knownBarcodes.add(barcode);
 
-                String clonotypeId = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID)]);
-                if (clonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
+                String rawClonotypeId = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID)]);
+                if (rawClonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
-                    hasCDR3NoClonotype++;
+                    fullLengthNoClonotype++;
                 }
 
-                if (clonotypeId == null)
+                if (rawClonotypeId == null)
                 {
-                    continue;
+                    noConsensusClonotype++;
+                    // NOTE: allow rows without consensus clonotypes, which will include the g/d rows:
+                    //continue;
                 }
 
                 //Preferentially use raw_consensus_id, but fall back to contig_id
-                String sequenceContigName = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]) == null ? removeNone(line[headerToIdx.get(HEADER_FIELD.CONTIG_ID)]) : removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]);
+                String coalescedContigName = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]) == null ? removeNone(line[headerToIdx.get(HEADER_FIELD.CONTIG_ID)]) : removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]);
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
                 String locus = line[headerToIdx.get(HEADER_FIELD.CHAIN)];
-                if (locus.equals("Multi") && cGene != null && removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]) != null && removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]) != null)
+                String jGene = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
+                String vGene = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
+                if (locus.equals("Multi") && cGene != null && jGene != null && vGene != null)
                 {
-                    if (cGene.contains("TRAC") && removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]).contains("TRAJ") && removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]).contains("TRDV"))
+                    if (cGene.contains("TRAC") && jGene.contains("TRAJ") && vGene.contains("TRDV"))
                     {
                         locus = "TRA";
                         multiChainConverted++;
                     }
                 }
 
-                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[headerToIdx.get(HEADER_FIELD.CDR3)], locus, clonotypeId, sequenceContigName, removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]), cGene, removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)])}, "<>");
+                if (cGene != null && !cGene.startsWith(locus))
+                {
+                    _log.error("Discordant locus/cGene: " + locus + " / " + cGene);
+                }
+
+                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, coalescedContigName, vHit, dHit, jHit, cHit, cdr3_nt
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[headerToIdx.get(HEADER_FIELD.CDR3)], locus, rawClonotypeId, coalescedContigName, removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]), cGene, removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
@@ -388,8 +398,8 @@ public class CellRangerVDJUtils
                     am.cdna = cDNA;
                     am.cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
                     am.locus = locus;
-                    am.cloneId = clonotypeId;
-                    am.sequenceContigName = sequenceContigName;
+                    am.cloneId = rawClonotypeId == null ? coalescedContigName : rawClonotypeId;
+                    am.coalescedContigName = coalescedContigName;
 
                     am.vHit = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
                     am.dHit = removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]);
@@ -402,7 +412,7 @@ public class CellRangerVDJUtils
                     am = rows.get(key);
                 }
 
-                uniqueContigNames.add(am.sequenceContigName);
+                uniqueContigNames.add(am.coalescedContigName);
                 am.barcodes.add(barcode);
                 rows.put(key, am);
 
@@ -418,13 +428,14 @@ public class CellRangerVDJUtils
             _log.info("total clonotype rows without CDR3: " + noCDR3);
             _log.info("total clonotype rows discarded for no C-gene: " + noCGene);
             _log.info("total clonotype rows discarded for not full length: " + notFullLength);
-            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
+            _log.info("total clonotype rows discarded for lacking consensus clonotype: " + noConsensusClonotype);
+            _log.info("total clonotype rows skipped for unknown barcocdes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + rows.size());
             _log.info("total sequences: " + uniqueContigNames.size());
-            _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
+            _log.info("total rows lacking clonotype, but marked full-length: " + fullLengthNoClonotype);
             _log.info("total rows converted from Multi to TRA: " + multiChainConverted);
 
         }
@@ -514,7 +525,7 @@ public class CellRangerVDJUtils
         private int cdna;
 
         private Set<String> barcodes = new HashSet<>();
-        private String sequenceContigName;
+        private String coalescedContigName;
     }
 
     private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA_Library> cDNAMap, Integer runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
@@ -536,7 +547,7 @@ public class CellRangerVDJUtils
         row.put("analysisId", model.getRowId());
         row.put("pipelineRunId", runId);
 
-        row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? null : assayModel.cloneId);
+        row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? assayModel.coalescedContigName : assayModel.cloneId);
         row.put("locus", assayModel.locus);
         row.put("vHit", assayModel.vHit);
         row.put("dHit", assayModel.dHit);
@@ -550,12 +561,12 @@ public class CellRangerVDJUtils
         double fraction = (double)assayModel.barcodes.size() / totalCellsBySample.get(assayModel.cdna).size();
         row.put("fraction", fraction);
 
-        if (!sequenceMap.containsKey(assayModel.sequenceContigName))
+        if (!sequenceMap.containsKey(assayModel.coalescedContigName))
         {
-            throw new PipelineJobException("Unable to find sequence for: " + assayModel.sequenceContigName);
+            throw new PipelineJobException("Unable to find sequence for: " + assayModel.coalescedContigName);
         }
 
-        row.put("sequence", sequenceMap.get(assayModel.sequenceContigName));
+        row.put("sequence", sequenceMap.get(assayModel.coalescedContigName));
 
         return row;
     }

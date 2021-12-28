@@ -706,6 +706,7 @@ public class TCRdbController extends SpringActionController
                     imputedSequences.append(rs.getString(FieldKey.fromString("sequence"))).append("\n");
                 }
 
+                // This applies to MiXCR
                 if (rs.getObject(FieldKey.fromString("cloneId")) != null && rs.getObject(FieldKey.fromString("clonesFile")) != null)
                 {
                     Integer key = rs.getInt(FieldKey.fromString("clonesFile"));
@@ -714,7 +715,7 @@ public class TCRdbController extends SpringActionController
 
                     clnaToCloneMap.put(key, set);
 
-                    clnaToCDR3Map.put(key.toString() + "_" + rs.getString(FieldKey.fromString("cloneId")), rs.getString(FieldKey.fromString("cdr3")));
+                    clnaToCDR3Map.put(key + "_" + rs.getString(FieldKey.fromString("cloneId")), rs.getString(FieldKey.fromString("cdr3")));
                 }
             });
 
@@ -830,7 +831,7 @@ public class TCRdbController extends SpringActionController
 
                 for (String cloneId : clnaToCloneMap.get(expData))
                 {
-                    String cdr3 = clnaToCDR3Map.get(expData.toString() + "_" + cloneId);
+                    String cdr3 = clnaToCDR3Map.get(expData + "_" + cloneId);
 
                     File fq1 = new File(fqBase.getParentFile(), basename + "_cln" + cloneId + "_R1.fastq.gz");
                     if (!fq1.exists())
