@@ -38,14 +38,13 @@ import java.util.Set;
 
 public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutputHandler<SequenceOutputHandler.SequenceOutputProcessor>
 {
-    private FileType _vloupeFileType = new FileType("vloupe", false);
-    private FileType _htmlFileType = new FileType("html", false);
+    private final FileType _vloupeFileType = new FileType("vloupe", false);
+    private final FileType _htmlFileType = new FileType("html", false);
 
     public static final String CATEGORY = "Cell Hashing Calls (VDJ)";
 
     public static final String TARGET_ASSAY = "targetAssay";
     public static final String DELETE_EXISTING_ASSAY_DATA = "deleteExistingAssayData";
-    public static final String ALLOW_GD_RECOVERY = "allowGDRecovery";
     public static final String USE_GEX_BARCODES = "useGexBarcodes";
 
     public CellRangerVDJCellHashingHandler()
@@ -60,15 +59,12 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 ToolParameterDescriptor.create(DELETE_EXISTING_ASSAY_DATA, "Delete Any Existing Assay Data", "If selected, prior to importing assay data, and existing assay runs in the target container from this readset will be deleted.", "checkbox", new JSONObject(){{
                     put("checked", true);
                 }}, true),
-                ToolParameterDescriptor.create(ALLOW_GD_RECOVERY, "Perform G/D Recovery", "Cellranger marks TRG/TRD rows as non-productive. As a result, gamma/delta cells will tend to be marked non-cell, since the cell lacks productive A/B chain. If selected, the code will ignore the cellranger is_cell flag to recover cells if the row is TRD/TRG, it has a CDR3 and is full-length.", "checkbox", new JSONObject(){{
-                    put("checked", false);
-                }}, false),
                 ToolParameterDescriptor.create("useOutputFileContainer", "Submit to Source File Workbook", "If checked, each job will be submitted to the same workbook as the input file, as opposed to submitting all jobs to the same workbook.  This is primarily useful if submitting a large batch of files to process separately. This only applies if 'Run Separately' is selected.", "checkbox", new JSONObject(){{
                     put("checked", true);
-                }}, false),
-                ToolParameterDescriptor.create(USE_GEX_BARCODES, "Use GEX and TCR Cell Barcodes", "If checked, the cell barcode whitelist used for cell hashing will be the union of TCR and GEX cell barcodes. If T-cells are a rare component of total cells, this might enhance the effectiveness of the callers by providing more positive signal.", "checkbox", new JSONObject(){{
-                    put("checked", true);
                 }}, false)
+//                ToolParameterDescriptor.create(USE_GEX_BARCODES, "Use GEX and TCR Cell Barcodes", "If checked, the cell barcode whitelist used for cell hashing will be the union of TCR and GEX cell barcodes. If T-cells are a rare component of total cells, this might enhance the effectiveness of the callers by providing more positive signal.", "checkbox", new JSONObject(){{
+//                    put("checked", true);
+//                }}, false)
         ));
 
         ret.addAll(CellHashingService.get().getHashingCallingParams(false));
@@ -163,16 +159,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     deleteExistingData = ConvertHelper.convert(job.getParameters().get(DELETE_EXISTING_ASSAY_DATA), Boolean.class);
                 }
 
-                boolean allowGDRecovery = false;
-                if (job.getParameters().get(ALLOW_GD_RECOVERY) != null)
-                {
-                    allowGDRecovery = ConvertHelper.convert(job.getParameters().get(ALLOW_GD_RECOVERY), Boolean.class);
-                }
-
                 for (SequenceOutputFile so : inputFiles)
                 {
                     AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, so.getFile(), job.getLogFile().getParentFile(), assayId, null, deleteExistingData, allowGDRecovery);
+                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, so.getFile(), job.getLogFile().getParentFile(), assayId, null, deleteExistingData);
                 }
             }
         }
@@ -225,8 +215,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 parameters.basename = FileUtil.makeLegalName(rs.getName());
                 parameters.allowableHtoBarcodes = htosPerReadset;
 
-                boolean allowGDRecovery = ctx.getParams().optBoolean(ALLOW_GD_RECOVERY, false);
-                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true, allowGDRecovery);
+                parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
                 File existingCountMatrixUmiDir = CellHashingService.get().getExistingFeatureBarcodeCountDir(rs, CellHashingService.BARCODE_TYPE.hashing, ctx.getSequenceSupport());
 
                 File cellToHto = CellHashingService.get().generateHashingCallsForRawMatrix(rs, output, ctx, parameters, existingCountMatrixUmiDir);
@@ -248,7 +237,7 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             }
         }
 
-        private File createCellbarcodeWhitelist(JobContext ctx, File perCellTsv, boolean allowCellsLackingCDR3, boolean allowGDRecovery) throws PipelineJobException
+        private File createCellbarcodeWhitelist(JobContext ctx, File perCellTsv, boolean allowCellsLackingCDR3) throws PipelineJobException
         {
             //prepare whitelist of cell indexes based on TCR calls:
             File cellBarcodeWhitelist = new File(ctx.getSourceDirectory(), "validCellIndexes.csv");
@@ -256,44 +245,48 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             Set<String> uniqueBarcodesIncludingNoCDR3 = new HashSet<>();
             ctx.getLogger().debug("writing cell barcodes, using file: " + perCellTsv.getPath());
             ctx.getLogger().debug("allow cells lacking CDR3: " + allowCellsLackingCDR3);
-            ctx.getLogger().debug("allow gamma/delta recovery: " + allowGDRecovery);
 
             int totalBarcodeWritten = 0;
+            int cellbarcodeIdx = 0;
+            int notCellIdx = 1;
+            int cdr3Idx = -1;
             try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(cellBarcodeWhitelist), ',', CSVWriter.NO_QUOTE_CHARACTER); CSVReader reader = new CSVReader(Readers.getReader(perCellTsv), ','))
             {
                 int rowIdx = 0;
                 int noCallRows = 0;
                 int nonCell = 0;
-                int recoveredGD = 0;
                 String[] row;
                 while ((row = reader.readNext()) != null)
                 {
                     //skip header
                     rowIdx++;
-                    if (rowIdx > 1)
+                    if (rowIdx == 1)
                     {
-                        if ("False".equalsIgnoreCase(row[1]))
+                        List<String> header = Arrays.asList(row);
+                        cdr3Idx = header.indexOf("cdr3");
+                        if (cdr3Idx == -1)
                         {
-                            if (allowGDRecovery && CellRangerVDJUtils.shouldRecoverGammaDeltaRow(row))
-                            {
-                                recoveredGD++;
-                            }
-                            else
-                            {
-                                nonCell++;
-                                continue;
-                            }
+                            throw new PipelineJobException("Unable to find CDR3 field in header: " + perCellTsv.getPath());
+                        }
+                    }
+                    else
+                    {
+                        if ("False".equalsIgnoreCase(row[notCellIdx]))
+                        {
+                            nonCell++;
+                            continue;
                         }
 
                         //NOTE: allow these to pass for cell-hashing under some conditions
-                        boolean hasCDR3 = !"None".equals(row[12]);
+                        String cdr3String = StringUtils.trimToNull(row[cdr3Idx]);
+                        boolean hasCDR3 = cdr3String != null && !"None".equals(cdr3String);
                         if (!hasCDR3)
                         {
                             noCallRows++;
                         }
 
                         //NOTE: 10x appends "-1" to barcodes
-                        String barcode = row[0].split("-")[0];
+                        String barcode = row[cellbarcodeIdx].split("-")[0];
                         if ((allowCellsLackingCDR3 || hasCDR3) && !uniqueBarcodes.contains(barcode))
                         {
                             writer.writeNext(new String[]{barcode});
@@ -308,7 +301,6 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 ctx.getLogger().debug("rows inspected: " + (rowIdx - 1));
                 ctx.getLogger().debug("rows without CDR3: " + noCallRows);
                 ctx.getLogger().debug("rows not called as cells: " + nonCell);
-                ctx.getLogger().debug("gamma/delta clonotype rows recovered: " + recoveredGD);
                 ctx.getLogger().debug("unique cell barcodes (with CDR3): " + uniqueBarcodes.size());
                 ctx.getLogger().debug("unique cell barcodes (including no CDR3): " + uniqueBarcodesIncludingNoCDR3.size());
                 ctx.getFileManager().addIntermediateFile(cellBarcodeWhitelist);
