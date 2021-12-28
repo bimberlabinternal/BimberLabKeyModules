@@ -65,7 +65,7 @@ public class CellRangerVDJUtils
         _log = log;
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting, boolean allowGDRecovery) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
     {
         File cellRangerOutDir = vLoupeFile.getParentFile();
 
@@ -107,7 +107,6 @@ public class CellRangerVDJUtils
         }
 
         _log.info("loading results into assay: " + assayId);
-        _log.info("allow gamma/delta recovery: " + allowGDRecovery);
 
         if (runId == null)
         {
@@ -270,7 +269,11 @@ public class CellRangerVDJUtils
 
         // use unfiltered data so we can apply demultiplex and also apply alternate filtering logic.
         // also, 10x no longer reports TRD/TRG data in their consensus file
-        //header: barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis	raw_clonotype_id	raw_consensus_id
+        //header for 3.x and lower:
+        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis	raw_clonotype_id	raw_consensus_id
+
+        //header for 6.x:
+        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	fwr1	fwr1_nt	cdr1	cdr1_nt	fwr2	fwr2_nt	cdr2	cdr2_nt	fwr3	fwr3_nt	cdr3	cdr3_nt	fwr4	fwr4_nt	reads	umis	raw_clonotype_id	raw_consensus_id	exact_subclonotype_id
         try (CSVReader reader = new CSVReader(Readers.getReader(allCsv), ','))
         {
             String[] line;
@@ -278,63 +281,60 @@ public class CellRangerVDJUtils
             int noCDR3 = 0;
             int noCGene = 0;
             int notFullLength = 0;
-            int recoveredGD = 0;
             int nonCell = 0;
             int totalSkipped = 0;
             int doubletSkipped = 0;
             int discordantSkipped = 0;
-            int hasCDR3NoClonotype = 0;
+            int noConsensusClonotype = 0;
+            int fullLengthNoClonotype = 0;
             int multiChainConverted = 0;
             Set<String> knownBarcodes = new HashSet<>();
+
+            Map<HEADER_FIELD, Integer> headerToIdx = null;
             while ((line = reader.readNext()) != null)
             {
                 idx++;
                 if (idx == 1)
                 {
                     _log.debug("skipping header, length: " + line.length);
+                    headerToIdx = inferFieldIdx(line);
                     continue;
                 }
 
-                if ("False".equalsIgnoreCase(line[1]))
+                if ("False".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.IS_CELL)]))
                 {
-                    //NOTE: cellranger marks TRG/TRD rows as non-productive. therefore, gamma/delta cells will tend to be marked non-cell, since the cell lacks productive A/B
-                    // Allow recovery of these cells if the row is TRD/TRG, has a CDR3 and is full-length:
-                    if (allowGDRecovery && shouldRecoverGammaDeltaRow(line))
-                    {
-                        recoveredGD++;
-                    }
-                    else
-                    {
-                        nonCell++;
-                        continue;
-                    }
+                    nonCell++;
+                    continue;
                 }
 
-                if ("None".equals(line[12]))
+                String cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
+                if (cdr3 == null)
                 {
                     noCDR3++;
                     continue;
                 }
 
-                String cGene = removeNone(line[9]);
+                String cGene = removeNone(line[headerToIdx.get(HEADER_FIELD.C_GENE)]);
                 if (cGene == null)
                 {
                     // Only discard these if chain type doesnt match between JGene and VGene.
-                    if (!line[8].substring(0, 3).equals(line[6].substring(0,3)))
+                    String vGene = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
+                    String jGene = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
+                    if (vGene == null || jGene == null || !jGene.substring(0, 3).equals(vGene.substring(0,3)))
                     {
                         noCGene++;
                         continue;
                     }
                 }
 
-                if ("False".equals(line[10]))
+                if ("False".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     notFullLength++;
                     continue;
                 }
 
                 //NOTE: 10x appends "-1" to barcode sequences
-                String barcode = line[0].split("-")[0];
+                String barcode = line[headerToIdx.get(HEADER_FIELD.CELL_BARCODE)].split("-")[0];
                 Integer cDNA = useCellHashing ? cellBarcodeToCDNAMap.get(barcode) : defaultCDNA;
                 if (cDNA == null)
                 {
@@ -355,45 +355,64 @@ public class CellRangerVDJUtils
                 }
                 knownBarcodes.add(barcode);
 
-                String clonotypeId = removeNone(line[16]);
-                String cdr3 = removeNone(line[12]);
-                if (clonotypeId == null && cdr3 != null && "TRUE".equalsIgnoreCase(line[10]))
+                String rawClonotypeId = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID)]);
+                if (rawClonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
-                    hasCDR3NoClonotype++;
+                    fullLengthNoClonotype++;
                 }
 
-                if (clonotypeId == null)
+                if (rawClonotypeId == null)
                 {
-                    continue;
+                    noConsensusClonotype++;
+                    // NOTE: allow rows without consensus clonotypes, which will include the g/d rows:
+                    //continue;
                 }
 
                 //Preferentially use raw_consensus_id, but fall back to contig_id
-                String sequenceContigName = removeNone(line[17]) == null ? removeNone(line[2]) : removeNone(line[17]);
+                String coalescedContigName = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]) == null ? removeNone(line[headerToIdx.get(HEADER_FIELD.CONTIG_ID)]) : removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]);
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
-                String locus = line[5];
-                if (locus.equals("Multi") && cGene != null && removeNone(line[8]) != null && removeNone(line[6]) != null)
+                String locus = line[headerToIdx.get(HEADER_FIELD.CHAIN)];
+                String jGene = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
+                String vGene = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
+                if (locus.equals("Multi") && cGene != null && jGene != null && vGene != null)
                 {
-                    if (cGene.contains("TRAC") && removeNone(line[8]).contains("TRAJ") && removeNone(line[6]).contains("TRDV"))
+                    if (cGene.contains("TRAC") && jGene.contains("TRAJ") && vGene.contains("TRDV"))
                     {
                         locus = "TRA";
                         multiChainConverted++;
                     }
                 }
 
-                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, sequenceContigName, vHit, dHit, jHit, cHit, cdr3_nt
-                String key = StringUtils.join(new String[]{cDNA.toString(), line[12], locus, clonotypeId, sequenceContigName, removeNone(line[6]), removeNone(line[7]), removeNone(line[8]), cGene, removeNone(line[13])}, "<>");
+                if (cGene != null && !cGene.startsWith(locus))
+                {
+                    _log.error("Discordant locus/cGene: " + locus + " / " + cGene);
+                }
+
+                // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, coalescedContigName, vHit, dHit, jHit, cHit, cdr3_nt
+                String key = StringUtils.join(new String[]{cDNA.toString(), line[headerToIdx.get(HEADER_FIELD.CDR3)], locus, rawClonotypeId, coalescedContigName, removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]), cGene, removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)])}, "<>");
                 AssayModel am;
                 if (!rows.containsKey(key))
                 {
-                    am = createForRow(line, sequenceContigName, cDNA, clonotypeId, locus);
+                    am = new AssayModel();
+                    am.cdna = cDNA;
+                    am.cdr3 = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3)]);
+                    am.locus = locus;
+                    am.cloneId = rawClonotypeId == null ? coalescedContigName : rawClonotypeId;
+                    am.coalescedContigName = coalescedContigName;
+
+                    am.vHit = removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]);
+                    am.dHit = removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]);
+                    am.jHit = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
+                    am.cHit = removeNone(line[headerToIdx.get(HEADER_FIELD.C_GENE)]);
+                    am.cdr3Nt = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)]);
                 }
                 else
                 {
                     am = rows.get(key);
                 }
 
-                uniqueContigNames.add(am.sequenceContigName);
+                uniqueContigNames.add(am.coalescedContigName);
                 am.barcodes.add(barcode);
                 rows.put(key, am);
 
@@ -409,14 +428,14 @@ public class CellRangerVDJUtils
             _log.info("total clonotype rows without CDR3: " + noCDR3);
             _log.info("total clonotype rows discarded for no C-gene: " + noCGene);
             _log.info("total clonotype rows discarded for not full length: " + notFullLength);
-            _log.info("total gamma/delta clonotype rows recovered: " + recoveredGD);
-            _log.info("total clonotype rows skipped for unknown barcodes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
+            _log.info("total clonotype rows discarded for lacking consensus clonotype: " + noConsensusClonotype);
+            _log.info("total clonotype rows skipped for unknown barcocdes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are discordant calls: " + discordantSkipped + " (" + (NumberFormat.getPercentInstance().format(discordantSkipped / (double)totalCells)) + ")");
             _log.info("unique known cell barcodes: " + knownBarcodes.size());
             _log.info("total clonotypes: " + rows.size());
             _log.info("total sequences: " + uniqueContigNames.size());
-            _log.info("total cells with CDR3, lacking clonotype: " + hasCDR3NoClonotype);
+            _log.info("total rows lacking clonotype, but marked full-length: " + fullLengthNoClonotype);
             _log.info("total rows converted from Multi to TRA: " + multiChainConverted);
 
         }
@@ -471,24 +490,6 @@ public class CellRangerVDJUtils
         saveRun(job, protocol, model, assayRows, outDir, runId, deleteExisting);
     }
 
-    private AssayModel createForRow(String[] line, String sequenceContigName, Integer cDNA, String clonotypeId, String locus)
-    {
-        AssayModel am = new AssayModel();
-        am.cdna = cDNA;
-        am.cdr3 = removeNone(line[12]);
-        am.locus = locus;
-        am.cloneId = clonotypeId;
-        am.sequenceContigName = sequenceContigName;
-
-        am.vHit = removeNone(line[6]);
-        am.dHit = removeNone(line[7]);
-        am.jHit = removeNone(line[8]);
-        am.cHit = removeNone(line[9]);
-        am.cdr3Nt = removeNone(line[13]);
-
-        return am;
-    }
-
     private File getCellToHtoFile(ExpRun run) throws PipelineJobException
     {
         List<? extends ExpData> datas = run.getInputDatas(TCR_HASHING_CALLS, ExpProtocol.ApplicationType.ExperimentRunOutput);
@@ -524,7 +525,7 @@ public class CellRangerVDJUtils
         private int cdna;
 
         private Set<String> barcodes = new HashSet<>();
-        private String sequenceContigName;
+        private String coalescedContigName;
     }
 
     private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA_Library> cDNAMap, Integer runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
@@ -546,7 +547,7 @@ public class CellRangerVDJUtils
         row.put("analysisId", model.getRowId());
         row.put("pipelineRunId", runId);
 
-        row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? null : assayModel.cloneId);
+        row.put("cloneId", assayModel.cloneId == null || assayModel.cloneId.contains("<>") ? assayModel.coalescedContigName : assayModel.cloneId);
         row.put("locus", assayModel.locus);
         row.put("vHit", assayModel.vHit);
         row.put("dHit", assayModel.dHit);
@@ -560,19 +561,19 @@ public class CellRangerVDJUtils
         double fraction = (double)assayModel.barcodes.size() / totalCellsBySample.get(assayModel.cdna).size();
         row.put("fraction", fraction);
 
-        if (!sequenceMap.containsKey(assayModel.sequenceContigName))
+        if (!sequenceMap.containsKey(assayModel.coalescedContigName))
         {
-            throw new PipelineJobException("Unable to find sequence for: " + assayModel.sequenceContigName);
+            throw new PipelineJobException("Unable to find sequence for: " + assayModel.coalescedContigName);
         }
 
-        row.put("sequence", sequenceMap.get(assayModel.sequenceContigName));
+        row.put("sequence", sequenceMap.get(assayModel.coalescedContigName));
 
         return row;
     }
 
     private String removeNone(String input)
     {
-        return "None".equals(input) ? null : input;
+        return "None".equals(input) ? null : StringUtils.trimToNull(input);
     }
 
     private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId, boolean deleteExisting) throws PipelineJobException
@@ -683,8 +684,45 @@ public class CellRangerVDJUtils
         return new File(cellRangerOutDir, "all_contig_annotations.csv");
     }
 
-    public static boolean shouldRecoverGammaDeltaRow(String[] line)
+    private Map<HEADER_FIELD, Integer> inferFieldIdx(String[] line)
     {
-        return ("TRD".equals(line[5]) || "TRG".equals(line[5])) && !"None".equals(line[12]) && !"False".equals(line[10]);
+        Map<HEADER_FIELD, Integer> ret = new HashMap<>();
+        List<String> header = Arrays.asList(line);
+        for (HEADER_FIELD hf : HEADER_FIELD.values())
+        {
+            int idx = header.indexOf(hf.headerStr);
+            if (idx == -1)
+            {
+                throw new IllegalStateException("Missing expected header field: " + hf.headerStr);
+            }
+
+            ret.put(hf, idx);
+        }
+
+        return ret;
+    }
+
+    private enum HEADER_FIELD
+    {
+        CELL_BARCODE("barcode"),
+        IS_CELL("is_cell"),
+        CONTIG_ID("contig_id"),
+        CHAIN("chain"),
+        V_GENE("v_gene"),
+        D_GENE("d_gene"),
+        J_GENE("j_gene"),
+        C_GENE("c_gene"),
+        FULL_LENGTH("full_length"),
+        CDR3("cdr3"),
+        CDR3_NT("cdr3_nt"),
+        RAW_CLONOTYPE_ID("raw_clonotype_id"),
+        RAW_CONSENSUS_ID("raw_consensus_id");
+
+        String headerStr;
+
+        HEADER_FIELD(String headerStr)
+        {
+            this.headerStr = headerStr;
+        }
     }
 }

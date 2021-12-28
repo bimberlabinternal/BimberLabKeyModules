@@ -149,6 +149,15 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="sitesOnlyVcfId">
+                <columnTitle>Sites-Only VCF File</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="humanJbrowseId">
                 <columnTitle>Genome Browser (Human)</columnTitle>
                 <nullable>true</nullable>
