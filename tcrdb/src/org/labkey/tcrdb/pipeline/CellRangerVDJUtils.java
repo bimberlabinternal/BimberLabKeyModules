@@ -386,7 +386,7 @@ public class CellRangerVDJUtils
 
                 if (cGene != null && !cGene.startsWith(locus))
                 {
-                    _log.error("Discordant locus/cGene: " + locus + " / " + cGene);
+                    _log.error("Discordant locus/cGene: " + locus + " / " + vGene + "/" + jGene + "/" + cGene);
                 }
 
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, coalescedContigName, vHit, dHit, jHit, cHit, cdr3_nt
@@ -494,7 +494,12 @@ public class CellRangerVDJUtils
     {
         if (line.length <= idx)
         {
-            _log.error("Line length of " + line.length + " too short for idx: " + idx + ", was: " + StringUtils.join(line, ","), new Exception());
+            // NOTE: the final two cells are not consistently present, so only warn for lower values:
+            if (idx < 28)
+            {
+                _log.error("Line length of " + line.length + " too short for idx: " + idx + ", was: " + StringUtils.join(line, ","), new Exception());
+            }
+
             return null;
         }
 
