@@ -288,6 +288,7 @@ public class CellRangerVDJUtils
             int noConsensusClonotype = 0;
             int fullLengthNoClonotype = 0;
             int multiChainConverted = 0;
+            int discordantLoci = 0;
             Set<String> knownBarcodes = new HashSet<>();
 
             Map<HEADER_FIELD, Integer> headerToIdx = null;
@@ -386,7 +387,8 @@ public class CellRangerVDJUtils
 
                 if (cGene != null && !cGene.startsWith(locus))
                 {
-                    _log.error("Discordant locus/cGene: " + locus + " / " + vGene + "/" + jGene + "/" + cGene);
+                    _log.warn("Discordant locus/cGene: " + locus + " / " + vGene + "/" + jGene + "/" + cGene);
+                    discordantLoci++;
                 }
 
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, coalescedContigName, vHit, dHit, jHit, cHit, cdr3_nt
@@ -437,6 +439,7 @@ public class CellRangerVDJUtils
             _log.info("total sequences: " + uniqueContigNames.size());
             _log.info("total rows lacking clonotype, but marked full-length: " + fullLengthNoClonotype);
             _log.info("total rows converted from Multi to TRA: " + multiChainConverted);
+            _log.info("total rows with discordant chain/c-gene calls: " + discordantLoci);
 
         }
         catch (IOException e)
