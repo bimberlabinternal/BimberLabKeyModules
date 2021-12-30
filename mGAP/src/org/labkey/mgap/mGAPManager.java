@@ -41,6 +41,8 @@ public class mGAPManager
     public static final String OmimApiKeyPropName = "OmimApiKey";
     public static final String GROUP_NAME = "mGAP Users";
 
+    public static final String DATA_DIR_NAME = "mgapData";
+
     private mGAPManager()
     {
         // prevent external construction with a private default constructor
