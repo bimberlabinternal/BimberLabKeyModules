@@ -6,6 +6,9 @@
                 <updateUrl>/mcc/animalRequest.view?requestId=${objectid}</updateUrl>
                 <titleColumn>rowid</titleColumn>
                 <columns>
+                    <column columnName="objectid">
+                        <isHidden>true</isHidden>
+                    </column>
                     <column columnName="edit" wrappedColumnName="rowid">
                         <columnTitle>Edit</columnTitle>
                         <isHidden>true</isHidden>
