@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.labkey.api.cluster.ClusterService;
 import org.labkey.api.data.Container;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -40,6 +41,7 @@ import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
 import org.labkey.primeseq.pipeline.GeographicOriginStep;
 import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
 import org.labkey.primeseq.pipeline.SequenceJobResourceAllocator;
+import org.labkey.primeseq.query.UpdateResourcesButton;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -83,6 +85,7 @@ public class PrimeseqModule extends ExtendedSimpleModule
         //register resources
         new PipelineStartup();
 
+        LDKService.get().registerQueryButton(new UpdateResourcesButton(), "pipeline", "job");
     }
 
     @Override

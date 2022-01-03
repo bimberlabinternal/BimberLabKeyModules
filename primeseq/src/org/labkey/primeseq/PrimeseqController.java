@@ -23,8 +23,10 @@ import org.json.JSONObject;
 import org.labkey.api.action.ApiResponse;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
+import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.ReadOnlyApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.cluster.ClusterService;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.ContainerType;
@@ -33,19 +35,31 @@ import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SqlExecutor;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipelineJob;
+import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.pipeline.PipelineService;
+import org.labkey.api.pipeline.PipelineStatusFile;
 import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.permissions.ReadPermission;
+import org.labkey.api.sequenceanalysis.pipeline.JobResourceSettings;
+import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
+import org.labkey.api.writer.PrintWriters;
+import org.labkey.sequenceanalysis.SequencePipelineServiceImpl;
+import org.labkey.sequenceanalysis.pipeline.SequenceJob;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -388,6 +402,188 @@ public class PrimeseqController extends SpringActionController
         public void setUpdateDatabase(boolean updateDatabase)
         {
             _updateDatabase = updateDatabase;
+        }
+    }
+
+    @RequiresPermission(ReadPermission.class)
+    public class GetResourceSettingsForJobAction extends ReadOnlyApiAction<GetResourceSettingsForJobForm>
+    {
+        @Override
+        public ApiResponse execute(GetResourceSettingsForJobForm form, BindException errors)
+        {
+            if (form.getJobId() == null)
+            {
+                errors.reject(ERROR_MSG, "Must provide JobId");
+                return null;
+            }
+
+            PipelineStatusFile sf = PipelineService.get().getStatusFile(form.getJobId());
+            if (sf == null)
+            {
+                errors.reject(ERROR_MSG, "Unknown job: " + form.getJobId());
+                return null;
+            }
+            else if (!sf.lookupContainer().hasPermission(getUser(), ReadPermission.class))
+            {
+                errors.reject(ERROR_MSG, "The current user does not have permission to view the folder: " + sf.lookupContainer().getPath());
+                return null;
+            }
+
+            File log = new File(sf.getFilePath());
+            File json = ClusterService.get().getSerializedJobFile(log);
+            if (!json.exists())
+            {
+                errors.reject(ERROR_MSG, "Unable to find job JSON, expected: " + json.getPath());
+                return null;
+            }
+
+            try
+            {
+                PipelineJob job = PipelineJob.readFromFile(json);
+                if (!(job instanceof SequenceJob))
+                {
+                    errors.reject(ERROR_MSG, "Altering cluster params is only supported for sequence jobs");
+                    return null;
+                }
+
+                SequenceJob sj = (SequenceJob)job;
+                JSONObject jobParams = sj.getParameterJson();
+
+                List<JSONObject> resourceSettings = new ArrayList<>();
+                for (JobResourceSettings settings : SequencePipelineServiceImpl.get().getResourceSettings())
+                {
+                    if (settings.isAvailable(getContainer()))
+                    {
+                        for (ToolParameterDescriptor pd : settings.getParams())
+                        {
+                            JSONObject pdJson = pd.toJSON();
+                            String jsonName = "resourceSettings.resourceSettings." + pd.getName();
+                            if (jobParams.containsKey(jsonName))
+                            {
+                                pdJson.put("defaultValue", jobParams.get(jsonName));
+                                pdJson.put("value", jobParams.get(jsonName));
+                            }
+
+                            resourceSettings.add(pdJson);
+                        }
+                    }
+                }
+
+                Map<String, Object> ret = new HashMap<>();
+                ret.put("name", "resourceSettings");
+                ret.put("parameters", resourceSettings);
+
+                return new ApiSimpleResponse(ret);
+            }
+            catch (IOException | PipelineJobException e)
+            {
+                errors.reject(ERROR_MSG, "Unable to read pipeline JSON");
+                _log.error(e);
+                return null;
+            }
+        }
+    }
+
+    @RequiresPermission(ReadPermission.class)
+    public class SetResourceSettingsForJobAction extends MutatingApiAction<GetResourceSettingsForJobForm>
+    {
+        @Override
+        public void validateForm(GetResourceSettingsForJobForm form, Errors errors)
+        {
+            super.validateForm(form, errors);
+
+            if (form.getJobId() == null)
+            {
+                errors.reject(ERROR_MSG, "Must provide JobId");
+            }
+        }
+
+        @Override
+        public Object execute(GetResourceSettingsForJobForm form, BindException errors) throws Exception
+        {
+            PipelineStatusFile sf = PipelineService.get().getStatusFile(form.getJobId());
+            if (sf == null)
+            {
+                errors.reject(ERROR_MSG, "Unknown job: " + form.getJobId());
+                return null;
+            }
+            else if (!sf.lookupContainer().hasPermission(getUser(), ReadPermission.class))
+            {
+                errors.reject(ERROR_MSG, "The current user does not have permission to view the folder: " + sf.lookupContainer().getPath());
+                return null;
+            }
+
+            File log = new File(sf.getFilePath());
+            File jobJson = ClusterService.get().getSerializedJobFile(log);
+            if (!jobJson.exists())
+            {
+                errors.reject(ERROR_MSG, "Unable to find job JSON, expected: " + jobJson.getPath());
+                return null;
+            }
+
+            PipelineJob job = null;
+            try
+            {
+                job = PipelineJob.readFromFile(jobJson);
+                if (!(job instanceof SequenceJob))
+                {
+                    errors.reject(ERROR_MSG, "Changing cluster parameters is only supported for Sequence jobs");
+                    return null;
+                }
+
+                SequenceJob sj = (SequenceJob)job;
+                JSONObject json = sj.getParameterJson();
+
+                JSONObject paramJson = new JSONObject(form.getParamJson());
+                for (String prop : paramJson.keySet())
+                {
+                    json.put(prop, paramJson.get(prop));
+                }
+
+                try (PrintWriter writer = PrintWriters.getPrintWriter(sj.getParametersFile()))
+                {
+                    writer.write(json.toString(1));
+                }
+            }
+            catch (Exception e)
+            {
+                if (job != null)
+                {
+                    job.getLogger().error("Unable to update job params", e);
+                }
+                else
+                {
+                    _log.error("Unable to update job params", e);
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public static class GetResourceSettingsForJobForm
+    {
+        private Integer _jobId;
+        private String _paramJson;
+
+        public Integer getJobId()
+        {
+            return _jobId;
+        }
+
+        public void setJobId(Integer jobId)
+        {
+            _jobId = jobId;
+        }
+
+        public String getParamJson()
+        {
+            return _paramJson;
+        }
+
+        public void setParamJson(String paramJson)
+        {
+            _paramJson = paramJson;
         }
     }
 }
