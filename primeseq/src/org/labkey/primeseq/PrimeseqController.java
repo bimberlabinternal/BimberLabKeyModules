@@ -544,6 +544,16 @@ public class PrimeseqController extends SpringActionController
                 {
                     writer.write(json.toString(1));
                 }
+
+                File submitScript = ClusterService.get().getExpectedSubmitScript(job);
+                if (submitScript == null)
+                {
+                    _log.error("Unable to find submit script for job: " + sf.getRowId());
+                }
+                else if (submitScript.exists())
+                {
+                    submitScript.delete();
+                }
             }
             catch (Exception e)
             {
