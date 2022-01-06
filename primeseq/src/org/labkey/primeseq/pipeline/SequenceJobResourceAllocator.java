@@ -137,8 +137,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceNormalizationTask(job))
         {
-            job.getLogger().debug("setting memory to 24");
-            return 24;
+            job.getLogger().debug("setting memory to 48");
+            return 48;
         }
 
         if (isCacheAlignerIndexesTask(job))

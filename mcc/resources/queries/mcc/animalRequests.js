@@ -10,5 +10,5 @@ function beforeUpdate(row, oldRow, errors){
 }
 
 function beforeUpsert(row, oldRow, errors) {
-
+    row.status = row.status || 'draft'
 }

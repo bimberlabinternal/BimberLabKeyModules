@@ -212,6 +212,7 @@
     </table>
 
     <table tableName="animalrequests" tableDbType="TABLE">
+        <tableTitle>MCC Animal Requests</tableTitle>
         <importUrl>mcc/animalRequest.view</importUrl>
         <insertUrl></insertUrl>
         <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
@@ -381,6 +382,7 @@
         </columns>
     </table>
     <table tableName="coinvestigators" tableDbType="TABLE">
+        <tableTitle>Co-investigators</tableTitle>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
@@ -441,6 +443,7 @@
         </columns>
     </table>
     <table tableName="requestcohorts" tableDbType="TABLE">
+        <tableTitle>Request Cohorts</tableTitle>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">

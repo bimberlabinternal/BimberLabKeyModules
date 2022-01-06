@@ -25,6 +25,7 @@ import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.data.UpgradeCode;
 import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
@@ -36,6 +37,7 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.pipeline.AnnotationStep;
@@ -81,6 +83,8 @@ public class mGAPModule extends ExtendedSimpleModule
         NotificationService.get().registerNotification(new mGAPUserNotification(this));
 
         JBrowseService.get().registerDemographicsSource(new mGAPDemographicsSource());
+
+        SystemMaintenance.addTask(new mGapMaintenanceTask());
 
         new PipelineStartup();
     }
@@ -163,5 +167,11 @@ public class mGAPModule extends ExtendedSimpleModule
     public @NotNull Set<Class> getUnitTests()
     {
         return PageFlowUtil.set(mGapReleaseGenerator.TestCase.class);
+    }
+
+    @Override
+    public UpgradeCode getUpgradeCode()
+    {
+        return new mGapUpgradeCode();
     }
 }
