@@ -288,6 +288,7 @@ public class CellRangerVDJUtils
             int noConsensusClonotype = 0;
             int fullLengthNoClonotype = 0;
             int multiChainConverted = 0;
+            int discordantLoci = 0;
             Set<String> knownBarcodes = new HashSet<>();
 
             Map<HEADER_FIELD, Integer> headerToIdx = null;
@@ -296,7 +297,7 @@ public class CellRangerVDJUtils
                 idx++;
                 if (idx == 1)
                 {
-                    _log.debug("skipping header, length: " + line.length);
+                    _log.debug("parsing header, length: " + line.length);
                     headerToIdx = inferFieldIdx(line);
                     continue;
                 }
@@ -355,7 +356,7 @@ public class CellRangerVDJUtils
                 }
                 knownBarcodes.add(barcode);
 
-                String rawClonotypeId = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID)]);
+                String rawClonotypeId = extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID));
                 if (rawClonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     fullLengthNoClonotype++;
@@ -369,7 +370,7 @@ public class CellRangerVDJUtils
                 }
 
                 //Preferentially use raw_consensus_id, but fall back to contig_id
-                String coalescedContigName = removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]) == null ? removeNone(line[headerToIdx.get(HEADER_FIELD.CONTIG_ID)]) : removeNone(line[headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)]);
+                String coalescedContigName = extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)) == null ? extractField(line, headerToIdx.get(HEADER_FIELD.CONTIG_ID)) : extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID));
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
                 String locus = line[headerToIdx.get(HEADER_FIELD.CHAIN)];
@@ -386,7 +387,8 @@ public class CellRangerVDJUtils
 
                 if (cGene != null && !cGene.startsWith(locus))
                 {
-                    _log.error("Discordant locus/cGene: " + locus + " / " + cGene);
+                    _log.warn("Discordant locus/cGene: " + locus + " / " + vGene + "/" + jGene + "/" + cGene);
+                    discordantLoci++;
                 }
 
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, coalescedContigName, vHit, dHit, jHit, cHit, cdr3_nt
@@ -437,6 +439,7 @@ public class CellRangerVDJUtils
             _log.info("total sequences: " + uniqueContigNames.size());
             _log.info("total rows lacking clonotype, but marked full-length: " + fullLengthNoClonotype);
             _log.info("total rows converted from Multi to TRA: " + multiChainConverted);
+            _log.info("total rows with discordant chain/c-gene calls: " + discordantLoci);
 
         }
         catch (IOException e)
@@ -488,6 +491,22 @@ public class CellRangerVDJUtils
         _log.info("total assay rows: " + assayRows.size());
         _log.info("total cells: " + totalCells);
         saveRun(job, protocol, model, assayRows, outDir, runId, deleteExisting);
+    }
+
+    private String extractField(String[] line, int idx)
+    {
+        if (line.length <= idx)
+        {
+            // NOTE: the final two cells are not consistently present, so only warn for lower values:
+            if (idx < 28)
+            {
+                _log.error("Line length of " + line.length + " too short for idx: " + idx + ", was: " + StringUtils.join(line, ","), new Exception());
+            }
+
+            return null;
+        }
+
+        return removeNone(line[idx]);
     }
 
     private File getCellToHtoFile(ExpRun run) throws PipelineJobException

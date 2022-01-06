@@ -21,6 +21,7 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.mgap.mGAPManager;
 
 import java.io.File;
 import java.net.URI;
@@ -118,13 +119,19 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             else
             {
                 PipeRoot pr = PipelineService.get().getPipelineRootSetting(getContainerUser().getContainer());
+                File baseDir = new File(pr.getRootPath(), mGAPManager.DATA_DIR_NAME);
+                if (!baseDir.exists())
+                {
+                    baseDir.mkdirs();
+                }
+
                 String folderNameString = StringUtils.trimToNull(String.valueOf(folderName));
                 if (folderNameString == null)
                 {
                     throw new PipelineJobException("Unable to find folderName");
                 }
 
-                File subdir = new File(pr.getRootPath(), folderNameString);
+                File subdir = new File(baseDir, folderNameString);
                 if (!subdir.exists())
                 {
                     subdir.mkdirs();
