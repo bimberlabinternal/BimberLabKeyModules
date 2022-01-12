@@ -7,23 +7,22 @@
             return;
 
         Ext4.get(webpart.wrapperDivId).update(
-            'Investigators interested in requesting marmosets for their research can submit applications via the animal request portal. Investigators must already have user access to the password protected MCC site to submit these applications. The animal request review process (submission to approval) takes about 10 business days. (Please note that applications are not being accepted yet).' +
+            'Below are all pending and historic animal requests to MCC. You can use the edit link to view/update any request. You can also use the left-hand \'Views\' button to toggle between submitted requests, all requests, etc.' +
             '<p></p>' +
-            '<a class="labkey-text-link" href="<%=contextPath%>/mcc' + ctx['MCCRequestContainer'] + '/animalRequest.view">Submit New Animal Request</a><br>' +
             '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
             '<p></p>' +
-            '<div id="' + webpart.wrapperDivId + '-webpart">'
+            '<div id="' + webpart.wrapperDivId + '-webpartPending">'
         );
 
         LDK.Utils.getBasicQWP({
-            title: 'MCC Animal Requests',
+            title: 'Pending MCC Animal Requests',
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'animalRequests',
+            viewName: 'Submitted',
             showRecordSelectors: true,
             showDetailsColumn: true,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}
-        }).render(webpart.wrapperDivId + '-webpart');
-
+        }).render(webpart.wrapperDivId + '-webpartPending');
     });
 </script>

@@ -1,0 +1,8 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canInherit="true" canOverride="false">
+    <filters>
+        <filter column="status" operator="eq" value="submitted" />
+    </filters>
+    <sorts>
+        <sort column="rowid" descending="true"/>
+    </sorts>
+</customView>
