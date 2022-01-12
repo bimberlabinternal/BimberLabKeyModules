@@ -1,4 +1,4 @@
-<customView xmlns="http://labkey.org/data/xml/queryCustomView" canInherit="true" canOverride="false">
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
     <filters>
         <filter column="status" operator="eq" value="submitted" />
     </filters>
