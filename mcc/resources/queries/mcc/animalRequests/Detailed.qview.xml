@@ -1,0 +1,16 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Requests">
+    <columns>
+        <column name="rowid"/>
+        <column name="lastname"/>
+        <column name="firstname"/>
+        <column name="institutionname"/>
+        <column name="fundingsource"/>
+        <column name="researcharea"/>
+        <column name="iacucapproval"/>
+        <column name="applicationduedate"/>
+        <column name="status"/>
+    </columns>
+    <sorts>
+        <sort column="rowid" descending="true"/>
+    </sorts>
+</customView>
