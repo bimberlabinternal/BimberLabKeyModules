@@ -3,6 +3,7 @@
         <column name="rowid"/>
         <column name="lastname"/>
         <column name="firstname"/>
+        <column name="createdby/email"/>
         <column name="institutionname"/>
         <column name="fundingsource"/>
         <column name="researcharea"/>
