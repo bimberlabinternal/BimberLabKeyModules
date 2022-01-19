@@ -3,6 +3,7 @@ import org.labkey.gradle.util.ExternalDependency
 
 configurations.all {
     resolutionStrategy {
+        // NOTE: this should be kept in sync with SequenceAnalysis module
         force "jakarta.xml.bind:jakarta.xml.bind-api:2.3.3"
     }
 }
