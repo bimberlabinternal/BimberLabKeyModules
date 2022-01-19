@@ -16,6 +16,7 @@
 
 package org.labkey.primeseq;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -411,76 +413,96 @@ public class PrimeseqController extends SpringActionController
         @Override
         public ApiResponse execute(GetResourceSettingsForJobForm form, BindException errors)
         {
-            if (form.getJobId() == null)
+            if (form.getJobRowIds().isEmpty())
             {
-                errors.reject(ERROR_MSG, "Must provide JobId");
+                errors.reject(ERROR_MSG, "Must provide at least one JobId");
                 return null;
             }
 
-            PipelineStatusFile sf = PipelineService.get().getStatusFile(form.getJobId());
-            if (sf == null)
+            List<JSONObject> resourceSettings = new ArrayList<>();
+            for (JobResourceSettings settings : SequencePipelineServiceImpl.get().getResourceSettings())
             {
-                errors.reject(ERROR_MSG, "Unknown job: " + form.getJobId());
-                return null;
-            }
-            else if (!sf.lookupContainer().hasPermission(getUser(), ReadPermission.class))
-            {
-                errors.reject(ERROR_MSG, "The current user does not have permission to view the folder: " + sf.lookupContainer().getPath());
-                return null;
-            }
-
-            File log = new File(sf.getFilePath());
-            File json = ClusterService.get().getSerializedJobFile(log);
-            if (!json.exists())
-            {
-                errors.reject(ERROR_MSG, "Unable to find job JSON, expected: " + json.getPath());
-                return null;
-            }
-
-            try
-            {
-                PipelineJob job = PipelineJob.readFromFile(json);
-                if (!(job instanceof SequenceJob))
+                if (settings.isAvailable(getContainer()))
                 {
-                    errors.reject(ERROR_MSG, "Altering cluster params is only supported for sequence jobs");
+                    for (ToolParameterDescriptor pd : settings.getParams())
+                    {
+                        resourceSettings.add(pd.toJSON());
+                    }
+                }
+            }
+
+            Map<String, Set<String>> valueMap = new HashMap<>();
+            for (Integer jobId : form.getJobRowIds())
+            {
+                PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
+                if (sf == null)
+                {
+                    errors.reject(ERROR_MSG, "Unknown job: " + jobId);
+                    return null;
+                }
+                else if (!sf.lookupContainer().hasPermission(getUser(), ReadPermission.class))
+                {
+                    errors.reject(ERROR_MSG, "The current user does not have permission to view the folder: " + sf.lookupContainer().getPath());
                     return null;
                 }
 
-                SequenceJob sj = (SequenceJob)job;
-                JSONObject jobParams = sj.getParameterJson();
-
-                List<JSONObject> resourceSettings = new ArrayList<>();
-                for (JobResourceSettings settings : SequencePipelineServiceImpl.get().getResourceSettings())
+                File log = new File(sf.getFilePath());
+                File json = ClusterService.get().getSerializedJobFile(log);
+                if (!json.exists())
                 {
-                    if (settings.isAvailable(getContainer()))
+                    errors.reject(ERROR_MSG, "Unable to find job JSON, expected: " + json.getPath());
+                    return null;
+                }
+
+                try
+                {
+                    PipelineJob job = PipelineJob.readFromFile(json);
+                    if (!(job instanceof SequenceJob))
                     {
-                        for (ToolParameterDescriptor pd : settings.getParams())
+                        errors.reject(ERROR_MSG, "Altering cluster params is only supported for sequence jobs");
+                        return null;
+                    }
+
+                    SequenceJob sj = (SequenceJob) job;
+                    JSONObject jobParams = sj.getParameterJson();
+                    for (JSONObject jsonObj : resourceSettings)
+                    {
+                        String name = jsonObj.getString("name");
+                        String jsonName = "resourceSettings.resourceSettings." + name;
+                        if (jobParams.containsKey(jsonName) && jobParams.get(jsonName) != null)
                         {
-                            JSONObject pdJson = pd.toJSON();
-                            String jsonName = "resourceSettings.resourceSettings." + pd.getName();
-                            if (jobParams.containsKey(jsonName))
+                            if (!valueMap.containsKey(name))
                             {
-                                pdJson.put("defaultValue", jobParams.get(jsonName));
-                                pdJson.put("value", jobParams.get(jsonName));
+                                valueMap.put(name, new HashSet<>());
                             }
 
-                            resourceSettings.add(pdJson);
+                            valueMap.get(name).add(String.valueOf(jobParams.get(jsonName)));
                         }
                     }
                 }
-
-                Map<String, Object> ret = new HashMap<>();
-                ret.put("name", "resourceSettings");
-                ret.put("parameters", resourceSettings);
-
-                return new ApiSimpleResponse(ret);
+                catch (IOException | PipelineJobException e)
+                {
+                    errors.reject(ERROR_MSG, "Unable to read pipeline JSON");
+                    _log.error(e);
+                    return null;
+                }
             }
-            catch (IOException | PipelineJobException e)
+
+            Map<String, Object> ret = new HashMap<>();
+            ret.put("name", "resourceSettings");
+            for (JSONObject o : resourceSettings)
             {
-                errors.reject(ERROR_MSG, "Unable to read pipeline JSON");
-                _log.error(e);
-                return null;
+                String name = o.getString("name");
+                if (valueMap.containsKey(name) && valueMap.get(name).size() == 1)
+                {
+                    o.put("defaultValue", valueMap.get(name).iterator().next());
+                    o.put("value", valueMap.get(name).iterator().next());
+                }
             }
+
+            ret.put("parameters", resourceSettings);
+
+            return new ApiSimpleResponse(ret);
         }
     }
 
@@ -492,7 +514,7 @@ public class PrimeseqController extends SpringActionController
         {
             super.validateForm(form, errors);
 
-            if (form.getJobId() == null)
+            if (form.getJobRowIds().isEmpty())
             {
                 errors.reject(ERROR_MSG, "Must provide JobId");
             }
@@ -501,69 +523,72 @@ public class PrimeseqController extends SpringActionController
         @Override
         public Object execute(GetResourceSettingsForJobForm form, BindException errors) throws Exception
         {
-            PipelineStatusFile sf = PipelineService.get().getStatusFile(form.getJobId());
-            if (sf == null)
+            for (Integer jobId : form.getJobRowIds())
             {
-                errors.reject(ERROR_MSG, "Unknown job: " + form.getJobId());
-                return null;
-            }
-            else if (!sf.lookupContainer().hasPermission(getUser(), ReadPermission.class))
-            {
-                errors.reject(ERROR_MSG, "The current user does not have permission to view the folder: " + sf.lookupContainer().getPath());
-                return null;
-            }
-
-            File log = new File(sf.getFilePath());
-            File jobJson = ClusterService.get().getSerializedJobFile(log);
-            if (!jobJson.exists())
-            {
-                errors.reject(ERROR_MSG, "Unable to find job JSON, expected: " + jobJson.getPath());
-                return null;
-            }
-
-            PipelineJob job = null;
-            try
-            {
-                job = PipelineJob.readFromFile(jobJson);
-                if (!(job instanceof SequenceJob))
+                PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
+                if (sf == null)
                 {
-                    errors.reject(ERROR_MSG, "Changing cluster parameters is only supported for Sequence jobs");
+                    errors.reject(ERROR_MSG, "Unknown job: " + jobId);
+                    return null;
+                }
+                else if (!sf.lookupContainer().hasPermission(getUser(), ReadPermission.class))
+                {
+                    errors.reject(ERROR_MSG, "The current user does not have permission to view the folder: " + sf.lookupContainer().getPath());
                     return null;
                 }
 
-                SequenceJob sj = (SequenceJob)job;
-                JSONObject json = sj.getParameterJson();
-
-                JSONObject paramJson = new JSONObject(form.getParamJson());
-                for (String prop : paramJson.keySet())
+                File log = new File(sf.getFilePath());
+                File jobJson = ClusterService.get().getSerializedJobFile(log);
+                if (!jobJson.exists())
                 {
-                    json.put(prop, paramJson.get(prop));
+                    errors.reject(ERROR_MSG, "Unable to find job JSON, expected: " + jobJson.getPath());
+                    return null;
                 }
 
-                try (PrintWriter writer = PrintWriters.getPrintWriter(sj.getParametersFile()))
+                PipelineJob job = null;
+                try
                 {
-                    writer.write(json.toString(1));
-                }
+                    job = PipelineJob.readFromFile(jobJson);
+                    if (!(job instanceof SequenceJob))
+                    {
+                        errors.reject(ERROR_MSG, "Changing cluster parameters is only supported for Sequence jobs");
+                        return null;
+                    }
 
-                File submitScript = ClusterService.get().getExpectedSubmitScript(job);
-                if (submitScript == null)
-                {
-                    _log.error("Unable to find submit script for job: " + sf.getRowId());
+                    SequenceJob sj = (SequenceJob) job;
+                    JSONObject json = sj.getParameterJson();
+
+                    JSONObject paramJson = new JSONObject(form.getParamJson());
+                    for (String prop : paramJson.keySet())
+                    {
+                        json.put(prop, paramJson.get(prop));
+                    }
+
+                    try (PrintWriter writer = PrintWriters.getPrintWriter(sj.getParametersFile()))
+                    {
+                        writer.write(json.toString(1));
+                    }
+
+                    File submitScript = ClusterService.get().getExpectedSubmitScript(job);
+                    if (submitScript == null)
+                    {
+                        _log.error("Unable to find submit script for job: " + sf.getRowId());
+                    }
+                    else if (submitScript.exists())
+                    {
+                        submitScript.delete();
+                    }
                 }
-                else if (submitScript.exists())
+                catch (Exception e)
                 {
-                    submitScript.delete();
-                }
-            }
-            catch (Exception e)
-            {
-                if (job != null)
-                {
-                    job.getLogger().error("Unable to update job params", e);
-                }
-                else
-                {
-                    _log.error("Unable to update job params", e);
+                    if (job != null)
+                    {
+                        job.getLogger().error("Unable to update job params", e);
+                    }
+                    else
+                    {
+                        _log.error("Unable to update job params", e);
+                    }
                 }
             }
 
@@ -573,17 +598,17 @@ public class PrimeseqController extends SpringActionController
 
     public static class GetResourceSettingsForJobForm
     {
-        private Integer _jobId;
+        private String _jobIds;
         private String _paramJson;
 
-        public Integer getJobId()
+        public String getJobIds()
         {
-            return _jobId;
+            return _jobIds;
         }
 
-        public void setJobId(Integer jobId)
+        public void setJobIds(String jobIds)
         {
-            _jobId = jobId;
+            _jobIds = jobIds;
         }
 
         public String getParamJson()
@@ -594,6 +619,17 @@ public class PrimeseqController extends SpringActionController
         public void setParamJson(String paramJson)
         {
             _paramJson = paramJson;
+        }
+
+        public Collection<Integer> getJobRowIds()
+        {
+            Set<Integer> ret = new HashSet<>();
+            for (String id : getJobIds().split(","))
+            {
+                ret.add(Integer.parseInt(StringUtils.trimToNull(id)));
+            }
+
+            return ret;
         }
     }
 }
