@@ -8,13 +8,9 @@ Ext4.define('Primeseq.window.UpdateJobResources', {
                 Ext4.Msg.alert('Error', 'No rows selected');
                 return;
             }
-            else if (checked.length > 1){
-                Ext4.Msg.alert('Error', 'Can only select one row at a time');
-                return;
-            }
 
             Ext4.create('Primeseq.window.UpdateJobResources', {
-                jobId: checked[0]
+                jobIds: checked
             }).show()
         }
     },
@@ -46,13 +42,13 @@ Ext4.define('Primeseq.window.UpdateJobResources', {
         Ext4.Msg.wait('Loading...');
         LABKEY.Ajax.request({
             method: 'POST',
-            url: LABKEY.ActionURL.buildURL('primeseq', 'getResourceSettingsForJob', null, {jobId: this.jobId}),
+            url: LABKEY.ActionURL.buildURL('primeseq', 'getResourceSettingsForJob', null, {jobIds: this.jobIds.join(',')}),
             scope: this,
             success: function(response){
                 LDK.Utils.decodeHttpResponseJson(response);
                 if (response.responseJSON){
                     var cfg = this.getJobResourcesCfg(response.responseJSON);
-                    LDK.Assert.assertNotEmpty('Error loading cluster configuration for job: ' + this.jobId, cfg);
+                    LDK.Assert.assertNotEmpty('Error loading cluster configuration for job(s): ' + this.jobIds.join(','), cfg);
 
                     if (cfg) {
                         this.add(cfg);
@@ -89,7 +85,7 @@ Ext4.define('Primeseq.window.UpdateJobResources', {
             method: 'POST',
             url: LABKEY.ActionURL.buildURL('primeseq', 'setResourceSettingsForJob'),
             jsonData: {
-                jobId: this.jobId,
+                jobIds: this.jobIds.join(','),
                 paramJson: JSON.stringify(json)
             },
             scope: this,

@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react'
-import { Query, ActionURL, Filter } from '@labkey/api'
+import { Query, ActionURL, Filter, getServerContext } from '@labkey/api';
 import { nanoid } from 'nanoid'
 
 import Tooltip from './tooltip'
@@ -99,6 +99,20 @@ export function AnimalRequest() {
         }
     }
 
+    // The general idea is that users with MCCRequestAdminPermission can edit all states.
+    // A normal user can only edit their own requests, and only when in draft form. Once submitted, they can no longer edit them.
+    function hasEditPermission() {
+        const ctx = getServerContext().getModuleContext('mcc') || {};
+        if (!!ctx.hasRequestAdminPermission) {
+            return true
+        }
+
+        if (!animalRequests.data.status) {
+            return true
+        }
+
+        return "draft" === animalRequests.data.status
+    }
 
     function handleNextStateSubmitButton() {
         setIsSubmitting(true);
@@ -476,7 +490,7 @@ export function AnimalRequest() {
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={getRequired()} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial}/>
+                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={false} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial}/>
                     </div>
                 </div>
 
@@ -653,11 +667,11 @@ export function AnimalRequest() {
 
                     <Button onClick={() => {
                         handleNextStateSaveButton();
-                     }} text={getSaveButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
+                     }} text={getSaveButtonText()} display={hasEditPermission() && animalRequests.data.status != "rejected"}/>
 
                     <Button onClick={() => {
                         handleNextStateSubmitButton();
-                     }} text={getSubmitButtonText()} display={animalRequests.data.status != "rejected" && animalRequests.data.status != "approved"}/>
+                     }} text={getSubmitButtonText()} display={hasEditPermission() && animalRequests.data.status != "rejected"}/>
                 </div>
             </form>
 

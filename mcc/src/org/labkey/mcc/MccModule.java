@@ -18,6 +18,7 @@ package org.labkey.mcc;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONObject;
 import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.Module;
@@ -26,8 +27,10 @@ import org.labkey.api.query.DefaultSchema;
 import org.labkey.api.query.QuerySchema;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.api.writer.ContainerUser;
 import org.labkey.mcc.query.MccEhrCustomizer;
 import org.labkey.mcc.security.MccDataAdminRole;
+import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequesterRole;
 
 import java.util.Collection;
@@ -70,6 +73,16 @@ public class MccModule extends ExtendedSimpleModule
 
         RoleManager.registerRole(new MccRequesterRole());
         RoleManager.registerRole(new MccDataAdminRole());
+    }
+
+    @NotNull
+    @Override
+    public JSONObject getPageContextJson(ContainerUser context)
+    {
+        JSONObject ret = super.getPageContextJson(context);
+        ret.put("hasRequestAdminPermission", context.getContainer().hasPermission(context.getUser(), MccRequestAdminPermission.class));
+
+        return ret;
     }
 
     @Override

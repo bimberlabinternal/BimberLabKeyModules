@@ -312,7 +312,7 @@
                 <nullable>true</nullable>
             </column>
             <column columnName="otherjustification">
-                <columnTitle>Justification if "other" picked on Research Area</columnTitle>
+                <columnTitle>Justification (If other picked on Research Area)</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="existingmarmosetcolony">
