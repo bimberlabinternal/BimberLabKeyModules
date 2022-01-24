@@ -74,6 +74,10 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         labels: ['Assay Type', 'Assay_Type'],
         allowBlank: true
     },{
+        name: 'sampleType',
+        labels: ['Sample Type', 'Sample_Type'],
+        allowBlank: true
+    },{
         name: 'comment',
         labels: ['Comment'],
         alwaysShow: true,
@@ -622,9 +626,21 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
     },
 
     onSubmit: function(e, dt, node, config){
-        //Ext4.Msg.wait('Saving...');
+        Ext4.Msg.wait('Saving...');
 
-        //TODO
+        LABKEY.Query.insertRows({
+            schemaName: 'covidseq',
+            queryName: 'samples',
+            scope: this,
+            success: function(){
+                Ext4.Msg.hide();
+                Ext4.Msg.alert('Success', 'Data Imported', function(){
+                    window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'samples', schemaName: 'covidseq', 'query.sort': '-created'})
+                }, this);
+            },
+            failure: LDK.Utils.getErrorCallback(),
+            rows: config.rowData.parsedRows
+        });
     },
 
     COUNTY_LIST: [
