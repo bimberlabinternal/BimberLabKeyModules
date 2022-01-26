@@ -111,7 +111,7 @@ export function AnimalRequest() {
             return true
         }
 
-        return "draft" === animalRequests.data.status
+        return "draft" === animalRequests.data.status || "submitting" === animalRequests.data.status
     }
 
     function handleNextStateSubmitButton() {
