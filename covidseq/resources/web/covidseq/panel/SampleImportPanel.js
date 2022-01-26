@@ -15,6 +15,11 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         allowBlank: false,
         transform: 'samplename'
     },{
+        name: 'identifier',
+        labels: ['Patient Id', 'Patient_Id', 'Individual_ID'],
+        alwaysShow: true,
+        allowBlank: true
+    },{
         name: 'cdna_plate_location',
         labels: ['Well', 'Well Id', 'cDNA_Plate_Location'],
         alwaysShow: true,
@@ -47,36 +52,48 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
     },{
         name: 'n1_or_s',
         labels: ['N1_or_S', 'S'],
-        allowBlank: true
+        allowBlank: true,
+        transform: 'ct'
     },{
         name: 'n2_orn',
         labels: ['N2_orN', 'N/N2'],
-        allowBlank: true
+        allowBlank: true,
+        transform: 'ct'
     },{
         name: 'rp_or_orf1ab',
         labels: ['RP_or_ORF1ab'],
-        allowBlank: true
+        allowBlank: true,
+        transform: 'ct'
     },{
         name: 'ms2',
         labels: ['MS2/Control', 'MS2'],
-        allowBlank: true
+        allowBlank: true,
+        transform: 'ct'
     },{
         name: 'age',
         labels: ['Age'],
+        allowBlank: true,
+        transform: 'age'
+    },{
+        name: 'ageQualifier',
+        labels: ['Age Qualifier'],
         allowBlank: true
     },{
         name: 'sampledate',
         labels: ['Sample Date', 'Collection Date', 'CollectionDate', 'SampleDate', 'Collection_Date'],
         alwaysShow: true,
-        allowBlank: true
+        allowBlank: true,
+        transform: 'sampledate'
     },{
         name: 'assayType',
         labels: ['Assay Type', 'Assay_Type'],
+        transform: 'assayType',
         allowBlank: true
     },{
         name: 'sampleType',
-        labels: ['Sample Type', 'Sample_Type'],
-        allowBlank: true
+        labels: ['Sample Type', 'Sample_Type', 'Type'],
+        allowBlank: true,
+        transform: 'sampleType'
     },{
         name: 'comment',
         labels: ['Comment'],
@@ -130,6 +147,68 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             return val;
         },
 
+        sampledate: function(val) {
+            if (val && val.toLowerCase() === 'unknown') {
+                val = null;
+            }
+
+            return(val);
+        },
+
+        ct: function(val, panel, row) {
+            if (val) {
+                if (String(val).toLowerCase() === 'undetermined') {
+                    val = null;
+                }
+                else if (String(val).toLowerCase() === 'na') {
+                    val = null;
+                }
+
+                // Transform values like "4.8 *"
+                if (String(val).match('[\\* ]')) {
+                    val = String(val).replaceAll(/[\\* ]/g, '');
+                }
+            }
+
+            return(val);
+        },
+
+        age: function(val, panel, row) {
+            if (val && String(val).toLowerCase() === 'unknown') {
+                val = null;
+            }
+            else if (val && String(val).match('>')) {
+                row.ageQualifier = '>';
+                val = String(val).replaceAll('>', '');
+            }
+            else if (val && String(val).match('<')) {
+                row.ageQualifier = '<';
+                val = String(val).replaceAll('<', '');
+            }
+
+            return(val);
+        },
+
+        assayType: function(val) {
+            if (val) {
+                if ('x' === val.toLowerCase() || 'tp' === val.toLowerCase()) {
+                    val = 'TaqPath';
+                }
+            }
+
+            return val;
+        },
+
+        sampleType: function(val) {
+            if (val) {
+                if ('np' === val.toLowerCase()) {
+                    val = 'Nasopharyngeal swab';
+                }
+            }
+
+            return val;
+        },
+
         county: function(val, panel, row, rowIdx, errorMessages, infoMessages) {
             if (!val) {
                 return val;
@@ -142,20 +221,25 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
                 return 'Not Applicable'
             }
 
-            if (val === 'unknown' || val === 'unk') {
+            if (val === 'unknown' || val === 'unk' || val === '?') {
                 return 'Unknown'
             }
 
             if (panel.COUNTY_MAP[val]) {
                 if (row.state) {
+                    if (panel.STATE_ABBREV[val.toLowerCase()]) {
+                        row.state = panel.STATE_ABBREV[row.state.toLowerCase()]
+                    }
+
                     if (panel.COUNTY_MAP[val].states.indexOf(row.state) === -1) {
                         var updated = false;
+                        var inputState = row.state;
                         if (panel.AUTO_UPDATE_STATE && panel.COUNTY_MAP[val].states.length === 1){
                             updated = true;
                             row.state = panel.COUNTY_MAP[val].states[0];
                         }
 
-                        infoMessages.push('State doesnt match for county: ' + val + ', input value: '  + row.state + ', expected: ' + panel.COUNTY_MAP[val].states.join(',') + ', at row: ' + (rowIdx + 1) + (updated ? '. This was corrected.' : '. This was not automatically changed.'));
+                        infoMessages.push('State doesnt match for county: ' + val + ', input value: '  + inputState + ', expected: ' + panel.COUNTY_MAP[val].states.join(',') + ', at row: ' + (rowIdx + 1) + (updated ? '. This was corrected.' : '. This was not automatically changed.'));
 
                     }
                 } else {
@@ -185,11 +269,13 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             if (!val) {
                 data.comment = data.comment ? data.comment + '. State auto-assigned to OR' : 'State auto-assigned to OR';
                 return 'OR';
-
             }
 
             val = val.toLowerCase();
-            if (['or', 'oregon'].indexOf(val) > -1) {
+            if (panel.STATE_ABBREV[val]) {
+                return panel.STATE_ABBREV[val];
+            }
+            else if (['or', 'oregon'].indexOf(val) > -1) {
                 return 'OR'
             }
             else if (['wa', 'washington'].indexOf(val) > -1) {
@@ -200,9 +286,11 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         },
     },
 
-    DEFAULT_HEADER: ['cDNA_Plate_ID','cDNA_Plate_Location','CODED_ID','RQG_alt_ID','Collection_Date','Gender','State','County','N1_or_S','N2_orN','RP_or_ORF1ab','Assay_Type','MS2','Age'],
+    DEFAULT_HEADER: ['cDNA_Plate_ID','cDNA_Plate_Location','CODED_ID','RQG_alt_ID','Collection_Date','Gender','State','County','N1_or_S','N2_orN','RP_or_ORF1ab','Assay_Type','MS2','SampleType','Age'],
 
     initComponent: function () {
+        Ext4.QuickTips.init();
+
         this.COLUMN_MAP = {};
         Ext4.Array.forEach(this.COLUMNS, function(col){
             this.COLUMN_MAP[col.name.toLowerCase()] = col;
@@ -419,9 +507,15 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             return;
         }
 
+        var patientRows = this.inferPatientRows(parsedRows)
         console.log(parsedRows)
+        console.log(patientRows)
+        this.reviewPatients(colArray, parsedRows, patientRows)
+    },
 
-        this.renderPreview(colArray, parsedRows);
+    reviewPatients: function(colArray, parsedRows, patientRows) {
+        // TODO: consider querying the patients table to look for existing records?
+        this.renderPreview(colArray, parsedRows, patientRows);
     },
 
     parseHeader: function(headerRow){
@@ -547,6 +641,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             // CT of record is N for taqpath, N1 for CDC?
 
+            data.patientid = data.patientid || data.samplename
             ret.push(data);
         }, this);
 
@@ -563,7 +658,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         return error ? null : ret;
     },
 
-    renderPreview: function(colArray, parsedRows){
+    renderPreview: function(colArray, parsedRows, patientRows){
         var previewArea = this.down('#previewArea');
         previewArea.removeAll();
 
@@ -612,6 +707,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
                 rowData: {
                     colArray: colArray,
                     parsedRows: parsedRows,
+                    patientRows: patientRows,
                     panel: this
                 }
             }],
@@ -628,19 +724,53 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
     onSubmit: function(e, dt, node, config){
         Ext4.Msg.wait('Saving...');
 
-        LABKEY.Query.insertRows({
+        var request = new LABKEY.MultiRequest();
+        request.add(LABKEY.Query.insertRows, {
             schemaName: 'covidseq',
             queryName: 'samples',
             scope: this,
-            success: function(){
-                Ext4.Msg.hide();
-                Ext4.Msg.alert('Success', 'Data Imported', function(){
-                    window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'samples', schemaName: 'covidseq', 'query.sort': '-created'})
-                }, this);
-            },
             failure: LDK.Utils.getErrorCallback(),
             rows: config.rowData.parsedRows
         });
+
+        request.add(LABKEY.Query.insertRows, {
+            schemaName: 'covidseq',
+            queryName: 'patients',
+            scope: this,
+            failure: LDK.Utils.getErrorCallback(),
+            rows: config.rowData.patientRows
+        });
+
+        request.send(this.onRequestSuccess, this);
+    },
+
+    inferPatientRows: function(sampleRows) {
+        var patientRows = [];
+
+        var patientColumns = ['state', 'county', 'country', 'age', 'gender'];
+        sampleRows.forEach(function(row) {
+            var guid = LABKEY.Utils.generateUUID();
+            if (row.patientid) {
+                var newRow = {};
+                newRow.patientid = guid;
+                newRow.identifier = row.identifier;
+                row.patientid = guid;
+
+                patientColumns.forEach(function(colName){
+                    newRow[colName] = row[colName]
+                });
+                patientRows.push(newRow);
+            }
+        })
+
+        return patientRows;
+    },
+
+    onRequestSuccess: function(){
+        Ext4.Msg.hide();
+        Ext4.Msg.alert('Success', 'Data Imported', function(){
+            window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'samples', schemaName: 'covidseq', 'query.sort': '-created'})
+        }, this);
     },
 
     COUNTY_LIST: [
@@ -905,6 +1035,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         ['Custer County','Custer','CO'],
         ['Delta County','Delta','CO'],
         ['Denver','Denver','CO'],
+        ['Denver','Denver County','CO'],
         ['Dolores County','Dolores','CO'],
         ['Douglas County','Douglas','CO'],
         ['Eagle County','Eagle','CO'],
@@ -1006,6 +1137,8 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         ['Marion County','Marion','FL'],
         ['Martin County','Martin','FL'],
         ['Miami-Dade County','Miami-Dade','FL'],
+        ['Miami-Dade County','MiamiDade','FL'],
+        ['Miami-Dade County','MiamiDade County','FL'],
         ['Monroe County','Monroe','FL'],
         ['Nassau County','Nassau','FL'],
         ['Okaloosa County','Okaloosa','FL'],
@@ -1022,6 +1155,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         ['Seminole County','Seminole','FL'],
         ['St. Johns County','St. Johns','FL'],
         ['St. Lucie County','St. Lucie','FL'],
+        ['St. Lucie County','Saint Lucie County','FL'],
         ['Sumter County','Sumter','FL'],
         ['Suwannee County','Suwannee','FL'],
         ['Taylor County','Taylor','FL'],
@@ -1805,6 +1939,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         ['St. James Parish','St. James','LA'],
         ['St. John the Baptist Parish','St. John the Baptist','LA'],
         ['St. Landry Parish','St. Landry','LA'],
+        ['St. Landry Parish','Saint Landry Parish','LA'],
         ['St. Martin Parish','St. Martin','LA'],
         ['St. Mary Parish','St. Mary','LA'],
         ['St. Tammany Parish','St. Tammany','LA'],
@@ -3869,5 +4004,61 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         ['Villalba','Villalba','PR'],
         ['Yabucoa','Yabucoa','PR'],
         ['Yauco','Yauco','PR'],
-    ]
+    ],
+
+    STATE_ABBREV: {
+        'alabama': 'AL',
+        'alaska': 'AK',
+        'arizona': 'AZ',
+        'arkansas': 'AR',
+        'california': 'CA',
+        'colorado': 'CO',
+        'connecticut': 'CT',
+        'delaware': 'DE',
+        'district of columbia': 'DC',
+        'florida': 'FL',
+        'georgia': 'GA',
+        'hawaii': 'HI',
+        'idaho': 'ID',
+        'illinois': 'IL',
+        'indiana': 'IN',
+        'iowa': 'IA',
+        'kansas': 'KS',
+        'kentucky': 'KY',
+        'louisiana': 'LA',
+        'maine': 'ME',
+        'maryland': 'MD',
+        'massachusetts': 'MA',
+        'michigan': 'MI',
+        'minnesota': 'MN',
+        'mississippi': 'MS',
+        'missouri': 'MO',
+        'montana': 'MT',
+        'nebraska': 'NE',
+        'nevada': 'NV',
+        'new hampshire': 'NH',
+        'new jersey': 'NJ',
+        'new mexico': 'NM',
+        'new york': 'NY',
+        'north carolina': 'NC',
+        'north dakota': 'ND',
+        'ohio': 'OH',
+        'oklahoma': 'OK',
+        'oregon': 'OR',
+        'pennsylvania': 'PA',
+        'puerto rico': 'PR',
+        'rhode island': 'RI',
+        'south carolina': 'SC',
+        'south dakota': 'SD',
+        'tennessee': 'TN',
+        'texas': 'TX',
+        'utah': 'UT',
+        'vermont': 'VT',
+        'virginia': 'VA',
+        'virgin islands': 'VI',
+        'washington': 'WA',
+        'west virginia': 'WV',
+        'wisconsin': 'WI',
+        'wyoming': 'WY'
+    }
 });
