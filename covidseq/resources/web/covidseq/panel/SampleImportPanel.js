@@ -15,7 +15,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         allowBlank: false,
         transform: 'samplename'
     },{
-        name: 'identifier',
+        name: 'patientid',
         labels: ['Patient Id', 'Patient_Id', 'Individual_ID'],
         alwaysShow: true,
         allowBlank: true
@@ -127,7 +127,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             return val || 'USA'
         },
 
-        gender: function(val, panel, row, rowIdx, messages) {
+        gender: function(val, panel, row, rowIdx) {
             if (!val) {
                 return val;
             }
@@ -155,7 +155,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             return(val);
         },
 
-        ct: function(val, panel, row) {
+        ct: function(val, panel, row, rowIdx, errorMessages, infoMessages) {
             if (val) {
                 if (String(val).toLowerCase() === 'undetermined') {
                     val = null;
@@ -163,10 +163,9 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
                 else if (String(val).toLowerCase() === 'na') {
                     val = null;
                 }
-
-                // Transform values like "4.8 *"
-                if (String(val).match('[\\* ]')) {
-                    val = String(val).replaceAll(/[\\* ]/g, '');
+                else if (!Ext4.isNumeric(val)) {
+                    errorMessages.push('Non-numeric CT: ' + val + ' at row: ' + rowIdx);
+                    return val;
                 }
             }
 
@@ -641,7 +640,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             // CT of record is N for taqpath, N1 for CDC?
 
-            data.patientid = data.patientid || data.samplename
+            data._patientid = data.patientid || data.samplename
             ret.push(data);
         }, this);
 
@@ -724,44 +723,73 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
     onSubmit: function(e, dt, node, config){
         Ext4.Msg.wait('Saving...');
 
-        var request = new LABKEY.MultiRequest();
-        request.add(LABKEY.Query.insertRows, {
-            schemaName: 'covidseq',
-            queryName: 'samples',
-            scope: this,
-            failure: LDK.Utils.getErrorCallback(),
-            rows: config.rowData.parsedRows
+        config.rowData.parsedRows.forEach(function(row){
+            if (row.patientidGUID) {
+                row.patientid = row.patientidGUID;
+            }
         });
 
-        request.add(LABKEY.Query.insertRows, {
-            schemaName: 'covidseq',
-            queryName: 'patients',
+        LABKEY.Query.saveRows({
+            commands: [{
+                command: 'insert',
+                schemaName: 'covidseq',
+                queryName: 'samples',
+                rows: config.rowData.parsedRows
+            },{
+                command: 'insert',
+                schemaName: 'covidseq',
+                queryName: 'patients',
+                rows: config.rowData.patientRows
+            }],
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
-            rows: config.rowData.patientRows
+            success: this.onRequestSuccess
         });
-
-        request.send(this.onRequestSuccess, this);
     },
 
     inferPatientRows: function(sampleRows) {
         var patientRows = [];
+        var patientsEncountered = {};
+        var patientToGUID = {};
 
         var patientColumns = ['state', 'county', 'country', 'age', 'gender'];
         sampleRows.forEach(function(row) {
-            var guid = LABKEY.Utils.generateUUID();
-            if (row.patientid) {
+            if (row._patientid) {
                 var newRow = {};
-                newRow.patientid = guid;
-                newRow.identifier = row.identifier;
-                row.patientid = guid;
 
                 patientColumns.forEach(function(colName){
                     newRow[colName] = row[colName]
                 });
+
+                var rowKey = Object.values(newRow).join('<>');
+                var doSave = true;
+                if (patientsEncountered[row._patientid]) {
+                    var oldRowKey = patientsEncountered[row._patientid];
+                    if (rowKey !== oldRowKey) {
+                        console.error("Mismatch: " + row._patientid);
+                        console.error(newRow);
+                        console.error(oldRowKey);
+                    }
+                    else {
+                        doSave = false;
+                        console.log('skipping second patient row: ' + row._patientid);
+                    }
+                }
+                else {
+                    patientsEncountered[row._patientid] = rowKey;
+                    patientToGUID[row._patientid] = LABKEY.Utils.generateUUID();
+                }
+
+                // Create GUID to manage relationship:
+                newRow.patientid = patientToGUID[row._patientid];
+                newRow.identifier = row._patientid;
+
+                // update original row:
+                row.patientidGUID = patientToGUID[row._patientid];
+
                 patientRows.push(newRow);
             }
-        })
+        });
 
         return patientRows;
     },
