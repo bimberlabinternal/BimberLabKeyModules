@@ -5,6 +5,7 @@ import InputNumber from './input-number'
 import Select from './select'
 import Title from './title'
 import TextArea from './text-area'
+import ErrorMessageHandler from './error-message-handler'
 
 import { animalSexes, otherCharacteristicsPlaceholder } from './values'
 
@@ -33,6 +34,7 @@ export default function AnimalCohorts(props) {
   return (
     <>
       {[...cohorts].map((cohort, index) => (
+        <ErrorMessageHandler isSubmitting={props.isSubmitting} keyInternal={cohort.uuid} key={cohort.uuid + "-errorHandler"}>
         <div className="tw-flex tw-flex-wrap tw-w-full tw-mx-2 tw-mb-10" key={cohort.uuid}>
           <div className="tw-flex tw-flex-wrap tw-w-full tw-mb-6">
             <div className="tw-w-1/2 md:tw-mb-0">
@@ -48,22 +50,23 @@ export default function AnimalCohorts(props) {
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Title text="Number of animals&nbsp;&nbsp;&nbsp;" />
             <div className="tw-mb-4">
-              <InputNumber id={"animal-cohorts-" + index + "-" + "numberofanimals"} isSubmitting={props.isSubmitting} placeholder="Number of animals" required={props.required} defaultValue={cohort.numberofanimals}/>
+              <InputNumber id={"animal-cohorts-" + index + "-" + "numberofanimals"} name="Number of Animals" isSubmitting={props.isSubmitting} placeholder="Number of animals" required={props.required} defaultValue={cohort.numberofanimals}/>
             </div>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Title text="Cohort sex&nbsp;&nbsp;&nbsp;" />
             <div className="tw-mb-6">
-              <Select id={"animal-cohorts-" + index + "-" + "sex"} isSubmitting={props.isSubmitting} options={animalSexes} defaultValue={cohort.sex} required={props.required}/>
+              <Select id={"animal-cohorts-" + index + "-" + "sex"} name="Sex" isSubmitting={props.isSubmitting} options={animalSexes} defaultValue={cohort.sex} required={props.required}/>
             </div>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-            <TextArea id={"animal-cohorts-" + index + "-" + "othercharacteristics"} isSubmitting={props.isSubmitting} placeholder={otherCharacteristicsPlaceholder} 
+            <TextArea id={"animal-cohorts-" + index + "-" + "othercharacteristics"} name="Other Characteristics" isSubmitting={props.isSubmitting} placeholder={otherCharacteristicsPlaceholder} 
              required={props.required} defaultValue={cohort.othercharacteristics}/>
           </div>
         </div>
+        </ErrorMessageHandler>
       ))}
 
       <div className="tw-w-full tw-px-3 tw-mb-10 md:tw-mb-0">
