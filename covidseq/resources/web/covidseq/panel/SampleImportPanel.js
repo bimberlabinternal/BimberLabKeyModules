@@ -770,10 +770,9 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
                         console.error(newRow);
                         console.error(oldRowKey);
                     }
-                    else {
-                        doSave = false;
-                        console.log('skipping second patient row: ' + row._patientid);
-                    }
+
+                    doSave = false;
+                    console.log('skipping second patient row: ' + row._patientid);
                 }
                 else {
                     patientsEncountered[row._patientid] = rowKey;
@@ -787,7 +786,9 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
                 // update original row:
                 row.patientidGUID = patientToGUID[row._patientid];
 
-                patientRows.push(newRow);
+                if (doSave) {
+                    patientRows.push(newRow);
+                }
             }
         });
 
