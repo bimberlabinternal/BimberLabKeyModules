@@ -141,7 +141,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             }
 
             if (val === 'unknown' || val === 'unk') {
-                return 'Unknown'
+                return 'unknown'
             }
 
             return val;
@@ -221,7 +221,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             }
 
             if (val === 'unknown' || val === 'unk' || val === '?') {
-                return 'Unknown'
+                return 'unknown'
             }
 
             if (panel.COUNTY_MAP[val]) {
@@ -640,7 +640,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             // CT of record is N for taqpath, N1 for CDC?
 
-            data._patientid = data.patientid || data.samplename
+            data._patientid = data.patientid || data.state + '-OHSU-' + data.samplename.replaceAll('CV', '');
             ret.push(data);
         }, this);
 
