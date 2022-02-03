@@ -347,7 +347,7 @@ export function AnimalRequest() {
                 ...coinvestigatorCommands,
                 ...cohortCommands
             ],
-            success: function(data) {
+            success: function(response) {
                 window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
             },
             failure: handleFailure
