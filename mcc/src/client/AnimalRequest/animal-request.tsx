@@ -74,8 +74,10 @@ export function AnimalRequest() {
     })
     
 
-    function handleFailure(data) {
-        console.error(data)
+    function handleFailure(response) {
+        //TODO: actually do something with this!
+        console.error(response)
+        console.error(response.exception)  //this is probably what you want to show. An example would be to submit data with a long value for middle initial (>14 characters)
     }
 
     

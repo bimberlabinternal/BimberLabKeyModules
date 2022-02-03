@@ -16,6 +16,7 @@
 
 package org.labkey.test.tests.mcc;
 
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,12 +28,16 @@ import org.labkey.remoteapi.query.Sort;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
 import org.labkey.test.ModulePropertyValue;
+import org.labkey.test.TestFileUtils;
 import org.labkey.test.TestTimeoutException;
+import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
 import org.labkey.test.util.DataRegionTable;
 import org.openqa.selenium.Keys;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -263,19 +268,58 @@ public class MccTest extends BaseWebDriverTest
     }
 
     @BeforeClass
-    public static void setupProject()
+    public static void setupProject() throws Exception
     {
         MccTest init = (MccTest)getCurrentTest();
         init.doSetup();
     }
 
-    private void doSetup()
+    private void doSetup() throws Exception
     {
-        _containerHelper.createProject(getProjectName(), "MCC");
+        // NOTE: delay setting module properties until the study exists, since dashboard depends on it
+        _containerHelper.createProject(getProjectName());
+
+        importStudyFromPath();
+
+        _containerHelper.setFolderType("MCC");
         setModuleProperties(Arrays.asList(
                 new ModulePropertyValue("MCC", "/", "MCCContainer", "/" + getProjectName()),
                 new ModulePropertyValue("MCC", "/", "MCCRequestContainer", "/" + getProjectName())
         ));
+    }
+
+    private String getModulePath()
+    {
+        return "server/modules/BimberLabKeyModules/mcc";
+    }
+
+    private void importStudyFromPath() throws IOException
+    {
+        File source = new File(TestFileUtils.getLabKeyRoot(), getModulePath() + "/resources/referenceStudy");
+        File dest = new File(TestFileUtils.getDefaultFileRoot(getProjectName()), "referenceStudy");
+        if (dest.exists())
+        {
+            FileUtils.deleteDirectory(dest);
+        }
+        FileUtils.copyDirectory(source, dest.getParentFile());
+
+        beginAt(WebTestHelper.getBaseURL() + "/pipeline-status/" + getProjectName() + "/begin.view");
+        clickButton("Process and Import Data", defaultWaitForPage);
+
+        _fileBrowserHelper.expandFileBrowserRootNode();
+        _fileBrowserHelper.checkFileBrowserFileCheckbox("study.xml");
+
+        if (isTextPresent("Reload Study"))
+            _fileBrowserHelper.selectImportDataAction("Reload Study");
+        else
+            _fileBrowserHelper.selectImportDataAction("Import Study");
+
+        Locator cb = Locator.checkboxByName("validateQueries");
+        waitForElement(cb);
+        uncheckCheckbox(cb);
+
+        clickButton("Start Import"); // Validate queries page
+        waitForPipelineJobsToComplete(1, "Study import", false, MAX_WAIT_SECONDS * 2500);
     }
 
     @Before
