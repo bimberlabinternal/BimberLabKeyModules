@@ -41,19 +41,19 @@ export default function CoInvestigators(props) {
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "lastName"} name="Last Name" isSubmitting={props.isSubmitting} placeholder="Last Name" required={props.required} defaultValue={coInvestigator.lastname}/>
+            <Input id={"coinvestigators-" + index + "-" + "lastName"} ariaLabel={"Last Name" + "#" + index} isSubmitting={props.isSubmitting} placeholder="Last Name" required={props.required} defaultValue={coInvestigator.lastname}/>
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "firstName"} name="First Name" isSubmitting={props.isSubmitting} placeholder="First Name" required={props.required} defaultValue={coInvestigator.firstname}/>
+            <Input id={"coinvestigators-" + index + "-" + "firstName"}  ariaLabel={"First Name" + "#" + index} isSubmitting={props.isSubmitting} placeholder="First Name" required={props.required} defaultValue={coInvestigator.firstname}/>
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "middleInitial"} name="Middle Initial" isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={false} defaultValue={coInvestigator.middleinitial}/>
+            <Input id={"coinvestigators-" + index + "-" + "middleInitial"}  ariaLabel={"Middle Initial" + "#" + index} isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={false} defaultValue={coInvestigator.middleinitial}/>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "institution"} name="Institution" isSubmitting={props.isSubmitting} placeholder="Institution" required={props.required} defaultValue={coInvestigator.institutionname}/>
+            <Input id={"coinvestigators-" + index + "-" + "institution"}  ariaLabel={"Institution" + "#" + index} isSubmitting={props.isSubmitting} placeholder="Institution" required={props.required} defaultValue={coInvestigator.institutionname}/>
           </div>
         </div>
         </ErrorMessageHandler>

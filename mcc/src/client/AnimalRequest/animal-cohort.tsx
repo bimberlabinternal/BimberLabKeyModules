@@ -50,19 +50,19 @@ export default function AnimalCohorts(props) {
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Title text="Number of animals&nbsp;&nbsp;&nbsp;" />
             <div className="tw-mb-4">
-              <InputNumber id={"animal-cohorts-" + index + "-" + "numberofanimals"} name="Number of Animals" isSubmitting={props.isSubmitting} placeholder="Number of animals" required={props.required} defaultValue={cohort.numberofanimals}/>
+              <InputNumber id={"animal-cohorts-" + index + "-" + "numberofanimals"} ariaLabel={"Number of Animals" + "#" + index} isSubmitting={props.isSubmitting} placeholder="Number of animals" required={props.required} defaultValue={cohort.numberofanimals}/>
             </div>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
             <Title text="Cohort sex&nbsp;&nbsp;&nbsp;" />
             <div className="tw-mb-6">
-              <Select id={"animal-cohorts-" + index + "-" + "sex"} name="Sex" isSubmitting={props.isSubmitting} options={animalSexes} defaultValue={cohort.sex} required={props.required}/>
+              <Select id={"animal-cohorts-" + index + "-" + "sex"} ariaLabel={"Sex" + "#" + index} isSubmitting={props.isSubmitting} options={animalSexes} defaultValue={cohort.sex} required={props.required}/>
             </div>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-            <TextArea id={"animal-cohorts-" + index + "-" + "othercharacteristics"} name="Other Characteristics" isSubmitting={props.isSubmitting} placeholder={otherCharacteristicsPlaceholder} 
+            <TextArea id={"animal-cohorts-" + index + "-" + "othercharacteristics"} ariaLabel={"Other Characteristics" + "#" + index} isSubmitting={props.isSubmitting} placeholder={otherCharacteristicsPlaceholder}
              required={props.required} defaultValue={cohort.othercharacteristics}/>
           </div>
         </div>

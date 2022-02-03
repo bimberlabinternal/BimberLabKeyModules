@@ -14,7 +14,9 @@ export default function ErrorMessageHandler(props) {
         
         for (const e of el.querySelectorAll('input, select, textarea')) {
           if (!e.checkValidity()) {
-            tmp.add(`${e.name}: ${e.validationMessage}`)
+            const name = e.getAttribute("aria-label").split("#")[0]
+            const message = e.validationMessage
+            tmp.add(`${name}: ${message}`)
           }
         }
         

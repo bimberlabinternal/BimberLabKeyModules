@@ -25,13 +25,13 @@ export default function Funding(props) {
         <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
             <Title text="Existing or proposed funding source*"/>
             <div className="tw-w-full tw-px-3 tw-mb-6">
-                <Select id={props.id + "-source"} name="Proposed Funding Source" isSubmitting={props.isSubmitting} options={fundingSourceOptions} onChange={(e) => setDisplayApplicationDateField(e.currentTarget.value)} required={props.required} defaultValue={props.defaultValue.fundingsource} />
+                <Select id={props.id + "-source"} ariaLabel="Proposed Funding Source" isSubmitting={props.isSubmitting} options={fundingSourceOptions} onChange={(e) => setDisplayApplicationDateField(e.currentTarget.value)} required={props.required} defaultValue={props.defaultValue.fundingsource} />
             </div>
 
             <div className="tw-w-full tw-px-3">
-                <Input id={props.id + "-grant-number"} name="Grant Number" isSubmitting={props.isSubmitting} placeholder="Grant Number(s)" display={!displayApplicationDate} required={!displayApplicationDate && props.required} defaultValue={props.defaultValue.grantnumber}/>
+                <Input id={props.id + "-grant-number"} ariaLabel="Grant Number" isSubmitting={props.isSubmitting} placeholder="Grant Number(s)" display={!displayApplicationDate} required={!displayApplicationDate && props.required} defaultValue={props.defaultValue.grantnumber}/>
                 <Title text="Application Date" display={displayApplicationDate}/>
-                <Date id={props.id + "-application-due-date"} name="Application Date" isSubmitting={props.isSubmitting} placeholder="Application due date" display={displayApplicationDate} required={displayApplicationDate && props.required} defaultValue={props.defaultValue.applicationduedate}/>
+                <Date id={props.id + "-application-due-date"} ariaLabel="Application Date" isSubmitting={props.isSubmitting} placeholder="Application due date" display={displayApplicationDate} required={displayApplicationDate && props.required} defaultValue={props.defaultValue.applicationduedate}/>
             </div>
         </div>
         </ErrorMessageHandler>

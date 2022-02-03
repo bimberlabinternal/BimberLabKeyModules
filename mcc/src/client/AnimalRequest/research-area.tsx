@@ -26,11 +26,11 @@ export default function ResearchArea(props) {
                 <Title text="Research Area"/>
             </div>
             <div className="tw-w-full tw-mb-6">
-                <Select id={props.id} options={researchAreaOptions} name="Research Area" isSubmitting={props.isSubmitting} onChange={(e) => setDisplayOtherField(e.currentTarget.value)} defaultValue={props.defaultValue.researcharea} required={props.required}/>
+                <Select id={props.id} options={researchAreaOptions} ariaLabel="Research Area" isSubmitting={props.isSubmitting} onChange={(e) => setDisplayOtherField(e.currentTarget.value)} defaultValue={props.defaultValue.researcharea} required={props.required}/>
             </div>
 
             <div className="tw-w-full tw-mb-6">
-                <Input id={props.id + "-other-specify"} name="Other" isSubmitting={props.isSubmitting} placeholder="Please specify" display={displayOther} required={displayOther && props.required} defaultValue={props.defaultValue.otherjustification}/>
+                <Input id={props.id + "-other-specify"} ariaLabel="Other" isSubmitting={props.isSubmitting} placeholder="Please specify" display={displayOther} required={displayOther && props.required} defaultValue={props.defaultValue.otherjustification}/>
             </div>
         </div>
         </ErrorMessageHandler>
