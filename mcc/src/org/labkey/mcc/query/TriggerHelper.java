@@ -93,7 +93,7 @@ public class TriggerHelper
 
             Container rc = MccManager.get().getMCCRequestContainer();
             DetailsURL url = DetailsURL.fromString("/mcc/mccRequestAdmin.view", rc);
-            mail.setEncodedHtmlContent("A user requested an account on MCC.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
+            mail.setEncodedHtmlContent("An animal request was submitted on MCC.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
             mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[0]));
 
             MailHelper.send(mail, _user, _container);
