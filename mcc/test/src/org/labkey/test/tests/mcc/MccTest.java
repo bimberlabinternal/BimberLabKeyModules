@@ -230,11 +230,14 @@ public class MccTest extends BaseWebDriverTest
         // Check for error messages. Now remove that Co-I block
         waitAndClick(Locator.tagWithText("p", "Co-Investigator 2").parent("div").followingSibling("div").index(0).child("input"));
 
+        // Ensure form still in error-reporting state
+        waitForElement(Locator.tagWithText("li", "Last Name: Please fill out this field."));
+
         // Repeat for Cohorts
         waitAndClick(Locator.tagWithAttribute("input", "value", "Add Cohort"));
         Locator removeBtn = Locator.tagWithText("p", "Cohort 2").parent("div").followingSibling("div").index(0).child("input");
         waitForElement(removeBtn);
-        scrollIntoView(removeBtn);
+        scrollIntoView(Locator.tagWithAttribute("input", "value", "Add Cohort"));
         waitForElement(Locator.tagWithText("li", "Number of Animals: Please fill out this field."));
         waitAndClick(removeBtn);
 
