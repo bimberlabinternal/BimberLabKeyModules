@@ -49,7 +49,7 @@ export default function CoInvestigators(props) {
           </div>
 
           <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-            <Input id={"coinvestigators-" + index + "-" + "middleInitial"}  ariaLabel={"Middle Initial" + "#" + index} isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={false} defaultValue={coInvestigator.middleinitial}/>
+            <Input id={"coinvestigators-" + index + "-" + "middleInitial"}  ariaLabel={"Middle Initial" + "#" + index} isSubmitting={props.isSubmitting} placeholder="Middle Initial" required={false} defaultValue={coInvestigator.middleinitial} maxLength="8"/>
           </div>
 
           <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">

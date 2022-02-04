@@ -9,7 +9,7 @@ export default function Input(props) {
     } else {
         return (
             <input className={"tw-appearance-none tw-block tw-w-full tw-text-gray-700" + (props.isSubmitting && " tw-invalid ") + "tw-rounded tw-py-4 tw-px-6 tw-mb-3 tw-leading-tight focus:tw-outline-none"}
-             name={props.id} aria-label={props.ariaLabel} id={props.id} type="text" placeholder={props.placeholder} required={props.required} defaultValue={props.defaultValue}/>
+             name={props.id} aria-label={props.ariaLabel} id={props.id} type="text" placeholder={props.placeholder} required={props.required} defaultValue={props.defaultValue} maxLength={props.maxLength}/>
         )
     }
 }

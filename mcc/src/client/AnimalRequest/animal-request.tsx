@@ -33,6 +33,33 @@ export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [displayOverlay, setDisplayOverlay] = useState(false)
+    const [stateRollbackOnFailure, setStateRollbackOnFailure] = useState({
+        "returned": false,
+        "data": {"status": "draft",
+            middleinitial: undefined,
+            lastname: undefined,
+            firstname: undefined,
+            isprincipalinvestigator: undefined,
+            institutionname: undefined,
+            institutioncity: undefined,
+            institutionstate: undefined,
+            institutioncountry: undefined,
+            officiallastname: undefined,
+            officialfirstname: undefined,
+            officialemail: undefined,
+            experimentalrationale: undefined,
+            methodsproposed: undefined,
+            collaborations: undefined,
+            existingmarmosetcolony: undefined,
+            existingnhpfacilities: undefined,
+            rowid: undefined,
+            certify: false,
+            animalwelfare: undefined,
+            vetlastname: undefined,
+            vetemail: undefined,
+            vetfirstname: undefined
+        }
+    })
 
     // On submit, state is managed by the FormData object in handleSubmit. These hooks are only used to propagate values
     // from the database into the form via fillForm if there is a requestId
@@ -75,9 +102,12 @@ export function AnimalRequest() {
     
 
     function handleFailure(response) {
-        //TODO: actually do something with this!
-        console.error(response)
-        console.error(response.exception)  //this is probably what you want to show. An example would be to submit data with a long value for middle initial (>14 characters)
+        alert(response.exception)  //this is probably what you want to show. An example would be to submit data with a long value for middle initial (>14 characters)
+        setDisplayOverlay(false)
+        setAnimalRequests({
+            "returned": stateRollbackOnFailure.returned,
+            "data": { ...stateRollbackOnFailure.data, status: stateRollbackOnFailure.data.status }
+        })
     }
 
     
@@ -161,7 +191,7 @@ export function AnimalRequest() {
 
 
     function handleNextStateSaveButton() {
-        setIsSubmitting(false);
+        setIsSubmitting(false)
 
         if (animalRequests.data.status === "submitting") {
             setAnimalRequests({
@@ -174,7 +204,7 @@ export function AnimalRequest() {
                     "data": { ...animalRequests.data, status:"submitted" }
             });
         } else if (animalRequests.data.status === "under-review") {
-            setIsSubmitting(true);
+            setIsSubmitting(true)
             setAnimalRequests({
                     "returned": true,
                     "data": { ...animalRequests.data, status:"rejecting" }
@@ -284,6 +314,10 @@ export function AnimalRequest() {
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
         setDisplayOverlay(true)
+        setStateRollbackOnFailure({
+            "returned": animalRequests.returned,
+            "data": { ...animalRequests.data, status: animalRequests.data.status }
+        })
 
         if(animalRequests.data.status === "submitting") {
             animalRequests.data.status = "submitted"
@@ -292,7 +326,7 @@ export function AnimalRequest() {
         } else if(animalRequests.data.status === "approving-final") {
             animalRequests.data.status = "approved"
         } else if(animalRequests.data.status === "rejecting") {
-            animalRequests.data.status = "rejected"
+                animalRequests.data.status = "rejected"
         }
 
         const data = new FormData(e.currentTarget as HTMLFormElement)
@@ -494,7 +528,7 @@ export function AnimalRequest() {
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={false} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial}/>
+                        <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={false} placeholder="Middle Initial" defaultValue={animalRequests.data.middleinitial} maxLength="8"/>
                     </div>
                 </div>
                 </ErrorMessageHandler>
