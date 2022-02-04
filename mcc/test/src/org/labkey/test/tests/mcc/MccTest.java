@@ -232,8 +232,11 @@ public class MccTest extends BaseWebDriverTest
 
         // Repeat for Cohorts
         waitAndClick(Locator.tagWithAttribute("input", "value", "Add Cohort"));
+        Locator removeBtn = Locator.tagWithText("p", "Cohort 2").parent("div").followingSibling("div").index(0).child("input");
+        waitForElement(removeBtn);
+        scrollIntoView(removeBtn);
         waitForElement(Locator.tagWithText("li", "Number of Animals: Please fill out this field."));
-        waitAndClick(Locator.tagWithText("p", "Cohort 2").parent("div").followingSibling("div").index(0).child("input"));
+        waitAndClick(removeBtn);
 
         // Even though last name is missing, it should still be savable:
         waitAndClickAndWait(getButton("Save"));
