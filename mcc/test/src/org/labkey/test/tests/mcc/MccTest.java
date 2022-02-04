@@ -238,7 +238,7 @@ public class MccTest extends BaseWebDriverTest
         Locator removeBtn = Locator.tagWithText("p", "Cohort 2").parent("div").followingSibling("div").index(0).child("input");
         waitForElement(removeBtn);
         scrollIntoView(Locator.tagWithAttribute("input", "value", "Add Cohort"));
-        waitForElement(Locator.tagWithText("li", "Number of Animals: Please fill out this field."));
+        waitForElement(Locator.tagWithText("li", "Number of Animals: Please enter a number."));
         waitAndClick(removeBtn);
 
         // Even though last name is missing, it should still be savable:
