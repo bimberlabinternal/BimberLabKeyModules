@@ -16,7 +16,14 @@
         </propertyDescriptor>
         <propertyDescriptor name="MCCContactUsers">
             <canSetPerContainer>false</canSetPerContainer>
-            <description>This is a comma separated list of LabKey user names of users that should be notified by email when requests are submitted through MCC.</description>
+            <description>This is a comma separated list of LabKey user names of users that should be notified by email when requests for help or user access are submitted through MCC.</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
+        <propertyDescriptor name="MCCRequestNotificationUsers">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is a comma separated list of LabKey user names of users that should be notified by email when requests for help or user access are submitted through MCC.</description>
             <editPermissions>
                 <permission>ADMIN</permission>
             </editPermissions>
