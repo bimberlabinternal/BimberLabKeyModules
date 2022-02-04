@@ -313,7 +313,9 @@ public class MccTest extends BaseWebDriverTest
         _containerHelper.setFolderType("MCC");
         setModuleProperties(Arrays.asList(
                 new ModulePropertyValue("MCC", "/", "MCCContainer", "/" + getProjectName()),
-                new ModulePropertyValue("MCC", "/", "MCCRequestContainer", "/" + getProjectName())
+                new ModulePropertyValue("MCC", "/", "MCCRequestContainer", "/" + getProjectName()),
+                new ModulePropertyValue("MCC", "/", "MCCContactUsers", getCurrentUserName()),
+                new ModulePropertyValue("MCC", "/", "MCCRequestNotificationUsers", getCurrentUserName())
         ));
     }
 
