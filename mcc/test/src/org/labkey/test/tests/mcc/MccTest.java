@@ -306,6 +306,7 @@ public class MccTest extends BaseWebDriverTest
     {
         // NOTE: delay setting module properties until the study exists, since dashboard depends on it
         _containerHelper.createProject(getProjectName());
+        _containerHelper.enableModules(Arrays.asList("mcc", "study"));
 
         importStudyFromPath();
 
