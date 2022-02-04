@@ -18,6 +18,7 @@ package org.labkey.test.tests.mcc;
 
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import org.labkey.remoteapi.query.SelectRowsResponse;
 import org.labkey.remoteapi.query.Sort;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
+import org.labkey.test.Locators;
 import org.labkey.test.ModulePropertyValue;
 import org.labkey.test.TestFileUtils;
 import org.labkey.test.TestTimeoutException;
@@ -53,6 +55,7 @@ public class MccTest extends BaseWebDriverTest
         _containerHelper.enableModule("Mcc");
 
         doRequestFormTest();
+        doRequestFormTestWithFailure();
     }
 
     private static class FormElement
@@ -126,7 +129,7 @@ public class MccTest extends BaseWebDriverTest
     final FormElement[] FORM_DATA = new FormElement[]{
             new FormElement("investigator-last-name", "last name"),
             new FormElement("investigator-first-name", "first name"),
-            new FormElement("investigator-middle-initial", "middle initial"),
+            new FormElement("investigator-middle-initial", "m"),
             new FormElement("is-principal-investigator-yes", null).isCheckBox(),
             new FormElement("institution-name", "institution name"),
             new FormElement("institution-city", "institution city"),
@@ -207,15 +210,30 @@ public class MccTest extends BaseWebDriverTest
         setFormValues(Arrays.asList("investigator-last-name"));
         waitAndClick(getButton("Submit"));
 
-        //TODO: ensure errors messages present
+        waitForElement(Locator.tagWithText("li", "Last Name: Please fill out this field."));
+
+        // Add Co-I
+        waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
+        waitForElement(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
         // To full exercise saving, add a cohort and co-investigator
+        new FormElement("coinvestigators-0-lastName", "coinvestigators-lastName").setFieldValue(this);
+        new FormElement("coinvestigators-0-firstName", "coinvestigators-firstName").setFieldValue(this);
+        new FormElement("coinvestigators-0-institution", "coinvestigators-institution").setFieldValue(this);
+        waitForElementToDisappear(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
-        // TODO: Now add one more cohort, but dont fill it out. This should be invalid.
+        // Add another, which makes it invalid again
+        waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
         waitAndClick(getButton("Submit"));
-        // Check for cohort error messages. Now remove that cohort
+        waitForElement(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
-        // Repeat for Co-Investigator
+        // Check for error messages. Now remove that Co-I block
+        waitAndClick(Locator.tagWithText("p", "Co-Investigator 2").parent("div").followingSibling("div").index(0).child("input"));
+
+        // Repeat for Cohorts
+        waitAndClick(Locator.tagWithAttribute("input", "value", "Add Cohort"));
+        waitForElement(Locator.tagWithText("li", "Number of Animals: Please fill out this field."));
+        waitAndClick(Locator.tagWithText("p", "Cohort 2").parent("div").followingSibling("div").index(0).child("input"));
 
         // Even though last name is missing, it should still be savable:
         waitAndClickAndWait(getButton("Save"));
@@ -233,6 +251,16 @@ public class MccTest extends BaseWebDriverTest
         getFormElementByName("investigator-last-name").setFieldValue(this);
 
         waitAndClickAndWait(getButton("Submit"));
+
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        Assert.assertEquals("submitted", dr.getDataAsText(0, "status"));
+
+        dr.clickEditRow(0);
+        getFormElementByName("investigator-last-name").waitFor(this);
+        waitForElement(getButton("Approve Request"));
+        impersonateRoles("Editor", "MCC Requestor");
+        assertElementNotPresent(getButton("Submit"));
+        assertElementNotPresent(getButton("Approve Request"));
     }
 
     private FormElement getFormElementByName(String name)
