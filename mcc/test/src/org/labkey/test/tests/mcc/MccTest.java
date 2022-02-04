@@ -238,7 +238,9 @@ public class MccTest extends BaseWebDriverTest
         Locator removeBtn = Locator.tagWithText("p", "Cohort 2").parent("div").followingSibling("div").index(0).child("input");
         waitForElement(removeBtn);
         scrollIntoView(Locator.tagWithAttribute("input", "value", "Add Cohort"));
-        waitForElement(Locator.tagWithText("li", "Number of Animals: Please enter a number."));
+
+        // NOTE: this message seems to be browser-dependent. On Chrome is says 'Please fill out this field', but FF says 'Please enter a number'
+        waitForElement(Locator.tagContainingText("li", "Number of Animals: Please"));
         waitAndClick(removeBtn);
 
         // Even though last name is missing, it should still be savable:
