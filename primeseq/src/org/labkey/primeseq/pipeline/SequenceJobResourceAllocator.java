@@ -3,6 +3,7 @@ package org.labkey.primeseq.pipeline;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONObject;
 import org.labkey.api.cluster.ClusterResourceAllocator;
 import org.labkey.api.data.ConvertHelper;
 import org.labkey.api.pipeline.PipelineJob;
@@ -376,13 +377,29 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     private boolean needsGPUs(PipelineJob job)
     {
         Map<String, String> params = ((HasJobParams) job).getJobParams();
-        return StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus")) != null;
+        return hasCellBender(job) || StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus")) != null;
+    }
+
+    private boolean hasCellBender(PipelineJob job)
+    {
+        if (!(job instanceof HasJobParams))
+        {
+            return false;
+        }
+
+        JSONObject json = ((HasJobParams)job).getParameterJson();
+        return json.optBoolean("singleCellRawData.PrepareRawCounts.runCellBender", false);
     }
 
     private void possiblyAddGpus(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
     {
         Map<String, String> params = ((HasJobParams) job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus"));
+        if (val == null && hasCellBender(job))
+        {
+            val = "1";
+        }
+
         if (val == null)
         {
             return;
