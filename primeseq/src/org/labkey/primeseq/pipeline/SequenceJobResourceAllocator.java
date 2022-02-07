@@ -277,6 +277,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddHighIO(job, engine, lines);
             possiblyAddDisk(job, engine, lines);
             possiblyAddSSD(job, engine, lines);
+            possiblyAddGpus(job, engine, lines);
             possiblyAddExclusive(job, engine, lines);
             possiblyAddInfiniband(job, engine, lines);
             possiblyAddCOVID(job, lines);
@@ -370,6 +371,27 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         job.getLogger().debug("Adding local disk (mb): " + val);
         lines.add("#SBATCH --gres=disk:" + val);
+    }
+
+    private boolean needsGPUs(PipelineJob job)
+    {
+        Map<String, String> params = ((HasJobParams) job).getJobParams();
+        return StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus")) != null;
+    }
+
+    private void possiblyAddGpus(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    {
+        Map<String, String> params = ((HasJobParams) job).getJobParams();
+        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus"));
+        if (val == null)
+        {
+            return;
+        }
+
+        lines.removeIf(line -> line.contains("#SBATCH --gres=gpus:"));
+
+        job.getLogger().debug("Adding gpus: " + val);
+        lines.add("#SBATCH --gres=gpus:" + val);
     }
 
     private void possiblyAddExclusive(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
@@ -504,7 +526,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 }
 
                 //then add
-                lines.add("#SBATCH --partition=exacloud");
+                lines.add("#SBATCH --partition=" + getPartition(job));
                 if (qosName != null)
                 {
                     lines.add("#SBATCH --qos=" + qosName);
@@ -519,9 +541,14 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         else
         {
             //otherwise add defaults
-            lines.add("#SBATCH --partition=exacloud");
+            lines.add("#SBATCH --partition=" + getPartition(job));
             lines.add("#SBATCH --time=" + (time == null ? "0-36" : time));
         }
+    }
+
+    private String getPartition(PipelineJob job)
+    {
+        return needsGPUs(job) ? "gpu" : "exacloud";
     }
 
     private Long getFileSize(PipelineJob job)
