@@ -406,10 +406,10 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return;
         }
 
-        lines.removeIf(line -> line.contains("#SBATCH --gres=gpus:"));
+        lines.removeIf(line -> line.contains("#SBATCH --gres=gpu:"));
 
         job.getLogger().debug("Adding gpus: " + val);
-        lines.add("#SBATCH --gres=gpus:" + val);
+        lines.add("#SBATCH --gres=gpu:" + val);
     }
 
     private void possiblyAddExclusive(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
