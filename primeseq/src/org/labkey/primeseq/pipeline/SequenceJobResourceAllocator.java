@@ -397,6 +397,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus"));
         if (val == null && hasCellBender(job))
         {
+            job.getLogger().debug("Setting GPUs to one since cellbender is used");
             val = "1";
         }
 
