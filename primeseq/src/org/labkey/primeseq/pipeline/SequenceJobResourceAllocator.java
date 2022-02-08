@@ -382,13 +382,33 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
     private boolean hasCellBender(PipelineJob job)
     {
-        if (!(job instanceof HasJobParams))
+        if (!isSequenceSequenceOutputHandlerTask(job))
         {
             return false;
         }
 
-        JSONObject json = ((HasJobParams)job).getParameterJson();
-        return json.optBoolean("singleCellRawData.PrepareRawCounts.runCellBender", false);
+        File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
+        if (jobXml.exists())
+        {
+            try (BufferedReader reader = Readers.getReader(jobXml))
+            {
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    if (line.contains("CellBenderLoupeHandler"))
+                    {
+                        job.getLogger().debug("Forcing the GPU partition for CellBenderLoupeHandler");
+                        return true;
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                job.getLogger().error(e.getMessage(), e);
+            }
+        }
+
+        return false;
     }
 
     private void possiblyAddGpus(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
