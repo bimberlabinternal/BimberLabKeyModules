@@ -32,7 +32,9 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.ehr.EHRService;
 import org.labkey.api.module.AllowedDuringUpgrade;
+import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
@@ -40,17 +42,13 @@ import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
 import org.labkey.api.security.GroupManager;
 import org.labkey.api.security.IgnoresTermsOfUse;
-import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.SecurityManager;
-import org.labkey.api.security.SecurityPolicyManager;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.AdminPermission;
-import org.labkey.api.security.permissions.ReadPermission;
-import org.labkey.api.security.roles.ReaderRole;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
 import org.labkey.api.util.ConfigurationException;
@@ -58,6 +56,7 @@ import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.mcc.etl.ZimsImportTask;
@@ -559,6 +558,42 @@ public class MccController extends SpringActionController
         public boolean handlePost(Object o, BindException errors) throws Exception
         {
             ZimsImportTask.saveLastRun(getContainer(), null);
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public class ImportStudyAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Import MCC Study");
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("This will import the default MCC study in this folder and create other resources, like QCStates. Do you want to continue?");
+
+            return new HtmlView(HtmlString.unsafe(sb.toString()));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            EHRService.get().importStudyDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
 
             return true;
         }
