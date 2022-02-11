@@ -33,9 +33,10 @@ public class ExacloudResourceSettings implements JobResourceSettings
                 }}, 1028),
                 ToolParameterDescriptor.create("localSSD", "Request Nodes With SSD Scratch", "If selected, -C ssdscratch will be added to the submit script, which limits to node with faster SSD scratch space.  This might be important for I/O intense jobs.", "checkbox", null, null),
                 ToolParameterDescriptor.create("useLustre", "Use Old Lustre Working Space", "If selected, this job will use the older Lustre working space.", "checkbox", null, null),
-                ToolParameterDescriptor.create("useExclusive", "Use Exclusive Flag", "If selected, the job allocation can not share nodes with other running jobs. This should not be selected unless you are sure about this. It can help protect memory-intensive, long-running jobs.", "checkbox", null, null),
+                //ToolParameterDescriptor.create("useExclusive", "Use Exclusive Flag", "If selected, the job allocation can not share nodes with other running jobs. This should not be selected unless you are sure about this. It can help protect memory-intensive, long-running jobs.", "checkbox", null, null),
                 ToolParameterDescriptor.create("requireInfiniband", "Require InfiniBand", "If selected, this job will be flagged as -C IB to force the node to have InfiniBand.", "checkbox", null, null),
-                ToolParameterDescriptor.create("covidRelated", "COVID Related Job", "If selected, this job will be flagged as --comment=COVID to help ACC track these jobs.", "checkbox", null, null)
+                ToolParameterDescriptor.create("covidRelated", "COVID Related Job", "If selected, this job will be flagged as --comment=COVID to help ACC track these jobs.", "checkbox", null, null),
+                ToolParameterDescriptor.create("gpus", "GPUs", "The number of GPUs requested for this job. If non-zero, the gpu partition will be used.", "ldk-integerfield", null, null)
         );
     }
 

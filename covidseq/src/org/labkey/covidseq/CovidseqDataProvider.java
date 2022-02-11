@@ -2,6 +2,7 @@ package org.labkey.covidseq;
 
 import org.json.JSONObject;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.TableInfo;
 import org.labkey.api.laboratory.AbstractDataProvider;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.laboratory.NavItem;
@@ -52,7 +53,14 @@ public class CovidseqDataProvider extends AbstractDataProvider
         QueryCache cache = new QueryCache();
 
         return Arrays.asList(
-            new QueryImportNavItem(this, CovidseqSchema.NAME, CovidseqSchema.TABLE_SAMPLES, "COVID Samples", LaboratoryService.NavItemCategory.samples, "Samples", cache)
+            new QueryImportNavItem(this, CovidseqSchema.NAME, CovidseqSchema.TABLE_SAMPLES, "COVID Samples", LaboratoryService.NavItemCategory.samples, "Samples", cache){
+                @Override
+                public ActionURL getImportUrl(Container c, User u)
+                {
+                    TableInfo ti = getTableInfo(c, u);
+                    return ti == null ? null : ti.getImportDataURL(c);
+                }
+            }
         );
     }
 

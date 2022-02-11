@@ -7,6 +7,7 @@ import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.table.ContainerScopedTable;
 import org.labkey.api.module.Module;
 import org.labkey.api.query.DefaultSchema;
@@ -40,8 +41,16 @@ public class CovidseqUserSchema extends SimpleUserSchema
     protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable, ContainerFilter cf)
     {
         if (CovidseqSchema.TABLE_SAMPLES.equalsIgnoreCase(name))
-            return new ContainerScopedTable<>(this, sourceTable, cf, "sampleName").init();
+        {
+            ContainerScopedTable<?> ret = new ContainerScopedTable<>(this, sourceTable, cf, "sampleName").init();
+            LDKService.get().applyNaturalSort(ret, "samplename");
+            LDKService.get().applyNaturalSort(ret, "patientid");
+
+            return(ret);
+        }
         else
+        {
             return super.createWrappedTable(name, sourceTable, cf);
+        }
     }
 }
