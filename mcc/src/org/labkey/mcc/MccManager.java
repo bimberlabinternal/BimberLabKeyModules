@@ -38,6 +38,8 @@ public class MccManager
 
     public static final String ContainerPropName = "MCCContainer";
     public static final String NotifyPropName = "MCCContactUsers";
+    public static final String MCCRequestNotificationUsers = "MCCRequestNotificationUsers";
+    public static final String MCCRequestContainer = "MCCRequestContainer";
     public static final String ZIMSImportPath = "ZIMSImportPath";
 
     public static final String MCC_GROUP_NAME = "MCC Users";
@@ -54,6 +56,17 @@ public class MccManager
     public static MccManager get()
     {
         return _instance;
+    }
+
+    public Container getMCCRequestContainer()
+    {
+        Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
+        ModuleProperty mp = m.getModuleProperties().get(MccManager.MCCRequestContainer);
+        String path = mp.getEffectiveValue(ContainerManager.getRoot());
+        if (path == null)
+            return null;
+
+        return ContainerManager.getForPath(path);
     }
 
     public Container getMCCContainer()
@@ -82,8 +95,18 @@ public class MccManager
 
     public Set<User> getNotificationUsers()
     {
+        return getUsersForProp(MccManager.NotifyPropName);
+    }
+
+    public Set<User> getRequestNotificationUsers()
+    {
+        return getUsersForProp(MccManager.MCCRequestNotificationUsers);
+    }
+
+    private Set<User> getUsersForProp(String propName)
+    {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
-        ModuleProperty mp = m.getModuleProperties().get(MccManager.NotifyPropName);
+        ModuleProperty mp = m.getModuleProperties().get(propName);
         String userNames = mp.getEffectiveValue(ContainerManager.getRoot());
         userNames = StringUtils.trimToNull(userNames);
         if (userNames == null)
@@ -107,7 +130,7 @@ public class MccManager
 
             if (u == null)
             {
-                _log.error("Unknown user registered for MCC notifcations: " + username);
+                _log.error("Unknown user registered for MCC notifications: " + username, new Exception());
             }
 
             if (u != null)

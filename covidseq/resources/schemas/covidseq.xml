@@ -23,7 +23,7 @@
         <tableTitle>Samples</tableTitle>
 <!--        <javaCustomizer class="org.labkey.laboratory.query.SamplesCustomizer" />-->
         <insertUrl></insertUrl>
-        <importUrl>/covidseq/sampleImport.view</importUrl>
+        <importUrl>covidseq/sampleImport.view</importUrl>
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <titleColumn>samplename</titleColumn>
@@ -134,7 +134,7 @@
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>patientId</pkColumnName>
-        <titleColumn>rowid</titleColumn>
+        <titleColumn>identifier</titleColumn>
         <columns>
             <column columnName="rowid">
                 <isAutoInc>true</isAutoInc>
@@ -148,7 +148,7 @@
                 <columnTitle>Patient Identifier</columnTitle>
             </column>
             <column columnName="patientid">
-                <nullable>true</nullable>
+                <nullable>false</nullable>
                 <columnTitle>Patient Id</columnTitle>
                 <phi>PHI</phi>
             </column>
@@ -168,6 +168,10 @@
             <column columnName="age">
                 <nullable>true</nullable>
                 <columnTitle>Age (years)</columnTitle>
+            </column>
+            <column columnName="ageQualifier">
+                <nullable>true</nullable>
+                <columnTitle>Age Qualifier</columnTitle>
             </column>
             <column columnName="gender">
                 <columnTitle>Gender</columnTitle>

@@ -431,7 +431,7 @@ public class PrimeseqController extends SpringActionController
                 }
             }
 
-            Map<String, Set<String>> valueMap = new HashMap<>();
+            Map<String, Set<Object>> valueMap = new HashMap<>();
             for (Integer jobId : form.getJobRowIds())
             {
                 PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
@@ -476,7 +476,7 @@ public class PrimeseqController extends SpringActionController
                                 valueMap.put(name, new HashSet<>());
                             }
 
-                            valueMap.get(name).add(String.valueOf(jobParams.get(jsonName)));
+                            valueMap.get(name).add(jobParams.get(jsonName));
                         }
                     }
                 }

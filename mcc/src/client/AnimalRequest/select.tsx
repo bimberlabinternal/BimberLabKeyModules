@@ -12,10 +12,10 @@ export default function Select(props) {
     }
 
     return (
-        <select className={"tw-block tw-border tw-border-gray-300" + (props.isSubmitting && value === "none" && " tw-border-red-500 ") + "tw-text-gray-700 tw-py-3 tw-pr-8 tw-rounded tw-leading-tight focus:tw-outline-none"}
-            name={props.id} id={props.id} required={props.required} defaultValue={props.defaultValue || "none"} onChange={(e) => onChange(e)}>
+        <select className={"tw-block tw-border tw-border-gray-300" + (props.isSubmitting && " tw-invalid ") + "tw-text-gray-700 tw-py-3 tw-pr-8 tw-rounded tw-leading-tight focus:tw-outline-none"}
+          name={props.id} aria-label={props.ariaLabel} id={props.id} required={props.required} defaultValue={props.defaultValue || ""} onChange={(e) => onChange(e)}>
 
-            <option disabled value="none"> -- </option>
+            <option disabled value=""> -- </option>
             {props.options.map(({ value, label }, _) => <option key={value} value={value}>{label}</option>)}
         </select>
     )

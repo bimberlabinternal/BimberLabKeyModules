@@ -11,7 +11,8 @@ export default function Radio(props) {
         <div id={props.id} className="tw-flex tw-flex-wrap tw-mx-2">
             <div className="tw-w-full md:tw-w-1/6 tw-px-3 tw-mb-6 md:tw-mb-0">
                 <label className="tw-text-gray-700 ml-1">
-                    <input name={props.id} id={props.id + "-yes"} type="radio" value="yes" required={props.required}
+                    <input name={props.id} aria-label={props.ariaLabel} id={props.id + "-yes"} type="radio" value="yes" required={props.required}
+                     className={(props.isSubmitting ? "custom-invalid" : "")}
                      defaultChecked={props.defaultValue === true} onChange={(e) => onChange(e)}/>
                     <p className="tw-inline">Yes</p>
                 </label>
@@ -19,7 +20,8 @@ export default function Radio(props) {
 
             <div className="tw-w-full md:tw-w-1/6 tw-px-3 tw-mb-6 md:tw-mb-0">
                 <label className="tw-text-gray-700 ml-1">
-                    <input name={props.id} id={props.id + "-no"} type="radio" value="no" required={props.required}
+                    <input name={props.id} aria-label={props.ariaLabel} id={props.id + "-no"} type="radio" value="no" required={props.required}
+                     className={(props.isSubmitting ? "custom-invalid" : "")}
                      defaultChecked={props.defaultValue === false} onChange={(e) => onChange(e)}/>
                     <p className="tw-inline">No</p>
                 </label>

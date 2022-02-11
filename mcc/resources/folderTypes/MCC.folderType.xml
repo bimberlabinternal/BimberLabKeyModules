@@ -1,0 +1,36 @@
+<folderType xmlns="http://labkey.org/data/xml/folderType">
+    <name>MCC</name>
+    <description>The default folder layout for MCC</description>
+    <folderTabs>
+        <folderTab>
+            <name>mcc</name>
+            <caption>MCC</caption>
+            <selectors>
+                <selector>
+                    <regex>overview</regex>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Overview</name>
+                    <location>body</location>
+                </webPart>
+                <webPart>
+                    <name>MCC Dashboard Webpart</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+    </folderTabs>
+    <modules>
+        <moduleName>MCC</moduleName>
+        <moduleName>Study</moduleName>
+        <moduleName>Query</moduleName>
+        <moduleName>Pipeline</moduleName>
+        <moduleName>Core</moduleName>
+    </modules>
+    <defaultModule>Core</defaultModule>
+</folderType>

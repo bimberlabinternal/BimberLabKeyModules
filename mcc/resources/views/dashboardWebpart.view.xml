@@ -3,6 +3,6 @@
         <permission name="read"/>
     </permissions>
     <dependencies>
-        <dependency path="mcc/gen/dashboardWebpart"/>
+        <dependency path="gen/dashboardWebpart"/>
     </dependencies>
 </view>
