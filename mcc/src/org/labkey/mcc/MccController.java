@@ -593,7 +593,7 @@ public class MccController extends SpringActionController
         @Override
         public boolean handlePost(Object o, BindException errors) throws Exception
         {
-            EHRService.get().importStudyDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
+            EHRService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
 
             return true;
         }
