@@ -316,7 +316,7 @@ public class MccTest extends BaseWebDriverTest
         _containerHelper.createProject(getProjectName());
         _containerHelper.enableModules(Arrays.asList("MCC", "Study"));
 
-        importStudyFromPath();
+        importStudy();
 
         _containerHelper.setFolderType("MCC");
         setModuleProperties(Arrays.asList(
@@ -332,32 +332,10 @@ public class MccTest extends BaseWebDriverTest
         return "server/modules/BimberLabKeyModules/mcc";
     }
 
-    private void importStudyFromPath() throws IOException
+    private void importStudy()
     {
-        File source = new File(TestFileUtils.getLabKeyRoot(), getModulePath() + "/resources/referenceStudy");
-        File dest = new File(TestFileUtils.getDefaultFileRoot(getProjectName()), "referenceStudy");
-        if (dest.exists())
-        {
-            FileUtils.deleteDirectory(dest);
-        }
-        FileUtils.copyDirectory(source, dest.getParentFile());
-
-        beginAt(WebTestHelper.getBaseURL() + "/pipeline-status/" + getProjectName() + "/begin.view");
-        clickButton("Process and Import Data", defaultWaitForPage);
-
-        _fileBrowserHelper.expandFileBrowserRootNode();
-        _fileBrowserHelper.checkFileBrowserFileCheckbox("study.xml");
-
-        if (isTextPresent("Reload Study"))
-            _fileBrowserHelper.selectImportDataAction("Reload Study");
-        else
-            _fileBrowserHelper.selectImportDataAction("Import Study");
-
-        Locator cb = Locator.checkboxByName("validateQueries");
-        waitForElement(cb);
-        uncheckCheckbox(cb);
-
-        clickButton("Start Import"); // Validate queries page
+        beginAt(WebTestHelper.getBaseURL() + "/mcc/" + getProjectName() + "/importStudy.view");
+        clickButton("OK");
         waitForPipelineJobsToComplete(1, "Study import", false, MAX_WAIT_SECONDS * 2500);
     }
 
