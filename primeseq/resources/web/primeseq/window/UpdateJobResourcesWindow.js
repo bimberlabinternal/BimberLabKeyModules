@@ -1,4 +1,4 @@
-Ext4.define('Primeseq.window.UpdateJobResources', {
+Ext4.define('Primeseq.window.UpdateJobResourcesWindow', {
     extend: 'Ext.window.Window',
 
     statics: {
@@ -9,7 +9,7 @@ Ext4.define('Primeseq.window.UpdateJobResources', {
                 return;
             }
 
-            Ext4.create('Primeseq.window.UpdateJobResources', {
+            Ext4.create('Primeseq.window.UpdateJobResourcesWindow', {
                 jobIds: checked
             }).show()
         }
@@ -79,8 +79,11 @@ Ext4.define('Primeseq.window.UpdateJobResources', {
     },
 
     onSubmit: function(){
-        const json = this.down('#analysissectionpanel').toJSON();
         Ext4.Msg.wait('Loading...');
+
+        var panel = this.down('#analysissectionpanel');
+        LDK.Assert.assertNotEmpty('analysissectionpanel was null in UpdateJobResourcesWindow', panel);
+        const json = panel.toJSON();
         LABKEY.Ajax.request({
             method: 'POST',
             url: LABKEY.ActionURL.buildURL('primeseq', 'setResourceSettingsForJob'),
