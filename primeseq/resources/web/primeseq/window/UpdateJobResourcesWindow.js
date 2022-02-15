@@ -10,8 +10,9 @@ Ext4.define('Primeseq.window.UpdateJobResourcesWindow', {
             }
 
             Ext4.create('Primeseq.window.UpdateJobResourcesWindow', {
-                jobIds: checked
-            }).show()
+                jobIds: checked,
+                autoShow: true
+            });
         }
     },
 
