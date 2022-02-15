@@ -134,14 +134,14 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 if (so == null)
                 {
                     log.error("Unknown output file: " + rowId + " for field: " + field + ", for variant release: " + releaseId);
-                    return;
+                    continue;
                 }
 
                 File f = so.getFile();
                 if (f == null)
                 {
                     log.error("No file for outputfile: " + rowId + " for release: " + releaseId);
-                    return;
+                    continue;
                 }
 
                 expectedFiles.add(f);
