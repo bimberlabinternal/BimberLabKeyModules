@@ -42,8 +42,11 @@ Ext4.define('Primeseq.window.UpdateJobResourcesWindow', {
         Ext4.Msg.wait('Loading...');
         LABKEY.Ajax.request({
             method: 'POST',
-            url: LABKEY.ActionURL.buildURL('primeseq', 'getResourceSettingsForJob', null, {jobIds: this.jobIds.join(',')}),
+            url: LABKEY.ActionURL.buildURL('primeseq', 'getResourceSettingsForJob', null),
             scope: this,
+            jsonData: {
+                jobIds: this.jobIds.join(',')
+            },
             success: function(response){
                 LDK.Utils.decodeHttpResponseJson(response);
                 if (response.responseJSON){

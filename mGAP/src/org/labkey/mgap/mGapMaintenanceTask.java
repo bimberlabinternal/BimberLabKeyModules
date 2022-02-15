@@ -133,7 +133,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 SequenceOutputFile so = SequenceOutputFile.getForId(rowId);
                 if (so == null)
                 {
-                    log.error("Unknown output file: " + rowId + " for release: " + releaseId);
+                    log.error("Unknown output file: " + rowId + " for field: " + field + ", for variant release: " + releaseId);
                     return;
                 }
 
