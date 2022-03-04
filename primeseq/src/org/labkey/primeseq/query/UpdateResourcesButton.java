@@ -13,7 +13,7 @@ public class UpdateResourcesButton extends SimpleButtonConfigFactory
 {
     public UpdateResourcesButton()
     {
-        super(ModuleLoader.getInstance().getModule(PrimeseqModule.class), "Update Cluster Resources", "Primeseq.window.UpdateJobResources.buttonHandler(dataRegionName);", Arrays.asList(
+        super(ModuleLoader.getInstance().getModule(PrimeseqModule.class), "Update Cluster Resources", "Primeseq.window.UpdateJobResourcesWindow.buttonHandler(dataRegionName);", Arrays.asList(
                 ClientDependency.supplierFromPath("Ext4"),
                 ClientDependency.supplierFromPath("laboratory.context"),
                 ClientDependency.supplierFromPath("primeseq/window/UpdateJobResourcesWindow.js"),
