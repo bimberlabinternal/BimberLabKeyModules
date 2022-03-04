@@ -105,7 +105,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             SequenceOutputFile so = SequenceOutputFile.getForId(rowId);
             if (so == null)
             {
-                log.error("Unknown output file: " + rowId + " for release: " + releaseId);
+                log.error("Unknown output file in tracksPerRelease: " + rowId + " for release: " + releaseId);
                 return;
             }
 
@@ -133,15 +133,15 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 SequenceOutputFile so = SequenceOutputFile.getForId(rowId);
                 if (so == null)
                 {
-                    log.error("Unknown output file: " + rowId + " for release: " + releaseId);
-                    return;
+                    log.error("Unknown output file: " + rowId + " for field: " + field + ", for variant release: " + releaseId);
+                    continue;
                 }
 
                 File f = so.getFile();
                 if (f == null)
                 {
                     log.error("No file for outputfile: " + rowId + " for release: " + releaseId);
-                    return;
+                    continue;
                 }
 
                 expectedFiles.add(f);
