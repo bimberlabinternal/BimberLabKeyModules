@@ -9,7 +9,7 @@
                 <deleteUrl />
                 <columns>
                     <column columnName="Id">
-                        <!--<isKeyField>true</isKeyField>-->
+                        <url></url>
                     </column>
                     <column columnName="date">
                         <isHidden>true</isHidden>
@@ -118,7 +118,7 @@
                             <fkTable>animal</fkTable>
                             <fkColumnName>id</fkColumnName>
                         </fk>
-                        <url>/ehr/participantView.view?participantId=${dam}</url>
+                        <url></url>
                     </column>
                     <column columnName="sire">
                         <columnTitle>Sire</columnTitle>
@@ -127,7 +127,7 @@
                             <fkTable>animal</fkTable>
                             <fkColumnName>id</fkColumnName>
                         </fk>
-                        <url>/ehr/participantView.view?participantId=${sire}</url>
+                        <url></url>
                     </column>
                     <column columnName="origin">
                         <columnTitle>Origin</columnTitle>
