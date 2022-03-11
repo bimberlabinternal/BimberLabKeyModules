@@ -503,6 +503,7 @@
         <pkColumnName>rowid</pkColumnName>
         <tableTitle>Animal ID Mapping</tableTitle>
         <auditLogging>DETAILED</auditLogging>
+        <titleColumn>externalAlias</titleColumn>
         <columns>
             <column columnName="rowid">
                 <isAutoInc>true</isAutoInc>
