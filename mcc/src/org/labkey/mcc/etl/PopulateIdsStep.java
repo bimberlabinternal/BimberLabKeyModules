@@ -61,7 +61,7 @@ public class PopulateIdsStep implements TaskRefTask
     {
         final Map<Container, List<Map<String, Object>>> toAdd = new HashMap<>();
 
-        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set("originalId", "container"), new SimpleFilter(FieldKey.fromString(fieldName), null, CompareType.ISBLANK), null);
+        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set(aliasField, "container"), new SimpleFilter(FieldKey.fromString(fieldName), null, CompareType.ISBLANK), null);
         if (ts.exists())
         {
             ts.forEachResults(rs -> {
@@ -69,7 +69,7 @@ public class PopulateIdsStep implements TaskRefTask
                 List<Map<String, Object>> rows = toAdd.containsKey(c) ? toAdd.get(c) : new ArrayList<>();
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
                 row.put("subjectname", rs.getString(FieldKey.fromString(aliasField)));
-                row.put("externalAlias", null);
+                row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
 
                 rows.add(row);
                 toAdd.put(c, rows);
