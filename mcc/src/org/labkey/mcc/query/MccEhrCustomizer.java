@@ -30,6 +30,11 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             {
                 customizeAnimalTable((AbstractTableInfo)table);
             }
+            else if (matches(table, "study", "demographics"))
+            {
+                addMccAlias((AbstractTableInfo)table, "dam", "damMccAlias", "Dam MCC Alias");
+                addMccAlias((AbstractTableInfo)table, "sire", "sireMccAlias", "Sire MCC Alias");
+            }
         }
     }
 
@@ -44,11 +49,15 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             }
         }
 
-        String mccId = "mccAlias";
-        if (ti.getColumn(mccId) == null)
+        addMccAlias(ti, "Id", "mccAlias", "MCC Alias");
+    }
+
+    private void addMccAlias(AbstractTableInfo ti, String sourceCol, String name, String label)
+    {
+        if (ti.getColumn(name) == null)
         {
-            WrappedColumn ci = new WrappedColumn(ti.getColumn("Id"), mccId);
-            ci.setFieldKey(FieldKey.fromParts(mccId));
+            WrappedColumn ci = new WrappedColumn(ti.getColumn(sourceCol), name);
+            ci.setFieldKey(FieldKey.fromParts(name));
             final UserSchema us = getUserSchema(ti, MccSchema.NAME);
             LookupForeignKey fk = new LookupForeignKey("subjectname")
             {
@@ -62,7 +71,7 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
 
             ci.setFk(fk);
             ci.setUserEditable(false);
-            ci.setLabel("MCC Alias");
+            ci.setLabel(label);
             ti.addColumn(ci);
         }
     }

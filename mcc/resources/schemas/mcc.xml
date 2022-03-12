@@ -517,7 +517,7 @@
                 <nullable>false</nullable>
             </column>
             <column columnName="externalAlias">
-                <columnTitle>mGAP Alias</columnTitle>
+                <columnTitle>MCC Alias</columnTitle>
                 <nullable>false</nullable>
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>
