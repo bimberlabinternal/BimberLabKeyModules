@@ -54,14 +54,13 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
 
     private void addMccAlias(AbstractTableInfo ti, String sourceCol, String name, String label)
     {
+        if (ti.getColumn(sourceCol) == null)
+        {
+            return;
+        }
+
         if (ti.getColumn(name) == null)
         {
-            if (ti.getColumn(sourceCol) == null)
-            {
-                _log.error("Unable to find column: " + sourceCol + " for table: " + ti.getName(), new Exception());
-                return;
-            }
-
             WrappedColumn ci = new WrappedColumn(ti.getColumn(sourceCol), name);
             ci.setFieldKey(FieldKey.fromParts(name));
             final UserSchema us = getUserSchema(ti, MccSchema.NAME);
