@@ -117,6 +117,7 @@
                             <fkDbSchema>study</fkDbSchema>
                             <fkTable>animal</fkTable>
                             <fkColumnName>id</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                         <url></url>
                     </column>
@@ -126,6 +127,7 @@
                             <fkDbSchema>study</fkDbSchema>
                             <fkTable>animal</fkTable>
                             <fkColumnName>id</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                         <url></url>
                     </column>

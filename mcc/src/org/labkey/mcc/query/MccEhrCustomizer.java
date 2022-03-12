@@ -32,10 +32,15 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             }
             else if (matches(table, "study", "demographics"))
             {
-                addMccAlias((AbstractTableInfo)table, "dam", "damMccAlias", "Dam MCC Alias");
-                addMccAlias((AbstractTableInfo)table, "sire", "sireMccAlias", "Sire MCC Alias");
+                customizeDemographics((AbstractTableInfo)table);
             }
         }
+    }
+
+    private void customizeDemographics(AbstractTableInfo ti)
+    {
+        addMccAlias(ti, "dam", "damMccAlias", "Dam MCC Alias");
+        addMccAlias(ti, "sire", "sireMccAlias", "Sire MCC Alias");
     }
 
     private void customizeAnimalTable(AbstractTableInfo ti)
