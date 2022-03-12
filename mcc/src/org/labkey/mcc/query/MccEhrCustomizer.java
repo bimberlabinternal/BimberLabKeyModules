@@ -56,6 +56,12 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
     {
         if (ti.getColumn(name) == null)
         {
+            if (ti.getColumn(sourceCol) == null)
+            {
+                _log.error("Unable to find column: " + sourceCol + " for table: " + ti.getName());
+                return;
+            }
+
             WrappedColumn ci = new WrappedColumn(ti.getColumn(sourceCol), name);
             ci.setFieldKey(FieldKey.fromParts(name));
             final UserSchema us = getUserSchema(ti, MccSchema.NAME);
