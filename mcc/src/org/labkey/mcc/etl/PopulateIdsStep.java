@@ -57,18 +57,21 @@ public class PopulateIdsStep implements TaskRefTask
         return new RecordedActionSet();
     }
 
-    private void populateForField(PipelineJob job, TableInfo sourceTi, String fieldName, String aliasField)
+    private void populateForField(PipelineJob job, TableInfo sourceTi, String fieldName, String originalIdField)
     {
         final Map<Container, List<Map<String, Object>>> toAdd = new HashMap<>();
 
-        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set(aliasField, "container"), new SimpleFilter(FieldKey.fromString(fieldName), null, CompareType.ISBLANK), null);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString(fieldName), null, CompareType.ISBLANK);
+        filter.addCondition(FieldKey.fromString(originalIdField), null, CompareType.NONBLANK);
+
+        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set(originalIdField, "container"), filter, null);
         if (ts.exists())
         {
             ts.forEachResults(rs -> {
                 Container c = ContainerManager.getForId(rs.getString(FieldKey.fromString("container")));
                 List<Map<String, Object>> rows = toAdd.containsKey(c) ? toAdd.get(c) : new ArrayList<>();
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
-                row.put("subjectname", rs.getString(FieldKey.fromString(aliasField)));
+                row.put("subjectname", rs.getString(FieldKey.fromString(originalIdField)));
                 row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
 
                 rows.add(row);
