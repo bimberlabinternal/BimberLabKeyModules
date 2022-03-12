@@ -58,7 +58,7 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
         {
             if (ti.getColumn(sourceCol) == null)
             {
-                _log.error("Unable to find column: " + sourceCol + " for table: " + ti.getName());
+                _log.error("Unable to find column: " + sourceCol + " for table: " + ti.getName(), new Exception());
                 return;
             }
 
@@ -73,8 +73,7 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
                     return us.getTable(MccSchema.TABLE_ANIMAL_MAPPING);
                 }
             };
-            fk.addJoin(FieldKey.fromString("Id"), "subjectname", false);
-
+            fk.addJoin(FieldKey.fromString(sourceCol), "subjectname", false);
             ci.setFk(fk);
             ci.setUserEditable(false);
             ci.setLabel(label);
