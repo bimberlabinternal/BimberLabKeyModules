@@ -443,7 +443,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
                                 map.put("af", line[10]);
                                 map.put("identifier", line[11]);
-                                map.put("cadd", line[12]);
+                                Double cadd = StringUtils.trimToNull(line[12]) == null ? null : Double.parseDouble(line[12]);
+                                map.put("cadd", cadd);
                                 map.put("objectId", new GUID().toString());
 
                                 variantTableRows.add(map);
