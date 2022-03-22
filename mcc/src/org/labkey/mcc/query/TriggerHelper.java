@@ -72,8 +72,8 @@ public class TriggerHelper
     }
 
     public void sendNotification(int rowid) {
-        Set<User> users = MccManager.get().getRequestNotificationUsers();
-        if (users == null || users.isEmpty())
+        Set<Address> emails = MccManager.get().getRequestNotificationUserEmails();
+        if (emails == null || emails.isEmpty())
         {
             _log.error("An MCC request was finalized but there are no notification users");
             return;
@@ -81,12 +81,6 @@ public class TriggerHelper
 
         try
         {
-            Set<Address> emails = new HashSet<>();
-            for (User u : users)
-            {
-                emails.add(new InternetAddress(u.getEmail()));
-            }
-
             MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
             mail.setFrom("mcc-do-not-reply@ohsu.edu");
             mail.setSubject("MCC Animal Request");

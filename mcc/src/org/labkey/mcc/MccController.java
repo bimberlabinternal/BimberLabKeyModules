@@ -156,17 +156,11 @@ public class MccController extends SpringActionController
 
                 Table.insert(UserManager.getGuestUser(), ti, row);
 
-                Set<User> users = MccManager.get().getNotificationUsers();
-                if (users != null && !users.isEmpty())
+                Set<Address> emails = MccManager.get().getNotificationUserEmails();
+                if (emails != null && !emails.isEmpty())
                 {
                     try
                     {
-                        Set<Address> emails = new HashSet<>();
-                        for (User u : users)
-                        {
-                            emails.add(new InternetAddress(u.getEmail()));
-                        }
-
                         MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                         Container c = MccManager.get().getMCCContainer();
                         if (c == null)
@@ -480,17 +474,11 @@ public class MccController extends SpringActionController
         @Override
         public Object execute(RequestHelpForm form, BindException errors) throws Exception
         {
-            Set<User> users = MccManager.get().getNotificationUsers();
-            if (users != null && !users.isEmpty())
+            Set<Address> emails = MccManager.get().getNotificationUserEmails();
+            if (emails != null && !emails.isEmpty())
             {
                 try
                 {
-                    Set<Address> emails = new HashSet<>();
-                    for (User u : users)
-                    {
-                        emails.add(new InternetAddress(u.getEmail()));
-                    }
-
                     MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                     mail.setEncodedHtmlContent("A support request was submitted from MCC by: " + form.getEmail() + "<br><br>Message:<br>" + form.getComment());
                     mail.setFrom(form.getEmail());

@@ -21,13 +21,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
+import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.module.ModuleProperty;
-import org.labkey.api.security.User;
-import org.labkey.api.security.UserManager;
+import org.labkey.api.security.SecurityManager;
+import org.labkey.api.security.UserPrincipal;
 import org.labkey.api.security.ValidEmail;
 
+import javax.mail.Address;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -93,17 +95,17 @@ public class MccManager
         return new File(val);
     }
 
-    public Set<User> getNotificationUsers()
+    public Set<Address> getNotificationUserEmails()
     {
-        return getUsersForProp(MccManager.NotifyPropName);
+        return getUserEmailsForProp(MccManager.NotifyPropName);
     }
 
-    public Set<User> getRequestNotificationUsers()
+    public Set<Address> getRequestNotificationUserEmails()
     {
-        return getUsersForProp(MccManager.MCCRequestNotificationUsers);
+        return getUserEmailsForProp(MccManager.MCCRequestNotificationUsers);
     }
 
-    private Set<User> getUsersForProp(String propName)
+    private Set<Address> getUserEmailsForProp(String propName)
     {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
         ModuleProperty mp = m.getModuleProperties().get(propName);
@@ -112,30 +114,23 @@ public class MccManager
         if (userNames == null)
             return null;
 
-        Set<User> ret = new HashSet<>();
-        for (String username : userNames.split(","))
+        Set<Address> ret = new HashSet<>();
+        for (String principalName : userNames.split(","))
         {
-            User u = UserManager.getUserByDisplayName(username);
-            if (u == null)
+            UserPrincipal up = SecurityManager.getPrincipal(principalName, getMCCContainer(), true);
+            if (up == null)
             {
-                try
-                {
-                    u = UserManager.getUser(new ValidEmail(username));
-                }
-                catch (ValidEmail.InvalidEmailException e)
-                {
-                    //ignore
-                }
+                _log.error("Unknown user/group registered for MCC notifications: " + principalName, new Exception());
+                continue;
             }
 
-            if (u == null)
+            try
             {
-                _log.error("Unknown user registered for MCC notifications: " + username, new Exception());
+                ret.addAll(NotificationService.get().getEmailsForPrincipal(up));
             }
-
-            if (u != null)
+            catch (ValidEmail.InvalidEmailException e)
             {
-                ret.add(u);
+                _log.error("Invalid MCC email: " + principalName, e);
             }
         }
 
