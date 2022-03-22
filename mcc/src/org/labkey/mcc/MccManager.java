@@ -26,6 +26,8 @@ import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.module.ModuleProperty;
 import org.labkey.api.security.SecurityManager;
+import org.labkey.api.security.User;
+import org.labkey.api.security.UserManager;
 import org.labkey.api.security.UserPrincipal;
 import org.labkey.api.security.ValidEmail;
 
@@ -117,20 +119,35 @@ public class MccManager
         Set<Address> ret = new HashSet<>();
         for (String principalName : userNames.split(","))
         {
-            UserPrincipal up = SecurityManager.getPrincipal(principalName, getMCCContainer(), true);
-            if (up == null)
+            User u = UserManager.getUserByDisplayName(principalName);
+            if (u != null)
             {
-                _log.error("Unknown user/group registered for MCC notifications: " + principalName, new Exception());
-                continue;
+                try
+                {
+                    ret.add(new ValidEmail(u.getEmail()).getAddress());
+                }
+                catch (ValidEmail.InvalidEmailException e)
+                {
+                    _log.error("Invalid MCC email: " + principalName, e);
+                }
             }
+            else
+            {
+                UserPrincipal up = SecurityManager.getPrincipal(principalName, getMCCContainer(), true);
+                if (up == null)
+                {
+                    _log.error("Unknown user/group registered for MCC notifications: [" + principalName + "]", new Exception());
+                    continue;
+                }
 
-            try
-            {
-                ret.addAll(NotificationService.get().getEmailsForPrincipal(up));
-            }
-            catch (ValidEmail.InvalidEmailException e)
-            {
-                _log.error("Invalid MCC email: " + principalName, e);
+                try
+                {
+                    ret.addAll(NotificationService.get().getEmailsForPrincipal(up));
+                }
+                catch (ValidEmail.InvalidEmailException e)
+                {
+                    _log.error("Invalid MCC email: " + principalName, e);
+                }
             }
         }
 
