@@ -119,7 +119,7 @@ public class MccManager
         {
             UserPrincipal up = SecurityManager.getPrincipal(principalName, getMCCContainer(), true);
             if (up == null)
-            {
+            {m
                 _log.error("Unknown user/group registered for MCC notifications: " + principalName, new Exception());
                 continue;
             }
