@@ -224,6 +224,23 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                     throw new PipelineJobException("Missing cell to HTO file");
                 }
 
+                double maxHashingPctDiscordant = -1;
+                if (ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_DISCORDANT) != null)
+                {
+                    maxHashingPctDiscordant = ConvertHelper.convert(ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_DISCORDANT), Double.class);
+                }
+
+                double maxHashingPctFail = -1;
+                if (ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_FAIL) != null)
+                {
+                    maxHashingPctFail = ConvertHelper.convert(ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_FAIL), Double.class);
+                }
+
+                if (maxHashingPctDiscordant > -1 || maxHashingPctFail > -1)
+                {
+                    validateHashingRates(ctx, cellToHto, maxHashingPctFail, maxHashingPctDiscordant);
+                }
+
                 action.addOutput(cellToHto, CellRangerVDJUtils.TCR_HASHING_CALLS, false);
                 ctx.getFileManager().addStepOutputs(action, output);
             }
@@ -335,6 +352,67 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
             //TODO: consider looking up GEX data?
 
             return cellBarcodeWhitelist;
+        }
+    }
+
+    private void validateHashingRates(JobContext ctx, File cellbarcodeToHtoFile, double maxHashingPctFail, double maxHashingPctDiscordant) throws PipelineJobException
+    {
+        try (CSVReader reader = new CSVReader(Readers.getReader(cellbarcodeToHtoFile), '\t'))
+        {
+            String[] line;
+            int discordant = 0;
+            int negative = 0;
+            int totalLines = 0;
+
+            int consensusIdx = -1;
+            while ((line = reader.readNext()) != null)
+            {
+                if (line.length < 3)
+                {
+                    throw new PipelineJobException("Line too short");
+                }
+
+                //header
+                if ("cellbarcode".equalsIgnoreCase(line[0]))
+                {
+                    consensusIdx = Arrays.asList(line).indexOf("consensuscall");
+                    continue;
+                }
+
+                if (consensusIdx == -1)
+                {
+                    throw new PipelineJobException("consensuscall column not found");
+                }
+
+                String hto = line[consensusIdx];
+                totalLines++;
+                if ("Discordant".equals(hto))
+                {
+                    discordant++;
+                }
+                else if ("Negative".equals(hto))
+                {
+                    negative++;
+                }
+            }
+
+            double fractionDiscordantHashing = (double)discordant / (double)totalLines;
+            if (maxHashingPctDiscordant != -1 && fractionDiscordantHashing > maxHashingPctDiscordant)
+            {
+                CellHashingService.get().copyHtmlLocally(ctx);
+                throw new PipelineJobException("Discordant hashing rate was : " + fractionDiscordantHashing + ", which is above threshold of: " + maxHashingPctDiscordant + ". Total cells: " + totalLines);
+            }
+
+            double fractionFailedHashing = (double)(discordant + negative) / (double)totalLines;
+            if (maxHashingPctFail != -1 && fractionFailedHashing > maxHashingPctFail)
+            {
+                CellHashingService.get().copyHtmlLocally(ctx);
+                throw new PipelineJobException("Fraction failing cell hashing was : " + fractionFailedHashing + ", which is above threshold of: " + maxHashingPctFail + ". Total cells: " + totalLines);
+            }
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
         }
     }
 }
