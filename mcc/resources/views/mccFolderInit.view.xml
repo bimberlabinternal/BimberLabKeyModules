@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view" title="MCC Site Admin">
+<view xmlns="http://labkey.org/data/xml/view" title="Initialize MCC Study Folder">
     <permissions>
         <permission name="admin"/>
     </permissions>

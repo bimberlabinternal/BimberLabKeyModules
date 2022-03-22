@@ -1,0 +1,24 @@
+<script type="text/javascript">
+
+Ext4.onReady(function (){
+
+if (LABKEY.Security.currentUser.isAdmin){
+    var webpart = <%=webpartContext%>;
+
+    Ext4.create('LDK.panel.NavPanel', {
+        renderTo: webpart.wrapperDivId,
+        width: 350,
+        sections: [
+            {header: 'Folder Initialization',
+                items: [
+                    {name: '1) Load/Create MCC Study', url: '<%=contextPath%>/mcc<%=containerPath%>/importStudy.view?'},
+                    {name: '2) Create Study QC States', url: '<%=contextPath%>/ehr<%=containerPath%>/ensureQcStates.view?'},
+                    {name: '3) Populate Initial Data', url: '<%=contextPath%>/EHR<%=containerPath%>/populateInitialData.view?'},
+                ]
+            }
+        ]
+    });
+}
+});
+
+</script>
