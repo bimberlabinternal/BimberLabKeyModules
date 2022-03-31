@@ -225,13 +225,13 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 }
 
                 double maxHashingPctDiscordant = -1;
-                if (ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_DISCORDANT) != null)
+                if (ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_DISCORDANT) != null && !StringUtils.isEmpty(ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_DISCORDANT).toString()))
                 {
                     maxHashingPctDiscordant = ConvertHelper.convert(ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_DISCORDANT), Double.class);
                 }
 
                 double maxHashingPctFail = -1;
-                if (ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_FAIL) != null)
+                if (ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_FAIL) != null && !StringUtils.isEmpty(ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_FAIL).toString()))
                 {
                     maxHashingPctFail = ConvertHelper.convert(ctx.getParams().get(CellHashingService.MAX_HASHING_PCT_FAIL), Double.class);
                 }
