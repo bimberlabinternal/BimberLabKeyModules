@@ -226,6 +226,7 @@
                 <columnTitle>Object Id</columnTitle>
                 <isHidden>true</isHidden>
                 <nullable>false</nullable>
+                <shownInDetailsView>false</shownInDetailsView>
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
