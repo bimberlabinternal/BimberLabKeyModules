@@ -152,9 +152,6 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
             log.info("total active pipeline jobs: " + _jobGuids.size());
 
             //hacky, but this is only planned to be used by us
-            inspectFolder(log, new File("/home/exacloud/lustre1/prime-seq/workDir/"));
-            inspectFolder(log, new File("/home/exacloud/lustre1/prime-seq/cachedData/"));
-
             inspectFolder(log, new File("/home/exacloud/gscratch/prime-seq/workDir/"));
             inspectFolder(log, new File("/home/exacloud/gscratch/prime-seq/cachedData/"));
         }
