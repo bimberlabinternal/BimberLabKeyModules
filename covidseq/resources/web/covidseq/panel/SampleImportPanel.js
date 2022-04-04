@@ -574,6 +574,11 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         var errorMessages = [];
         var infoMessages = [];
         Ext4.Array.forEach(rows, function(row, rowIdx){
+            // skip blank rows:
+            if (Ext4.isEmpty(row.join(''))) {
+                return;
+            }
+
             var data = {
                 objectId: LABKEY.Utils.generateUUID()
             };
