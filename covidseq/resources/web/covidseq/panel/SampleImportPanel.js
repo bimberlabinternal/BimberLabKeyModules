@@ -227,7 +227,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
             if (panel.COUNTY_MAP[val]) {
                 if (row.state) {
                     if (panel.STATE_ABBREV[val.toLowerCase()]) {
-                        row.state = panel.STATE_ABBREV[row.state.toLowerCase()]
+                        row.state = panel.STATE_ABBREV[val.toLowerCase()]
                     }
 
                     if (panel.COUNTY_MAP[val].states.indexOf(row.state) === -1) {
@@ -640,7 +640,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             // CT of record is N for taqpath, N1 for CDC?
 
-            data._patientid = data.patientid || data.state + '-OHSU-' + data.samplename.replaceAll('CV', '');
+            data._patientid = data.patientid || data.state + '-OHSU-' + (data.samplename ? data.samplename.replaceAll('CV', '') : 'Sample');
             ret.push(data);
         }, this);
 
