@@ -26,9 +26,12 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         allowBlank: true
     },{
         name: 'cdna_plate_id',
-        labels: ['cDNA_Plate_ID', 'RQG_alt_ID', 'MM Alt ID', 'Alt ID', 'MM ID', 'RQG_alt_ID'],
+        labels: ['cDNA_Plate_ID', 'MM Alt ID', 'Alt ID', 'MM ID'],
         alwaysShow: true,
         allowBlank: true
+    },{
+        name: 'RQG_alt_ID',
+        labels: ['RQG_alt_ID', 'RQG_alt_ID']
     },{
         name: 'gender',
         labels: ['Gender', 'Sex'],
