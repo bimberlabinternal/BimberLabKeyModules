@@ -226,8 +226,9 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             if (panel.COUNTY_MAP[val]) {
                 if (row.state) {
-                    if (panel.STATE_ABBREV[val.toLowerCase()]) {
-                        row.state = panel.STATE_ABBREV[val.toLowerCase()]
+                    // Correct state, if needed:
+                    if (panel.STATE_ABBREV[row.state.toLowerCase()]) {
+                        row.state = panel.STATE_ABBREV[row.state.toLowerCase()]
                     }
 
                     if (panel.COUNTY_MAP[val].states.indexOf(row.state) === -1) {
