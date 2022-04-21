@@ -10,21 +10,26 @@ import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbSequence;
 import org.labkey.api.data.DbSequenceManager;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
+import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.MailHelper;
+import org.labkey.api.view.UnauthorizedException;
 import org.labkey.mcc.MccManager;
 import org.labkey.mcc.MccSchema;
 
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -96,5 +101,22 @@ public class TriggerHelper
         {
             _log.error("Unable to send MCC email", e);
         }
+    }
+
+    public void cascadeDelete(String schemaName, String queryName, String keyField, Object keyValue) throws SQLException
+    {
+        DbSchema schema = QueryService.get().getUserSchema(_user, _container, schemaName).getDbSchema();
+        if (schema == null)
+            throw new RuntimeException("Unknown schema: " + schemaName);
+
+        TableInfo table = schema.getTable(queryName);
+        if (table == null)
+            throw new RuntimeException("Unknown table: " + schemaName + "." + queryName);
+
+        if (!_container.hasPermission(_user, DeletePermission.class))
+            throw new UnauthorizedException("User does not have permission to delete from the table: " + table.getPublicName());
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString(keyField), keyValue);
+        Table.delete(table, filter);
     }
 }

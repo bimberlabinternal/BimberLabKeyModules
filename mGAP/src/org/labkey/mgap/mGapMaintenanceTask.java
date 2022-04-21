@@ -120,7 +120,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             expectedFiles.add(new File(f.getPath() + ".tbi"));
         });
 
-        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId");
+        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId");
         new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), fields, new SimpleFilter(FieldKey.fromString("objectid"), releaseId), null).forEachResults(rs -> {
             for (String field : fields)
             {

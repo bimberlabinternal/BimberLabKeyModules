@@ -94,6 +94,8 @@
                     <column>liftedVcfId/library_id/name</column>
                     <column>sitesOnlyVcfId/dataid/DataFileUrl</column>
                     <column>sitesOnlyVcfId/name</column>
+                    <column>novelSitesVcfId/dataid/DataFileUrl</column>
+                    <column>novelSitesVcfId/name</column>
                     <column>humanJbrowseId</column>
                     <column>objectId</column>
                 </sourceColumns>
@@ -104,6 +106,7 @@
                     <column source="vcfId/dataid/DataFileUrl" target="vcfId" transformClass="org.labkey.mgap.columnTransforms.OutputFileTransform" />
                     <column source="variantTable/dataid/DataFileUrl" target="variantTable" transformClass="org.labkey.mgap.columnTransforms.OutputFileTransform" />
                     <column source="sitesOnlyVcfId/dataid/DataFileUrl" target="sitesOnlyVcfId" transformClass="org.labkey.mgap.columnTransforms.OutputFileTransform" />
+                    <column source="novelSitesVcfId/dataid/DataFileUrl" target="novelSitesVcfId" transformClass="org.labkey.mgap.columnTransforms.OutputFileTransform" />
                     <column source="jbrowseId" transformClass="org.labkey.mgap.columnTransforms.JBrowseSessionTransform"/>
                     <column source="liftedVcfId/dataid/DataFileUrl" target="liftedVcfId" transformClass="org.labkey.mgap.columnTransforms.LiftedVcfTransform" />
                     <column source="humanJbrowseId" transformClass="org.labkey.mgap.columnTransforms.JBrowseHumanSessionTransform"/>
