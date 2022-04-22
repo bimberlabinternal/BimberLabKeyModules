@@ -50,42 +50,53 @@ public class PopulateIdsStep implements TaskRefTask
             throw new PipelineJobException("Unable to find table: aggregatedDemographics");
         }
 
-        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set("originalId", "container"), new SimpleFilter(FieldKey.fromString("Id"), null, CompareType.ISBLANK), null);
+        populateForField(job, sourceTi, "Id", "originalId");
+        populateForField(job, sourceTi, "dam", "originalDam");
+        populateForField(job, sourceTi, "sire", "originalSire");
+
+        return new RecordedActionSet();
+    }
+
+    private void populateForField(PipelineJob job, TableInfo sourceTi, String fieldName, String originalIdField)
+    {
+        final Map<Container, List<Map<String, Object>>> toAdd = new HashMap<>();
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString(fieldName), null, CompareType.ISBLANK);
+        filter.addCondition(FieldKey.fromString(originalIdField), null, CompareType.NONBLANK);
+
+        TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set(originalIdField, "container"), filter, null);
         if (ts.exists())
         {
-            final Map<Container, List<Map<String, Object>>> toAdd = new HashMap<>();
             ts.forEachResults(rs -> {
                 Container c = ContainerManager.getForId(rs.getString(FieldKey.fromString("container")));
                 List<Map<String, Object>> rows = toAdd.containsKey(c) ? toAdd.get(c) : new ArrayList<>();
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
-                row.put("subjectname", rs.getString(FieldKey.fromString("originalId")));
-                row.put("externalAlias", null);
+                row.put("subjectname", rs.getString(FieldKey.fromString(originalIdField)));
+                row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
 
                 rows.add(row);
                 toAdd.put(c, rows);
             });
-
-            try
-            {
-                for (Container c : toAdd.keySet())
-                {
-                    job.getLogger().info("Total IDs to alias for " + c.getPath() + ": " + toAdd.get(c).size());
-                    TableInfo ti = QueryService.get().getUserSchema(_containerUser.getUser(), c, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
-                    BatchValidationException bve = new BatchValidationException();
-                    ti.getUpdateService().insertRows(_containerUser.getUser(), c, toAdd.get(c), bve, null, null);
-                    if (bve.hasErrors())
-                    {
-                        throw bve;
-                    }
-                }
-            }
-            catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
-            {
-                job.getLogger().error("Error populating IDs", e);
-            }
         }
 
-        return new RecordedActionSet();
+        try
+        {
+            for (Container c : toAdd.keySet())
+            {
+                job.getLogger().info("Total IDs to alias for field " + fieldName + " in container: " + c.getPath() + ": " + toAdd.get(c).size());
+                TableInfo ti = QueryService.get().getUserSchema(_containerUser.getUser(), c, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+                BatchValidationException bve = new BatchValidationException();
+                ti.getUpdateService().insertRows(_containerUser.getUser(), c, toAdd.get(c), bve, null, null);
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+            }
+        }
+        catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
+        {
+            job.getLogger().error("Error populating IDs", e);
+        }
     }
 
     @Override

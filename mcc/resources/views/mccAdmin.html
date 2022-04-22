@@ -5,15 +5,18 @@ Ext4.onReady(function (){
 if (LABKEY.Security.currentUser.isAdmin){
     var webpart = <%=webpartContext%>;
 
+    var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+    if(!ctx)
+        return;
+
     Ext4.create('LDK.panel.NavPanel', {
         renderTo: webpart.wrapperDivId,
         width: 350,
         sections: [
-            {header: 'Folder Initialization',
+            {header: 'User/Request Management',
                 items: [
-                    {name: '1) Load/Create MCC Study', url: '<%=contextPath%>/mcc<%=containerPath%>/importStudy.view?'},
-                    {name: '2) Create Study QC States', url: '<%=contextPath%>/ehr<%=containerPath%>/ensureQcStates.view?'},
-                    {name: '3) Populate Initial Data', url: '<%=contextPath%>/EHR<%=containerPath%>/populateInitialData.view?'},
+                    {name: 'View Pending User Requests', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'},
+                    {name: 'View All Users', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'}
                 ]
             }
         ]

@@ -26,6 +26,10 @@ function onUpsert(helper, scriptErrors, row, oldRow){
         row.calculated_status = row.status;
     }
 
+    if (row.calculated_status === 'alive') {
+        row.calculated_status = 'Alive';
+    }
+
     if (row.death) {
         row.calculated_status = 'Dead';
     }
@@ -42,6 +46,9 @@ function onUpsert(helper, scriptErrors, row, oldRow){
             case 'Female':
                 row.gender = 'f';
                 break;
+            case 'U':
+            case 'u':
+            case 'Other':
             case 'Undetermined':
                 row.gender = 'Unknown';
                 break;

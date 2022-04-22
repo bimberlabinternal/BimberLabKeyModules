@@ -9,7 +9,7 @@
                 <deleteUrl />
                 <columns>
                     <column columnName="Id">
-                        <!--<isKeyField>true</isKeyField>-->
+                        <url></url>
                     </column>
                     <column columnName="date">
                         <isHidden>true</isHidden>
@@ -113,21 +113,23 @@
                     </column>
                     <column columnName="dam">
                         <columnTitle>Dam</columnTitle>
-                        <!--<fk>-->
-                            <!--<fkDbSchema>study</fkDbSchema>-->
-                            <!--<fkTable>animal</fkTable>-->
-                            <!--<fkColumnName>id</fkColumnName>-->
-                        <!--</fk>-->
-                        <url>/ehr/participantView.view?participantId=${dam}</url>
+                        <fk>
+                            <fkDbSchema>study</fkDbSchema>
+                            <fkTable>animal</fkTable>
+                            <fkColumnName>id</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
+                        <url></url>
                     </column>
                     <column columnName="sire">
                         <columnTitle>Sire</columnTitle>
-                        <!--<fk>-->
-                            <!--<fkDbSchema>study</fkDbSchema>-->
-                            <!--<fkTable>animal</fkTable>-->
-                            <!--<fkColumnName>id</fkColumnName>-->
-                        <!--</fk>-->
-                        <url>/ehr/participantView.view?participantId=${sire}</url>
+                        <fk>
+                            <fkDbSchema>study</fkDbSchema>
+                            <fkTable>animal</fkTable>
+                            <fkColumnName>id</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
+                        <url></url>
                     </column>
                     <column columnName="origin">
                         <columnTitle>Origin</columnTitle>

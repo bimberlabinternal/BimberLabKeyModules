@@ -23,6 +23,12 @@ MCC.Utils = new function() {
             }
 
             return ctx;
+        },
+
+        isRequestAdmin: function(){
+            var ctx = LABKEY.getModuleContext('mcc');
+
+            return !!ctx.hasRequestAdminPermission;
         }
     }
 };

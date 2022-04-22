@@ -226,6 +226,7 @@
                 <columnTitle>Object Id</columnTitle>
                 <isHidden>true</isHidden>
                 <nullable>false</nullable>
+                <shownInDetailsView>false</shownInDetailsView>
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
@@ -503,6 +504,7 @@
         <pkColumnName>rowid</pkColumnName>
         <tableTitle>Animal ID Mapping</tableTitle>
         <auditLogging>DETAILED</auditLogging>
+        <titleColumn>externalAlias</titleColumn>
         <columns>
             <column columnName="rowid">
                 <isAutoInc>true</isAutoInc>
@@ -516,7 +518,7 @@
                 <nullable>false</nullable>
             </column>
             <column columnName="externalAlias">
-                <columnTitle>mGAP Alias</columnTitle>
+                <columnTitle>MCC Alias</columnTitle>
                 <nullable>false</nullable>
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>

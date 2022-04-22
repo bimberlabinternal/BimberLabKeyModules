@@ -105,7 +105,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             SequenceOutputFile so = SequenceOutputFile.getForId(rowId);
             if (so == null)
             {
-                log.error("Unknown output file: " + rowId + " for release: " + releaseId);
+                log.error("Unknown output file in tracksPerRelease: " + rowId + " for release: " + releaseId);
                 return;
             }
 
@@ -120,7 +120,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             expectedFiles.add(new File(f.getPath() + ".tbi"));
         });
 
-        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId");
+        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId");
         new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), fields, new SimpleFilter(FieldKey.fromString("objectid"), releaseId), null).forEachResults(rs -> {
             for (String field : fields)
             {
@@ -133,15 +133,15 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 SequenceOutputFile so = SequenceOutputFile.getForId(rowId);
                 if (so == null)
                 {
-                    log.error("Unknown output file: " + rowId + " for release: " + releaseId);
-                    return;
+                    log.error("Unknown output file: " + rowId + " for field: " + field + ", for variant release: " + releaseId);
+                    continue;
                 }
 
                 File f = so.getFile();
                 if (f == null)
                 {
                     log.error("No file for outputfile: " + rowId + " for release: " + releaseId);
-                    return;
+                    continue;
                 }
 
                 expectedFiles.add(f);

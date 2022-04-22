@@ -46,7 +46,7 @@ Ext4.define('mGAP.window.DownloadWindow', {
                         success: function (results) {
                             Ext4.Msg.hide();
 
-                            if (!results || !results.rows) {
+                            if (!results || !results.rows || !results.rows.length) {
                                 Ext4.Msg.alert('Error', 'Unable to find matching rows');
                                 return;
                             }

@@ -6,6 +6,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.laboratory.AbstractDataProvider;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.laboratory.NavItem;
+import org.labkey.api.laboratory.QueryCountNavItem;
 import org.labkey.api.laboratory.QueryImportNavItem;
 import org.labkey.api.laboratory.SummaryNavItem;
 import org.labkey.api.ldk.table.QueryCache;
@@ -15,6 +16,7 @@ import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.ViewContext;
 import org.labkey.api.view.template.ClientDependency;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -91,7 +93,18 @@ public class CovidseqDataProvider extends AbstractDataProvider
     @Override
     public List<SummaryNavItem> getSummary(Container c, User u)
     {
-        return Collections.emptyList();
+        List<SummaryNavItem> items = new ArrayList<>();
+
+        for (NavItem nav : getSampleNavItems(c, u))
+        {
+            if (nav.isVisible(c, u))
+            {
+                QueryImportNavItem item = ((QueryImportNavItem)nav);
+                items.add(new QueryCountNavItem(this, item.getSchema(), item.getQuery(), item.getItemType(), item.getReportCategory(), item.getLabel()));
+            }
+        }
+
+        return Collections.unmodifiableList(items);
     }
 
     @Override
