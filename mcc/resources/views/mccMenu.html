@@ -17,6 +17,37 @@
         if(!ctx)
             return;
 
+        var menuItems = [{
+            label: 'Site Home',
+            name: 'siteHome',
+            url: LABKEY.ActionURL.buildURL('project', 'begin', 'home'),
+            visible: true
+        }, {
+            label: 'Animal Requests',
+            name: 'requests',
+            url: LABKEY.ActionURL.buildURL('mcc', 'mccRequests', ctx['MCCRequestContainer']),
+            visible: true
+        }, {
+            label: 'Animal Data',
+            name: 'animalData',
+            url: LABKEY.ActionURL.buildURL('project', 'begin', ctx['MCCContainer']),
+            visible: true
+        }, {
+            label: 'Request Help / Contact',
+            name: 'help',
+            url: LABKEY.ActionURL.buildURL('mcc', 'contact', 'home'),
+            visible: true
+        }];
+
+        if (MCC.Utils.isRequestAdmin()) {
+            menuItems.push({
+                label: 'Request Admin',
+                name: 'requestAdmin',
+                url: LABKEY.ActionURL.buildURL('mcc', 'mccRequestAdmin', ctx['MCCRequestContainer']),
+                visible: true
+            })
+        }
+
         var panel = Ext4.create('Ext.view.View', {
             renderTo: div.id,
             cls: 'labkey-iconpanel',
@@ -44,27 +75,7 @@
             store: {
                 type: 'store',
                 fields: ['label', 'name', 'url', 'visible'],
-                data: [{
-                    label: 'Site Home',
-                    name: 'siteHome',
-                    url: LABKEY.ActionURL.buildURL('project', 'begin', 'home'),
-                    visible: true
-                }, {
-                    label: 'Animal Requests',
-                    name: 'requests',
-                    url: LABKEY.ActionURL.buildURL('mcc', 'mccRequests', ctx['MCCRequestContainer']),
-                    visible: true
-                }, {
-                    label: 'Animal Data',
-                    name: 'animalData',
-                    url: LABKEY.ActionURL.buildURL('project', 'begin', ctx['MCCContainer']),
-                    visible: true
-                }, {
-                    label: 'Request Help / Contact',
-                    name: 'help',
-                    url: LABKEY.ActionURL.buildURL('mcc', 'contact', 'home'),
-                    visible: true
-                }]
+                data: menuItems
             },
             border: true,
             minHeight: 50

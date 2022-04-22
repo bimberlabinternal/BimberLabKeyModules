@@ -498,16 +498,22 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
             schemaName: 'sequenceanalysis',
             queryName: 'alignment_summary_grouped',
             columns: 'analysis_id,lineages,loci,alleles,total_reads,percent,total_reads_from_locus,percent_from_locus',
+            // This is designed to remove the view-level sorts:
+            sort: 'analysis_id',
             apiVersion: 13.2,
             scope: this,
             filterArray: [
-                LABKEY.Filter.create('analysis_id', this.analysisIds.join(';'), LABKEY.Filter.Types.IN),
-                LABKEY.Filter.create('percent_from_locus', minPct || 0, LABKEY.Filter.Types.GTE)
+                LABKEY.Filter.create('analysis_id', this.analysisIds.join(';'), LABKEY.Filter.Types.IN)
             ],
             failure: LDK.Utils.getErrorCallback(),
             success: function(results){
                 this.lineageToAlleleMap = {};
                 Ext4.Array.forEach(results.rows, function(row){
+                    // NOTE: perform this filter in memory rather than SQL for speed:
+                    if (minPct && row.percent_from_locus < minPct) {
+                        return;
+                    }
+
                     if (Ext4.isArray(row.lineages)){
                         row.lineages = row.lineages.join(';');
                     }

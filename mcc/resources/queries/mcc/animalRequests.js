@@ -30,3 +30,14 @@ function afterUpsert(row, oldRow, errors) {
         }
     }
 }
+
+// cascade delete co-i, cohorts:
+function beforeDelete(row, errors){
+    if (row.objectid) {
+        triggerHelper.cascadeDelete('mcc', 'coinvestigators', 'requestid', row.objectid);
+        triggerHelper.cascadeDelete('mcc', 'requestcohorts', 'requestid', row.objectid);
+    }
+    else {
+        console.error('MCC animalRequests row lacks objectid. row ID: ' + row.rowid);
+    }
+}
