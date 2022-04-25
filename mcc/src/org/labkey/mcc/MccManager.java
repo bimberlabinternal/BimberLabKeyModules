@@ -30,6 +30,9 @@ import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.security.UserPrincipal;
 import org.labkey.api.security.ValidEmail;
+import org.labkey.api.security.permissions.Permission;
+import org.labkey.mcc.security.MccRequestAdminPermission;
+import org.labkey.mcc.security.MccRequestorPermission;
 
 import javax.mail.Address;
 import java.io.File;
@@ -40,6 +43,35 @@ public class MccManager
 {
     private static final Logger _log = LogManager.getLogger(MccManager.class);
 
+    public enum RequestStatus
+    {
+        Draft(1, "Draft", MccRequestorPermission.class),
+        Submitted(2, "Submitted", MccRequestorPermission.class),
+        FormCheck(3, "Internal Review", MccRequestAdminPermission.class),
+        RabReview(4, "RAB Review", MccRequestAdminPermission.class),
+        FinalReview(5, "Final Review", MccRequestAdminPermission.class),
+        Approved(6, "Approved", MccRequestAdminPermission.class),
+        Rejected(7, "Rejected", MccRequestAdminPermission.class),
+        Processing(8, "Processing", MccRequestAdminPermission.class),
+        Fulfilled(8, "Fulfilled", MccRequestAdminPermission.class);
+
+        int sortOrder;
+        String label;
+        Class<? extends Permission> editPermission;
+
+        RequestStatus(int sortOrder, String label, Class<? extends Permission> editPermission)
+        {
+            this.sortOrder = sortOrder;
+            this.label = label;
+            this.editPermission = editPermission;
+        }
+
+        public boolean canEdit(User u, Container c)
+        {
+            return c.hasPermission(u, this.editPermission);
+        }
+    }
+
     public static final String ContainerPropName = "MCCContainer";
     public static final String NotifyPropName = "MCCContactUsers";
     public static final String MCCRequestNotificationUsers = "MCCRequestNotificationUsers";
@@ -49,6 +81,7 @@ public class MccManager
     public static final String MCC_GROUP_NAME = "MCC Users";
     public static final String ANIMAL_GROUP_NAME = "MCC Animal Data Access";
     public static final String REQUEST_GROUP_NAME = "MCC Animal Requestors";
+    public static final String REQUEST_REVIEW_GROUP_NAME = "MCC RAB Members";
 
     private static final MccManager _instance = new MccManager();
 
@@ -73,6 +106,11 @@ public class MccManager
         return ContainerManager.getForPath(path);
     }
 
+    public String getMccAdminEmail()
+    {
+        return "mcc@ohsu.edu";
+    }
+
     public Container getMCCContainer()
     {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
@@ -82,6 +120,18 @@ public class MccManager
             return null;
 
         return ContainerManager.getForPath(path);
+    }
+
+    public boolean isRequestAdmin(User u)
+    {
+        Container c = getMCCRequestContainer();
+        if (c == null)
+        {
+            _log.error("MccManager.isRequestAdmin called, but MCCRequestContainer has not been set");
+            return false;
+        }
+
+        return c.hasPermission(u, MccRequestAdminPermission.class);
     }
 
     public File getZimsImportFolder(Container c)

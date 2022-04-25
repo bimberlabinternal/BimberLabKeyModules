@@ -3,6 +3,8 @@ SELECT
   coalesce(s.gender, d.gender) as gender,
   coalesce(s.species, d.species) as species,
   coalesce(s.geographic_origin, d.geographic_origin) as geographic_origin,
+--        TODO: geographic origin score
+
   CASE
     WHEN d.center IS NOT NULL THEN d.center
     WHEN s.subjectname IS NOT NULL THEN 'ONPRC'

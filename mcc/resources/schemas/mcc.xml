@@ -241,7 +241,11 @@
                 <nullable>true</nullable>
             </column>
             <column columnName="isprincipalinvestigator">
-                <columnTitle>Is Principal Investigator</columnTitle>
+                <columnTitle>Is Principal Investigator?</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="earlystageinvestigator">
+                <columnTitle>Is Early Stage Investigator?</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="institutionname">
@@ -379,6 +383,13 @@
                 <nullable>true</nullable>
                 <scale>29</scale>
                 <isHidden>true</isHidden>
+            </column>
+            <column columnName="actions" wrappedColumnName="objectid">
+                <columnTitle>Actions</columnTitle>
+                <displayWidth>200</displayWidth>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.AnimalRequestActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
             </column>
         </columns>
     </table>
@@ -556,6 +567,164 @@
                 <shownInUpdateView>false</shownInUpdateView>
                 <nullable>true</nullable>
                 <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="requestReviews" tableDbType="TABLE">
+        <tableTitle>Request Reviews</tableTitle>
+        <insertUrl />
+        <importUrl />
+        <updateUrl />
+        <tableUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row ID</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="reviewerId">
+                <columnTitle>Reviewer</columnTitle>
+                <nullable>false</nullable>
+
+                <fk>
+                    <fkDbSchema>core</fkDbSchema>
+                    <fkTable>users</fkTable>
+                    <fkColumnName>userid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="review">
+                <columnTitle>Review</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="score">
+                <columnTitle>Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="comments">
+                <columnTitle>Comments</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="status">
+                <columnTitle>Status</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="requestid">
+                <columnTitle>Request ID</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>mcc</fkDbSchema>
+                    <fkTable>animalrequests</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="actions" wrappedColumnName="rowid">
+                <columnTitle>Actions</columnTitle>
+                <displayWidth>200</displayWidth>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.RequestReviewActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+        </columns>
+    </table>
+    <table tableName="requestScores" tableDbType="TABLE">
+        <insertUrl />
+        <importUrl />
+        <updateUrl />
+        <tableUrl />
+        <deleteUrl />
+        <tableTitle>Animal Request Reviews</tableTitle>
+        <pkColumnName>rowid</pkColumnName>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row ID</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="preliminaryScore">
+                <columnTitle>Preliminary Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="resourceAvailabilityScore">
+                <columnTitle>Resource Availability Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="researchAreaPriorityScore">
+                <columnTitle>Research Area Priority Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="proposalScore">
+                <columnTitle>Proposal Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="comments">
+                <columnTitle>Comments</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="requestid">
+                <columnTitle>Request ID</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>mcc</fkDbSchema>
+                    <fkTable>animalrequests</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="actions" wrappedColumnName="rowid">
+                <columnTitle>Actions</columnTitle>
+                <displayWidth>200</displayWidth>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.RequestScoreActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
             </column>
         </columns>
     </table>

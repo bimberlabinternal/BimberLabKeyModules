@@ -1,0 +1,12 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Reviews" canOverride="false">
+    <columns>
+        <column name="requestId/rowid"/>
+        <column name="requestId/lastname"/>
+        <column name="requestId/firstname"/>
+        <column name="requestId/status"/>
+        <column name="actions"/>
+    </columns>
+    <sorts>
+        <sort column="requestId/rowid" descending="true"/>
+    </sorts>
+</customView>
