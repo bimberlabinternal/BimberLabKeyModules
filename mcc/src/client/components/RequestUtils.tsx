@@ -60,6 +60,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
 
     if (!requestId) {
         requestData.dataLoaded = true
+        requestData.cohorts = [new AnimalCohort()]
         return(requestData)
     }
 

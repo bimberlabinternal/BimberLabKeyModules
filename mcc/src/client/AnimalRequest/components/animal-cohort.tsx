@@ -11,7 +11,7 @@ import { animalSexes, otherCharacteristicsPlaceholder } from './values'
 import { AnimalCohort } from '../../components/RequestUtils';
 
 export default function AnimalCohorts(props) {
-  const [cohorts, setCohorts] = useState<AnimalCohort[]>(props.defaultValue || [])
+  const [cohorts, setCohorts] = useState<AnimalCohort[]>(props.defaultValue)
 
   function addCohort() {
     cohorts.push(new AnimalCohort())

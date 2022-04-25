@@ -378,55 +378,57 @@ export function AnimalRequest() {
                         <Select id="existing-marmoset-colony" ariaLabel="Existing Marmoset Colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={requestData.request.existingmarmosetcolony} required={getRequired()}/>
                     </div>
                 </ErrorMessageHandler>
-            </div>
 
-            <Title text="3. Do you plan to breed marmosets?"/>
-            <div className="tw-w-full tw-px-3 tw-mb-4">
-                <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
+                <Title text="3. Do you plan to breed marmosets?"/>
+                <div className="tw-w-full tw-px-3 tw-mb-4">
+                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
+                </div>
             </div>
 
             <h3>Research Details</h3>
 
-            <div className="tw-mb-6">
-                <Title text="1. Research Area"/>
-            </div>
-            <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
-
             <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                <Title text="1. Research Area"/>
+
+                <div className="tw-w-full tw-px-3 tw-mb-6">
+                    <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
+                </div>
+
+                <div className="tw-w-full tw-px-3 tw-mb-4">
                     <Title text={"2. " + experimentalRationalePlaceholder}/>
                     <Tooltip id="research-use-statement-helper"
                        text={experimentalRationalePlaceholder}
                     />
-                </div>
 
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                <div className="tw-w-full tw-px-3 tw-mb-6 tw-mt-6">
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <TextArea id="experiment-rationale" ariaLabel="Experimental rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={getRequired()} defaultValue={requestData.request.experimentalrationale}/>
+                    </ErrorMessageHandler>
                 </div>
-                </ErrorMessageHandler>
 
+                <Title text="3. Animal Cohorts"/>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
-                    <Title text="3. Animal Cohorts"/>
                     <AnimalCohorts isSubmitting={isSubmitting} defaultValue={requestData.cohorts} required={getRequired()}/>
                 </div>
 
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <Title text={"4. " + methodsProposedPlaceholder}/>
-                    <TextArea id="methods-proposed" ariaLabel="Methods Proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={getRequired()} defaultValue={requestData.request.methodsproposed}/>
+                <Title text={"4. " + methodsProposedPlaceholder}/>
+                <div className="tw-w-full tw-px-3 tw-mb-6">
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <TextArea id="methods-proposed" ariaLabel="Methods Proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={getRequired()} defaultValue={requestData.request.methodsproposed}/>
+                    </div>
+                    </ErrorMessageHandler>
                 </div>
-                </ErrorMessageHandler>
 
-                <Title text={"4. " + collaborationsPlaceholder}/>
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <TextArea id="collaborations" ariaLabel="Collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={getRequired()} defaultValue={requestData.request.collaborations}/>
+                <Title text={"5. " + collaborationsPlaceholder}/>
+                <div className="tw-w-full tw-px-3 tw-mb-6">
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <TextArea id="collaborations" ariaLabel="Collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={getRequired()} defaultValue={requestData.request.collaborations}/>
+                    </div>
+                    </ErrorMessageHandler>
                 </div>
-                </ErrorMessageHandler>
 
-
-                <Title text={"5. " + animalWellfarePlaceholder}/>
+                <Title text={"6. " + animalWellfarePlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -444,7 +446,7 @@ export function AnimalRequest() {
 
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                    <Title text="6. Attending veterinarian"/>
+                    <Title text="7. Attending veterinarian"/>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
                         <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={requestData.request.vetlastname}/>

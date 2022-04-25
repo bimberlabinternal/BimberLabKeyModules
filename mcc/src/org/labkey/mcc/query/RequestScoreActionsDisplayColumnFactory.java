@@ -98,6 +98,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
 
                 keys.add(getBoundKey("rowid"));
                 keys.add(getBoundKey("createdby"));
+                keys.add(getBoundKey("requestId"));
                 keys.add(getBoundKey("requestId/status"));
             }
 
