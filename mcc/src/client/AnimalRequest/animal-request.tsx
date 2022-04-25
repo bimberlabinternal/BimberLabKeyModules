@@ -1,23 +1,23 @@
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { ActionURL, getServerContext, Query } from '@labkey/api';
 import { nanoid } from 'nanoid';
-import { AnimalRequestModel, queryRequestInformation } from './RequestUtils';
+import { AnimalRequestModel, queryRequestInformation } from '../components/RequestUtils';
 
-import Tooltip from './tooltip';
-import Title from './title';
-import Input from './input';
-import Select from './select';
-import CoInvestigators from './co-investigators';
-import TextArea from './text-area';
-import YesNoRadio from './yes-no-radio';
-import AnimalBreeding from './animal-breeding';
-import IACUCProtocol from './iacuc-protocol';
-import Funding from './funding';
+import Tooltip from './components/tooltip';
+import Title from './components/title';
+import Input from './components/input';
+import Select from './components/select';
+import CoInvestigators from './components/co-investigators';
+import TextArea from './components/text-area';
+import YesNoRadio from './components/yes-no-radio';
+import AnimalBreeding from './components/animal-breeding';
+import IACUCProtocol from './components/iacuc-protocol';
+import Funding from './components/funding';
 import ResearchArea from './research-area';
-import AnimalCohorts from './animal-cohort';
-import Button from './button';
+import AnimalCohorts from './components/animal-cohort';
+import Button from './components/button';
 import SavingOverlay from './saving-overlay';
-import ErrorMessageHandler from './error-message-handler';
+import ErrorMessageHandler from './components/error-message-handler';
 
 import {
     animalWellfarePlaceholder,
@@ -30,7 +30,7 @@ import {
     institutionTypeOptions,
     methodsProposedPlaceholder,
     signingOfficialTooltip
-} from './values';
+} from './components/values';
 
 
 export function AnimalRequest() {
@@ -69,7 +69,6 @@ export function AnimalRequest() {
     function getRequired() {
         switch (requestData.request.status) {
             case "Draft":
-            //case "Submitting":
                 return false
             default:
                 return true
@@ -88,14 +87,13 @@ export function AnimalRequest() {
             return true
         }
 
-        return "Draft" === requestData.request.status || "Submitting" === requestData.request.status
+        return "Draft" === requestData.request.status
     }
 
     function handleSubmitButton(incrementStatus) {
         if (incrementStatus) {
             setIsSubmitting(true);
             setStateRollbackOnFailure(requestData.request.status)
-            requestData.request.status = "Submitting"
         }
 
         setRequestData(requestData)
@@ -104,7 +102,6 @@ export function AnimalRequest() {
     function getSubmitButtonText() {
         switch (requestData.request.status) {
             case "Draft":
-            case "Submitting":
                 return "Submit"
             default:
                 return "Update Request"
@@ -195,9 +192,8 @@ export function AnimalRequest() {
         setDisplayOverlay(true)
         setStateRollbackOnFailure(requestData.request.status)
 
-        if (requestData.request.status === "Submitting") {
-            requestData.request.status = "Submitted"
-        }
+        //TODO: check this??
+        requestData.request.status = "Submitted"
 
         const el = e.currentTarget as HTMLFormElement
         const data = new FormData(el)

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
-import Select from './select'
-import Input from './input'
-import Title from './title'
-import ErrorMessageHandler from './error-message-handler'
+import Select from './components/select'
+import Input from './components/input'
+import Title from './components/title'
+import ErrorMessageHandler from './components/error-message-handler'
 
-import { researchAreaOptions } from './values'
+import { researchAreaOptions } from './components/values'
 
 export default function ResearchArea(props) {
 

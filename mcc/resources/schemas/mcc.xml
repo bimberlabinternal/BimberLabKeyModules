@@ -673,6 +673,7 @@
                 <columnTitle>Resource Availability Score</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <!-- TODO: remove?-->
             <column columnName="researchAreaPriorityScore">
                 <columnTitle>Research Area Priority Score</columnTitle>
                 <nullable>true</nullable>

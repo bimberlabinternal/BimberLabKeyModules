@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Input from './input';
 import Title from './title';
 import ErrorMessageHandler from './error-message-handler';
-import { CoInvestigatorModel } from './RequestUtils';
+import { CoInvestigatorModel } from '../../components/RequestUtils';
 
 export default function CoInvestigators(props) {
   const [coInvestigators, setCoInvestigators] = useState<CoInvestigatorModel[]>(props.defaultValue || [])

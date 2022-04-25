@@ -8,7 +8,7 @@ import TextArea from './text-area'
 import ErrorMessageHandler from './error-message-handler'
 
 import { animalSexes, otherCharacteristicsPlaceholder } from './values'
-import { AnimalCohort } from './RequestUtils';
+import { AnimalCohort } from '../../components/RequestUtils';
 
 export default function AnimalCohorts(props) {
   const [cohorts, setCohorts] = useState<AnimalCohort[]>(props.defaultValue || [])
