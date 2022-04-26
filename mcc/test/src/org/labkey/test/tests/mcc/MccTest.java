@@ -73,13 +73,6 @@ public class MccTest extends BaseWebDriverTest
             this.sendKeysValue = sendKeysValue;
         }
 
-        public FormElement withDatabaseField(String databaseFieldName)
-        {
-            this.databaseFieldName = databaseFieldName;
-
-            return this;
-        }
-
         public FormElement isCheckBox()
         {
             this.isCheckBox = true;
@@ -130,7 +123,7 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("investigator-last-name", "last name"),
             new FormElement("investigator-first-name", "first name"),
             new FormElement("investigator-middle-initial", "m"),
-            new FormElement("is-principal-investigator-yes", null).isCheckBox(),
+            new FormElement("is-early-stage-investigator-yes", null).isCheckBox(),
             new FormElement("institution-name", "institution name"),
             new FormElement("institution-city", "institution city"),
             new FormElement("institution-state", "institution state"),
@@ -141,7 +134,6 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("funding-source", Keys.ARROW_DOWN).withInput("select"),
             new FormElement("funding-grant-number", "grant number"),
             new FormElement("experiment-rationale", "rationale").withInput("textarea"),
-
 
             new FormElement("animal-cohorts-0-numberofanimals", "1"),
             new FormElement("animal-cohorts-0-sex", Keys.ARROW_DOWN).withInput("select"),
