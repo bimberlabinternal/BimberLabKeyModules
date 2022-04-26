@@ -173,7 +173,7 @@ public class MccTest extends BaseWebDriverTest
 
         setFormValues(null);
 
-        waitAndClickAndWait(getButton("Save"));
+        waitAndClick(getButton("Save"));
 
         // Verify record created:
         Map<String, Object> request = getLastModifiedRequestRow();
