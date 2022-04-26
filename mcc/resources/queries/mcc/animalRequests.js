@@ -29,7 +29,9 @@ function afterUpdate(row, oldRow, errors){
 }
 
 function afterUpsert(row, oldRow, errors) {
-    triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row));
+    if (row.status && row.status !== 'Draft') {
+        triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row));
+    }
 }
 
 // cascade delete co-i, cohorts:
