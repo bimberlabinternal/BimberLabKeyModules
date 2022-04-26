@@ -19,6 +19,7 @@ module.exports = {
     name: 'requestReview',
     title: 'Animal Request Review',
     permission: 'read',
+    template: 'home',
     path: './src/client/RequestReview'
   }]
 };

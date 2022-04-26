@@ -41,6 +41,13 @@
 
         if (MCC.Utils.isRequestAdmin()) {
             menuItems.push({
+                label: 'RAB Reviewer Dashboard',
+                name: 'reviewerDashboard',
+                url: LABKEY.ActionURL.buildURL('mcc', 'rabRequestReview', ctx['MCCRequestContainer']),
+                visible: true
+            })
+
+            menuItems.push({
                 label: 'Request Admin',
                 name: 'requestAdmin',
                 url: LABKEY.ActionURL.buildURL('mcc', 'mccRequestAdmin', ctx['MCCRequestContainer']),

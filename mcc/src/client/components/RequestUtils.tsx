@@ -24,8 +24,13 @@ export class AnimalRequestProps {
     officialfirstname: string;
     officialemail: string;
     experimentalrationale: string;
+    isbreedinganimals: boolean;
+    breedingpurpose: string;
     methodsproposed: string;
     collaborations: string;
+    researcharea: string;
+    otherjustification: string;
+    iacucprotocol: string;
     existingmarmosetcolony: string;
     existingnhpfacilities: string;
     rowid: number;
@@ -34,6 +39,7 @@ export class AnimalRequestProps {
     vetlastname: string;
     vetemail: string;
     vetfirstname: string;
+    objectid: string;
 }
 
 export class CoInvestigatorModel {

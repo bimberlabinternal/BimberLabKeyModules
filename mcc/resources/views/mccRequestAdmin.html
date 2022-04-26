@@ -16,8 +16,8 @@
             '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
             '<br>' +
             '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
-                '<br>' +
-                '<a class="labkey-text-link" href="<%=contextPath%>/' + ctx.MCCRequestContainer + '/security-permissions.view?t=sitegroups">Manage RAB Members (admin permission needed)</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/' + ctx.MCCRequestContainer + '/security-permissions.view?t=sitegroups">Manage RAB Members (admin permission needed)</a>' +
             '<p></p>' +
             '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>' +
             '<p></p>' +
@@ -27,11 +27,13 @@
         );
 
         LDK.Utils.getBasicQWP({
-            title: 'Reviews Assigned to Me',
+            title: 'All Pending RAB Reviews',
             schemaName: 'mcc',
             queryName: 'requestReviews',
             //frame: 'none',
-            filterArray: [LABKEY.Filter.create('reviewerId', LABKEY.Security.currentUser.id)],
+            filterArray: [
+                LABKEY.Filter.create('review', null, LABKEY.Filter.Types.ISBLANK)
+            ],
             showRecordSelectors: false,
             showDetailsColumn: false,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}

@@ -3,13 +3,16 @@ package org.labkey.mcc.query;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.DataColumn;
 import org.labkey.api.data.DisplayColumn;
 import org.labkey.api.data.DisplayColumnFactory;
 import org.labkey.api.data.RenderContext;
+import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
+import org.labkey.mcc.MccManager;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -35,9 +38,11 @@ public class RequestReviewActionsDisplayColumnFactory implements DisplayColumnFa
                     return;
                 }
 
-                int rowId = ctx.get(getBoundKey("rowId"), Integer.class);
                 String requestId = ctx.get(getBoundKey("requestId"), String.class);
-                out.write("<a class=\"labkey-text-link\" onclick=\"MCC.window.EnterReviewWindow.buttonHandler(" + rowId + ", '" + requestId + "');\");\">Enter Review</a>");
+
+                Container requestContainer = MccManager.get().getMCCRequestContainer();
+                DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=rabReview", requestContainer);
+                out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL() + "\">Enter Review</a>");
             }
 
             @Override
