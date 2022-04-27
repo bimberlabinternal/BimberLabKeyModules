@@ -39,7 +39,7 @@ export function AnimalRequest() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [displayOverlay, setDisplayOverlay] = useState(false)
     const [requestData, setRequestData] = useState<AnimalRequestModel>(null)
-    const [stateRollbackOnFailure, setStateRollbackOnFailure] = useState(requestData?.request.status)
+    const [stateRollbackOnFailure, setStateRollbackOnFailure] = useState(requestData?.request?.status)
 
     if (!requestData) {
         queryRequestInformation(requestId, handleFailure).then((model) => {
@@ -55,7 +55,7 @@ export function AnimalRequest() {
         )
     }
     else if (requestData.dataLoaded === true && !requestData.request) {
-        return(<Title text="No such request."/>)
+        return(<div>There is no request with id: " + requestId</div>)
     }
 
     function handleFailure(response) {
