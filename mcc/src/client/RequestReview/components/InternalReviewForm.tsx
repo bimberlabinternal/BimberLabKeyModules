@@ -56,31 +56,30 @@ export default function InternalReviewForm(props: {requestId: string, readOnly?:
     return (
         <>
         <h2>Enter MCC Review</h2>
-        <form noValidate autoComplete='off' onSubmit={onFormSubmit}>
-        <Box style={{display: 'inline-block'}}>
-        <Table width={500}>
-            <TableBody>
-            <TableRow>
-                <TableCell><TextField key={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell><TextField key={"resourceAvailabilityScore"} label={"Resource Availability Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityScore || ''} fullWidth={true} /></TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell><TextField key={"researchAreaPriorityScore"} label={"Research Area Priority Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.researchAreaPriorityScore || ''} fullWidth={true} /></TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell><TextField key={"proposalScore"} label={"Final Proposal Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.proposalScore || ''} fullWidth={true} /></TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell><TextField key={"comments"} label={"Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
-            </TableRow>
-            </TableBody>
-        </Table>
-        <p />
-        <Button variant={"contained"} style={{marginRight: 10}} type={'submit'}>Save Review</Button>
+        <Box key={"mccReviewBox"} style={{display: 'inline-block'}}>
+            <form key={"internalReviewForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
+            <Table width={500}>
+                <TableBody>
+                <TableRow>
+                    <TableCell><TextField key={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell><TextField key={"resourceAvailabilityScore"} label={"Resource Availability Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityScore || ''} fullWidth={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell><TextField key={"researchAreaPriorityScore"} label={"Research Area Priority Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.researchAreaPriorityScore || ''} fullWidth={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell><TextField key={"proposalScore"} label={"Final Proposal Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.proposalScore || ''} fullWidth={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell><TextField key={"comments"} label={"Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
+                </TableRow>
+                </TableBody>
+            </Table>
+            <Button key={"saveReviewBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'}>Save Review</Button>
+            </form>
         </Box>
-        </form>
         </>
     )
 }

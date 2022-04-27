@@ -50,22 +50,22 @@ export function RequestView() {
     switch (mode) {
         case "primaryReview":
             reviewForms = [
-                <InternalReviewForm requestId={requestId}/>
+                <InternalReviewForm key={"internalReviewForm"} requestId={requestId}/>
             ]
             break
         case "rabReview":
             reviewForms = (
                 <>
-                <InternalReviewForm requestId={requestId} readOnly={true}/>
-                <RabReviewForm requestId={requestId}/>
+                <InternalReviewForm key={"internalReviewForm"} requestId={requestId} readOnly={true}/>
+                <RabReviewForm key={"rabReviewForm"} requestId={requestId}/>
                 </>
             )
             break
         case "finalReview":
             reviewForms = (
                 <>
-                <RabReviewForm requestId={requestId} readOnly={true}/>
-                <InternalReviewForm requestId={requestId}/>
+                <RabReviewForm key={"rabReviewForm"} requestId={requestId} readOnly={true}/>
+                <InternalReviewForm key={"internalReviewForm"} requestId={requestId}/>
                 </>
             )
             break
