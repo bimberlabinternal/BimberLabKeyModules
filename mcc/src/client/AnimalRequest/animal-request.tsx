@@ -242,7 +242,7 @@ export function AnimalRequest() {
                         "existingmarmosetcolony": data.get("existing-marmoset-colony"),
                         "existingnhpfacilities": data.get("existing-nhp-facilities"),
                         "animalwelfare": data.get("animal-welfare"),
-                        "certify": data.get("certify"),
+                        "certify": !!data.get("certify"),
                         "vetlastname": data.get("vet-last-name"),
                         "vetfirstname": data.get("vet-first-name"),
                         "vetemail": data.get("vet-email"),
