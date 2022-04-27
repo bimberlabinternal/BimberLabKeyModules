@@ -33,7 +33,7 @@ export const researchAreaOptions = [
 ]
 
 export const institutionTypeOptions = [
-    {value: 'neuroscience', label: 'Minority serving'},
+    {value: 'minorityServing', label: 'Minority serving'},
     {value: 'university', label: 'University/Non-profit'},
     {value: 'commercial', label: 'Commercial entity'}
 ]

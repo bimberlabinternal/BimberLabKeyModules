@@ -240,10 +240,6 @@
                 <columnTitle>Middle Initial</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="isprincipalinvestigator">
-                <columnTitle>Is Principal Investigator?</columnTitle>
-                <nullable>true</nullable>
-            </column>
             <column columnName="earlystageinvestigator">
                 <columnTitle>Is Early Stage Investigator?</columnTitle>
                 <nullable>true</nullable>

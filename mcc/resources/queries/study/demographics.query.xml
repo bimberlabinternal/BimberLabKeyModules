@@ -85,6 +85,9 @@
                             <fkColumnName>code</fkColumnName>
                         </fk>
                     </column>
+                    <column columnName="alternateIds">
+                        <columnTitle>Alternate IDs</columnTitle>
+                    </column>
                     <column columnName="remark">
 
                     </column>
