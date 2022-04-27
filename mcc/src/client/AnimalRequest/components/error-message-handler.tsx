@@ -27,6 +27,9 @@ export default function ErrorMessageHandler(props) {
 
       el.addEventListener('input', handleValidationMessages)
       handleValidationMessages()
+    } else {
+      // NOTE: if we're not actively submitting, reset the errors
+      setErrors(new Set())
     }
   }, [props.isSubmitting, props.rerender]);
 

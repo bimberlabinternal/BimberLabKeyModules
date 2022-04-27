@@ -135,6 +135,11 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 Filter.create('requestId', requestId)
             ],
             success: function (resp) {
+                if (resp.rows.length) {
+                    // NOTE: this property is purely for client-side UI and not persisted in the DB, so create a value
+                    resp.rows.map(c => c.uuid = nanoid())
+                }
+
                 resolve(resp.rows)
             },
             failure: handleFailure
@@ -160,6 +165,9 @@ export async function queryRequestInformation(requestId, handleFailure) {
                     requestData.cohorts = [new AnimalCohort()]
                 } else {
                     requestData.cohorts = resp.rows
+
+                    // NOTE: this property is purely for client-side UI and not persisted in the DB, so create a value
+                    requestData.cohorts.map(c => c.uuid = nanoid())
                 }
 
                 resolve(requestData.cohorts)

@@ -66,13 +66,8 @@ export function AnimalRequest() {
         setRequestData({...requestData})
     }
 
-    function getRequired() {
-        switch (requestData.request.status) {
-            case "Draft":
-                return false
-            default:
-                return true
-        }
+    function doEnforceRequiredFields() {
+        return isSubmitting || requestData.request.status !== "Draft"
     }
 
     // The general idea is that users with MCCRequestAdminPermission can edit all states.
@@ -90,19 +85,14 @@ export function AnimalRequest() {
         return "Draft" === requestData.request.status
     }
 
-    function handleSubmitButton(incrementStatus) {
-        // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
-        // Any other action preserved the status as-is
-        if (incrementStatus) {
-            setIsSubmitting(true);
-            setStateRollbackOnFailure(requestData.request.status)
+    function handleSubmitButton(e, isSubmitting) {
+        setIsSubmitting(isSubmitting);
 
-            if (requestData.request.status === 'Draft') {
-                requestData.request.status = 'Submitted'
-
-                console.log('new status: ' + requestData.request.status)
-                setRequestData({...requestData})
-            }
+        if (!isSubmitting) {
+            // Use this to reset each field's error state
+            e.target.form.querySelectorAll('input, select, textarea').forEach(function(e){
+                e.checkValidity()
+            })
         }
     }
 
@@ -119,7 +109,7 @@ export function AnimalRequest() {
         return "Save"
     }
 
-    function get_coinvestigator_commands(data, objectId) {
+    function getCoinvestigatorCommands(data, objectId) {
         let commands = []
         let i = 0
 
@@ -157,7 +147,7 @@ export function AnimalRequest() {
         return commands
     }
 
-    function get_animal_cohort_commands(data, objectId) {
+    function getAnimalCohortCommands(data, objectId) {
         let commands = []
         let i = 0
 
@@ -197,8 +187,18 @@ export function AnimalRequest() {
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
         setDisplayOverlay(true)
-        setStateRollbackOnFailure(requestData.request.status)
 
+        // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
+        // Any other action preserved the status as-is
+        if (isSubmitting) {
+            setStateRollbackOnFailure(requestData.request.status)
+            if (requestData.request.status === 'Draft') {
+                requestData.request.status = 'Submitted'
+
+                setRequestData({...requestData})
+            }
+        }
+    
         const el = e.currentTarget as HTMLFormElement
         const data = new FormData(el)
         el.querySelectorAll<HTMLSelectElement>('select[multiple]').forEach(function(x){
@@ -206,8 +206,8 @@ export function AnimalRequest() {
         })
 
         const objectId = requestId || nanoid()
-        let coinvestigatorCommands = get_coinvestigator_commands(data, objectId)
-        let cohortCommands = get_animal_cohort_commands(data, objectId)
+        let coinvestigatorCommands = getCoinvestigatorCommands(data, objectId)
+        let cohortCommands = getAnimalCohortCommands(data, objectId)
 
         let rowId = requestId ? {"rowid": requestData.request.rowid} : {}
 
@@ -276,11 +276,11 @@ export function AnimalRequest() {
                 <Title text="1. Principal Investigator*"/>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} required={getRequired()} placeholder="Last Name" defaultValue={requestData.request.lastname}/>
+                    <Input id="investigator-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="Last Name" defaultValue={requestData.request.lastname}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} required={getRequired()} placeholder="First Name" defaultValue={requestData.request.firstname}/>
+                    <Input id="investigator-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="First Name" defaultValue={requestData.request.firstname}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
@@ -299,7 +299,7 @@ export function AnimalRequest() {
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mt-6">
-                    <YesNoRadio id="is-early-stage-investigator" ariaLabel="Early Stage Investigator" isSubmitting={isSubmitting} required={getRequired()} defaultValue={requestData.request.earlystageinvestigator}/>
+                    <YesNoRadio id="is-early-stage-investigator" ariaLabel="Early Stage Investigator" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request.earlystageinvestigator}/>
                 </div>
             </div>
             </ErrorMessageHandler>
@@ -309,25 +309,25 @@ export function AnimalRequest() {
                 <Title text="3. Affiliated research institution*"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-name" ariaLabel="Institution Name" isSubmitting={isSubmitting} placeholder="Name" required={getRequired()} defaultValue={requestData.request.institutionname}/>
+                    <Input id="institution-name" ariaLabel="Institution Name" isSubmitting={isSubmitting} placeholder="Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutionname}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-city" ariaLabel="Institution City" isSubmitting={isSubmitting} placeholder="City" required={getRequired()} defaultValue={requestData.request.institutioncity}/>
+                    <Input id="institution-city" ariaLabel="Institution City" isSubmitting={isSubmitting} placeholder="City" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutioncity}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-state" ariaLabel="Institution State" isSubmitting={isSubmitting} placeholder="State" required={getRequired()} defaultValue={requestData.request.institutionstate}/>
+                    <Input id="institution-state" ariaLabel="Institution State" isSubmitting={isSubmitting} placeholder="State" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutionstate}/>
                 </div>
 
                 <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-country" ariaLabel="Institution Country" isSubmitting={isSubmitting} placeholder="Country" required={getRequired()} defaultValue={requestData.request.institutioncountry}/>
+                    <Input id="institution-country" ariaLabel="Institution Country" isSubmitting={isSubmitting} placeholder="Country" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutioncountry}/>
                 </div>
 
                 <Title text="4. Affiliated Research Institution Type*"/>
 
                 <div className="tw-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Select id="institution-type" ariaLabel="Institution Type" isSubmitting={isSubmitting} placeholder="Type" required={getRequired()} defaultValue={requestData.request.institutiontype} options={institutionTypeOptions}/>
+                    <Select id="institution-type" ariaLabel="Institution Type" isSubmitting={isSubmitting} placeholder="Type" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutiontype} options={institutionTypeOptions}/>
                 </div>
             </div>
             </ErrorMessageHandler>
@@ -344,15 +344,15 @@ export function AnimalRequest() {
 
                 <div className="tw-flex tw-flex-wrap tw-mt-6">
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={requestData.request.officiallastname}/>
+                        <Input id="official-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.officiallastname}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} placeholder="First Name" required={getRequired()} defaultValue={requestData.request.officialfirstname}/>
+                        <Input id="official-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} placeholder="First Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.officialfirstname}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-email" ariaLabel="Email Address" isSubmitting={isSubmitting} placeholder="Email Address" required={getRequired()} defaultValue={requestData.request.officialemail}/>
+                        <Input id="official-email" ariaLabel="Email Address" isSubmitting={isSubmitting} placeholder="Email Address" required={doEnforceRequiredFields()} defaultValue={requestData.request.officialemail}/>
                     </div>
                 </div>
             </div>
@@ -361,31 +361,31 @@ export function AnimalRequest() {
             <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                 <Title text="6. Co-Investigators"/>
 
-                <CoInvestigators isSubmitting={isSubmitting} defaultValue={requestData.coinvestigators} required={getRequired()}/>
+                <CoInvestigators isSubmitting={isSubmitting} defaultValue={requestData.coinvestigators} required={doEnforceRequiredFields()}/>
             </div>
 
             <Title text="7. Existing or proposed funding source (select all that apply)"/>
-            <Funding id="funding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
+            <Funding id="funding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
 
             <h3>Institutional Animal Facilities and Capabilities</h3>
             <div className="tw-w-full tw-px-3">
                 <Title text="1. Does your institution have existing NHP facilities?"/>
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                        <Select id="existing-nhp-facilities" ariaLabel="Existing NHP Facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} defaultValue={requestData.request.existingnhpfacilities} required={getRequired()}/>
+                        <Select id="existing-nhp-facilities" ariaLabel="Existing NHP Facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} defaultValue={requestData.request.existingnhpfacilities} required={doEnforceRequiredFields()}/>
                     </div>
                 </ErrorMessageHandler>
 
                 <Title text="2. Does your institution have an existing marmoset colony?"/>
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                        <Select id="existing-marmoset-colony" ariaLabel="Existing Marmoset Colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={requestData.request.existingmarmosetcolony} required={getRequired()}/>
+                        <Select id="existing-marmoset-colony" ariaLabel="Existing Marmoset Colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={requestData.request.existingmarmosetcolony} required={doEnforceRequiredFields()}/>
                     </div>
                 </ErrorMessageHandler>
 
                 <Title text="3. Do you plan to breed marmosets?"/>
                 <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
+                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
                 </div>
             </div>
 
@@ -395,7 +395,7 @@ export function AnimalRequest() {
                 <Title text="1. Research Area"/>
 
                 <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={requestData.request} required={getRequired()}/>
+                    <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
                 </div>
 
                 <div className="tw-w-full tw-px-3 tw-mb-4">
@@ -405,20 +405,20 @@ export function AnimalRequest() {
                     />
 
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <TextArea id="experiment-rationale" ariaLabel="Experimental rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={getRequired()} defaultValue={requestData.request.experimentalrationale}/>
+                    <TextArea id="experiment-rationale" ariaLabel="Experimental rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.experimentalrationale}/>
                     </ErrorMessageHandler>
                 </div>
 
                 <Title text="3. Animal Cohorts"/>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
-                    <AnimalCohorts isSubmitting={isSubmitting} defaultValue={requestData.cohorts} required={getRequired()}/>
+                    <AnimalCohorts isSubmitting={isSubmitting} defaultValue={requestData.cohorts} required={doEnforceRequiredFields()}/>
                 </div>
 
                 <Title text={"4. " + methodsProposedPlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="methods-proposed" ariaLabel="Methods Proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={getRequired()} defaultValue={requestData.request.methodsproposed}/>
+                        <TextArea id="methods-proposed" ariaLabel="Methods Proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.methodsproposed}/>
                     </div>
                     </ErrorMessageHandler>
                 </div>
@@ -427,7 +427,7 @@ export function AnimalRequest() {
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="collaborations" ariaLabel="Collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={getRequired()} defaultValue={requestData.request.collaborations}/>
+                        <TextArea id="collaborations" ariaLabel="Collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.collaborations}/>
                     </div>
                     </ErrorMessageHandler>
                 </div>
@@ -436,13 +436,13 @@ export function AnimalRequest() {
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="animal-welfare" ariaLabel="Animal Welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={getRequired()} defaultValue={requestData.request.animalwelfare}/>
+                        <TextArea id="animal-welfare" ariaLabel="Animal Welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.animalwelfare}/>
                     </div>
                     </ErrorMessageHandler>
 
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <input type="checkbox" name="certify" id="certify" aria-label="Certify" className={(isSubmitting ? "custom-invalid" : "")} required={getRequired()} defaultChecked={requestData.request.certify}/>
+                        <input type="checkbox" name="certify" id="certify" aria-label="Certify" className={(isSubmitting ? "custom-invalid" : "")} required={doEnforceRequiredFields()} defaultChecked={requestData.request.certify}/>
                         <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
                     </div>
                     </ErrorMessageHandler>
@@ -453,21 +453,26 @@ export function AnimalRequest() {
                     <Title text="7. Attending veterinarian"/>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={getRequired()} defaultValue={requestData.request.vetlastname}/>
+                        <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetlastname}/>
                     </div>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} placeholder="First Name" required={getRequired()} defaultValue={requestData.request.vetfirstname}/>
+                        <Input id="vet-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} placeholder="First Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetfirstname}/>
                     </div>
 
                     <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-email" ariaLabel="Email" isSubmitting={isSubmitting} placeholder="Email Address" required={getRequired()} defaultValue={requestData.request.vetemail}/>
+                        <Input id="vet-email" ariaLabel="Email" isSubmitting={isSubmitting} placeholder="Email Address" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetemail}/>
                     </div>
                 </div>
                 </ErrorMessageHandler>
             </div>
 
-            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={getRequired()} defaultValue={requestData.request}/>
+            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request}/>
+
+            <div className="tw-flex tw-flex-wrap tw-mx-2">
+                <Title text="Request Status"/>
+                {requestData.request.status}
+            </div>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
                 <button className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
@@ -478,12 +483,12 @@ export function AnimalRequest() {
                     }
                 }}>Cancel</button>
 
-                <Button onClick={() => {
-                    handleSubmitButton(false);
+                <Button onClick={(e) => {
+                    handleSubmitButton(e, false);
                  }} text={getSaveButtonText()} display={hasEditPermission()}/>
 
-                <Button onClick={() => {
-                    handleSubmitButton(true);
+                <Button onClick={(e) => {
+                    handleSubmitButton(e, true);
                  }} text={getSubmitButtonText()} display={hasEditPermission()}/>
             </div>
         </form>
