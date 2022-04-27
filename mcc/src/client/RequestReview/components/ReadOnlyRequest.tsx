@@ -15,7 +15,11 @@ function formatPIName(request: AnimalRequestProps) {
 }
 
 function formatName(lastname, firstname, middleinitial) {
-    return(lastname + ', ' + (firstname || 'No First Name') + (middleinitial ? ' ' + middleinitial : ''))
+    if (!lastname) {
+        return('NOT ENTERED')
+    }
+
+    return(lastname + ', ' + (firstname || 'NOT_ENTERED') + (middleinitial ? ' ' + middleinitial : ''))
 }
 
 function findDisplayValue(value, translationMap) {
@@ -90,7 +94,8 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     <div>Signing Official: </div>
                 </Grid>
                 <Grid item xs={10}>
-                    {formatName(requestData.request.officiallastname, requestData.request.officialfirstname, null)} ({requestData.request.officialemail})
+                    {formatName(requestData.request.officiallastname, requestData.request.officialfirstname, null)}
+                    {requestData.request.officialemail ? ' (' + requestData.request.officialemail + ')' : ''}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
                     <div>Co-Investigators: </div>
@@ -195,8 +200,8 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                 Attending Veterinarian:
                 </Grid>
                 <Grid item xs={10}>
-                    {requestData.request.vetlastname + (requestData.request.vetfirstname ? ', ' + requestData.request.vetfirstname : '')}
-                    ({requestData.request.vetemail})
+                    {requestData.request.vetlastname ? (requestData.request.vetlastname + (requestData.request.vetfirstname ? ', ' + requestData.request.vetfirstname : '')) : ''}
+                    {requestData.request.vetemail ? ' (' + requestData.request.vetemail + ')' : ''}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
                     IACUC Approval:
