@@ -470,8 +470,7 @@ export function AnimalRequest() {
             <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request}/>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <Title text="Request Status"/>
-                {requestData.request.status}
+                <Title text="Request Status: "/>{requestData.request.status}
             </div>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
