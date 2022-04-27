@@ -174,6 +174,7 @@ public class MccTest extends BaseWebDriverTest
         setFormValues(null);
 
         waitAndClick(getButton("Save"));
+        waitForElementToDisappear(Locator.tagWithText("h2", "Saving").withClass("text-xl"));
 
         // Verify record created:
         Map<String, Object> request = getLastModifiedRequestRow();

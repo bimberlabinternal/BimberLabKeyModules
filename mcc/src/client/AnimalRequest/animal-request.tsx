@@ -63,7 +63,7 @@ export function AnimalRequest() {
         setDisplayOverlay(false)
 
         requestData.request.status = stateRollbackOnFailure
-        setRequestData(requestData)
+        setRequestData({...requestData})
     }
 
     function getRequired() {
@@ -91,12 +91,19 @@ export function AnimalRequest() {
     }
 
     function handleSubmitButton(incrementStatus) {
+        // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
+        // Any other action preserved the status as-is
         if (incrementStatus) {
             setIsSubmitting(true);
             setStateRollbackOnFailure(requestData.request.status)
-        }
 
-        setRequestData(requestData)
+            if (requestData.request.status === 'Draft') {
+                requestData.request.status = 'Submitted'
+
+                console.log('new status: ' + requestData.request.status)
+                setRequestData({...requestData})
+            }
+        }
     }
 
     function getSubmitButtonText() {
@@ -191,9 +198,6 @@ export function AnimalRequest() {
         e.preventDefault()
         setDisplayOverlay(true)
         setStateRollbackOnFailure(requestData.request.status)
-
-        //TODO: check this??
-        requestData.request.status = "Submitted"
 
         const el = e.currentTarget as HTMLFormElement
         const data = new FormData(el)
