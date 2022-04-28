@@ -251,7 +251,10 @@ public class MccTest extends BaseWebDriverTest
 
     private void addCoinvestigator(int idx)
     {
-        waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
+        if (idx >= 0)
+        {
+            waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
+        }
 
         FormElement[] fields = getCoinvestigatorFields(idx);
         for (FormElement f : fields)
@@ -350,7 +353,8 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(getButton("Submit"));
 
         // This omits a required field
-        setFormValues(Arrays.asList("investigator-last-name"));
+        setFormValues(Arrays.asList("lastName"));
+        addCohort(0);
         waitAndClick(getButton("Submit"));
 
         waitForElement(Locator.tagWithText("li", "Last Name: Please fill out this field."));
@@ -359,6 +363,8 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
         waitForElement(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
+        addCoinvestigator(-1);  //the button was clicked above
+        waitAndClick(getButton("Save"));
         waitForElementToDisappear(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
         // Add another, which makes it invalid again
@@ -395,13 +401,13 @@ public class MccTest extends BaseWebDriverTest
         DataRegionTable dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
         dr.clickEditRow(0);
 
-        getFormElementByName("investigator-last-name").waitFor(this);
+        getFormElementByName("lastName").waitFor(this);
 
         // TODO: make sure the field values are remembered
         // including cohort and co-investigator
         for (FormElement f : FORM_DATA)
         {
-            if ("investigator-last-name".equals(f.getInputName()))
+            if ("lastName".equals(f.getDatabaseFieldName()))
             {
                 continue;
             }
@@ -410,7 +416,7 @@ public class MccTest extends BaseWebDriverTest
         }
 
         // Now fill in the missing field:
-        getFormElementByName("investigator-last-name").setFieldValue(this);
+        getFormElementByName("lastName").setFieldValue(this);
 
         waitAndClickAndWait(getButton("Submit"));
 
@@ -418,7 +424,7 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Submitted", dr.getDataAsText(0, "status"));
 
         dr.clickEditRow(0);
-        getFormElementByName("investigator-last-name").waitFor(this);
+        getFormElementByName("lastName").waitFor(this);
 
         waitForElement(getButton("Update Request"));
         assertElementNotPresent(getButton("Submit"));
