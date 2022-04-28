@@ -146,6 +146,10 @@ public class MccTest extends BaseWebDriverTest
             {
                 test.waitAndClick(getLocator());
             }
+            else if ("select".equals(inputType))
+            {
+                test.selectOptionByText(getLocator(), String.valueOf(fieldValue));
+            }
             else
             {
                 test.setFormElement(getLocator(), String.valueOf(fieldValue));
@@ -272,6 +276,15 @@ public class MccTest extends BaseWebDriverTest
         waitForSaveToComplete();
         Assert.assertEquals(1, getCoinvestigatorRecords(requestId).size());
         Assert.assertEquals(1, getCohortRecords(requestId).size());
+
+        // Test IACUC toggle
+        selectOptionByText(getFormElementByName("iacucapproval").getLocator(), "Approved");
+        waitForElement(Locator.tagWithId("input", "iacuc-protocol"));
+        setFormElement(Locator.tagWithId("input", "iacuc-protocol"), "IACUC 123456");
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+
+        Assert.assertEquals(getLastModifiedRequestRow().get("iacucprotocol"), "IACUC 123456");
     }
 
     private FormElement[] getCoinvestigatorFields(int idx)
@@ -359,6 +372,7 @@ public class MccTest extends BaseWebDriverTest
         sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
         List<String> cols = new ArrayList<>(Arrays.stream(FORM_DATA).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
         cols.add("objectid");
+        cols.add("iacucprotocol");
         sr.setColumns(cols);
 
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
