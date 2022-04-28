@@ -216,6 +216,7 @@
         <importUrl>mcc/animalRequest.view</importUrl>
         <insertUrl></insertUrl>
         <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
+        <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
@@ -392,6 +393,7 @@
     <table tableName="coinvestigators" tableDbType="TABLE">
         <tableTitle>Co-investigators</tableTitle>
         <pkColumnName>rowid</pkColumnName>
+        <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
                 <columnTitle>Row ID</columnTitle>
@@ -453,6 +455,7 @@
     <table tableName="requestcohorts" tableDbType="TABLE">
         <tableTitle>Request Cohorts</tableTitle>
         <pkColumnName>rowid</pkColumnName>
+        <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
                 <columnTitle>Cohort Id</columnTitle>
@@ -568,6 +571,7 @@
     </table>
     <table tableName="requestReviews" tableDbType="TABLE">
         <tableTitle>Request Reviews</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
         <insertUrl />
         <importUrl />
         <updateUrl />
@@ -655,6 +659,7 @@
         <tableUrl />
         <deleteUrl />
         <tableTitle>Animal Request Reviews</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
