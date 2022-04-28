@@ -245,7 +245,7 @@ public class MccTest extends BaseWebDriverTest
         return new FormElement[]{
                 new FormElement("animal-cohorts-" + idx + "-numberofanimals", "numberofanimals", 12),
                 new FormElement("animal-cohorts-" + idx + "-sex", "sex", "Male").select("male"),
-                new FormElement("animal-cohorts-" + idx + "-othercharacteristics", "institution", "cohort-othercharacteristics").inputType("textarea")
+                new FormElement("animal-cohorts-" + idx + "-othercharacteristics", "othercharacteristics", "cohort-othercharacteristics").inputType("textarea")
         };
     }
 
