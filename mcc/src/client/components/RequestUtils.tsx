@@ -1,6 +1,6 @@
 import React from 'react';
 import { Filter, Query } from '@labkey/api';
-import { generateUUID } from '@labkey/api/dist/labkey/Utils';
+import { v4 as uuidv4 } from 'uuid';
 
 export class AnimalRequestModel {
     request: AnimalRequestProps = new AnimalRequestProps();
@@ -49,7 +49,7 @@ export class CoInvestigatorModel {
     firstname: string;
     middleinitial: string;
     institutionname: string;
-    uuid: string = generateUUID();
+    uuid: string = uuidv4();
 }
 
 export class AnimalCohort {
@@ -58,7 +58,7 @@ export class AnimalCohort {
     numberofanimals: number;
     sex: string;
     othercharacteristics: string;
-    uuid: string = generateUUID();
+    uuid: string = uuidv4();
 }
 
 export async function queryRequestInformation(requestId, handleFailure) {
@@ -137,7 +137,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
             success: function (resp) {
                 if (resp.rows.length) {
                     // NOTE: this property is purely for client-side UI and not persisted in the DB, so create a value
-                    resp.rows.map(c => c.uuid = generateUUID())
+                    resp.rows.map(c => c.uuid = uuidv4())
                 }
 
                 resolve(resp.rows)
@@ -167,7 +167,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
                     requestData.cohorts = resp.rows
 
                     // NOTE: this property is purely for client-side UI and not persisted in the DB, so create a value
-                    requestData.cohorts.map(c => c.uuid = generateUUID())
+                    requestData.cohorts.map(c => c.uuid = uuidv4())
                 }
 
                 resolve(requestData.cohorts)

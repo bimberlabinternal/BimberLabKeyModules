@@ -30,8 +30,7 @@ import {
     methodsProposedPlaceholder,
     signingOfficialTooltip
 } from './components/values';
-import { generateUUID } from '@labkey/api/dist/labkey/Utils';
-
+import { v4 as uuidv4 } from 'uuid';
 
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
@@ -207,7 +206,8 @@ export function AnimalRequest() {
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
         })
 
-        const objectId = requestId || generateUUID()
+        // NOTE: use a proper v4 UUID so this is compatible with the sqlserver ENTITYID datatype
+        const objectId = requestId || uuidv4()
         let coinvestigatorCommands = getCoinvestigatorCommands(data, objectId)
         let cohortCommands = getAnimalCohortCommands(data, objectId)
 
