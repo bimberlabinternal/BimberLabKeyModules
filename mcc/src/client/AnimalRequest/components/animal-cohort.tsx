@@ -1,13 +1,12 @@
-import React, { useState, Fragment } from 'react'
-import { nanoid } from 'nanoid'
+import React, { useState } from 'react';
 
-import InputNumber from './input-number'
-import Select from './select'
-import Title from './title'
-import TextArea from './text-area'
-import ErrorMessageHandler from './error-message-handler'
+import InputNumber from './input-number';
+import Select from './select';
+import Title from './title';
+import TextArea from './text-area';
+import ErrorMessageHandler from './error-message-handler';
 
-import { animalSexes, otherCharacteristicsPlaceholder } from './values'
+import { animalSexes, otherCharacteristicsPlaceholder } from './values';
 import { AnimalCohort } from '../../components/RequestUtils';
 
 export default function AnimalCohorts(props) {

@@ -1,6 +1,5 @@
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { ActionURL, getServerContext, Query } from '@labkey/api';
-import { nanoid } from 'nanoid';
 import { AnimalRequestModel, queryRequestInformation } from '../components/RequestUtils';
 
 import Tooltip from './components/tooltip';
@@ -31,6 +30,7 @@ import {
     methodsProposedPlaceholder,
     signingOfficialTooltip
 } from './components/values';
+import { generateUUID } from '@labkey/api/dist/labkey/Utils';
 
 
 export function AnimalRequest() {
@@ -59,6 +59,8 @@ export function AnimalRequest() {
     }
 
     function handleFailure(response) {
+        console.error(response.exception)
+        console.error(response)
         alert(response.exception)  //this is probably what you want to show. An example would be to submit data with a long value for middle initial (>14 characters)
         setDisplayOverlay(false)
 
@@ -205,7 +207,7 @@ export function AnimalRequest() {
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
         })
 
-        const objectId = requestId || nanoid()
+        const objectId = requestId || generateUUID()
         let coinvestigatorCommands = getCoinvestigatorCommands(data, objectId)
         let cohortCommands = getAnimalCohortCommands(data, objectId)
 
