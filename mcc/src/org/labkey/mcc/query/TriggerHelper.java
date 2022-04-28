@@ -96,7 +96,7 @@ public class TriggerHelper
                 return;
             }
 
-            TableSelector ts = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_SCORE), new SimpleFilter(FieldKey.fromString("requestid"), objectId), null);
+            TableSelector ts = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_SCORE), PageFlowUtil.set("rowid", "preliminaryScore"), new SimpleFilter(FieldKey.fromString("requestid"), objectId), null);
             if (!ts.exists())
             {
                 Map<String, Object> toInsert = new CaseInsensitiveHashMap<>();
@@ -112,7 +112,8 @@ public class TriggerHelper
                 try
                 {
                     BatchValidationException bve = new BatchValidationException();
-                    QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_SCORE).getUpdateService().insertRows(_user, _container, Arrays.asList(toInsert), bve, null, null);
+                    TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_SCORE);
+                    ti.getUpdateService().insertRows(_user, _container, Arrays.asList(toInsert), bve, null, null);
                 }
                 catch (QueryUpdateServiceException | BatchValidationException | DuplicateKeyException | SQLException e)
                 {
@@ -121,9 +122,27 @@ public class TriggerHelper
             }
             else
             {
-                // ensure score is accurate in the case of an update:
+                // Ensure score is accurate in the case the underlying data changed:
                 List<Map> records = ts.getArrayList(Map.class);
+                if (records.size() != 1)
+                {
+                    _log.error("More than one requestScore record found for requestId: " + objectId);
+                }
 
+                Map<String, Object> row = records.get(0);
+                if (score != (Integer)row.get("preliminaryScore"))
+                {
+                    try
+                    {
+                        row.put("preliminaryScore", score);
+                        TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_SCORE);
+                        ti.getUpdateService().updateRows(_user, _container, Arrays.asList(row), Arrays.asList(Collections.singletonMap("rowid", row.get("rowid"))), null, null);
+                    }
+                    catch (QueryUpdateServiceException | BatchValidationException | InvalidKeyException | SQLException e)
+                    {
+                        _log.error("Unable to update score for: " + objectId, e);
+                    }
+                }
             }
 
             // This indicates the form was submitted immediately (i.e. not a draft), or it was in draft state and has advanced.
