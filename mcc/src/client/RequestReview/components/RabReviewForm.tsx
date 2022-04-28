@@ -75,11 +75,12 @@ export default function RabReviewForm(props: {requestId: string, readOnly?: bool
         <h2>Enter MCC Review</h2>
         <form noValidate autoComplete='off' onSubmit={onFormSubmit}>
         <Box style={{display: 'inline-block'}}>
+        Instructions for RAB
         <Table width={500}>
             <TableBody>
             <TableRow>
                 {/*TODO: this probably needs to be a select*/}
-                <TableCell><TextField key={"review"} label={"Review"} onChange={handleChange} variant={'outlined'} value={recordData.review || ''} disabled={true} fullWidth={true}/></TableCell>
+                <TableCell><TextField key={"review"} label={"Review"} onChange={handleChange} variant={'outlined'} value={recordData.review || ''} fullWidth={true}/></TableCell>
             </TableRow>
             <TableRow>
                 <TableCell><TextField key={"comments"} label={"Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>

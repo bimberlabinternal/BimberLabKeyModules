@@ -32,10 +32,7 @@
             title: 'All Pending RAB Reviews',
             schemaName: 'mcc',
             queryName: 'requestReviews',
-            //frame: 'none',
-            filterArray: [
-                LABKEY.Filter.create('review', null, LABKEY.Filter.Types.ISBLANK)
-            ],
+            viewName: 'Pending Reviews',
             showRecordSelectors: false,
             showDetailsColumn: false,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}
@@ -46,6 +43,7 @@
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'requestScores',
+            viewName: 'Pending Requests',
             showRecordSelectors: true,
             showDetailsColumn: true,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}

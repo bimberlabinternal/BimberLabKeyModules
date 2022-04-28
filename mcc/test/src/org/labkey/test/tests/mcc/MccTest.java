@@ -192,7 +192,6 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("methods-proposed", "methodsproposed", "methods").inputType("textarea"),
             new FormElement("collaborations", "collaborations", "collaborations").inputType("textarea"),
             new FormElement("animal-breeding-is-planning-to-breed-animals", "isbreedinganimals", false).radio(),
-            new FormElement("research-area", "researcharea", "Rare disease research").select("rare-disease"),
             new FormElement("existing-marmoset-colony", "existingmarmosetcolony", "Existing marmoset colony").select("existing"),
             new FormElement("existing-nhp-facilities", "existingnhpfacilities", "Existing NHP facilities").select("existing"),
             new FormElement("animal-welfare", "animalwelfare", "welfare").inputType("textarea"),
@@ -243,7 +242,7 @@ public class MccTest extends BaseWebDriverTest
         String requestId = (String)requestRows.get(0).get("objectid");
         Assert.assertEquals(expectedRequests +  1, requestRows.size());
 
-        Assert.assertEquals(2, getCohortRecords(requestId).size());
+        Assert.assertEquals(2, getCoinvestigatorRecords(requestId).size());
         Assert.assertEquals(1, getCohortRecords(requestId).size());
 
         // This is to ensure we update the record we have, rather than create a new one

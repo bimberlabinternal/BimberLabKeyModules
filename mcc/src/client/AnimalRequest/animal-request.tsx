@@ -17,7 +17,6 @@ import YesNoRadio from './components/yes-no-radio';
 import AnimalBreeding from './components/animal-breeding';
 import IACUCProtocol from './components/iacuc-protocol';
 import Funding from './components/funding';
-import ResearchArea from './research-area';
 import AnimalCohorts from './components/animal-cohort';
 import Button from './components/button';
 import SavingOverlay from './saving-overlay';
@@ -281,8 +280,6 @@ export function AnimalRequest() {
                         "collaborations": data.get("collaborations"),
                         "isbreedinganimals": data.get("animal-breeding-is-planning-to-breed-animals"),
                         "breedingpurpose": data.get("animal-breeding-purpose"),
-                        "researcharea": data.get("research-area"),
-                        "otherjustification": data.get("research-area-other-specify"),
                         "existingmarmosetcolony": data.get("existing-marmoset-colony"),
                         "existingnhpfacilities": data.get("existing-nhp-facilities"),
                         "animalwelfare": data.get("animal-welfare"),
@@ -502,6 +499,7 @@ export function AnimalRequest() {
             </div>
 
             <Title text="7. Existing or proposed funding source (select all that apply)"/>
+            {/* TODO: Make into checkbox group*/}
             <Funding id="funding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
 
             <h3>Institutional Animal Facilities and Capabilities</h3>
@@ -522,21 +520,15 @@ export function AnimalRequest() {
 
                 <Title text="3. Do you plan to breed marmosets?"/>
                 <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
+                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} request={requestData.request} required={doEnforceRequiredFields()}/>
                 </div>
             </div>
 
             <h3>Research Details</h3>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <Title text="1. Research Area"/>
-
-                <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
-                </div>
-
                 <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <Title text={"2. " + experimentalRationalePlaceholder}/>
+                    <Title text={"1. " + experimentalRationalePlaceholder}/>
                     <Tooltip id="research-use-statement-helper"
                        text={experimentalRationalePlaceholder}
                     />
@@ -546,12 +538,12 @@ export function AnimalRequest() {
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text="3. Animal Cohorts"/>
+                <Title text="2. Animal Cohorts"/>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
                     <AnimalCohorts isSubmitting={isSubmitting} cohorts={requestData.cohorts} required={doEnforceRequiredFields()} onAddCohort={onAddCohort} onRemoveCohort={onRemoveCohort}/>
                 </div>
 
-                <Title text={"4. " + methodsProposedPlaceholder}/>
+                <Title text={"3. " + methodsProposedPlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -560,7 +552,7 @@ export function AnimalRequest() {
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text={"5. " + collaborationsPlaceholder}/>
+                <Title text={"4. " + collaborationsPlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -569,7 +561,7 @@ export function AnimalRequest() {
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text={"6. " + animalWellfarePlaceholder}/>
+                <Title text={"5. " + animalWellfarePlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -587,7 +579,7 @@ export function AnimalRequest() {
 
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                    <Title text="7. Attending veterinarian"/>
+                    <Title text="6. Attending veterinarian"/>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
                         <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetlastname}/>
@@ -604,7 +596,7 @@ export function AnimalRequest() {
                 </ErrorMessageHandler>
             </div>
 
-            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request}/>
+            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
                 <Title text="Request Status: "/>{requestData.request.status}

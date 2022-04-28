@@ -28,9 +28,8 @@ export class AnimalRequestProps {
     breedingpurpose: string;
     methodsproposed: string;
     collaborations: string;
-    researcharea: string;
-    otherjustification: string;
     iacucprotocol: string;
+    iacucapproval: string;
     existingmarmosetcolony: string;
     existingnhpfacilities: string;
     rowid: number;
@@ -97,8 +96,6 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 "collaborations",
                 "isbreedinganimals",
                 "breedingpurpose",
-                "researcharea",
-                "otherjustification",
                 "existingmarmosetcolony",
                 "existingnhpfacilities",
                 "animalwelfare",

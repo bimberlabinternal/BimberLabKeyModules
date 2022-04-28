@@ -128,7 +128,7 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     Plans to Breed Marmosets:
                 </Grid>
                 <Grid item xs={10}>
-                    {requestData.request.isbreedinganimals}
+                    {requestData.request.isbreedinganimals ? 'Yes' : 'No'}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
                     Breeding Purpose:
@@ -146,12 +146,6 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                 </Grid>
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.researcharea, researchAreaOptions)}
-                </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
-                    Experimental Rationale:
-                </Grid>
-                <Grid item xs={10}>
-                    {requestData.request.otherjustification}
                 </Grid>
 
                 <Grid item xs={2} className={styles.fieldLabel}>
@@ -207,7 +201,9 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     IACUC Approval:
                 </Grid>
                 <Grid item xs={10}>
-                    {translateRawToDisplayValue(requestData.request.iacucprotocol, IACUCApprovalOptions)}
+                    {translateRawToDisplayValue(requestData.request.iacucapproval, IACUCApprovalOptions)}
+                    {/*TODO: show*/}
+                    {/*{requestData.request.iacucprotocol}*/}
                 </Grid>
             </Grid>
             <p />
