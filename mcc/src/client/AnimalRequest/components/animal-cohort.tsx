@@ -1,33 +1,26 @@
-import React, { useState, Fragment } from 'react'
-import { nanoid } from 'nanoid'
+import React, { useState } from 'react';
 
-import InputNumber from './input-number'
-import Select from './select'
-import Title from './title'
-import TextArea from './text-area'
-import ErrorMessageHandler from './error-message-handler'
+import InputNumber from './input-number';
+import Select from './select';
+import Title from './title';
+import TextArea from './text-area';
+import ErrorMessageHandler from './error-message-handler';
 
-import { animalSexes, otherCharacteristicsPlaceholder } from './values'
+import { animalSexes, otherCharacteristicsPlaceholder } from './values';
+import { AnimalCohort } from '../../components/RequestUtils';
 
 export default function AnimalCohorts(props) {
-  const [cohorts, setCohorts] = useState(new Set(
-    props.defaultValue.map((cohort) => ({
-      ...cohort,
-      "uuid": nanoid()
-    }))
-  ))
- 
+  const [cohorts, setCohorts] = useState<AnimalCohort[]>(props.defaultValue)
+
   function addCohort() {
-    cohorts.add({
-      "uuid": nanoid()
-    })
-    setCohorts(new Set(cohorts))
+    cohorts.push(new AnimalCohort())
+    setCohorts([...cohorts])
   }
 
   function removeCohort(cohort) {
-    if(cohorts.size > 1) {
-      cohorts.delete(cohort)
-      setCohorts(new Set(cohorts))
+    // NOTE: dont allow removing all cohorts
+    if (cohorts.length > 1) {
+      setCohorts([...cohorts.filter(item => item.uuid !== cohort.uuid)])
     }
   }
 
@@ -43,7 +36,7 @@ export default function AnimalCohorts(props) {
 
             <div className="tw-flex tw-flex-wrap tw-w-full md:tw-w-1/2 md:tw-mb-0">
                 <input type="button" className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-2 tw-px-4 tw-border-none tw-rounded"
-                  onClick={() => removeCohort(cohort)} value="Remove" style={{display: cohorts.size > 1 ? null : "none"}}/>
+                  onClick={() => removeCohort(cohort)} value="Remove" style={{display: index > 0 ? null : "none"}}/>
             </div>
           </div>
 

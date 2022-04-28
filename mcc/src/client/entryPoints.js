@@ -15,5 +15,11 @@ module.exports = {
     title: 'Animal Requests',
     permission: 'read',
     path: './src/client/AnimalRequest'
+  },{
+    name: 'requestReview',
+    title: 'Animal Request Review',
+    permission: 'read',
+    template: 'home',
+    path: './src/client/RequestReview'
   }]
 };

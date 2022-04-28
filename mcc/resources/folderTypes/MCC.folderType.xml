@@ -22,6 +22,10 @@
                     <name>MCC Dashboard Webpart</name>
                     <location>body</location>
                 </webPart>
+                <webPart>
+                    <name>MCC Menu</name>
+                    <location>menu</location>
+                </webPart>
             </preferredWebParts>
         </folderTab>
     </folderTabs>

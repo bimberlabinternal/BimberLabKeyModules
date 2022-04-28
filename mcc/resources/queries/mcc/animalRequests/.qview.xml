@@ -7,6 +7,7 @@
         <column name="institutionname"/>
         <column name="status"/>
         <column name="modified"/>
+        <column name="actions"/>
     </columns>
     <sorts>
         <sort column="rowid" descending="true"/>

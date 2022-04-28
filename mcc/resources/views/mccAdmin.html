@@ -1,27 +1,37 @@
 <script type="text/javascript">
 
 Ext4.onReady(function (){
+    //TODO
+    if (LABKEY.Security.currentUser.isAdmin){
+        var webpart = <%=webpartContext%>;
 
-if (LABKEY.Security.currentUser.isAdmin){
-    var webpart = <%=webpartContext%>;
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
 
-    var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
-    if(!ctx)
-        return;
+        Ext4.create('LDK.panel.NavPanel', {
+            renderTo: webpart.wrapperDivId,
+            width: 350,
+            sections: [
+                {header: 'User/Request Management',
+                    items: [
+                        {name: 'View Pending User Requests', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'},
+                        {name: 'View All Users', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'}
+                    ]
+                },
+                {header: 'Configuration/Data Management',
+                    items: [
+                        {name: 'Ensure Site Settings and Groups', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/mcc-executeQuery.view?schemaName=mcc&queryName=userRequests?'}
+                    ]
+                }
 
-    Ext4.create('LDK.panel.NavPanel', {
-        renderTo: webpart.wrapperDivId,
-        width: 350,
-        sections: [
-            {header: 'User/Request Management',
-                items: [
-                    {name: 'View Pending User Requests', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'},
-                    {name: 'View All Users', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'}
-                ]
-            }
-        ]
-    });
-}
+
+            ]
+        });
+    }
+    else {
+
+    }
 });
 
 </script>

@@ -6,23 +6,59 @@
         if(!ctx)
             return;
 
+        //TODO:
+        // Review advisory board table
+        // figure with workflow
+
         Ext4.get(webpart.wrapperDivId).update(
             'Below are all pending and historic animal requests to MCC. You can use the edit link to view/update any request. You can also use the left-hand \'Views\' button to toggle between submitted requests, all requests, etc.' +
             '<p></p>' +
             '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/' + ctx.MCCRequestContainer + '/security-permissions.view?t=sitegroups">Manage RAB Members (admin permission needed)</a>' +
             '<p></p>' +
-            '<div id="' + webpart.wrapperDivId + '-webpartPending">'
+            '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>' +
+            '<p></p>' +
+            '<div id="' + webpart.wrapperDivId + '-webpartPending"></div>' +
+            '<p></p>' +
+            '<div id="' + webpart.wrapperDivId + '-webpartRAB"></div>'
         );
 
         LDK.Utils.getBasicQWP({
-            title: 'MCC Animal Requests',
+            title: 'All Pending RAB Reviews',
+            schemaName: 'mcc',
+            queryName: 'requestReviews',
+            //frame: 'none',
+            filterArray: [
+                LABKEY.Filter.create('review', null, LABKEY.Filter.Types.ISBLANK)
+            ],
+            showRecordSelectors: false,
+            showDetailsColumn: false,
+            buttonBar: {position: 'top', includeStandardButtons: true, items: []}
+        }).render(webpart.wrapperDivId + '-webpartAssignments');
+
+        LDK.Utils.getBasicQWP({
+            title: 'All Pending MCC Requests',
             frame: 'left-nav',
             schemaName: 'mcc',
-            queryName: 'animalRequests',
-            viewName: 'Submitted',
+            queryName: 'requestScores',
+            //viewName: 'In Progress',
             showRecordSelectors: true,
             showDetailsColumn: true,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}
         }).render(webpart.wrapperDivId + '-webpartPending');
+
+        LDK.Utils.getBasicQWP({
+            title: 'Current RAB Members',
+            //frame: 'none',
+            schemaName: 'core',
+            queryName: 'Members',
+            filterArray: [LABKEY.Filter.create('GroupId/Name', 'MCC RAB')],
+            showRecordSelectors: false,
+            showDetailsColumn: false,
+            buttonBar: {position: 'top', includeStandardButtons: true, items: []}
+        }).render(webpart.wrapperDivId + '-webpartRAB');
     });
 </script>

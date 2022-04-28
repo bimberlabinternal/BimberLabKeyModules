@@ -655,6 +655,9 @@
             <column columnName="center">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="alternateIds">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Demographics</tableTitle>
     </table>
