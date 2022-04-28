@@ -213,8 +213,8 @@ public class MccTest extends BaseWebDriverTest
 
         addCohort(0);
 
-        addCoinvestigator(0);
-        addCoinvestigator(1);
+        addCoinvestigator(0, true);
+        addCoinvestigator(1, true);
 
         waitAndClick(getButton("Save"));
         waitForSaveToComplete();
@@ -249,9 +249,9 @@ public class MccTest extends BaseWebDriverTest
         };
     }
 
-    private void addCoinvestigator(int idx)
+    private void addCoinvestigator(int idx, boolean clickBtn)
     {
-        if (idx >= 0)
+        if (clickBtn)
         {
             waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
         }
@@ -363,7 +363,7 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
         waitForElement(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
-        addCoinvestigator(-1);  //the button was clicked above
+        addCoinvestigator(0, false);  //the button was clicked above
         waitAndClick(getButton("Save"));
         waitForElementToDisappear(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
@@ -389,7 +389,7 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(removeBtn);
 
         // Even though last name is missing, it should still be savable:
-        waitAndClickAndWait(getButton("Save"));
+        waitAndClick(getButton("Save"));
         waitForSaveToComplete();
 
         doAndWaitForPageToLoad(() -> {
