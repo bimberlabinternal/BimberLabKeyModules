@@ -151,6 +151,24 @@ public class MccTest extends BaseWebDriverTest
                 test.setFormElement(getLocator(), String.valueOf(fieldValue));
             }
         }
+
+        public String getExpectedInputFieldValue()
+        {
+            if (fieldValue instanceof Boolean)
+            {
+                boolean val = (boolean)fieldValue;
+                if ("checkbox".equals(inputType))
+                {
+                    return val ? "on" : null;
+                }
+                else if ("radio".equals(inputType))
+                {
+                    return val ? "yes" : "no";
+                }
+            }
+
+            return String.valueOf(fieldValue);
+        }
     }
 
     // Field name / field value:
@@ -412,7 +430,7 @@ public class MccTest extends BaseWebDriverTest
                 continue;
             }
 
-            Assert.assertEquals(getFormElementByName(f.inputName), f.fieldValue);
+            Assert.assertEquals(getFormElement(f.getLocator()), f.getExpectedInputFieldValue());
         }
 
         // Now fill in the missing field:
