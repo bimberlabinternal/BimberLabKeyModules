@@ -463,14 +463,14 @@ public class MccTest extends BaseWebDriverTest
     @Override
     protected void doCleanup(boolean afterTest) throws TestTimeoutException
     {
-        //super.doCleanup(afterTest);
+        super.doCleanup(afterTest);
     }
 
     @BeforeClass
     public static void setupProject() throws Exception
     {
         MccTest init = (MccTest)getCurrentTest();
-        //init.doSetup();
+        init.doSetup();
     }
 
     private void doSetup() throws Exception
