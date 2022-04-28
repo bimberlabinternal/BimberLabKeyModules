@@ -18,6 +18,8 @@
             '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
             '<br>' +
             '<a class="labkey-text-link" href="<%=contextPath%>/security/' + ctx.MCCRequestContainer + '/permissions.view?t=sitegroups">Manage RAB Members (admin permission needed)</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/query/' + ctx.MCCRequestContainer + '/executeQuery.view?schemaName=mcc&queryName=animalRequests">View All Requests</a>' +
             '<p></p>' +
             '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>' +
             '<p></p>' +
@@ -44,7 +46,6 @@
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'requestScores',
-            //viewName: 'In Progress',
             showRecordSelectors: true,
             showDetailsColumn: true,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}

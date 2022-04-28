@@ -234,8 +234,24 @@ public class MccTest extends BaseWebDriverTest
         addCoinvestigator(0, true);
         addCoinvestigator(1, true);
 
+        int expectedRequests = getRequestRows().size();
+
         waitAndClick(getButton("Save"));
         waitForSaveToComplete();
+
+        List<Map<String, Object>> requestRows = getRequestRows();
+        String requestId = (String)requestRows.get(0).get("objectid");
+        Assert.assertEquals(expectedRequests +  1, requestRows.size());
+
+        Assert.assertEquals(2, getCohortRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
+
+        // This is to ensure we update the record we have, rather than create a new one
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+        Assert.assertEquals(expectedRequests +  1, getRequestRows().size());
+        Assert.assertEquals(2, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
 
         // Verify record created:
         Map<String, Object> request = getLastModifiedRequestRow();
@@ -246,6 +262,17 @@ public class MccTest extends BaseWebDriverTest
 
         assertCohortValues((String)request.get("objectid"), 1);
         assertCoinvestigatorValues((String)request.get("objectid"), 2);
+
+        // Remove Co-I, save:
+        Locator removeBtn = Locator.tagWithText("p", "Co-Investigator 2").parent("div").followingSibling("div").index(0).child("input");
+        waitForElement(removeBtn);
+        click(removeBtn);
+        waitForElementToDisappear(removeBtn);
+
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+        Assert.assertEquals(1, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
     }
 
     private FormElement[] getCoinvestigatorFields(int idx)
@@ -327,7 +354,7 @@ public class MccTest extends BaseWebDriverTest
         }
     }
 
-    private Map<String, Object> getLastModifiedRequestRow() throws Exception
+    private List<Map<String, Object>> getRequestRows() throws Exception
     {
         SelectRowsCommand sr = new SelectRowsCommand("mcc", "animalrequests");
         sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
@@ -336,7 +363,14 @@ public class MccTest extends BaseWebDriverTest
         sr.setColumns(cols);
 
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
-        return srr.getRows().get(0);
+        return srr.getRows();
+    }
+
+    private Map<String, Object> getLastModifiedRequestRow() throws Exception
+    {
+        List<Map<String, Object>> rr = getRequestRows();
+
+        return rr.isEmpty() ? null : rr.get(0);
     }
 
     private List<Map<String, Object>> getCohortRecords(String requestId) throws Exception

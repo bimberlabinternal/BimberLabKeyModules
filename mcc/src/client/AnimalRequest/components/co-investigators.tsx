@@ -1,27 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import Input from './input';
 import Title from './title';
 import ErrorMessageHandler from './error-message-handler';
 import { CoInvestigatorModel } from '../../components/RequestUtils';
 
-export default function CoInvestigators(props) {
-  const [coInvestigators, setCoInvestigators] = useState<CoInvestigatorModel[]>(props.defaultValue || [])
-
-  function addInvestigator() {
-    coInvestigators.push(new CoInvestigatorModel())
-    setCoInvestigators([...coInvestigators])
-  }
-
-  function removeCoInvestigator(coInvestigator) {
-    if (coInvestigators.length) {
-      setCoInvestigators([...coInvestigators.filter(item => item.uuid !== coInvestigator.uuid)])
-    }
-  }
+export default function CoInvestigators(props: {coinvestigators: CoInvestigatorModel[], required: boolean, isSubmitting: boolean, onAddRecord: () => void, onRemoveRecord: (x: CoInvestigatorModel) => void}) {
 
   return (
       <>
-        {[...coInvestigators].map((coInvestigator, index) => (
+        {[...props.coinvestigators].map((coInvestigator, index) => (
             <ErrorMessageHandler isSubmitting={props.isSubmitting} keyInternal={coInvestigator.uuid} key={coInvestigator.uuid + "-errorHandler"}>
               <div className="tw-flex tw-flex-wrap tw-w-full tw-mx-2 tw-mb-4" key={coInvestigator.uuid}>
                 <div className="tw-flex tw-flex-wrap tw-w-full tw-mb-6">
@@ -30,7 +18,7 @@ export default function CoInvestigators(props) {
                   </div>
 
                   <div className="tw-flex tw-flex-wrap tw-w-full md:tw-w-1/2 md:tw-mb-0">
-                    <input type="button" className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-2 tw-px-4 tw-border-none tw-rounded" onClick={() => removeCoInvestigator(coInvestigator)} value="Remove" />
+                    <input type="button" className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-2 tw-px-4 tw-border-none tw-rounded" onClick={() => props.onRemoveRecord(coInvestigator)} value="Remove" />
                   </div>
                 </div>
 
@@ -54,7 +42,7 @@ export default function CoInvestigators(props) {
         ))}
 
         <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-          <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={addInvestigator} value="Add Co-investigator" />
+          <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={props.onAddRecord} value="Add Co-investigator" />
         </div>
       </>
   )

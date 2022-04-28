@@ -1,4 +1,4 @@
-<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Reviews" canOverride="false">
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="MCC Requests" canOverride="false">
     <columns>
         <column name="requestId/rowid"/>
         <column name="requestId/lastname"/>
