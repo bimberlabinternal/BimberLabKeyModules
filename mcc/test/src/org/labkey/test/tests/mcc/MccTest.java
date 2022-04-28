@@ -167,7 +167,7 @@ public class MccTest extends BaseWebDriverTest
                 }
             }
 
-            return String.valueOf(fieldValue);
+            return String.valueOf(databaseValue == null ? fieldValue : databaseValue);
         }
     }
 

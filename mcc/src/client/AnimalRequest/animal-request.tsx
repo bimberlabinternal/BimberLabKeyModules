@@ -55,7 +55,7 @@ export function AnimalRequest() {
         )
     }
     else if (requestData.dataLoaded === true && !requestData.request) {
-        return(<div>There is no request with id: " + requestId</div>)
+        return(<div>There is no request with id: {requestId}</div>)
     }
 
     function handleFailure(response) {
