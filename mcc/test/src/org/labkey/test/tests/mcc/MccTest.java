@@ -334,7 +334,7 @@ public class MccTest extends BaseWebDriverTest
     {
         SelectRowsCommand sr = new SelectRowsCommand("mcc", "coinvestigators");
         sr.addSort(new Sort("rowid", Sort.Direction.ASCENDING));
-        sr.setColumns(Arrays.stream(getCohortFields(0)).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
+        sr.setColumns(Arrays.stream(getCoinvestigatorFields(0)).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
         sr.addFilter(new Filter("requestid", requestId));
 
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
