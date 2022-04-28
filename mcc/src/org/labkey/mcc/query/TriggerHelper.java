@@ -90,7 +90,7 @@ public class TriggerHelper
     {
         try
         {
-            MccManager.RequestStatus st = MccManager.RequestStatus.valueOf(status);
+            MccManager.RequestStatus st = MccManager.RequestStatus.resolveStatus(status);
             if (st == MccManager.RequestStatus.Draft)
             {
                 return;
@@ -146,7 +146,7 @@ public class TriggerHelper
             }
 
             // This indicates the form was submitted immediately (i.e. not a draft), or it was in draft state and has advanced.
-            MccManager.RequestStatus st2 = previousStatus == null ? null : MccManager.RequestStatus.valueOf(previousStatus);
+            MccManager.RequestStatus st2 = previousStatus == null ? null : MccManager.RequestStatus.resolveStatus(previousStatus);
             if (st2 == null || st2 == MccManager.RequestStatus.Draft)
             {
                 sendInitialNotification();
@@ -213,7 +213,7 @@ public class TriggerHelper
     {
         try
         {
-            return MccManager.RequestStatus.valueOf(status).canEdit(_user, _container);
+            return MccManager.RequestStatus.resolveStatus(status).canEdit(_user, _container);
         }
         catch (IllegalArgumentException e)
         {

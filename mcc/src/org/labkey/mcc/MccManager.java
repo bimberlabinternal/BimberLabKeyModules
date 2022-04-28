@@ -70,6 +70,23 @@ public class MccManager
         {
             return c.hasPermission(u, this.editPermission);
         }
+
+        public static RequestStatus resolveStatus(String val)
+        {
+            if (val == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return valueOf(val);
+            }
+            catch (IllegalArgumentException e)
+            {
+                return valueOf(val.substring(0, 1).toUpperCase() + val.substring(1).toLowerCase());
+            }
+        }
     }
 
     public static final String ContainerPropName = "MCCContainer";
