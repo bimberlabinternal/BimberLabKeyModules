@@ -12,35 +12,36 @@ import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbSequence;
 import org.labkey.api.data.DbSequenceManager;
 import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.QueryUpdateServiceException;
+import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.settings.AppProps;
-import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.MailHelper;
+import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.UnauthorizedException;
 import org.labkey.mcc.MccManager;
 import org.labkey.mcc.MccSchema;
 
 import javax.mail.Address;
 import javax.mail.Message;
-import javax.mail.internet.InternetAddress;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by bimber
@@ -167,8 +168,7 @@ public class TriggerHelper
 
     public void cascadeDelete(String schemaName, String queryName, String keyField, Object keyValue) throws SQLException
     {
-        // TODO: consider using QUS?
-        DbSchema schema = QueryService.get().getUserSchema(_user, _container, schemaName).getDbSchema();
+        UserSchema schema = QueryService.get().getUserSchema(_user, _container, schemaName);
         if (schema == null)
             throw new RuntimeException("Unknown schema: " + schemaName);
 
@@ -179,8 +179,15 @@ public class TriggerHelper
         if (!_container.hasPermission(_user, DeletePermission.class))
             throw new UnauthorizedException("User does not have permission to delete from the table: " + table.getPublicName());
 
-        SimpleFilter filter = new SimpleFilter(FieldKey.fromString(keyField), keyValue);
-        Table.delete(table, filter);
+        try
+        {
+            List<Map<String, Object>> toDelete = new TableSelector(table, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString(keyField), keyValue), null).stream(Integer.class).map(x -> new CaseInsensitiveHashMap<Object>(Collections.singletonMap("rowId", x))).collect(Collectors.toList());
+            table.getUpdateService().deleteRows(_user, _container, toDelete, null, null);
+        }
+        catch (QueryUpdateServiceException | InvalidKeyException | BatchValidationException e)
+        {
+            _log.error("Unable to delete from: " + queryName, e);
+        }
     }
 
     public boolean hasPermission(String status)
