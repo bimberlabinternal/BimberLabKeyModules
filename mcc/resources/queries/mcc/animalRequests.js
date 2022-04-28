@@ -60,28 +60,28 @@ function calculatePreliminaryScore(row) {
     var score = 2;
 
     score += row.earlystageinvestigator ? 1 : 0;
-    if (row.institutiontype === 'Minority serving' || row.institutiontype === 'University/Non-profit') {
+    if (row.institutiontype === 'minorityServing' || row.institutiontype === 'university') {
         score += 1;
     }
-    else if (row.institutiontype === 'Commercial entity') {
+    else if (row.institutiontype === 'commercial') {
         score -= 1;
     }
     else {
         console.error('Unknown MCC institutiontype: ' + row.institutiontype)
     }
 
-    if (['NIH-supported research', 'Other federal agency support', 'Institutional start-up funding', 'Foundation/non-profit support'].indexOf(row.fundingsource) !== -1) {
+    if (['nih', 'other-federal', 'start-up', 'foundation'].indexOf(row.fundingsource) !== -1) {
         score += 1;
     }
-    else if (row.fundingsource === 'Private funding' || row.fundingsource === 'Not currently funded') {
+    else if (row.fundingsource === 'private' || row.fundingsource === 'no-funding') {
         // no score change
     }
     else {
-        console.error('Unknown MCC fundingsource: ' + row.institutiontype)
+        console.error('Unknown MCC fundingsource: ' + row.fundingsource)
     }
 
-    score += row.existingnhpfacilities === 'Existing NHP facilities' ? 1 : -1;
-    score += row.existingmarmosetcolony === 'Existing marmoset colony' ? 1 : 0;
+    score += row.existingnhpfacilities === 'existing' ? 1 : -1;
+    score += row.existingmarmosetcolony === 'existing' ? 1 : 0;
 
     //TODO: verify values
     score += row.isbreedinganimals ? 1 : 0;
