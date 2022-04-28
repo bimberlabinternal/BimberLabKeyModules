@@ -142,13 +142,6 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
             <h4 style={{marginTop: 10}}>Research Details</h4>
             <Grid container spacing={1}  style={{marginLeft: 10}}>
                 <Grid item xs={2} className={styles.fieldLabel}>
-                    Research Area:
-                </Grid>
-                <Grid item xs={10}>
-                    {translateRawToDisplayValue(requestData.request.researcharea, researchAreaOptions)}
-                </Grid>
-
-                <Grid item xs={2} className={styles.fieldLabel}>
                     Animal Cohorts:
                 </Grid>
                 <Grid item xs={10}>
