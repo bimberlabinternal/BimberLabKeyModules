@@ -393,8 +393,8 @@ public class MccTest extends BaseWebDriverTest
         waitForSaveToComplete();
 
         doAndWaitForPageToLoad(() -> {
-            waitAndClickAndWait(getButton("Cancel"));
-            assertAlert("You are about to leave this page");
+            waitAndClick(getButton("Cancel"));
+            assertAlert("You are about to leave this page.");
         });
 
         // Now reopen this form:
