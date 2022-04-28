@@ -236,7 +236,7 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("coinvestigators-" + idx + "-lastName", "lastname", "coinvestigators-lastName"),
             new FormElement("coinvestigators-" + idx + "-firstName", "firstname", "coinvestigators-firstName"),
             new FormElement("coinvestigators-" + idx + "-middleInitial", "middleInitial", "mi"),
-            new FormElement("coinvestigators-" + idx + "-institution", "institution", "coinvestigators-institution")
+            new FormElement("coinvestigators-" + idx + "-institution", "institutionname", "coinvestigators-institution")
         };
     }
 
