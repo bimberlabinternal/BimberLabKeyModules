@@ -5,7 +5,7 @@ export const researchUseStatementTooltip = "This will hold an explanation of the
 export const signingOfficialTooltip = "An SO has institutional authority to legally bind the institution in grant-administration matters by providing signature approval on grant application submissions. The SO monitors grant related activities within the extramural organization and may have a number of titles. The SO can also create additional accounts for personnel at their institution, including new signing official accounts."
 
 export const experimentalRationalePlaceholder = "Experimental rationale and justification for the selection of marmosets"
-export const otherCharacteristicsPlaceholder = "Other characteristics (ie. Sex, age, disease state, genotype...)"
+export const otherCharacteristicsPlaceholder = "Other characteristics (ie. age, disease state, genotype...)"
 export const methodsProposedPlaceholder = "Methods proposed and investigators' experience in the methods"
 export const animalBreedingPlaceholder = "Purpose of the animal breeding program"
 export const collaborationsPlaceholder = "Any collaborations, pilot studies, and/or publications"
