@@ -14,6 +14,8 @@ function beforeUpdate(row, oldRow, errors){
 function beforeUpsert(row, oldRow, errors) {
     if (!row.status) {
         console.error('Request row being submitted without a status: ' + row.objectid)
+        console.error(row)
+        console.error(oldRow)
     }
 
     row.status = row.status || 'Draft'
@@ -34,7 +36,16 @@ function afterUpdate(row, oldRow, errors){
 
 function afterUpsert(row, oldRow, errors) {
     if (row.status && row.status !== 'Draft') {
-        triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row));
+        try {
+            triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row));
+        }
+        catch(e) {
+            console.error('Error in animalRequest.afterUpsert')
+            console.error(e)
+            console.error(row)
+            console.error(oldRow)
+            errors._form = 'Error saving record'
+        }
     }
 }
 

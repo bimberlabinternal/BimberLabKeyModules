@@ -12,11 +12,11 @@ import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbSequence;
 import org.labkey.api.data.DbSequenceManager;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
-import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
@@ -35,7 +35,6 @@ import org.labkey.mcc.MccSchema;
 import javax.mail.Address;
 import javax.mail.Message;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -96,7 +95,9 @@ public class TriggerHelper
                 return;
             }
 
-            TableSelector ts = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_SCORE), PageFlowUtil.set("rowid", "preliminaryScore"), new SimpleFilter(FieldKey.fromString("requestid"), objectId), null);
+            // NOTE: regular users (opposed to those with MccRequestAdminPermission) cannot read this table. Therefore do these operations using the schema layer, not QUS
+            TableInfo scoreTable = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_SCORE);
+            TableSelector ts = new TableSelector(scoreTable, PageFlowUtil.set("rowid", "preliminaryScore"), new SimpleFilter(FieldKey.fromString("requestid"), objectId), null);
             if (!ts.exists())
             {
                 Map<String, Object> toInsert = new CaseInsensitiveHashMap<>();
@@ -109,16 +110,7 @@ public class TriggerHelper
                 toInsert.put("modified", new Date());
                 toInsert.put("modifiedby", _user.getUserId());
 
-                try
-                {
-                    BatchValidationException bve = new BatchValidationException();
-                    TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_SCORE);
-                    ti.getUpdateService().insertRows(_user, _container, Arrays.asList(toInsert), bve, null, null);
-                }
-                catch (QueryUpdateServiceException | BatchValidationException | DuplicateKeyException | SQLException e)
-                {
-                    _log.error("Unable to create requestScore rows for request: " + objectId, e);
-                }
+                Table.insert(_user, scoreTable, toInsert);
             }
             else
             {
@@ -132,16 +124,10 @@ public class TriggerHelper
                 Map<String, Object> row = records.get(0);
                 if (score != (Integer)row.get("preliminaryScore"))
                 {
-                    try
-                    {
-                        row.put("preliminaryScore", score);
-                        TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_SCORE);
-                        ti.getUpdateService().updateRows(_user, _container, Arrays.asList(row), Arrays.asList(Collections.singletonMap("rowid", row.get("rowid"))), null, null);
-                    }
-                    catch (QueryUpdateServiceException | BatchValidationException | InvalidKeyException | SQLException e)
-                    {
-                        _log.error("Unable to update score for: " + objectId, e);
-                    }
+                    row.put("preliminaryScore", score);
+                    row.put("modified", new Date());
+                    row.put("modifiedby", _user.getUserId());
+                    Table.update(_user, scoreTable, row, row.get("rowid"));
                 }
             }
 
@@ -155,6 +141,10 @@ public class TriggerHelper
         catch (IllegalArgumentException e)
         {
             _log.error("Unknown MCC status: " + status);
+        }
+        catch (Exception e)
+        {
+            _log.error("Error in ensureReviewRecordsCreated", e);
         }
     }
 

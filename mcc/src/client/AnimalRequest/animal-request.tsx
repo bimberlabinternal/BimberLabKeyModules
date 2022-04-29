@@ -86,7 +86,7 @@ export function AnimalRequest() {
     if (!requestData) {
         queryRequestInformation(requestId, handleFailure).then((model) => {
             setRequestData(model)
-            setStateRollbackOnFailure(requestData.request.status)
+            setStateRollbackOnFailure(requestData?.request.status)
         })
     }
 
@@ -248,9 +248,14 @@ export function AnimalRequest() {
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
         })
 
+        if (!requestData.request.status) {
+            console.error('Request being submitted without a status!')
+        }
+
         if (!requestData.request.objectid) {
             console.error('Request being submitted without an objectId!')
         }
+
         // NOTE: use a proper v4 UUID so this is compatible with the sqlserver ENTITYID datatype
         let coinvestigatorCommands = getCoinvestigatorCommands(data)
         let cohortCommands = getAnimalCohortCommands(data)
@@ -310,6 +315,13 @@ export function AnimalRequest() {
                 }
                 else {
                     requestData.request.rowid = rowId
+                }
+
+                if (response.result[0].rows[0].rowid.status) {
+                    requestData.request.status = response.result[0].rows[0].rowid.status
+                }
+                else {
+                    console.error('Status was null for the animalrequest row after save. This is not expected.')
                 }
 
                 response.result.filter(x => x.command !== 'delete' && x.queryName === 'requestcohorts').forEach((x, idx) => {
