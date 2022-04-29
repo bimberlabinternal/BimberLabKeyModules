@@ -174,8 +174,8 @@ export function AnimalRequest() {
             })
         }
 
-        if (deletedCohortRecords.size) {
-            deletedCohortRecords.forEach(rowId => {
+        if (deletedCoIRecords.size) {
+            deletedCoIRecords.forEach(rowId => {
                 commands.push({
                     command: "delete",
                     schemaName: "mcc",

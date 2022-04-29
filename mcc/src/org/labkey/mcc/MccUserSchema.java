@@ -41,12 +41,14 @@ public class MccUserSchema extends SimpleUserSchema
             ret.addPermissionMapping(UpdatePermission.class, MccRequestAdminPermission.class);
             ret.addPermissionMapping(DeletePermission.class, MccRequestAdminPermission.class);
 
+            ret = ret.init();
+
             if (MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
             {
-                return addScoreColumns(ret).init();
+                return addScoreColumns(ret);
             }
 
-            return ret.init();
+            return ret;
         }
 
         return super.createWrappedTable(name, schemaTable, cf);
@@ -56,7 +58,7 @@ public class MccUserSchema extends SimpleUserSchema
     {
         if (ti.getColumn("rabReviewStatus") == null)
         {
-            SQLFragment sql = new SQLFragment("(SELECT CAST(sum(CASE WHEN m.score IS NULL THEN 0 ELSE 1 END) as varchar) || ' of ' || cast(count(*) as varchar) as expr FROM mcc.requestReviews r WHERE m.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            SQLFragment sql = new SQLFragment("(SELECT CONCAT(CAST(sum(CASE WHEN r.score IS NULL THEN 0 ELSE 1 END) as varchar), ' of ', cast(count(*) as varchar)) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
             ExprColumn newCol = new ExprColumn(ti, "rabReviewStatus", sql, JdbcType.VARCHAR, ti.getColumn("requestId"));
 
             newCol.setLabel("RAB Review Status");
@@ -79,8 +81,10 @@ public class MccUserSchema extends SimpleUserSchema
 
             ti.addColumn(newCol);
 
-            MutableColumnInfo col = WrappedColumnInfo.wrapAsCopy(ti, FieldKey.fromString("rabReviewStatus"), ti.getColumn("requestId"), "RAB Review Status", null);
-            col.setCalculated(true);
+            SQLFragment sql2 = new SQLFragment("(SELECT sum(CASE WHEN r.score IS NULL THEN 0 ELSE 1 END) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            ExprColumn newCol2 = new ExprColumn(ti, "pendingRabReviews", sql2, JdbcType.INTEGER, ti.getColumn("requestId"));
+            newCol2.setLabel("Pending RAB Reviews");
+            ti.addColumn(newCol2);
         }
 
         return ti;

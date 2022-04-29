@@ -1,6 +1,12 @@
 <folderType xmlns="http://labkey.org/data/xml/folderType">
     <name>MCC</name>
     <description>The default folder layout for MCC</description>
+    <preferredWebParts>
+        <webPart>
+            <name>MCC Menu</name>
+            <location>menu</location>
+        </webPart>
+    </preferredWebParts>
     <folderTabs>
         <folderTab>
             <name>mcc</name>
@@ -21,10 +27,6 @@
                 <webPart>
                     <name>MCC Dashboard Webpart</name>
                     <location>body</location>
-                </webPart>
-                <webPart>
-                    <name>MCC Menu</name>
-                    <location>menu</location>
                 </webPart>
             </preferredWebParts>
         </folderTab>
