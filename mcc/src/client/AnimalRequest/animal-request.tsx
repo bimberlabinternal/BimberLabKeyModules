@@ -394,7 +394,18 @@ export function AnimalRequest() {
 
                 setDisplayOverlay(false)
                 if (isSubmitting) {
-                    window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
+                    const returnURL = (new URLSearchParams(window.location.search)).get("requestId")
+                    let dest = ActionURL.buildURL('mcc', 'mccRequests.view')
+                    if (returnURL) {
+                        try {
+                            dest = new URL(returnURL).href
+                        }
+                        catch (e) {
+
+                        }
+                    }
+
+                    window.location.href = dest
                 }
             },
             failure: handleFailure

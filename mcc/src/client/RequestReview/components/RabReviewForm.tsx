@@ -41,14 +41,6 @@ export default function RabReviewForm(props: {requestId: string, readOnly?: bool
         ],
         filterArray: filters,
         success: function (resp) {
-            if (!resp.rows.length) {
-                //TODO: error?
-            }
-
-            if (resp.rows.review) {
-                //TODO: this indicates the review was already entered. Do we want to allow updates?
-            }
-
             setRecordData({...resp.rows})
         },
         failure: function(response) {
@@ -73,6 +65,10 @@ export default function RabReviewForm(props: {requestId: string, readOnly?: bool
                 </TableBody>
             </Table>
         )
+    }
+
+    if (!recordData?.length) {
+        return(<div style={{paddingTop: 20}}>You have not been assigned to review this request</div>)
     }
 
     const handleChange = (e) => {

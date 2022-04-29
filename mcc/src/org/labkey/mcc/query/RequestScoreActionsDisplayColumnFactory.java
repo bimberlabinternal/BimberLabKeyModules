@@ -68,7 +68,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         if (st == MccManager.RequestStatus.Submitted)
                         {
                             DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=primaryReview", requestContainer);
-                            out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL() + "\">Enter MCC Internal Review</a>");
+                            out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter MCC Internal Review</a>");
                         }
                         else if (st == MccManager.RequestStatus.FormCheck)
                         {
@@ -77,7 +77,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         else if (st == MccManager.RequestStatus.RabReview)
                         {
                             DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
-                            out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL() + "\">Enter Final Review</a>");
+                            out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {
