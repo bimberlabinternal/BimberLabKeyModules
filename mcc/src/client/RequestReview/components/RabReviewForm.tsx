@@ -1,6 +1,17 @@
 import { Filter, getServerContext, Query } from '@labkey/api';
 import React, { FormEvent, useState } from 'react';
-import { Box, Button, Table, TableBody, TableCell, TableRow, TextField } from '@material-ui/core';
+import {
+    Box,
+    Button,
+    MenuItem,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    TextField
+} from '@material-ui/core';
 
 export default function RabReviewForm(props: {requestId: string, readOnly?: boolean}) {
     const [ recordData, setRecordData ] = useState(null)
@@ -38,7 +49,7 @@ export default function RabReviewForm(props: {requestId: string, readOnly?: bool
                 //TODO: this indicates the review was already entered. Do we want to allow updates?
             }
 
-            setRecordData({...resp.rows[0]})
+            setRecordData({...resp.rows})
         },
         failure: function(response) {
             alert(response.exception)
@@ -50,12 +61,23 @@ export default function RabReviewForm(props: {requestId: string, readOnly?: bool
     }
 
     if (props.readOnly) {
-        return(<div>This needs to render a simple read-only table of the reviews</div>)
+        return(
+            <Table>
+                <TableHead>
+                    <TableRow key={"header"}><TableCell>Reviewer</TableCell><TableCell>Score</TableCell><TableCell>Comments</TableCell></TableRow>
+                </TableHead>
+                <TableBody>
+                    {recordData.map(row => {
+                        return(<TableRow key={"review-" + row.reviewerid}><TableCell>{row.reviewerid}</TableCell><TableCell>{row.score}</TableCell><TableCell>{row.comments}</TableCell></TableRow>)
+                    })}
+                </TableBody>
+            </Table>
+        )
     }
 
     const handleChange = (e) => {
-        recordData[e.target.name] = e.target.value ? e.target.value.trim() : null
-        setRecordData({...recordData})
+        recordData[0][e.target.name] = e.target.value ? e.target.value.trim() : null
+        setRecordData([...recordData])
 
         console.log(e.target.name)
         console.log(e.target.value.trim())
@@ -67,22 +89,28 @@ export default function RabReviewForm(props: {requestId: string, readOnly?: bool
 
         console.log(recordData)
 
-        // TODO: save this record and navigateBack to
+        // TODO: save this record and navigateBack to the prior page
     }
 
     return (
         <>
-        <h2>Enter MCC Review</h2>
+        <h2>Enter Review</h2>
         <form noValidate autoComplete='off' onSubmit={onFormSubmit}>
         <Box style={{display: 'inline-block'}}>
-        <Table width={500}>
+            After reviewing the request, please fill out the section below and provide a 2-3 sentence justification for your choice.
+            <Table width={500}>
             <TableBody>
             <TableRow>
-                {/*TODO: this probably needs to be a select*/}
-                <TableCell><TextField key={"review"} label={"Review"} onChange={handleChange} variant={'outlined'} value={recordData.review || ''} disabled={true} fullWidth={true}/></TableCell>
+                <TableCell>
+                    <Select id={"review"} aria-label="Review" onChange={handleChange} required={true} defaultValue={recordData[0].review} fullWidth={true} displayEmpty={true}>
+                        <MenuItem value={"I recommend this proposal"}>I recommend this proposal</MenuItem>
+                        <MenuItem value={"I recommend this proposal with conditions"}>I recommend this proposal with conditions</MenuItem>
+                        <MenuItem value={"I do not recommend this proposal"}>I do not recommend this proposal</MenuItem>
+                    </Select>
+                </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell><TextField key={"comments"} label={"Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
+                <TableCell><TextField key={"comments"} label={"Justification"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData[0].comments || ''} fullWidth={true} /></TableCell>
             </TableRow>
             </TableBody>
         </Table>

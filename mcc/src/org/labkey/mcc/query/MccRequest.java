@@ -33,7 +33,6 @@ public class MccRequest
     private String _collaborations;
     private Boolean _isbreedinganimals;
     private String _breedingpurpose;
-    private String _otherjustification;
     private Boolean _existingmarmosetcolony;
     private Boolean _existingnhpfacilities;
     private String _animalwelfare;
@@ -265,16 +264,6 @@ public class MccRequest
     public void setBreedingpurpose(String breedingpurpose)
     {
         _breedingpurpose = breedingpurpose;
-    }
-
-    public String getOtherjustification()
-    {
-        return _otherjustification;
-    }
-
-    public void setOtherjustification(String otherjustification)
-    {
-        _otherjustification = otherjustification;
     }
 
     public Boolean getExistingmarmosetcolony()

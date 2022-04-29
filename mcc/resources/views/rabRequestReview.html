@@ -20,9 +20,9 @@
             title: 'Animal Request Review Assignments',
             schemaName: 'mcc',
             queryName: 'requestReviews',
+            viewName: 'Pending Reviews',
             filterArray: [
-                LABKEY.Filter.create('reviewerId', LABKEY.Security.currentUser.id),
-                LABKEY.Filter.create('review', null, LABKEY.Filter.Types.ISBLANK)
+                LABKEY.Filter.create('reviewerId', LABKEY.Security.currentUser.id)
             ],
             showRecordSelectors: false,
             showDetailsColumn: false,

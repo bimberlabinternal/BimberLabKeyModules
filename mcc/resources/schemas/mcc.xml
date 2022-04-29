@@ -214,8 +214,10 @@
     <table tableName="animalrequests" tableDbType="TABLE">
         <tableTitle>MCC Animal Requests</tableTitle>
         <importUrl>mcc/animalRequest.view</importUrl>
-        <insertUrl></insertUrl>
+        <insertUrl>mcc/animalRequest.view</insertUrl>
         <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
+        <deleteUrl />
+        <tableUrl />
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>
@@ -309,14 +311,6 @@
                 <columnTitle>Detail on Breeding</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="researcharea">
-                <columnTitle>Research Area</columnTitle>
-                <nullable>true</nullable>
-            </column>
-            <column columnName="otherjustification">
-                <columnTitle>Justification (If other picked on Research Area)</columnTitle>
-                <nullable>true</nullable>
-            </column>
             <column columnName="existingmarmosetcolony">
                 <columnTitle>Existing marmoset colony?</columnTitle>
                 <nullable>true</nullable>
@@ -407,6 +401,7 @@
                     <fkDbSchema>mcc</fkDbSchema>
                     <fkTable>animalrequests</fkTable>
                     <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
                 </fk>
             </column>
             <column columnName="lastname">
@@ -468,6 +463,7 @@
                     <fkDbSchema>mcc</fkDbSchema>
                     <fkTable>animalrequests</fkTable>
                     <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
                 </fk>
             </column>
             <column columnName="numberofanimals">
@@ -616,6 +612,7 @@
                     <fkDbSchema>mcc</fkDbSchema>
                     <fkTable>animalrequests</fkTable>
                     <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
                 </fk>
             </column>
             <column columnName="container">
@@ -674,11 +671,6 @@
                 <columnTitle>Resource Availability Score</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <!-- TODO: remove?-->
-            <column columnName="researchAreaPriorityScore">
-                <columnTitle>Research Area Priority Score</columnTitle>
-                <nullable>true</nullable>
-            </column>
             <column columnName="proposalScore">
                 <columnTitle>Proposal Score</columnTitle>
                 <nullable>true</nullable>
@@ -694,6 +686,7 @@
                     <fkDbSchema>mcc</fkDbSchema>
                     <fkTable>animalrequests</fkTable>
                     <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
                 </fk>
             </column>
             <column columnName="container">

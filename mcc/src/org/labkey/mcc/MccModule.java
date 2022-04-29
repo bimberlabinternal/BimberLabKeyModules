@@ -50,7 +50,7 @@ public class MccModule extends ExtendedSimpleModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.010;
+        return 20.011;
     }
 
     @Override

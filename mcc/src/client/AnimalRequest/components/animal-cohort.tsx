@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import InputNumber from './input-number';
 import Select from './select';
@@ -9,24 +9,10 @@ import ErrorMessageHandler from './error-message-handler';
 import { animalSexes, otherCharacteristicsPlaceholder } from './values';
 import { AnimalCohort } from '../../components/RequestUtils';
 
-export default function AnimalCohorts(props) {
-  const [cohorts, setCohorts] = useState<AnimalCohort[]>(props.defaultValue)
-
-  function addCohort() {
-    cohorts.push(new AnimalCohort())
-    setCohorts([...cohorts])
-  }
-
-  function removeCohort(cohort) {
-    // NOTE: dont allow removing all cohorts
-    if (cohorts.length > 1) {
-      setCohorts([...cohorts.filter(item => item.uuid !== cohort.uuid)])
-    }
-  }
-
+export default function AnimalCohorts(props: { cohorts: AnimalCohort[], required: boolean, isSubmitting: boolean, onAddCohort: () => void, onRemoveCohort: (x: AnimalCohort) => void}) {
   return (
     <>
-      {[...cohorts].map((cohort, index) => (
+      {[...props.cohorts].map((cohort, index) => (
         <ErrorMessageHandler isSubmitting={props.isSubmitting} keyInternal={cohort.uuid} key={cohort.uuid + "-errorHandler"}>
         <div className="tw-flex tw-flex-wrap tw-w-full tw-mx-2 tw-mb-10" key={cohort.uuid}>
           <div className="tw-flex tw-flex-wrap tw-w-full tw-mb-6">
@@ -36,7 +22,7 @@ export default function AnimalCohorts(props) {
 
             <div className="tw-flex tw-flex-wrap tw-w-full md:tw-w-1/2 md:tw-mb-0">
                 <input type="button" className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-2 tw-px-4 tw-border-none tw-rounded"
-                  onClick={() => removeCohort(cohort)} value="Remove" style={{display: index > 0 ? null : "none"}}/>
+                  onClick={() => props.onRemoveCohort(cohort)} value="Remove" style={{display: index > 0 ? null : "none"}}/>
             </div>
           </div>
 
@@ -63,7 +49,7 @@ export default function AnimalCohorts(props) {
       ))}
 
       <div className="tw-w-full tw-px-3 tw-mb-10 md:tw-mb-0">
-        <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={addCohort} value="Add Cohort" />
+        <input type="button" className="tw-bg-blue-500 hover:tw-bg-blue-400 tw-text-white tw-font-bold tw-py-2 tw-mt-2 tw-px-4 tw-border-none tw-rounded" onClick={props.onAddCohort} value="Add Cohort" />
       </div>
     </>
   )

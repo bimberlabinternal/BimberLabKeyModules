@@ -28,9 +28,8 @@ export class AnimalRequestProps {
     breedingpurpose: string;
     methodsproposed: string;
     collaborations: string;
-    researcharea: string;
-    otherjustification: string;
     iacucprotocol: string;
+    iacucapproval: string;
     existingmarmosetcolony: string;
     existingnhpfacilities: string;
     rowid: number;
@@ -66,7 +65,9 @@ export async function queryRequestInformation(requestId, handleFailure) {
 
     if (!requestId) {
         requestData.dataLoaded = true
+        requestData.request.objectid = requestData.request.objectid || uuidv4()
         requestData.cohorts = [new AnimalCohort()]
+
         return(requestData)
     }
 
@@ -95,8 +96,6 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 "collaborations",
                 "isbreedinganimals",
                 "breedingpurpose",
-                "researcharea",
-                "otherjustification",
                 "existingmarmosetcolony",
                 "existingnhpfacilities",
                 "animalwelfare",

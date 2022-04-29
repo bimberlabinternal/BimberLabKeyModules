@@ -12,7 +12,6 @@ export default function InternalReviewForm(props: {requestId: string, readOnly?:
             "rowid",
             "preliminaryScore",
             "resourceAvailabilityScore",
-            "researchAreaPriorityScore",
             "proposalScore",
             "comments",
             "requestid"
@@ -65,9 +64,6 @@ export default function InternalReviewForm(props: {requestId: string, readOnly?:
                 </TableRow>
                 <TableRow>
                     <TableCell><TextField key={"resourceAvailabilityScore"} label={"Resource Availability Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityScore || ''} fullWidth={true} /></TableCell>
-                </TableRow>
-                <TableRow>
-                    <TableCell><TextField key={"researchAreaPriorityScore"} label={"Research Area Priority Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.researchAreaPriorityScore || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 <TableRow>
                     <TableCell><TextField key={"proposalScore"} label={"Final Proposal Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.proposalScore || ''} fullWidth={true} /></TableCell>

@@ -18,6 +18,8 @@
             '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
             '<br>' +
             '<a class="labkey-text-link" href="<%=contextPath%>/security/' + ctx.MCCRequestContainer + '/permissions.view?t=sitegroups">Manage RAB Members (admin permission needed)</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/query/' + ctx.MCCRequestContainer + '/executeQuery.view?schemaName=mcc&queryName=animalRequests">View All Requests</a>' +
             '<p></p>' +
             '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>' +
             '<p></p>' +
@@ -30,10 +32,7 @@
             title: 'All Pending RAB Reviews',
             schemaName: 'mcc',
             queryName: 'requestReviews',
-            //frame: 'none',
-            filterArray: [
-                LABKEY.Filter.create('review', null, LABKEY.Filter.Types.ISBLANK)
-            ],
+            viewName: 'Pending Reviews',
             showRecordSelectors: false,
             showDetailsColumn: false,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}
@@ -44,7 +43,7 @@
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'requestScores',
-            //viewName: 'In Progress',
+            viewName: 'Pending Requests',
             showRecordSelectors: true,
             showDetailsColumn: true,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}

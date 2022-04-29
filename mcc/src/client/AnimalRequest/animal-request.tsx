@@ -1,6 +1,11 @@
 import React, { FormEvent, useState } from 'react';
 import { ActionURL, getServerContext, Query } from '@labkey/api';
-import { AnimalRequestModel, queryRequestInformation } from '../components/RequestUtils';
+import {
+    AnimalCohort,
+    AnimalRequestModel,
+    CoInvestigatorModel,
+    queryRequestInformation
+} from '../components/RequestUtils';
 
 import Tooltip from './components/tooltip';
 import Title from './components/title';
@@ -12,7 +17,6 @@ import YesNoRadio from './components/yes-no-radio';
 import AnimalBreeding from './components/animal-breeding';
 import IACUCProtocol from './components/iacuc-protocol';
 import Funding from './components/funding';
-import ResearchArea from './research-area';
 import AnimalCohorts from './components/animal-cohort';
 import Button from './components/button';
 import SavingOverlay from './saving-overlay';
@@ -30,7 +34,6 @@ import {
     methodsProposedPlaceholder,
     signingOfficialTooltip
 } from './components/values';
-import { v4 as uuidv4 } from 'uuid';
 
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
@@ -39,6 +42,46 @@ export function AnimalRequest() {
     const [displayOverlay, setDisplayOverlay] = useState(false)
     const [requestData, setRequestData] = useState<AnimalRequestModel>(null)
     const [stateRollbackOnFailure, setStateRollbackOnFailure] = useState(requestData?.request?.status)
+
+    const [ deletedCohortRecords, setDeletedCohortRecords ] = useState(new Set<number>())
+    const [ deletedCoIRecords, setDeletedCoIRecords ] = useState(new Set<number>())
+
+    function onAddCohort() {
+        requestData.cohorts.push(new AnimalCohort())
+        setRequestData({...requestData})
+    }
+
+    function onRemoveCohort(cohort: AnimalCohort) {
+        // NOTE: dont allow removing all cohorts
+        if (requestData.cohorts.length > 1) {
+            requestData.cohorts = [...requestData.cohorts.filter(item => item.uuid !== cohort.uuid)]
+
+            if (cohort.rowid) {
+                deletedCohortRecords.add(cohort.rowid)
+                setDeletedCohortRecords(new Set(deletedCohortRecords))
+            }
+
+            setRequestData({...requestData})
+        }
+    }
+
+    function onAddInvestigator() {
+        requestData.coinvestigators.push(new CoInvestigatorModel())
+        setRequestData({...requestData})
+    }
+
+    function onRemoveCoInvestigator(coInvestigator: CoInvestigatorModel) {
+        if (requestData.coinvestigators.length) {
+            requestData.coinvestigators = [...requestData.coinvestigators.filter(item => item.uuid !== coInvestigator.uuid)]
+
+            if (coInvestigator.rowid) {
+                deletedCoIRecords.add(coInvestigator.rowid)
+                setDeletedCoIRecords(new Set(deletedCoIRecords))
+            }
+
+            setRequestData({...requestData})
+        }
+    }
 
     if (!requestData) {
         queryRequestInformation(requestId, handleFailure).then((model) => {
@@ -110,76 +153,74 @@ export function AnimalRequest() {
         return "Save"
     }
 
-    function getCoinvestigatorCommands(data, objectId) {
+    function getCoinvestigatorCommands(data) {
         let commands = []
-        let i = 0
 
-        if (requestId && requestData.coinvestigators.length > 0) {
-            for (const coinvestigator of requestData.coinvestigators) {
+        if (requestData.coinvestigators.length) {
+            requestData.coinvestigators.forEach((rec, i) => {
+                commands.push({
+                    command: rec.rowid ? "update" : "insert",
+                    schemaName: "mcc",
+                    queryName: "coinvestigators",
+                    rows: [{
+                        "rowid": rec.rowid,
+                        "requestId": requestData.request.objectid,
+                        "lastname": data.get("coinvestigators-" + i + "-lastName"),
+                        "firstname": data.get("coinvestigators-" + i + "-firstName"),
+                        "middleinitial": data.get("coinvestigators-" + i + "-middleInitial"),
+                        "institutionname": data.get("coinvestigators-" + i + "-institution"),
+                    }]
+                })
+            })
+        }
+
+        if (deletedCoIRecords.size) {
+            deletedCoIRecords.forEach(rowId => {
                 commands.push({
                     command: "delete",
                     schemaName: "mcc",
                     queryName: "coinvestigators",
                     rows: [{
-                        "rowid": coinvestigator.rowid,
+                        "rowid": rowId,
                     }]
                 })
-            }
-        }
-
-        while(data.get("coinvestigators-" + i + "-lastName") || data.get("coinvestigators-" + i + "-firstName") ||
-              data.get("coinvestigators-" + i + "-middleInitial") || data.get("coinvestigators-" + i + "-institution")) {
-            commands.push({
-                command: "insert",
-                schemaName: "mcc",
-                queryName: "coinvestigators",
-                rows: [{
-                    "requestId": objectId,
-                    "lastname": data.get("coinvestigators-" + i + "-lastName"),
-                    "firstname": data.get("coinvestigators-" + i + "-firstName"),
-                    "middleinitial": data.get("coinvestigators-" + i + "-middleInitial"),
-                    "institutionname": data.get("coinvestigators-" + i + "-institution"),
-                }]
             })
-
-            i++
         }
 
         return commands
     }
 
-    function getAnimalCohortCommands(data, objectId) {
+    function getAnimalCohortCommands(data) {
         let commands = []
-        let i = 0
 
-        if (requestId && requestData.cohorts.length > 0) {
-            for (const cohort of requestData.cohorts) {
+        if (requestData.cohorts.length) {
+            requestData.cohorts.forEach((rec, i) => {
+                commands.push({
+                    command: rec.rowid ? "update" : "insert",
+                    schemaName: "mcc",
+                    queryName: "requestcohorts",
+                    rows: [{
+                        "rowid": rec.rowid,
+                        "requestId": requestData.request.objectid,
+                        "numberofanimals": data.get("animal-cohorts-" + i + "-numberofanimals"),
+                        "sex": data.get("animal-cohorts-" + i + "-sex"),
+                        "othercharacteristics": data.get("animal-cohorts-" + i + "-othercharacteristics"),
+                    }]
+                })
+            })
+        }
+
+        if (deletedCohortRecords.size) {
+            deletedCohortRecords.forEach(rowId => {
                 commands.push({
                     command: "delete",
                     schemaName: "mcc",
                     queryName: "requestcohorts",
                     rows: [{
-                        "rowid": cohort.rowid,
+                        "rowid": rowId,
                     }]
                 })
-            }
-        }
-
-        while(data.get("animal-cohorts-" + i + "-numberofanimals") || data.get("animal-cohorts-" + i + "-sex") ||
-              data.get("animal-cohorts-" + i + "-othercharacteristics")) {
-            commands.push({
-                command: "insert",
-                schemaName: "mcc",
-                queryName: "requestcohorts",
-                rows: [{
-                    "requestId": objectId,
-                    "numberofanimals": data.get("animal-cohorts-" + i + "-numberofanimals"),
-                    "sex": data.get("animal-cohorts-" + i + "-sex"),
-                    "othercharacteristics": data.get("animal-cohorts-" + i + "-othercharacteristics"),
-                }]
             })
-
-            i++
         }
 
         return commands
@@ -206,21 +247,21 @@ export function AnimalRequest() {
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
         })
 
+        if (!requestData.request.objectid) {
+            console.error('Request being submitted without an objectId!')
+        }
         // NOTE: use a proper v4 UUID so this is compatible with the sqlserver ENTITYID datatype
-        const objectId = requestId || uuidv4()
-        let coinvestigatorCommands = getCoinvestigatorCommands(data, objectId)
-        let cohortCommands = getAnimalCohortCommands(data, objectId)
-
-        let rowId = requestId ? {"rowid": requestData.request.rowid} : {}
+        let coinvestigatorCommands = getCoinvestigatorCommands(data)
+        let cohortCommands = getAnimalCohortCommands(data)
 
         Query.saveRows({
-            commands: [
-                {
-                    command: requestId ? "update" : "insert",
+            commands: [{
+                    command: requestData.request.rowid ? "update" : "insert",
                     schemaName: "mcc",
                     queryName: "animalrequests",
                     rows: [{
-                        "objectId": objectId,
+                        "rowid": requestData.request.rowid,
+                        "objectId": requestData.request.objectid,
                         "lastname": data.get("investigator-last-name"),
                         "firstname": data.get("investigator-first-name"),
                         "middleinitial": data.get("investigator-middle-initial"),
@@ -239,8 +280,6 @@ export function AnimalRequest() {
                         "collaborations": data.get("collaborations"),
                         "isbreedinganimals": data.get("animal-breeding-is-planning-to-breed-animals"),
                         "breedingpurpose": data.get("animal-breeding-purpose"),
-                        "researcharea": data.get("research-area"),
-                        "otherjustification": data.get("research-area-other-specify"),
                         "existingmarmosetcolony": data.get("existing-marmoset-colony"),
                         "existingnhpfacilities": data.get("existing-nhp-facilities"),
                         "animalwelfare": data.get("animal-welfare"),
@@ -253,13 +292,106 @@ export function AnimalRequest() {
                         "grantnumber" : data.get("funding-grant-number"),
                         "applicationduedate": data.get("funding-application-due-date"),
                         "status": requestData.request.status,
-                        ...rowId
                     }]
                 },
                 ...coinvestigatorCommands,
                 ...cohortCommands
             ],
             success: function(response) {
+                // set RowIDs:
+                if (response.result[0].queryName !== 'animalrequests') {
+                    console.error('The first command was not animal requests! This is not expected.')
+                }
+
+                const rowId = response.result[0].rows[0].rowid
+                if (!rowId) {
+                    console.error('No rowId found for the animalrequest row after save. This is not expected.')
+                }
+                else {
+                    requestData.request.rowid = rowId
+                }
+
+                response.result.filter(x => x.command !== 'delete' && x.queryName === 'requestcohorts').forEach((x, idx) => {
+                    if (requestData.cohorts.length < idx) {
+                        console.error('There are more cohort saveRows commands than client-side records')
+                        return
+                    }
+
+                    if (x.rows.length != 1) {
+                        console.error('Expected a single row per cohort saveRows command, found: ' + x.rows.length)
+                        return
+                    }
+
+                    if (requestData.cohorts[idx].rowid && requestData.cohorts[idx].rowid != x.rows[0].rowid) {
+                        console.error('Cohort row has existing rowId but doesnt match the server: ' + requestData.cohorts[idx].rowid + ' / ' + x.rows[0].rowid)
+                        return
+                    }
+
+                    requestData.cohorts[idx].rowid = x.rows[0].rowid
+                })
+
+                response.result.filter(x => x.command !== 'delete' && x.queryName === 'coinvestigators').forEach((x, idx) => {
+                    if (requestData.coinvestigators.length < idx) {
+                        console.error('There are more coinvestigators saveRows commands than client-side records')
+                        return
+                    }
+
+                    if (x.rows.length != 1) {
+                        console.error('Expected a single row per coinvestigators saveRows command, found: ' + x.rows.length)
+                        return
+                    }
+
+                    if (requestData.coinvestigators[idx].rowid && requestData.coinvestigators[idx].rowid != x.rows[0].rowid) {
+                        console.error('Coinvestigators row has existing rowId but doesnt match the server: ' + requestData.coinvestigators[idx].rowid + ' / ' + x.rows[0].rowid)
+                        return
+                    }
+
+                    requestData.coinvestigators[idx].rowid = x.rows[0].rowid
+                })
+
+                response.result.filter(x => x.command === 'delete').forEach((x, idx) => {
+                    if (x.rows.length != 1) {
+                        console.error('Expected a single row per saveRows delete command, found: ' + x.rows.length)
+                        return
+                    }
+
+                    const rowId = x.rows[0].rowid
+                    if (x.queryName === 'requestcohorts') {
+                        deletedCohortRecords.delete(rowId)
+                        setDeletedCohortRecords(new Set(deletedCohortRecords))
+                    }
+                    else if (x.queryName === 'coinvestigators') {
+                        deletedCoIRecords.delete(rowId)
+                        setDeletedCoIRecords(new Set(deletedCoIRecords))
+                    }
+                })
+
+                if (deletedCoIRecords.size) {
+                    console.log('there are still records in deletedCoIRecords: ' + deletedCoIRecords.size)
+                }
+
+                if (deletedCohortRecords.size) {
+                    console.log('there are still records in deletedCohortRecords: ' + deletedCohortRecords.size)
+                }
+
+                setRequestData({...requestData})
+
+                if (!requestData.request.rowid) {
+                    console.error("Missing request rowid after save")
+                }
+
+                requestData.cohorts.forEach(x => {
+                    if (!x.rowid) {
+                        console.error("Missing cohort rowid after save")
+                    }
+                })
+
+                requestData.coinvestigators.forEach(x => {
+                    if (!x.rowid) {
+                        console.error("Missing coinvestigator rowid after save")
+                    }
+                })
+
                 setDisplayOverlay(false)
                 if (isSubmitting) {
                     window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
@@ -363,10 +495,11 @@ export function AnimalRequest() {
             <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
                 <Title text="6. Co-Investigators"/>
 
-                <CoInvestigators isSubmitting={isSubmitting} defaultValue={requestData.coinvestigators} required={doEnforceRequiredFields()}/>
+                <CoInvestigators isSubmitting={isSubmitting} required={doEnforceRequiredFields()} coinvestigators={requestData.coinvestigators} onAddRecord={onAddInvestigator} onRemoveRecord={onRemoveCoInvestigator} />
             </div>
 
             <Title text="7. Existing or proposed funding source (select all that apply)"/>
+            {/* TODO: Make into checkbox group*/}
             <Funding id="funding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
 
             <h3>Institutional Animal Facilities and Capabilities</h3>
@@ -387,21 +520,15 @@ export function AnimalRequest() {
 
                 <Title text="3. Do you plan to breed marmosets?"/>
                 <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
+                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} request={requestData.request} required={doEnforceRequiredFields()}/>
                 </div>
             </div>
 
             <h3>Research Details</h3>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <Title text="1. Research Area"/>
-
-                <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <ResearchArea id="research-area" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
-                </div>
-
                 <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <Title text={"2. " + experimentalRationalePlaceholder}/>
+                    <Title text={"1. " + experimentalRationalePlaceholder}/>
                     <Tooltip id="research-use-statement-helper"
                        text={experimentalRationalePlaceholder}
                     />
@@ -411,12 +538,12 @@ export function AnimalRequest() {
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text="3. Animal Cohorts"/>
+                <Title text="2. Animal Cohorts"/>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
-                    <AnimalCohorts isSubmitting={isSubmitting} defaultValue={requestData.cohorts} required={doEnforceRequiredFields()}/>
+                    <AnimalCohorts isSubmitting={isSubmitting} cohorts={requestData.cohorts} required={doEnforceRequiredFields()} onAddCohort={onAddCohort} onRemoveCohort={onRemoveCohort}/>
                 </div>
 
-                <Title text={"4. " + methodsProposedPlaceholder}/>
+                <Title text={"3. " + methodsProposedPlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -425,7 +552,7 @@ export function AnimalRequest() {
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text={"5. " + collaborationsPlaceholder}/>
+                <Title text={"4. " + collaborationsPlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -434,7 +561,7 @@ export function AnimalRequest() {
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text={"6. " + animalWellfarePlaceholder}/>
+                <Title text={"5. " + animalWellfarePlaceholder}/>
                 <div className="tw-w-full tw-px-3 tw-mb-6">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
@@ -452,7 +579,7 @@ export function AnimalRequest() {
 
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                 <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                    <Title text="7. Attending veterinarian"/>
+                    <Title text="6. Attending veterinarian"/>
 
                     <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
                         <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetlastname}/>
@@ -469,7 +596,7 @@ export function AnimalRequest() {
                 </ErrorMessageHandler>
             </div>
 
-            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request}/>
+            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
                 <Title text="Request Status: "/>{requestData.request.status}

@@ -1,4 +1,4 @@
-<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Reviews" canOverride="false">
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Requests" canOverride="false">
     <columns>
         <column name="requestId/rowid"/>
         <column name="requestId/lastname"/>
@@ -7,8 +7,9 @@
         <column name="requestId/status"/>
         <column name="preliminaryScore"/>
         <column name="resourceAvailabilityScore"/>
-        <column name="researchAreaPriorityScore"/>
+        <column name="rabReviewStatus"/>
         <column name="proposalScore"/>
+        <column name="created"/>
 
         <column name="actions"/>
     </columns>

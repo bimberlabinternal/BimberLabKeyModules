@@ -146,6 +146,10 @@ public class MccTest extends BaseWebDriverTest
             {
                 test.waitAndClick(getLocator());
             }
+            else if ("select".equals(inputType))
+            {
+                test.selectOptionByText(getLocator(), String.valueOf(fieldValue));
+            }
             else
             {
                 test.setFormElement(getLocator(), String.valueOf(fieldValue));
@@ -192,7 +196,6 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("methods-proposed", "methodsproposed", "methods").inputType("textarea"),
             new FormElement("collaborations", "collaborations", "collaborations").inputType("textarea"),
             new FormElement("animal-breeding-is-planning-to-breed-animals", "isbreedinganimals", false).radio(),
-            new FormElement("research-area", "researcharea", "Rare disease research").select("rare-disease"),
             new FormElement("existing-marmoset-colony", "existingmarmosetcolony", "Existing marmoset colony").select("existing"),
             new FormElement("existing-nhp-facilities", "existingnhpfacilities", "Existing NHP facilities").select("existing"),
             new FormElement("animal-welfare", "animalwelfare", "welfare").inputType("textarea"),
@@ -234,8 +237,24 @@ public class MccTest extends BaseWebDriverTest
         addCoinvestigator(0, true);
         addCoinvestigator(1, true);
 
+        int expectedRequests = getRequestRows().size();
+
         waitAndClick(getButton("Save"));
         waitForSaveToComplete();
+
+        List<Map<String, Object>> requestRows = getRequestRows();
+        String requestId = (String)requestRows.get(0).get("objectid");
+        Assert.assertEquals(expectedRequests +  1, requestRows.size());
+
+        Assert.assertEquals(2, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
+
+        // This is to ensure we update the record we have, rather than create a new one
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+        Assert.assertEquals(expectedRequests +  1, getRequestRows().size());
+        Assert.assertEquals(2, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
 
         // Verify record created:
         Map<String, Object> request = getLastModifiedRequestRow();
@@ -246,6 +265,26 @@ public class MccTest extends BaseWebDriverTest
 
         assertCohortValues((String)request.get("objectid"), 1);
         assertCoinvestigatorValues((String)request.get("objectid"), 2);
+
+        // Remove Co-I, save:
+        Locator removeBtn = Locator.tagWithText("p", "Co-Investigator 2").parent("div").followingSibling("div").index(0).child("input");
+        waitForElement(removeBtn);
+        click(removeBtn);
+        waitForElementToDisappear(removeBtn);
+
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+        Assert.assertEquals(1, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
+
+        // Test IACUC toggle
+        selectOptionByText(getFormElementByName("iacucapproval").getLocator(), "Approved");
+        waitForElement(Locator.tagWithId("input", "iacuc-protocol"));
+        setFormElement(Locator.tagWithId("input", "iacuc-protocol"), "IACUC 123456");
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+
+        Assert.assertEquals(getLastModifiedRequestRow().get("iacucprotocol"), "IACUC 123456");
     }
 
     private FormElement[] getCoinvestigatorFields(int idx)
@@ -327,16 +366,24 @@ public class MccTest extends BaseWebDriverTest
         }
     }
 
-    private Map<String, Object> getLastModifiedRequestRow() throws Exception
+    private List<Map<String, Object>> getRequestRows() throws Exception
     {
         SelectRowsCommand sr = new SelectRowsCommand("mcc", "animalrequests");
         sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
         List<String> cols = new ArrayList<>(Arrays.stream(FORM_DATA).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
         cols.add("objectid");
+        cols.add("iacucprotocol");
         sr.setColumns(cols);
 
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
-        return srr.getRows().get(0);
+        return srr.getRows();
+    }
+
+    private Map<String, Object> getLastModifiedRequestRow() throws Exception
+    {
+        List<Map<String, Object>> rr = getRequestRows();
+
+        return rr.isEmpty() ? null : rr.get(0);
     }
 
     private List<Map<String, Object>> getCohortRecords(String requestId) throws Exception
