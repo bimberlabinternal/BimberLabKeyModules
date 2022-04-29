@@ -7,13 +7,10 @@ import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DataColumn;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.JdbcType;
-import org.labkey.api.data.MutableColumnInfo;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
-import org.labkey.api.data.WrappedColumnInfo;
 import org.labkey.api.ldk.table.CustomPermissionsTable;
 import org.labkey.api.query.ExprColumn;
-import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.SimpleUserSchema;
 import org.labkey.api.security.User;
 import org.labkey.api.security.permissions.DeletePermission;
@@ -21,6 +18,7 @@ import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
 import org.labkey.mcc.security.MccRequestAdminPermission;
+import org.labkey.mcc.security.MccRequestorPermission;
 
 public class MccUserSchema extends SimpleUserSchema
 {
@@ -33,7 +31,16 @@ public class MccUserSchema extends SimpleUserSchema
     @Nullable
     protected TableInfo createWrappedTable(String name, @NotNull TableInfo schemaTable, ContainerFilter cf)
     {
-        if (MccSchema.TABLE_REQUEST_REVIEWS.equalsIgnoreCase(name) || MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
+        if (MccSchema.TABLE_ANIMAL_REQUESTS.equalsIgnoreCase(name))
+        {
+            CustomPermissionsTable<?> ret = new CustomPermissionsTable<>(this, schemaTable, cf);
+            ret.addPermissionMapping(InsertPermission.class, MccRequestorPermission.class);
+            ret.addPermissionMapping(UpdatePermission.class, MccRequestorPermission.class);
+            ret.addPermissionMapping(DeletePermission.class, MccRequestAdminPermission.class);
+
+            return ret.init();
+        }
+        else if (MccSchema.TABLE_REQUEST_REVIEWS.equalsIgnoreCase(name) || MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
         {
             CustomPermissionsTable<?> ret = new CustomPermissionsTable<>(this, schemaTable, cf);
             ret.addPermissionMapping(ReadPermission.class, MccRequestAdminPermission.class);

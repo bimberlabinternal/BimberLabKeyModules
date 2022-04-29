@@ -48,6 +48,8 @@ export function RequestView() {
 
     let reviewForms = null
     switch (mode) {
+        case "details":
+            break
         case "primaryReview":
             reviewForms = [
                 <InternalReviewForm key={"internalReviewForm"} requestId={requestId}/>
