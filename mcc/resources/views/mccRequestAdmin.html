@@ -54,7 +54,8 @@
             //frame: 'none',
             schemaName: 'core',
             queryName: 'Members',
-            filterArray: [LABKEY.Filter.create('GroupId/Name', 'MCC RAB')],
+            columns: 'UserId,UserId/FirstName,UserId/LastName,UserId/Email',
+            filterArray: [LABKEY.Filter.create('GroupId/Name', 'MCC RAB Members')],
             showRecordSelectors: false,
             showDetailsColumn: false,
             buttonBar: {position: 'top', includeStandardButtons: true, items: []}
