@@ -216,8 +216,8 @@
         <importUrl>mcc/animalRequest.view</importUrl>
         <insertUrl>mcc/animalRequest.view</insertUrl>
         <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
-        <deleteUrl></deleteUrl>
-        <tableUrl></tableUrl>
+        <deleteUrl />
+        <tableUrl />
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>

@@ -195,8 +195,7 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                 </Grid>
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.iacucapproval, IACUCApprovalOptions)}
-                    {/*TODO: show*/}
-                    {/*{requestData.request.iacucprotocol}*/}
+                    {requestData.request.iacucprotocol ? ' (' + requestData.request.iacucprotocol + ')' : ''}
                 </Grid>
             </Grid>
             <p />

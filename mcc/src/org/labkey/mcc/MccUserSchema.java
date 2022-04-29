@@ -58,7 +58,7 @@ public class MccUserSchema extends SimpleUserSchema
     {
         if (ti.getColumn("rabReviewStatus") == null)
         {
-            SQLFragment sql = new SQLFragment("(SELECT CONCAT(CAST(sum(CASE WHEN r.score IS NULL THEN 0 ELSE 1 END) as varchar), ' of ', cast(count(*) as varchar)) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            SQLFragment sql = new SQLFragment("(SELECT CONCAT(COALESCE(CAST(sum(CASE WHEN r.score IS NULL THEN 0 ELSE 1 END) as varchar), '0'), ' of ', cast(count(*) as varchar)) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
             ExprColumn newCol = new ExprColumn(ti, "rabReviewStatus", sql, JdbcType.VARCHAR, ti.getColumn("requestId"));
 
             newCol.setLabel("RAB Review Status");
@@ -81,7 +81,7 @@ public class MccUserSchema extends SimpleUserSchema
 
             ti.addColumn(newCol);
 
-            SQLFragment sql2 = new SQLFragment("(SELECT sum(CASE WHEN r.score IS NULL THEN 0 ELSE 1 END) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            SQLFragment sql2 = new SQLFragment("(SELECT COALESCE(sum(CASE WHEN r.score IS NULL THEN 0 ELSE 1 END), 0) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
             ExprColumn newCol2 = new ExprColumn(ti, "pendingRabReviews", sql2, JdbcType.INTEGER, ti.getColumn("requestId"));
             newCol2.setLabel("Pending RAB Reviews");
             ti.addColumn(newCol2);
