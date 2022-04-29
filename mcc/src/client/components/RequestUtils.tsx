@@ -66,6 +66,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
     if (!requestId) {
         requestData.dataLoaded = true
         requestData.request.objectid = requestData.request.objectid || uuidv4()
+        requestData.request.status = 'Draft'
         requestData.cohorts = [new AnimalCohort()]
 
         return(requestData)

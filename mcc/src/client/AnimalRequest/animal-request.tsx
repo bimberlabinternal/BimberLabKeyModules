@@ -86,6 +86,7 @@ export function AnimalRequest() {
     if (!requestData) {
         queryRequestInformation(requestId, handleFailure).then((model) => {
             setRequestData(model)
+            setStateRollbackOnFailure(requestData.request.status)
         })
     }
 
@@ -375,6 +376,7 @@ export function AnimalRequest() {
                 }
 
                 setRequestData({...requestData})
+                setStateRollbackOnFailure(requestData.request.status)
 
                 if (!requestData.request.rowid) {
                     console.error("Missing request rowid after save")
