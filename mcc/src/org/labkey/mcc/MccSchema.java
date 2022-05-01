@@ -28,6 +28,9 @@ public class MccSchema
     public static final String TABLE_USER_REQUESTS = "userRequests";
     public static final String TABLE_ETL_TRANSLATIONS = "etltranslations";
     public static final String TABLE_ANIMAL_MAPPING = "animalMapping";
+    public static final String TABLE_ANIMAL_REQUESTS = "animalRequests";
+    public static final String TABLE_REQUEST_REVIEWS = "requestReviews";
+    public static final String TABLE_REQUEST_SCORE = "requestScores";
 
     public static MccSchema getInstance()
     {
