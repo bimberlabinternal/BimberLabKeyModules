@@ -69,6 +69,7 @@ import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -529,6 +530,59 @@ public class MccController extends SpringActionController
     }
 
     @RequiresPermission(AdminPermission.class)
+    public static class ConfigureMccAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Configure MCC");
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("This will ensure various settings required by MCC are configured on this server. Do you want to continue?");
+
+            return new HtmlView(HtmlString.unsafe(sb.toString()));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            for (String gn : Arrays.asList(MccManager.REQUEST_GROUP_NAME, MccManager.ANIMAL_GROUP_NAME, MccManager.REQUEST_REVIEW_GROUP_NAME))
+            {
+                Group g1 = GroupManager.getGroup(ContainerManager.getRoot(), gn, GroupEnumType.SITE);
+                if (g1 == null)
+                {
+                    SecurityManager.createGroup(ContainerManager.getRoot(), gn);
+                }
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+            Container mccContainer = MccManager.get().getMCCContainer();
+            if (mccContainer == null)
+            {
+                errors.reject(ERROR_MSG, "The MCC data container property has not been set");
+            }
+
+            Container requestContainer = MccManager.get().getMCCRequestContainer();
+            if (requestContainer == null)
+            {
+                errors.reject(ERROR_MSG, "The MCC request container property has not been set");
+            }
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return getContainer().getStartURL(getUser());
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
     public class ResetZimsRuntimeAction extends ConfirmAction<Object>
     {
         @Override
@@ -599,4 +653,8 @@ public class MccController extends SpringActionController
             return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
         }
     }
+
+    //TODO:
+    // assign to reviewers
+
 }

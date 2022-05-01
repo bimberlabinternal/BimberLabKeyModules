@@ -22,10 +22,9 @@ export default function Funding(props) {
 
     return (
         <ErrorMessageHandler isSubmitting={props.isSubmitting} rerender={displayApplicationDate}>
-        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-            <Title text="Existing or proposed funding source*"/>
+        <div className="tw-w-full tw-mx-2 tw-mb-4">
             <div className="tw-w-full tw-px-3 tw-mb-6">
-                <Select id={props.id + "-source"} ariaLabel="Proposed Funding Source" isSubmitting={props.isSubmitting} options={fundingSourceOptions} onChange={(e) => setDisplayApplicationDateField(e.currentTarget.value)} required={props.required} defaultValue={props.defaultValue.fundingsource} />
+                <Select id={props.id + "-source"} ariaLabel="Proposed Funding Source(s)" isSubmitting={props.isSubmitting} options={fundingSourceOptions} onChange={(e) => setDisplayApplicationDateField(e.currentTarget.value)} multiSelect={true} required={props.required} defaultValue={props.defaultValue.fundingsource} />
             </div>
 
             <div className="tw-w-full tw-px-3">

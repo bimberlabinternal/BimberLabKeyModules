@@ -1,0 +1,32 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
+
+        Ext4.get(webpart.wrapperDivId).update(
+            'Below are all pending and historic animal requests to MCC. You can use the edit link to view/update any request. You can also use the left-hand \'Views\' button to toggle between submitted requests, all requests, etc.' +
+            '<p></p>' +
+            '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
+            '<p></p>' +
+            '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>'
+        );
+
+        LDK.Utils.getBasicQWP({
+            title: 'Animal Request Review Assignments',
+            schemaName: 'mcc',
+            queryName: 'requestReviews',
+            viewName: 'Pending Reviews',
+            filterArray: [
+                LABKEY.Filter.create('reviewerId', LABKEY.Security.currentUser.id)
+            ],
+            showRecordSelectors: false,
+            showDetailsColumn: false,
+            buttonBar: {position: 'top', includeStandardButtons: true, items: []}
+        }).render(webpart.wrapperDivId + '-webpartAssignments');
+    });
+</script>
