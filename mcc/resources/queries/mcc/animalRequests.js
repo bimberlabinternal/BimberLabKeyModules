@@ -12,6 +12,15 @@ function beforeUpdate(row, oldRow, errors){
 }
 
 function beforeUpsert(row, oldRow, errors) {
+    if (!row.objectid && row.rowid) {
+        row.objectid = triggerHelper.resolveObjectId(row.rowid)
+    }
+
+    if (!row.objectid) {
+        errors._form = 'Unable to resolve record with rowid: ' + row.rowid
+        return
+    }
+
     if (!row.status) {
         console.error('Request row being submitted without a status: ' + row.objectid)
         console.error(row)
@@ -21,7 +30,7 @@ function beforeUpsert(row, oldRow, errors) {
     row.status = row.status || 'Draft'
 
     if (!triggerHelper.hasPermission(row.status)) {
-        errors._form = 'Insufficient permissions to update this request';
+        errors._form = 'Insufficient permissions to update request with status: ' + row.status;
         return;
     }
 }

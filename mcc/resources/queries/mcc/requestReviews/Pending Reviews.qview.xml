@@ -1,6 +1,6 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" label="Pending Reviews" canOverride="false">
     <filters>
-        <filter column="score" operator="isblank"/>
+        <filter column="review" operator="isblank"/>
     </filters>
     <sorts>
         <sort column="requestId/rowid" descending="true"/>

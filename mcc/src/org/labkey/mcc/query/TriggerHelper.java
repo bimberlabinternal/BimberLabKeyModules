@@ -87,6 +87,12 @@ public class TriggerHelper
 
     public void ensureReviewRecordsCreated(String objectId, String status, @Nullable String previousStatus, int score)
     {
+        if (objectId == null)
+        {
+            _log.error("No objectId provided, cannot update animalRequest record");
+            return;
+        }
+
         try
         {
             MccManager.RequestStatus st = MccManager.RequestStatus.resolveStatus(status);
@@ -210,5 +216,10 @@ public class TriggerHelper
             _log.error("Unknown MCC status: " + status);
             return false;
         }
+    }
+
+    public String resolveObjectId(int rowid)
+    {
+        return new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("rowid"), rowid), null).getObject(String.class);
     }
 }

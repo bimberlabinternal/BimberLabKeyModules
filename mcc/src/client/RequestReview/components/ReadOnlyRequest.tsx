@@ -7,7 +7,18 @@ import {
     institutionTypeOptions,
     researchAreaOptions
 } from '../../AnimalRequest/components/values';
-import { Box, Button, Grid, makeStyles, Table, TableBody, TableCell, TableHead, TableRow } from '@material-ui/core';
+import {
+    Box,
+    Button,
+    Grid,
+    makeStyles,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Typography
+} from '@material-ui/core';
 import { ActionURL } from '@labkey/api';
 
 function formatPIName(request: AnimalRequestProps) {
@@ -46,7 +57,15 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
             fontWeight: "bold"
         },
         tableHead: {
-            fontWeight: "bold"
+            fontWeight: "bold",
+            padding: 5,
+            paddingTop: 0
+        },
+        tableCell: {
+            border: 1,
+            borderColor: "black",
+            borderStyle: "solid",
+            padding: 5
         }
     })()
 
@@ -101,16 +120,16 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     <div>Co-Investigators: </div>
                 </Grid>
                 <Grid item xs={10}>
-                    {requestData.coinvestigators.length ? requestData.coinvestigators.map(coi => {
+                    {requestData.coinvestigators.length ? requestData.coinvestigators.map((coi, idx) => {
                         return([
-                            formatName(coi.lastname, coi.firstname, coi.middleinitial) + ': ' +coi.institutionname
+                            <Typography key={'coi-' + idx}>{formatName(coi.lastname, coi.firstname, coi.middleinitial) + ': ' +coi.institutionname}</Typography>
                         ])
-                    }).join('<br>') : 'N/A'}
+                    }) : 'N/A'}
                 </Grid>
             </Grid>
 
             <p />
-            <h4 style={{marginTop: 10}}>Institutional Animal Facilities and Capabilities</h4>
+            <h4 style={{marginTop: 20}}>Institutional Animal Facilities and Capabilities</h4>
             <Grid container spacing={1}  style={{marginLeft: 10}}>
                 <Grid item xs={2} className={styles.fieldLabel}>
                     Has Existing NHP Facilities:
@@ -139,25 +158,25 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
             </Grid>
 
             <p />
-            <h4 style={{marginTop: 10}}>Research Details</h4>
+            <h4 style={{marginTop: 20}}>Research Details</h4>
             <Grid container spacing={1}  style={{marginLeft: 10}}>
                 <Grid item xs={2} className={styles.fieldLabel}>
                     Animal Cohorts:
                 </Grid>
                 <Grid item xs={10}>
                     {requestData.cohorts.length ? (
-                        <Table style={{display: "inline-block"}} cellPadding={1} cellSpacing={1} >
+                        <Table style={{display: "inline-block", padding: 5}}>
                             <TableHead><TableRow key={"cohorts-header"}>
                                 <TableCell className={styles.tableHead}>Number of Animals</TableCell><TableCell className={styles.tableHead}>Sex</TableCell><TableCell className={styles.tableHead}>Other Characteristics</TableCell>
                             </TableRow>
                             </TableHead>
-                            <TableBody>
-                            {requestData.cohorts.map(cohort => {
+                            <TableBody style={{border: 1, borderColor: 'black'}}>
+                            {requestData.cohorts.map((cohort, idx) => {
                                 return(
-                                    <TableRow key={cohort.rowid}>
-                                        <TableCell>{cohort.numberofanimals}</TableCell>
-                                        <TableCell>{cohort.sex}</TableCell>
-                                        <TableCell>{cohort.othercharacteristics}</TableCell>
+                                    <TableRow key={cohort.rowid} style = { idx % 2 ? { background : "#fdffe0" }:{ background : "white" }}>
+                                        <TableCell className={styles.tableCell}>{cohort.numberofanimals}</TableCell>
+                                        <TableCell className={styles.tableCell}>{cohort.sex}</TableCell>
+                                        <TableCell className={styles.tableCell}>{cohort.othercharacteristics}</TableCell>
                                     </TableRow>
                                 )
                             })}
@@ -196,6 +215,12 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.iacucapproval, IACUCApprovalOptions)}
                     {requestData.request.iacucprotocol ? ' (' + requestData.request.iacucprotocol + ')' : ''}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
+                    Status:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.status}
                 </Grid>
             </Grid>
             <p />

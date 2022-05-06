@@ -641,7 +641,6 @@
             </column>
             <column columnName="actions" wrappedColumnName="rowid">
                 <columnTitle>Actions</columnTitle>
-                <displayWidth>200</displayWidth>
                 <displayColumnFactory>
                     <className>org.labkey.mcc.query.RequestReviewActionsDisplayColumnFactory</className>
                 </displayColumnFactory>

@@ -57,7 +57,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                     {
                         String requestId = ctx.get(getBoundKey("requestId"), String.class);
 
-                        MccManager.RequestStatus st = MccManager.RequestStatus.valueOf(status);
+                        MccManager.RequestStatus st = MccManager.RequestStatus.resolveStatus(status);
                         Container requestContainer = MccManager.get().getMCCRequestContainer();
                         if (requestContainer == null)
                         {
@@ -74,14 +74,14 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         {
                             out.write("<br><a class=\"labkey-text-link\" href=\"javascript:void(0)\">Submit For RAB Review</a>");
                         }
-                        else if (st == MccManager.RequestStatus.RabReview)
+                        else if (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
                         {
                             DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
                             out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {
-                            out.write("<br><a class=\"labkey-text-link\" href=\"javascript:alert('This is not enabled yet')\">Update Animal Status</a>");
+                            out.write("<br><a class=\"labkey-text-link\" href=\"javascript:alert('This is not enabled yet')\">Update Animal Availability</a>");
                         }
                     }
                     catch (IllegalArgumentException e)
@@ -99,14 +99,8 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                 keys.add(getBoundKey("rowid"));
                 keys.add(getBoundKey("createdby"));
                 keys.add(getBoundKey("requestId"));
+                keys.add(getBoundKey("pendingRabReviews"));
                 keys.add(getBoundKey("requestId/status"));
-            }
-
-            @Override
-            public @NotNull Set<ClientDependency> getClientDependencies()
-            {
-                //TODO
-                return super.getClientDependencies();
             }
         };
     }
