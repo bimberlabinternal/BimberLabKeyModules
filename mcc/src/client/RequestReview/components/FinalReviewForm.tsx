@@ -154,7 +154,7 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
                 {reviewData.map((row, idx) => {
                     return(
                         <TableRow key={"review-" + row.reviewerid} style = { idx % 2 ? { background : "#fdffe0" }:{ background : "white" }}>
-                            <TableCell className={styles.tableCell}>{row['reviewerid/DisplayName']}</TableCell>
+                            <TableCell className={styles.tableCell}>{row['reviewerid/displayName']}</TableCell>
                             <TableCell className={styles.tableCell}>{row.review}</TableCell>
                             <TableCell className={styles.tableCell}>{row.comments}</TableCell>
                         </TableRow>
