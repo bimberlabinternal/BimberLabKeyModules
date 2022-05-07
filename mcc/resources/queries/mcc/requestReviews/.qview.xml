@@ -3,7 +3,12 @@
         <column name="requestId/rowid"/>
         <column name="requestId/lastname"/>
         <column name="requestId/firstname"/>
-        <column name="requestId/status"/>
+        <column name="requestId/status">
+            <properties>
+                <property name="columnTitle" value="Request Status"/>
+            </properties>
+        </column>
+        <column name="review"/>
         <column name="actions"/>
     </columns>
     <sorts>

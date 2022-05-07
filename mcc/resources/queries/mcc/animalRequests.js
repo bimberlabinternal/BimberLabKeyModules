@@ -12,6 +12,15 @@ function beforeUpdate(row, oldRow, errors){
 }
 
 function beforeUpsert(row, oldRow, errors) {
+    if (!row.objectid && row.rowid) {
+        row.objectid = triggerHelper.resolveObjectId(row.rowid)
+    }
+
+    if (!row.objectid) {
+        errors._form = 'Unable to resolve record with rowid: ' + row.rowid
+        return
+    }
+
     if (!row.status) {
         console.error('Request row being submitted without a status: ' + row.objectid)
         console.error(row)
@@ -21,7 +30,7 @@ function beforeUpsert(row, oldRow, errors) {
     row.status = row.status || 'Draft'
 
     if (!triggerHelper.hasPermission(row.status)) {
-        errors._form = 'Insufficient permissions to update this request';
+        errors._form = 'Insufficient permissions to update request with status: ' + row.status;
         return;
     }
 }
@@ -37,7 +46,7 @@ function afterUpdate(row, oldRow, errors){
 function afterUpsert(row, oldRow, errors) {
     if (row.status && row.status !== 'Draft') {
         try {
-            triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row));
+            triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row, oldRow));
         }
         catch(e) {
             console.error('Error in animalRequest.afterUpsert')
@@ -73,7 +82,24 @@ function beforeDelete(row, errors){
     }
 }
 
-function calculatePreliminaryScore(row) {
+function calculatePreliminaryScore(row, oldRow) {
+    var fields = ['institutiontype', 'earlystageinvestigator', 'fundingsource', 'existingnhpfacilities', 'existingmarmosetcolony', 'isbreedinganimals'];
+    if (oldRow) {
+        fields.forEach(function(fieldName){
+            if (row[fieldName] === undefined) {
+                row[fieldName] = oldRow[fieldName]
+            }
+        }, this);
+    }
+
+    fields.forEach(function(fieldName){
+        if (row[fieldName] === undefined || row[fieldName] === null || row[fieldName] === '') {
+            console.error('Missing field ' + fieldName + ' in calculatePreliminaryScore: [' + row[fieldName] + ']')
+            console.error(row)
+            console.error(oldRow)
+        }
+    }, this);
+
     // NOTE: the initial score is two, such that the final range is 0-10
     var score = 2;
 

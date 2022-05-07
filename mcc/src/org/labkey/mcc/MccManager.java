@@ -84,6 +84,14 @@ public class MccManager
             }
             catch (IllegalArgumentException e)
             {
+                for (RequestStatus s : RequestStatus.values())
+                {
+                    if (s.label.equals(val))
+                    {
+                        return s;
+                    }
+                }
+
                 return valueOf(val.substring(0, 1).toUpperCase() + val.substring(1).toLowerCase());
             }
         }

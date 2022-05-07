@@ -42,7 +42,7 @@ public class RequestReviewActionsDisplayColumnFactory implements DisplayColumnFa
 
                 Container requestContainer = MccManager.get().getMCCRequestContainer();
                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=rabReview", requestContainer);
-                out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL() + "\">Enter Review</a>");
+                out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL() + "\">Enter Review</a>");
             }
 
             @Override

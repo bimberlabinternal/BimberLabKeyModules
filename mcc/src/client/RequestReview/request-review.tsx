@@ -8,6 +8,8 @@ import InternalReviewForm from './components/InternalReviewForm';
 import { ThemeProvider } from '@material-ui/styles';
 import { createTheme } from '@material-ui/core/styles';
 import '../labkeyOverrides.css';
+import FinalReviewForm from './components/FinalReviewForm';
+import { ErrorBoundary } from '@labkey/components';
 
 export function RequestView() {
     const mode = (new URLSearchParams(window.location.search)).get("mode")
@@ -52,13 +54,12 @@ export function RequestView() {
             break
         case "primaryReview":
             reviewForms = [
-                <InternalReviewForm key={"internalReviewForm"} requestId={requestId}/>
+                <InternalReviewForm key={"internalReviewForm"} requestData={requestData}/>
             ]
             break
         case "rabReview":
             reviewForms = (
                 <>
-                <InternalReviewForm key={"internalReviewForm"} requestId={requestId} readOnly={true}/>
                 <RabReviewForm key={"rabReviewForm"} requestId={requestId}/>
                 </>
             )
@@ -66,8 +67,7 @@ export function RequestView() {
         case "finalReview":
             reviewForms = (
                 <>
-                <RabReviewForm key={"rabReviewForm"} requestId={requestId} readOnly={true}/>
-                <InternalReviewForm key={"internalReviewForm"} requestId={requestId}/>
+                <FinalReviewForm key={"finalReviewForm"} requestData={requestData}/>
                 </>
             )
             break
@@ -85,10 +85,12 @@ export function RequestView() {
 
     return(
         <>
-        <ThemeProvider theme={theme}>
-            <ReadOnlyRequest requestData={requestData} />
-            {reviewForms}
-        </ThemeProvider>
+        <ErrorBoundary>
+            <ThemeProvider theme={theme}>
+                <ReadOnlyRequest requestData={requestData} />
+                {reviewForms}
+            </ThemeProvider>
+        </ErrorBoundary>
         </>
     )
 }
