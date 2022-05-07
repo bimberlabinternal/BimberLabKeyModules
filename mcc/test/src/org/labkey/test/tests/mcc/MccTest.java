@@ -33,6 +33,7 @@ import org.labkey.test.TestTimeoutException;
 import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.util.ApiPermissionsHelper;
 import org.labkey.test.util.DataRegionTable;
 
 import java.util.ArrayList;
@@ -285,6 +286,70 @@ public class MccTest extends BaseWebDriverTest
         waitForSaveToComplete();
 
         Assert.assertEquals(getLastModifiedRequestRow().get("iacucprotocol"), "IACUC 123456");
+        waitAndClickAndWait(getButton("Submit"));
+
+        DataRegionTable dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        Assert.assertEquals("Submitted", dr.getDataAsText(0, "status"));
+
+        beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+
+        // Ensure groups set up correctly:
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName("Current RAB Members").waitFor();
+        Assert.assertEquals(dr.getDataRowCount(), 1);
+
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter MCC Internal Review"));
+
+        waitAndClick(getButton("Return to Investigator"));
+        waitForElement(Locator.tagWithText("h2", "Return To Investigator").notHidden());
+        waitAndClickAndWait(getButton("Submit"));
+
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        dr.clickRowDetails(0);
+
+        // Reset status to Submitted:
+        waitAndClickAndWait(getButton("Edit Request"));
+        waitAndClickAndWait(getButton("Submit"));
+
+        beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName("All Pending MCC Requests").waitFor();
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter MCC Internal Review"));
+
+        waitAndClick(getButton("Assign to RAB Reviewers"));
+        waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
+        waitForElement(Locator.tagWithText("p", getCurrentUserName()));
+        waitAndClickAndWait(getButton("Submit"));
+
+        goBack();
+
+        // Repeat to ensure the assignment is picked up
+        waitAndClick(getButton("Assign to RAB Reviewers"));
+        waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
+        waitForElement(Locator.tagWithText("p", getCurrentUserName() + " (already assigned)"));
+        waitAndClickAndWait(getButton("Submit"));
+
+        beginAt("/mcc/" + getProjectName() + "/rabRequestReview.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter Review"));
+        waitForElement(Locator.tagWithText("td", "cohort-othercharacteristics"));
+
+        waitAndClick(getButton("Submit Review"));
+        waitForElement(Locator.tagWithClass("div", "Mui-error"));
+
+        //TODO: select "I recommend this proposal"
+        waitAndClickAndWait(getButton("Submit Review"));
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        Assert.assertEquals(dr.getDataRowCount(), 0);
+
+        beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName("All Pending MCC Requests").waitFor();
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
+
+        waitAndClick(getButton("Approve Request"));
+        waitForElement(Locator.tagWithClass("div", "Mui-error"));
+
+        setFormElement(Locator.tagWithAttribute("input", "name", "proposalScore"), "999");
+        waitAndClickAndWait(getButton("Approve Request"));
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName("All Pending MCC Requests").waitFor();
+        Assert.assertEquals(dr.getDataRowCount(), 0);
     }
 
     private FormElement[] getCoinvestigatorFields(int idx)
@@ -559,6 +624,11 @@ public class MccTest extends BaseWebDriverTest
                 new ModulePropertyValue("MCC", "/", "MCCContactUsers", getCurrentUserName()),
                 new ModulePropertyValue("MCC", "/", "MCCRequestNotificationUsers", getCurrentUserName())
         ));
+
+        beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
+        waitAndClickAndWait(Locator.button("OK"));
+
+        new ApiPermissionsHelper(this).addUserToSiteGroup(getCurrentUser(), "MCC RAB Members");
     }
 
     private void testInvalidId()
