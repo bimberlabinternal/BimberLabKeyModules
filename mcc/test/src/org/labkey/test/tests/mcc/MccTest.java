@@ -626,7 +626,7 @@ public class MccTest extends BaseWebDriverTest
         ));
 
         beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
-        waitAndClickAndWait(Locator.button("OK"));
+        clickButton("OK");
 
         new ApiPermissionsHelper(this).addUserToSiteGroup(getCurrentUser(), "MCC RAB Members");
     }
