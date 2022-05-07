@@ -46,7 +46,7 @@ function afterUpdate(row, oldRow, errors){
 function afterUpsert(row, oldRow, errors) {
     if (row.status && row.status !== 'Draft') {
         try {
-            triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row));
+            triggerHelper.ensureReviewRecordsCreated(row.objectId, row.status, oldRow ? oldRow.status : null, calculatePreliminaryScore(row, oldRow));
         }
         catch(e) {
             console.error('Error in animalRequest.afterUpsert')
@@ -82,7 +82,24 @@ function beforeDelete(row, errors){
     }
 }
 
-function calculatePreliminaryScore(row) {
+function calculatePreliminaryScore(row, oldRow) {
+    var fields = ['institutiontype', 'earlystageinvestigator', 'fundingsource', 'existingnhpfacilities', 'existingmarmosetcolony', 'isbreedinganimals'];
+    if (oldRow) {
+        for (var fieldName in fields) {
+            if (row[fieldName] === undefined) {
+                row[fieldName] = oldRow[fieldName]
+            }
+        }
+    }
+
+    for (var fieldName in fields) {
+        if (row[fieldName] === undefined || row[fieldName] === null || row[fieldName] === '') {
+            console.error('Missing field ' + fieldName + ' in calculatePreliminaryScore: [' + row[fieldName] + ']')
+            console.error(row)
+            console.error(oldRow)
+        }
+    }
+
     // NOTE: the initial score is two, such that the final range is 0-10
     var score = 2;
 
