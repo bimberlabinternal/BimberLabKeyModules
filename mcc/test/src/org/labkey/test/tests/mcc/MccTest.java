@@ -295,7 +295,7 @@ public class MccTest extends BaseWebDriverTest
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
 
         // Ensure groups set up correctly:
-        String dataRegionName = getDataRegionName("Current RAB Members");
+        String dataRegionName = getDataRegionName("webpartRAB");
         dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 1);
 
@@ -305,61 +305,67 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("h2", "Return To Investigator").notHidden());
         waitAndClickAndWait(getButton("Submit"));
 
-        dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(getDataRegionName("webpartPending")).waitFor();
         dr.clickRowDetails(0);
 
         // Reset status to Submitted:
-        waitAndClickAndWait(getButton("Edit Request"));
+        waitAndClickAndWait(Locator.tagWithText("span", "Edit Request"));
         waitAndClickAndWait(getButton("Submit"));
 
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
-        dataRegionName = getDataRegionName("All Pending MCC Requests");
-        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        dataRegionName = getDataRegionName("webpartPending");
+        new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         waitAndClickAndWait(Locator.tagWithText("a", "Enter MCC Internal Review"));
 
-        waitAndClick(getButton("Assign to RAB Reviewers"));
+        waitAndClick(Locator.tagWithText("span", "Assign to RAB Reviewers"));
         waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
         waitForElement(Locator.tagWithText("p", getCurrentUserName()));
-        waitAndClickAndWait(getButton("Submit"));
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
 
         goBack();
 
         // Repeat to ensure the assignment is picked up
-        waitAndClick(getButton("Assign to RAB Reviewers"));
+        waitAndClick(Locator.tagWithText("span", "Assign to RAB Reviewers"));
         waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
         waitForElement(Locator.tagWithText("p", getCurrentUserName() + " (already assigned)"));
-        waitAndClickAndWait(getButton("Submit"));
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
 
         beginAt("/mcc/" + getProjectName() + "/rabRequestReview.view");
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Review"));
         waitForElement(Locator.tagWithText("td", "cohort-othercharacteristics"));
 
-        waitAndClick(getButton("Submit Review"));
+        waitAndClick(Locator.tagWithText("span", "Submit Review"));
         waitForElement(Locator.tagWithClass("div", "Mui-error"));
 
-        //TODO: select "I recommend this proposal"
-        waitAndClickAndWait(getButton("Submit Review"));
+        waitAndClick(Locator.tagWithText("div", "Not Decided"));
+        waitAndClick(Locator.tagWithText("li", "I recommend this proposal"));
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit Review"));
         dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 0);
 
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
-        dataRegionName = getDataRegionName("All Pending MCC Requests");
-        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        dataRegionName = getDataRegionName("webpartPending");
+        new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
 
-        waitAndClick(getButton("Approve Request"));
+        waitAndClick(Locator.tagWithText("span", "Approve Request"));
         waitForElement(Locator.tagWithClass("div", "Mui-error"));
 
         setFormElement(Locator.tagWithAttribute("input", "name", "proposalScore"), "999");
-        waitAndClickAndWait(getButton("Approve Request"));
-        dataRegionName = getDataRegionName("All Pending MCC Requests");
+        waitAndClickAndWait(Locator.tagWithText("span", "Approve Request"));
+        dataRegionName = getDataRegionName("webpartPending");
         dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 0);
     }
 
-    private String getDataRegionName(String title)
+    private String getDataRegionName(String divName)
     {
-        return getAttribute(Locator.tagWithAttribute("div", "name", "webpart").withChild(Locator.tagWithText("h3", title).withClass("panel-title")), "name");
+        Locator.XPathLocator l = Locator.tagWithAttributeContaining("div", "id", divName);
+        waitForElement(l);
+        l = l.append(Locator.tag("form"));
+        waitForElement(l);
+
+        return getAttribute(l, "lk-region-form");
     }
 
     private FormElement[] getCoinvestigatorFields(int idx)
