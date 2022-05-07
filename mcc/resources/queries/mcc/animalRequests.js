@@ -85,20 +85,20 @@ function beforeDelete(row, errors){
 function calculatePreliminaryScore(row, oldRow) {
     var fields = ['institutiontype', 'earlystageinvestigator', 'fundingsource', 'existingnhpfacilities', 'existingmarmosetcolony', 'isbreedinganimals'];
     if (oldRow) {
-        for (var fieldName in fields) {
+        fields.forEach(function(fieldName){
             if (row[fieldName] === undefined) {
                 row[fieldName] = oldRow[fieldName]
             }
-        }
+        }, this);
     }
 
-    for (var fieldName in fields) {
+    fields.forEach(function(fieldName){
         if (row[fieldName] === undefined || row[fieldName] === null || row[fieldName] === '') {
             console.error('Missing field ' + fieldName + ' in calculatePreliminaryScore: [' + row[fieldName] + ']')
             console.error(row)
             console.error(oldRow)
         }
-    }
+    }, this);
 
     // NOTE: the initial score is two, such that the final range is 0-10
     var score = 2;
