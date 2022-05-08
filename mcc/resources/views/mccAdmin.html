@@ -15,13 +15,13 @@ Ext4.onReady(function (){
             sections: [
                 {header: 'User/Request Management',
                     items: [
-                        {name: 'View Pending User Requests', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'},
-                        {name: 'View All Users', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'}
+                        {name: 'View Pending User Requests', url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'},
+                        {name: 'View All Users', url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'}
                     ]
                 },
                 {header: 'Configuration/Data Management',
                     items: [
-                        {name: 'Ensure Site Settings and Groups', url: '<%=contextPath%>/' + ctx['MCCContainer'] + '/mcc-configureMcc.view'}
+                        {name: 'Ensure Site Settings and Groups', url: '<%=contextPath%>' + ctx['MCCContainer'] + '/mcc-configureMcc.view'}
                     ]
                 }
 

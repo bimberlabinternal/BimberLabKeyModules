@@ -12,8 +12,18 @@ MCC.Utils = new function() {
             var requiredProps = requiredProps || ['MCCContainer', 'MCCRequestContainer'];
             var missingProps = [];
             for (var i=0;i<requiredProps.length;i++){
-                if(!ctx[requiredProps[i]])
+                if (!ctx[requiredProps[i]]) {
                     missingProps.push(requiredProps[i]);
+                }
+                else {
+                    if (!ctx[requiredProps[i]].startsWith('/')) {
+                        ctx[requiredProps[i]] = '/' + ctx[requiredProps[i]];
+                    }
+
+                    if (ctx[requiredProps[i]].endsWith('/')) {
+                        ctx[requiredProps[i]] = ctx[requiredProps[i]].substr(0, -1);
+                    }
+                }
             }
 
             if (missingProps.length > 0){
