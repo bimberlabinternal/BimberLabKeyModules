@@ -32,24 +32,24 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
             @Override
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
-                int rowId = ctx.get(getBoundKey("rowid"), Integer.class);
+                int requestRowId = ctx.get(getBoundKey("requestId", "rowid"), Integer.class);
                 if (MccManager.get().isRequestAdmin(ctx.getViewContext().getUser()))
                 {
-                    int userId = ctx.get(getBoundKey("createdby"), Integer.class);
+                    int userId = ctx.get(getBoundKey("requestId", "createdby"), Integer.class);
                     User u = UserManager.getUser(userId);
                     if (u == null)
                     {
-                        _log.error("Unknown user: " + userId + " for MCC request " + rowId, new Exception());
+                        _log.error("Unknown user: " + userId + " for MCC request " + requestRowId, new Exception());
                         return;
                     }
 
-                    out.write("<a class=\"labkey-text-link\" href=\"mailto:" + u.getEmail() + "?subject=MCC Request #" + rowId + "\">Contact Investigator</a>");
+                    out.write("<a class=\"labkey-text-link\" href=\"mailto:" + u.getEmail() + "?subject=MCC Request #" + requestRowId + "\">Contact Investigator</a>");
                 }
 
                 String status = ctx.get(getBoundKey("requestId", "status"), String.class);
                 if (status == null)
                 {
-                    _log.error("MCC Request lacks status: " + rowId, new Exception());
+                    _log.error("MCC Request lacks status: " + requestRowId, new Exception());
                 }
                 else
                 {
@@ -86,7 +86,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                     }
                     catch (IllegalArgumentException e)
                     {
-                        _log.error("Unknown MCC Request status: " + rowId, new Exception());
+                        _log.error("Unknown MCC Request status: " + requestRowId, new Exception());
                     }
                 }
             }
@@ -97,10 +97,11 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                 super.addQueryFieldKeys(keys);
 
                 keys.add(getBoundKey("rowid"));
-                keys.add(getBoundKey("createdby"));
+                keys.add(getBoundKey("requestId", "createdby"));
                 keys.add(getBoundKey("requestId"));
                 keys.add(getBoundKey("pendingRabReviews"));
-                keys.add(getBoundKey("requestId/status"));
+                keys.add(getBoundKey("requestId", "status"));
+                keys.add(getBoundKey("requestId" , "rowid"));
             }
         };
     }
