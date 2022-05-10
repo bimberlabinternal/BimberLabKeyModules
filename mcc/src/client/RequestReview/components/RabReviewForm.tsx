@@ -1,18 +1,6 @@
 import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 import React, { useEffect, useState } from 'react';
-import {
-    Box,
-    Button,
-    makeStyles,
-    MenuItem,
-    Select,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TextField
-} from '@material-ui/core';
+import { Box, Button, MenuItem, Select, Table, TableBody, TableCell, TableRow, TextField } from '@material-ui/core';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
 
 export default function RabReviewForm(props: {requestId: string}) {
@@ -36,11 +24,11 @@ export default function RabReviewForm(props: {requestId: string}) {
             ],
             filterArray: [
                 Filter.create('requestId', props.requestId),
-                Filter.create('reviewerid', getServerContext().user.userId)
+                Filter.create('reviewerId', getServerContext().user.id)
             ],
             success: function (resp) {
                 if (resp.rows.length > 1) {
-                    console.error("More than one MCC review record returned for the user: " + getServerContext().user.userId + ". this should never happen")
+                    console.error("More than one MCC review record returned for the user: " + getServerContext().user.id + ". this should never happen")
                 }
 
                 setRecordData([...resp.rows])

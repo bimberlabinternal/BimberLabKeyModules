@@ -8,6 +8,7 @@
                 <property name="columnTitle" value="Request Status"/>
             </properties>
         </column>
+        <column name="reviewerId"/>
         <column name="review"/>
         <column name="actions"/>
     </columns>

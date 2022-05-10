@@ -579,9 +579,8 @@
                 <nullable>false</nullable>
             </column>
             <column columnName="reviewerId">
-                <columnTitle>Reviewer</columnTitle>
+                <columnTitle>Assigned Reviewer</columnTitle>
                 <nullable>false</nullable>
-
                 <fk>
                     <fkDbSchema>core</fkDbSchema>
                     <fkTable>users</fkTable>
