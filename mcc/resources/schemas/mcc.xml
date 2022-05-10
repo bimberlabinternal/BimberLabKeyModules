@@ -565,6 +565,7 @@
         </columns>
     </table>
     <table tableName="requestReviews" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <tableTitle>Request Reviews</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <insertUrl />
@@ -645,6 +646,15 @@
                 </displayColumnFactory>
             </column>
         </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Print</originalText>
+            </item>
+        </buttonBarOptions>
     </table>
     <table tableName="requestScores" tableDbType="TABLE">
         <insertUrl />
@@ -719,5 +729,14 @@
                 </displayColumnFactory>
             </column>
         </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Print</originalText>
+            </item>
+        </buttonBarOptions>
     </table>
 </tables>

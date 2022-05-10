@@ -8,7 +8,7 @@
         <column name="preliminaryScore"/>
         <column name="resourceAvailabilityScore"/>
         <column name="rabReviewStatus"/>
-        <column name="proposalScore"/>
+<!--        <column name="proposalScore"/>-->
         <column name="created"/>
 
         <column name="actions"/>

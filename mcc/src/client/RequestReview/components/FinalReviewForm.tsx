@@ -173,11 +173,11 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
                 <TableRow>
                     <TableCell><TextField key={"resourceAvailabilityScore"} name={"resourceAvailabilityScore"} label={"Resource Availability Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityScore || ''} fullWidth={true} /></TableCell>
                 </TableRow>
+                {/*<TableRow>*/}
+                {/*    <TableCell><TextField key={"proposalScore"} name={"proposalScore"} required={true} error={hasSubmitted && !recordData.proposalScore} label={"Final Proposal Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.proposalScore || ''} fullWidth={true} /></TableCell>*/}
+                {/*</TableRow>*/}
                 <TableRow>
-                    <TableCell><TextField key={"proposalScore"} name={"proposalScore"} required={true} error={hasSubmitted && !recordData.proposalScore} label={"Final Proposal Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.proposalScore || ''} fullWidth={true} /></TableCell>
-                </TableRow>
-                <TableRow>
-                    <TableCell><TextField key={"comments"} name={"comments"} label={"Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
+                    <TableCell><TextField key={"comments"} name={"comments"} label={"NIH Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 </TableBody>
             </Table>

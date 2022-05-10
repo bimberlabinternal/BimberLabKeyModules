@@ -38,8 +38,11 @@ public class RequestReviewActionsDisplayColumnFactory implements DisplayColumnFa
                     return;
                 }
 
-                String requestId = ctx.get(getBoundKey("requestId"), String.class);
+                if (!ctx.getViewContext().getUser().equals(u)) {
+                    return;
+                }
 
+                String requestId = ctx.get(getBoundKey("requestId"), String.class);
                 Container requestContainer = MccManager.get().getMCCRequestContainer();
                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=rabReview", requestContainer);
                 out.write("<a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Review</a>");

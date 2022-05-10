@@ -34,8 +34,7 @@
             queryName: 'requestReviews',
             viewName: 'Pending Reviews',
             showRecordSelectors: false,
-            showDetailsColumn: false,
-            buttonBar: {position: 'top', includeStandardButtons: true, items: []}
+            showDetailsColumn: false
         }).render(webpart.wrapperDivId + '-webpartAssignments');
 
         LDK.Utils.getBasicQWP({
@@ -43,10 +42,9 @@
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'requestScores',
-            viewName: 'Pending Requests',
+            //viewName: 'Pending Requests',
             showRecordSelectors: true,
-            showDetailsColumn: true,
-            buttonBar: {position: 'top', includeStandardButtons: true, items: []}
+            showDetailsColumn: true
         }).render(webpart.wrapperDivId + '-webpartPending');
 
         LDK.Utils.getBasicQWP({

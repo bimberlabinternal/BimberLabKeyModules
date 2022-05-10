@@ -74,7 +74,9 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         {
                             out.write("<br><a class=\"labkey-text-link\" href=\"javascript:void(0)\">Submit For RAB Review</a>");
                         }
-                        else if (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
+                        else if (st == MccManager.RequestStatus.PendingDecision ||
+                                (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
+                        )
                         {
                             DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
                             out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");

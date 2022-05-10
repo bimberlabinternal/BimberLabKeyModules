@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
@@ -29,6 +30,7 @@ import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mcc.query.MccEhrCustomizer;
+import org.labkey.mcc.query.ReviewerNotifyButton;
 import org.labkey.mcc.security.MccDataAdminRole;
 import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequesterRole;
@@ -89,6 +91,7 @@ public class MccModule extends ExtendedSimpleModule
     protected void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
         registerEHRResources();
+        LDKService.get().registerQueryButton(new ReviewerNotifyButton(), MccSchema.NAME, MccSchema.TABLE_REQUEST_REVIEWS);
     }
 
     @Override

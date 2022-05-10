@@ -49,6 +49,7 @@ public class MccManager
         Submitted(2, "Submitted", MccRequestorPermission.class),
         FormCheck(3, "Internal Review", MccRequestAdminPermission.class),
         RabReview(4, "RAB Review", MccRequestAdminPermission.class),
+        PendingDecision(4, "Pending Decision", MccRequestAdminPermission.class),
         FinalReview(5, "Final Review", MccRequestAdminPermission.class),
         Approved(6, "Approved", MccRequestAdminPermission.class),
         Rejected(7, "Rejected", MccRequestAdminPermission.class),
@@ -69,6 +70,11 @@ public class MccManager
         public boolean canEdit(User u, Container c)
         {
             return c.hasPermission(u, this.editPermission);
+        }
+
+        public String getLabel()
+        {
+            return label;
         }
 
         public static RequestStatus resolveStatus(String val)

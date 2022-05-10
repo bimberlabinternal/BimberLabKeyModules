@@ -35,8 +35,11 @@ import org.labkey.mcc.MccSchema;
 import javax.mail.Address;
 import javax.mail.Message;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -121,7 +124,7 @@ public class TriggerHelper
             else
             {
                 // Ensure score is accurate in the case the underlying data changed:
-                List<Map> records = ts.getArrayList(Map.class);
+                List<Map<String, Object>> records = new ArrayList<>(ts.getMapCollection());
                 if (records.size() != 1)
                 {
                     _log.error("More than one requestScore record found for requestId: " + objectId);
@@ -221,5 +224,20 @@ public class TriggerHelper
     public String resolveObjectId(int rowid)
     {
         return new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("rowid"), rowid), null).getObject(String.class);
+    }
+
+    public void possiblySetRabComplete(String requestId)
+    {
+        TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS);
+        Set<String> reviews = new HashSet<>(new TableSelector(ti, PageFlowUtil.set("review"), new SimpleFilter(FieldKey.fromString("requestId"), requestId), null).getArrayList(String.class));
+        if (!reviews.isEmpty() && !reviews.contains(null)) {
+            TableInfo requestTable = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS);
+            int rowId = new TableSelector(requestTable, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("requestId"), requestId), null).getObject(Integer.class);
+            Map<String, Object> map = new HashMap<>();
+            map.put("rowid", rowId);
+            map.put("status", MccManager.RequestStatus.PendingDecision.getLabel());
+
+            Table.update(_user, ti, map, rowId);
+        }
     }
 }
