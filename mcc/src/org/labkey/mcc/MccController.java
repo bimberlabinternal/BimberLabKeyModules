@@ -24,6 +24,7 @@ import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.CoreSchema;
@@ -60,6 +61,7 @@ import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.mcc.etl.ZimsImportTask;
+import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.security.xml.GroupEnumType;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -75,6 +77,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MccController extends SpringActionController
 {
@@ -654,7 +657,76 @@ public class MccController extends SpringActionController
         }
     }
 
-    //TODO:
-    // assign to reviewers
+    @RequiresPermission(MccRequestAdminPermission.class)
+    public class NotifyReviewersAction extends MutatingApiAction<NotifyReviewersForm>
+    {
+        @Override
+        public Object execute(NotifyReviewersForm form, BindException errors) throws Exception
+        {
+            if (form.getRowIds() == null || form.getRowIds().length == 0)
+            {
+                errors.reject(ERROR_MSG, "No rowIds provided");
+                return null;
+            }
 
+            List<Integer> rowIds = Arrays.stream(form.getRowIds()).collect(Collectors.toList());
+            List<Integer> userIds = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS), PageFlowUtil.set("reviewerId"), new SimpleFilter(FieldKey.fromString("rowid"), rowIds, CompareType.IN), null).getArrayList(Integer.class);
+            if (userIds.size() != form.getRowIds().length)
+            {
+                errors.reject(ERROR_MSG, "Not all users in this request were found");
+                return null;
+            }
+
+            Set<Address> emails = new HashSet<>();
+            for (int userId : userIds)
+            {
+                User u = UserManager.getUser(userId);
+                if (u == null)
+                {
+                    _log.error("Unknown user: " + userId);
+                    errors.reject(ERROR_MSG, "Unknown user: " + userId);
+                    return null;
+                }
+
+                ValidEmail validEmail = new ValidEmail(u.getEmail());
+                emails.add(validEmail.getAddress());
+            }
+
+            try
+            {
+                MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
+                mail.setFrom("mcc-do-not-reply@ohsu.edu");
+                mail.setSubject("MCC Animal Request Reviews");
+
+                Container rc = MccManager.get().getMCCRequestContainer();
+                DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
+                mail.setEncodedHtmlContent("You have been assigned one or more MCC Animal Requests to review. <a href=\"" + url.getActionURL() + "\">Please click here to view and complete these assignments</a>");
+                mail.addRecipients(Message.RecipientType.BCC, emails.toArray(new Address[0]));
+                mail.addRecipients(Message.RecipientType.TO, "mcc-do-not-reply@ohsu.edu");
+
+                MailHelper.send(mail, getUser(), getContainer());
+            }
+            catch (Exception e)
+            {
+                _log.error("Unable to send MCC email", e);
+            }
+
+            return new ApiSimpleResponse("success", true);
+        }
+    }
+
+    public static class NotifyReviewersForm
+    {
+        Integer[] rowIds;
+
+        public Integer[] getRowIds()
+        {
+            return rowIds;
+        }
+
+        public void setRowIds(Integer[] rowIds)
+        {
+            this.rowIds = rowIds;
+        }
+    }
 }
