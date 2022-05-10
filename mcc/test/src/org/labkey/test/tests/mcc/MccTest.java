@@ -347,12 +347,8 @@ public class MccTest extends BaseWebDriverTest
         dataRegionName = getDataRegionName("webpartPending");
         new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
-
         waitAndClick(Locator.tagWithText("span", "Approve Request"));
-        waitForElement(Locator.tagWithClass("div", "Mui-error"));
 
-        setFormElement(Locator.tagWithAttribute("input", "name", "proposalScore"), "999");
-        waitAndClickAndWait(Locator.tagWithText("span", "Approve Request"));
         dataRegionName = getDataRegionName("webpartPending");
         dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 0);
