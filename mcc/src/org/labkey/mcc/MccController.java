@@ -700,7 +700,7 @@ public class MccController extends SpringActionController
 
                 Container rc = MccManager.get().getMCCRequestContainer();
                 DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
-                mail.setEncodedHtmlContent("You have been assigned one or more MCC Animal Requests to review. <a href=\"" + url.getActionURL() + "\">Please click here to view and complete these assignments</a>");
+                mail.setEncodedHtmlContent("You have been assigned one or more MCC Animal Requests to review. <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL() + "\">Please click here to view and complete these assignments</a>");
                 mail.addRecipients(Message.RecipientType.BCC, emails.toArray(new Address[0]));
                 mail.addRecipients(Message.RecipientType.TO, "mcc-do-not-reply@ohsu.edu");
 
