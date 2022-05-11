@@ -343,7 +343,12 @@ public class MccTest extends BaseWebDriverTest
         dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 0);
 
+
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+
+        // NOTE: since the last review was entered, this should update the status of the request
+        Assert.assertEquals("Pending Decision", getLastModifiedRequestRow().get("status"));
+
         dataRegionName = getDataRegionName("webpartPending");
         new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
@@ -449,6 +454,7 @@ public class MccTest extends BaseWebDriverTest
         sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
         List<String> cols = new ArrayList<>(Arrays.stream(FORM_DATA).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
         cols.add("objectid");
+        cols.add("status");
         cols.add("iacucprotocol");
         sr.setColumns(cols);
 
