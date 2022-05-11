@@ -351,7 +351,7 @@ public class MccTest extends BaseWebDriverTest
 
         dataRegionName = getDataRegionName("webpartPending");
         dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
-        Assert.assertEquals(dr.getDataRowCount(), 0);
+        Assert.assertEquals(dr.getDataRowCount(), 1);
     }
 
     private String getDataRegionName(String divName)
