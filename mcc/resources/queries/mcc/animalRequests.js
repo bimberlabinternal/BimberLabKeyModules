@@ -24,6 +24,10 @@ function beforeUpsert(row, oldRow, errors) {
         row.objectid = row.objectid.toUpperCase();
     }
 
+    if (!row.status && oldRow) {
+        row.status = oldRow.status;
+    }
+
     if (!row.status) {
         console.error('Request row being submitted without a status: ' + row.objectid)
         console.error(row)
