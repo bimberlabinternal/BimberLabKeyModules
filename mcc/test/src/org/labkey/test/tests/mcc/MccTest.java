@@ -452,6 +452,7 @@ public class MccTest extends BaseWebDriverTest
         sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
         List<String> cols = new ArrayList<>(Arrays.stream(FORM_DATA).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
         cols.add("objectid");
+        cols.add("status");
         cols.add("iacucprotocol");
         sr.setColumns(cols);
 
