@@ -20,6 +20,9 @@ function beforeUpsert(row, oldRow, errors) {
         errors._form = 'Unable to resolve record with rowid: ' + row.rowid
         return
     }
+    else {
+        row.objectid = row.objectid.toUpperCase();
+    }
 
     if (!row.status) {
         console.error('Request row being submitted without a status: ' + row.objectid)

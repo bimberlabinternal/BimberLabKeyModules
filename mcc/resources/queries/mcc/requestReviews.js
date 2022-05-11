@@ -12,7 +12,31 @@ function beforeUpdate(row, oldRow, errors){
 }
 
 function beforeUpsert(row, oldRow, errors) {
-    row.status = row.status || 'draft'
+    if (row.requestId) {
+        row.requestId = row.requestId.toUpperCase();
+    }
+}
 
-    //TODO: check permissions
+function afterInsert(row, errors){
+    afterUpsert(row, null, errors);
+}
+
+function afterUpdate(row, oldRow, errors){
+    afterUpsert(row, oldRow, errors);
+}
+
+function afterUpsert(row, oldRow, errors) {
+    if (row.review) {
+        var requestId = row.requestId || oldRow.requestId
+        if (!requestId) {
+            console.error('No requestId for requestScore update')
+            console.error(row)
+            return
+        }
+
+        // Only perform this test the first time the review is added
+        if (!oldRow || !oldRow.review) {
+            triggerHelper.possiblySetRabComplete(requestId);
+        }
+    }
 }

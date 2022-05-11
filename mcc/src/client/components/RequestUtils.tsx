@@ -48,7 +48,7 @@ export class CoInvestigatorModel {
     firstname: string;
     middleinitial: string;
     institutionname: string;
-    uuid: string = uuidv4();
+    uuid: string = uuidv4().toUpperCase();
 }
 
 export class AnimalCohort {
@@ -57,7 +57,7 @@ export class AnimalCohort {
     numberofanimals: number;
     sex: string;
     othercharacteristics: string;
-    uuid: string = uuidv4();
+    uuid: string = uuidv4().toUpperCase();
 }
 
 export async function queryRequestInformation(requestId, handleFailure) {
@@ -65,7 +65,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
 
     if (!requestId) {
         requestData.dataLoaded = true
-        requestData.request.objectid = requestData.request.objectid || uuidv4()
+        requestData.request.objectid = requestData.request.objectid || uuidv4().toUpperCase()
         requestData.request.status = 'Draft'
         requestData.cohorts = [new AnimalCohort()]
 
@@ -137,7 +137,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
             success: function (resp) {
                 if (resp.rows.length) {
                     // NOTE: this property is purely for client-side UI and not persisted in the DB, so create a value
-                    resp.rows.map(c => c.uuid = uuidv4())
+                    resp.rows.map(c => c.uuid = uuidv4().toUpperCase())
                 }
 
                 resolve(resp.rows)
@@ -167,7 +167,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
                     requestData.cohorts = resp.rows
 
                     // NOTE: this property is purely for client-side UI and not persisted in the DB, so create a value
-                    requestData.cohorts.map(c => c.uuid = uuidv4())
+                    requestData.cohorts.map(c => c.uuid = uuidv4().toUpperCase())
                 }
 
                 resolve(requestData.cohorts)
