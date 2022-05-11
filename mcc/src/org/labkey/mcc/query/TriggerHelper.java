@@ -239,7 +239,7 @@ public class TriggerHelper
             map.put("modifiedby", _user.getUserId());
             map.put("modified", new Date());
 
-            Table.update(_user, ti, map, rowId);
+            Table.update(_user, requestTable, map, rowId);
         }
     }
 }
