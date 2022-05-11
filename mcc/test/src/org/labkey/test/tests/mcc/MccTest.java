@@ -343,6 +343,9 @@ public class MccTest extends BaseWebDriverTest
         dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 0);
 
+        // NOTE: since the last review was entered, this should update the status of the request
+        Assert.assertEquals("Pending Decision", getLastModifiedRequestRow().get("status"));
+
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
         dataRegionName = getDataRegionName("webpartPending");
         new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
