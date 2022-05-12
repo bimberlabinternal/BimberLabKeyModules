@@ -15,6 +15,8 @@ import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.view.template.ClientDependency;
 import org.labkey.mcc.MccManager;
+import org.labkey.mcc.security.MccFinalReviewPermission;
+import org.labkey.mcc.security.MccRequestAdminPermission;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -67,19 +69,28 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
 
                         if (st == MccManager.RequestStatus.Submitted)
                         {
-                            DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=primaryReview", requestContainer);
-                            out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter MCC Internal Review</a>");
+                            if (requestContainer.hasPermission(ctx.getViewContext().getUser(), MccRequestAdminPermission.class))
+                            {
+                                DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=primaryReview", requestContainer);
+                                out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter MCC Internal Review</a>");
+                            }
                         }
                         else if (st == MccManager.RequestStatus.FormCheck)
                         {
-                            out.write("<br><a class=\"labkey-text-link\" href=\"javascript:void(0)\">Submit For RAB Review</a>");
+                            if (requestContainer.hasPermission(ctx.getViewContext().getUser(), MccRequestAdminPermission.class))
+                            {
+                                out.write("<br><a class=\"labkey-text-link\" href=\"javascript:void(0)\">Submit For RAB Review</a>");
+                            }
                         }
                         else if (st == MccManager.RequestStatus.PendingDecision ||
                                 (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
                         )
                         {
-                            DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
-                            out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");
+                            if (requestContainer.hasPermission(ctx.getViewContext().getUser(), MccFinalReviewPermission.class))
+                            {
+                                DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
+                                out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");
+                            }
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {

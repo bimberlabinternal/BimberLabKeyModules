@@ -7,7 +7,7 @@
             return;
 
         Ext4.get(webpart.wrapperDivId).update(
-            'Below are all the MCC animal requests assigned to you for review. By default this shows only incomplete reviews; however, you can the left-hand \'Views\' button to toggle between pending assignments and assignment you previously completed.' +
+            'Below are all MCC requests awaiting the final decision. By default this shows only pending requests; however, you can the left-hand \'Views\' button to toggle between this and all requests.' +
             '<p></p>' +
             '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
             '<br>' +
@@ -17,16 +17,13 @@
         );
 
         LDK.Utils.getBasicQWP({
-            title: 'Animal Request Review Assignments',
+            title: 'All Pending MCC Requests',
+            frame: 'left-nav',
             schemaName: 'mcc',
-            queryName: 'requestReviews',
-            viewName: 'Pending Reviews',
-            filterArray: [
-                LABKEY.Filter.create('reviewerId', LABKEY.Security.currentUser.id)
-            ],
-            showRecordSelectors: false,
-            showDetailsColumn: false,
-            buttonBar: {position: 'top', includeStandardButtons: true, items: []}
+            queryName: 'requestScores',
+            viewName: 'Pending Decision',
+            showRecordSelectors: true,
+            showDetailsColumn: true
         }).render(webpart.wrapperDivId + '-webpartAssignments');
     });
 </script>

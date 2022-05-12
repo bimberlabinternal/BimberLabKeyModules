@@ -43,13 +43,16 @@ import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
 import org.labkey.api.security.GroupManager;
 import org.labkey.api.security.IgnoresTermsOfUse;
+import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.SecurityManager;
+import org.labkey.api.security.SecurityPolicyManager;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.AdminPermission;
+import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
 import org.labkey.api.util.ConfigurationException;
@@ -61,7 +64,11 @@ import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.mcc.etl.ZimsImportTask;
+import org.labkey.mcc.security.MccDataAdminRole;
+import org.labkey.mcc.security.MccFinalReviewerRole;
+import org.labkey.mcc.security.MccRabReviewerRole;
 import org.labkey.mcc.security.MccRequestAdminPermission;
+import org.labkey.mcc.security.MccRequesterRole;
 import org.labkey.security.xml.GroupEnumType;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -549,12 +556,61 @@ public class MccController extends SpringActionController
         @Override
         public boolean handlePost(Object o, BindException errors) throws Exception
         {
-            for (String gn : Arrays.asList(MccManager.REQUEST_GROUP_NAME, MccManager.ANIMAL_GROUP_NAME, MccManager.REQUEST_REVIEW_GROUP_NAME))
+            for (String gn : Arrays.asList(MccManager.REQUEST_GROUP_NAME, MccManager.ANIMAL_GROUP_NAME, MccManager.REQUEST_REVIEW_GROUP_NAME, MccManager.FINAL_REVIEW_GROUP_NAME, MccManager.ADMIN_GROUP_NAME))
             {
                 Group g1 = GroupManager.getGroup(ContainerManager.getRoot(), gn, GroupEnumType.SITE);
                 if (g1 == null)
                 {
                     SecurityManager.createGroup(ContainerManager.getRoot(), gn);
+                }
+            }
+
+            // Ensure groups have target roles:
+            Container requestContainer = MccManager.get().getMCCRequestContainer();
+            if (requestContainer != null)
+            {
+                Group requestGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.REQUEST_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(requestGroup).contains(RoleManager.getRole(MccRequesterRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(requestGroup, RoleManager.getRole(MccRequesterRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+
+                Group reviewGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.REQUEST_REVIEW_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(reviewGroup).contains(RoleManager.getRole(MccRabReviewerRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(reviewGroup, RoleManager.getRole(MccRabReviewerRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+
+                Group finalGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.FINAL_REVIEW_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(finalGroup).contains(RoleManager.getRole(MccFinalReviewerRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(finalGroup, RoleManager.getRole(MccFinalReviewerRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+
+                Group adminGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.ADMIN_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(adminGroup).contains(RoleManager.getRole(MccDataAdminRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(adminGroup, RoleManager.getRole(MccDataAdminRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+            }
+
+            Container dataContainer = MccManager.get().getMCCContainer();
+            if (dataContainer != null)
+            {
+                Group adminGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.ADMIN_GROUP_NAME, GroupEnumType.SITE);
+                if (!dataContainer.getPolicy().getAssignedRoles(adminGroup).contains(RoleManager.getRole(MccDataAdminRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(dataContainer.getPolicy());
+                    policy.addRoleAssignment(adminGroup, RoleManager.getRole(MccDataAdminRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
                 }
             }
 
