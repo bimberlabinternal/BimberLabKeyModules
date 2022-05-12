@@ -39,6 +39,18 @@ MCC.Utils = new function() {
             var ctx = LABKEY.getModuleContext('mcc');
 
             return !!ctx.hasRequestAdminPermission;
+        },
+
+        hasRabPermission: function(){
+            var ctx = LABKEY.getModuleContext('mcc');
+
+            return !!ctx.hasRabPermission;
+        },
+
+        hasFinalDecisionPermission: function(){
+            var ctx = LABKEY.getModuleContext('mcc');
+
+            return !!ctx.hasFinalDecisionPermission;
         }
     }
 };

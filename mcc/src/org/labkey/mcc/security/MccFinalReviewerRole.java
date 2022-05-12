@@ -6,16 +6,16 @@ import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
 import org.labkey.api.security.roles.AbstractRole;
 
-public class MccDataAdminRole extends AbstractRole
+public class MccFinalReviewerRole extends AbstractRole
 {
-    public MccDataAdminRole()
+    public MccFinalReviewerRole()
     {
-        super("MccDataAdmin", "These users can administer data and animal requests", ReadPermission.class, InsertPermission.class, UpdatePermission.class, MccRequestorPermission.class, MccDataAdminPermission.class, MccRequestAdminPermission.class);
+        super("MccFinalReviewer", "These users can enter the final reviews for MCC requests", ReadPermission.class, InsertPermission.class, UpdatePermission.class, MccRequestorPermission.class, MccRabReviewPermission.class, MccFinalReviewPermission.class);
     }
 
     @Override
     public @NotNull String getDisplayName()
     {
-        return "MCC Data Admin";
+        return "MCC Final Reviewer";
     }
 }

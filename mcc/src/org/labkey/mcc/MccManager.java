@@ -31,6 +31,7 @@ import org.labkey.api.security.UserManager;
 import org.labkey.api.security.UserPrincipal;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.Permission;
+import org.labkey.mcc.security.MccFinalReviewPermission;
 import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequestorPermission;
 
@@ -49,8 +50,7 @@ public class MccManager
         Submitted(2, "Submitted", MccRequestorPermission.class),
         FormCheck(3, "Internal Review", MccRequestAdminPermission.class),
         RabReview(4, "RAB Review", MccRequestAdminPermission.class),
-        PendingDecision(4, "Pending Decision", MccRequestAdminPermission.class),
-        FinalReview(5, "Final Review", MccRequestAdminPermission.class),
+        PendingDecision(5, "Pending Decision", MccFinalReviewPermission.class),
         Approved(6, "Approved", MccRequestAdminPermission.class),
         Rejected(7, "Rejected", MccRequestAdminPermission.class),
         Processing(8, "Processing", MccRequestAdminPermission.class),
@@ -113,6 +113,8 @@ public class MccManager
     public static final String ANIMAL_GROUP_NAME = "MCC Animal Data Access";
     public static final String REQUEST_GROUP_NAME = "MCC Animal Requestors";
     public static final String REQUEST_REVIEW_GROUP_NAME = "MCC RAB Members";
+    public static final String FINAL_REVIEW_GROUP_NAME = "MCC Final Reviewers";
+    public static final String ADMIN_GROUP_NAME = "MCC Admins";
 
     private static final MccManager _instance = new MccManager();
 
