@@ -7,13 +7,15 @@ SELECT
   d.birth,
   d.death,
   d.colony,
-  d.dam,
-  d.sire,
+  d.damMccAlias.externalAlias as dam,
+  d.sireMccAlias.externalAlias as sire,
+  d.dam as originalDam,
+  d.sire as originalSire,
   d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
   d.objectid,
   d.calculated_status,
   CASE
-    WHEN (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
+    WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
   d.container
@@ -31,13 +33,15 @@ SELECT
   d.birth,
   d.death,
   d.colony,
-  d.dam,
-  d.sire,
+  d.damMccAlias.externalAlias as dam,
+  d.sireMccAlias.externalAlias as sire,
+  d.dam as originalDam,
+  d.sire as originalSire,
   d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
   d.objectid,
   d.calculated_status,
   CASE
-    WHEN (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
+    WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
   d.container
@@ -55,8 +59,10 @@ SELECT
     d.birth,
     d.death,
     'U NEB' as colony,
-    d.dam,
-    d.sire,
+    d.damMccAlias.externalAlias as dam,
+    d.sireMccAlias.externalAlias as sire,
+    d.dam as originalDam,
+    d.sire as originalSire,
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,
@@ -76,8 +82,10 @@ SELECT
     d.birth,
     d.death,
     d.center as colony,
-    d.dam,
-    d.sire,
+    d.damMccAlias.externalAlias as dam,
+    d.sireMccAlias.externalAlias as sire,
+    d.dam as originalDam,
+    d.sire as originalSire,
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,
@@ -97,8 +105,10 @@ SELECT
     d.birth,
     d.death,
     d.colony,
-    d.dam,
-    d.sire,
+    d.damMccAlias.externalAlias as dam,
+    d.sireMccAlias.externalAlias as sire,
+    d.dam as originalDam,
+    d.sire as originalSire,
     d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
     d.objectid,
     d.calculated_status,

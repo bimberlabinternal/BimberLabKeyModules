@@ -1,0 +1,1 @@
+ALTER TABLE mgap.variantList ALTER COLUMN cadd DOUBLE PRECISION;

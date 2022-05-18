@@ -1,0 +1,1 @@
+ALTER TABLE mgap.variantList ALTER COLUMN cadd TYPE DOUBLE PRECISION USING cadd::double precision;

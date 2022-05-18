@@ -1,7 +1,7 @@
-<view xmlns="http://labkey.org/data/xml/view" title="MCC Administration">
-    <permissions>
-        <permission name="admin"/>
-    </permissions>
+<view xmlns="http://labkey.org/data/xml/view" title="MCC Site Admin">
+    <permissionClasses>
+        <permissionClass name="org.labkey.mcc.security.MccDataAdminPermission"/>
+    </permissionClasses>
     <dependencies>
         <dependency path="mcc.context" />
     </dependencies>

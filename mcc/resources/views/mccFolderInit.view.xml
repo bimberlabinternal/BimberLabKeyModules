@@ -1,0 +1,8 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Initialize MCC Study Folder">
+    <permissions>
+        <permission name="admin"/>
+    </permissions>
+    <dependencies>
+        <dependency path="mcc.context" />
+    </dependencies>
+</view>

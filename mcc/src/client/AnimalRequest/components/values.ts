@@ -5,18 +5,13 @@ export const researchUseStatementTooltip = "This will hold an explanation of the
 export const signingOfficialTooltip = "An SO has institutional authority to legally bind the institution in grant-administration matters by providing signature approval on grant application submissions. The SO monitors grant related activities within the extramural organization and may have a number of titles. The SO can also create additional accounts for personnel at their institution, including new signing official accounts."
 
 export const experimentalRationalePlaceholder = "Experimental rationale and justification for the selection of marmosets"
-export const otherCharacteristicsPlaceholder = "Other characteristics (ie. Sex, age, disease state, genotype...)"
+export const otherCharacteristicsPlaceholder = "Other characteristics (ie. age, disease state, genotype...)"
 export const methodsProposedPlaceholder = "Methods proposed and investigators' experience in the methods"
 export const animalBreedingPlaceholder = "Purpose of the animal breeding program"
 export const collaborationsPlaceholder = "Any collaborations, pilot studies, and/or publications"
 export const animalWellfarePlaceholder = "Animal welfare (proposed care and use)"
 
 export const certificationLabel = "I certify and I have obtained approval for this study from my institution."
-
-export const isPrincipalInvestigatorOptions = [
-    { value: 'yes', label: 'Yes' },
-    { value: 'no', label: 'No' },
-]
 
 export const fundingSourceOptions = [
     {value: 'nih', label: 'NIH-supported research'},
@@ -32,10 +27,15 @@ export const researchAreaOptions = [
     {value: 'public-health', label: 'Public health emergency response (COVID or other)'},
     {value: 'rare-disease', label: 'Rare disease research'},
     {value: 'no-models', label: 'Paucity of existing disease animal models'},
-    {value: 'nih-ic-interest', label: 'NIH IC interest'},
     {value: 'new-colony-trans', label: 'Set up new breeding colony—transgenics'},
     {value: 'new-colony-non-trans', label: 'Set up new breeding colony—not transgenics'},
     {value: 'other', label: 'Other (specify)'},
+]
+
+export const institutionTypeOptions = [
+    {value: 'minorityServing', label: 'Minority serving'},
+    {value: 'university', label: 'University/Non-profit'},
+    {value: 'commercial', label: 'Commercial entity'}
 ]
 
 export const existingMarmosetColonyOptions = [

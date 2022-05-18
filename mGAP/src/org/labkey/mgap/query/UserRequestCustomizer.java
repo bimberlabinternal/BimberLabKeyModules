@@ -37,7 +37,6 @@ public class UserRequestCustomizer implements TableCustomizer
                 ")) THEN " + ti.getSqlDialect().getBooleanTRUE() + " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END)"), JdbcType.BOOLEAN, ti.getColumn("userId"));
         col.setLabel("Has mGAP Access?");
         col.setReadOnly(true);
-        col.setIsUnselectable(true);
         col.setUserEditable(false);
         ti.addColumn(col);
     }

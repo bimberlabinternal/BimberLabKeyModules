@@ -158,6 +158,15 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="novelSitesVcfId">
+                <columnTitle>Novel Sites For This Release</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="humanJbrowseId">
                 <columnTitle>Genome Browser (Human)</columnTitle>
                 <nullable>true</nullable>

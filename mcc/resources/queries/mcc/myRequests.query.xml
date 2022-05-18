@@ -3,6 +3,8 @@
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="myRequests" tableDbType="TABLE">
                 <javaCustomizer class="org.labkey.mcc.query.MccEhrCustomizer" />
+                <insertUrl>/mcc/animalRequest.view</insertUrl>
+                <importUrl/>
                 <updateUrl>/mcc/animalRequest.view?requestId=${objectid}</updateUrl>
                 <titleColumn>rowid</titleColumn>
                 <columns>

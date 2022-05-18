@@ -24,6 +24,7 @@ import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.CoreSchema;
@@ -42,13 +43,16 @@ import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
 import org.labkey.api.security.GroupManager;
 import org.labkey.api.security.IgnoresTermsOfUse;
+import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.SecurityManager;
+import org.labkey.api.security.SecurityPolicyManager;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.AdminPermission;
+import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
 import org.labkey.api.util.ConfigurationException;
@@ -60,6 +64,11 @@ import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.mcc.etl.ZimsImportTask;
+import org.labkey.mcc.security.MccDataAdminRole;
+import org.labkey.mcc.security.MccFinalReviewerRole;
+import org.labkey.mcc.security.MccRabReviewerRole;
+import org.labkey.mcc.security.MccRequestAdminPermission;
+import org.labkey.mcc.security.MccRequesterRole;
 import org.labkey.security.xml.GroupEnumType;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -69,11 +78,13 @@ import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MccController extends SpringActionController
 {
@@ -156,17 +167,11 @@ public class MccController extends SpringActionController
 
                 Table.insert(UserManager.getGuestUser(), ti, row);
 
-                Set<User> users = MccManager.get().getNotificationUsers();
-                if (users != null && !users.isEmpty())
+                Set<Address> emails = MccManager.get().getNotificationUserEmails();
+                if (emails != null && !emails.isEmpty())
                 {
                     try
                     {
-                        Set<Address> emails = new HashSet<>();
-                        for (User u : users)
-                        {
-                            emails.add(new InternetAddress(u.getEmail()));
-                        }
-
                         MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                         Container c = MccManager.get().getMCCContainer();
                         if (c == null)
@@ -480,17 +485,11 @@ public class MccController extends SpringActionController
         @Override
         public Object execute(RequestHelpForm form, BindException errors) throws Exception
         {
-            Set<User> users = MccManager.get().getNotificationUsers();
-            if (users != null && !users.isEmpty())
+            Set<Address> emails = MccManager.get().getNotificationUserEmails();
+            if (emails != null && !emails.isEmpty())
             {
                 try
                 {
-                    Set<Address> emails = new HashSet<>();
-                    for (User u : users)
-                    {
-                        emails.add(new InternetAddress(u.getEmail()));
-                    }
-
                     MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
                     mail.setEncodedHtmlContent("A support request was submitted from MCC by: " + form.getEmail() + "<br><br>Message:<br>" + form.getComment());
                     mail.setFrom(form.getEmail());
@@ -537,6 +536,108 @@ public class MccController extends SpringActionController
         public void setComment(String comment)
         {
             _comment = comment;
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public static class ConfigureMccAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Configure MCC");
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("This will ensure various settings required by MCC are configured on this server. Do you want to continue?");
+
+            return new HtmlView(HtmlString.unsafe(sb.toString()));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            for (String gn : Arrays.asList(MccManager.REQUEST_GROUP_NAME, MccManager.ANIMAL_GROUP_NAME, MccManager.REQUEST_REVIEW_GROUP_NAME, MccManager.FINAL_REVIEW_GROUP_NAME, MccManager.ADMIN_GROUP_NAME))
+            {
+                Group g1 = GroupManager.getGroup(ContainerManager.getRoot(), gn, GroupEnumType.SITE);
+                if (g1 == null)
+                {
+                    SecurityManager.createGroup(ContainerManager.getRoot(), gn);
+                }
+            }
+
+            // Ensure groups have target roles:
+            Container requestContainer = MccManager.get().getMCCRequestContainer();
+            if (requestContainer != null)
+            {
+                Group requestGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.REQUEST_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(requestGroup).contains(RoleManager.getRole(MccRequesterRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(requestGroup, RoleManager.getRole(MccRequesterRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+
+                Group reviewGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.REQUEST_REVIEW_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(reviewGroup).contains(RoleManager.getRole(MccRabReviewerRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(reviewGroup, RoleManager.getRole(MccRabReviewerRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+
+                Group finalGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.FINAL_REVIEW_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(finalGroup).contains(RoleManager.getRole(MccFinalReviewerRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(finalGroup, RoleManager.getRole(MccFinalReviewerRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+
+                Group adminGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.ADMIN_GROUP_NAME, GroupEnumType.SITE);
+                if (!requestContainer.getPolicy().getAssignedRoles(adminGroup).contains(RoleManager.getRole(MccDataAdminRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(requestContainer.getPolicy());
+                    policy.addRoleAssignment(adminGroup, RoleManager.getRole(MccDataAdminRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+            }
+
+            Container dataContainer = MccManager.get().getMCCContainer();
+            if (dataContainer != null)
+            {
+                Group adminGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.ADMIN_GROUP_NAME, GroupEnumType.SITE);
+                if (!dataContainer.getPolicy().getAssignedRoles(adminGroup).contains(RoleManager.getRole(MccDataAdminRole.class)))
+                {
+                    MutableSecurityPolicy policy = new MutableSecurityPolicy(dataContainer.getPolicy());
+                    policy.addRoleAssignment(adminGroup, RoleManager.getRole(MccDataAdminRole.class));
+                    SecurityPolicyManager.savePolicy(policy);
+                }
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+            Container mccContainer = MccManager.get().getMCCContainer();
+            if (mccContainer == null)
+            {
+                errors.reject(ERROR_MSG, "The MCC data container property has not been set");
+            }
+
+            Container requestContainer = MccManager.get().getMCCRequestContainer();
+            if (requestContainer == null)
+            {
+                errors.reject(ERROR_MSG, "The MCC request container property has not been set");
+            }
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return getContainer().getStartURL(getUser());
         }
     }
 
@@ -609,6 +710,79 @@ public class MccController extends SpringActionController
         public URLHelper getSuccessURL(Object o)
         {
             return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
+
+    @RequiresPermission(MccRequestAdminPermission.class)
+    public class NotifyReviewersAction extends MutatingApiAction<NotifyReviewersForm>
+    {
+        @Override
+        public Object execute(NotifyReviewersForm form, BindException errors) throws Exception
+        {
+            if (form.getRowIds() == null || form.getRowIds().length == 0)
+            {
+                errors.reject(ERROR_MSG, "No rowIds provided");
+                return null;
+            }
+
+            List<Integer> rowIds = Arrays.stream(form.getRowIds()).collect(Collectors.toList());
+            List<Integer> userIds = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS), PageFlowUtil.set("reviewerId"), new SimpleFilter(FieldKey.fromString("rowid"), rowIds, CompareType.IN), null).getArrayList(Integer.class);
+            if (userIds.size() != form.getRowIds().length)
+            {
+                errors.reject(ERROR_MSG, "Not all users in this request were found");
+                return null;
+            }
+
+            Set<Address> emails = new HashSet<>();
+            for (int userId : userIds)
+            {
+                User u = UserManager.getUser(userId);
+                if (u == null)
+                {
+                    _log.error("Unknown user: " + userId);
+                    errors.reject(ERROR_MSG, "Unknown user: " + userId);
+                    return null;
+                }
+
+                ValidEmail validEmail = new ValidEmail(u.getEmail());
+                emails.add(validEmail.getAddress());
+            }
+
+            try
+            {
+                MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
+                mail.setFrom("mcc-do-not-reply@ohsu.edu");
+                mail.setSubject("MCC Animal Request Reviews");
+
+                Container rc = MccManager.get().getMCCRequestContainer();
+                DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
+                mail.setEncodedHtmlContent("You have been assigned one or more MCC Animal Requests to review. <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL() + "\">Please click here to view and complete these assignments</a>");
+                mail.addRecipients(Message.RecipientType.BCC, emails.toArray(new Address[0]));
+                mail.addRecipients(Message.RecipientType.TO, "mcc-do-not-reply@ohsu.edu");
+
+                MailHelper.send(mail, getUser(), getContainer());
+            }
+            catch (Exception e)
+            {
+                _log.error("Unable to send MCC email", e);
+            }
+
+            return new ApiSimpleResponse("success", true);
+        }
+    }
+
+    public static class NotifyReviewersForm
+    {
+        Integer[] rowIds;
+
+        public Integer[] getRowIds()
+        {
+            return rowIds;
+        }
+
+        public void setRowIds(Integer[] rowIds)
+        {
+            this.rowIds = rowIds;
         }
     }
 }
