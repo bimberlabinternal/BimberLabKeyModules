@@ -214,8 +214,10 @@
     <table tableName="animalrequests" tableDbType="TABLE">
         <tableTitle>MCC Animal Requests</tableTitle>
         <importUrl>mcc/animalRequest.view</importUrl>
-        <insertUrl></insertUrl>
+        <insertUrl>mcc/animalRequest.view</insertUrl>
         <updateUrl>mcc/animalRequest.view?requestId=${objectid}</updateUrl>
+        <tableUrl>mcc/requestReview.view?requestId=${objectid}&amp;mode=details</tableUrl>
+        <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>
             <column columnName="rowid">
@@ -226,6 +228,7 @@
                 <columnTitle>Object Id</columnTitle>
                 <isHidden>true</isHidden>
                 <nullable>false</nullable>
+                <shownInDetailsView>false</shownInDetailsView>
             </column>
             <column columnName="lastname">
                 <columnTitle>Last Name</columnTitle>
@@ -239,8 +242,8 @@
                 <columnTitle>Middle Initial</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="isprincipalinvestigator">
-                <columnTitle>Is Principal Investigator</columnTitle>
+            <column columnName="earlystageinvestigator">
+                <columnTitle>Is Early Stage Investigator?</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="institutionname">
@@ -307,14 +310,6 @@
                 <columnTitle>Detail on Breeding</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="researcharea">
-                <columnTitle>Research Area</columnTitle>
-                <nullable>true</nullable>
-            </column>
-            <column columnName="otherjustification">
-                <columnTitle>Justification (If other picked on Research Area)</columnTitle>
-                <nullable>true</nullable>
-            </column>
             <column columnName="existingmarmosetcolony">
                 <columnTitle>Existing marmoset colony?</columnTitle>
                 <nullable>true</nullable>
@@ -379,11 +374,19 @@
                 <scale>29</scale>
                 <isHidden>true</isHidden>
             </column>
+            <column columnName="actions" wrappedColumnName="objectid">
+                <columnTitle>Actions</columnTitle>
+                <displayWidth>200</displayWidth>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.AnimalRequestActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
         </columns>
     </table>
     <table tableName="coinvestigators" tableDbType="TABLE">
         <tableTitle>Co-investigators</tableTitle>
         <pkColumnName>rowid</pkColumnName>
+        <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
                 <columnTitle>Row ID</columnTitle>
@@ -397,6 +400,7 @@
                     <fkDbSchema>mcc</fkDbSchema>
                     <fkTable>animalrequests</fkTable>
                     <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
                 </fk>
             </column>
             <column columnName="lastname">
@@ -445,6 +449,7 @@
     <table tableName="requestcohorts" tableDbType="TABLE">
         <tableTitle>Request Cohorts</tableTitle>
         <pkColumnName>rowid</pkColumnName>
+        <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
                 <columnTitle>Cohort Id</columnTitle>
@@ -457,6 +462,7 @@
                     <fkDbSchema>mcc</fkDbSchema>
                     <fkTable>animalrequests</fkTable>
                     <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
                 </fk>
             </column>
             <column columnName="numberofanimals">
@@ -503,6 +509,7 @@
         <pkColumnName>rowid</pkColumnName>
         <tableTitle>Animal ID Mapping</tableTitle>
         <auditLogging>DETAILED</auditLogging>
+        <titleColumn>externalAlias</titleColumn>
         <columns>
             <column columnName="rowid">
                 <isAutoInc>true</isAutoInc>
@@ -516,7 +523,7 @@
                 <nullable>false</nullable>
             </column>
             <column columnName="externalAlias">
-                <columnTitle>mGAP Alias</columnTitle>
+                <columnTitle>MCC Alias</columnTitle>
                 <nullable>false</nullable>
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>
@@ -556,5 +563,180 @@
                 <isHidden>true</isHidden>
             </column>
         </columns>
+    </table>
+    <table tableName="requestReviews" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Request Reviews</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <insertUrl />
+        <importUrl />
+        <updateUrl />
+        <tableUrl />
+        <deleteUrl />
+        <pkColumnName>rowid</pkColumnName>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row ID</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="reviewerId">
+                <columnTitle>Assigned Reviewer</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>core</fkDbSchema>
+                    <fkTable>users</fkTable>
+                    <fkColumnName>userid</fkColumnName>
+                </fk>
+            </column>
+            <column columnName="review">
+                <columnTitle>Review</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="score">
+                <columnTitle>Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="comments">
+                <columnTitle>Comments</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="status">
+                <columnTitle>Status</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="requestid">
+                <columnTitle>Request ID</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>mcc</fkDbSchema>
+                    <fkTable>animalrequests</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="actions" wrappedColumnName="rowid">
+                <columnTitle>Actions</columnTitle>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.RequestReviewActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Print</originalText>
+            </item>
+        </buttonBarOptions>
+    </table>
+    <table tableName="requestScores" tableDbType="TABLE">
+        <insertUrl />
+        <importUrl />
+        <updateUrl />
+        <tableUrl>/mcc/requestReview.view?requestId=${requestId}&amp;mode=details</tableUrl>
+        <deleteUrl />
+        <tableTitle>Animal Request Reviews</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <pkColumnName>rowid</pkColumnName>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row ID</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="preliminaryScore">
+                <columnTitle>Preliminary Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="resourceAvailabilityScore">
+                <columnTitle>Resource Availability Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="proposalScore">
+                <columnTitle>Proposal Score</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="comments">
+                <columnTitle>Comments</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="requestid">
+                <columnTitle>Request ID</columnTitle>
+                <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>mcc</fkDbSchema>
+                    <fkTable>animalrequests</fkTable>
+                    <fkColumnName>objectid</fkColumnName>
+                    <fkDisplayColumnName>rowId</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="actions" wrappedColumnName="rowid">
+                <columnTitle>Actions</columnTitle>
+                <displayWidth>200</displayWidth>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.RequestScoreActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Print</originalText>
+            </item>
+        </buttonBarOptions>
     </table>
 </tables>

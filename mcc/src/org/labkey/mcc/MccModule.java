@@ -19,8 +19,10 @@ package org.labkey.mcc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
+import org.labkey.api.data.Container;
 import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
@@ -29,7 +31,12 @@ import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mcc.query.MccEhrCustomizer;
+import org.labkey.mcc.query.ReviewerNotifyButton;
 import org.labkey.mcc.security.MccDataAdminRole;
+import org.labkey.mcc.security.MccFinalReviewPermission;
+import org.labkey.mcc.security.MccFinalReviewerRole;
+import org.labkey.mcc.security.MccRabReviewPermission;
+import org.labkey.mcc.security.MccRabReviewerRole;
 import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequesterRole;
 
@@ -50,7 +57,7 @@ public class MccModule extends ExtendedSimpleModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.008;
+        return 20.011;
     }
 
     @Override
@@ -73,6 +80,8 @@ public class MccModule extends ExtendedSimpleModule
 
         RoleManager.registerRole(new MccRequesterRole());
         RoleManager.registerRole(new MccDataAdminRole());
+        RoleManager.registerRole(new MccRabReviewerRole());
+        RoleManager.registerRole(new MccFinalReviewerRole());
     }
 
     @NotNull
@@ -80,7 +89,11 @@ public class MccModule extends ExtendedSimpleModule
     public JSONObject getPageContextJson(ContainerUser context)
     {
         JSONObject ret = super.getPageContextJson(context);
-        ret.put("hasRequestAdminPermission", context.getContainer().hasPermission(context.getUser(), MccRequestAdminPermission.class));
+
+        Container requestContainer = MccManager.get().getMCCRequestContainer();
+        ret.put("hasRequestAdminPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRequestAdminPermission.class));
+        ret.put("hasRabPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRabReviewPermission.class));
+        ret.put("hasFinalDecisionPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccFinalReviewPermission.class));
 
         return ret;
     }
@@ -89,6 +102,7 @@ public class MccModule extends ExtendedSimpleModule
     protected void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
         registerEHRResources();
+        LDKService.get().registerQueryButton(new ReviewerNotifyButton(), MccSchema.NAME, MccSchema.TABLE_REQUEST_REVIEWS);
     }
 
     @Override

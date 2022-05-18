@@ -29,7 +29,7 @@ export function Dashboard() {
                 queryName: 'demographics',
                 columns: 'Id,birth,death,gender/meaning,species,colony,calculated_status,u24_status,Id/age/AgeFriendly,Id/ageClass/label',
                 success: function(results) {
-                    setLiving(results.rows.filter(row => row.calculated_status === 'Alive'));
+                    setLiving(results.rows.filter(row => row.calculated_status === 'Alive' || row.calculated_status === 'alive'));
                     setu24Assigned(results.rows.filter(row => row.u24_status === true));
                     setDemographics(results.rows);
                 },

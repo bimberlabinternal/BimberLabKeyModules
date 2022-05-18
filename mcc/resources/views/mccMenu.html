@@ -17,57 +17,129 @@
         if(!ctx)
             return;
 
-        var panel = Ext4.create('Ext.view.View', {
-            renderTo: div.id,
-            cls: 'labkey-iconpanel',
-            width: 300,
-            itemId: 'menuPanel',
-            style: {
-                padding: '10px'
-            },
-            defaults: {
-                overItemCls: 'x4-item-over',
-                trackOver: true
-            },
-            tpl: [
+        var menuItemsData = [{
+            label: 'Site Home',
+            name: 'siteHome',
+            url: LABKEY.ActionURL.buildURL('project', 'begin', 'home'),
+            visible: true
+        }, {
+            label: 'Animal Data',
+            name: 'animalData',
+            url: LABKEY.ActionURL.buildURL('project', 'begin', ctx['MCCContainer']),
+            visible: true
+        }, {
+            label: 'Request Help / Contact',
+            name: 'help',
+            url: LABKEY.ActionURL.buildURL('mcc', 'contact', 'home'),
+            visible: true
+        }];
+
+        if (MCC.Utils.isRequestAdmin()) {
+            menuItemsData.push({
+                label: 'MCC Site Admin',
+                name: 'siteAdmin',
+                url: LABKEY.ActionURL.buildURL('mcc', 'mccAdmin', ctx['MCCContainer']),
+                visible: true
+            })
+        }
+
+        var menuItemsRequest = [{
+            label: 'Submit/Manage Requests',
+            name: 'requests',
+            url: LABKEY.ActionURL.buildURL('mcc', 'mccRequests', ctx['MCCRequestContainer']),
+            visible: true
+        }]
+
+        if (MCC.Utils.hasRabPermission()) {
+            menuItemsRequest.push({
+                label: 'RAB Reviewer Dashboard',
+                name: 'reviewerDashboard',
+                url: LABKEY.ActionURL.buildURL('mcc', 'rabRequestReview', ctx['MCCRequestContainer']),
+                visible: true
+            })
+        }
+
+        if (MCC.Utils.hasFinalDecisionPermission()) {
+            menuItemsRequest.push({
+                label: 'NIH Review Dashboard',
+                name: 'nihReview',
+                url: LABKEY.ActionURL.buildURL('mcc', 'nihReview', ctx['MCCRequestContainer']),
+                visible: true
+            })
+        }
+
+        if (MCC.Utils.isRequestAdmin()) {
+            menuItemsRequest.push({
+                label: 'Animal Request Administration',
+                name: 'requestAdmin',
+                url: LABKEY.ActionURL.buildURL('mcc', 'mccRequestAdmin', ctx['MCCRequestContainer']),
+                visible: true
+            })
+        }
+
+        var getTemplate = function(title) {
+            return [
+                '<span style="font-weight: bold;height: auto;padding-bottom: 5px;">' + title + '</span>',
                 '<tpl for=".">',
                 '<tpl if="visible">',
-                    '<div style="width: 300px;font-weight: bold;height: auto;" class="thumb-wrap thumb-wrap-side">',
-                    '<a href="{url}">',
-                    '<span style="text-align: left;font-weight: bold" class="thumb-label-side">{label:htmlEncode}</span>',
-                    '</a>',
-                    '</div>',
+                '<div style="width: 300px;font-weight: bold;height: auto;" class="thumb-wrap thumb-wrap-side">',
+                '<a href="{url}">',
+                '<span style="text-align: left;font-weight: bold" class="thumb-label-side">{label:htmlEncode}</span>',
+                '</a>',
+                '</div>',
                 '</tpl>',
                 '</tpl>',
                 '<div class="x-clear"></div>'
-            ],
-            store: {
-                type: 'store',
-                fields: ['label', 'name', 'url', 'visible'],
-                data: [{
-                    label: 'Site Home',
-                    name: 'siteHome',
-                    url: LABKEY.ActionURL.buildURL('project', 'begin', 'home'),
-                    visible: true
-                }, {
-                    label: 'Animal Requests',
-                    name: 'requests',
-                    url: LABKEY.ActionURL.buildURL('mcc', 'mccRequests', ctx['MCCRequestContainer']),
-                    visible: true
-                }, {
-                    label: 'Animal Data',
-                    name: 'animalData',
-                    url: LABKEY.ActionURL.buildURL('project', 'begin', ctx['MCCContainer']),
-                    visible: true
-                }, {
-                    label: 'Request Help / Contact',
-                    name: 'help',
-                    url: LABKEY.ActionURL.buildURL('mcc', 'contact', 'home'),
-                    visible: true
+            ]
+        }
+
+        Ext4.create('Ext.panel.Panel', {
+            renderTo: div.id,
+            cls: 'labkey-iconpanel',
+            style: 'padding: 10px;',
+            border: false,
+            width: 300,
+            itemId: 'menuPanel',
+            minHeight: 50,
+            items: [{
+                xtype: 'panel',
+                border: false,
+                style: 'padding-bottom: 10px;',
+                items: [{
+                    xtype: 'dataview',
+                    style: 'padding-left: 5px;',
+                    overItemCls: 'x4-item-over',
+                    trackOver: true,
+                    itemSelector: 'div.thumb-wrap',
+                    cls: 'labkey-iconpanel',
+                    tpl: getTemplate('General Items:'),
+                    border: false,
+                    store: {
+                        type: 'store',
+                        fields: ['label', 'name', 'url', 'visible'],
+                        data: menuItemsData
+                    }
                 }]
-            },
-            border: true,
-            minHeight: 50
+            },{
+                xtype: 'panel',
+                border: false,
+                hidden: !menuItemsRequest.length,
+                items: [{
+                    xtype: 'dataview',
+                    style: 'padding-left: 5px;',
+                    overItemCls: 'x4-item-over',
+                    trackOver: true,
+                    itemSelector: 'div.thumb-wrap',
+                    cls: 'labkey-iconpanel',
+                    tpl: getTemplate('Animal Requests:'),
+                    border: false,
+                    store: {
+                        type: 'store',
+                        fields: ['label', 'name', 'url', 'visible'],
+                        data: menuItemsRequest
+                    }
+                }]
+            }]
         });
     });
 

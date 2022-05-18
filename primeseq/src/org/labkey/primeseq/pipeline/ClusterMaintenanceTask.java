@@ -2,6 +2,7 @@ package org.labkey.primeseq.pipeline;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,12 +19,14 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.pipeline.PipeRoot;
 import org.labkey.api.pipeline.PipelineJob;
+import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineJobService;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.pipeline.PipelineValidationException;
 import org.labkey.api.pipeline.RemoteExecutionEngine;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.UserManager;
+import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.Job;
 import org.labkey.api.util.JobRunner;
@@ -37,6 +40,7 @@ import java.io.StringWriter;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -152,9 +156,6 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
             log.info("total active pipeline jobs: " + _jobGuids.size());
 
             //hacky, but this is only planned to be used by us
-            inspectFolder(log, new File("/home/exacloud/lustre1/prime-seq/workDir/"));
-            inspectFolder(log, new File("/home/exacloud/lustre1/prime-seq/cachedData/"));
-
             inspectFolder(log, new File("/home/exacloud/gscratch/prime-seq/workDir/"));
             inspectFolder(log, new File("/home/exacloud/gscratch/prime-seq/cachedData/"));
         }
@@ -163,11 +164,18 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
         {
             try
             {
-                FileUtils.deleteDirectory(child);
+                if (SystemUtils.IS_OS_WINDOWS)
+                {
+                    FileUtils.deleteDirectory(child);
+                }
+                else
+                {
+                    new SimpleScriptWrapper(log).execute(Arrays.asList("rm", "-Rf", child.getPath()));
+                }
             }
-            catch (IOException e)
+            catch (IOException | PipelineJobException e)
             {
-                log.error(e);
+                log.error("Unable to delete folder: " + child.getPath(), e);
             }
         }
 

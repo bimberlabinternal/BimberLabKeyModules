@@ -26,9 +26,12 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         allowBlank: true
     },{
         name: 'cdna_plate_id',
-        labels: ['cDNA_Plate_ID', 'RQG_alt_ID', 'MM Alt ID', 'Alt ID', 'MM ID', 'RQG_alt_ID'],
+        labels: ['cDNA_Plate_ID', 'MM Alt ID', 'Alt ID', 'MM ID'],
         alwaysShow: true,
         allowBlank: true
+    },{
+        name: 'RQG_alt_ID',
+        labels: ['RQG_alt_ID', 'RQG_alt_ID']
     },{
         name: 'gender',
         labels: ['Gender', 'Sex'],
@@ -226,7 +229,8 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             if (panel.COUNTY_MAP[val]) {
                 if (row.state) {
-                    if (panel.STATE_ABBREV[val.toLowerCase()]) {
+                    // Correct state, if needed:
+                    if (panel.STATE_ABBREV[row.state.toLowerCase()]) {
                         row.state = panel.STATE_ABBREV[row.state.toLowerCase()]
                     }
 
@@ -574,6 +578,11 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
         var errorMessages = [];
         var infoMessages = [];
         Ext4.Array.forEach(rows, function(row, rowIdx){
+            // skip blank rows:
+            if (Ext4.isEmpty(row.join(''))) {
+                return;
+            }
+
             var data = {
                 objectId: LABKEY.Utils.generateUUID()
             };
@@ -640,7 +649,7 @@ Ext4.define('CovidSeq.panel.SampleImportPanel', {
 
             // CT of record is N for taqpath, N1 for CDC?
 
-            data._patientid = data.patientid || data.state + '-OHSU-' + data.samplename.replaceAll('CV', '');
+            data._patientid = data.patientid || data.state + '-OHSU-' + (data.samplename ? data.samplename.replaceAll('CV', '') : 'Sample');
             ret.push(data);
         }, this);
 

@@ -1,0 +1,29 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
+
+        Ext4.get(webpart.wrapperDivId).update(
+            'Below are all MCC requests awaiting the final decision. By default this shows only pending requests; however, you can the left-hand \'Views\' button to toggle between this and all requests.' +
+            '<p></p>' +
+            '<a class="labkey-text-link" href="/become-a-user.html#request-animals">Click Here to View Documentation on the Request Process and Scoring Criteria</a>' +
+            '<br>' +
+            '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
+            '<p></p>' +
+            '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>'
+        );
+
+        LDK.Utils.getBasicQWP({
+            title: 'All Pending MCC Requests',
+            frame: 'left-nav',
+            schemaName: 'mcc',
+            queryName: 'requestScores',
+            viewName: 'Pending Decision',
+            showRecordSelectors: true,
+            showDetailsColumn: true
+        }).render(webpart.wrapperDivId + '-webpartAssignments');
+    });
+</script>

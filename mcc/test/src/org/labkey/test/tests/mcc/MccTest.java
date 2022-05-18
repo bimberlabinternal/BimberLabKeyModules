@@ -16,35 +16,34 @@
 
 package org.labkey.test.tests.mcc;
 
-import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.labkey.remoteapi.query.Filter;
 import org.labkey.remoteapi.query.SelectRowsCommand;
 import org.labkey.remoteapi.query.SelectRowsResponse;
 import org.labkey.remoteapi.query.Sort;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
-import org.labkey.test.Locators;
 import org.labkey.test.ModulePropertyValue;
-import org.labkey.test.TestFileUtils;
 import org.labkey.test.TestTimeoutException;
 import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.util.ApiPermissionsHelper;
 import org.labkey.test.util.DataRegionTable;
-import org.openqa.selenium.Keys;
+import org.labkey.test.util.PermissionsHelper;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Category({External.class, LabModule.class})
 public class MccTest extends BaseWebDriverTest
@@ -56,108 +55,157 @@ public class MccTest extends BaseWebDriverTest
 
         doRequestFormTest();
         doRequestFormTestWithFailure();
+
+        testInvalidId();
     }
 
     private static class FormElement
     {
         String inputType = "input";
-        String databaseFieldName = null;
-        boolean isCheckBox = false;
+        String databaseValue = null;
 
         final String inputName;
-        final CharSequence sendKeysValue;
+        final Object fieldValue;
+        final String databaseFieldName;
 
-        public FormElement(String inputName, CharSequence sendKeysValue)
+        public FormElement(String inputName, String databaseFieldName, Object fieldValue)
         {
             this.inputName = inputName;
-            this.sendKeysValue = sendKeysValue;
-        }
-
-        public FormElement withDatabaseField(String databaseFieldName)
-        {
+            this.fieldValue = fieldValue;
             this.databaseFieldName = databaseFieldName;
-
-            return this;
         }
 
-        public FormElement isCheckBox()
+        public String getDatabaseFieldName()
         {
-            this.isCheckBox = true;
+            return databaseFieldName;
+        }
+
+        public FormElement checkBox()
+        {
+            if (!(fieldValue instanceof Boolean))
+            {
+                throw new IllegalStateException("Checkbox must have a boolean input fieldValue");
+            }
+
+            this.inputType = "checkbox";
             return this;
         }
 
-        public FormElement withInput(String inputType)
+        public FormElement select(String databaseValue)
+        {
+            this.databaseValue = databaseValue;
+            this.inputType = "select";
+
+            return this;
+        }
+
+        public FormElement radio()
+        {
+            if (!(fieldValue instanceof Boolean))
+            {
+                throw new IllegalStateException("Radio must have a boolean input fieldValue");
+            }
+
+            this.inputType = "radio";
+            return this;
+        }
+
+        public Object getDatabaseValue()
+        {
+            return databaseValue == null ? fieldValue : databaseValue;
+        }
+
+        public FormElement inputType(String inputType)
         {
             this.inputType = inputType;
-
             return this;
         }
 
-        public String getFieldName()
+        public String getInputName()
         {
+            if ("radio".equals(inputType))
+            {
+                return inputName + ((boolean)fieldValue ? "-yes" : "-no");
+            }
+
             return inputName;
         }
 
-        public String getInputType()
+        public Locator getLocator()
         {
-            return inputType;
+            return Locator.tagWithId("radio".equals(inputType) || "checkbox".equals(inputType) ? "input" : inputType, getInputName());
         }
 
         public void waitFor(BaseWebDriverTest test)
         {
-            Locator loc = Locator.tagWithId(getInputType(), getFieldName());
-            test.waitForElement(loc);
+            test.waitForElement(getLocator());
         }
 
         public void setFieldValue(BaseWebDriverTest test)
         {
-            Locator loc = Locator.tagWithId(getInputType(), getFieldName());
             waitFor(test);
-            if (this.sendKeysValue == null)
+            if ("checkbox".equals(inputType) || "radio".equals(inputType))
             {
-                test.waitAndClick(loc);
+                test.waitAndClick(getLocator());
+            }
+            else if ("select".equals(inputType))
+            {
+                test.selectOptionByText(getLocator(), String.valueOf(fieldValue));
             }
             else
             {
-                loc.findElement(test.getDriver()).sendKeys(this.sendKeysValue);
+                test.setFormElement(getLocator(), String.valueOf(fieldValue));
+            }
+        }
+
+        public String getExpectedInputFieldValue()
+        {
+            if (fieldValue instanceof Boolean)
+            {
+                boolean val = (boolean)fieldValue;
+                if ("checkbox".equals(inputType))
+                {
+                    return val ? "on" : null;
+                }
+                else if ("radio".equals(inputType))
+                {
+                    return val ? "yes" : "no";
+                }
             }
 
+            return String.valueOf(databaseValue == null ? fieldValue : databaseValue);
         }
     }
 
     // Field name / field value:
     final FormElement[] FORM_DATA = new FormElement[]{
-            new FormElement("investigator-last-name", "last name"),
-            new FormElement("investigator-first-name", "first name"),
-            new FormElement("investigator-middle-initial", "m"),
-            new FormElement("is-principal-investigator-yes", null).isCheckBox(),
-            new FormElement("institution-name", "institution name"),
-            new FormElement("institution-city", "institution city"),
-            new FormElement("institution-state", "institution state"),
-            new FormElement("institution-country", "institution country"),
-            new FormElement("official-last-name", "official last name"),
-            new FormElement("official-first-name", "official first name"),
-            new FormElement("official-email", "official@email.com"),
-            new FormElement("funding-source", Keys.ARROW_DOWN).withInput("select"),
-            new FormElement("funding-grant-number", "grant number"),
-            new FormElement("experiment-rationale", "rationale").withInput("textarea"),
-
-
-            new FormElement("animal-cohorts-0-numberofanimals", "1"),
-            new FormElement("animal-cohorts-0-sex", Keys.ARROW_DOWN).withInput("select"),
-            new FormElement("animal-cohorts-0-othercharacteristics", "characteristics").withInput("textarea"),
-            new FormElement("methods-proposed", "methods").withInput("textarea"),
-            new FormElement("collaborations", "collaborations").withInput("textarea"),
-            new FormElement("animal-breeding-is-planning-to-breed-animals-no", null).isCheckBox(),
-            new FormElement("research-area", Keys.ARROW_DOWN).withInput("select"),
-            new FormElement("existing-marmoset-colony",  Keys.ARROW_DOWN).withInput("select"),
-            new FormElement("existing-nhp-facilities", Keys.ARROW_DOWN).withInput("select"),
-            new FormElement("animal-welfare", "welfare").withInput("textarea"),
-            new FormElement("certify", null).isCheckBox(),
-            new FormElement("vet-last-name", "vet last name"),
-            new FormElement("vet-first-name", "vet first name"),
-            new FormElement("vet-email", "vet@email.com"),
-            new FormElement("iacuc-approval", Keys.ARROW_DOWN).withInput("select")
+            new FormElement("investigator-last-name", "lastName", "last name"),
+            new FormElement("investigator-first-name", "firstName", "first name"),
+            new FormElement("investigator-middle-initial", "middleinitial", "m"),
+            new FormElement("is-early-stage-investigator", "earlystageinvestigator", true).radio(),
+            new FormElement("institution-name", "institutionname", "institution name"),
+            new FormElement("institution-city", "institutioncity", "institution city"),
+            new FormElement("institution-state", "institutionstate", "institution state"),
+            new FormElement("institution-type", "institutiontype", "Minority serving").select("minorityServing"),
+            new FormElement("institution-country", "institutioncountry", "institution country"),
+            new FormElement("official-last-name", "officiallastname", "official last name"),
+            new FormElement("official-first-name", "officialfirstname", "official first name"),
+            new FormElement("official-email", "officialemail", "official@email.com"),
+            //TODO: multi-select
+            new FormElement("funding-source", "fundingsource", "NIH-supported research").select("nih"),
+            new FormElement("funding-grant-number", "grantnumber", "grant number"),
+            new FormElement("experiment-rationale", "experimentalrationale", "rationale").inputType("textarea"),
+            new FormElement("methods-proposed", "methodsproposed", "methods").inputType("textarea"),
+            new FormElement("collaborations", "collaborations", "collaborations").inputType("textarea"),
+            new FormElement("animal-breeding-is-planning-to-breed-animals", "isbreedinganimals", false).radio(),
+            new FormElement("existing-marmoset-colony", "existingmarmosetcolony", "Existing marmoset colony").select("existing"),
+            new FormElement("existing-nhp-facilities", "existingnhpfacilities", "Existing NHP facilities").select("existing"),
+            new FormElement("animal-welfare", "animalwelfare", "welfare").inputType("textarea"),
+            new FormElement("certify", "certify", true).checkBox(),
+            new FormElement("vet-last-name", "vetlastname", "vet last name"),
+            new FormElement("vet-first-name", "vetfirstname", "vet first name"),
+            new FormElement("vet-email", "vetemail", "vet@email.com"),
+            new FormElement("iacuc-approval", "iacucapproval", "Provisional").select("provisional")
     };
 
     private Locator getButton(String text)
@@ -173,30 +221,276 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("a", "Submit New Animal Request"));
     }
 
+    private void waitForSaveToComplete()
+    {
+        waitForElementToDisappear(Locator.tagWithText("h2", "Saving").withClass("text-xl"));
+    }
+
     private void doRequestFormTest() throws Exception
     {
         goToAnimalRequests();
         waitAndClickAndWait(Locator.tagWithText("a", "Submit New Animal Request"));
-        waitForElement(getButton("Submit"));
+        waitForElement(getButton("Save"));
 
-        setFormValues(null);
+        setAllFormValues();
 
-        waitAndClickAndWait(getButton("Save"));
+        addCohort(0);
+
+        addCoinvestigator(0, true);
+        addCoinvestigator(1, true);
+
+        int expectedRequests = getRequestRows().size();
+
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+
+        List<Map<String, Object>> requestRows = getRequestRows();
+        String requestId = (String)requestRows.get(0).get("objectid");
+        Assert.assertEquals(expectedRequests +  1, requestRows.size());
+
+        Assert.assertEquals(2, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
+
+        // This is to ensure we update the record we have, rather than create a new one
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+        Assert.assertEquals(expectedRequests +  1, getRequestRows().size());
+        Assert.assertEquals(2, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
 
         // Verify record created:
         Map<String, Object> request = getLastModifiedRequestRow();
         for (FormElement f : FORM_DATA)
         {
-            //TODO: check data
+            Assert.assertEquals(request.get(f.databaseFieldName), f.getDatabaseValue());
         }
+
+        assertCohortValues((String)request.get("objectid"), 1);
+        assertCoinvestigatorValues((String)request.get("objectid"), 2);
+
+        // Remove Co-I, save:
+        Locator removeBtn = Locator.tagWithText("p", "Co-Investigator 2").parent("div").followingSibling("div").index(0).child("input");
+        waitForElement(removeBtn);
+        click(removeBtn);
+        waitForElementToDisappear(removeBtn);
+
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+        Assert.assertEquals(1, getCoinvestigatorRecords(requestId).size());
+        Assert.assertEquals(1, getCohortRecords(requestId).size());
+
+        // Test IACUC toggle
+        selectOptionByText(getFormElementByName("iacucapproval").getLocator(), "Approved");
+        waitForElement(Locator.tagWithId("input", "iacuc-protocol"));
+        setFormElement(Locator.tagWithId("input", "iacuc-protocol"), "IACUC 123456");
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+
+        Assert.assertEquals(getLastModifiedRequestRow().get("iacucprotocol"), "IACUC 123456");
+        waitAndClickAndWait(getButton("Submit"));
+
+        DataRegionTable dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        Assert.assertEquals("Submitted", dr.getDataAsText(0, "status"));
+
+        beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+
+        // Ensure groups set up correctly:
+        String dataRegionName = getDataRegionName("webpartRAB");
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        Assert.assertEquals(dr.getDataRowCount(), 1);
+
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter MCC Internal Review"));
+
+        waitAndClick(getButton("Return to Investigator"));
+        waitForElement(Locator.tagWithText("h2", "Return To Investigator").notHidden());
+        waitAndClickAndWait(getButton("Submit"));
+
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(getDataRegionName("webpartPending")).waitFor();
+        dr.clickRowDetails(0);
+
+        // Reset status to Submitted:
+        waitAndClickAndWait(Locator.tagWithText("span", "Edit Request"));
+        waitAndClickAndWait(getButton("Submit"));
+
+        beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+        dataRegionName = getDataRegionName("webpartPending");
+        new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter MCC Internal Review"));
+
+        waitAndClick(Locator.tagWithText("span", "Assign to RAB Reviewers"));
+        waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
+        waitForElement(Locator.tagWithText("p", getCurrentUserName()));
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
+
+        goBack();
+
+        // Repeat to ensure the assignment is picked up
+        waitAndClick(Locator.tagWithText("span", "Assign to RAB Reviewers"));
+        waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
+        waitForElement(Locator.tagWithText("p", getCurrentUserName() + " (already assigned)"));
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
+
+        beginAt("/mcc/" + getProjectName() + "/rabRequestReview.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter Review"));
+        waitForElement(Locator.tagWithText("td", "cohort-othercharacteristics"));
+
+        waitAndClick(Locator.tagWithText("span", "Submit Review"));
+        waitForElement(Locator.tagWithClass("div", "Mui-error"));
+
+        waitAndClick(Locator.tagWithText("div", "Not Decided"));
+        waitAndClick(Locator.tagWithText("li", "I recommend this proposal"));
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit Review"));
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
+        Assert.assertEquals(dr.getDataRowCount(), 0);
+
+
+        beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
+
+        // NOTE: since the last review was entered, this should update the status of the request
+        Assert.assertEquals("Pending Decision", getLastModifiedRequestRow().get("status"));
+
+        dataRegionName = getDataRegionName("webpartPending");
+        new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
+        waitAndClick(Locator.tagWithText("span", "Approve Request"));
+
+        dataRegionName = getDataRegionName("webpartPending");
+        dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        Assert.assertEquals(dr.getDataRowCount(), 1);
+    }
+
+    private String getDataRegionName(String divName)
+    {
+        Locator.XPathLocator l = Locator.tagWithAttributeContaining("div", "id", divName);
+        waitForElement(l);
+        l = l.append(Locator.tag("form"));
+        waitForElement(l);
+
+        return getAttribute(l, "lk-region-form");
+    }
+
+    private FormElement[] getCoinvestigatorFields(int idx)
+    {
+        return new FormElement[]{
+            new FormElement("coinvestigators-" + idx + "-lastName", "lastname", "coinvestigators-lastName"),
+            new FormElement("coinvestigators-" + idx + "-firstName", "firstname", "coinvestigators-firstName"),
+            new FormElement("coinvestigators-" + idx + "-middleInitial", "middleInitial", "mi"),
+            new FormElement("coinvestigators-" + idx + "-institution", "institutionname", "coinvestigators-institution")
+        };
+    }
+
+    private FormElement[] getCohortFields(int idx)
+    {
+        return new FormElement[]{
+                new FormElement("animal-cohorts-" + idx + "-numberofanimals", "numberofanimals", 12),
+                new FormElement("animal-cohorts-" + idx + "-sex", "sex", "Male").select("male"),
+                new FormElement("animal-cohorts-" + idx + "-othercharacteristics", "othercharacteristics", "cohort-othercharacteristics").inputType("textarea")
+        };
+    }
+
+    private void addCoinvestigator(int idx, boolean clickBtn)
+    {
+        if (clickBtn)
+        {
+            waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
+        }
+
+        FormElement[] fields = getCoinvestigatorFields(idx);
+        for (FormElement f : fields)
+        {
+            f.setFieldValue(this);
+        }
+    }
+
+    private void addCohort(int idx)
+    {
+        if (idx > 0)
+        {
+            waitAndClick(Locator.tagWithText("button", "Add Cohort"));
+        }
+
+        FormElement[] cohort = getCohortFields(idx);
+        for (FormElement f : cohort)
+        {
+            f.setFieldValue(this);
+        }
+    }
+
+    private void assertCoinvestigatorValues(String requestId, int expectedRecords) throws Exception
+    {
+        List<Map<String, Object>> rows = getCoinvestigatorRecords(requestId);
+        Assert.assertEquals(rows.size(), expectedRecords);
+
+        for (int i=0;i<rows.size();i++)
+        {
+            Map<String, Object> row = rows.get(i);
+            FormElement[] cohort = getCoinvestigatorFields(i);
+            for (FormElement f : cohort)
+            {
+                Assert.assertEquals(f.getDatabaseValue(), row.get(f.getDatabaseFieldName()));
+            }
+        }
+    }
+
+    private void assertCohortValues(String requestId, int expectedRecords) throws Exception
+    {
+        List<Map<String, Object>> cohortRows = getCohortRecords(requestId);
+        Assert.assertEquals(cohortRows.size(), expectedRecords);
+
+        for (int i=0;i<cohortRows.size();i++)
+        {
+            Map<String, Object> row = cohortRows.get(i);
+            FormElement[] cohort = getCohortFields(i);
+            for (FormElement f : cohort)
+            {
+                Assert.assertEquals(f.getDatabaseValue(), row.get(f.getDatabaseFieldName()));
+            }
+        }
+    }
+
+    private List<Map<String, Object>> getRequestRows() throws Exception
+    {
+        SelectRowsCommand sr = new SelectRowsCommand("mcc", "animalrequests");
+        sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
+        List<String> cols = new ArrayList<>(Arrays.stream(FORM_DATA).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
+        cols.add("objectid");
+        cols.add("status");
+        cols.add("iacucprotocol");
+        sr.setColumns(cols);
+
+        SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
+        return srr.getRows();
     }
 
     private Map<String, Object> getLastModifiedRequestRow() throws Exception
     {
-        SelectRowsCommand sr = new SelectRowsCommand("mcc", "animalrequests");
-        sr.addSort(new Sort("modified", Sort.Direction.DESCENDING));
+        List<Map<String, Object>> rr = getRequestRows();
+
+        return rr.isEmpty() ? null : rr.get(0);
+    }
+
+    private List<Map<String, Object>> getCohortRecords(String requestId) throws Exception
+    {
+        SelectRowsCommand sr = new SelectRowsCommand("mcc", "requestcohorts");
+        sr.addSort(new Sort("rowid", Sort.Direction.ASCENDING));
+        sr.setColumns(Arrays.stream(getCohortFields(0)).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
+        sr.addFilter(new Filter("requestid", requestId));
+
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
-        return srr.getRows().get(0);
+
+        return srr.getRows();
+    }
+
+    private List<Map<String, Object>> getCoinvestigatorRecords(String requestId) throws Exception
+    {
+        SelectRowsCommand sr = new SelectRowsCommand("mcc", "coinvestigators");
+        sr.addSort(new Sort("rowid", Sort.Direction.ASCENDING));
+        sr.setColumns(Arrays.stream(getCoinvestigatorFields(0)).map(FormElement::getDatabaseFieldName).collect(Collectors.toList()));
+        sr.addFilter(new Filter("requestid", requestId));
+
+        SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName());
+
+        return srr.getRows();
     }
 
     private void doRequestFormTestWithFailure() throws Exception
@@ -207,7 +501,8 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(getButton("Submit"));
 
         // This omits a required field
-        setFormValues(Arrays.asList("investigator-last-name"));
+        setFormValues(Arrays.asList("lastName"));
+        addCohort(0);
         waitAndClick(getButton("Submit"));
 
         waitForElement(Locator.tagWithText("li", "Last Name: Please fill out this field."));
@@ -216,10 +511,8 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Locator.tagWithAttribute("input", "value", "Add Co-investigator"));
         waitForElement(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
-        // To full exercise saving, add a cohort and co-investigator
-        new FormElement("coinvestigators-0-lastName", "coinvestigators-lastName").setFieldValue(this);
-        new FormElement("coinvestigators-0-firstName", "coinvestigators-firstName").setFieldValue(this);
-        new FormElement("coinvestigators-0-institution", "coinvestigators-institution").setFieldValue(this);
+        addCoinvestigator(0, false);  //the button was clicked above
+        waitAndClick(getButton("Save"));
         waitForElementToDisappear(Locator.tagWithText("li", "Institution: Please fill out this field."));
 
         // Add another, which makes it invalid again
@@ -244,29 +537,48 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(removeBtn);
 
         // Even though last name is missing, it should still be savable:
-        waitAndClickAndWait(getButton("Save"));
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+
+        doAndWaitForPageToLoad(() -> {
+            waitAndClick(getButton("Cancel"));
+            assertAlert("You are about to leave this page.");
+        });
 
         // Now reopen this form:
         DataRegionTable dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
         dr.clickEditRow(0);
 
-        getFormElementByName("investigator-last-name").waitFor(this);
+        getFormElementByName("lastName").waitFor(this);
 
         // TODO: make sure the field values are remembered
         // including cohort and co-investigator
+        for (FormElement f : FORM_DATA)
+        {
+            if ("lastName".equals(f.getDatabaseFieldName()))
+            {
+                continue;
+            }
+
+            Assert.assertEquals(getFormElement(f.getLocator()), f.getExpectedInputFieldValue());
+        }
 
         // Now fill in the missing field:
-        getFormElementByName("investigator-last-name").setFieldValue(this);
+        getFormElementByName("lastName").setFieldValue(this);
 
         waitAndClickAndWait(getButton("Submit"));
 
         dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
-        Assert.assertEquals("submitted", dr.getDataAsText(0, "status"));
+        Assert.assertEquals("Submitted", dr.getDataAsText(0, "status"));
 
         dr.clickEditRow(0);
-        getFormElementByName("investigator-last-name").waitFor(this);
-        waitForElement(getButton("Approve Request"));
+        getFormElementByName("lastName").waitFor(this);
+
+        waitForElement(getButton("Update Request"));
+        assertElementNotPresent(getButton("Submit"));
         impersonateRoles("Editor", "MCC Requestor");
+
+        assertElementNotPresent(getButton("Save"));
         assertElementNotPresent(getButton("Submit"));
         assertElementNotPresent(getButton("Approve Request"));
     }
@@ -275,7 +587,7 @@ public class MccTest extends BaseWebDriverTest
     {
         for (FormElement e : FORM_DATA)
         {
-            if (name.equals(e.getFieldName()))
+            if (name.equals(e.databaseFieldName))
             {
                 return e;
             }
@@ -284,11 +596,16 @@ public class MccTest extends BaseWebDriverTest
         throw new IllegalArgumentException("Unknown field: " + name);
     }
 
+    private void setAllFormValues()
+    {
+        setFormValues(null);
+    }
+
     private void setFormValues(@Nullable Collection<String> fieldsToSkip)
     {
         for (FormElement el : FORM_DATA)
         {
-            if (fieldsToSkip != null && fieldsToSkip.contains(el.getFieldName()))
+            if (fieldsToSkip != null && fieldsToSkip.contains(el.databaseFieldName))
             {
                 continue;
             }
@@ -325,12 +642,28 @@ public class MccTest extends BaseWebDriverTest
                 new ModulePropertyValue("MCC", "/", "MCCContactUsers", getCurrentUserName()),
                 new ModulePropertyValue("MCC", "/", "MCCRequestNotificationUsers", getCurrentUserName())
         ));
+
+        beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
+        clickButton("OK");
+
+        ApiPermissionsHelper helper = new ApiPermissionsHelper(this);
+        if (!helper.isUserInGroup(getCurrentUser(), "MCC RAB Members", "/", PermissionsHelper.PrincipalType.USER))
+        {
+            helper.addUserToSiteGroup(getCurrentUser(), "MCC RAB Members");
+        }
+        else
+        {
+            log("Member already in group. This is not expected for fresh installations or TeamCity");
+        }
     }
 
-    private String getModulePath()
+    private void testInvalidId()
     {
-        return "server/modules/BimberLabKeyModules/mcc";
+        beginAt("/mcc/" + getProjectName() + "/animalRequest.view?requestId=foo");
+
+        assertElementPresent(Locator.tagWithText("div", "There is no request with id: foo"));
     }
+
 
     private void importStudy()
     {

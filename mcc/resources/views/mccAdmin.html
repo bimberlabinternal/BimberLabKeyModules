@@ -1,24 +1,64 @@
 <script type="text/javascript">
 
 Ext4.onReady(function (){
-
-if (LABKEY.Security.currentUser.isAdmin){
     var webpart = <%=webpartContext%>;
 
-    Ext4.create('LDK.panel.NavPanel', {
+    var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+    if(!ctx)
+        return;
+
+    Ext4.create('Ext.panel.Panel', {
         renderTo: webpart.wrapperDivId,
-        width: 350,
-        sections: [
-            {header: 'Folder Initialization',
-                items: [
-                    {name: '1) Load/Create MCC Study', url: '<%=contextPath%>/mcc<%=containerPath%>/importStudy.view?'},
-                    {name: '2) Create Study QC States', url: '<%=contextPath%>/ehr<%=containerPath%>/ensureQcStates.view?'},
-                    {name: '3) Populate Initial Data', url: '<%=contextPath%>/EHR<%=containerPath%>/populateInitialData.view?'},
-                ]
-            }
-        ]
+        border: false,
+        items: [{
+            xtype: 'panel',
+            border: false,
+            defaults: {
+                border: false
+            },
+            items: [{
+                html: 'This page contains information related to the setup and administration of the MCC site.' +
+                '<p></p>' +
+                'Below is a summary of the key user groups. Users can be added/removed from these groups to control permissions. <a href="' + LABKEY.ActionURL.buildURL('security', 'permissions.view', ctx.MCCRequestContainer, {t: 'sitegroups'}) + '">Admins can manage users by clicking here</a>.' +
+                '<p></p>' +
+                '<ul>' +
+                    '<li>MCC Animal Data Access: Any user needing animal-level data access should be in this group.</li>' +
+                    '<li>MCC Animal Requestors: Any user who will request MCC animals should be in this group.</li>' +
+                    '<li>MCC RAB Members: This group is responsible for RAB reviews.</li>' +
+                    '<li>MCC Final Reviewers: This group is authorized to enter the final approve/reject decision on requests.</li>' +
+                    '<li>MCC Admins: This group should be very limited, including the MCC project manager(s) and other administrators.</li>' +
+                '</ul>'
+            }]
+        },{
+            xtype: 'ldk-navpanel',
+            style: 'padding-top: 20px;',
+            border: false,
+            sections: [
+                {
+                    header: 'User/Request Management',
+                    items: [
+                        {
+                            name: 'View Pending User Requests',
+                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'
+                        },
+                        {
+                            name: 'View All Users',
+                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'
+                        }
+                    ]
+                },
+                {
+                    header: 'Configuration/Data Management',
+                    items: [
+                        {
+                            name: 'Ensure Site Settings and Groups',
+                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/mcc-configureMcc.view'
+                        }
+                    ]
+                }
+            ]
+        }]
     });
-}
 });
 
 </script>

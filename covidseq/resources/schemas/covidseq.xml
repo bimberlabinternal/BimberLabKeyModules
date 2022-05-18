@@ -102,7 +102,9 @@
             <column columnName="cDNA_Plate_Location">
                 <columnTitle>cDNA_Plate_Location</columnTitle>
             </column>
-
+            <column columnName="RQG_alt_ID">
+                <columnTitle>RQG_alt_ID</columnTitle>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>

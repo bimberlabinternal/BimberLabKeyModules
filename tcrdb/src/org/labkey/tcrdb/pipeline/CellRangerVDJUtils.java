@@ -196,6 +196,7 @@ public class CellRangerVDJUtils
                 int doublet = 0;
                 int discordant = 0;
                 int negative = 0;
+                int lowCounts = 0;
 
                 int consensusIdx = -1;
                 while ((line = reader.readNext()) != null)
@@ -235,6 +236,11 @@ public class CellRangerVDJUtils
                         negative++;
                         continue;
                     }
+                    else if ("Low Counts".equals(hto))
+                    {
+                        lowCounts++;
+                        continue;
+                    }
 
                     CDNA_Library cDNA = htoNameToCDNAMap.get(hto);
                     if (cDNA == null)
@@ -249,6 +255,7 @@ public class CellRangerVDJUtils
                 _log.info("total doublets: " + doublet);
                 _log.info("total discordant: " + discordant);
                 _log.info("total negatives: " + negative);
+                _log.info("total low counts: " + lowCounts);
             }
             catch (IOException e)
             {

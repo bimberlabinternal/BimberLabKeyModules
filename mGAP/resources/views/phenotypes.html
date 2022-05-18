@@ -41,8 +41,7 @@
                 ['No Genetic Association Reported','Cardiovascular Phenotypes','Ueda, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/30723724'],
                 ['Genetic Association Reported','Retinal Disease','Moshiri, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/30667376'],
                 ['Genetic Association Reported','Bardet-Biedl Syndrome','Peterson, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/31589838'],
-                ['Genetic Association Reported','Epidermolysis Bullosa','Johnson, et al. 2019','']
-
+                ['Genetic Association Reported','Epidermolysis Bullosa','Johnson, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/32096448']
             ];
 
             var dataMap = {};
@@ -82,6 +81,83 @@
             var rowId = mGAP.Utils.getMGapReleaseId();
             var url = LABKEY.ActionURL.buildURL('mgap', 'phenotypeList', null, {release: rowId});
             $('#traitUrl').attr('href', url);
+
+
+            //COVID data:
+            var covidRows = [
+                ['LZTFL1','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:101823807..101843715'],
+                ['CXCR6','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:101948255..101953190'],
+                ['CCR9','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:101888276..101907994'],
+                ['CCR1','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:102205536..102212086'],
+                ['CCR3','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:102268893..102269960'],
+                ['RPL24','SARS-CoV-2 Infection','','','','','','x','2:174444785..174450351'],
+                ['NXPE3','SARS-CoV-2 Infection','','','','','','x','2:174323787..174365577'],
+                ['ZBTB1','SARS-CoV-2 Infection','','','','','','x','7:126570101..126598047'],
+                ['CEP97','SARS-CoV-2 Infection','','','','','','x','2:174379912..174413230'],
+                ['FOXP4','COVID-19 severity','','','','','','x','4:127783384..127837788'],
+                ['CCHCR1','COVID-19 severity','','x','','x','','','4:138774693..138790019'],
+                ['ABO','SARS-CoV-2 Infection','x','x','x','','x','x','15:7086376..7107347'],
+                ['OAS1','COVID-19 severity','x','','','x','','x','11:112632314..112654759'],
+                ['OAS2','COVID-19 severity','x','','','x','','x','11:112695363..112728626'],
+                ['OAS3','COVID-19 severity','x','','','x','','x','11:112661047..112689871'],
+                ['KANSL1','COVID-19 severity','','','','','','x','16:57818339..58014773'],
+                ['WNT3','COVID-19 severity','','','','','','x','16:57171387..57225633'],
+                ['TAC4','COVID-19 severity','','','','','','x','X:89,480,106..89,483,948'],
+                ['KAT7','COVID-19 severity','','','','','','x','16:46957860..47008121'],
+                ['DPP9','COVID-19 severity','x','x','','x','','x','19:4604356..4656762'],
+                ['TYK2','COVID-19 severity','','','','x','','x','19:10110204..10144759'],
+                ['ICAM5','COVID-19 severity','','','','x','','x','19:10044223..10051556'],
+                ['ICAM3','COVID-19 severity','','','','x','','x','19:10088945..10110262'],
+                ['ICAM4','COVID-19 severity','','','','x','','x','19:10041723..10043298'],
+                ['ICAM1','COVID-19 severity','','','','x','','x','19:10024950..10040084'],
+                ['PLEKHA4','SARS-CoV-2 Infection','','','','','','x','19:48819628..48850822'],
+                ['PPP1R15A','SARS-CoV-2 Infection','','','','','','x','19:48854619..48858778'],
+                ['TULP2','SARS-CoV-2 Infection','','','','','','x','19:48864508..48880575'],
+                ['NUCB1','SARS-CoV-2 Infection','','','','','','x','19:48881525..48906138'],
+                ['IFNAR2','COVID-19 severity','x','x','','x','','x','3:13289046..13325302'],
+                ['IL10RB','COVID-19 severity','x','x','','x','','x','3:13,254,913..13,288,351'],
+                ['TMPRSS2','COVID-19 severity','x','x','','x','','x','3:5139757..5184755'],
+                ['ACE2','SARS-CoV-2 Infection','','','','','','','X:15247646..15300547']
+            ];
+
+            covidRows = covidRows.map(function(r){
+                var publications = []
+                if (r[2]) {
+                    publications.push('<a href="https://www.nature.com/articles/s41588-022-01042-x">Roberts et al.</a>')
+                }
+                if (r[3]) {
+                    publications.push('<a href="https://pubmed.ncbi.nlm.nih.gov/35241825/">Horowitz et al.</a>')
+                }
+                if (r[4]) {
+                    publications.push('<a href="https://doi.org/10.1038%2Fs41588-021-00854-7">Shelton et al.</a>')
+                }
+                if (r[5]) {
+                    publications.push('<a href="https://doi.org/10.1038%2Fs41586-020-03065-y">Pairo-Castineira et al.</a>')
+                }
+                if (r[6]) {
+                    publications.push('<a href="https://doi.org/10.1056%2FNEJMoa2020283">Ellinghaus et al.</a>')
+                }
+                if (r[7]) {
+                    publications.push('<a href="https://doi.org/10.1038/s41586-021-03767-x">COVID-19 HGI</a>')
+                }
+
+                var url = LABKEY.ActionURL.buildURL('mgap', 'genomebrowser', null, {location: r[8]})
+                return ['<a href="' + url + '">' + r[0] + '</a>', r[1], publications.join('<br>')]
+            })
+
+            var table = $('#covidPublicationsTable').DataTable({
+                data: covidRows,
+                pageLength: 500,
+
+                dom: '',
+                buttons: [],
+                order: [],
+                columns: [
+                    {title: 'Candidate Gene'},
+                    {title: 'Phenotype', sortable: false, width: 250},
+                    {title: 'Publications', sortable: false}
+                ]
+            });
         });
     })(jQuery);
 </script>
@@ -110,5 +186,16 @@
     <div style="width: 600px;">
         <span><b>Table I. Published macaque disease models with and without reported genetic associations.</b></span>
         <table id="phenotypeTable" class="stripe hover"></table>
+    </div>
+</div>
+<hr>
+<h4 style="text-decoration: underline">COVID Genetic Associations:</h4>
+<div class="colDiv">
+    <div style="flex: 1;max-width: 40%;margin-right: 20px;">
+        The development of COVID-19 vaccines and therapies required extensive testing of their safety and efficacy in nonhuman primates (NHPs) before these new treatments could be used in humans (<a href="https://www.nature.com/articles/s41684-021-00760-9">reviewed in this article</a>). A growing number of human genes have been implicated in COVID-19 disease severity and hospitalization. The table to the right list many of these genes (summarized in: <a href="https://www.covid19hg.org/">https://www.covid19hg.org/</a>), and provides links to mGAP variants in each gene.
+    </div>
+    <div style="width: 600px;">
+        <span><b>Table II. Genes associated with COVID-19 severity and links to macaque variants (<a href = "https://www.nature.com/articles/s41588-021-00985-x">Based on Karlsen et al.</a>). Click the gene name to load the genome browser, showing macaque variants in that gene.</b></span>
+        <table id="covidPublicationsTable" class="stripe hover"></table>
     </div>
 </div>
