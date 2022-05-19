@@ -10,6 +10,7 @@ import { createTheme } from '@material-ui/core/styles';
 import '../labkeyOverrides.css';
 import FinalReviewForm from './components/FinalReviewForm';
 import { ErrorBoundary } from '@labkey/components';
+import ResourceAssessmentForm from './components/ResourceAssessmentForm';
 
 export function RequestView() {
     const mode = (new URLSearchParams(window.location.search)).get("mode")
@@ -64,6 +65,12 @@ export function RequestView() {
                 </>
             )
             break
+        case "resourceAvailability":
+            reviewForms = (
+                <>
+                    <ResourceAssessmentForm key={"resourceAssessmentForm"} requestData={requestData}/>
+                </>
+            )
         case "finalReview":
             reviewForms = (
                 <>

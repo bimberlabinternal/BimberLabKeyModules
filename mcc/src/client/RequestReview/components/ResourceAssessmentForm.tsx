@@ -14,13 +14,11 @@ import {
 import { AnimalRequestModel } from '../../components/RequestUtils';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
 
-export default function FinalReviewForm(props: {requestData: AnimalRequestModel}) {
+export default function ResourceAssessmentForm(props: {requestData: AnimalRequestModel}) {
     const { requestData } = props
     const [ recordData, setRecordData ] = useState(null)
     const [ reviewData, setReviewData ] = useState(null)
     const [ displayOverlay, setDisplayOverlay ] = useState(false)
-    const [ hasSubmitted, setHasSubmitted ] = useState(false)
-    const [ pendingStatus, setPendingStatus ] = useState<string>(null)
 
     const styles = makeStyles({
         tableHead: {
@@ -44,8 +42,6 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
                 "rowid",
                 "preliminaryScore",
                 "resourceAvailabilityAssessment",
-                "proposalScore",
-                "comments",
                 "requestid"
             ],
             filterArray: [
@@ -117,7 +113,6 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
     }
 
     const onFormSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
-        setHasSubmitted(true)
         e.preventDefault()
         if (!e.currentTarget.reportValidity()) {
             return
@@ -127,9 +122,12 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
         Query.updateRows({
             schemaName: "mcc",
             queryName: "requestScores",
-            rows: [recordData],
+            rows: [{
+                rowid: recordData.rowid,
+                resourceAvailabilityAssessment: recordData.resourceAvailabilityAssessment
+            }],
             success: function (resp) {
-                updateRequestStatus(pendingStatus)
+                updateRequestStatus("Decision Pending")
             },
             failure: function (response) {
                 setDisplayOverlay(false)
@@ -164,19 +162,18 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
         </Table>
         <h2>Enter MCC Review</h2>
         <Box key={"mccReviewBox"} style={{display: 'inline-block'}}>
-            <form key={"internalReviewForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
-            <Table width={500}>
+            <form key={"resourceAssessmentForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
+            <Table width={800}>
                 <TableBody>
                 <TableRow>
                     <TableCell><TextField key={"preliminaryScore"} name={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell><TextField key={"comments"} name={"comments"} label={"NIH Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
+                    <TableCell><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 </TableBody>
             </Table>
-            <Button key={"approveBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'} onClick={() => setPendingStatus("Approved")}>Approve Request</Button>
-            <Button key={"rejectBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'}  onClick={() => setPendingStatus("Rejected")}>Reject Request</Button>
+            <Button key={"approveBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'}>Submit</Button>
             </form>
         </Box>
         <SavingOverlay display={displayOverlay} />

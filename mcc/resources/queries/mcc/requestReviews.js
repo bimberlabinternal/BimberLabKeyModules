@@ -34,9 +34,10 @@ function afterUpsert(row, oldRow, errors) {
             return
         }
 
+        // NOTE: this has been disabled. this code could be a point to add an automated email though
         // Only perform this test the first time the review is added
-        if (!oldRow || !oldRow.review) {
-            triggerHelper.possiblySetRabComplete(requestId);
-        }
+        //if (!oldRow || !oldRow.review) {
+        //    triggerHelper.possiblySetRabComplete(requestId);
+        //}
     }
 }
