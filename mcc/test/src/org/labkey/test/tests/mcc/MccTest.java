@@ -345,12 +345,16 @@ public class MccTest extends BaseWebDriverTest
 
 
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
-
-        // NOTE: since the last review was entered, this should update the status of the request
-        Assert.assertEquals("Pending Decision", getLastModifiedRequestRow().get("status"));
-
         dataRegionName = getDataRegionName("webpartPending");
         new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
+        waitAndClickAndWait(Locator.tagWithText("a", "Enter Resource Availability Assessment"));
+
+        waitAndClick(Locator.tagWithText("span", "Submit"));
+        waitForElement(Locator.tagWithClass("div", "Mui-error"));
+
+        setFormElement(Locator.tagWithAttribute("input", "name",  "resourceAvailabilityAssessment"), "This is the assessment");
+        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
+
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
         waitAndClick(Locator.tagWithText("span", "Approve Request"));
 

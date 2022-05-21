@@ -1,5 +1,5 @@
-import React, { FormEvent, useEffect, useState } from 'react';
-import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
+import React, { useEffect, useState } from 'react';
+import { ActionURL, Filter, Query } from '@labkey/api';
 import {
     Box,
     Button,
@@ -160,7 +160,7 @@ export default function ResourceAssessmentForm(props: {requestData: AnimalReques
                 })}
             </TableBody>
         </Table>
-        <h2>Enter MCC Review</h2>
+        <h2>Enter Resource Availability Assessment</h2>
         <Box key={"mccReviewBox"} style={{display: 'inline-block'}}>
             <form key={"resourceAssessmentForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
             <Table width={800}>
@@ -169,7 +169,7 @@ export default function ResourceAssessmentForm(props: {requestData: AnimalReques
                     <TableCell><TextField key={"preliminaryScore"} name={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Score"} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
+                    <TableCell><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Assessment"} required={true} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 </TableBody>
             </Table>

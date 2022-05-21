@@ -71,6 +71,7 @@ export function RequestView() {
                     <ResourceAssessmentForm key={"resourceAssessmentForm"} requestData={requestData}/>
                 </>
             )
+            break
         case "finalReview":
             reviewForms = (
                 <>
