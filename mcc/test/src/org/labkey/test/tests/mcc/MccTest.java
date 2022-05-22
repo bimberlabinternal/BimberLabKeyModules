@@ -349,8 +349,9 @@ public class MccTest extends BaseWebDriverTest
         new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Resource Availability Assessment"));
 
+        // Assessment missing so form should not be valid
         waitAndClick(Locator.tagWithText("span", "Submit"));
-        waitForElement(Locator.tagWithClass("div", "Mui-error"));
+        waitForElement(Locator.tagWithClass("label", "Mui-focused"));
 
         setFormElement(Locator.tagWithAttribute("input", "name",  "resourceAvailabilityAssessment"), "This is the assessment");
         waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
