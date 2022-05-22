@@ -353,7 +353,7 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Locator.tagWithText("span", "Submit"));
         waitForElement(Locator.tagWithClass("label", "Mui-focused"));
 
-        setFormElement(Locator.tagWithAttribute("input", "name",  "resourceAvailabilityAssessment"), "This is the assessment");
+        setFormElement(Locator.tagWithAttribute("textarea", "name",  "resourceAvailabilityAssessment"), "This is the assessment");
         waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
 
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
