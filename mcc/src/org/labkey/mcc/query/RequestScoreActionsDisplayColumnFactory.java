@@ -98,7 +98,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                     }
                     catch (IllegalArgumentException e)
                     {
-                        _log.error("Unknown MCC Request status: " + requestRowId, new Exception());
+                        _log.error("Unknown MCC Request status: [" + status + "] for row: " + requestRowId, new Exception());
                     }
                 }
             }
