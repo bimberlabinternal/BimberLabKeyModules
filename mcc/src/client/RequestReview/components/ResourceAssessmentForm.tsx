@@ -161,21 +161,21 @@ export default function ResourceAssessmentForm(props: {requestData: AnimalReques
             </TableBody>
         </Table>
         <h2>Enter Resource Availability Assessment</h2>
+        <form key={"resourceAssessmentForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
         <Box key={"mccReviewBox"} style={{display: 'inline-block'}}>
-            <form key={"resourceAssessmentForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
-            <Table width={800}>
+            <Table>
                 <TableBody>
                 <TableRow>
                     <TableCell><TextField key={"preliminaryScore"} name={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Assessment"} required={true} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
+                    <TableCell width={800}><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Assessment"} required={true} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 </TableBody>
             </Table>
             <Button key={"approveBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'}>Submit</Button>
-            </form>
         </Box>
+        </form>
         <SavingOverlay display={displayOverlay} />
         </>
     )

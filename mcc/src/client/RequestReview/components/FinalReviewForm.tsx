@@ -1,5 +1,5 @@
-import React, { FormEvent, useEffect, useState } from 'react';
-import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
+import React, { useEffect, useState } from 'react';
+import { ActionURL, Filter, Query } from '@labkey/api';
 import {
     Box,
     Button,
@@ -163,22 +163,25 @@ export default function FinalReviewForm(props: {requestData: AnimalRequestModel}
             </TableBody>
         </Table>
         <h2>Enter MCC Review</h2>
+        <form key={"internalReviewForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
         <Box key={"mccReviewBox"} style={{display: 'inline-block'}}>
-            <form key={"internalReviewForm"} noValidate autoComplete='off' onSubmit={onFormSubmit}>
-            <Table width={500}>
+            <Table>
                 <TableBody>
                 <TableRow>
                     <TableCell><TextField key={"preliminaryScore"} name={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell><TextField key={"comments"} name={"comments"} label={"NIH Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
+                    <TableCell width={800}><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Assessment"} minRows={4} multiline={true} disabled={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell width={800}><TextField key={"comments"} name={"comments"} label={"NIH Comments"} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.comments || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 </TableBody>
             </Table>
             <Button key={"approveBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'} onClick={() => setPendingStatus("Approved")}>Approve Request</Button>
             <Button key={"rejectBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'}  onClick={() => setPendingStatus("Rejected")}>Reject Request</Button>
-            </form>
         </Box>
+        </form>
         <SavingOverlay display={displayOverlay} />
         </>
     )
