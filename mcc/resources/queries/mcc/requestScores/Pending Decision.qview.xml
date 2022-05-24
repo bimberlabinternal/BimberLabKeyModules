@@ -1,8 +1,0 @@
-<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="Pending Decision" canOverride="false">
-    <filters>
-        <filter column="requestId/status" operator="eq" value="Pending Decision"/>
-    </filters>
-    <sorts>
-        <sort column="requestId/rowid" descending="true"/>
-    </sorts>
-</customView>
