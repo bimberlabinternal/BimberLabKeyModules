@@ -226,20 +226,21 @@ public class TriggerHelper
         return new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("rowid"), rowid), null).getObject(String.class);
     }
 
-    public void possiblySetRabComplete(String requestId)
-    {
-        TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS);
-        Set<String> reviews = new HashSet<>(new TableSelector(ti, PageFlowUtil.set("review"), new SimpleFilter(FieldKey.fromString("requestId"), requestId), null).getArrayList(String.class));
-        if (!reviews.isEmpty() && !reviews.contains(null)) {
-            TableInfo requestTable = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS);
-            int rowId = new TableSelector(requestTable, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("objectid"), requestId), null).getObject(Integer.class);
-            Map<String, Object> map = new HashMap<>();
-            map.put("rowid", rowId);
-            map.put("status", MccManager.RequestStatus.PendingDecision.getLabel());
-            map.put("modifiedby", _user.getUserId());
-            map.put("modified", new Date());
-
-            Table.update(_user, requestTable, map, rowId);
-        }
-    }
+    // NOTE: this has been disabled. this code could be a point to add an automated email though
+//    public void possiblySetRabComplete(String requestId)
+//    {
+//        TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS);
+//        Set<String> reviews = new HashSet<>(new TableSelector(ti, PageFlowUtil.set("review"), new SimpleFilter(FieldKey.fromString("requestId"), requestId), null).getArrayList(String.class));
+//        if (!reviews.isEmpty() && !reviews.contains(null)) {
+//            TableInfo requestTable = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS);
+//            int rowId = new TableSelector(requestTable, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("objectid"), requestId), null).getObject(Integer.class);
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("rowid", rowId);
+//            map.put("status", MccManager.RequestStatus.PendingDecision.getLabel());
+//            map.put("modifiedby", _user.getUserId());
+//            map.put("modified", new Date());
+//
+//            Table.update(_user, requestTable, map, rowId);
+//        }
+//    }
 }

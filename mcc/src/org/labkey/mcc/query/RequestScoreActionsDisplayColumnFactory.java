@@ -75,16 +75,15 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter MCC Internal Review</a>");
                             }
                         }
-                        else if (st == MccManager.RequestStatus.FormCheck)
+                        else if (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
                         {
-                            if (requestContainer.hasPermission(ctx.getViewContext().getUser(), MccRequestAdminPermission.class))
+                            if (requestContainer.hasPermission(ctx.getViewContext().getUser(), MccFinalReviewPermission.class))
                             {
-                                out.write("<br><a class=\"labkey-text-link\" href=\"javascript:void(0)\">Submit For RAB Review</a>");
+                                DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=resourceAvailability", requestContainer);
+                                out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Resource Availability Assessment</a>");
                             }
                         }
-                        else if (st == MccManager.RequestStatus.PendingDecision ||
-                                (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
-                        )
+                        else if (st == MccManager.RequestStatus.PendingDecision)
                         {
                             if (requestContainer.hasPermission(ctx.getViewContext().getUser(), MccFinalReviewPermission.class))
                             {
@@ -99,7 +98,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                     }
                     catch (IllegalArgumentException e)
                     {
-                        _log.error("Unknown MCC Request status: " + requestRowId, new Exception());
+                        _log.error("Unknown MCC Request status: [" + status + "] for row: " + requestRowId, new Exception());
                     }
                 }
             }

@@ -48,12 +48,11 @@ public class MccManager
     {
         Draft(1, "Draft", MccRequestorPermission.class),
         Submitted(2, "Submitted", MccRequestorPermission.class),
-        FormCheck(3, "Internal Review", MccRequestAdminPermission.class),
-        RabReview(4, "RAB Review", MccRequestAdminPermission.class),
-        PendingDecision(5, "Pending Decision", MccFinalReviewPermission.class),
-        Approved(6, "Approved", MccRequestAdminPermission.class),
-        Rejected(7, "Rejected", MccRequestAdminPermission.class),
-        Processing(8, "Processing", MccRequestAdminPermission.class),
+        RabReview(3, "RAB Review", MccRequestAdminPermission.class),
+        PendingDecision(4, "Decision Pending", MccFinalReviewPermission.class),
+        Approved(5, "Approved", MccRequestAdminPermission.class),
+        Rejected(6, "Rejected", MccRequestAdminPermission.class),
+        Processing(7, "Processing", MccRequestAdminPermission.class),
         Fulfilled(8, "Fulfilled", MccRequestAdminPermission.class);
 
         int sortOrder;
