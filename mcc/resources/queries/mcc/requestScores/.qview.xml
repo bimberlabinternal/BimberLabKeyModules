@@ -6,7 +6,7 @@
         <column name="requestId/institutionname"/>
         <column name="requestId/status"/>
         <column name="preliminaryScore"/>
-        <column name="resourceAvailabilityScore"/>
+        <column name="resourceAvailabilityAssessment"/>
         <column name="rabReviewStatus"/>
 <!--        <column name="proposalScore"/>-->
         <column name="created"/>

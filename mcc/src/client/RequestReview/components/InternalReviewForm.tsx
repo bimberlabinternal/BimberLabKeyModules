@@ -21,7 +21,7 @@ export default function InternalReviewForm(props: {requestData: AnimalRequestMod
             columns: [
                 "rowid",
                 "preliminaryScore",
-                "resourceAvailabilityScore",
+                "resourceAvailabilityAssessment",
                 "proposalScore",
                 "comments",
                 "requestid",

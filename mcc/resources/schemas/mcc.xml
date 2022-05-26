@@ -674,8 +674,8 @@
                 <columnTitle>Preliminary Score</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="resourceAvailabilityScore">
-                <columnTitle>Resource Availability Score</columnTitle>
+            <column columnName="resourceAvailabilityAssessment">
+                <columnTitle>Resource Availability Assessment</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="proposalScore">
