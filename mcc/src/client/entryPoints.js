@@ -15,11 +15,17 @@ module.exports = {
     title: 'Animal Requests',
     permission: 'read',
     path: './src/client/AnimalRequest'
-  },{
+  }, {
     name: 'requestReview',
     title: 'Animal Request Review',
     permission: 'read',
     template: 'home',
     path: './src/client/RequestReview'
+  },{
+    name: 'geneticsPlot',
+    title: 'Marmoset Genetics',
+    permission: 'read',
+    path: './src/client/GeneticsPlot'
+
   }]
 };
