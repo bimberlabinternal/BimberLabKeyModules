@@ -9,7 +9,7 @@ SELECT
   d.objectid,
   d.container
 
-FROM "/data/Colonies/SNPRC/".study.demographics d
+FROM "/data/Colonies/SNPRC/".study.kinship d
 
 UNION ALL
 
@@ -24,7 +24,7 @@ SELECT
     d.objectid,
     d.container
 
-FROM "/data/Colonies/WNPRC/".study.demographics d
+FROM "/data/Colonies/WNPRC/".study.kinship d
 
 UNION ALL
 
@@ -39,7 +39,7 @@ SELECT
     d.objectid,
     d.container
 
-FROM "/data/Colonies/UNO/".study.demographics d
+FROM "/data/Colonies/UNO/".study.kinship d
 
 UNION ALL
 
@@ -54,7 +54,7 @@ SELECT
     d.objectid,
     d.container
 
-FROM "/data/Colonies/UCSD/".study.demographics d
+FROM "/data/Colonies/UCSD/".study.kinship d
 
 UNION ALL
 
@@ -69,4 +69,4 @@ SELECT
     d.objectid,
     d.container
 
-FROM "/data/Colonies/Other/".study.demographics d
+FROM "/data/Colonies/Other/".study.kinship d

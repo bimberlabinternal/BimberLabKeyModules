@@ -28,9 +28,17 @@ export function GeneticsPlot() {
             containerPath: containerPath,
             schemaName: 'study',
             queryName: 'kinship',
-            columns: 'Id,Id2,kinship,relationship',
+            columns: 'Id,Id2,kinship,relationship,objectid',
             success: function(results) {
-                setKinshipData(results.rows)
+                setKinshipData(results.rows.map((row) => {
+                    return({
+                        id: row.objectid,
+                        Id: row.Id,
+                        Id2: row.Id2,
+                        kinship: row.kinship,
+                        relationship: row.relationship
+                    })
+                }))
             },
             failure: function(response) {
                 alert('There was an error loading data');

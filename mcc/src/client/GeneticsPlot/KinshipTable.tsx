@@ -6,10 +6,10 @@ export default function KinshipTable(props: {data: any}) {
     const [pageSize, setPageSize] = React.useState<number>(25);
 
     const columns: GridColumns = [
-        { field: 'Id', headerName: 'Animal 1', width: 100, type: "string", flex: 1, headerAlign: 'left' },
-        { field: 'Id2', headerName: 'Animal 2', width: 100, type: "string", flex: 1, headerAlign: 'left' },
-        { field: 'kinship', headerName: 'Kinship', width: 50, type: "number", flex: 1, headerAlign: 'left' },
-        { field: 'relationship', headerName: 'Inferred Relationship', width: 100, type: "string", flex: 1, headerAlign: 'left' }
+        { field: 'Id', headerName: 'Animal 1', width: 150, type: "string", headerAlign: 'left' },
+        { field: 'Id2', headerName: 'Animal 2', width: 150, type: "string", headerAlign: 'left' },
+        { field: 'kinship', headerName: 'Kinship', width: 150, type: "number", headerAlign: 'right' },
+        { field: 'relationship', headerName: 'Inferred Relationship', width: 150, type: "string", headerAlign: 'left' }
     ]
 
     return (

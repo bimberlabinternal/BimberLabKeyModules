@@ -27,8 +27,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PopulateIdsStep implements TaskRefTask
 {
@@ -92,13 +94,20 @@ public class PopulateIdsStep implements TaskRefTask
         TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set(originalIdField, "container"), filter, null);
         if (ts.exists())
         {
+            Set<String> idsEncountered = new HashSet<>();
             ts.forEachResults(rs -> {
                 Container c = ContainerManager.getForId(rs.getString(FieldKey.fromString("container")));
                 List<Map<String, Object>> rows = toAdd.containsKey(c) ? toAdd.get(c) : new ArrayList<>();
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
+                if (idsEncountered.contains(rs.getString(FieldKey.fromString(originalIdField))))
+                {
+                    return;
+                }
+
                 row.put("subjectname", rs.getString(FieldKey.fromString(originalIdField)));
                 row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
 
+                idsEncountered.add(rs.getString(FieldKey.fromString(originalIdField)));
                 rows.add(row);
                 toAdd.put(c, rows);
             });
