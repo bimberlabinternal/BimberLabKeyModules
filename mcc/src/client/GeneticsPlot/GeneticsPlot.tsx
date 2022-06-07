@@ -76,6 +76,7 @@ export function GeneticsPlot() {
     }
 
     return (
+        <>
         <ErrorBoundary>
             <div style={{paddingBottom: 20, maxWidth: 800}}>
                 Population structure analysis using PCA is a helpful way to summarize the genetic relationships among animals in the MCC. The PCA results can be thought of as a simple type of genetic clustering - animals with more similar principal component loadings are more genetically similar. A more precise description of the relationship between two animals is provided by kinship coefficients – these are quantitative measures of relatedness that can be calculated by comparing two genomes, and interpreted using genealogical language, such as ‘parent-child’, ‘uncle-nephew’, ‘first cousins’, etc.
@@ -100,5 +101,6 @@ export function GeneticsPlot() {
                 </div>
             </div>
         </ErrorBoundary>
+        </>
     );
 }
