@@ -36,6 +36,24 @@
                 </alternateKeys>
             </destination>
         </transform>
+        <transform type="SimpleQueryTransformStep" id="kinship">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedKinship" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>Id2</column>
+                    <column>kinship</column>
+                    <column>relationship</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="kinship" targetOption="truncate" bulkLoad="true">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
     </transforms>
     <schedule>
         <!--11PM-->

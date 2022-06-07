@@ -53,6 +53,9 @@ Ext4.onReady(function (){
                         {
                             name: 'Ensure Site Settings and Groups',
                             url: '<%=contextPath%>' + ctx['MCCContainer'] + '/mcc-configureMcc.view'
+                        },{
+                            name: 'Import/Re-import MCC Study',
+                            url: LABKEY.ActionURL.buildURL('mcc', 'importStudy.view')
                         }
                     ]
                 }
