@@ -37,6 +37,14 @@ public class PopulateIdsStep implements TaskRefTask
     @Override
     public RecordedActionSet run(@NotNull PipelineJob job) throws PipelineJobException
     {
+        populateForDemographics(job);
+        populateForKinship(job);
+
+        return new RecordedActionSet();
+    }
+
+    private void populateForDemographics(PipelineJob job) throws PipelineJobException
+    {
         // Query aggregated demographics:
         UserSchema sourceSchema = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), MccSchema.NAME);
         if (sourceSchema == null)
@@ -53,8 +61,25 @@ public class PopulateIdsStep implements TaskRefTask
         populateForField(job, sourceTi, "Id", "originalId");
         populateForField(job, sourceTi, "dam", "originalDam");
         populateForField(job, sourceTi, "sire", "originalSire");
+    }
 
-        return new RecordedActionSet();
+    private void populateForKinship(PipelineJob job) throws PipelineJobException
+    {
+        // Query aggregated demographics:
+        UserSchema sourceSchema = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "mcc");
+        if (sourceSchema == null)
+        {
+            throw new PipelineJobException("Unable to find source schema: " + MccSchema.NAME);
+        }
+
+        TableInfo sourceTi = sourceSchema.getTable("aggregatedKinship");
+        if (sourceTi == null)
+        {
+            throw new PipelineJobException("Unable to find table: aggregatedKinship");
+        }
+
+        populateForField(job, sourceTi, "Id", "originalId");
+        populateForField(job, sourceTi, "Id2", "originalId2");
     }
 
     private void populateForField(PipelineJob job, TableInfo sourceTi, String fieldName, String originalIdField)

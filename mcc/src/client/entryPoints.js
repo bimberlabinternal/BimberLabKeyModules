@@ -26,6 +26,10 @@ module.exports = {
     title: 'Marmoset Genetics',
     permission: 'read',
     path: './src/client/GeneticsPlot'
-
+  },{
+    name: 'geneticsPlotWebpart',
+    title: 'Marmoset Genetics',
+    permission: 'read',
+    path: './src/client/GeneticsPlot/webpart'
   }]
 };
