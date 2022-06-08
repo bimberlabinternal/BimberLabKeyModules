@@ -8,8 +8,8 @@ import { Box, Tab, Tabs } from '@material-ui/core';
 import KinshipTable from './KinshipTable';
 
 export function GeneticsPlot() {
-    const [pcaData, setPcaData] = useState(null);
-    const [kinshipData, setKinshipData] = useState(null);
+    const [pcaData, setPcaData] = useState([]);
+    const [kinshipData, setKinshipData] = useState([]);
     const [value, setValue] = React.useState(0);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
@@ -52,14 +52,6 @@ export function GeneticsPlot() {
         return (
             <div className="loading">
                 <div>Error: must set the MCCContainer module property</div>
-            </div>
-        );
-    }
-
-    if (pcaData === null || kinshipData === null) {
-        return (
-            <div className="loading">
-                <div>Loading...</div>
             </div>
         );
     }
