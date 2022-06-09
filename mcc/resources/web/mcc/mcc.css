@@ -1,8 +1,3 @@
-.mgap-link {
-    font-weight: normal;
-    text-decoration: underline;
-}
-
 /* NOTE: this is added to revert bootstrap's changes */
 html {
     font-size: 14px; !important;
