@@ -8,8 +8,8 @@ export default function KinshipTable(props: {data: any}) {
     const columns: GridColumns = [
         { field: 'Id', headerName: 'Animal 1', width: 150, type: "string", headerAlign: 'left' },
         { field: 'Id2', headerName: 'Animal 2', width: 150, type: "string", headerAlign: 'left' },
-        { field: 'kinship', headerName: 'Kinship', width: 150, type: "number", headerAlign: 'right' },
-        { field: 'relationship', headerName: 'Inferred Relationship', width: 150, type: "string", headerAlign: 'left' }
+        { field: 'kinship', headerName: 'Kinship', width: 125, type: "number", headerAlign: 'right' },
+        { field: 'relationship', headerName: 'Inferred Relationship', width: 200, type: "string", headerAlign: 'left' }
     ]
 
     return (

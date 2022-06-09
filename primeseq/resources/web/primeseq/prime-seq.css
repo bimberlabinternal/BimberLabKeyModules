@@ -104,3 +104,7 @@ span.button-icon {
 	color: #c5050c;
 }
 
+/* NOTE: this is added to revert bootstrap's changes */
+html {
+	font-size: 14px; !important;
+}
