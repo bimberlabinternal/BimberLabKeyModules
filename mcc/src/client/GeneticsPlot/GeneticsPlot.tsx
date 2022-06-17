@@ -16,12 +16,19 @@ export function GeneticsPlot() {
     const containerPath = ctx.MCCContainer || null;
 
     useEffect(() => {
-        fetch(getServerContext().contextPath + "/mcc/data/PCA_Eigenvecs_mcc_recode_42122.txt", {
-            method: 'GET'
-        }).then((response) => response.text())
-        .then((tsv) => {
-            const data = TSV.parse(tsv)
-            setPcaData(data)
+        Query.selectRows({
+            containerPath: containerPath,
+            schemaName: 'lists',
+            queryName: 'PCA_Example',
+            success: function(results) {
+                const data = results.rows
+                setPcaData(data)
+            },
+            failure: function(response) {
+                alert('There was an error loading data');
+                console.log(response);
+            },
+            scope: this
         });
 
         Query.selectRows({
