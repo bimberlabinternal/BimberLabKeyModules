@@ -48,8 +48,6 @@ export default function ScatterChart(props: {data: any}) {
         })
     })
 
-    console.log(dataByColony)
-
     const chartOptions = {
         scales: {
             y: {
