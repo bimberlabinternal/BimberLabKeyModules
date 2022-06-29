@@ -983,4 +983,35 @@
         </columns>
         <tableTitle>Clinical Observations</tableTitle>
     </table>
+    <table tableName="kinship" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
+                <importAliases>
+                    <importAlias>ptid</importAlias>
+                </importAliases>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
+                <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
+            </column>
+            <column columnName="Id2">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="kinship">
+                <datatype>double</datatype>
+            </column>
+            <column columnName="relationship">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectid">
+                <datatype>entityid</datatype>
+                <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
+                <isKeyField>true</isKeyField>
+            </column>
+        </columns>
+        <tableTitle>Kinship</tableTitle>
+    </table>
 </tables>

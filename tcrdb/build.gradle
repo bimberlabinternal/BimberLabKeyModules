@@ -11,6 +11,10 @@ repositories {
    maven {
       url "https://maven.scijava.org/content/groups/public"
    }
+   // Added to support ancient sam JAR needed by FASTQC (in sequenceanalysis)
+   maven {
+      url "https://clojars.org/repo"
+   }
 }
 
 dependencies {
