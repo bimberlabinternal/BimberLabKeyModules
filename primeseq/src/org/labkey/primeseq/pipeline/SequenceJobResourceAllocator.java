@@ -542,9 +542,10 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 {
                     job.getLogger().info("Using default queue for task: " + activeTask);
                     qos = "Default";
+                    time = null;
                 }
 
-                String qosName = null;
+                String qosName;
                 switch (qos)
                 {
                     case "Default":

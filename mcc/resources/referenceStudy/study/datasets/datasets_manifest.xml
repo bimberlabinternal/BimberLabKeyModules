@@ -58,5 +58,8 @@
         <dataset name="clinical_observations" id="5006" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>
+        <dataset name="kinship" id="5007" showByDefault="true" category="Colony Management" type="Standard">
+            <tags/>
+        </dataset>
     </datasets>
 </datasets>

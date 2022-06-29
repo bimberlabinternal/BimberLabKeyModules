@@ -17,6 +17,7 @@ Ext4.define('Primeseq.window.UpdateJobResourcesWindow', {
     },
 
     initComponent: function(){
+        Ext4.QuickTips.init();
         Ext4.apply(this, {
             title: 'Update Job Resources',
             width: 600,
