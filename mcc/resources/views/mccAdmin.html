@@ -44,6 +44,10 @@ Ext4.onReady(function (){
                         {
                             name: 'View All Users',
                             url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'
+                        },
+                        {
+                            name: 'Request MCC Account for A User',
+                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/mcc-requestLogin.view'
                         }
                     ]
                 },
