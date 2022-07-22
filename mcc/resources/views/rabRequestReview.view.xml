@@ -1,6 +1,6 @@
 <view xmlns="http://labkey.org/data/xml/view" title="MCC RAB Reviewer Dashboard">
     <permissionClasses>
-        <permissionClass name="org.labkey.mcc.security.MccRequestAdminPermission"/>
+        <permissionClass name="org.labkey.mcc.security.MccRabReviewPermission"/>
     </permissionClasses>
     <dependencies>
         <dependency path="ldk.context" />
