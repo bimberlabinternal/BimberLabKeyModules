@@ -18,6 +18,7 @@ import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.security.permissions.InsertPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
+import org.labkey.mcc.security.MccRabReviewPermission;
 import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequestorPermission;
 
@@ -43,7 +44,19 @@ public class MccUserSchema extends SimpleUserSchema
 
             return ret.init();
         }
-        else if (MccSchema.TABLE_REQUEST_REVIEWS.equalsIgnoreCase(name) || MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
+        else if (MccSchema.TABLE_REQUEST_REVIEWS.equalsIgnoreCase(name))
+        {
+            CustomPermissionsTable<?> ret = new CustomPermissionsTable<>(this, schemaTable, cf);
+            ret.addPermissionMapping(ReadPermission.class, MccRabReviewPermission.class);
+            ret.addPermissionMapping(InsertPermission.class, MccRabReviewPermission.class);
+            ret.addPermissionMapping(UpdatePermission.class, MccRabReviewPermission.class);
+            ret.addPermissionMapping(DeletePermission.class, MccRabReviewPermission.class);
+
+            ret = ret.init();
+
+            return ret;
+        }
+        else if (MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
         {
             CustomPermissionsTable<?> ret = new CustomPermissionsTable<>(this, schemaTable, cf);
             ret.addPermissionMapping(ReadPermission.class, MccRequestAdminPermission.class);
@@ -53,12 +66,7 @@ public class MccUserSchema extends SimpleUserSchema
 
             ret = ret.init();
 
-            if (MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
-            {
-                return addScoreColumns(ret);
-            }
-
-            return ret;
+            return addScoreColumns(ret);
         }
 
         return super.createWrappedTable(name, schemaTable, cf);
