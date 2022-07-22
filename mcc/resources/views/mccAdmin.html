@@ -39,11 +39,15 @@ Ext4.onReady(function (){
                     items: [
                         {
                             name: 'View Pending User Requests',
-                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests&viewName=Pending Requests'
+                            url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', ctx['MCCContainer'], {schemaName: 'mcc', queryName: 'userRequests', viewName: 'Pending Requests'})
                         },
                         {
                             name: 'View All Users',
-                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/query-executeQuery.view?schemaName=mcc&queryName=userRequests'
+                            url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', ctx['MCCContainer'], {schemaName: 'mcc', queryName: 'userRequests'})
+                        },
+                        {
+                            name: 'Request MCC Account for A User',
+                            url: LABKEY.ActionURL.buildURL('mcc', 'requestLogin.view', ctx['MCCContainer']),
                         }
                     ]
                 },
@@ -52,10 +56,13 @@ Ext4.onReady(function (){
                     items: [
                         {
                             name: 'Ensure Site Settings and Groups',
-                            url: '<%=contextPath%>' + ctx['MCCContainer'] + '/mcc-configureMcc.view'
+                            url: LABKEY.ActionURL.buildURL('mcc', 'configureMcc.view', ctx['MCCContainer']),
                         },{
                             name: 'Import/Re-import MCC Study',
                             url: LABKEY.ActionURL.buildURL('mcc', 'importStudy.view')
+                        },{
+                            name: 'Site-wide Animal to MCC ID Mapping',
+                            url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', ctx['MCCContainer'], {schemaName: 'mcc', queryName: 'animalMapping', 'query.containerFilterName': 'AllFolders'})
                         }
                     ]
                 }
