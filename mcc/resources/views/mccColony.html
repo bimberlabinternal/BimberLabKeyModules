@@ -38,6 +38,9 @@ Ext4.onReady(function (){
                     },{
                         name: 'Observation Summary',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'study', queryName: 'mostRecentObservationsPivoted'})
+                    },{
+                        name: 'View Files',
+                        url: LABKEY.ActionURL.buildURL('filecontent', 'begin.view')
                     }]
                 },{
                     header: 'Configuration/Data Management',
