@@ -8,8 +8,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         alwaysShow: true,
         allowBlank: true
     },{
-        name: 'center',
-        labels: ['Center'],
+        name: 'colony',
+        labels: ['Current Colony'],
         allowRowSpan: false,
         alwaysShow: true,
         allowBlank: false,
@@ -39,9 +39,9 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Birth', 'DOB'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'birth'
+        transform: 'genericDate'
     },{
-        name: 'sex',
+        name: 'gender',
         labels: ['Sex'],
         allowRowSpan: false,
         allowBlank: true,
@@ -51,25 +51,25 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Dam', 'maternal ID'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'parentId'
+        transform: 'damOrSire'
     },{
         name: 'sire',
         labels: ['Sire', 'paternal ID'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'parentId'
+        transform: 'damOrSire'
     },{
         name: 'weight',
         labels: ['Weight (g)', 'Weight (grams)'],
         allowRowSpan: false,
-        allowBlank: false,
+        allowBlank: true,
         transform: 'weight'
     },{
         name: 'weightDate',
         labels: ['Date of Weight', 'date of weight'],
         alwaysShow: true,
         allowRowSpan: false,
-        transform: 'Date',
+        transform: 'genericDate',
         allowBlank: true
     },{
         name: 'date',
@@ -86,10 +86,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
         allowBlank: false,
         transform: 'u24'
     },{
-        name: 'available',
+        name: 'availability',
         labels: ['Available to Transfer', 'availalble to transfer'],
         allowRowSpan: false,
-        allowBlank: false,
+        allowBlank: true,
         transform: 'available'
     },{
         name: 'housingStatus',
@@ -104,11 +104,23 @@ Ext4.define('MCC.panel.MccImportPanel', {
         alwaysShow: true,
         transform: 'infantHistory'
     },{
+        name: 'fertilityStatus',
+        labels: ['Fertility Status'],
+        allowRowSpan: false,
+        alwaysShow: true,
+        transform: 'fertilityStatus'
+    },{
         name: 'medicalHistory',
         labels: ['Medical History'],
         allowRowSpan: false,
-        allowBlank: false,
+        allowBlank: true,
         transform: 'medicalHistory'
+    },{
+        name: 'errors',
+        labels: ['Warnings/Errors'],
+        allowRowSpan: false,
+        allowBlank: true,
+        alwaysShow: true
     }],
 
     IGNORED_COLUMNS: [],
@@ -132,19 +144,42 @@ Ext4.define('MCC.panel.MccImportPanel', {
             }
         }
 
-        row.errors = row.errors || [];
         row.errors.push('Bad value: ' + val);
 
         return(val);
     },
 
     transforms: {
+        damOrSire: function(val, panel, row) {
+            if (val && val.toUpperCase() === 'NA' || val.toUpperCase() === 'N/A') {
+                val = null;
+            }
+
+            return val;
+        },
+
         center: function(val, panel) {
             return val || panel.CENTER;
         },
 
-        date: function(val, panel) {
-            return val || panel.IMPORT_DATE;
+        genericDate: function(val, panel, row) {
+            if (val) {
+                var parsedDate = LDK.ConvertUtils.parseDate(val);
+                if (!parsedDate) {
+                    row.errors.push('Invalid date: ' + val);
+                }
+                else {
+                    return Ext4.Date.format(parsedDate, 'Y-m-d');
+                }
+            }
+
+            return val;
+        },
+
+        date: function(val, panel, row) {
+            val = val || panel.IMPORT_DATE;
+
+            return this.genericDate(val, panel, row);
         },
 
         sex: function(val, panel, row) {
@@ -191,13 +226,20 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         u24: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['not assigned to U24 breeding colony', 'assigned to U24 breeding colong'], row);
+            val = panel.enforceAllowableValues(val, ['not assigned to U24 breeding colony', 'assigned to U24 breeding colony'], row);
 
-            return(val);
+            if (!val) {
+                val = 'not assigned to U24 breeding colony';
+            }
+
+            return val.toLowerCase() === 'assigned to U24 breeding colony';
         },
 
         weight: function(val, panel, row){
-            //TODO: enforce reasonable values and convert to kg
+            // enforce reasonable values and convert to kg
+            if (val && val < 20) {
+                row.errors.push('Suspicious weight value');
+            }
 
             return val;
         }
@@ -234,12 +276,13 @@ Ext4.define('MCC.panel.MccImportPanel', {
             html: 'This page is designed to help import MCC animal-level data. Use the fields below to download the excel template and paste data to import.<p>'
         },{
             layout: 'hbox',
+            style: 'margin-bottom: 20px;',
             items: [{
                 xtype: 'button',
                 text: 'Download Template',
                 border: true,
                 scope: this,
-                href: LABKEY.ActionURL.getContextPath() + '/mcc/exampleData/ImportTemplate.xlsx'
+                href: LABKEY.ActionURL.getContextPath() + '/mcc/exampleData/MCC_Data_Template.xlsx'
             }]
         },{
             xtype: 'datefield',
@@ -249,10 +292,11 @@ Ext4.define('MCC.panel.MccImportPanel', {
             value: new Date()
         },{
             xtype: 'textfield',
-            fieldLabel: 'Center Name',
+            fieldLabel: 'Center/Colony Name',
             itemId: 'centerName',
             helpPopup: 'The name of the center submitting these data.',
-            value: null
+            //TODO: change this!!!
+            value: 'TODO'
         },{
             xtype: 'textarea',
             fieldLabel: 'Paste Data Below',
@@ -307,17 +351,36 @@ Ext4.define('MCC.panel.MccImportPanel', {
         var parsedRows = this.parseRows(colArray, rows, errorsMsgs);
 
         // Load existing demographics:
+        Ext4.Msg.wait('Loading...');
         LABKEY.Query.selectRows({
             schemaName: 'study',
             queryName: 'demographics',
-            columns: 'Id,alternateIds,dam,sire,birth,death,colony',
+            columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,mccAlias/externalId',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
-
+                Ext4.Msg.hide();
                 var demographicsRecords = this.parseDemographics((results.rows));
-
                 parsedRows = this.mergeWithDemographics(parsedRows, demographicsRecords, errorsMsgs);
+
+                //TODO: merge in parents??
+
+                var encounteredIds = [];
+                var duplicateIds = [];
+                Ext4.Array.forEach(parsedRows, function(row) {
+                    if (row.Id && encounteredIds.indexOf(row.Id) > -1) {
+                        duplicateIds.push(row.Id);
+                        row.errors.push('Duplicate Id: ' + row.Id);
+                    }
+                    else {
+                        encounteredIds.push(row.Id);
+                    }
+                }, this);
+
+                if (duplicateIds.length) {
+                    duplicateIds = Ext4.unique(duplicateIds);
+                    errorsMsgs.push('Duplicate Ids: ' + duplicateIds.join(', '));
+                }
 
                 if (errorsMsgs.length) {
                     errorsMsgs = Ext4.unique(errorsMsgs);
@@ -333,12 +396,33 @@ Ext4.define('MCC.panel.MccImportPanel', {
     mergeWithDemographics: function(rows, demographicsRecords, errorMsgs) {
         Ext4.Array.forEach(rows, function(row){
             row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id) > -1;
-
             if (row.existingRecord) {
-                //TODO: check if we actually need to update?
+                var existingRecord = demographicsRecords.rowMap[row.Id];
+                if (existingRecord.colony !== row.colony) {
+                    row.errors.push('Colony does not match existing row: ' + existingRecord.colony);
+                }
+                else {
+                    row.objectId = existingRecord.objectid;
+
+                    var fields = ['birth', 'dam', 'sire'];
+                    for (var idx in fields) {
+                        var fn = fields[idx];
+
+                        // kind of a hack:
+                        if (fn === 'birth' && existingRecord[fn]) {
+                            existingRecord[fn] = Ext4.Date.format(LDK.ConvertUtils.parseDate(existingRecord[fn], 'Y-m-d'));
+                        }
+                        if (row[fn] && existingRecord[fn] && row[fn] !== existingRecord[fn]) {
+                            row.errors.push('Does not match existing row for ' + fn + ': ' + existingRecord[fn]);
+                        }
+                    }
+
+                    //TODO: check if we actually need to update?
+                }
+
             }
 
-            //TODO: look for aliases?
+            //TODO: look for alternateIds?
             //TODO: what about dam/sire?
         }, this);
 
@@ -435,10 +519,16 @@ Ext4.define('MCC.panel.MccImportPanel', {
         var ret = [];
         Ext4.Array.forEach(rows, function(row, rowIdx){
             var data = {
-                objectId: LABKEY.Utils.generateUUID()
+                objectId: LABKEY.Utils.generateUUID(),
+                errors: []
             };
 
             Ext4.Array.forEach(colArray, function(col, colIdx){
+                // Handle errors separately:
+                if (col.name === 'errors') {
+                    return;
+                }
+
                 var cell = Ext4.isDefined(col.dataIdx) ? row[col.dataIdx] : '';
                 if (col.transform && this.transforms[col.transform]){
                     cell = this.transforms[col.transform](cell, this, data, errorsMsgs);
@@ -446,6 +536,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
                 data[col.name] = cell;
             }, this);
+
+            if (data.weight && !data.weightDate) {
+                data.errors.push('Weight provided, but missing weight date');
+            }
 
             ret.push(data);
         }, this);
@@ -461,13 +555,20 @@ Ext4.define('MCC.panel.MccImportPanel', {
         var colIdxs = [];
         Ext4.Array.forEach(colArray, function(col, idx){
             if (col){
-                columns.push({title: col.labels[0], className: 'dt-center'});
+                var colDef = {title: col.labels[0], className: 'dt-center'};
+                if (col.name === 'errors') {
+                    colDef.width = '350px';
+                    colDef.className = 'dt-left';
+                }
+
+                columns.push(colDef);
                 colIdxs.push(idx);
             }
         }, this);
 
         var data = [];
         var missingValues = false;
+        var hasErrors = false;
         Ext4.Array.forEach(parsedRows, function(row, rowIdx){
             var toAdd = [rowIdx + 1];
             Ext4.Array.forEach(colIdxs, function(colIdx){
@@ -479,7 +580,18 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     toAdd.push('MISSING');
                 }
                 else {
-                    toAdd.push(row[propName] || 'ND');
+                    var val = row[propName];
+                    if (Ext4.isArray(val)) {
+                        val = val.join('\n');
+                        toAdd.push(val || '');
+                    }
+                    else {
+                        toAdd.push(Ext4.isEmpty(val) ? '--' : val);
+                    }
+                }
+
+                if (row.errors && row.errors.length) {
+                    hasErrors = true;
                 }
 
             }, this);
@@ -510,33 +622,139 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         previewArea.doLayout();
 
-        if (missingValues){
-            Ext4.Msg.alert('Error', 'One or more rows is missing data.  Any required cells without values are marked MISSING');
+        if (missingValues || hasErrors){
+            Ext4.Msg.alert('Error', 'One or more rows is missing data or has errors.  Any required cells without values are marked MISSING. Warnings/errors are shown to the right.');
         }
     },
 
     onSubmit: function(e, dt, node, config){
         Ext4.Msg.wait('Saving...');
-        LABKEY.Ajax.request({
-            url: LABKEY.ActionURL.buildURL('singlecell', 'importTenx', Laboratory.Utils.getQueryContainerPath()),
-            method: 'POST',
-            jsonData: config.rowData.parsedRows,
+        var rawData = config.rowData.parsedRows;
+
+        var demographicsInserts = [];
+        var demographicsUpdates = [];
+
+        var observationInserts = [];
+        var weightInserts = [];
+
+        Ext4.Array.forEach(rawData, function(row){
+            if (row.existingRecord) {
+                demographicsUpdates.push({
+                    Id: row.Id,
+                    date: row.date,
+                    birth: row.birth,
+                    dam: row.dam,
+                    sire: row.sire,
+                    alternateIds: row.alternateIds,
+                    colony: row.colony,
+                    source: row.source,
+                    gender: row.gender,
+                    u24_status: row.u24_status,
+                    objectId: row.objectid,
+                    QCStateLabel: 'Completed'
+                });
+            }
+            else {
+                demographicsInserts.push({
+                    Id: row.Id,
+                    date: row.date,
+                    birth: row.birth,
+                    dam: row.dam,
+                    sire: row.sire,
+                    alternateIds: row.alternateIds,
+                    colony: row.colony,
+                    source: row.source,
+                    gender: row.gender,
+                    u24_status: row.u24_status,
+                    objectId: LABKEY.Utils.generateUUID().toUpperCase(),
+                    QCStateLabel: 'Completed'
+                });
+            }
+
+            if (row.weight && row.weightDate) {
+                weightInserts.push({
+                    Id: row.Id,
+                    date: row.weightDate,
+                    // data are stored in kg:
+                    weight: row.weight / 1000,
+                    objectId: LABKEY.Utils.generateUUID().toUpperCase(),
+                    QCStateLabel: 'Completed'
+                });
+            }
+
+            var obsFieldMap = {
+                availability: 'Availability',
+                housingStatus: 'Current Housing Status',
+                fertilityStatus: 'Fertility Status',
+                infantHistory: 'Infant History',
+                medicalHistory: 'Medical History'
+            }
+
+            Ext4.Array.forEach(Ext4.Object.getKeys(obsFieldMap), function(fn){
+                if (row[fn]) {
+                    observationInserts.push({
+                        Id: row.Id,
+                        date: row.date,
+                        category: obsFieldMap[fn],
+                        observation: row[fn],
+                        objectId: LABKEY.Utils.generateUUID().toUpperCase(),
+                        QCStateLabel: 'Completed'
+                    });
+                }
+            }, this);
+        })
+
+        var commands = [];
+        if (demographicsInserts.length) {
+            commands.push({
+                command: 'insert',
+                schemaName: 'study',
+                queryName: 'demographics',
+                rows: demographicsInserts
+            });
+        }
+
+        if (demographicsUpdates.length) {
+            commands.push({
+                command: 'update',
+                schemaName: 'study',
+                queryName: 'demographics',
+                rows: demographicsUpdates
+            });
+        }
+
+        if (weightInserts.length) {
+            commands.push({
+                command: 'insert',
+                schemaName: 'study',
+                queryName: 'weight',
+                rows: weightInserts
+            });
+        }
+
+        if (observationInserts.length) {
+            commands.push({
+                command: 'insert',
+                schemaName: 'study',
+                queryName: 'clinical_observations',
+                rows: observationInserts
+            });
+        }
+
+        LABKEY.Query.saveRows({
+            commands: commands,
             scope: this,
             success: function(){
                 Ext4.Msg.hide();
-                Ext4.Msg.alert('Success', 'Data Saved', function(){
-                    window.location = LABKEY.ActionURL.buildURL('query', 'executeQuery.view', Laboratory.Utils.getQueryContainerPath(), {'query.queryName': 'cdna_libraries', schemaName: 'singlecell', 'query.sort': '-created'})
+                Ext4.Msg.alert('Success', 'Data Saved!' +
+                        '<br>Demographic Records Created: ' + demographicsInserts.length +
+                        '<br>Demographic Records Updated: ' + demographicsUpdates.length +
+                        '<br>Weight Records Created: ' + weightInserts.length +
+                        '<br>Observation Records Created: ' + observationInserts.length, function(){
+                    window.location = LABKEY.ActionURL.buildURL('project', 'begin.view');
                 }, this);
             },
             failure: LDK.Utils.getErrorCallback()
         });
-    },
-
-    getSampleKey: function(data){
-        return [data.sampleId, data.subjectId, data.stim, data.assaytype, data.tissue, (Ext4.isDate(data.sampleDate) ? Ext4.Date.format(data.sampleDate, 'Y-m-d') : data.sampleDate)].join('|');
-    },
-
-    getSortKey: function(data){
-        return [this.getSampleKey(data), data.sortId, data.population, data.hto].join('|');
     }
 });

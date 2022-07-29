@@ -61,6 +61,12 @@ Ext4.onReady(function (){
                             name: 'Import/Re-import MCC Study',
                             url: LABKEY.ActionURL.buildURL('mcc', 'importStudy.view')
                         },{
+                            name: 'Ensure Study QC States Present',
+                            url: LABKEY.ActionURL.buildURL('ehr', 'ensureQcStates.view')
+                        },{
+                            name: 'Populate Lookups',
+                            url: LABKEY.ActionURL.buildURL('mcc', 'populateData.view')
+                        },{
                             name: 'Site-wide Animal to MCC ID Mapping',
                             url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', ctx['MCCContainer'], {schemaName: 'mcc', queryName: 'animalMapping', 'query.containerFilterName': 'AllFolders'})
                         }

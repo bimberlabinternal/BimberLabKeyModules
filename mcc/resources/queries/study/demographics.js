@@ -39,17 +39,21 @@ function onUpsert(helper, scriptErrors, row, oldRow){
             case 'M':
             case 'm':
             case 'Male':
+            case 'male':
                 row.gender = 'm';
                 break;
             case 'F':
             case 'f':
             case 'Female':
+            case 'female':
                 row.gender = 'f';
                 break;
             case 'U':
             case 'u':
             case 'Other':
+            case 'other':
             case 'Undetermined':
+            case 'undetermined':
                 row.gender = 'Unknown';
                 break;
         }
@@ -57,6 +61,9 @@ function onUpsert(helper, scriptErrors, row, oldRow){
 
     if (row.species) {
         switch (row.species) {
+            case 'Marmoset':
+            case 'marmoset':
+            case 'marm':
             case 'CJ':
             case 'cj':
                 row.species = 'CJ';

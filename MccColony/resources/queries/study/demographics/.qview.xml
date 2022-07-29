@@ -3,6 +3,7 @@
         <column name="Id"/>
         <column name="Id/mccAlias/externalAlias"/>
         <column name="colony"/>
+        <column name="source"/>
         <column name="u24_status"/>
         <column name="gender"/>
         <column name="Id/ageClass/label">

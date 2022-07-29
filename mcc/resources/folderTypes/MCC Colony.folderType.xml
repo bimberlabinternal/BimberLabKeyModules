@@ -29,6 +29,7 @@
     </folderTabs>
     <modules>
         <moduleName>MCC</moduleName>
+        <moduleName>MccColony</moduleName>
         <moduleName>Study</moduleName>
         <moduleName>Query</moduleName>
         <moduleName>Pipeline</moduleName>

@@ -55,7 +55,7 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
         String name = "weightGrams";
         if (ti.getColumn(name) == null && ti.getColumn("weight") != null)
         {
-            SQLFragment sql = new SQLFragment("CASE WHEN " + ExprColumn.STR_TABLE_ALIAS + ".weight IS NULL THEN NULL ELSE (" + ExprColumn.STR_TABLE_ALIAS + ".weight / 1000) END");
+            SQLFragment sql = new SQLFragment("CASE WHEN " + ExprColumn.STR_TABLE_ALIAS + ".weight IS NULL THEN NULL ELSE (" + ExprColumn.STR_TABLE_ALIAS + ".weight * 1000) END");
             ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, ti.getColumn("weight"));
             newCol.setLabel("Weight (g)");
 
