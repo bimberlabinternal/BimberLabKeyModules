@@ -12,7 +12,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Center'],
         allowRowSpan: false,
         alwaysShow: true,
-        allowBlank: false
+        allowBlank: false,
+        transform: 'center'
     },{
         name: 'Id',
         labels: ['Id', 'animal ID', 'AnimalId', 'MarmId', 'Marm Id'],
@@ -71,6 +72,13 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'Date',
         allowBlank: true
     },{
+        name: 'date',
+        labels: ['Observation Date', 'date'],
+        allowRowSpan: false,
+        alwaysShow: true,
+        allowBlank: false,
+        transform: 'date'
+    },{
         name: 'U24_status',
         labels: ['U24 status'],
         alwaysShow: false,
@@ -93,7 +101,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         name: 'infantHistory',
         labels: ['Infant History'],
         allowRowSpan: false,
-        alwaysShow: true
+        alwaysShow: true,
+        transform: 'infantHistory'
     },{
         name: 'medicalHistory',
         labels: ['Medical History'],
@@ -112,7 +121,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         return val;
     },
 
-    enforceAllowableValues: function(val, allowableValues, errors) {
+    enforceAllowableValues: function(val, allowableValues, row) {
         if (!val) {
             return val;
         }
@@ -123,56 +132,66 @@ Ext4.define('MCC.panel.MccImportPanel', {
             }
         }
 
-        console.error('bad value: ' + val);
+        row.errors = row.errors || [];
+        row.errors.push('Bad value: ' + val);
+
         return(val);
     },
 
     transforms: {
-        sex: function(val, panel) {
+        center: function(val, panel) {
+            return val || panel.CENTER;
+        },
+
+        date: function(val, panel) {
+            return val || panel.IMPORT_DATE;
+        },
+
+        sex: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['male', 'female']);
+            val = panel.enforceAllowableValues(val, ['male', 'female'], row);
 
             return(val);
         },
 
-        available: function(val, panel) {
+        available: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['not available for transfer', 'available for transfer']);
+            val = panel.enforceAllowableValues(val, ['not available for transfer', 'available for transfer'], row);
 
             return(val);
         },
 
-        housingStatus: function(val, panel) {
+        housingStatus: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['singly housed', 'natal family group', 'active breeding', 'social non breeding']);
+            val = panel.enforceAllowableValues(val, ['singly housed', 'natal family group', 'active breeding', 'social non breeding'], row);
 
             return(val);
         },
 
-        infantHistory: function(val, panel) {
+        infantHistory: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['no experience', 'sibling experience only', 'non successful offspring', 'successful rearing of offspring']);
+            val = panel.enforceAllowableValues(val, ['no experience', 'sibling experience only', 'non successful offspring', 'successful rearing of offspring'], row);
 
             return(val);
         },
 
-        medicalHistory: function(val, panel) {
+        medicalHistory: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['naive animal', 'animal assigned to invasive study']);
+            val = panel.enforceAllowableValues(val, ['naive animal', 'animal assigned to invasive study'], row);
 
             return(val);
         },
 
-        fertilityStatus: function(val, panel) {
+        fertilityStatus: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['no mating opportunity', 'mated no offspring produced', 'successful offspring produced', 'hormonal birth control', 'sterilized']);
+            val = panel.enforceAllowableValues(val, ['no mating opportunity', 'mated no offspring produced', 'successful offspring produced', 'hormonal birth control', 'sterilized'], row);
 
             return(val);
         },
 
-        u24: function(val, panel) {
+        u24: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['not assigned to U24 breeding colony', 'assigned to U24 breeding colong']);
+            val = panel.enforceAllowableValues(val, ['not assigned to U24 breeding colony', 'assigned to U24 breeding colong'], row);
 
             return(val);
         },
@@ -262,6 +281,12 @@ Ext4.define('MCC.panel.MccImportPanel', {
             return;
         }
 
+        this.CENTER = this.down('#centerName').getValue();
+        if (!this.CENTER) {
+            Ext4.Msg.alert('Error', 'Must provide the center name');
+            return;
+        }
+
         this.IMPORT_DATE = this.down('#importDate').getValue();
         if (this.IMPORT_DATE) {
             this.IMPORT_DATE = Ext4.Date.format(this.IMPORT_DATE, 'Y-m-d');
@@ -278,7 +303,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         var rows = LDK.Utils.CSVToArray(text, '\t');
         var colArray = this.parseHeader(rows.shift());
-        var parsedRows = this.parseRows(colArray, rows);
+        var errorsMsgs = [];
+        var parsedRows = this.parseRows(colArray, rows, errorsMsgs);
 
         // Load existing demographics:
         LABKEY.Query.selectRows({
@@ -288,13 +314,35 @@ Ext4.define('MCC.panel.MccImportPanel', {
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
-                console.log(results.rows);
 
                 var demographicsRecords = this.parseDemographics((results.rows));
 
-                this.renderPreview(colArray, parsedRows, demographicsRecords);
+                parsedRows = this.mergeWithDemographics(parsedRows, demographicsRecords, errorsMsgs);
+
+                if (errorsMsgs.length) {
+                    errorsMsgs = Ext4.unique(errorsMsgs);
+                    Ext4.Msg.alert('Error', errorsMsgs.join('<br>'));
+                    return null;
+                }
+
+                this.renderPreview(colArray, parsedRows);
             }
         });
+    },
+
+    mergeWithDemographics: function(rows, demographicsRecords, errorMsgs) {
+        Ext4.Array.forEach(rows, function(row){
+            row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id) > -1;
+
+            if (row.existingRecord) {
+                //TODO: check if we actually need to update?
+            }
+
+            //TODO: look for aliases?
+            //TODO: what about dam/sire?
+        }, this);
+
+        return rows;
     },
 
     parseDemographics: function(rows) {
@@ -383,7 +431,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         return colArray;
     },
 
-    parseRows: function(colArray, rows){
+    parseRows: function(colArray, rows, errorsMsgs){
         var ret = [];
         Ext4.Array.forEach(rows, function(row, rowIdx){
             var data = {
@@ -392,21 +440,11 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
             Ext4.Array.forEach(colArray, function(col, colIdx){
                 var cell = Ext4.isDefined(col.dataIdx) ? row[col.dataIdx] : '';
-                if (cell){
-                    if (col.transform && this.transforms[col.transform]){
-                        cell = this.transforms[col.transform](cell, this, data);
-                    }
-
-                    data[col.name] = cell;
+                if (col.transform && this.transforms[col.transform]){
+                    cell = this.transforms[col.transform](cell, this, data, errorsMsgs);
                 }
-                else {
-                    //allow transform even if value is null
-                    if (col.transform && this.transforms[col.transform]){
-                        cell = this.transforms[col.transform](cell, this, data);
-                    }
 
-                    data[col.name] = cell;
-                }
+                data[col.name] = cell;
             }, this);
 
             ret.push(data);
