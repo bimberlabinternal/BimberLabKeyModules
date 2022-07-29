@@ -24,6 +24,7 @@ import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
+import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.util.MailHelper;
@@ -226,21 +227,33 @@ public class TriggerHelper
         return new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("rowid"), rowid), null).getObject(String.class);
     }
 
-    // NOTE: this has been disabled. this code could be a point to add an automated email though
-//    public void possiblySetRabComplete(String requestId)
-//    {
-//        TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS);
-//        Set<String> reviews = new HashSet<>(new TableSelector(ti, PageFlowUtil.set("review"), new SimpleFilter(FieldKey.fromString("requestId"), requestId), null).getArrayList(String.class));
-//        if (!reviews.isEmpty() && !reviews.contains(null)) {
-//            TableInfo requestTable = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS);
-//            int rowId = new TableSelector(requestTable, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("objectid"), requestId), null).getObject(Integer.class);
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("rowid", rowId);
-//            map.put("status", MccManager.RequestStatus.PendingDecision.getLabel());
-//            map.put("modifiedby", _user.getUserId());
-//            map.put("modified", new Date());
-//
-//            Table.update(_user, requestTable, map, rowId);
-//        }
-//    }
+    public void possiblySendRabNotification(int reviewerId)
+    {
+        User u = UserManager.getUser(reviewerId);
+        if (u == null)
+        {
+            _log.error("An MCC RAB was entered with an unknown reviewerId: " + reviewerId);
+            return;
+        }
+
+        try
+        {
+            Set<Address> emails = Collections.singleton(new ValidEmail(u.getEmail()).getAddress());
+
+            MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
+            mail.setFrom("mcc@ohsu.edu");
+            mail.setSubject("MCC RAB Review Assignment");
+
+            Container rc = MccManager.get().getMCCRequestContainer();
+            DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
+            mail.setEncodedHtmlContent("One or more MCC requests were assigned to you for RAB Review. <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view and enter your review(s)</a>. Please reply to this email if you have any questions.");
+            mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[0]));
+
+            MailHelper.send(mail, _user, _container);
+        }
+        catch (Exception e)
+        {
+            _log.error("Unable to send MCC email", e);
+        }
+    }
 }

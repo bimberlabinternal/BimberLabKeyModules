@@ -17,6 +17,9 @@
                     <column columnName="u24_status">
                         <columnTitle>U24 Assigned?</columnTitle>
                     </column>
+                    <column columnName="colony">
+                        <columnTitle>Colony</columnTitle>
+                    </column>
                     <column columnName="project">
                         <isHidden>true</isHidden>
                     </column>
