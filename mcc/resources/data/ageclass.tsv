@@ -1,10 +1,19 @@
-species	ageclass	min	max	rowid
-CJ	3	2.0	8.0	1
-CJ	4	8.0		2
-CJ	1	0.0	1.0	3
-CJ	2	1.0	2.0	4
-Rhesus	2	1.0	4.0	5
-Rhesus	1	0.0	1.0	6
-Rhesus	3	4.0	20.0	7
-Rhesus	4	20.0		8
-Cynomolgus	3	5.0		9
+label	ageclass	gender	species	min	max
+Infant	1		Cynomolgus	0	1
+Infant	1		CJ	0	1
+Infant	1		Rhesus	0	1
+Juvenile	2	m	Cynomolgus	1	3
+Juvenile	2	m	CJ	1	3
+Juvenile	2	m	Rhesus	1	3
+Juvenile	2	f	Cynomolgus	1	4
+Juvenile	2	f	CJ	1	4
+Juvenile	2	f	Rhesus	1	4
+Adult	3	m	Cynomolgus	3	18
+Adult	3	m	CJ	3	18
+Adult	3	m	Rhesus	3	18
+Adult	3	f	Cynomolgus	4	18
+Adult	3	f	CJ	4	18
+Adult	3	f	Rhesus	4	18
+Senior	4		Cynomolgus	18
+Senior	4		CJ	18
+Senior	4		Rhesus	18
