@@ -20,17 +20,9 @@
         <column name="sire"/>
         <column name="birth"/>
         <column name="death"/>
-        <column name="MostRecentWeight">
-            <properties>
-                <property name="columnTitle" value="Current Weight (kg)"/>
-            </properties>
-        </column>
-        <column name="MostRecentWeightDate">
-            <properties>
-                <property name="columnTitle" value="Weight Date"/>
-            </properties>
-        </column>
-        <column name="source"/>
+        <column name="species"/>
+        <column name="Id/MostRecentWeight/MostRecentWeightGrams"/>
+        <column name="Id/MostRecentWeight/MostRecentWeightDate"/>
         <column name="alternateIds"/>
     </columns>
     <sorts>
