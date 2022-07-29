@@ -165,6 +165,13 @@ Ext4.onReady(function(){
             queryName: 'ageclass',
             pk: 'rowid'
         },{
+            label: 'Calculated Status Code',
+            populateFn: 'populateFromFile',
+            moduleName: 'mcc',
+            schemaName: 'ehr_lookups',
+            queryName: 'calculated_status_codes',
+            pk: 'rowid'
+        },{
             label: 'Conc Units',
             populateFn: 'populateFromFile',
             moduleName: 'ehr',

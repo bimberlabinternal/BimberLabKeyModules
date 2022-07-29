@@ -18,7 +18,10 @@
                         <columnTitle>U24 Assigned?</columnTitle>
                     </column>
                     <column columnName="colony">
-                        <columnTitle>Colony</columnTitle>
+                        <columnTitle>Current Colony</columnTitle>
+                    </column>
+                    <column columnName="source">
+                        <columnTitle>Source Colony</columnTitle>
                     </column>
                     <column columnName="project">
                         <isHidden>true</isHidden>

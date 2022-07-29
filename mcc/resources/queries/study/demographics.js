@@ -6,6 +6,8 @@
 
 require("ehr/triggers").initScript(this);
 
+var triggerHelper = new org.labkey.mcc.query.TriggerHelper(LABKEY.Security.currentUser.id, LABKEY.Security.currentContainer.id);
+
 function onInit(event, helper){
     helper.setScriptOptions({
         allowAnyId: true,
@@ -68,6 +70,25 @@ function onUpsert(helper, scriptErrors, row, oldRow){
             case 'cj':
                 row.species = 'CJ';
                 break;
+        }
+    }
+
+    if (row.source) {
+        switch (row.source) {
+            case 'In house':
+            case 'Inhouse':
+            case 'inhouse':
+                row.source = 'In-house';
+                break;
+        }
+    }
+}
+
+function onComplete(event, errors, helper){
+    if (!helper.isETL() && helper.getPublicParticipantsModified().length) {
+        var aliasesCreated = triggerHelper.ensureMccAliasExists(helper.getPublicParticipantsModified());
+        if (aliasesCreated) {
+            console.log('Total MCC aliases assigned during import: ' + aliasesCreated);
         }
     }
 }

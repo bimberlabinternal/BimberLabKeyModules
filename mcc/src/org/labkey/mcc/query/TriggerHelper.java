@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DbSchema;
@@ -17,6 +18,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
+import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
@@ -37,6 +39,7 @@ import javax.mail.Address;
 import javax.mail.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -254,6 +257,47 @@ public class TriggerHelper
         catch (Exception e)
         {
             _log.error("Unable to send MCC email", e);
+        }
+    }
+
+    public int ensureMccAliasExists(Collection<String> ids)
+    {
+        ids = new HashSet<>(ids);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN);
+
+        TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+        List<String> hasAlias = new TableSelector(ti, PageFlowUtil.set("subjectname"), filter, null).getArrayList(String.class);
+
+        ids.removeAll(hasAlias);
+        if (ids.isEmpty())
+        {
+            return 0;
+        }
+
+        try
+        {
+            final List<Map<String, Object>> toAdd = new ArrayList<>();
+            ids.forEach(id -> {
+                CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
+                row.put("subjectname", id);
+                row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
+
+                toAdd.add(row);
+            });
+
+            BatchValidationException bve = new BatchValidationException();
+            ti.getUpdateService().insertRows(_user, _container, toAdd, bve, null, null);
+            if (bve.hasErrors())
+            {
+                throw bve;
+            }
+
+            return toAdd.size();
+        }
+        catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
+        {
+            _log.error("Error auto-creating MCC aliases during insert", e);
+            return 0;
         }
     }
 }

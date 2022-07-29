@@ -35,6 +35,9 @@ Ext4.onReady(function (){
                     },{
                         name: 'Animal to MCC ID Mapping',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'mcc', queryName: 'animalMapping'})
+                    },{
+                        name: 'Observation Summary',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'study', queryName: 'mostRecentObservationsPivoted'})
                     }]
                 },{
                     header: 'Configuration/Data Management',
