@@ -1,0 +1,51 @@
+<script type="text/javascript">
+
+Ext4.onReady(function (){
+    var webpart = <%=webpartContext%>;
+
+    var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+    if(!ctx)
+        return;
+
+    Ext4.create('Ext.panel.Panel', {
+        renderTo: webpart.wrapperDivId,
+        border: false,
+        items: [{
+            xtype: 'panel',
+            border: false,
+            defaults: {
+                border: false
+            },
+            items: [{
+                html: 'This folder contains the raw animal data for a colony or set of colonies. Below are links to view and manage these data.'
+            }]
+        },{
+            xtype: 'ldk-navpanel',
+            style: 'padding-top: 20px;',
+            border: false,
+            sections: [
+                {
+                    header: 'Data and Management',
+                    items: [{
+                        name: 'View Study Datasets',
+                        url: LABKEY.ActionURL.buildURL('study', 'datasets')
+                    },{
+                        name: 'Import Excel-Based Data',
+                        url: LABKEY.ActionURL.buildURL('mcc', 'mccDataImport')
+                    }]
+                },{
+                    header: 'Configuration/Data Management',
+                    items: [{
+                        name: 'Import/Re-import MCC Study',
+                        url: LABKEY.ActionURL.buildURL('mcc', 'importStudy.view')
+                    },{
+                        name: 'Animal to MCC ID Mapping',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'mcc', queryName: 'animalMapping'})
+                    }]
+                }
+            ]
+        }]
+    });
+});
+
+</script>

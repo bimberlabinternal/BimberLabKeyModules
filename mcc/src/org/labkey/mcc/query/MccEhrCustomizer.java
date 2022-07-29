@@ -4,9 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.JdbcType;
+import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.WrappedColumn;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
+import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.LookupForeignKey;
 import org.labkey.api.query.UserSchema;
@@ -34,6 +37,10 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             {
                 customizeDemographics((AbstractTableInfo)table);
             }
+            else if (matches(table, "study", "weight"))
+            {
+                customizeWeight((AbstractTableInfo)table);
+            }
         }
     }
 
@@ -41,6 +48,19 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
     {
         addMccAlias(ti, "dam", "damMccAlias", "Dam MCC Alias");
         addMccAlias(ti, "sire", "sireMccAlias", "Sire MCC Alias");
+    }
+
+    private void customizeWeight(AbstractTableInfo ti)
+    {
+        String name = "weightGrams";
+        if (ti.getColumn(name) == null)
+        {
+            SQLFragment sql = new SQLFragment("CASE WHEN " + ExprColumn.STR_TABLE_ALIAS + ".weight IS NULL THEN NULL ELSE (" + ExprColumn.STR_TABLE_ALIAS + ".weight / 1000) END");
+            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, ti.getColumn("weight"));
+            newCol.setLabel("Weight (g)");
+
+            ti.addColumn(newCol);
+        }
     }
 
     private void customizeAnimalTable(AbstractTableInfo ti)
