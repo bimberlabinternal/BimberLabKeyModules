@@ -2,9 +2,12 @@ package org.labkey.mgap;
 
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.LDKService;
+import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipeRoot;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.FieldKey;
@@ -64,6 +67,8 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             log.error("LDK Background user not set, cannot run mGAP Maintenance task");
             return;
         }
+
+        checkForDuplicateAliases(log, u);
 
         // Find expected folder names:
         List<String> releaseIds = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("objectid")).getArrayList(String.class);
@@ -168,6 +173,31 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         for (File f : missingFiles)
         {
             log.error("Missing expected file: " + f.getPath());
+        }
+    }
+
+    private void checkForDuplicateAliases(Logger log, User u)
+    {
+        // Find all container Ids in use in the table:
+        Set<String> containerIds = new HashSet<>(new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_ANIMAL_MAPPING), PageFlowUtil.set("container")).getArrayList(String.class));
+        for (String containerId : containerIds)
+        {
+            Container c = ContainerManager.getForId(containerId);
+            if (c == null)
+            {
+                log.error("Unable to find container: " + containerId);
+            }
+
+            if (!c.getActiveModules().contains(ModuleLoader.getInstance().getModule(mGAPModule.class)))
+            {
+                continue;
+            }
+
+            TableInfo ti = QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable("duplicateAliases");
+            if (new TableSelector(ti).exists())
+            {
+                log.error("Duplicate mGAP aliases found in the folder: " + c.getPath() + ". Please load the query mgap/duplicateAliases for more detail");
+            }
         }
     }
 }
