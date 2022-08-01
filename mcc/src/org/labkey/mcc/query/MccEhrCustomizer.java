@@ -41,6 +41,10 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             {
                 customizeWeight((AbstractTableInfo)table);
             }
+            else if (matches(table, "study", "kinship"))
+            {
+                customizeKinship((AbstractTableInfo)table);
+            }
         }
     }
 
@@ -48,6 +52,11 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
     {
         addMccAlias(ti, "dam", "damMccAlias", "Dam MCC Alias");
         addMccAlias(ti, "sire", "sireMccAlias", "Sire MCC Alias");
+    }
+
+    private void customizeKinship(AbstractTableInfo ti)
+    {
+        addMccAlias(ti, "Id2", "id2MccAlias", "Id 2 MCC Alias");
     }
 
     private void customizeWeight(AbstractTableInfo ti)
