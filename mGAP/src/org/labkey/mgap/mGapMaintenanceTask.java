@@ -43,6 +43,27 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
     @Override
     public void run(Logger log)
     {
+        // Note: perform this check first as sort of an opt-in.
+        // If this property is set, the admin should expect this to run and report errors if not completely configured.
+        Container c = mGAPManager.get().getMGapContainer();
+        if (c == null)
+        {
+            return;
+        }
+
+        User u = LDKService.get().getBackgroundAdminUser();
+        if (u == null)
+        {
+            log.error("LDK Background user not set, cannot run mGAP Maintenance task");
+            return;
+        }
+
+        checkForDuplicateAliases(log, u);
+        checkMGapFiles(log, u);
+    }
+
+    private void checkMGapFiles(Logger log, User u)
+    {
         Container c = mGAPManager.get().getMGapContainer();
         if (c == null)
         {
@@ -60,15 +81,6 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         {
             return;
         }
-
-        User u = LDKService.get().getBackgroundAdminUser();
-        if (u == null)
-        {
-            log.error("LDK Background user not set, cannot run mGAP Maintenance task");
-            return;
-        }
-
-        checkForDuplicateAliases(log, u);
 
         // Find expected folder names:
         List<String> releaseIds = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("objectid")).getArrayList(String.class);
