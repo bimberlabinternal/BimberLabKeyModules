@@ -28,6 +28,11 @@
             url: LABKEY.ActionURL.buildURL('project', 'begin', ctx['MCCContainer']),
             visible: true
         }, {
+            label: 'Genetics Dashboard',
+            name: 'geneticsPlot',
+            url: LABKEY.ActionURL.buildURL('mcc', 'geneticsPlot', ctx['MCCContainer']),
+            visible: true
+        }, {
             label: 'Request Help / Contact',
             name: 'help',
             url: LABKEY.ActionURL.buildURL('mcc', 'contact', 'home'),
