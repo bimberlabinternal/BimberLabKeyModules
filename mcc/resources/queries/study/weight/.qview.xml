@@ -2,7 +2,7 @@
    <columns>
         <column name="Id"/>
         <column name="date" />
-        <column name="weight" />
+        <column name="weightGrams" />
         <column name="remark" />
        <column name="qcstate" />
        <column name="taskid" />

@@ -72,6 +72,8 @@ public class MccUserSchema extends SimpleUserSchema
         return super.createWrappedTable(name, schemaTable, cf);
     }
 
+    // TODO: make automatic aggregation queries for ETLs
+
     private CustomPermissionsTable<?> addScoreColumns(CustomPermissionsTable<?> ti)
     {
         if (ti.getColumn("rabReviewStatus") == null)

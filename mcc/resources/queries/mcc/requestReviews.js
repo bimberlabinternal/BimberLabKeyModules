@@ -27,17 +27,23 @@ function afterUpdate(row, oldRow, errors){
 
 function afterUpsert(row, oldRow, errors) {
     if (row.review) {
-        var requestId = row.requestId || oldRow.requestId
+        var requestId = row.requestId || oldRow.requestId;
         if (!requestId) {
-            console.error('No requestId for requestScore update')
+            console.error('No requestId for requestReview update')
             console.error(row)
             return
         }
 
-        // NOTE: this has been disabled. this code could be a point to add an automated email though
-        // Only perform this test the first time the review is added
-        //if (!oldRow || !oldRow.review) {
-        //    triggerHelper.possiblySetRabComplete(requestId);
-        //}
+        var reviewerId = row.reviewerId || oldRow.reviewerId;
+        if (!reviewerId) {
+            console.error('No reviewerId for requestReview')
+            console.error(row)
+        }
+        else {
+            // NOTE: send a notification if this is a new row, if this is the first time the row has a reviewerId, or if the reviewerId changed
+            if (!oldRow || !oldRow.reviewerId || (oldRow.reviewerId && row.reviewerId && oldRow.reviewerId !== row.reviewerId)) {
+                triggerHelper.possiblySendRabNotification(reviewerId);
+            }
+        }
     }
 }

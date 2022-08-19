@@ -4,58 +4,58 @@
         <dataset name="flags" id="5019" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="parentage" id="5025" category="Colony Management" type="Standard">
+        <dataset name="parentage" id="5025" showByDefault="true" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
         <dataset name="birth" id="1007" category="Colony Management" demographicData="true" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="encounters" id="1067" category="Clinical" type="Standard">
+        <dataset name="encounters" id="1067" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="medicationOrders" id="1037" category="Clinical" type="Standard">
+        <dataset name="medicationOrders" id="1037" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="treatment_order" id="5056" category="Clinical" type="Standard">
+        <dataset name="treatment_order" id="5056" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="clinremarks" id="1047" category="Clinical" type="Standard">
+        <dataset name="clinremarks" id="1047" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>
         <dataset name="medicationAdministration" id="1014" category="Clinical" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="weight" id="1045" category="Clinical" type="Standard">
+        <dataset name="weight" id="1045" showByDefault="true" category="Clinical" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="labwork" id="1073" category="ClinPath" type="Standard">
+        <dataset name="labwork" id="1073" showByDefault="false" category="ClinPath" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="labworkResults" id="1074" category="ClinPath" type="Standard">
+        <dataset name="labworkResults" id="1074" showByDefault="false" category="ClinPath" type="Standard">
             <tags/>
         </dataset>
         <dataset name="transfers" id="1001" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="deaths" id="1048" category="Colony Management" demographicData="true" type="Standard">
+        <dataset name="deaths" id="1048" showByDefault="false" category="Colony Management" demographicData="true" type="Standard">
             <tags/>
         </dataset>
         <dataset name="demographics" id="1012" category="Colony Management" demographicData="true" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="departure" id="1013" category="Colony Management" type="Standard">
+        <dataset name="departure" id="1013" showByDefault="false" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
         <dataset name="assignment" id="1002" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="problem" id="1030" category="Clinical" type="Standard">
+        <dataset name="problem" id="1030" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>
         <dataset name="housing" id="1018" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="clinical_observations" id="5006" showByDefault="false" category="Clinical" type="Standard">
+        <dataset name="clinical_observations" id="5006" showByDefault="true" category="Clinical" type="Standard">
             <tags/>
         </dataset>
         <dataset name="kinship" id="5007" showByDefault="true" category="Colony Management" type="Standard">
