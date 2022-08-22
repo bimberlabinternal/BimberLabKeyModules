@@ -43,6 +43,8 @@ import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
+import org.labkey.mgap.pipeline.VcfComparisonStep;
+import org.labkey.mgap.pipeline.mGapReleaseComparisonStep;
 import org.labkey.mgap.pipeline.mGapReleaseGenerator;
 import org.labkey.mgap.query.mGAPUserSchema;
 
@@ -112,6 +114,8 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new AnnotationStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RenameSamplesForMgapStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new VcfComparisonStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new mGapReleaseComparisonStep.Provider());
 
                 _hasRegistered = true;
             }
