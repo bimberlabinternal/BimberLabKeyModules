@@ -24,9 +24,10 @@
                         <url></url>
                     </column>
                     <column columnName="kinship">
+                        <columnTitle>Kinship Coefficient</columnTitle>
                     </column>
                     <column columnName="relationship">
-
+                        <columnTitle>Relationship</columnTitle>
                     </column>
                     <column columnName="QCState">
                         <columnTitle>Record Status</columnTitle>

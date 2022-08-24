@@ -35,7 +35,9 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.ehr.EHRService;
 import org.labkey.api.module.AllowedDuringUpgrade;
+import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.module.ModuleProperty;
 import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
@@ -686,7 +688,7 @@ public class MccController extends SpringActionController
             setTitle("Import MCC Study");
 
             StringBuilder sb = new StringBuilder();
-            sb.append("This will import the default MCC study in this folder and create other resources, like QCStates. Do you want to continue?");
+            sb.append("This will import the default MCC study in this folder and set the EHRStudyContainer property to point to this container. Do you want to continue?");
 
             return new HtmlView(HtmlString.unsafe(sb.toString()));
         }
@@ -694,6 +696,10 @@ public class MccController extends SpringActionController
         @Override
         public boolean handlePost(Object o, BindException errors) throws Exception
         {
+            Module ehr = ModuleLoader.getInstance().getModule("ehr");
+            ModuleProperty mp = ehr.getModuleProperties().get("EHRStudyContainer");
+            mp.saveValue(getUser(), getContainer(), getContainer().getPath());
+
             EHRService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
 
             return true;

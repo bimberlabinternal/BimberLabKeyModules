@@ -28,17 +28,35 @@ public class LiftoverVcfRunner extends PicardWrapper
         getLogger().info("Liftover VCF: " + inputVcf.getPath());
 
         List<String> params = getBaseArgs();
-        params.add("INPUT=" + inputVcf.getPath());
-        params.add("OUTPUT=" + outputVcf.getPath());
-        params.add("CHAIN=" + chainFile.getPath());
-        params.add("REFERENCE_SEQUENCE=" + referenceFasta.getPath());
-        params.add("WRITE_ORIGINAL_POSITION=true");
-        params.add("WRITE_ORIGINAL_ALLELES=true");
-        params.add("LOG_FAILED_INTERVALS=false");
-        params.add("LIFTOVER_MIN_MATCH=" + minPctMatch);
+        params.add("-INPUT");
+        params.add(inputVcf.getPath());
+
+        params.add("-OUTPUT");
+        params.add(outputVcf.getPath());
+
+        params.add("-CHAIN");
+        params.add(chainFile.getPath());
+
+        params.add("-REFERENCE_SEQUENCE");
+        params.add(referenceFasta.getPath());
+
+        params.add("-WRITE_ORIGINAL_POSITION");
+        params.add("true");
+
+        params.add("-WRITE_ORIGINAL_ALLELES");
+        params.add("true");
+
+        params.add("-LOG_FAILED_INTERVALS");
+        params.add("false");
+
+        params.add("-LIFTOVER_MIN_MATCH");
+        params.add(String.valueOf(minPctMatch));
+
         if (rejectVcf != null)
-            params.add("REJECT=" + rejectVcf.getPath());
-        inferMaxRecordsInRam(params);
+        {
+            params.add("-REJECT");
+            params.add(rejectVcf.getPath());
+        }
 
         execute(params);
 
@@ -60,18 +78,5 @@ public class LiftoverVcfRunner extends PicardWrapper
         }
 
         return outputVcf;
-    }
-
-    @Override
-    protected File getJar()
-    {
-        //NOTE: this has been added to use new features/arguments not yet in the release, and should be reverted once picard is updated
-        File ret = super.getJar();
-        if (ret != null)
-        {
-            ret = new File(ret.getParentFile(), "picard-liftover.jar");
-        }
-
-        return ret;
     }
 }
