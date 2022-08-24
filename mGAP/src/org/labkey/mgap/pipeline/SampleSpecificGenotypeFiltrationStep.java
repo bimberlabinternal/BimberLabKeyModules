@@ -53,13 +53,19 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
                     ToolParameterDescriptor.create("wgsMaxDepth", "WGS Max Depth", "The max depth for WGS samples.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
                     }}, 50),
+                    ToolParameterDescriptor.create("wgsMinQual", "WGS Min Qual", "The min genotype qual for WGS samples.", "ldk-integerfield", new JSONObject(){{
+                        put("minValue", 0);
+                    }}, 30),
                     ToolParameterDescriptor.create("wxsMinDepth", "WXS Min Depth", "The min depth for WXS samples.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
                     }}, 10),
                     ToolParameterDescriptor.create("wxsMaxDepth", "WXS Max Depth", "The max depth for WXS samples.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
-                    }}, null)
-            ), null, "");
+                    }}, null),
+                    ToolParameterDescriptor.create("wxsMinQual", "WXS Min Qual", "The min genotype qual for WXS samples.", "ldk-integerfield", new JSONObject(){{
+                        put("minValue", 0);
+                    }}, 30)
+                    ), null, "");
         }
 
         @Override
@@ -150,6 +156,15 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
             params.add("WGS:DP>" + wgsMaxDepth);
         }
 
+        Integer wgsMinQual = getProvider().getParameterByName("wgsMinQual").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
+        if (wgsMinQual != null)
+        {
+            params.add("--genotype-filter-name");
+            params.add("GQ-LT" + wgsMinQual);
+            params.add("--genotype-filter-expression");
+            params.add("WGS:GQ<" + wgsMinQual);
+        }
+
         Integer wxsMinDepth = getProvider().getParameterByName("wxsMinDepth").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
         if (wxsMinDepth != null)
         {
@@ -166,6 +181,15 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
             params.add("DP-GT" + wxsMaxDepth);
             params.add("--genotype-filter-expression");
             params.add("WXS:DP>" + wxsMaxDepth);
+        }
+
+        Integer wxsMinQual = getProvider().getParameterByName("wxsMinQual").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
+        if (wxsMinQual != null)
+        {
+            params.add("--genotype-filter-name");
+            params.add("GQ-LT" + wxsMinQual);
+            params.add("--genotype-filter-expression");
+            params.add("WXS:GQ<" + wxsMinQual);
         }
 
         params.add("--sample-map");
