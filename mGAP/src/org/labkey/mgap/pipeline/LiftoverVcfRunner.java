@@ -23,38 +23,38 @@ public class LiftoverVcfRunner extends PicardWrapper
         return "LiftoverVcf";
     }
 
-    public File doLiftover(File inputVcf, File chainFile, File referenceFasta, @Nullable File rejectVcf, File outputVcf, double minPctMatch) throws PipelineJobException
+    public void doLiftover(File inputVcf, File chainFile, File referenceFasta, @Nullable File rejectVcf, File outputVcf, double minPctMatch) throws PipelineJobException
     {
         getLogger().info("Liftover VCF: " + inputVcf.getPath());
 
         List<String> params = getBaseArgs();
-        params.add("-INPUT");
+        params.add("--INPUT");
         params.add(inputVcf.getPath());
 
-        params.add("-OUTPUT");
+        params.add("--OUTPUT");
         params.add(outputVcf.getPath());
 
-        params.add("-CHAIN");
+        params.add("--CHAIN");
         params.add(chainFile.getPath());
 
-        params.add("-REFERENCE_SEQUENCE");
+        params.add("--REFERENCE_SEQUENCE");
         params.add(referenceFasta.getPath());
 
-        params.add("-WRITE_ORIGINAL_POSITION");
+        params.add("--WRITE_ORIGINAL_POSITION");
         params.add("true");
 
-        params.add("-WRITE_ORIGINAL_ALLELES");
+        params.add("--WRITE_ORIGINAL_ALLELES");
         params.add("true");
 
-        params.add("-LOG_FAILED_INTERVALS");
+        params.add("--LOG_FAILED_INTERVALS");
         params.add("false");
 
-        params.add("-LIFTOVER_MIN_MATCH");
+        params.add("--LIFTOVER_MIN_MATCH");
         params.add(String.valueOf(minPctMatch));
 
         if (rejectVcf != null)
         {
-            params.add("-REJECT");
+            params.add("--REJECT");
             params.add(rejectVcf.getPath());
         }
 
@@ -76,7 +76,5 @@ public class LiftoverVcfRunner extends PicardWrapper
                 throw new PipelineJobException(e);
             }
         }
-
-        return outputVcf;
     }
 }
