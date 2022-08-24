@@ -81,7 +81,7 @@ SELECT
     d.gender,
     d.birth,
     d.death,
-    d.center as colony,
+    d.colony,
     d.damMccAlias.externalAlias as dam,
     d.sireMccAlias.externalAlias as sire,
     d.dam as originalDam,

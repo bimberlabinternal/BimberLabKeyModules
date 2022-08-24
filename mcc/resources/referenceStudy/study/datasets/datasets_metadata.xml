@@ -649,10 +649,10 @@
             <column columnName="colony">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="global_id">
+            <column columnName="source">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="center">
+            <column columnName="global_id">
                 <datatype>varchar</datatype>
             </column>
             <column columnName="alternateIds">

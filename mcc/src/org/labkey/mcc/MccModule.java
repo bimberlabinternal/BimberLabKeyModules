@@ -28,6 +28,7 @@ import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
 import org.labkey.api.query.QuerySchema;
 import org.labkey.api.security.roles.RoleManager;
+import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mcc.query.MccEhrCustomizer;
@@ -103,6 +104,8 @@ public class MccModule extends ExtendedSimpleModule
     {
         registerEHRResources();
         LDKService.get().registerQueryButton(new ReviewerNotifyButton(), MccSchema.NAME, MccSchema.TABLE_REQUEST_REVIEWS);
+
+        SystemMaintenance.addTask(new MccMaintenanceTask());
     }
 
     @Override

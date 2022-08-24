@@ -103,6 +103,7 @@ public class MccManager
     }
 
     public static final String ContainerPropName = "MCCContainer";
+    public static final String MCCInternalDataContainerPropName = "MCCInternalDataContainer";
     public static final String NotifyPropName = "MCCContactUsers";
     public static final String MCCRequestNotificationUsers = "MCCRequestNotificationUsers";
     public static final String MCCRequestContainer = "MCCRequestContainer";
@@ -141,6 +142,17 @@ public class MccManager
     public String getMccAdminEmail()
     {
         return "mcc@ohsu.edu";
+    }
+
+    public Container getMCCInternalDataContainer()
+    {
+        Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
+        ModuleProperty mp = m.getModuleProperties().get(MccManager.MCCInternalDataContainerPropName);
+        String path = mp.getEffectiveValue(ContainerManager.getRoot());
+        if (path == null)
+            return null;
+
+        return ContainerManager.getForPath(path);
     }
 
     public Container getMCCContainer()
