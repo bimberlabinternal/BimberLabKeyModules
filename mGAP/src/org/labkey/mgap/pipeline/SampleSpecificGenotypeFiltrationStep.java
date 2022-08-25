@@ -80,6 +80,7 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
     {
         try (PrintWriter writer = PrintWriters.getPrintWriter(getSampleMapFile()))
         {
+            getPipelineCtx().getLogger().info("Writing Sample Map for WGS/WXS filtering");
             for (SequenceOutputFile so : inputFiles)
             {
                 if (so.getReadset() == null)
@@ -126,7 +127,7 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
 
     private File getSampleMapFile()
     {
-        return new File(getPipelineCtx().getSourceDirectory(), "sampleMap.txt");
+        return new File(getPipelineCtx().getJob().isSplitJob() ? getPipelineCtx().getSourceDirectory().getParentFile() : getPipelineCtx().getSourceDirectory(), "sampleMap.txt");
     }
 
     @Override
