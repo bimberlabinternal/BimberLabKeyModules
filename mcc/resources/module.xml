@@ -2,7 +2,7 @@
     <properties>
         <propertyDescriptor name="MCCContainer">
             <canSetPerContainer>false</canSetPerContainer>
-            <description>This is the path to the container holding the primary MCC Study.  Use of slashes is very important - it should be in the format '/myProject/mcc'</description>
+            <description>This is the path to the container holding the primary MCC Study with aggregated data.  Use of slashes is very important - it should be in the format '/myProject/mcc'</description>
             <editPermissions>
                 <permission>ADMIN</permission>
             </editPermissions>
@@ -10,6 +10,13 @@
         <propertyDescriptor name="MCCRequestContainer">
             <canSetPerContainer>false</canSetPerContainer>
             <description>This is the path to the container used to manage MCC animal requests. Use of slashes is very important - it should be in the format '/myProject/mcc'</description>
+            <editPermissions>
+                <permission>ADMIN</permission>
+            </editPermissions>
+        </propertyDescriptor>
+        <propertyDescriptor name="MCCInternalDataContainer">
+            <canSetPerContainer>false</canSetPerContainer>
+            <description>This is the path to the container parent for the internal MCC Studies, each with raw data.  Use of slashes is very important - it should be in the format '/myProject/mcc'</description>
             <editPermissions>
                 <permission>ADMIN</permission>
             </editPermissions>
