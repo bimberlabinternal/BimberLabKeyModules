@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DbSchema;
@@ -17,6 +18,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
+import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
@@ -24,6 +26,7 @@ import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
+import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.util.MailHelper;
@@ -36,6 +39,7 @@ import javax.mail.Address;
 import javax.mail.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -226,21 +230,74 @@ public class TriggerHelper
         return new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("rowid"), rowid), null).getObject(String.class);
     }
 
-    // NOTE: this has been disabled. this code could be a point to add an automated email though
-//    public void possiblySetRabComplete(String requestId)
-//    {
-//        TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS);
-//        Set<String> reviews = new HashSet<>(new TableSelector(ti, PageFlowUtil.set("review"), new SimpleFilter(FieldKey.fromString("requestId"), requestId), null).getArrayList(String.class));
-//        if (!reviews.isEmpty() && !reviews.contains(null)) {
-//            TableInfo requestTable = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_ANIMAL_REQUESTS);
-//            int rowId = new TableSelector(requestTable, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("objectid"), requestId), null).getObject(Integer.class);
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("rowid", rowId);
-//            map.put("status", MccManager.RequestStatus.PendingDecision.getLabel());
-//            map.put("modifiedby", _user.getUserId());
-//            map.put("modified", new Date());
-//
-//            Table.update(_user, requestTable, map, rowId);
-//        }
-//    }
+    public void possiblySendRabNotification(int reviewerId)
+    {
+        User u = UserManager.getUser(reviewerId);
+        if (u == null)
+        {
+            _log.error("An MCC RAB was entered with an unknown reviewerId: " + reviewerId);
+            return;
+        }
+
+        try
+        {
+            Set<Address> emails = Collections.singleton(new ValidEmail(u.getEmail()).getAddress());
+
+            MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
+            mail.setFrom("mcc@ohsu.edu");
+            mail.setSubject("MCC RAB Review Assignment");
+
+            Container rc = MccManager.get().getMCCRequestContainer();
+            DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
+            mail.setEncodedHtmlContent("One or more MCC requests were assigned to you for RAB Review. <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view and enter your review(s)</a>. Please reply to this email if you have any questions.");
+            mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[0]));
+
+            MailHelper.send(mail, _user, _container);
+        }
+        catch (Exception e)
+        {
+            _log.error("Unable to send MCC email", e);
+        }
+    }
+
+    public int ensureMccAliasExists(Collection<String> ids)
+    {
+        ids = new HashSet<>(ids);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN);
+
+        TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+        List<String> hasAlias = new TableSelector(ti, PageFlowUtil.set("subjectname"), filter, null).getArrayList(String.class);
+
+        ids.removeAll(hasAlias);
+        if (ids.isEmpty())
+        {
+            return 0;
+        }
+
+        try
+        {
+            final List<Map<String, Object>> toAdd = new ArrayList<>();
+            ids.forEach(id -> {
+                CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
+                row.put("subjectname", id);
+                row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
+
+                toAdd.add(row);
+            });
+
+            BatchValidationException bve = new BatchValidationException();
+            ti.getUpdateService().insertRows(_user, _container, toAdd, bve, null, null);
+            if (bve.hasErrors())
+            {
+                throw bve;
+            }
+
+            return toAdd.size();
+        }
+        catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
+        {
+            _log.error("Error auto-creating MCC aliases during insert", e);
+            return 0;
+        }
+    }
 }

@@ -10,7 +10,7 @@ public class MccDataAdminRole extends AbstractRole
 {
     public MccDataAdminRole()
     {
-        super("MccDataAdmin", "These users can administer data and animal requests", ReadPermission.class, InsertPermission.class, UpdatePermission.class, MccRequestorPermission.class, MccDataAdminPermission.class, MccRequestAdminPermission.class);
+        super("MccDataAdmin", "These users can administer data and animal requests", ReadPermission.class, InsertPermission.class, UpdatePermission.class, MccRequestorPermission.class, MccDataAdminPermission.class, MccRequestAdminPermission.class, MccRabReviewPermission.class);
     }
 
     @Override

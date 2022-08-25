@@ -1,0 +1,19 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Assignments">
+    <columns>
+        <column name="Id"/>
+        <column name="Id/mccAlias/externalAlias"/>
+        <column name="Id/Dataset/Demographics/gender">
+            <properties>
+                <property name="columnTitle" value="Gender"/>
+            </properties>
+        </column>
+        <column name="project"/>
+        <column name="date"/>
+        <column name="enddate"/>
+        <column name="qcstate" />
+        <column name="taskid" />
+    </columns>
+   <sorts>
+       <sort column="date" descending="true"/>
+   </sorts>
+</customView>

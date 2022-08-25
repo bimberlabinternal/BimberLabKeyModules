@@ -18,9 +18,9 @@
         <column name="sire"/>
         <column name="birth"/>
         <column name="death"/>
-        <column name="MostRecentWeight">
+        <column name="MostRecentWeightGrams">
             <properties>
-                <property name="columnTitle" value="Current Weight (kg)"/>
+                <property name="columnTitle" value="Current Weight (g)"/>
             </properties>
         </column>
         <column name="MostRecentWeightDate">
