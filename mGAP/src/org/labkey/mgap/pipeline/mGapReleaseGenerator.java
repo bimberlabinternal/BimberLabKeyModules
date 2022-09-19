@@ -1105,7 +1105,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         omimds.addAll(parseRawOmimd(vc, ctx.getLogger()));
                     }
 
-                    Set<String> overlappingGenes = new HashSet<>();
+                    Set<String> overlappingGenes = new TreeSet<>();
                     if (vc.getAttribute("ANN") != null)
                     {
                         List<String> anns = vc.getAttributeAsStringList("ANN", "");
@@ -1148,6 +1148,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                             }
                         }
 
+                        Set<String> overlappingGenesReported = new HashSet<>();
                         for (String ann : anns)
                         {
                             if (StringUtils.isEmpty(ann))
@@ -1171,7 +1172,14 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     description += "; AA Change: " + tokens[10];
                                 }
 
-                                maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
+                                String overlappingGenesJoin = StringUtils.join(overlappingGenes, ",");
+                                if (!overlappingGenesReported.contains(overlappingGenesJoin))
+                                {
+                                    maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
+
+                                    // NOTE: a given site could have multiple overlapping ORFs (usually different isoforms), so if we hit one allow this to tag that site and skip the remaining.
+                                    overlappingGenesReported.add(overlappingGenesJoin);
+                                }
                             }
                         }
                     }
