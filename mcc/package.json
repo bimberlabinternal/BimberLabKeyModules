@@ -11,13 +11,11 @@
     "test": "cross-env NODE_ENV=test jest"
   },
   "dependencies": {
-    "@labkey/api": "^1.12.1",
-    "@labkey/components": "^2.202.0",
-    "chart.js": "^3.7.0",
+    "@labkey/api": "^1.15.0",
+    "@labkey/components": "^2.218.1",
+    "chart.js": "^3.9.1",
     "react-chartjs-2": "^4.3.1",
     "uuid": "^8.3.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
     "react-hot-loader": "^4.13.0",
     "react-tooltip": "^4.2.21",
     "@material-ui/core": "^4.12.4",
