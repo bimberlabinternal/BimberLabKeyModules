@@ -90,7 +90,7 @@ function beforeDelete(row, errors){
 }
 
 function calculatePreliminaryScore(row, oldRow) {
-    var fields = ['institutiontype', 'earlystageinvestigator', 'fundingsource', 'existingnhpfacilities', 'existingmarmosetcolony', 'isbreedinganimals'];
+    var fields = ['institutiontype', 'earlystageinvestigator', 'fundingsource', 'existingnhpfacilities', 'existingmarmosetcolony', 'breedinganimals'];
     if (oldRow) {
         fields.forEach(function(fieldName){
             if (row[fieldName] === undefined) {
@@ -134,8 +134,7 @@ function calculatePreliminaryScore(row, oldRow) {
     score += row.existingnhpfacilities === 'existing' ? 1 : -1;
     score += row.existingmarmosetcolony === 'existing' ? 1 : 0;
 
-    //TODO: verify values
-    score += row.isbreedinganimals ? 1 : 0;
+    score += ['Request breeding pair', 'Will pair with existing animals'].indexOf(row.breedinganimals) !== -1 ? 1 : 0;
 
     return score;
 }

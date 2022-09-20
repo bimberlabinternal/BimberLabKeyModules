@@ -290,6 +290,26 @@
                 <columnTitle>Application Due Date</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="title">
+                <columnTitle>Project Title</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="narrative">
+                <columnTitle>Project Narrative</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="neuroscience">
+                <columnTitle>Neuroscience Relevance</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="census">
+                <columnTitle>Participate In Census?</columnTitle>
+                <nullable>true</nullable>
+            </column>
+            <column columnName="censusreason">
+                <columnTitle>Census Decline Reason</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="experimentalrationale">
                 <columnTitle>Experimental Rationale</columnTitle>
                 <nullable>true</nullable>
@@ -298,12 +318,16 @@
                 <columnTitle>Methods Proposed</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="terminalprocedures">
+                <columnTitle>Terminal Procedures?</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="collaborations">
                 <columnTitle>Collaborations</columnTitle>
                 <nullable>true</nullable>
             </column>
-            <column columnName="isbreedinganimals">
-                <columnTitle>Breeding Animals?</columnTitle>
+            <column columnName="breedinganimals">
+                <columnTitle>Breeding</columnTitle>
                 <nullable>true</nullable>
             </column>
             <column columnName="breedingpurpose">
@@ -587,6 +611,9 @@
                     <fkTable>users</fkTable>
                     <fkColumnName>userid</fkColumnName>
                 </fk>
+            </column>
+            <column columnName="role">
+                <columnTitle>Role</columnTitle>
             </column>
             <column columnName="review">
                 <columnTitle>Review</columnTitle>

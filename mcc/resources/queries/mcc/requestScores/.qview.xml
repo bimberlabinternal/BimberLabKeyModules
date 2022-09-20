@@ -3,6 +3,7 @@
         <column name="requestId/rowid"/>
         <column name="requestId/lastname"/>
         <column name="requestId/firstname"/>
+        <column name="requestId/title"/>
         <column name="requestId/institutionname"/>
         <column name="requestId/status"/>
         <column name="preliminaryScore"/>

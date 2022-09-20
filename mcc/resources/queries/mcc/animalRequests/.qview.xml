@@ -4,6 +4,7 @@
         <column name="lastname"/>
         <column name="firstname"/>
         <column name="createdby/email"/>
+        <column name="title"/>
         <column name="institutionname"/>
         <column name="status"/>
         <column name="modified"/>

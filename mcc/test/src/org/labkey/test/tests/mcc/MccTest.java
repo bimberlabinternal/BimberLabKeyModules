@@ -197,7 +197,8 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("experiment-rationale", "experimentalrationale", "rationale").inputType("textarea"),
             new FormElement("methods-proposed", "methodsproposed", "methods").inputType("textarea"),
             new FormElement("collaborations", "collaborations", "collaborations").inputType("textarea"),
-            new FormElement("animal-breeding-is-planning-to-breed-animals", "isbreedinganimals", false).radio(),
+
+            new FormElement("animal-breeding-is-planning-to-breed-animals", "breedinganimals", false).radio(),
             new FormElement("existing-marmoset-colony", "existingmarmosetcolony", "Existing marmoset colony").select("existing"),
             new FormElement("existing-nhp-facilities", "existingnhpfacilities", "Existing NHP facilities").select("existing"),
             new FormElement("animal-welfare", "animalwelfare", "welfare").inputType("textarea"),
