@@ -180,9 +180,9 @@ public class MccTest extends BaseWebDriverTest
     // Field name / field value:
     final FormElement[] FORM_DATA = new FormElement[]{
             new FormElement("project-title", "title", "the project title"),
-            new FormElement("project-narrative", "narrative", "the narrative"),
+            new FormElement("project-narrative", "narrative", "the narrative").inputType("textarea"),
             new FormElement("investigator-last-name", "lastName", "last name"),
-            new FormElement("neuroscience", "neuroscience", "neuroscience connection"),
+            new FormElement("neuroscience", "neuroscience", "neuroscience connection").inputType("textarea"),
             new FormElement("investigator-first-name", "firstName", "first name"),
             new FormElement("investigator-middle-initial", "middleinitial", "m"),
             new FormElement("is-early-stage-investigator", "earlystageinvestigator", true).radio(),
