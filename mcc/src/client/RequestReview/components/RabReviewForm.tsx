@@ -17,6 +17,7 @@ export default function RabReviewForm(props: {requestId: string}) {
                 "reviewerid",
                 "reviewerid/displayName",
                 "reviewerid/email",
+                "role",
                 "review",
                 "score",
                 "comments",

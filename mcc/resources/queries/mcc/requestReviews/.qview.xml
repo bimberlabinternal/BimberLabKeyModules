@@ -1,6 +1,7 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Reviews" canOverride="false">
     <columns>
         <column name="requestId/rowid"/>
+        <column name="requestId/title"/>
         <column name="requestId/lastname"/>
         <column name="requestId/firstname"/>
         <column name="requestId/status">
@@ -8,6 +9,7 @@
                 <property name="columnTitle" value="Request Status"/>
             </properties>
         </column>
+        <column name="role"/>
         <column name="reviewerId"/>
         <column name="review"/>
         <column name="actions"/>

@@ -10,12 +10,18 @@ import java.util.Date;
 public class MccRequest
 {
     private int _rowId;
+    private String _title;
+    private String _narrative;
+    private String _neuroscience;
+    private boolean _census;
+    private String _censusReason;
+
     private String _lastname;
     private String _firstname;
     private String _middleinitial;
     private Boolean _isprincipalinvestigator;
 
-
+    private boolean _terminalProcedures;
     private String _institutionname;
     private String _institutioncity;
     private String _institutionstate;
@@ -31,7 +37,7 @@ public class MccRequest
     private String _experimentalrationale;
     private String _methodsproposed;
     private String _collaborations;
-    private Boolean _isbreedinganimals;
+    private String _breedinganimals;
     private String _breedingpurpose;
     private Boolean _existingmarmosetcolony;
     private Boolean _existingnhpfacilities;
@@ -246,14 +252,14 @@ public class MccRequest
         _collaborations = collaborations;
     }
 
-    public Boolean getIsbreedinganimals()
+    public String getBreedinganimals()
     {
-        return _isbreedinganimals;
+        return _breedinganimals;
     }
 
-    public void setIsbreedinganimals(Boolean isbreedinganimals)
+    public void setBreedinganimals(String breedinganimals)
     {
-        _isbreedinganimals = isbreedinganimals;
+        _breedinganimals = breedinganimals;
     }
 
     public String getBreedingpurpose()

@@ -77,6 +77,27 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
         <>
         <h2>Request Details</h2>
         <Box display={"inline-block"} style={{marginBottom: 30}}>
+            <h4 style={{marginTop: 10}}>Overview</h4>
+            <Grid container spacing={1} style={{marginLeft: 10}}>
+                <Grid item xs={2} className={styles.fieldLabel}>
+                    Project Title:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.title}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
+                    Project Narrative:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.narrative}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
+                    Relation to neuroscience:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.neuroscience}
+                </Grid>
+            </Grid>
             <h4 style={{marginTop: 10}}>General Information</h4>
             <Grid container spacing={1} style={{marginLeft: 10}}>
                 <Grid item xs={2} className={styles.fieldLabel}>
@@ -147,7 +168,7 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     Plans to Breed Marmosets:
                 </Grid>
                 <Grid item xs={10}>
-                    {requestData.request.isbreedinganimals ? 'Yes' : 'No'}
+                    {requestData.request.breedinganimals || ''}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
                     Breeding Purpose:
@@ -191,6 +212,12 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     {requestData.request.methodsproposed}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
+                    Includes Terminal Procedures:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.terminalprocedures ? 'Yes' : 'No'}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
                     Collaborations:
                 </Grid>
                 <Grid item xs={10}>
@@ -217,6 +244,18 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     {requestData.request.iacucprotocol ? ' (' + requestData.request.iacucprotocol + ')' : ''}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
+                    Participate In MCC Census:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.census ? 'Yes' : 'No'}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
+                    Reason for not participating:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.censusreason || 'N/A'}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
                     Status:
                 </Grid>
                 <Grid item xs={10}>
@@ -226,6 +265,7 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
             <p />
             <Button variant={"contained"} style={{marginLeft: 10}} href={ActionURL.buildURL('mcc', 'animalRequest', null, {requestId: requestData.request.objectid})}>Edit Request</Button>
         </Box>
+        {/*    TODO: more detail if authorized?*/}
         </>
     )
 }

@@ -11,10 +11,15 @@ export class AnimalRequestModel {
 
 export class AnimalRequestProps {
     status: string = 'Draft';
+    narrative: string;
+    title: string;
+    neuroscience: string;
+    census: boolean;
+    censusreason: string;
     middleinitial: string;
     lastname: string;
     firstname: string;
-    earlystageinvestigator: string;
+    earlystageinvestigator: boolean;
     institutionname: string;
     institutioncity: string;
     institutionstate: string;
@@ -24,8 +29,9 @@ export class AnimalRequestProps {
     officialfirstname: string;
     officialemail: string;
     experimentalrationale: string;
-    isbreedinganimals: boolean;
+    breedinganimals: string;
     breedingpurpose: string;
+    terminalprocedures: boolean;
     methodsproposed: string;
     collaborations: string;
     iacucprotocol: string;
@@ -79,6 +85,12 @@ export async function queryRequestInformation(requestId, handleFailure) {
             columns: [
                 "rowid",
                 "objectId",
+                "narrative",
+                "title",
+                "neuroscience",
+                "census",
+                "censusreason",
+                "terminalprocedures",
                 "lastname",
                 "firstname",
                 "middleinitial",
@@ -95,7 +107,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 "experimentalrationale",
                 "methodsproposed",
                 "collaborations",
-                "isbreedinganimals",
+                "breedinganimals",
                 "breedingpurpose",
                 "existingmarmosetcolony",
                 "existingnhpfacilities",
