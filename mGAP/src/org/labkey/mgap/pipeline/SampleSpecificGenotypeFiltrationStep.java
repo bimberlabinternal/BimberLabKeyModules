@@ -11,6 +11,7 @@ import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.model.Readset;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
+import org.labkey.api.sequenceanalysis.pipeline.CommandLineParam;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
@@ -64,8 +65,11 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
                     }}, null),
                     ToolParameterDescriptor.create("wxsMinQual", "WXS Min Qual", "The min genotype qual for WXS samples.", "ldk-integerfield", new JSONObject(){{
                         put("minValue", 0);
-                    }}, 30)
-                    ), null, "");
+                    }}, 30),
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--set-filtered-genotype-to-no-call"), "setFilteredGtToNocall", "Set Filtered Genotypes to No-Call", "If selected, any filtered genotypes will be converted to no-call.", "checkbox", new JSONObject(){{
+                        put("checked", true);
+                    }}, true)
+            ), null, "");
         }
 
         @Override
