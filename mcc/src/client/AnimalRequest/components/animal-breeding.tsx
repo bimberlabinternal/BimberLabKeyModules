@@ -25,7 +25,7 @@ export default function AnimalBreeding(props: {request: AnimalRequestProps, isSu
     return (
         <ErrorMessageHandler isSubmitting={props.isSubmitting}>
             <div className="tw-mb-6">
-                <Select id={props.id + "-is-planning-to-breed-animals"} ariaLabel="Planning to breed animals" isSubmitting={props.isSubmitting} options={breedingOptions} required={props.required} defaultValue={props.request.breedingpurpose}
+                <Select id={props.id + "-is-planning-to-breed-animals"} ariaLabel="Planning to breed animals" isSubmitting={props.isSubmitting} options={breedingOptions} required={props.required} defaultValue={props.request.breedinganimals}
                         onChange={(e) => setDisplayPurposeField(e.currentTarget.value)}/>
             </div>
 
