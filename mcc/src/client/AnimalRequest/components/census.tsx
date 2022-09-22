@@ -9,13 +9,13 @@ import { AnimalRequestProps } from '../../components/RequestUtils';
 
 export default function AnimalCensus(props: {request: AnimalRequestProps, isSubmitting: boolean, required: boolean, id: string}) {
 
-    const [displayReason, setDisplayReason] = useState(!props.request.census)
+    const [displayReason, setDisplayReason] = useState(props.request.census === false)
 
     function setDisplayReasonField(value) {
-        if (value === "yes") {
-            setDisplayReason(false)
-        } else {
+        if (value === "no") {
             setDisplayReason(true)
+        } else {
+            setDisplayReason(false)
         }
     }
 
