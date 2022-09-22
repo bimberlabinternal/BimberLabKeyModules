@@ -666,8 +666,10 @@ export function AnimalRequest() {
 
             <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
 
-            <Title text="9. Will participate in the MCC Census?"/>
-            <div className="tw-w-full tw-px-3 tw-mb-4">
+            <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                <Title text="9. Will participate in the MCC Census?"/>
+            </div>
+            <div className="tw-w-full tw-px-3 tw-mt-3">
                 <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
             </div>
 
