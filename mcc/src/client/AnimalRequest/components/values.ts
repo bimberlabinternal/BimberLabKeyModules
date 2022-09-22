@@ -1,7 +1,6 @@
 export const earlyInvestigatorTooltip = "An Early Stage Investigator (ESI) is a new investigator that has completed his or her terminal research degree or medical residency—whichever date is later—within the past 10 years and has not yet competed successfully for a substantial, competing NIH research grant."
 
-//TODO these two tooltips
-export const researchUseStatementTooltip = "This will hold an explanation of the research use statement"
+export const censusToolTip = "NIH/MCC expect recipients to submit census data on transferred animals (and their progeny) longitudinally"
 export const signingOfficialTooltip = "An SO has institutional authority to legally bind the institution in grant-administration matters by providing signature approval on grant application submissions. The SO monitors grant related activities within the extramural organization and may have a number of titles. The SO can also create additional accounts for personnel at their institution, including new signing official accounts."
 
 export const experimentalRationalePlaceholder = "Experimental rationale and justification for the selection of marmosets"

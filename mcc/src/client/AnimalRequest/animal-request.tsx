@@ -33,7 +33,7 @@ import {
     experimentalRationalePlaceholder,
     institutionTypeOptions,
     methodsProposedPlaceholder,
-    signingOfficialTooltip
+    signingOfficialTooltip, censusToolTip
 } from './components/values';
 import AnimalCensus from './components/census';
 
@@ -667,7 +667,8 @@ export function AnimalRequest() {
             <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
 
             <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                <Title text="9. Will participate in the MCC Census?"/>
+                <Title text="9. Will participate in the MCC Census?&nbsp;"/>
+                <Tooltip id="census-helper" text={censusToolTip}/>
             </div>
             <div className="tw-w-full tw-px-3 tw-mt-3">
                 <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
