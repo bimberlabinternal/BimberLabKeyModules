@@ -251,7 +251,10 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             }
 
             TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
-            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN), null);
+            SimpleFilter.OrClause filter = new SimpleFilter.OrClause();
+            filter.addClause(new CompareType.CompareClause(FieldKey.fromString("otherNames"), CompareType.CONTAINS_ONE_OF, subjects));
+            filter.addClause(new CompareType.CompareClause(FieldKey.fromString("subjectname"), CompareType.IN, subjects));
+            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(filter), null);
             ts.forEachResults(new Selector.ForEachBlock<Results>()
             {
                 @Override
