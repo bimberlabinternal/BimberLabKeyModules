@@ -281,6 +281,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                                     throw new IllegalStateException("Improper data in mgap.aliases table. Dual/conflicting aliases: " + name + ": " + rs.getString(FieldKey.fromString("externalAlias")) + " / " + sampleNameMap.get(name));
                                 }
 
+                                getPipelineCtx().getLogger().debug("Adding otherName: " + name);
                                 sampleNameMap.put(name, rs.getString(FieldKey.fromString("externalAlias")));
                             }
                         }
@@ -294,6 +295,8 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             sampleNames.retainAll(subjects);
             getPipelineCtx().getLogger().info("total samples to be written to any track: " + sampleNames.size());
 
+            getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
+
             sampleNames.removeAll(sampleNameMap.keySet());
             if (!sampleNames.isEmpty())
             {
@@ -301,16 +304,15 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             }
 
             //Now ensure we dont have duplicate mappings:
-            List<String> translated = new ArrayList<>(sampleNames.stream().map(sampleNameMap::get).collect(Collectors.toList()));
+            sampleNames = new HashSet<>(header.getSampleNamesInOrder());
+            List<String> translated = new ArrayList<>(sampleNames.stream().map(sampleNameMap::get).toList());
             Set<String> unique = new HashSet<>();
-            List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).collect(Collectors.toList());
+            List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).toList();
             if (!duplicates.isEmpty())
             {
                 throw new PipelineJobException("There were duplicate mGAP IDs are translation. They were: " + StringUtils.join(duplicates, ","));
             }
         }
-
-        getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
 
         return sampleNameMap;
     }
