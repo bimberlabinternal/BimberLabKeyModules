@@ -252,15 +252,19 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             }
 
             // Perform in batches to keep SQL reasonable:
-            List<List<String>> forQueries = Lists.partition(subjects, 100);
+            List<List<String>> forQueries = Lists.partition(subjects, 50);
             for (List<String> subjectList : forQueries)
             {
+                getPipelineCtx().getLogger().debug("Query batch with " + subjectList.size() + " samples");
                 TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
                 SimpleFilter.OrClause filter = new SimpleFilter.OrClause();
                 subjectList.forEach(s -> {
                     filter.addClause(new CompareType.CompareClause(FieldKey.fromString("subjectname"), CompareType.EQUAL, s));
                     filter.addClause(new CompareType.CompareClause(FieldKey.fromString("otherNames"), CompareType.CONTAINS, s));
                 });
+
+                // TODO: debugging only:
+                getPipelineCtx().getLogger().debug(new SimpleFilter(filter).toSQLString(ti.getSqlDialect()));
 
                 TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(filter), null);
                 ts.forEachResults(new Selector.ForEachBlock<Results>()
