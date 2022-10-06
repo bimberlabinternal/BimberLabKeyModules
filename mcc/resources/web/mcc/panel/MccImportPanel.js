@@ -688,8 +688,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     gender: row.gender,
                     u24_status: row.u24_status,
                     objectId: row.objectid,
-                    status: row.status,
-                    calculated_status: null,
+                    calculated_status: row.status,
                     QCStateLabel: 'Completed'
                 });
             }
@@ -707,8 +706,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     gender: row.gender,
                     u24_status: row.u24_status,
                     objectId: LABKEY.Utils.generateUUID().toUpperCase(),
-                    status: row.status,
-                    calculated_status: null,
+                    calculated_status: row.status,
                     QCStateLabel: 'Completed'
                 });
             }
