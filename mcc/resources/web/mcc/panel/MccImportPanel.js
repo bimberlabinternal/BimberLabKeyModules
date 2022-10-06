@@ -108,7 +108,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         name: 'housingStatus',
         labels: ['Current Housing Status'],
         allowRowSpan: false,
-        allowBlank: false,
+        allowBlank: true,
         transform: 'housingStatus'
     },{
         name: 'infantHistory',
