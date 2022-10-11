@@ -179,7 +179,10 @@ public class MccTest extends BaseWebDriverTest
 
     // Field name / field value:
     final FormElement[] FORM_DATA = new FormElement[]{
+            new FormElement("project-title", "title", "the project title"),
+            new FormElement("project-narrative", "narrative", "the narrative").inputType("textarea"),
             new FormElement("investigator-last-name", "lastName", "last name"),
+            new FormElement("neuroscience", "neuroscience", "neuroscience connection").inputType("textarea"),
             new FormElement("investigator-first-name", "firstName", "first name"),
             new FormElement("investigator-middle-initial", "middleinitial", "m"),
             new FormElement("is-early-stage-investigator", "earlystageinvestigator", true).radio(),
@@ -197,7 +200,8 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("experiment-rationale", "experimentalrationale", "rationale").inputType("textarea"),
             new FormElement("methods-proposed", "methodsproposed", "methods").inputType("textarea"),
             new FormElement("collaborations", "collaborations", "collaborations").inputType("textarea"),
-            new FormElement("animal-breeding-is-planning-to-breed-animals", "isbreedinganimals", false).radio(),
+
+            new FormElement("animal-breeding-is-planning-to-breed-animals", "breedinganimals", "Will not breed").select("Will not breed"),
             new FormElement("existing-marmoset-colony", "existingmarmosetcolony", "Existing marmoset colony").select("existing"),
             new FormElement("existing-nhp-facilities", "existingnhpfacilities", "Existing NHP facilities").select("existing"),
             new FormElement("animal-welfare", "animalwelfare", "welfare").inputType("textarea"),
@@ -205,7 +209,9 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("vet-last-name", "vetlastname", "vet last name"),
             new FormElement("vet-first-name", "vetfirstname", "vet first name"),
             new FormElement("vet-email", "vetemail", "vet@email.com"),
-            new FormElement("iacuc-approval", "iacucapproval", "Provisional").select("provisional")
+            new FormElement("iacuc-approval", "iacucapproval", "Provisional").select("provisional"),
+            new FormElement("is-terminalprocedures", "terminalprocedures", true).radio(),
+            new FormElement("census-participate-in-census", "census", true).radio()
     };
 
     private Locator getButton(String text)
@@ -377,10 +383,10 @@ public class MccTest extends BaseWebDriverTest
     private FormElement[] getCoinvestigatorFields(int idx)
     {
         return new FormElement[]{
-            new FormElement("coinvestigators-" + idx + "-lastName", "lastname", "coinvestigators-lastName"),
-            new FormElement("coinvestigators-" + idx + "-firstName", "firstname", "coinvestigators-firstName"),
-            new FormElement("coinvestigators-" + idx + "-middleInitial", "middleInitial", "mi"),
-            new FormElement("coinvestigators-" + idx + "-institution", "institutionname", "coinvestigators-institution")
+                new FormElement("coinvestigators-" + idx + "-lastName", "lastname", "coinvestigators-lastName"),
+                new FormElement("coinvestigators-" + idx + "-firstName", "firstname", "coinvestigators-firstName"),
+                new FormElement("coinvestigators-" + idx + "-middleInitial", "middleInitial", "mi"),
+                new FormElement("coinvestigators-" + idx + "-institution", "institutionname", "coinvestigators-institution")
         };
     }
 

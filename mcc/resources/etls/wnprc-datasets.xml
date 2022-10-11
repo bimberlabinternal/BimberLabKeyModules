@@ -97,6 +97,30 @@
             </destination>
         </transform>
 
+        <transform id="observations1" type="RemoteQueryTransformStep">
+            <description>Copy to target</description>
+            <source remoteSource="WNPRC" schemaName="study" queryName="u24_AdditionalColonyData">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>pg</column>
+                    <column>availableTransfer</column>
+                    <column>currentHousing</column>
+                    <column>infantHistory</column>
+                    <column>fertility</column>
+                    <column>medicalHistory</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination type="file" fileBaseName="u24_AdditionalColonyData" fileExtension="txt" columnDelimiter=","/>
+        </transform>
+        <transform id="observations2" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.WnprcObservationStep">
+                <settings>
+                </settings>
+            </taskref>
+        </transform>
+
         <!--<transform type="RemoteQueryTransformStep" id="deaths">-->
         <!--<description>Copy to target</description>-->
         <!--<source remoteSource="WNPRC" schemaName="study" queryName="deaths">-->

@@ -52,6 +52,7 @@ export function RequestView() {
     let reviewForms = null
     switch (mode) {
         case "details":
+            //TODO: more detail if authorized?
             break
         case "primaryReview":
             reviewForms = [
@@ -61,7 +62,7 @@ export function RequestView() {
         case "rabReview":
             reviewForms = (
                 <>
-                <RabReviewForm key={"rabReviewForm"} requestId={requestId}/>
+                    <RabReviewForm key={"rabReviewForm"} requestId={requestId}/>
                 </>
             )
             break
@@ -75,7 +76,7 @@ export function RequestView() {
         case "finalReview":
             reviewForms = (
                 <>
-                <FinalReviewForm key={"finalReviewForm"} requestData={requestData}/>
+                    <FinalReviewForm key={"finalReviewForm"} requestData={requestData}/>
                 </>
             )
             break
