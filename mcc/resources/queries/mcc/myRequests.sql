@@ -2,6 +2,7 @@ SELECT
     t.rowid,
     t.lastname,
     t.firstname,
+    t.title,
     t.created,
     t.createdby,
     t.status,

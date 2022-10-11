@@ -23,7 +23,7 @@ export default function IACUCProtocol(props: {request: AnimalRequestProps, isSub
     return (
         <ErrorMessageHandler isSubmitting={props.isSubmitting} rerender={displayProtocol}>
         <div className="tw-flex tw-flex-wrap tw-mx-2">
-            <Title text="7. IACUC Approval"/>
+            <Title text="8. IACUC Approval"/>
 
             <div className="tw-w-full tw-px-3 md:tw-mb-0">
 

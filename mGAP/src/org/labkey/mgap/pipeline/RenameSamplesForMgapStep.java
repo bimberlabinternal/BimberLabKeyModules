@@ -2,6 +2,7 @@ package org.labkey.mgap.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
+import com.google.common.collect.Lists;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
 import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
@@ -250,46 +251,22 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                 return Collections.emptyMap();
             }
 
-            TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
-            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN), null);
-            ts.forEachResults(new Selector.ForEachBlock<Results>()
-            {
-                @Override
-                public void exec(Results rs) throws SQLException
-                {
-                    sampleNameMap.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
-
-                    if (rs.getObject(FieldKey.fromString("otherNames")) != null)
-                    {
-                        String val = StringUtils.trimToNull(rs.getString(FieldKey.fromString("otherNames")));
-                        if (val != null)
-                        {
-                            String[] tokens = val.split(",");
-                            for (String name : tokens)
-                            {
-                                name = StringUtils.trimToNull(name);
-                                if (name == null)
-                                {
-                                    continue;
-                                }
-
-                                if (sampleNameMap.containsKey(name) && !sampleNameMap.get(name).equals(rs.getString(FieldKey.fromString("externalAlias"))))
-                                {
-                                    throw new IllegalStateException("Improper data in mgap.aliases table. Dual/conflicting aliases: " + name + ": " + rs.getString(FieldKey.fromString("externalAlias")) + " / " + sampleNameMap.get(name));
-                                }
-
-                                sampleNameMap.put(name, rs.getString(FieldKey.fromString("externalAlias")));
-                            }
-                        }
-                    }
-                }
-            });
-
             Set<String> sampleNames = new HashSet<>(header.getSampleNamesInOrder());
             getPipelineCtx().getLogger().info("total samples in input VCF: " + sampleNames.size());
 
-            sampleNames.retainAll(subjects);
-            getPipelineCtx().getLogger().info("total samples to be written to any track: " + sampleNames.size());
+            // Pass 1: match on proper ID:
+            querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN));
+
+            // Pass 2: add others using otherNames:
+            List<String> missingSamples = new ArrayList<>(sampleNames);
+            missingSamples.removeAll(sampleNameMap.keySet());
+            if (!missingSamples.isEmpty())
+            {
+                getPipelineCtx().getLogger().debug("Querying " + missingSamples.size() + " samples using otherNames field");
+                querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("otherNames"), missingSamples, CompareType.CONTAINS_ONE_OF));
+            }
+
+            getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
 
             sampleNames.removeAll(sampleNameMap.keySet());
             if (!sampleNames.isEmpty())
@@ -298,17 +275,54 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             }
 
             //Now ensure we dont have duplicate mappings:
-            List<String> translated = new ArrayList<>(sampleNames.stream().map(sampleNameMap::get).collect(Collectors.toList()));
+            List<String> translated = new ArrayList<>(header.getSampleNamesInOrder().stream().map(sampleNameMap::get).toList());
             Set<String> unique = new HashSet<>();
-            List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).collect(Collectors.toList());
+            List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).toList();
             if (!duplicates.isEmpty())
             {
                 throw new PipelineJobException("There were duplicate mGAP IDs are translation. They were: " + StringUtils.join(duplicates, ","));
             }
         }
 
-        getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
-
         return sampleNameMap;
+    }
+
+    private void querySampleBatch(Map<String, String> sampleNameMap, SimpleFilter filter)
+    {
+        TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
+        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(filter), null);
+        ts.forEachResults(new Selector.ForEachBlock<Results>()
+        {
+            @Override
+            public void exec(Results rs) throws SQLException
+            {
+                sampleNameMap.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
+
+                if (rs.getObject(FieldKey.fromString("otherNames")) != null)
+                {
+                    String val = StringUtils.trimToNull(rs.getString(FieldKey.fromString("otherNames")));
+                    if (val != null)
+                    {
+                        String[] tokens = val.split(",");
+                        for (String name : tokens)
+                        {
+                            name = StringUtils.trimToNull(name);
+                            if (name == null)
+                            {
+                                continue;
+                            }
+
+                            if (sampleNameMap.containsKey(name) && !sampleNameMap.get(name).equals(rs.getString(FieldKey.fromString("externalAlias"))))
+                            {
+                                throw new IllegalStateException("Improper data in mgap.aliases table. Dual/conflicting aliases: " + name + ": " + rs.getString(FieldKey.fromString("externalAlias")) + " / " + sampleNameMap.get(name));
+                            }
+
+                            getPipelineCtx().getLogger().debug("Adding otherName: " + name);
+                            sampleNameMap.put(name, rs.getString(FieldKey.fromString("externalAlias")));
+                        }
+                    }
+                }
+            }
+        });
     }
 }

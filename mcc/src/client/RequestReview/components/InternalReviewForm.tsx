@@ -107,10 +107,11 @@ export default function InternalReviewForm(props: {requestData: AnimalRequestMod
 
     const onRabReviewSubmit = (e) => {
         setDisplayOverlay(true)
-        const toInsert = rabMembers.filter(r => !existingAssignments.includes(r.UserId)).map(r => {
+        const toInsert = rabMembers.filter(r => !existingAssignments.includes(r.UserId)).map((r, idx) => {
             return {
                 reviewerId: r.UserId,
-                requestId: requestData.request.objectid
+                requestId: requestData.request.objectid,
+                role: 'Reviewer ' + idx
             }
         })
 
