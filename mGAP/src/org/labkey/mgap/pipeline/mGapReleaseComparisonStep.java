@@ -39,7 +39,7 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
         public Provider()
         {
             super("mGapReleaseComparison", "mGapReleaseComparison", "VcfComparison", "Compare the VCF to the specified mGAP release VCF, producing TSV/VCF reports with site- and genotype-level concordance.", Arrays.asList(
-                    ToolParameterDescriptor.createExpDataParam(REF_VCF, "mGAP Release", "This is the pre-computed celltypist model to use for classification", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject(){{
+                    ToolParameterDescriptor.createExpDataParam(REF_VCF, "mGAP Release", "The mGAP release VCF to use for comparison", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject(){{
                         put("allowBlank", false);
                         put("category", "mGAP Release");
                         put("performGenomeFilter", false);
@@ -47,6 +47,7 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
             ), PageFlowUtil.set("sequenceanalysis/field/SequenceOutputFileSelectorField.js"), null);
         }
 
+        @Override
         public mGapReleaseComparisonStep create(PipelineContext ctx)
         {
             return new mGapReleaseComparisonStep(this, ctx);
