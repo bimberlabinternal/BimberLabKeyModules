@@ -40,7 +40,7 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
     {
         public Provider()
         {
-            super("mGapAnnotateNovelSites", "mGapReleaseComparison", "AnnotateNovelSites", "Compare the VCF to the specified mGAP release VCF, producing TSV/VCF reports with site- and genotype-level concordance.", Arrays.asList(
+            super("mGapAnnotateNovelSites", "Annotate Novel Sites Against mGAP Release", "AnnotateNovelSites", "Compare the VCF to the specified mGAP release VCF, producing TSV/VCF reports with site- and genotype-level concordance.", Arrays.asList(
                     ToolParameterDescriptor.createExpDataParam(REF_VCF, "mGAP Release", "The mGAP release VCF to use for comparison", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject(){{
                         put("allowBlank", false);
                         put("category", "mGAP Release");
