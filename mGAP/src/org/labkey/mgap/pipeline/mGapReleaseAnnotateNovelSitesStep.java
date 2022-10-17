@@ -84,7 +84,7 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         }
 
         File annotatedVCF = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".comparison.vcf.gz");
-        getWrapper().execute(inputVCF, refVcf, releaseVersion, annotatedVCF, extraArgs);
+        getWrapper().execute(inputVCF, refVcf, genome.getWorkingFastaFile(), releaseVersion, annotatedVCF, extraArgs);
         if (!annotatedVCF.exists())
         {
             throw new PipelineJobException("Unable to find output: " + annotatedVCF.getPath());
@@ -106,10 +106,13 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
             super(log);
         }
 
-        public File execute(File vcf, File referenceVcf, String versionString, File vcfOutput, List<String> extraArgs) throws PipelineJobException
+        public File execute(File vcf, File referenceVcf, File fasta, String versionString, File vcfOutput, List<String> extraArgs) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
             args.add("AnnotateNovelSites");
+            args.add("-R");
+            args.add(fasta.getPath());
+
             args.add("-V");
             args.add(vcf.getPath());
             args.add("-rv");
