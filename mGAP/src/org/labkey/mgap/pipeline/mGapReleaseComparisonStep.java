@@ -43,6 +43,7 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
                         put("allowBlank", false);
                         put("category", "mGAP Release");
                         put("performGenomeFilter", false);
+                        put("doNotIncludeInTemplates", true);
                     }}, null)
             ), PageFlowUtil.set("sequenceanalysis/field/SequenceOutputFileSelectorField.js"), null);
         }

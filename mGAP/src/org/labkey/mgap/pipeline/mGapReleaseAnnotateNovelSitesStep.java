@@ -45,6 +45,7 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
                         put("allowBlank", false);
                         put("category", "mGAP Release");
                         put("performGenomeFilter", false);
+                        put("doNotIncludeInTemplates", true);
                     }}, null),
                     ToolParameterDescriptor.create("releaseVersion", "Version", "This string will be used as the version when published.", "textfield", new JSONObject(){{
                         put("allowBlank", false);
