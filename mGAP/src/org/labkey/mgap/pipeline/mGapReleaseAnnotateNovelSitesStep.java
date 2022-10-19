@@ -36,8 +36,9 @@ import java.util.List;
  */
 public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineStep<mGapReleaseAnnotateNovelSitesStep.AnnotateNovelSitesWrapper> implements VariantProcessingStep
 {
-    public static final String REF_VCF = "refVcf";
+    public static final String VERSION_ROWID = "versionRowId";
     public static final String PRIOR_RELEASE_LABEL = "priorReleaseLabel";
+    public static final String SITES_ONLY_DATA = "sitesOnlyVcfData";
 
     public mGapReleaseAnnotateNovelSitesStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
@@ -49,10 +50,15 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         public Provider()
         {
             super("mGapAnnotateNovelSites", "Annotate Novel Sites Against mGAP Release", "AnnotateNovelSites", "Compare the VCF to the specified mGAP release VCF, producing TSV/VCF reports with site- and genotype-level concordance.", Arrays.asList(
-                    ToolParameterDescriptor.createExpDataParam(REF_VCF, "mGAP Release", "The mGAP release VCF to use for comparison", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject(){{
+                    ToolParameterDescriptor.create(VERSION_ROWID, "mGAP Release", "The mGAP release VCF to use for comparison", "ldk-simplelabkeycombo", new JSONObject(){{
                         put("allowBlank", false);
-                        put("category", "mGAP Release");
-                        put("performGenomeFilter", false);
+                        put("width", 400);
+                        put("schemaName", "mgap");
+                        put("queryName", "variantCatalogReleases");
+                        put("containerPath", "js:Laboratory.Utils.getQueryContainerPath()");
+                        put("displayField", "version");
+                        put("valueField", "rowid");
+                        put("allowBlank", false);
                         put("doNotIncludeInTemplates", true);
                     }}, null),
                     ToolParameterDescriptor.create("releaseVersion", "mGAP Version", "This string will be used to tag novel variants.", "textfield", new JSONObject(){{
@@ -75,15 +81,14 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
         getPipelineCtx().getLogger().info("Annotating VCF by mGAP Release");
 
-        Integer refFileId = getProvider().getParameterByName(REF_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-        File refVcf = getPipelineCtx().getSequenceSupport().getCachedData(refFileId);
-        if (refVcf == null || !refVcf.exists())
-        {
-            throw new PipelineJobException("Unable to find file: " + refFileId + "/" + refVcf);
-        }
-
         String releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, "0.0");
         String priorReleaseLabel = getPipelineCtx().getSequenceSupport().getCachedObject(PRIOR_RELEASE_LABEL, String.class);
+        int sitesOnlyExpDataId = getPipelineCtx().getSequenceSupport().getCachedObject(SITES_ONLY_DATA, Integer.class);
+        File sitesOnlyVcf = getPipelineCtx().getSequenceSupport().getCachedData(sitesOnlyExpDataId);
+        if (!sitesOnlyVcf.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + sitesOnlyVcf);
+        }
 
         List<String> extraArgs = new ArrayList<>();
         if (intervals != null)
@@ -100,14 +105,14 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         extraArgs.add(priorReleaseLabel);
 
         File annotatedVCF = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".comparison.vcf.gz");
-        getWrapper().execute(inputVCF, refVcf, genome.getWorkingFastaFile(), releaseVersion, annotatedVCF, extraArgs);
+        getWrapper().execute(inputVCF, sitesOnlyVcf, genome.getWorkingFastaFile(), releaseVersion, annotatedVCF, extraArgs);
         if (!annotatedVCF.exists())
         {
             throw new PipelineJobException("Unable to find output: " + annotatedVCF.getPath());
         }
 
         output.addInput(inputVCF, "Input VCF");
-        output.addInput(refVcf, "Reference VCF");
+        output.addInput(sitesOnlyVcf, "Reference VCF");
 
         output.addOutput(annotatedVCF, "VCF Annotated by mGAP Version");
         output.setVcf(annotatedVCF);
@@ -118,15 +123,30 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
     @Override
     public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
     {
-        Integer refFileId = getProvider().getParameterByName(REF_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-        String version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("name"), new SimpleFilter(FieldKey.fromString("dataid"), refFileId), null).getObject(String.class);
+        Integer versionRowId = getProvider().getParameterByName(VERSION_ROWID).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
+        String version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("name"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(String.class);
         if (version == null)
         {
-            throw new PipelineJobException("Unable to find release for fileId: " + refFileId);
+            throw new PipelineJobException("Unable to find release for release: " + versionRowId);
         }
 
         version = version.split(": ")[1];
 
+        Integer sitesOnlyVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("sitesOnlyVcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
+        if (sitesOnlyVcfOutputId == null)
+        {
+            throw new PipelineJobException("Unable to find sites-only VCF for release: " + versionRowId);
+        }
+
+        SequenceOutputFile sitesOnly = SequenceOutputFile.getForId(sitesOnlyVcfOutputId);
+        if (sitesOnly == null)
+        {
+            throw new PipelineJobException("Unable to find sites-only VCF output file for fileId: " + sitesOnlyVcfOutputId);
+        }
+
+        support.cacheExpData(sitesOnly.getExpData());
+
+        support.cacheObject(SITES_ONLY_DATA, sitesOnly.getDataId());
         support.cacheObject(PRIOR_RELEASE_LABEL, version);
     }
 
