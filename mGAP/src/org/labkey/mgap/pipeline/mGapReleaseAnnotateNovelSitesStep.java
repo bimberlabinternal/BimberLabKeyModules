@@ -82,6 +82,8 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
                 extraArgs.add("-L");
                 extraArgs.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
             });
+
+            extraArgs.add("--ignore-variants-starting-outside-interval");
         }
 
         File annotatedVCF = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".comparison.vcf.gz");
