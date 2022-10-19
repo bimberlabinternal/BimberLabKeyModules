@@ -3,18 +3,25 @@ package org.labkey.mgap.pipeline;
 import htsjdk.samtools.util.Interval;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.TableSelector;
+import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
+import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.mgap.mGAPSchema;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -30,6 +37,7 @@ import java.util.List;
 public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineStep<mGapReleaseAnnotateNovelSitesStep.AnnotateNovelSitesWrapper> implements VariantProcessingStep
 {
     public static final String REF_VCF = "refVcf";
+    public static final String PRIOR_RELEASE_LABEL = "priorReleaseLabel";
 
     public mGapReleaseAnnotateNovelSitesStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
@@ -74,6 +82,7 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         }
 
         String releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, "0.0");
+        String priorReleaseLabel = getPipelineCtx().getSequenceSupport().getCachedObject(PRIOR_RELEASE_LABEL, String.class);
 
         List<String> extraArgs = new ArrayList<>();
         if (intervals != null)
@@ -85,6 +94,9 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
 
             extraArgs.add("--ignore-variants-starting-outside-interval");
         }
+
+        extraArgs.add("-dv");
+        extraArgs.add(priorReleaseLabel);
 
         File annotatedVCF = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".comparison.vcf.gz");
         getWrapper().execute(inputVCF, refVcf, genome.getWorkingFastaFile(), releaseVersion, annotatedVCF, extraArgs);
@@ -100,6 +112,21 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         output.setVcf(annotatedVCF);
 
         return output;
+    }
+
+    @Override
+    public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
+    {
+        Integer refFileId = getProvider().getParameterByName(REF_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
+        String version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("name"), new SimpleFilter(FieldKey.fromString("dataid"), refFileId), null).getObject(String.class);
+        if (version == null)
+        {
+            throw new PipelineJobException("Unable to find release for fileId: " + refFileId);
+        }
+
+        version = version.split(": ")[1];
+
+        support.cacheObject(PRIOR_RELEASE_LABEL, version);
     }
 
     public static class AnnotateNovelSitesWrapper extends AbstractDiscvrSeqWrapper
