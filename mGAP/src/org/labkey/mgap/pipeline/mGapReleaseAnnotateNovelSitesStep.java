@@ -55,8 +55,9 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
                         put("performGenomeFilter", false);
                         put("doNotIncludeInTemplates", true);
                     }}, null),
-                    ToolParameterDescriptor.create("releaseVersion", "Version", "This string will be used as the version when published.", "textfield", new JSONObject(){{
+                    ToolParameterDescriptor.create("releaseVersion", "mGAP Version", "This string will be used to tag novel variants.", "textfield", new JSONObject(){{
                         put("allowBlank", false);
+                        put("doNotIncludeInTemplates", true);
                     }}, null)
             ), PageFlowUtil.set("sequenceanalysis/field/SequenceOutputFileSelectorField.js"), null);
         }
