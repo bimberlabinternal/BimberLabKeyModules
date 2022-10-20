@@ -17,6 +17,24 @@
                     <column columnName="u24_status">
                         <columnTitle>U24 Assigned?</columnTitle>
                     </column>
+                    <column columnName="available_to_transfer">
+                        <columnTitle>Available to Transfer?</columnTitle>
+                    </column>
+                    <column columnName="current_housing_status">
+                        <columnTitle>Current Housing Status</columnTitle>
+                    </column>
+                    <column columnName="infant_history">
+                        <columnTitle>Infant History</columnTitle>
+                    </column>
+                    <column columnName="fertility_status">
+                        <columnTitle>Fertility Status</columnTitle>
+                    </column>
+                    <column columnName="medical_history">
+                        <columnTitle>Medical History</columnTitle>
+                    </column>
+                    <column columnName="date_of_observations">
+                        <columnTitle>Date of Observations</columnTitle>
+                    </column>
                     <column columnName="colony">
                         <columnTitle>Current Colony</columnTitle>
                     </column>

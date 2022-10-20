@@ -28,6 +28,12 @@
                 <property name="columnTitle" value="Weight Date"/>
             </properties>
         </column>
+        <column name="available_to_transfer"/>
+        <column name="current_housing_status"/>
+        <column name="infant_history"/>
+        <column name="fertility_status"/>
+        <column name="medical_history"/>
+        <column name="date_of_observations"/>
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>
