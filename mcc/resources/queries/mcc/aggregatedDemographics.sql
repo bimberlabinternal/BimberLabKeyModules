@@ -18,17 +18,22 @@ SELECT
     WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
+  o.availability,
+  o.current_housing_status,
+  o.infant_history,
+  o.fertility_status,
+  o.medical_history,
   d.container
 
 FROM "/data/Colonies/SNPRC/".study.demographics d
 LEFT JOIN (SELECT
-    o.Id,
-    o.date_of_observations,
-    o.availability,
-    o.current_housing_status,
-    o.infant_history,
-    o.fertility_status,
-    o.medical_history,
+                   o.Id,
+                   o.date_of_observations,
+                   o."availability::observation" as availability,
+                   o."current_housing_status::observation" as current_housing_status,
+                   o."infant_history::observation" as infant_history,
+                   o."fertility_status::observation" as fertility_status,
+                   o."medical_history::observation" as medical_history,
     FROM "/data/Colonies/SNPRC/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 
@@ -54,17 +59,22 @@ SELECT
     WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
+  o.availability,
+  o.current_housing_status,
+  o.infant_history,
+  o.fertility_status,
+  o.medical_history,
   d.container
 
 FROM "/data/Colonies/WNPRC/".study.demographics d
          LEFT JOIN (SELECT
                         o.Id,
                         o.date_of_observations,
-                        o.availability,
-                        o.current_housing_status,
-                        o.infant_history,
-                        o.fertility_status,
-                        o.medical_history,
+                        o."availability::observation" as availability,
+                        o."current_housing_status::observation" as current_housing_status,
+                        o."infant_history::observation" as infant_history,
+                        o."fertility_status::observation" as fertility_status,
+                        o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/WNPRC/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 
@@ -87,17 +97,22 @@ SELECT
     d.objectid,
     d.calculated_status,
     false as u24_status,
+    o.availability,
+    o.current_housing_status,
+    o.infant_history,
+    o.fertility_status,
+    o.medical_history,
     d.container
 
 FROM "/data/Colonies/UNO/".study.demographics d
          LEFT JOIN (SELECT
                         o.Id,
                         o.date_of_observations,
-                        o.availability,
-                        o.current_housing_status,
-                        o.infant_history,
-                        o.fertility_status,
-                        o.medical_history,
+                        o."availability::observation" as availability,
+                        o."current_housing_status::observation" as current_housing_status,
+                        o."infant_history::observation" as infant_history,
+                        o."fertility_status::observation" as fertility_status,
+                        o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/UNO/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 
@@ -120,17 +135,22 @@ SELECT
     d.objectid,
     d.calculated_status,
     d.u24_status,
+    o.availability,
+    o.current_housing_status,
+    o.infant_history,
+    o.fertility_status,
+    o.medical_history,
     d.container
 
 FROM "/data/Colonies/UCSD/".study.demographics d
          LEFT JOIN (SELECT
                         o.Id,
                         o.date_of_observations,
-                        o.availability,
-                        o.current_housing_status,
-                        o.infant_history,
-                        o.fertility_status,
-                        o.medical_history,
+                        o."availability::observation" as availability,
+                        o."current_housing_status::observation" as current_housing_status,
+                        o."infant_history::observation" as infant_history,
+                        o."fertility_status::observation" as fertility_status,
+                        o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/UCSD/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 
@@ -153,16 +173,21 @@ SELECT
     d.objectid,
     d.calculated_status,
     d.u24_status,
+    o.availability,
+    o.current_housing_status,
+    o.infant_history,
+    o.fertility_status,
+    o.medical_history,
     d.container
 
 FROM "/data/Colonies/Other/".study.demographics d
          LEFT JOIN (SELECT
                         o.Id,
                         o.date_of_observations,
-                        o.availability,
-                        o.current_housing_status,
-                        o.infant_history,
-                        o.fertility_status,
-                        o.medical_history,
+                        o."availability::observation" as availability,
+                        o."current_housing_status::observation" as current_housing_status,
+                        o."infant_history::observation" as infant_history,
+                        o."fertility_status::observation" as fertility_status,
+                        o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/Other/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
