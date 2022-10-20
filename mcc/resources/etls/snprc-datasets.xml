@@ -156,7 +156,7 @@
                     <column>AnimalId</column>
                     <column>Date</column>
                     <column>u24_status</column>
-                    <column>available_to_transfer</column>
+                    <column>availability</column>
                     <column>current_housing_status</column>
                     <column>infant_history</column>
                     <column>fertility_status</column>

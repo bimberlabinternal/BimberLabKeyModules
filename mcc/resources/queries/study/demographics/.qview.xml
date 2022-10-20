@@ -28,7 +28,7 @@
                 <property name="columnTitle" value="Weight Date"/>
             </properties>
         </column>
-        <column name="available_to_transfer"/>
+        <column name="availability"/>
         <column name="current_housing_status"/>
         <column name="infant_history"/>
         <column name="fertility_status"/>

@@ -646,7 +646,7 @@
             <column columnName="u24_status">
                 <datatype>boolean</datatype>
             </column>
-            <column columnName="available_to_transfer">
+            <column columnName="availability">
                 <datatype>varchar</datatype>
             </column>
             <column columnName="current_housing_status">

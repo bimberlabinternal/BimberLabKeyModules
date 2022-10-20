@@ -21,6 +21,16 @@ SELECT
   d.container
 
 FROM "/data/Colonies/SNPRC/".study.demographics d
+LEFT JOIN (SELECT
+    o.Id,
+    o.date_of_observations,
+    o.availability,
+    o.current_housing_status,
+    o.infant_history,
+    o.fertility_status,
+    o.medical_history,
+    FROM "/data/Colonies/SNPRC/".study.mostRecentObservationsPivoted o
+) o ON (o.Id = d.Id)
 
 UNION ALL
 
@@ -47,6 +57,16 @@ SELECT
   d.container
 
 FROM "/data/Colonies/WNPRC/".study.demographics d
+         LEFT JOIN (SELECT
+                        o.Id,
+                        o.date_of_observations,
+                        o.availability,
+                        o.current_housing_status,
+                        o.infant_history,
+                        o.fertility_status,
+                        o.medical_history,
+                    FROM "/data/Colonies/WNPRC/".study.mostRecentObservationsPivoted o
+) o ON (o.Id = d.Id)
 
 UNION ALL
 
@@ -70,6 +90,16 @@ SELECT
     d.container
 
 FROM "/data/Colonies/UNO/".study.demographics d
+         LEFT JOIN (SELECT
+                        o.Id,
+                        o.date_of_observations,
+                        o.availability,
+                        o.current_housing_status,
+                        o.infant_history,
+                        o.fertility_status,
+                        o.medical_history,
+                    FROM "/data/Colonies/UNO/".study.mostRecentObservationsPivoted o
+) o ON (o.Id = d.Id)
 
 UNION ALL
 
@@ -93,6 +123,16 @@ SELECT
     d.container
 
 FROM "/data/Colonies/UCSD/".study.demographics d
+         LEFT JOIN (SELECT
+                        o.Id,
+                        o.date_of_observations,
+                        o.availability,
+                        o.current_housing_status,
+                        o.infant_history,
+                        o.fertility_status,
+                        o.medical_history,
+                    FROM "/data/Colonies/UCSD/".study.mostRecentObservationsPivoted o
+) o ON (o.Id = d.Id)
 
 UNION ALL
 
@@ -116,3 +156,13 @@ SELECT
     d.container
 
 FROM "/data/Colonies/Other/".study.demographics d
+         LEFT JOIN (SELECT
+                        o.Id,
+                        o.date_of_observations,
+                        o.availability,
+                        o.current_housing_status,
+                        o.infant_history,
+                        o.fertility_status,
+                        o.medical_history,
+                    FROM "/data/Colonies/Other/".study.mostRecentObservationsPivoted o
+) o ON (o.Id = d.Id)

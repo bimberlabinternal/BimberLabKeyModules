@@ -24,6 +24,12 @@
                     <column>calculated_status</column>
                     <column>u24_status</column>
                     <column>mostRecentWeight</column>
+                    <column>availability</column>
+                    <column>current_housing_status</column>
+                    <column>infant_history</column>
+                    <column>fertility_status</column>
+                    <column>medical_history</column>
+                    <column>date_of_observations</column>
                     <column>colony</column>
                     <column>dam</column>
                     <column>sire</column>

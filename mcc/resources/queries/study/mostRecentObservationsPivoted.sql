@@ -5,12 +5,12 @@
  */
 SELECT
    t.Id,
-   t.mostRecentObsDate,
-   t.category,
-   group_concat(distinct mostRecentObservation) as obs
+   t.date_of_observations,
+   t.fieldName,
+   group_concat(distinct observation) as observation
 
 
 
 FROM study.mostRecentObservations t
-GROUP BY t.Id, t.mostRecentObsDate, t.category
-PIVOT obs BY category
+GROUP BY t.Id, t.date_of_observations, t.fieldName
+PIVOT observation BY fieldName

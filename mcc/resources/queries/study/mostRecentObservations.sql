@@ -7,6 +7,7 @@ SELECT
     co.Id,
     co.date as date_of_observations,
     co.category,
+    lower(replace(co.category, ' ', '_')) as fieldName,
     timestampdiff('SQL_TSI_DAY', co.date, now()) AS daysSinceObservation,
     --NOTE: we need to be careful in case duplicate records are entered on the same time
     GROUP_CONCAT(distinct co.observation) as observation
