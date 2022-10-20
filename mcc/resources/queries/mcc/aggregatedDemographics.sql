@@ -23,6 +23,7 @@ SELECT
   o.infant_history,
   o.fertility_status,
   o.medical_history,
+  o.date_of_observations,
   d.container
 
 FROM "/data/Colonies/SNPRC/".study.demographics d
@@ -64,6 +65,7 @@ SELECT
   o.infant_history,
   o.fertility_status,
   o.medical_history,
+  o.date_of_observations,
   d.container
 
 FROM "/data/Colonies/WNPRC/".study.demographics d
@@ -102,6 +104,7 @@ SELECT
     o.infant_history,
     o.fertility_status,
     o.medical_history,
+    o.date_of_observations,
     d.container
 
 FROM "/data/Colonies/UNO/".study.demographics d
@@ -140,6 +143,7 @@ SELECT
     o.infant_history,
     o.fertility_status,
     o.medical_history,
+    o.date_of_observations,
     d.container
 
 FROM "/data/Colonies/UCSD/".study.demographics d
@@ -178,6 +182,7 @@ SELECT
     o.infant_history,
     o.fertility_status,
     o.medical_history,
+    o.date_of_observations,
     d.container
 
 FROM "/data/Colonies/Other/".study.demographics d
