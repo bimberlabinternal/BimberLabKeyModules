@@ -24,8 +24,6 @@ import org.labkey.api.query.QueryService;
 import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
-import org.labkey.api.study.StudyService;
-import org.labkey.api.util.DateUtil;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.ContainerUser;
@@ -42,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class WnprcObservationStep implements TaskRefTask
+public class NprcObservationStep implements TaskRefTask
 {
     protected ContainerUser _containerUser;
 
@@ -57,7 +55,7 @@ public class WnprcObservationStep implements TaskRefTask
     private void processFile(PipelineJob job) throws PipelineJobException
     {
         PipeRoot root = PipelineService.get().findPipelineRoot(job.getContainer());
-        File f = new File(root.getRootPath(), "u24_AdditionalColonyData.txt");
+        File f = new File(root.getRootPath(), _settings.get(Settings.fileName.name()));
         if (!f.exists())
         {
             throw new PipelineJobException("Unable to find file: " + f.getPath());
@@ -249,16 +247,23 @@ public class WnprcObservationStep implements TaskRefTask
         return values.get(idx);
     }
 
+    protected final Map<String, String> _settings = new CaseInsensitiveHashMap<>();
+
     @Override
     public List<String> getRequiredSettings()
     {
-        return Collections.emptyList();
+        return Collections.unmodifiableList(Arrays.asList(Settings.fileName.name()));
+    }
+
+    private enum Settings
+    {
+        fileName();
     }
 
     @Override
     public void setSettings(Map<String, String> settings) throws XmlException
     {
-
+        _settings.putAll(settings);
     }
 
     @Override

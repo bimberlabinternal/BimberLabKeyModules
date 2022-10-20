@@ -100,6 +100,7 @@
         <transform id="observations1" type="RemoteQueryTransformStep">
             <description>Copy to target</description>
             <source remoteSource="WNPRC" schemaName="study" queryName="u24_AdditionalColonyData">
+                <!-- NOTE: the column orde must be preserved and match expected order in NprcObservationStep -->
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
@@ -112,11 +113,12 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination type="file" fileBaseName="u24_AdditionalColonyData" fileExtension="txt" columnDelimiter=","/>
+            <destination type="file" fileBaseName="u24_AdditionalColonyData_WNPRC" fileExtension="txt" columnDelimiter=","/>
         </transform>
         <transform id="observations2" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.mcc.etl.WnprcObservationStep">
+            <taskref ref="org.labkey.mcc.etl.NprcObservationStep">
                 <settings>
+                    <setting name="fileName" value="u24_AdditionalColonyData_WNPRC.txt"/>
                 </settings>
             </taskref>
         </transform>

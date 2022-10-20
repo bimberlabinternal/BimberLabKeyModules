@@ -148,6 +148,32 @@
 
         </transform>
 
+        <transform id="observations1" type="RemoteQueryTransformStep">
+            <description>Copy to target</description>
+            <source remoteSource="SNPRC" schemaName="study" queryName="u24MarmosetStats">
+                <!-- NOTE: the column orde must be preserved and match expected order in NprcObservationStep -->
+                <sourceColumns>
+                    <column>AnimalId</column>
+                    <column>Date</column>
+                    <column>u24_status</column>
+                    <column>available_to_transfer</column>
+                    <column>current_housing_status</column>
+                    <column>infant_history</column>
+                    <column>fertility_status</column>
+                    <column>medical_history</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination type="file" fileBaseName="u24_AdditionalColonyData_SNPRC" fileExtension="txt" columnDelimiter=","/>
+        </transform>
+        <transform id="observations2" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.NprcObservationStep">
+                <settings>
+                    <setting name="fileName" value="u24_AdditionalColonyData_SNPRC.txt"/>
+                </settings>
+            </taskref>
+        </transform>
+
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >
