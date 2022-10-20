@@ -58,7 +58,6 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
                         put("containerPath", "js:Laboratory.Utils.getQueryContainerPath()");
                         put("displayField", "version");
                         put("valueField", "rowid");
-                        put("allowBlank", false);
                         put("doNotIncludeInTemplates", true);
                     }}, null),
                     ToolParameterDescriptor.create("releaseVersion", "mGAP Version", "This string will be used to tag novel variants.", "textfield", new JSONObject(){{
