@@ -69,7 +69,7 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
         File refVcf = getPipelineCtx().getSequenceSupport().getCachedData(refFileId);
         if (refVcf == null || !refVcf.exists())
         {
-            throw new PipelineJobException("Unable to find file: " + refFileId + "/" + refVcf);
+            throw new PipelineJobException("Unable to find file: " + refFileId + ", path: " + refVcf);
         }
 
         List<String> extraArgs = new ArrayList<>();
