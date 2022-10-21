@@ -123,24 +123,28 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
     public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
     {
         Integer versionRowId = getProvider().getParameterByName(VERSION_ROWID).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-        String version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("name"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(String.class);
+        String version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("version"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(String.class);
         if (version == null)
         {
             throw new PipelineJobException("Unable to find release for release: " + versionRowId);
         }
 
-        version = version.split(": ")[1];
+        Integer referenceVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("sitesOnlyVcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
+        if (referenceVcfOutputId == null)
+        {
+            getPipelineCtx().getLogger().debug("Sites-only VCF not found, using primary VCF");
+            referenceVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("vcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
+        }
 
-        Integer sitesOnlyVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("sitesOnlyVcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
-        if (sitesOnlyVcfOutputId == null)
+        if (referenceVcfOutputId == null)
         {
             throw new PipelineJobException("Unable to find sites-only VCF for release: " + versionRowId);
         }
 
-        SequenceOutputFile sitesOnly = SequenceOutputFile.getForId(sitesOnlyVcfOutputId);
+        SequenceOutputFile sitesOnly = SequenceOutputFile.getForId(referenceVcfOutputId);
         if (sitesOnly == null)
         {
-            throw new PipelineJobException("Unable to find sites-only VCF output file for fileId: " + sitesOnlyVcfOutputId);
+            throw new PipelineJobException("Unable to find sites-only VCF output file for fileId: " + referenceVcfOutputId);
         }
 
         support.cacheExpData(sitesOnly.getExpData());
