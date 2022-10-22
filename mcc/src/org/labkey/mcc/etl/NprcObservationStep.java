@@ -243,7 +243,7 @@ public class NprcObservationStep implements TaskRefTask
         }
 
         int idx = ConvertHelper.convert(value, Integer.class);
-        if (idx >= value.length())
+        if (idx >= values.size())
         {
             throw new IllegalStateException("Unexpected value: " + value);
         }
