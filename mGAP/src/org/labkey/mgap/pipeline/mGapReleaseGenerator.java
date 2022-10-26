@@ -833,15 +833,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
                     else
                     {
-                        if (!track.isPrimary())
+                        ctx.getLogger().info("Copying VCF: " + renamedVcf.getPath());
+                        if (renamedVcf.exists())
                         {
-                            ctx.getLogger().info("Copying VCF: " + renamedVcf.getPath());
-                            if (renamedVcf.exists())
-                            {
-                                renamedVcf.delete();
-                            }
-                            FileUtils.copyFile(vcf, renamedVcf);
+                            renamedVcf.delete();
                         }
+                        FileUtils.copyFile(vcf, renamedVcf);
 
                         if (renamedVcfIdx.exists())
                         {
