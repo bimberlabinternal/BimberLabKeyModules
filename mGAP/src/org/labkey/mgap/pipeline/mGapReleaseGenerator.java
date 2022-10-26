@@ -52,7 +52,6 @@ import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
-import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.FileType;
@@ -83,6 +82,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,7 +93,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 {
     private final FileType _vcfType = new FileType(Arrays.asList(".vcf"), ".vcf", false, FileType.gzSupportLevel.SUPPORT_GZ);
     public static final String MMUL_GENOME = "mmulGenome";
-    public static final String PRIOR_RELEASE = "priorReleaseVcf";
 
     public mGapReleaseGenerator()
     {
@@ -105,10 +104,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 {{
                     put("extensions", Arrays.asList("gtf"));
                     put("width", 400);
-                    put("allowBlank", false);
-                }}, null),
-                ToolParameterDescriptor.createExpDataParam(PRIOR_RELEASE, "Prior mGAP Release VCF", "This is the file ID of the VCF from the previous release, used for comparison stats.", "ldk-expdatafield", new JSONObject()
-                {{
                     put("allowBlank", false);
                 }}, null),
                 ToolParameterDescriptor.create(AnnotationStep.GRCH37, "GRCh37 Genome", "The genome that matches human GRCh37.", "ldk-simplelabkeycombo", new JSONObject()
@@ -219,6 +214,19 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             ctx.getJob().getLogger().info("total tracks: " + distinctTracks.size());
 
+            AtomicBoolean hasNovelSites = new AtomicBoolean(false);
+            distinctTracks.forEach(tn -> {
+                if (tn.contains("Novel Sites"))
+                {
+                    hasNovelSites.getAndSet(true);
+                }
+            });
+
+            if (!hasNovelSites.get())
+            {
+                throw new PipelineJobException("Expected this release to contain one track with Novel Sites in the name");
+            }
+
             ctx.getSequenceSupport().cacheGenome(SequenceAnalysisService.get().getReferenceGenome(ctx.getParams().getInt(AnnotationStep.GRCH37), ctx.getJob().getUser()));
 
             //find chain files:
@@ -269,6 +277,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 job.getLogger().error("no outputs found");
             }
 
+
+            String releaseVersion = job.getParameters().get("releaseVersion");
+
             Map<String, SequenceOutputFile> outputVCFMap = new HashMap<>();
             Map<String, SequenceOutputFile> outputTableMap = new HashMap<>();
             Map<String, SequenceOutputFile> liftedVcfMap = new HashMap<>();
@@ -298,10 +309,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     String name = so.getName().replaceAll(": Sites Only", "");
                     sitesOnlyVcfMap.put(name, so);
                 }
-                else if (so.getCategory().contains("mGAP Release: Novel Sites"))
+                else if (so.getCategory().contains("Release Track") && so.getName().contains("Novel Sites"))
                 {
-                    String name = so.getName().replaceAll(": Novel Sites", "");
-                    novelSitesVcfMap.put(name, so);
+                    novelSitesVcfMap.put("mGAP Release: " + releaseVersion, so);
                 }
                 else if (so.getCategory().endsWith("Release"))
                 {
@@ -797,13 +807,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ReferenceGenome genome = ctx.getSequenceSupport().getCachedGenome(genomeId);
             boolean testOnly = ctx.getParams().optBoolean("testOnly", false);
 
-            int priorReleaseId = ctx.getParams().optInt(PRIOR_RELEASE);
-            File priorReleaseVcf = ctx.getSequenceSupport().getCachedData(priorReleaseId);
-            if (!priorReleaseVcf.exists())
-            {
-                throw new PipelineJobException("Unable to find prior release VCF: " + priorReleaseVcf.getPath());
-            }
-
             String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
             File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap.v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
 
@@ -830,19 +833,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
                     else
                     {
-                        if (track.isPrimary())
+                        ctx.getLogger().info("Copying VCF: " + renamedVcf.getPath());
+                        if (renamedVcf.exists())
                         {
-                            annotateBasedOnPriorRelease(ctx, vcf, priorReleaseVcf, releaseVersion, primaryTrackVcf, genome, testOnly);
+                            renamedVcf.delete();
                         }
-                        else
-                        {
-                            ctx.getLogger().info("Copying VCF: " + renamedVcf.getPath());
-                            if (renamedVcf.exists())
-                            {
-                                renamedVcf.delete();
-                            }
-                            FileUtils.copyFile(vcf, renamedVcf);
-                        }
+                        FileUtils.copyFile(vcf, renamedVcf);
 
                         if (renamedVcfIdx.exists())
                         {
@@ -903,22 +899,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
             output3.setLibrary_id(grch37Genome.getGenomeId());
             ctx.getFileManager().addSequenceOutput(output3);
-
-            SequenceOutputFile output4 = new SequenceOutputFile();
-            output4.setFile(getNovelSitesVcfName(ctx.getOutputDir(), primaryTrackVcf));
-            output4.setName("mGAP Release: " + releaseVersion + " Novel Sites");
-            output4.setCategory((testOnly ? "Test " : "") + "mGAP Release: Novel Sites");
-            output4.setLibrary_id(genome.getGenomeId());
-            ctx.getFileManager().addSequenceOutput(output4);
-        }
-
-        private void annotateBasedOnPriorRelease(JobContext ctx, File inputVcf, File priorReleaseVcf, String releaseVersion, File primaryTrackVcf, ReferenceGenome genome, boolean testOnly) throws PipelineJobException
-        {
-            // Annotate relative to previous release and make sites-only VCF
-            File droppedFromPriorRelease = getDroppedSitesVcfName(ctx.getOutputDir(), primaryTrackVcf);
-            File novelInRelease = getNovelSitesVcfName(ctx.getOutputDir(), primaryTrackVcf);
-
-            new AnnotateNovelSitesWrapper(ctx.getLogger()).execute(inputVcf, priorReleaseVcf, novelInRelease, droppedFromPriorRelease, releaseVersion, primaryTrackVcf);
         }
 
         private void checkVcfAnnotationsAndSamples(File vcfInput, boolean skipAnnotationChecks) throws PipelineJobException
@@ -1837,42 +1817,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 //    Assert.assertNotNull(updated);
                 //}
             }
-        }
-    }
-
-    private static class AnnotateNovelSitesWrapper extends AbstractDiscvrSeqWrapper
-    {
-        public AnnotateNovelSitesWrapper(Logger log)
-        {
-            super(log);
-        }
-
-        public File execute(File vcf, File referenceVcf, File novelSitesVcf, File missingSitesVcf, String versionString, File vcfOutput) throws PipelineJobException
-        {
-            List<String> args = new ArrayList<>(getBaseArgs());
-            args.add("AnnotateNovelSites");
-            args.add("-V");
-            args.add(vcf.getPath());
-            args.add("-rv");
-            args.add(referenceVcf.getPath());
-            args.add("-ns");
-            args.add(novelSitesVcf.getPath());
-            args.add("-ms");
-            args.add(missingSitesVcf.getPath());
-
-            args.add("-an");
-            args.add("mGAPV");
-            args.add("-ad");
-            args.add("The first mGAP version where variants at this site appeared");
-            args.add("-av");
-            args.add(versionString);
-
-            args.add("-O");
-            args.add(vcfOutput.getPath());
-
-            execute(args);
-
-            return vcfOutput;
         }
     }
 }
