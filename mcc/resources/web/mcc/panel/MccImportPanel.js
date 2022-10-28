@@ -249,7 +249,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                 val = 'not assigned to U24 breeding colony';
             }
 
-            return val.toLowerCase() === 'assigned to U24 breeding colony';
+            return val.toLowerCase() === 'assigned to u24 breeding colony';
         },
 
         weight: function(val, panel, row){

@@ -646,6 +646,24 @@
             <column columnName="u24_status">
                 <datatype>boolean</datatype>
             </column>
+            <column columnName="availability">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="current_housing_status">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="infant_history">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="fertility_status">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="medical_history">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="date_of_observations">
+                <datatype>timestamp</datatype>
+            </column>
             <column columnName="colony">
                 <datatype>varchar</datatype>
             </column>
