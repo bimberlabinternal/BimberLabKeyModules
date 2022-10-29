@@ -311,6 +311,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 else if (so.getCategory().contains("Release Track") && so.getName().contains("Novel Sites"))
                 {
                     novelSitesVcfMap.put("mGAP Release: " + releaseVersion, so);
+                    trackVCFMap.put(so.getName(), so);
                 }
                 else if (so.getCategory().endsWith("Release"))
                 {
