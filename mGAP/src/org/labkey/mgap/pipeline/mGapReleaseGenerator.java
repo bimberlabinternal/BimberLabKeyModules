@@ -306,8 +306,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
                 else if (so.getCategory().contains("mGAP Release: Sites Only"))
                 {
-                    String name = so.getName().replaceAll(": Sites Only", "");
-                    sitesOnlyVcfMap.put(name, so);
+                    sitesOnlyVcfMap.put("mGAP Release: " + releaseVersion, so);
                 }
                 else if (so.getCategory().contains("Release Track") && so.getName().contains("Novel Sites"))
                 {
@@ -853,12 +852,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     ctx.getFileManager().removeIntermediateFile(renamedVcfIdx);
                     ctx.getFileManager().addIntermediateFile(renamedVcfDone);
 
-                    SequenceOutputFile output = new SequenceOutputFile();
-                    output.setFile(renamedVcf);
-                    output.setName(track.getTrackName());
-                    output.setCategory("Release Track");
-                    output.setLibrary_id(genome.getGenomeId());
-                    ctx.getFileManager().addSequenceOutput(output);
+                    if (!track.isPrimary())
+                    {
+                        SequenceOutputFile output = new SequenceOutputFile();
+                        output.setFile(renamedVcf);
+                        output.setName(track.getTrackName());
+                        output.setCategory("Release Track");
+                        output.setLibrary_id(genome.getGenomeId());
+                        ctx.getFileManager().addSequenceOutput(output);
+                    }
                 }
             }
             catch (IOException e)
