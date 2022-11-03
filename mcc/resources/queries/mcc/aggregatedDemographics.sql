@@ -90,45 +90,6 @@ SELECT
     d.gender,
     d.birth,
     d.death,
-    'U NEB' as colony,
-    d.damMccAlias.externalAlias as dam,
-    d.sireMccAlias.externalAlias as sire,
-    d.dam as originalDam,
-    d.sire as originalSire,
-    d.Id.mostRecentWeight.mostRecentWeight as mostRecentWeight,
-    d.objectid,
-    d.calculated_status,
-    false as u24_status,
-    o.availability,
-    o.current_housing_status,
-    o.infant_history,
-    o.fertility_status,
-    o.medical_history,
-    o.date_of_observations,
-    d.container
-
-FROM "/data/Colonies/UNO/".study.demographics d
-         LEFT JOIN (SELECT
-                        o.Id,
-                        o.date_of_observations,
-                        o."availability::observation" as availability,
-                        o."current_housing_status::observation" as current_housing_status,
-                        o."infant_history::observation" as infant_history,
-                        o."fertility_status::observation" as fertility_status,
-                        o."medical_history::observation" as medical_history,
-                    FROM "/data/Colonies/UNO/".study.mostRecentObservationsPivoted o
-) o ON (o.Id = d.Id)
-
-UNION ALL
-
-SELECT
-    d.Id.mccAlias.externalAlias as Id,
-    d.Id as originalId,
-    d.date,
-    d.species,
-    d.gender,
-    d.birth,
-    d.death,
     d.colony,
     d.damMccAlias.externalAlias as dam,
     d.sireMccAlias.externalAlias as sire,
