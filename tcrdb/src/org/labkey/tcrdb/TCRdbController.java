@@ -606,6 +606,7 @@ public class TCRdbController extends SpringActionController
                         RefNtSequenceModel nt = RefNtSequenceModel.getForRowId(rs.getInt(FieldKey.fromString("ref_nt_id")));
                         fasta.append(">").append(nt.getName() + (nt.getSpecies() != null ? "-" + nt.getSpecies() : "")).append('\n').append(nt.getSequence()).append('\n');
                         missingSegments.remove(nt.getName());
+                        missingSegments.remove(nt.getLineage());
                     });
                 }
             }
