@@ -595,13 +595,13 @@ public class TCRdbController extends SpringActionController
             {
                 for (int libraryId : segmentsByLibrary.keySet())
                 {
-                    SimpleFilter ntFilter = new SimpleFilter(new SimpleFilter.OrClause(
-                            new CompareType.CompareClause(FieldKey.fromString("ref_nt_id/name"), CompareType.IN, segmentsByLibrary.get(libraryId)),
-                            new CompareType.CompareClause(FieldKey.fromString("ref_nt_id/lineage"), CompareType.IN, segmentsByLibrary.get(libraryId))
-                    ));
-
+                    SimpleFilter ntFilter = new SimpleFilter();
                     ntFilter.addCondition(FieldKey.fromString("ref_nt_id/datedisabled"), null, CompareType.ISBLANK);
                     ntFilter.addCondition(FieldKey.fromString("library_id"), libraryId, CompareType.EQUAL);
+                    ntFilter.addClause(new SimpleFilter.OrClause(
+                            new SimpleFilter.InClause(FieldKey.fromString("ref_nt_id/name"), segmentsByLibrary.get(libraryId)),
+                            new SimpleFilter.InClause(FieldKey.fromString("ref_nt_id/lineage"), segmentsByLibrary.get(libraryId))
+                    ));
                     new TableSelector(QueryService.get().getUserSchema(getUser(), target, "sequenceanalysis").getTable("reference_library_members"), PageFlowUtil.set("ref_nt_id"), ntFilter, null).forEachResults(rs -> {
                         RefNtSequenceModel nt = RefNtSequenceModel.getForRowId(rs.getInt(FieldKey.fromString("ref_nt_id")));
                         fasta.append(">").append(nt.getName() + (nt.getSpecies() != null ? "-" + nt.getSpecies() : "")).append('\n').append(nt.getSequence()).append('\n');
