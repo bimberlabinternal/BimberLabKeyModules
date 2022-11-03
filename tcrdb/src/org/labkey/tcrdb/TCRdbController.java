@@ -538,12 +538,24 @@ public class TCRdbController extends SpringActionController
                     FieldKey.fromString("jHit"),
                     FieldKey.fromString("dHit"),
                     FieldKey.fromString("cHit"),
-                    FieldKey.fromString("libraryId/libraryId")));
+                    FieldKey.fromString("libraryId/libraryId"),
+                    FieldKey.fromString("analysisId/library_id")));
             TableSelector ts = new TableSelector(assayData, cols.values(), assayFilter, null);
             Set<String> segmentsByName = new HashSet<>();
             final String[] segmentFields = new String[]{"vHit", "jHit", "cHit"};
             ts.forEachResults(rs -> {
-                Integer libraryId = rs.getObject(FieldKey.fromString("libraryId/libraryId")) == null ? null : rs.getInt(FieldKey.fromString("libraryId/libraryId"));
+                // Allows this to work with both MiXCR and 10x data
+                Integer libraryId = null;
+                if (rs.getObject(FieldKey.fromString("libraryId/libraryId")) != null)
+                {
+                    libraryId = rs.getInt(FieldKey.fromString("libraryId/libraryId"));
+                }
+
+                if (libraryId == null && rs.getObject(FieldKey.fromString("analysisId/library_id")) != null)
+                {
+                    libraryId = rs.getInt(FieldKey.fromString("analysisId/library_id"));
+                }
+
                 for (String fn : segmentFields)
                 {
                     if (rs.getString(FieldKey.fromString(fn)) != null)
