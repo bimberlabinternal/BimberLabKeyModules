@@ -50,7 +50,7 @@ dependencies {
     BuildUtils.addExternalDependency(
             project,
             new ExternalDependency(
-                    "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}",
+                    "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonDatabindVersion}",
                     "jackson-dataformat-xml",
                     "jackson-dataformat-xml",
                     "https://github.com/FasterXML/jackson-dataformat-xml",
