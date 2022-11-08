@@ -38,7 +38,7 @@ dependencies {
     BuildUtils.addExternalDependency(
             project,
             new ExternalDependency(
-                    "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
+                    "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
                     "jackson-databind",
                     "jackson-databind",
                     "https://github.com/FasterXML/jackson-databind",
@@ -50,7 +50,7 @@ dependencies {
     BuildUtils.addExternalDependency(
             project,
             new ExternalDependency(
-                    "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}",
+                    "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonDatabindVersion}",
                     "jackson-dataformat-xml",
                     "jackson-dataformat-xml",
                     "https://github.com/FasterXML/jackson-dataformat-xml",
