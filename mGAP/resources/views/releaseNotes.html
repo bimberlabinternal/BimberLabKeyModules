@@ -1,3 +1,13 @@
+<h4>Release 2.3:</h4>
+<ul>
+    <li>This is an additional 560 animals over the prior version.</li>
+    <li>There are a sizable number of data processing changes, largely adaptations to handle the rapidly growing dataset size:</li>
+    <ol>
+        <li>All data used <a href="https://gatk.broadinstitute.org/hc/en-us/articles/4405443600667-ReblockGVCF">GATK Reblocked gVCFs</a> as inputs. This reduces processing, but can reduce sensitivity at homozygous-reference sites (resulting in greater numbers of no-call genotypes at homozygous ref sites)</li>
+        <li>Also to adapt to larger data size, we changed the structure of data processing. Previously, samples were each aggregated into one GenomicsDB workspace per data type (WGS or WXS). Next, GenotypeGVCFs was run on each workspace, with one job per contig. The resulting VCFs were filtered and merged. In this release, the upfront aggregation step was dropped, and we instead: 1) use reblocked gVCFs as input (entire set of samples), 2) chunk the genome into ~1000 bins with one job/bin, 3) per bin, run GenomicsDbImport to make a transient workspace using the job's intervals +/- 1000bp, 4) run GenotypeGVCFs against that workspace, 5) filter the result, including technology-aware thresholds (i.e. different depth filters for WGS/WXS). This process is both considerably more efficient and has the advantage of joint-genotyping across the entire cohort at once.</li>
+    </ol>
+</ul>
+
 <h4>Release 2.2:</h4>
 <ul>
     <li>This is an additional 103 animals over the prior version.</li>
