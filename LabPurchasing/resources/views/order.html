@@ -1,0 +1,302 @@
+<script type="text/javascript" nonce="<%=getScriptNonce()%>">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+
+        Ext4.ns('LabPurchasing.panel');
+
+        Ext4.define('LabPurchasing.panel.VendorPanel', {
+            extend: 'LDK.form.Panel',
+            alias: 'widget.labpurchasing-vendorpanel',
+
+            initComponent: function() {
+                Ext4.apply(this, {
+                    border: false,
+                    store: {
+                        schemaName: 'labpurchasing',
+                        queryName: 'vendors',
+                        storeId: 'addNewVendorStore',
+                        autoLoad: true,
+                        maxRows: 0,
+                        metadata: {
+                            enabled: {
+                                defaultValue: true
+                            }
+                        },
+                    },
+                    dockedItems: []
+                });
+
+                this.callParent(arguments);
+            },
+
+            configureForm: function (store) {
+                var items = this.callParent(arguments);
+
+                return [{
+                    layout: 'column',
+                    border: false,
+                    defaults: {
+                        border: false,
+                        bodyStyle: 'padding: 5px;'
+                    },
+                    items: [{
+                        columnWidth: 0.5,
+                        items: items.slice(0, 7)
+                    },{
+                        columnWidth: 0.5,
+                        items: items.slice(7)
+                    }]
+                }];
+            },
+
+            loadQuery: function(store, records, success) {
+                this.callParent(arguments);
+
+                this.up('window').center();
+            },
+
+            doSubmit: function(btn){
+                btn.setDisabled(true);
+
+                var plugin = this.getPlugin('labkey-databind');
+                plugin.updateRecordFromForm();
+
+                if (!this.store.getNewRecords().length && !this.store.getUpdatedRecords().length && !this.store.getRemovedRecords().length){
+                    Ext4.Msg.alert('No changes', 'There are no changes, nothing to do', function(){
+                        var win = this.up('window');
+
+                        // Reload vendor store:
+                        var field = this.formPanel.query('field[name="vendorId"]')[0];
+                        field.store.sync()
+
+                        win.close();
+                    }, this);
+                    return;
+                }
+
+                function onSuccess(store){
+                    this.mun(this.store, onError);
+                    btn.setDisabled(false);
+
+                    var store = Ext4.StoreManager.get('labpurchasing||vendors||rowId||vendorName');
+                    if (store) {
+                        store.load();
+                    }
+
+                    Ext4.Msg.alert('Success', 'The new vendor was created', function(){
+                        this.up('window').close();
+                    }, this);
+                }
+
+                function onError(store, msg, error){
+                    this.mun(this.store, onSuccess);
+                    btn.setDisabled(false);
+                }
+
+                this.mon(this.store, 'write', onSuccess, this, {single: true});
+                this.mon(this.store, 'exception', onError, this, {single: true});
+                this.store.sync();
+            }
+        });
+
+        Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
+            extend: 'Ext.window.Window',
+            alias: 'widget.labpurchasing-reorderpreviouswindow',
+
+            initComponent: function () {
+                Ext4.apply(this, {
+                    border: false,
+                    width: 700,
+                    title: 'Re-order Previous Item',
+                    defaults: {
+                        border: false
+                    },
+                    bodyStyle: 'padding: 5px;',
+                    items: [{
+                        xtype: 'labkey-combo',
+                        itemId: 'vendorField',
+                        fieldLabel: 'Vendor (optional)',
+                        width: 650,
+                        labelWidth: 150,
+                        forceSelection: true,
+                        queryMode: 'local',
+                        store: {
+                            type: 'labkey-store',
+                            schemaName: 'labpurchasing',
+                            queryName: 'vendors',
+                            autoLoad: true
+                        },
+                        valueField: 'rowId',
+                        displayField: 'vendorName',
+                        listeners: {
+                            scope: this,
+                            change: function(field, val){
+                                var store = this.down('#itemField').store;
+                                if (val) {
+                                    store.filterArray = [LABKEY.Filter.create('vendorId', val, LABKEY.Filter.Types.EQUAL)];
+                                }
+                                else {
+                                    store.filterArray = null;
+                                }
+
+                                store.load();
+                            }
+                        }
+                    },{
+                        xtype: 'labkey-combo',
+                        itemId: 'itemField',
+                        fieldLabel: 'Item',
+                        allowBlank: false,
+                        forceSelection: true,
+                        queryMode: 'local',
+                        width: 650,
+                        labelWidth: 150,
+                        store: {
+                            type: 'labkey-store',
+                            schemaName: 'labpurchasing',
+                            queryName: 'referenceItems',
+                            columns: 'rowId,vendorId,itemName,itemNumber,units,unitCost',
+                            autoLoad: true
+                        },
+                        valueField: 'rowId',
+                        displayField: 'itemName'
+                    }],
+                    buttons: [{
+                        text: 'Re-order Item',
+                        scope: this,
+                        handler: function (btn) {
+                            var field = this.down('#itemField');
+                            var recIdx = field.store.find('rowId', field.getValue());
+                            if (recIdx === -1) {
+                                Ext4.Msg.alert('Error', 'Must select an item');
+                                return;
+                            }
+
+                            var rec = field.store.getAt(recIdx);
+                            this.formPanel.getForm().setValues({
+                                itemId: rec.get('rowId'),
+                                vendorId: rec.get('vendorId'),
+                                itemName: rec.get('itemName'),
+                                itemNumber: rec.get('itemNumber'),
+                                units: rec.get('units'),
+                                unitCost: rec.get('unitCost')
+                            });
+
+                            btn.up('window').close();
+                        }
+                    },{
+                        text: 'Cancel',
+                        handler: function(btn) {
+                            btn.up('window').close();
+                        }
+                    }]
+                });
+
+                this.callParent(arguments);
+            },
+        });
+
+        Ext4.define('LabPurchasing.panel.OrderPanel', {
+            extend: 'LDK.form.Panel',
+            alias: 'widget.labpurchasing-orderpanel',
+            initComponent: function() {
+                Ext4.apply(this, {
+                    border: false,
+                    metadata: {
+                        unitCost: {
+                            listeners: {
+                                change: function (field, val) {
+                                    var unitCost = val;
+                                    var quantity = field.up('panel').down('field[dataIndex="quantity"]').getValue();
+                                    if (quantity && unitCost) {
+                                        field.up('panel').down('field[dataIndex="totalCost"]').setValue(quantity * unitCost);
+                                    }
+                                }
+                            }
+                        },
+                        quantity: {
+                            listeners: {
+                                change: function (field, val) {
+                                    var quantity = val;
+                                    var unitCost = field.up('panel').down('field[dataIndex="unitCost"]').getValue();
+                                    if (quantity && unitCost) {
+                                        field.up('panel').down('field[dataIndex="totalCost"]').setValue(quantity * unitCost);
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    store: {
+                        schemaName: 'labpurchasing',
+                        queryName: 'purchases',
+                        columns: 'requestor,vendorId,itemName,itemNumber,units,quantity,unitCost,totalCost,description,fundingSource',
+                        autoLoad: true,
+                        maxRows: 0,
+                        metadata: {
+                            requestor: {
+                                defaultValue: LABKEY.Security.currentUser.displayName
+                            }
+                        }
+                    },
+                    dockedItems: [{
+                        xtype: 'toolbar',
+                        dock: 'bottom',
+                        ui: 'footer',
+                        style: 'background-color: transparent;',
+                        items: [
+                            LABKEY.ext4.FORMBUTTONS.getButton('SUBMIT'),
+                            LABKEY.ext4.FORMBUTTONS.getButton('CANCEL'),
+                            {
+                                text: 'Add New Vendor',
+                                scope: this,
+                                handler: function (btn) {
+                                    Ext4.create('Ext4.window.Window', {
+                                        title: 'Add New Vendor',
+                                        items: [{
+                                            xtype: 'labpurchasing-vendorpanel',
+                                            formPanel: this
+                                        }],
+                                        buttons: [{
+                                            text: 'Submit',
+                                            handler: function (btn) {
+                                                var panel = btn.up('window').down('form');
+                                                panel.doSubmit(btn);
+                                            }
+                                        }, {
+                                            text: 'Cancel',
+                                            handler: function (btn) {
+                                                btn.up('window').close();
+                                            }
+                                        }]
+                                    }).show();
+                                }
+                            }
+                        ]
+                    }, {
+                        xtype: 'toolbar',
+                        dock: 'top',
+                        ui: 'footer',
+                        style: 'background-color: transparent;',
+                        items: [{
+                            text: 'Re-order Previous Item',
+                            scope: this,
+                            handler: function (btn) {
+                                Ext4.create('LabPurchasing.window.ReorderPreviousWindow', {
+                                    formPanel: this
+                                }).show();
+
+                            }
+                        }]
+                    }]
+                });
+
+                this.callParent(arguments);
+            }
+        });
+
+        Ext4.create('LabPurchasing.panel.OrderPanel').render(webpart.wrapperDivId);
+
+    });
+
+</script>

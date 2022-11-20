@@ -1,0 +1,5 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Populate Purchasing Lookups and Reference Data">
+    <dependencies>
+        <dependency path="laboratory.context" />
+    </dependencies>
+</view>

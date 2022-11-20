@@ -1,20 +1,385 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
 
- * Copyright (c) 2020 LabKey Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-
- -->
 <tables xsi:schemaLocation="http://labkey.org/data/xml ..\..\..\..\schemas\tableInfo.xsd"
-        xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+        xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <table tableName="purchases" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Purchases</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="purchaseId">
+                <nullable>true</nullable>
+            </column>
+            <column columnName="requestor">
+                <columnTitle>Requested By</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="vendorId">
+                <columnTitle>Vendor</columnTitle>
+                <fk>
+                    <fkDbSchema>labpurchasing</fkDbSchema>
+                    <fkTable>vendors</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                    <fkDisplayColumnName>vendorName</fkDisplayColumnName>
+                </fk>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="itemName">
+                <columnTitle>Item Name</columnTitle>
+                <nullable>false</nullable>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="itemNumber">
+                <columnTitle>Product/Catalog #</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="units">
+                <columnTitle>Units</columnTitle>
+                <fk>
+                    <fkDbSchema>labpurchasing</fkDbSchema>
+                    <fkTable>purchasingUnits</fkTable>
+                    <fkColumnName>unit</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
+            <column columnName="quantity">
+                <columnTitle>Quantity</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="unitCost">
+                <columnTitle>Unit Cost</columnTitle>
+            </column>
+            <column columnName="totalCost">
+                <columnTitle>Total Cost</columnTitle>
+            </column>
+            <column columnName="description">
+                <columnTitle>Description</columnTitle>
+            </column>
+            <column columnName="fundingSource">
+                <columnTitle>Funding Source</columnTitle>
+                <fk>
+                    <fkDbSchema>labpurchasing</fkDbSchema>
+                    <fkTable>fundingSources</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                    <fkDisplayColumnName>title</fkDisplayColumnName>
+                </fk>
+            </column>
+            <column columnName="status">
+                <columnTitle>Order Status</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="orderNumber">
+                <columnTitle>Order Number</columnTitle>
+            </column>
+            <column columnName="orderedBy">
+                <columnTitle>Ordered By</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="orderDate">
+                <columnTitle>Order Date</columnTitle>
+            </column>
+            <column columnName="receivedBy">
+                <columnTitle>Received By</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="receivedDate">
+                <columnTitle>Date Received</columnTitle>
+            </column>
+            <column columnName="itemLocation">
+                <columnTitle>Item Location</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="invoiceNumber">
+                <columnTitle>Invoice Number</columnTitle>
+            </column>
+            <column columnName="invoiceDate">
+                <columnTitle>Invoice Date</columnTitle>
+            </column>
+            <column columnName="invoicedBy">
+                <columnTitle>Invoiced By</columnTitle>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
+    <table tableName="vendors" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Vendors</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="vendorName">
+                <columnTitle>Vendor Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="phone">
+                <columnTitle>Phone</columnTitle>
+            </column>
+            <column columnName="fax">
+                <columnTitle>Fax</columnTitle>
+            </column>
+            <column columnName="email">
+                <columnTitle>Email</columnTitle>
+            </column>
+            <column columnName="url">
+                <columnTitle>Website/URL</columnTitle>
+                <url>${url}</url>
+            </column>
+            <column columnName="address">
+                <columnTitle>Address</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="address2">
+                <columnTitle>Address Line 2</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="city">
+                <columnTitle>City</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="state">
+                <columnTitle>State</columnTitle>
+            </column>
+            <column columnName="zip">
+                <columnTitle>ZIP Code</columnTitle>
+            </column>
+            <column columnName="country">
+                <columnTitle>Country</columnTitle>
+            </column>
+            <column columnName="comments">
+                <columnTitle>Comments</columnTitle>
+            </column>
+            <column columnName="accountNumber">
+                <columnTitle>Account Number</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="enabled">
+                <columnTitle>Enabled?</columnTitle>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
+    <table tableName="referenceItems" tableDbType="TABLE">
+        <tableTitle>Reference Items</tableTitle>
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="vendorId">
+                <columnTitle>Vendor</columnTitle>
+                <fk>
+                    <fkDbSchema>labpurchasing</fkDbSchema>
+                    <fkTable>vendors</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                    <fkDisplayColumnName>vendorName</fkDisplayColumnName>
+                </fk>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="itemName">
+                <columnTitle>Item Name</columnTitle>
+                <nullable>false</nullable>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="itemNumber">
+                <columnTitle>Product/Catalog #</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="units">
+                <columnTitle>Units</columnTitle>
+                <fk>
+                    <fkDbSchema>labpurchasing</fkDbSchema>
+                    <fkTable>purchasingUnits</fkTable>
+                    <fkColumnName>unit</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+
+                </fk>
+            </column>
+            <column columnName="unitCost">
+                <columnTitle>Unit Cost</columnTitle>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
+    <table tableName="fundingSources" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Funding Sources</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <titleColumn>title</titleColumn>
+        <columns>
+            <column columnName="rowId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="title">
+                <columnTitle>Title</columnTitle>
+                <nullable>false</nullable>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="projectNumber">
+                <columnTitle>Grant/Project #</columnTitle>
+                <nullable>false</nullable>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="accountNumber">
+                <columnTitle>Account/Alias #</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="startDate">
+                <columnTitle>Start Date</columnTitle>
+            </column>
+            <column columnName="endDate">
+                <columnTitle>End Date</columnTitle>
+            </column>
+            <column columnName="pi">
+                <columnTitle>PI</columnTitle>
+                <inputType>textfield</inputType>
+            </column>
+            <column columnName="comment">
+                <columnTitle>Comment</columnTitle>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+
+    <table tableName="purchasingUnits" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Purchasing Units</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="unit">
+                <columnTitle>Unit</columnTitle>
+                <nullable>false</nullable>
+                <inputType>textfield</inputType>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+</tables>
+
