@@ -1,6 +1,6 @@
 CREATE TABLE labpurchasing.purchases (
     rowId int identity(1,1),
-    orderNumber integer,
+    purchaseId integer,
     requestor varchar(255),
 
     vendorId int,
@@ -84,7 +84,6 @@ CREATE TABLE labpurchasing.fundingSources (
     rowId int identity(1,1),
 
     title varchar(4000),
-    "grant" varchar(4000),
     accountNumber varchar(1000),
     projectNumber varchar(1000),
 
@@ -108,8 +107,8 @@ CREATE TABLE labpurchasing.purchasingUnits (
     unit varchar(4000),
 
     container entityid,
-    created timestamp,
-    modified timestamp,
+    created datetime,
+    modified datetime,
     createdBy int,
     modifiedBy int,
 

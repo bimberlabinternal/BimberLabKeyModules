@@ -17,19 +17,19 @@ CREATE TABLE labpurchasing.purchases (
 
     orderNumber varchar(255),
     orderedBy varchar(1000),
-    orderDate datetime,
+    orderDate timestamp,
 
     receivedBy varchar(1000),
-    receivedDate datetime,
+    receivedDate timestamp,
     itemLocation varchar(1000),
 
     invoiceNumber varchar(255),
-    invoiceDate datetime,
+    invoiceDate timestamp,
     invoicedBy varchar(255),
 
     container entityid,
-    created datetime,
-    modified datetime,
+    created timestamp,
+    modified timestamp,
     createdBy int,
     modifiedBy int,
 
@@ -55,8 +55,8 @@ CREATE TABLE labpurchasing.vendors (
      enabled boolean DEFAULT true,
 
      container entityid,
-     created datetime,
-     modified datetime,
+     created timestamp,
+     modified timestamp,
      createdBy int,
      modifiedBy int,
 
@@ -72,8 +72,8 @@ CREATE TABLE labpurchasing.referenceItems (
     unitCost numeric,
 
     container entityid,
-    created datetime,
-    modified datetime,
+    created timestamp,
+    modified timestamp,
     createdBy int,
     modifiedBy int,
 
@@ -87,14 +87,14 @@ CREATE TABLE labpurchasing.fundingSources (
     accountNumber varchar(1000),
     projectNumber varchar(1000),
 
-    startDate datetime,
-    endDate datetime,
+    startDate timestamp,
+    endDate timestamp,
     pi varchar(1000),
     comment varchar(4000),
 
     container entityid,
-    created datetime,
-    modified datetime,
+    created timestamp,
+    modified timestamp,
     createdBy int,
     modifiedBy int,
 
@@ -107,8 +107,8 @@ CREATE TABLE labpurchasing.purchasingUnits (
     unit varchar(4000),
 
     container entityid,
-    created datetime,
-    modified datetime,
+    created timestamp,
+    modified timestamp,
     createdBy int,
     modifiedBy int,
 
