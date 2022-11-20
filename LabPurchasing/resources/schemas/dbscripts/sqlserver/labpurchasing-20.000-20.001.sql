@@ -84,7 +84,7 @@ CREATE TABLE labpurchasing.fundingSources (
     rowId int identity(1,1),
 
     title varchar(4000),
-    grant varchar(4000),
+    "grant" varchar(4000),
     accountNumber varchar(1000),
     projectNumber varchar(1000),
 
