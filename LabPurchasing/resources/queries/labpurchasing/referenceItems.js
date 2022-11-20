@@ -16,6 +16,9 @@ function beforeInsert(row, errors){
                 if (results.rows.length) {
                     row.vendorId = results.rows[0].rowId;
                 }
+                else {
+                    console.error("Unable to resolve vendorname: " + row.vendorName);
+                }
             }
         })
     }

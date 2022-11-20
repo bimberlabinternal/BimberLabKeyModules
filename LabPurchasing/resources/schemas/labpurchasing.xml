@@ -5,6 +5,8 @@
 
     <table tableName="purchases" tableDbType="TABLE">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <insertUrl>/labpurchasing/order.view</insertUrl>
+        <importUrl>/labpurchasing/order.view</importUrl>
         <tableTitle>Purchases</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <columns>
