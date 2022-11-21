@@ -115,7 +115,7 @@ public class LabPurchasingTest extends BaseWebDriverTest
         Assert.assertEquals(25L, field.getFnEval("return this.store.getCount()"));
 
         field.setComboByDisplayValue("Streptavidin Conjugation Kit (300ug)");
-        waitAndClick(Ext4Helper.Locators.ext4Button("Re-Order Item"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Re-order Item"));
 
 
         Assert.assertEquals("AbCam", Ext4FieldRef.getForLabel(this, "Vendor").getValue());
