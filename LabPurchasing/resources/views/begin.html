@@ -22,20 +22,20 @@
                 },{
                     header: 'Purchasing Management',
                     items: [{
-                        name: 'View All Orders',
-                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases'})
+                        name: 'View My Orders',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', 'query.requestor~eq': LABKEY.Security.currentUser.displayName})
                     },{
-                        name: 'View Pending Items',
-                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases'})
+                        name: 'Items Not Yet Ordered',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Not Yet Ordered'})
                     },{
                         name: 'Mark Items Received',
-                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases'})
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Waiting for Item'})
                     },{
                         name: 'View All Purchases',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases'})
                     }]
                 },{
-                    header: 'Administation',
+                    header: 'Administration',
                     items: [{
                         name: 'Populate Initial Data',
                         url: LABKEY.ActionURL.buildURL('labpurchasing', 'populateData.view')

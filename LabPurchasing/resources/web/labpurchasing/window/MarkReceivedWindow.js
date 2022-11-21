@@ -32,6 +32,11 @@ Ext4.define('LabPurchasing.window.MarkReceivedWindow', {
                     width: 350,
                     itemId: 'dateReceived',
                     value: new Date()
+                },{
+                    xtype: 'textfield',
+                    fieldLabel: 'Item Location',
+                    width: 350,
+                    itemId: 'itemLocation'
                 }]
             }],
             buttons: [{
@@ -58,6 +63,8 @@ Ext4.define('LabPurchasing.window.MarkReceivedWindow', {
             return;
         }
 
+        var itemLocation = btn.up('window').down('#itemLocation').getValue();
+
         var dataRegion = LABKEY.DataRegions[this.dataRegionName];
         var checked = dataRegion.getChecked();
 
@@ -65,7 +72,8 @@ Ext4.define('LabPurchasing.window.MarkReceivedWindow', {
         Ext4.Array.forEach(checked, function(x){
             toUpdate.push({
                 rowId: x,
-                receivedDate: dateReceived
+                receivedDate: dateReceived,
+                itemLocation: itemLocation
             });
         }, this);
 

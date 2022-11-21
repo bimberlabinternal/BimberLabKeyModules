@@ -1,4 +1,21 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="purchaseId"/>
+        <column name="requestor"/>
+        <column name="vendorId"/>
+        <column name="itemName"/>
+        <column name="itemNumber"/>
+        <column name="units"/>
+        <column name="quantity"/>
+        <column name="unitCost"/>
+        <column name="totalCost" />
+        <column name="description" />
+        <column name="fundingSource"/>
+        <column name="orderDate"/>
+        <column name="orderNumber"/>
+        <column name="vendorId/phone"/>
+        <column name="vendorId/url"/>
+    </columns>
     <sorts>
         <sort column="purchaseId" descending="true"/>
     </sorts>

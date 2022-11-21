@@ -107,18 +107,23 @@ public class LabPurchasingTest extends BaseWebDriverTest
         Ext4FieldRef.waitForField(this, "Vendor");
         waitAndClick(Ext4Helper.Locators.ext4Button("Re-order Previous Item"));
         new Window.WindowFinder(getDriver()).withTitle("Re-order Previous Item").waitFor();
+
+        // NOTE: this store initially loads with the full list. If we set the vendor combo too quickly that filter event will happen before the original store load
+        Ext4ComboRef.waitForField(this, "Item");
+        Ext4ComboRef itemField = Ext4ComboRef.getForLabel(this, "Item");
+        itemField.waitForStoreLoad();
+
         Ext4ComboRef vendorField = Ext4ComboRef.getForLabel(this, "Vendor (optional)");
         vendorField.setComboByDisplayValue("AbCam");
-        Ext4ComboRef field = Ext4ComboRef.getForLabel(this, "Item");
-        sleep(500);
-        field.waitForStoreLoad();
-        Assert.assertEquals(25L, field.getFnEval("return this.store.getCount()"));
+        sleep(200);
+        itemField.waitForStoreLoad();
+        Assert.assertEquals(25L, itemField.getFnEval("return this.store.getCount()"));
 
-        field.setComboByDisplayValue("Streptavidin Conjugation Kit (300ug)");
+        itemField.setComboByDisplayValue("Streptavidin Conjugation Kit (300ug)");
         waitAndClick(Ext4Helper.Locators.ext4Button("Re-order Item"));
 
 
-        Assert.assertEquals("AbCam", Ext4FieldRef.getForLabel(this, "Vendor").getValue());
+        Assert.assertEquals("AbCam", Ext4ComboRef.getForLabel(this, "Vendor").getDisplayValue());
         Assert.assertEquals("Streptavidin Conjugation Kit (300ug)", Ext4FieldRef.getForLabel(this, "Item Name").getValue());
         Assert.assertEquals("ab102921", Ext4FieldRef.getForLabel(this, "Product/Catalog #").getValue());
         Assert.assertEquals("Kit", Ext4FieldRef.getForLabel(this, "Units").getValue());
@@ -131,11 +136,21 @@ public class LabPurchasingTest extends BaseWebDriverTest
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         clickAndWait(Ext4Helper.Locators.ext4Button("OK"));
 
-        // Toggle for 'does not need receipt'
+        dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
+        dr.checkCheckbox(1);
+        dr.clickHeaderMenu("More Actions", false, "Order Items");
+        new Window.WindowFinder(getDriver()).withTitle("Order Items").waitFor();
+        Ext4FieldRef.waitForField(this, "Order Number");
+        Ext4FieldRef.getForLabel(this, "Order Number").setValue("OrderXXXX");
+        clickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
 
-        // Make sure in grid
-        // Mark received
-
+        dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
+        dr.checkCheckbox(1);
+        dr.clickHeaderMenu("More Actions", false, "Mark Received");
+        new Window.WindowFinder(getDriver()).withTitle("Mark Received").waitFor();
+        Ext4FieldRef.waitForField(this, "Item Location");
+        Ext4FieldRef.getForLabel(this, "Item Location").setValue("-20 Freezer");
+        clickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
     }
 
     @Override
