@@ -4,7 +4,7 @@
         xmlns="http://labkey.org/data/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <table tableName="purchases" tableDbType="TABLE">
-        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
         <insertUrl>/labpurchasing/order.view</insertUrl>
         <importUrl>/labpurchasing/order.view</importUrl>
         <tableTitle>Purchases</tableTitle>

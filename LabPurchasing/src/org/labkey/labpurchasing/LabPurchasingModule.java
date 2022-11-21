@@ -21,8 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.labpurchasing.buttons.EnterOrderInfoButton;
+import org.labkey.labpurchasing.buttons.MarkReceivedButton;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -87,5 +90,8 @@ public class LabPurchasingModule extends ExtendedSimpleModule
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
         LaboratoryService.get().registerDataProvider(new LabPurchasingDataProvider());
+        LDKService.get().registerQueryButton(new MarkReceivedButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
+        LDKService.get().registerQueryButton(new EnterOrderInfoButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
+        LaboratoryService.get().registerTableCustomizer(this, LabPurchasingCustomizer.class, LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
     }
 }

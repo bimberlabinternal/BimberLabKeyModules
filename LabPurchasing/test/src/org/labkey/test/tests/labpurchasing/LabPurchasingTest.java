@@ -56,23 +56,22 @@ public class LabPurchasingTest extends BaseWebDriverTest
 
     private void populateData()
     {
-        goToProjectHome();
+        beginAt("/" + getProjectName() + "/labpurchasing-populateData.view");
 
-        waitAndClickAndWait(Locator.linkWithText( "Populate Initial Data"));
-        waitAndClick(Locator.button("Delete All"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Delete All"));
         waitForElement(Locator.tagWithText("div", "Delete Complete"));
 
-        waitAndClick(Locator.button("Populate Reference Vendors"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Populate Reference Vendors"));
         waitForElement(Locator.tagWithText("div", "Populating vendors..."));
         waitForElement(Locator.tagWithText("div", "Populate Complete"));
 
-        waitAndClick(Locator.button("Populate Units"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Populate Units"));
         waitForElement(Locator.tagWithText("div", "Populating purchasingUnits..."));
         waitForElement(Locator.tagWithText("div", "Populate Complete"));
 
-        waitAndClick(Locator.button("Populate Reference Items"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Populate Reference Items"));
         waitForElement(Locator.tagWithText("div", "Populating referenceItems..."));
-        waitForElement(Locator.tagWithText("div", "Populate Complete"));
+        waitForElement(Locator.tagWithText("div", "Populate Complete"), WAIT_FOR_PAGE);
     }
 
     @Test
@@ -85,12 +84,14 @@ public class LabPurchasingTest extends BaseWebDriverTest
         waitAndClick(Ext4Helper.Locators.ext4Button("Add New Vendor"));
         Ext4FieldRef.waitForField(this, "Vendor Name");
         Ext4FieldRef.getForLabel(this, "Vendor Name").setValue("New Vendor 1");
-        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+        Ext4FieldRef.getForLabel(this, "Phone").setValue("555-555-5555");
+        sleep(200); //let formbind work
+        waitAndClick(Ext4Helper.Locators.ext4Button("Add Vendor"));
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         click(Ext4Helper.Locators.ext4Button("OK"));
 
         // Adding the new vendor should have updated the combo:
-        Ext4ComboRef.getForLabel(this, "Vendor").setValue("New Vendor 1");
+        Ext4ComboRef.getForLabel(this, "Vendor").setComboByDisplayValue("New Vendor 1");
 
         Ext4FieldRef.getForLabel(this, "Item Name").setValue("Item1");
         Ext4FieldRef.getForLabel(this, "Quantity").setValue(2);
@@ -102,30 +103,39 @@ public class LabPurchasingTest extends BaseWebDriverTest
 
         // Create new item, re-using previous:
         DataRegionTable dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
-        dr.clickInsertNewRow();
-        Ext4FieldRef.waitForField(this, "Vendor Name");
+        dr.clickHeaderButtonAndWait(DataRegionTable.getInsertNewButtonText());
+        Ext4FieldRef.waitForField(this, "Vendor");
         waitAndClick(Ext4Helper.Locators.ext4Button("Re-order Previous Item"));
         new Window.WindowFinder(getDriver()).withTitle("Re-order Previous Item").waitFor();
-        Ext4FieldRef.getForLabel(this, "Vendor (optional)").setValue("AbCam");
+        Ext4ComboRef vendorField = Ext4ComboRef.getForLabel(this, "Vendor (optional)");
+        vendorField.setComboByDisplayValue("AbCam");
         Ext4ComboRef field = Ext4ComboRef.getForLabel(this, "Item");
+        sleep(500);
         field.waitForStoreLoad();
-        Assert.assertEquals(25, field.getFnEval("return this.store.getCount()"));
+        Assert.assertEquals(25L, field.getFnEval("return this.store.getCount()"));
 
-        field.setValue("Streptavidin Conjugation Kit (300ug)");
+        field.setComboByDisplayValue("Streptavidin Conjugation Kit (300ug)");
+        waitAndClick(Ext4Helper.Locators.ext4Button("Re-Order Item"));
 
-        // Create new item from new vendor, adding vendor.
+
+        Assert.assertEquals("AbCam", Ext4FieldRef.getForLabel(this, "Vendor").getValue());
+        Assert.assertEquals("Streptavidin Conjugation Kit (300ug)", Ext4FieldRef.getForLabel(this, "Item Name").getValue());
+        Assert.assertEquals("ab102921", Ext4FieldRef.getForLabel(this, "Product/Catalog #").getValue());
+        Assert.assertEquals("Kit", Ext4FieldRef.getForLabel(this, "Units").getValue());
+        Assert.assertEquals(419, Ext4FieldRef.getForLabel(this, "Unit Cost").getValue());
+
+        Ext4FieldRef.getForLabel(this, "Quantity").setValue(2);
+        Assert.assertEquals(838, Ext4FieldRef.getForLabel(this, "Total Cost").getValue());
+
+        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
+        clickAndWait(Ext4Helper.Locators.ext4Button("OK"));
 
         // Toggle for 'does not need receipt'
 
         // Make sure in grid
         // Mark received
 
-    }
-
-    @LogMethod(quiet = true)
-    protected void deleteDataFrom(@LoggedParam String tableLabel)
-    {
-        
     }
 
     @Override

@@ -108,6 +108,7 @@
                 Ext4.apply(this, {
                     border: false,
                     width: 700,
+                    closeAction: 'destroy',
                     title: 'Re-order Previous Item',
                     defaults: {
                         border: false
@@ -258,7 +259,7 @@
                                             formPanel: this
                                         }],
                                         buttons: [{
-                                            text: 'Submit',
+                                            text: 'Add Vendor',
                                             handler: function (btn) {
                                                 var panel = btn.up('window').down('form');
                                                 panel.doSubmit(btn);

@@ -1,0 +1,9 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <sorts>
+        <sort column="purchaseId" descending="true"/>
+    </sorts>
+    <filters>
+        <filter column="orderDate" operator="isnonblank" value=""/>
+        <filter column="receivedDate" operator="isnonblank" value=""/>
+    </filters>
+</customView>
