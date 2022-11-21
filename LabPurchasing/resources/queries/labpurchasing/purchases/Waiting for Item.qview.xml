@@ -12,6 +12,7 @@
         <column name="description" />
         <column name="fundingSource"/>
         <column name="orderDate"/>
+        <column name="orderNumber"/>
         <column name="receivedDate"/>
         <column name="itemLocation"/>
     </columns>
@@ -20,6 +21,6 @@
     </sorts>
     <filters>
         <filter column="orderDate" operator="isnonblank" value=""/>
-        <filter column="receivedDate" operator="isnonblank" value=""/>
+        <filter column="receivedDate" operator="isblank" value=""/>
     </filters>
 </customView>

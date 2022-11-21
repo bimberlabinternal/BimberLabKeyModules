@@ -127,10 +127,10 @@ public class LabPurchasingTest extends BaseWebDriverTest
         Assert.assertEquals("Streptavidin Conjugation Kit (300ug)", Ext4FieldRef.getForLabel(this, "Item Name").getValue());
         Assert.assertEquals("ab102921", Ext4FieldRef.getForLabel(this, "Product/Catalog #").getValue());
         Assert.assertEquals("Kit", Ext4FieldRef.getForLabel(this, "Units").getValue());
-        Assert.assertEquals(419, Ext4FieldRef.getForLabel(this, "Unit Cost").getValue());
+        Assert.assertEquals(419L, Ext4FieldRef.getForLabel(this, "Unit Cost").getValue());
 
         Ext4FieldRef.getForLabel(this, "Quantity").setValue(2);
-        Assert.assertEquals(838, Ext4FieldRef.getForLabel(this, "Total Cost").getValue());
+        Assert.assertEquals(838L, Ext4FieldRef.getForLabel(this, "Total Cost").getValue());
 
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
@@ -145,12 +145,21 @@ public class LabPurchasingTest extends BaseWebDriverTest
         clickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
 
         dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
-        dr.checkCheckbox(1);
+        dr.goToView("Waiting for Item");
+        dr.checkCheckbox(0);
+        Assert.assertEquals("OrderXXXX", dr.getRowDataAsText(0, "orderNumber").get(0));
+
         dr.clickHeaderMenu("More Actions", false, "Mark Received");
         new Window.WindowFinder(getDriver()).withTitle("Mark Received").waitFor();
         Ext4FieldRef.waitForField(this, "Item Location");
         Ext4FieldRef.getForLabel(this, "Item Location").setValue("-20 Freezer");
         clickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
+        Assert.assertEquals(0, dr.getDataRowCount());
+
+        dr.goToView("All Items");
+        Assert.assertEquals("-20 Freezer", dr.getRowDataAsText(1, "itemLocation").get(0));
     }
 
     @Override
