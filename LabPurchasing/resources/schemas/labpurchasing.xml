@@ -9,6 +9,7 @@
         <importUrl>/labpurchasing/order.view</importUrl>
         <updateUrl>/ldk/manageRecord.view?schemaName=labpurchasing&amp;queryName=purchases&amp;keyField=rowId&amp;key=${rowId}</updateUrl>
         <titleColumn>purchaseId</titleColumn>
+        <tableTitle>Purchases</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowId">
