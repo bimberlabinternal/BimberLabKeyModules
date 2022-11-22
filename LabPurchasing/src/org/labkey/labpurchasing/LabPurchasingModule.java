@@ -19,16 +19,19 @@ package org.labkey.labpurchasing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
-import org.labkey.api.data.ContainerManager;
-import org.labkey.api.module.DefaultModule;
+import org.labkey.api.laboratory.LaboratoryService;
+import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.labpurchasing.buttons.EnterOrderInfoButton;
+import org.labkey.labpurchasing.buttons.MarkReceivedButton;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-public class LabPurchasingModule extends DefaultModule
+public class LabPurchasingModule extends ExtendedSimpleModule
 {
     public static final String NAME = "LabPurchasing";
 
@@ -41,7 +44,7 @@ public class LabPurchasingModule extends DefaultModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.000;
+        return 20.001;
     }
 
     @Override
@@ -64,12 +67,6 @@ public class LabPurchasingModule extends DefaultModule
     }
 
     @Override
-    public void doStartup(ModuleContext moduleContext)
-    {
-
-    }
-
-    @Override
     @NotNull
     public Collection<String> getSummary(Container c)
     {
@@ -81,5 +78,20 @@ public class LabPurchasingModule extends DefaultModule
     public Set<String> getSchemaNames()
     {
         return Collections.singleton(LabPurchasingSchema.NAME);
+    }
+
+    @Override
+    protected void registerSchemas()
+    {
+        LabPurchasingUserSchema.register(this);
+    }
+
+    @Override
+    public void doStartupAfterSpringConfig(ModuleContext moduleContext)
+    {
+        LaboratoryService.get().registerDataProvider(new LabPurchasingDataProvider());
+        LDKService.get().registerQueryButton(new MarkReceivedButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
+        LDKService.get().registerQueryButton(new EnterOrderInfoButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
+        LaboratoryService.get().registerTableCustomizer(this, LabPurchasingCustomizer.class, LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
     }
 }
