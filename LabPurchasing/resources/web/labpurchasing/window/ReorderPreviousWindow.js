@@ -20,6 +20,8 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
                 labelWidth: 150,
                 forceSelection: true,
                 queryMode: 'local',
+                caseSensitive: false,
+                anyMatch: true,
                 store: {
                     type: 'labkey-store',
                     schemaName: 'labpurchasing',
@@ -50,6 +52,8 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
                 allowBlank: false,
                 forceSelection: true,
                 queryMode: 'local',
+                caseSensitive: false,
+                anyMatch: true,
                 width: 650,
                 labelWidth: 150,
                 store: {
@@ -67,7 +71,7 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
                         Ext4.defer(field.focus, 200, field);
                     },
                     specialkey: function (field, e) {
-                        if (field.getValue() && e.getKey() === e.ENTER) {
+                        if (!field.isExpanded && field.getValue() && e.getKey() === e.ENTER) {
                             this.doSubmit();
                         }
                     }
