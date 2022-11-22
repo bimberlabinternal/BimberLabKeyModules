@@ -1,0 +1,12 @@
+<script type="text/javascript" nonce="<%=getScriptNonce()%>">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+
+        Ext4.create('LabPurchasing.panel.OrderItemsGrid', {
+            showPlaceOrderUI: false,
+            rowIds: []
+        }).render(webpart.wrapperDivId);
+    });
+
+</script>
