@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view" title="Order New Item(s)">
+<view xmlns="http://labkey.org/data/xml/view" title="Order Item(s)">
     <dependencies>
         <dependency path="laboratory.context" />
         <dependency path="labpurchasing/window/ReorderPreviousWindow.js"/>

@@ -18,6 +18,7 @@ import org.labkey.test.util.LogMethod;
 import org.labkey.test.util.LoggedParam;
 import org.labkey.test.util.ext4cmp.Ext4ComboRef;
 import org.labkey.test.util.ext4cmp.Ext4FieldRef;
+import org.labkey.test.util.ext4cmp.Ext4GridRef;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
@@ -81,7 +82,8 @@ public class LabPurchasingTest extends BaseWebDriverTest
         waitAndClickAndWait(Locator.linkWithText("Enter New Order"));
 
         // Add a vendor:
-        waitAndClick(Ext4Helper.Locators.ext4Button("Add New Vendor"));
+        Ext4GridRef grid = _ext4Helper.queryOne("grid", Ext4GridRef.class);
+        waitAndClick(grid.getTbarButton("Add New Vendor"));
         Ext4FieldRef.waitForField(this, "Vendor Name");
         Ext4FieldRef.getForLabel(this, "Vendor Name").setValue("New Vendor 1");
         Ext4FieldRef.getForLabel(this, "Phone").setValue("555-555-5555");
@@ -91,21 +93,28 @@ public class LabPurchasingTest extends BaseWebDriverTest
         click(Ext4Helper.Locators.ext4Button("OK"));
 
         // Adding the new vendor should have updated the combo:
-        Ext4ComboRef.getForLabel(this, "Vendor").setComboByDisplayValue("New Vendor 1");
+        grid.clickTbarButton("Add New");
+        grid.setGridCell(1, "vendorId", "New Vendor 1");
 
-        Ext4FieldRef.getForLabel(this, "Item Name").setValue("Item1");
-        Ext4FieldRef.getForLabel(this, "Quantity").setValue(2);
-        Ext4FieldRef.getForLabel(this, "Unit Cost").setValue(10);
-        Assert.assertEquals(20, Ext4FieldRef.getForLabel(this, "Total Cost").getDoubleValue().intValue());
-        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+        // Try to save, expect error:
+        click(Ext4Helper.Locators.ext4Button("Order Items"));
+        new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
+        click(Ext4Helper.Locators.ext4Button("OK"));
+
+        grid.setGridCell(1, "itemName", "Item1");
+        grid.setGridCell(1, "quantity", "2");
+        grid.setGridCell(1, "unitCost", "10");
+        Assert.assertEquals(20L, grid.getFieldValue(1, "totalCost"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Order Items"));
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         clickAndWait(Ext4Helper.Locators.ext4Button("OK"));
 
         // Create new item, re-using previous:
         DataRegionTable dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
         dr.clickHeaderButtonAndWait(DataRegionTable.getInsertNewButtonText());
-        Ext4FieldRef.waitForField(this, "Vendor");
-        waitAndClick(Ext4Helper.Locators.ext4Button("Re-order Previous Item"));
+
+        grid = _ext4Helper.queryOne("grid", Ext4GridRef.class);
+        grid.clickTbarButton("Re-order Previous Item");
         new Window.WindowFinder(getDriver()).withTitle("Re-order Previous Item").waitFor();
 
         // NOTE: this store initially loads with the full list. If we set the vendor combo too quickly that filter event will happen before the original store load
@@ -122,32 +131,35 @@ public class LabPurchasingTest extends BaseWebDriverTest
         itemField.setComboByDisplayValue("Streptavidin Conjugation Kit (300ug)");
         waitAndClick(Ext4Helper.Locators.ext4Button("Re-order Item"));
 
+        Assert.assertEquals("AbCam", grid.getFieldValue(1, "vendorId"));
+        Assert.assertEquals("Streptavidin Conjugation Kit (300ug)", grid.getFieldValue(1, "itemName"));
+        Assert.assertEquals("ab102921", grid.getFieldValue(1, "itemNumber"));
+        Assert.assertEquals("Kit", grid.getFieldValue(1, "units"));
+        Assert.assertEquals(419L, grid.getFieldValue(1, "unitCost"));
 
-        Assert.assertEquals("AbCam", Ext4ComboRef.getForLabel(this, "Vendor").getDisplayValue());
-        Assert.assertEquals("Streptavidin Conjugation Kit (300ug)", Ext4FieldRef.getForLabel(this, "Item Name").getValue());
-        Assert.assertEquals("ab102921", Ext4FieldRef.getForLabel(this, "Product/Catalog #").getValue());
-        Assert.assertEquals("Kit", Ext4FieldRef.getForLabel(this, "Units").getValue());
-        Assert.assertEquals(419L, Ext4FieldRef.getForLabel(this, "Unit Cost").getValue());
+        grid.setGridCell(1, "quantity", "2");
+        Assert.assertEquals(838L, grid.getFieldValue(1, "totalCost"));
 
-        Ext4FieldRef.getForLabel(this, "Quantity").setValue(2);
-        Assert.assertEquals(838L, Ext4FieldRef.getForLabel(this, "Total Cost").getValue());
-
-        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Order Items"));
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         clickAndWait(Ext4Helper.Locators.ext4Button("OK"));
 
         dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
         dr.checkCheckbox(1);
-        dr.clickHeaderMenu("More Actions", false, "Order Items");
-        new Window.WindowFinder(getDriver()).withTitle("Order Items").waitFor();
-        Ext4FieldRef.waitForField(this, "Order Number");
-        Ext4FieldRef.getForLabel(this, "Order Number").setValue("OrderXXXX");
-        clickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
+        dr.clickHeaderMenu("More Actions", true, "Order Items");
+        grid = _ext4Helper.queryOne("grid", Ext4GridRef.class);
+        waitForElement(Locator.tagWithText("div", getCurrentUserName()).withClass("x4-grid-cell-inner "));
+        Assert.assertEquals(1, grid.getRowCount());
+        grid.setGridCell(1, "vendorId", "AddGene");
+        grid.setGridCell(1, "orderNumber", "OrderXXXX");
+        Assert.assertEquals(getCurrentUserName(), grid.getFieldValue(1, "orderedBy"));
+        Assert.assertNotNull(grid.getFieldValue(1, "orderDate"));
+        waitAndClickAndWait(grid.getTbarButton("Save Changes"));
 
         dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
         dr.goToView("Waiting for Item");
-        dr.checkCheckbox(0);
-        Assert.assertEquals("OrderXXXX", dr.getRowDataAsText(0, "orderNumber").get(0));
+        dr.checkCheckbox(1);
+        Assert.assertEquals("OrderXXXX", dr.getRowDataAsText(1, "orderNumber").get(0));
 
         dr.clickHeaderMenu("More Actions", false, "Mark Received");
         new Window.WindowFinder(getDriver()).withTitle("Mark Received").waitFor();

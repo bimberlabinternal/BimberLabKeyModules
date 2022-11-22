@@ -7,7 +7,8 @@
         <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
         <insertUrl>/labpurchasing/order.view</insertUrl>
         <importUrl>/labpurchasing/order.view</importUrl>
-        <tableTitle>Purchases</tableTitle>
+        <updateUrl>/ldk/manageRecord.view?schemaName=labpurchasing&amp;queryName=purchases&amp;keyField=rowId&amp;key=${rowId}</updateUrl>
+        <titleColumn>purchaseId</titleColumn>
         <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowId">
@@ -83,6 +84,7 @@
             </column>
             <column columnName="orderDate">
                 <columnTitle>Order Date</columnTitle>
+                <formatString>Date</formatString>
             </column>
             <column columnName="receivedBy">
                 <columnTitle>Received By</columnTitle>
@@ -90,6 +92,7 @@
             </column>
             <column columnName="receivedDate">
                 <columnTitle>Date Received</columnTitle>
+                <formatString>Date</formatString>
             </column>
             <column columnName="itemLocation">
                 <columnTitle>Item Location</columnTitle>
@@ -100,6 +103,7 @@
             </column>
             <column columnName="invoiceDate">
                 <columnTitle>Invoice Date</columnTitle>
+                <formatString>Date</formatString>
             </column>
             <column columnName="invoicedBy">
                 <columnTitle>Invoiced By</columnTitle>
@@ -306,9 +310,11 @@
             </column>
             <column columnName="startDate">
                 <columnTitle>Start Date</columnTitle>
+                <formatString>Date</formatString>
             </column>
             <column columnName="endDate">
                 <columnTitle>End Date</columnTitle>
+                <formatString>Date</formatString>
             </column>
             <column columnName="pi">
                 <columnTitle>PI</columnTitle>

@@ -8,8 +8,8 @@ public class EnterOrderInfoButton extends SimpleButtonConfigFactory
 {
     public EnterOrderInfoButton(Module owner)
     {
-        super(owner, "Order Items", "LabPurchasing.window.EnterOrderInfoWindow.buttonHandler(dataRegionName);");
+        super(owner, "Order Items", "LabPurchasing.buttons.purchaseItems(dataRegionName);");
         setInsertPosition(-1);
-        setClientDependencies(ClientDependency.supplierFromModuleName("laboratory"), ClientDependency.supplierFromPath("labpurchasing/window/EnterOrderInfoWindow.js"));
+        setClientDependencies(ClientDependency.supplierFromModuleName("laboratory"), ClientDependency.supplierFromPath("labpurchasing/GridButtons.js"));
     }
 }
