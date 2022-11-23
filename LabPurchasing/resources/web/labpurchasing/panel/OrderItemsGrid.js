@@ -84,8 +84,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                     units: {
                         fixedWidthCol: true,
                         editorConfig: {
-                            xtype: 'ldk-integerfield',
-                            minValue: 0
+                            plugins: ['ldk-usereditablecombo']
                         },
                         columnConfig: {
                             width: 100
