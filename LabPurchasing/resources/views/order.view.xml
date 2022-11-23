@@ -1,4 +1,7 @@
 <view xmlns="http://labkey.org/data/xml/view" title="Order New Item(s)">
+    <permissions>
+        <permission name="insert"/>
+    </permissions>
     <dependencies>
         <dependency path="laboratory.context" />
         <dependency path="labpurchasing/window/ReorderPreviousWindow.js"/>

@@ -93,5 +93,6 @@ public class LabPurchasingModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new MarkReceivedButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
         LDKService.get().registerQueryButton(new EnterOrderInfoButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
         LaboratoryService.get().registerTableCustomizer(this, LabPurchasingCustomizer.class, LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
+        LaboratoryService.get().registerTableCustomizer(this, LabPurchasingCustomizer.class, LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_REFERENCE_ITEMS);
     }
 }

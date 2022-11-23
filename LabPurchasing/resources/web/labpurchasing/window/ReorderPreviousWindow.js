@@ -60,11 +60,11 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
                     type: 'labkey-store',
                     schemaName: 'labpurchasing',
                     queryName: 'referenceItems',
-                    columns: 'rowId,vendorId,itemName,itemNumber,units,unitCost',
+                    columns: 'rowId,vendorId,itemName,itemAndNumber,itemNumber,units,unitCost',
                     autoLoad: true
                 },
                 valueField: 'rowId',
-                displayField: 'itemName',
+                displayField: 'itemAndNumber',
                 listeners: {
                     scope: this,
                     afterrender: function (field) {

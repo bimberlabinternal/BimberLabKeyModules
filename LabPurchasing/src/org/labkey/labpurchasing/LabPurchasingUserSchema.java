@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
+import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.laboratory.query.ContainerIncrementingTable;
 import org.labkey.api.module.Module;
@@ -22,7 +23,7 @@ public class LabPurchasingUserSchema extends SimpleUserSchema
 
     public static void register(final Module m)
     {
-        final DbSchema dbSchema = DbSchema.get(LabPurchasingSchema.NAME);
+        final DbSchema dbSchema = DbSchema.get(LabPurchasingSchema.NAME, DbSchemaType.Module);
 
         DefaultSchema.registerProvider(LabPurchasingSchema.NAME, new DefaultSchema.SchemaProvider(m)
         {

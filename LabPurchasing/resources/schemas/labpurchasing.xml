@@ -221,7 +221,7 @@
 
     <table tableName="referenceItems" tableDbType="TABLE">
         <tableTitle>Reference Items</tableTitle>
-        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <javaCustomizer class="org.labkey.laboratory.query.LaboratoryTableCustomizer" />
         <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowId">
