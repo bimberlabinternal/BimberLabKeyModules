@@ -38,7 +38,8 @@
                     header: 'Administration',
                     items: [{
                         name: 'Populate Initial Data',
-                        url: LABKEY.ActionURL.buildURL('labpurchasing', 'populateData.view')
+                        url: LABKEY.ActionURL.buildURL('labpurchasing', 'populateData.view'),
+                        hasPermission: LABKEY.Security.currentUser.isAdmin
                     },{
                         name: 'Manage Vendors',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'vendors'})
