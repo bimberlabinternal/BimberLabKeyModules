@@ -11,6 +11,8 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
             width: '100%',
             xtype: 'ldk-gridpanel',
             clicksToEdit: 1,
+            // This causes the editor plugin to begin on the vendor column
+            firstEditableColumn: 1,
             listeners: {
                 scope: this,
                 reconfigure: function(){
@@ -25,7 +27,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                 queryName: 'purchases',
                 filterArray: this.rowIds && this.rowIds.length ? [LABKEY.Filter.create('rowId', this.rowIds.join(';'), LABKEY.Filter.Types.IN)] : [],
                 maxRows: this.rowIds && this.rowIds.length ? -1 : 0,
-                columns: 'requestor,vendorId,itemName,itemNumber,units,quantity,unitCost,totalCost,description,fundingSource,orderedBy,orderDate,orderNumber',
+                columns: 'requestor,vendorId,itemName,itemNumber,units,quantity,unitCost,totalCost,description,fundingSource,orderedBy,orderDate,orderNumber,emailOnArrival',
                 autoLoad: true,
                 listeners: {
                     scope: this,
@@ -53,7 +55,10 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                     },
                     requestor: {
                         fixedWidthCol: true,
-                        defaultValue: LABKEY.Security.currentUser.displayName,
+                        defaultValue: LABKEY.Security.currentUser.id,
+                        editorConfig: {
+                            initialValue: LABKEY.Security.currentUser.id
+                        },
                         columnConfig: {
                             width: 100,
                             header: 'Requestor',
@@ -158,6 +163,14 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                             hidden: !this.showPlaceOrderUI,
                             width: 120
                         }
+                    },
+                    emailOnArrival: {
+                        defaultValue: true,
+                        columnConfig: {
+                            renderer: function(val) {
+                                return(val ? 'Yes' : 'No');
+                            }
+                        }
                     }
                 }
             },
@@ -238,6 +251,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                 scope: this,
                 handler: function (btn) {
                     Ext4.create('Ext4.window.Window', {
+                        modal: true,
                         title: 'Add New Vendor',
                         items: [{
                             xtype: 'labpurchasing-vendorpanel',

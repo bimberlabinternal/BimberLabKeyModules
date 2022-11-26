@@ -25,8 +25,8 @@
                         name: 'View My Orders',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', 'query.requestor~eq': LABKEY.Security.currentUser.displayName})
                     },{
-                        name: 'Items Not Yet Ordered',
-                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Not Yet Ordered'})
+                        name: 'Items To Order',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Items To Order'})
                     },{
                         name: 'Mark Items Received',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Waiting for Item'})
@@ -44,7 +44,7 @@
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'vendors'})
                     },{
                         name: 'Manage Reference Items',
-                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'referenceItems'})
+                        url: LABKEY.ActionURL.buildURL('labpurchasing', 'manageReferenceItems.view')
                     },{
                         name: 'Manage Funding Sources',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'fundingSources'})

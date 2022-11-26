@@ -44,7 +44,7 @@ public class LabPurchasingModule extends ExtendedSimpleModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.001;
+        return 20.002;
     }
 
     @Override

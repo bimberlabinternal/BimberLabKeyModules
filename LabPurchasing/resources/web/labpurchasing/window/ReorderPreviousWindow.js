@@ -4,6 +4,7 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
 
     initComponent: function () {
         Ext4.apply(this, {
+            modal: true,
             border: false,
             width: 700,
             closeAction: 'destroy',
@@ -102,7 +103,7 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
 
         var rec = field.store.getAt(recIdx);
         var data = {
-            requestor: LABKEY.Security.currentUser.displayName,
+            requestor: LABKEY.Security.currentUser.id,
             itemId: rec.get('rowId'),
             vendorId: rec.get('vendorId'),
             itemName: rec.get('itemName'),
@@ -115,7 +116,13 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
             this.formPanel.getForm().setValues(data);
         }
         else {
-            this.gridPanel.store.add(this.gridPanel.store.createModel(data));
+            var recIdx = this.gridPanel.store.add(this.gridPanel.store.createModel(data));
+            console.log(recIdx);
+            var cellEditing = this.gridPanel.getPlugin(this.gridPanel.editingPluginId);
+            if (cellEditing) {
+                cellEditing.completeEdit();
+                cellEditing.startEditByPosition({row: 0, column: 5});
+            }
         }
 
         this.close();

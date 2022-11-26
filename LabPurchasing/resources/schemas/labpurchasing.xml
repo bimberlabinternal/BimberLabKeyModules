@@ -21,6 +21,12 @@
             <column columnName="requestor">
                 <columnTitle>Requested By</columnTitle>
                 <nullable>false</nullable>
+                <fk>
+                    <fkDbSchema>core</fkDbSchema>
+                    <fkTable>users</fkTable>
+                    <fkColumnName>UserId</fkColumnName>
+                    <fkDisplayColumnName>DisplayName</fkDisplayColumnName>
+                </fk>
             </column>
             <column columnName="vendorId">
                 <columnTitle>Vendor</columnTitle>
@@ -72,9 +78,17 @@
                     <fkDisplayColumnName>title</fkDisplayColumnName>
                 </fk>
             </column>
+            <column columnName="emailOnArrival">
+                <columnTitle>Email on Arrival?</columnTitle>
+            </column>
+            <column columnName="excludeFromRefItems">
+                <columnTitle>Exclude From Reference Items?</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
             <column columnName="status">
                 <columnTitle>Order Status</columnTitle>
                 <inputType>textfield</inputType>
+                <isHidden>true</isHidden>
             </column>
             <column columnName="orderNumber">
                 <columnTitle>Order Number</columnTitle>

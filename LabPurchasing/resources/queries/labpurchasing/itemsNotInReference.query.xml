@@ -1,0 +1,31 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="" tableDbType="TABLE">
+                <tableTitle>Purchases Not In Reference Items</tableTitle>
+                <columns>
+                    <column columnName="rowId">
+                        <isKeyField>true</isKeyField>
+                    </column>
+
+                </columns>
+                <buttonBarOptions alwaysShowRecordSelectors="true" includeStandardButtons="true">
+                    <includeScript>laboratory.context</includeScript>
+                    <includeScript>labpurchasing/GridButtons.js</includeScript>
+                    <item permission="DELETE" text="Add To Reference Items" requiresSelection="true" iconCls="plus" insertPosition="beginning">
+                        <onClick>LabPurchasing.buttons.addToReferenceItems(dataRegionName)</onClick>
+                    </item>
+                    <item permission="INSERT" text="Exclude From Reference Items" requiresSelection="true" iconCls="trash" insertAfter="Add To Reference Items">
+                        <onClick>LabPurchasing.buttons.excludeFromReferenceItems(dataRegionName)</onClick>
+                    </item>
+                    <item text="Print" hidden="true">
+                        <originalText>Print</originalText>
+                    </item>
+                    <item text="Charts" hidden="true">
+                        <originalText>Charts</originalText>
+                    </item>
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>
