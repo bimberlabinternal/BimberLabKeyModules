@@ -1,0 +1,58 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function (){
+        var webpart = <%=webpartContext%>;
+
+        Ext4.create('Ext.panel.Panel', {
+            renderTo: webpart.wrapperDivId,
+            border: false,
+            items: [{
+                xtype: 'ldk-navpanel',
+                style: 'padding-top: 20px;',
+                border: false,
+                sections: [{
+                    header: 'Orders',
+                    items: [{
+                        name: 'Enter New Order',
+                        url: LABKEY.ActionURL.buildURL('labpurchasing', 'order.view')
+                    },{
+                        name: 'View My Orders',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases'})
+                    }]
+                },{
+                    header: 'Purchasing Management',
+                    items: [{
+                        name: 'View My Orders',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', 'query.requestor~eq': LABKEY.Security.currentUser.displayName})
+                    },{
+                        name: 'Items To Order',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Items To Order'})
+                    },{
+                        name: 'Mark Items Received',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases', viewName: 'Waiting for Item'})
+                    },{
+                        name: 'View All Purchases',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'purchases'})
+                    }]
+                },{
+                    header: 'Administration',
+                    items: [{
+                        name: 'Populate Initial Data',
+                        url: LABKEY.ActionURL.buildURL('labpurchasing', 'populateData.view'),
+                        hasPermission: LABKEY.Security.currentUser.isAdmin
+                    },{
+                        name: 'Manage Vendors',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'vendors'})
+                    },{
+                        name: 'Manage Reference Items',
+                        url: LABKEY.ActionURL.buildURL('labpurchasing', 'manageReferenceItems.view')
+                    },{
+                        name: 'Manage Funding Sources',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'fundingSources'})
+                    }]
+                }]
+            }]
+        });
+    });
+
+</script>

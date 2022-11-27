@@ -1,0 +1,9 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Manage Reference Item">
+    <permissions>
+        <permission name="update"/>
+        <permission name="delete"/>
+    </permissions>
+    <dependencies>
+        <dependency path="laboratory.context" />
+    </dependencies>
+</view>

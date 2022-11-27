@@ -1,0 +1,11 @@
+<view xmlns="http://labkey.org/data/xml/view" title="Order New Item(s)">
+    <permissions>
+        <permission name="insert"/>
+    </permissions>
+    <dependencies>
+        <dependency path="laboratory.context" />
+        <dependency path="labpurchasing/window/ReorderPreviousWindow.js"/>
+        <dependency path="labpurchasing/panel/VendorPanel.js"/>
+        <dependency path="labpurchasing/panel/OrderItemsGrid.js"/>
+    </dependencies>
+</view>

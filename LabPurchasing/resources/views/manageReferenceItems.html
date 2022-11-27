@@ -1,0 +1,29 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function (){
+        var webpart = <%=webpartContext%>;
+
+        Ext4.create('Ext.panel.Panel', {
+            renderTo: webpart.wrapperDivId,
+            border: false,
+            items: [{
+                xtype: 'ldk-navpanel',
+                border: false,
+                sections: [{
+                    header: 'Purchasing Management',
+                    items: [{
+                        name: 'View All Reference Items',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'referenceItems'})
+                    },{
+                        name: 'Duplicate Reference Items',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'duplicateReferenceItems'})
+                    },{
+                        name: 'Purchased Items Not In Reference Items',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'labpurchasing', queryName: 'itemsNotInReference'})
+                    }]
+                }]
+            }]
+        });
+    });
+
+</script>

@@ -1,0 +1,40 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="" tableDbType="TABLE">
+                <tableTitle>Duplicate Reference Items</tableTitle>
+                <pkColumnName>rowId</pkColumnName>
+                <columns>
+                    <column columnName="rowId">
+                        <isKeyField>true</isKeyField>
+                    </column>
+                    <column columnName="alternateRowIds">
+                        <columnTitle>Other Row Id(s)</columnTitle>
+                    </column>
+                    <column columnName="alternateName">
+                        <columnTitle>Other Item Name(s)</columnTitle>
+                    </column>
+                    <column columnName="alternateUnits">
+                        <columnTitle>Other Units(s)</columnTitle>
+                    </column>
+                    <column columnName="alternateUnitCost">
+                        <columnTitle>Other Unit Cost(s)</columnTitle>
+                    </column>
+                </columns>
+                <buttonBarOptions alwaysShowRecordSelectors="true" includeStandardButtons="true">
+                    <includeScript>laboratory.context</includeScript>
+                    <includeScript>labpurchasing/GridButtons.js</includeScript>
+                    <item permission="DELETE" text="Delete" requiresSelection="true" iconCls="trash" insertPosition="end">
+                        <onClick>LabPurchasing.buttons.deleteDuplicateReferenceItems(dataRegionName)</onClick>
+                    </item>
+                    <item text="Print" hidden="true">
+                        <originalText>Print</originalText>
+                    </item>
+                    <item text="Charts" hidden="true">
+                        <originalText>Charts</originalText>
+                    </item>
+                </buttonBarOptions>
+            </table>
+        </tables>
+    </metadata>
+</query>
