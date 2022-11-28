@@ -31,6 +31,7 @@ import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
 import org.labkey.mcc.query.ReviewerNotifyButton;
 import org.labkey.mcc.security.MccDataAdminRole;
@@ -119,6 +120,7 @@ public class MccModule extends ExtendedSimpleModule
     {
         EHRService.get().registerModule(this);
         EHRService.get().registerTableCustomizer(this, MccEhrCustomizer.class);
+        EHRService.get().registerMoreActionsButton(new MarkShippedButton(), "study", "demographics");
     }
 
     @Override

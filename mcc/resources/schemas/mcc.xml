@@ -545,16 +545,19 @@
             <column columnName="subjectname">
                 <columnTitle>Subject Name</columnTitle>
                 <nullable>false</nullable>
+                <inputType>textfield</inputType>
             </column>
             <column columnName="externalAlias">
                 <columnTitle>MCC Alias</columnTitle>
                 <nullable>false</nullable>
+                <inputType>textfield</inputType>
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>
             </column>
             <column columnName="otherNames">
                 <columnTitle>Other Names</columnTitle>
                 <description>A comma-separated list of alternate names</description>
+                <inputType>textfield</inputType>
                 <nullable>true</nullable>
                 <isUserEditable>true</isUserEditable>
                 <shownInInsertView>false</shownInInsertView>
