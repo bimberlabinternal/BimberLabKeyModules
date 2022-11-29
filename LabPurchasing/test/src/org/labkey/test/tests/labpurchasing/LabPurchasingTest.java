@@ -70,6 +70,10 @@ public class LabPurchasingTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("div", "Populating purchasingUnits..."));
         waitForElement(Locator.tagWithText("div", "Populate Complete"));
 
+        waitAndClick(Ext4Helper.Locators.ext4Button("Populate Locations"));
+        waitForElement(Locator.tagWithText("div", "Populating purchasingLocations..."));
+        waitForElement(Locator.tagWithText("div", "Populate Complete"));
+
         waitAndClick(Ext4Helper.Locators.ext4Button("Populate Reference Items"));
         waitForElement(Locator.tagWithText("div", "Populating referenceItems..."));
         waitForElement(Locator.tagWithText("div", "Populate Complete"), WAIT_FOR_PAGE);
@@ -147,7 +151,7 @@ public class LabPurchasingTest extends BaseWebDriverTest
 
         dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
         dr.checkCheckbox(1);
-        dr.clickHeaderMenu("More Actions", true, "Order Items");
+        dr.clickHeaderMenu("More Actions", true, "Enter Order Info");
         grid = _ext4Helper.queryOne("grid", Ext4GridRef.class);
         waitForElement(Locator.tagWithText("div", getCurrentUserName()).withClass("x4-grid-cell-inner "));
         Assert.assertEquals(1, grid.getRowCount());
@@ -167,14 +171,14 @@ public class LabPurchasingTest extends BaseWebDriverTest
         dr.clickHeaderMenu("More Actions", false, "Mark Received");
         new Window.WindowFinder(getDriver()).withTitle("Mark Received").waitFor();
         Ext4FieldRef.waitForField(this, "Item Location");
-        Ext4FieldRef.getForLabel(this, "Item Location").setValue("-20 Freezer");
+        Ext4FieldRef.getForLabel(this, "Item Location").setValue("-80 Freezer");
         clickAndWait(Ext4Helper.Locators.ext4Button("Submit"));
 
         dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
         Assert.assertEquals(0, dr.getDataRowCount());
 
         dr.goToView("All Items");
-        Assert.assertEquals("-20 Freezer", dr.getRowDataAsText(1, "itemLocation").get(0));
+        Assert.assertEquals("-80 Freezer", dr.getRowDataAsText(1, "itemLocation").get(0));
     }
 
     @Override
