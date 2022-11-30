@@ -1,0 +1,18 @@
+<script type="text/javascript" nonce="<%=getScriptNonce()%>">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+
+        var rowIds = LABKEY.ActionURL.getParameter('rowId');
+        if (!rowIds) {
+            Ext4.Msg.alert('Error', 'Provide rowIds of items');
+            return;
+        }
+
+        Ext4.create('LabPurchasing.panel.OrderItemsGrid', {
+            showPlaceOrderUI: true,
+            rowIds: rowIds.split(';')
+        }).render(webpart.wrapperDivId);
+    });
+
+</script>
