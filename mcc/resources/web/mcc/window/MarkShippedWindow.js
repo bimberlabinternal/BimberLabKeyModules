@@ -71,7 +71,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 itemId: 'targetFolder',
                 allowBlank: false,
                 displayField: 'Name',
-                valueField: 'EntityId',
+                valueField: 'Path',
                 triggerAction: 'all',
                 queryMode: 'local',
                 forceSelection: true,
@@ -171,8 +171,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         death: row.death,
                         colony: centerName,
                         source: row.colony,
-                        calculated_status: row.calculated_status,
+                        calculated_status: 'Alive',
                         skipMccAliasCreation: true,
+                        QCState: null,
                         QCStateLabel: 'Completed',
                         objectId: null
                     }]
