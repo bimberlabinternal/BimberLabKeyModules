@@ -1099,8 +1099,8 @@
                 <isUserEditable>false</isUserEditable>
                 <columnTitle>Row Id</columnTitle>
             </column>
-            <column columnName="subjectname">
-                <columnTitle>Subject Name</columnTitle>
+            <column columnName="sampleName">
+                <columnTitle>Sample Name</columnTitle>
                 <nullable>false</nullable>
             </column>
             <column columnName="measurementName">
