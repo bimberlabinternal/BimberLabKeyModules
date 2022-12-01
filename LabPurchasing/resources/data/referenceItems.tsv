@@ -194,8 +194,8 @@ BD Biosciences	anti-CD45 PE-Cy7 (clone:D058-1283)	561294		172
 Fisher Scientific	anti-CD49d Ab, purified	553314		205
 BD Biosciences	anti-CD68 FITC (clone: Y1/82A)	562117		150
 Santa Cruz Biotechnology, Inc.	anti-CD68 PerCP-Cy5.5 (Clone: KP1)	sc-20060 PCPC5		301
-eBioscience	Anti-CD69 FITC (clone: FN50)	11-0699-42		179
 eBioscience	Anti-CD69 FITC (clone: FN50)	11-0699-41		79
+eBioscience	Anti-CD69 FITC (clone: FN50)	11-0699-42		179
 Life Technologies	Anti-CD79a eFluor-780 (APC-Cy7), clone HM47, 100 tests, EA (Cat#47-0792-42)	47-0792-42		220
 Fisher Scientific	Anti-CD79a eFluor-780 (APC-Cy7), clone HM47, 25 tests	50-112-4039		143
 BD Biosciences	anti-CD8 APC-H7 (clone: SK1)	561423		205
@@ -298,8 +298,8 @@ Fisher Scientific	Bacdown antimicrobial hand soap (17oz)	435550		7
 Fisher Scientific	BALANCE HAR TRIP MTRC SGL BEAM	02035SD		194
 Fisher Scientific	Basix 1.5 MICROCENTRIFUGE TUBE	02-682-002		58
 Fisher Scientific	Basix 200uL Tips, 960/pk	13-611-113		40
-Fisher Scientific	BasiX Polypropylene tubes with flat screw cap closures 15ML conical RK 500CS	5539801		46
 Fisher Scientific	BasiX Polypropylene tubes with flat screw cap closures 15ML conical RK 500CS	14-955-238		46
+Fisher Scientific	BasiX Polypropylene tubes with flat screw cap closures 15ML conical RK 500CS	5539801		46
 Fisher Scientific	BasiX Polypropylene tubes with flat screw cap closures 50ML conical RK 500CS	5539803		52
 Fisher Scientific	Basix Polystyrene Serological Pipets, 50ml, case of 100	14-955-236		37
 Fisher Scientific	BD 1mL syringe Luer-Lok Tip (Ref # 309628), pack of 100	14-823-30		69
@@ -361,7 +361,6 @@ Invitrogen	Bulk fixative [100ml bottle/100ul test] (Fix & Perm cell permeabiliza
 Fisher Scientific	BupH Carbonate-Bicarbonate Buffer Packs	28382		164
 BD Biosciences	BUV395 Mouse Anti-Human CD271	743362		495
 BD Biosciences	BUV395 Mouse Anti-Human CD4  Clone  L200	564107		283
-BD Biosciences	BUV395 Mouse Anti-Human CD4 	BUV395 Mouse Anti-Human CD4 		283
 BD Biosciences	BUV737 Mouse Anti-Human CD8	612754		407
 BIOLEGEND INCORPORATED	BV 711 anti-human CD192 (CCR2) Antibody	357232		415
 BD Biosciences	BV421 anti-human CD21 Antibody, clone B-ly4, 100 tests	562966		277
@@ -576,8 +575,8 @@ Fisher Scientific	Falconô Polystyrene 24-well Microplates (no tissue culture tr
 Life Technologies	FastDigest AatII, 50 reactions	FD0994		65
 Finnzymes	FastDigest EheI (50 reactions)	FD0444		82
 Life Technologies	FastDigest SalI	FD0644		59
-Fisher Scientific	FB SUREGRIP 200UL NT 960/PK	5408189		126
 Fisher Scientific	FB SUREGRIP 200UL NT 960/PK	054-081-89		29
+Fisher Scientific	FB SUREGRIP 200UL NT 960/PK	5408189		126
 Invitrogen	Fc Receptor Binding Inhibitor Polyclonal Antibody, eBioscience	14-9161-71		87
 Miltenyi Biotec Inc	FcR Blocking Reagent, human	130-059-901		131
 Integrated DNA Technologies	Female luer x female luer adapter, Nylon, 25/pk	UX-45502-22		9
@@ -1014,8 +1013,8 @@ BIOLEGEND INCORPORATED	PE/Cy7 anti-human CD4 Antibody.  Clone OKT-4, 100 tests.	
 BIOLEGEND INCORPORATED	PE/Cy7 anti-human CD4 Antibody.  Clone OKT-4, 25 tests.	317413		130
 BIOLEGEND INCORPORATED	PE/Cy7 anti-human CD79a (Iga) Antibody, Clone HM47, 100 tests	333510		325
 BIOLEGEND INCORPORATED	PE/Cy7 anti-human HLA-E Antibody	342607		145
-eBioscience	PE/Cy7 anti-mouse IgG1	406613		75
 eBioscience	PE/Cy7 anti-mouse IgG1	25-4015-80		75
+eBioscience	PE/Cy7 anti-mouse IgG1	406613		75
 BIOLEGEND INCORPORATED	PE/Cyanine7 anti-human CD195 (CCR5) Antibody J418F1	359108		305
 BIOLEGEND INCORPORATED	PE/Cyanine7 anti-human CD45 Antibody	368532		255
 BIOLEGEND INCORPORATED	PE/Cyanine7 anti-human CD69 Antibody (FN50)	310912		265
@@ -1224,8 +1223,8 @@ Life Technologies	SuperScript III Platinum One-Step qRT-PCR Kit w/ROX	11745100		
 Life Technologies	SuperScript III Reverse Transcriptase, 10000 units	18080044		286
 Fisher Scientific	SuperScript IV VILO Master Mix with DNAse	11766050		596
 Life Technologies	SuperScriptÆ One-Step RT-PCR System with PlatinumÆ Taq DNA Polymerase	10928-042		608
-Fisher Scientific	SuperScriptÆ VILOô cDNA Synthesis Kit	11754250		2160
 Fisher Scientific	SuperScriptÆ VILOô cDNA Synthesis Kit	11754-050		495
+Fisher Scientific	SuperScriptÆ VILOô cDNA Synthesis Kit	11754250		2160
 Fisher Scientific	SuperScriptÆ VILOô Master Mix	11755050		488
 Fisher Scientific	SuperScriptÆ VILOô Master Mix	11755500		3595
 Invitrogen	SuperScriptô III One-Step RT-PCR System with PlatinumÆ Taq High Fidelity	12574-035		667
@@ -1250,7 +1249,6 @@ Life Technologies	TaqMan Fast Advanced Master Mix (1 x 1ml)	4444556		95
 Life Technologies	TaqMan Fast Advanced Master Mix (1 x 5ml)	4444557		306
 Fisher Scientific	TC PLATE 12 WELL PS 50/CS	877229		66
 Fisher Scientific	TC PLATE W/LID 96 WELLS 50/CS (FLAT BOTTOM, REF 353072)	087722C		100
-Fisher Scientific	TEKGRO LB AGAR 500ML Soluble Pouch/5PK	50841732		27
 Fisher Scientific	TEKGRO LB AGAR 500ML Soluble Pouch/5PK (new correct catalog number)	50841727		27
 Fisher Scientific	Tempshield Cryo-Gloves Blue Waterproof Mid-Arm Length Cryogenic Gloves, Size Large, Manufacturer Catalog #MALWP	11-394-327		327
 Fisher Scientific	Terrific Broth Powder (100g)	BP2468-100		31
@@ -1389,7 +1387,6 @@ VWR	Biotix 1250ul barrier tips, 768tips/pack	BT1250	Case	163
 West Campus Store	BLEACH LIQUID 5.25%	124575	Case	2
 Fisher Scientific	CELLTREAT Scientific Products 50mL Serological Pipet, Paper/Plastic Wrapped, Sterile, case of 200		Case	186
 Fisher Scientific	Corning Mediatech Cell Culture Phosphate Buffered Saline (10X), Case of 6 x 1L		Case	108
-Fisher Scientific	Corning PBS 1X, No calcium and magnesium, case of 6 500ml bottles		Case	41
 Fisher Scientific	Corning PBS 1X, No calcium and magnesium, case of 6 500ml bottles, CASE (Cat#MT21040CV) by Fisher Scientific		Case	41
 Fisher Scientific	Corning RPMI 1640 Medium with HEPES and L-glutamine, 6/case		Case	93
 Terumo	CPD/OPTISOL Double 500ml Blood Bag with Donor Care Needle Guard and Diversion Blood Sampling Arm 24/Case (For Cord Blood)	1BBAGD506A2	Case	522
@@ -1411,8 +1408,6 @@ Fisher Scientific	Hanks BSS w/o CA, MG, 6X1L, case of 6 (For Shoko)		Case	73
 Fisher Scientific	Labsource Inc CLUSTER TUBES (BULK) 4800/CS, non-sterile		Case	121
 West Campus Store	Microflex* Evolution One* Powder-Free Latex Exam Gloves: Medium (100 per pack)	1146268C	Case	74
 VWR	Neptune Universal Pipette Tips, 1000uL, pre-sterile with barriers, Pack of 768	BT1000.96.N	Case	208
-Fisher Scientific	PETRI DISH 100X15 BEV 500/CS		Case	78
-Fisher Scientific	PETRI DISH 100X15 BEV 500/CS		Case	78
 BD Biosciences	Plastic whole blood tube with spray-coated K2EDTA	366643	Case	0
 VWR	Rainbow Pack of Lab Tape, 1/2" wide by 500" long (24 rolls)	89097-920	Case	60
 Fisher Scientific	Sarstedt Inc 2ML SC MTUBE CONICAL ST/CS1000		Case	269
@@ -1436,7 +1431,6 @@ Fisher Scientific	36 CELLS PLASTIC DIVIDER		Each	3
 VWR	50x TAE	T1346	Each	46
 Wilson Wolf	50x TAE	T1346	Each	46
 Viaflo	5ml tips/individually wrapped, sterile	4456	Each	69
-Fisher Scientific	6X TriTrack DNA Loading Dye		Each	35
 Fisher Scientific	6X TriTrack DNA Loading Dye, ea (Cat#R1161) by Fisher Scientific		Each	35
 Fisher Scientific	8 WELL COMB 1.0MM 1.5MM THK		Each	37
 West Campus Store	AAA batteries	111579	Each	0
@@ -1587,41 +1581,31 @@ Fisher Scientific	ExoSAP-IT (500rnx)		Each	327
 West Campus Store	Facial Tissue, 2-ply	147232	Each	1
 Fisher Scientific	FAST Digest Bcu I, 20 reactions		Each	28
 Fisher Scientific	Fast Digest Bgl II, 100 reactions		Each	29
-Fisher Scientific	FastAP Thermosensitive Alkaline Phosphatase (1000 units)		Each	49
 Fisher Scientific	FastAP Thermosensitive Alkaline Phosphatase (1000 units), EA (Cat#FEREF0651) by Fisher Scientific		Each	49
 Fisher Scientific	FastDigest BamHI (800units)		Each	43
 Fisher Scientific	FastDigest BclI (300 reactions)		Each	56
 Fisher Scientific	FastDigest BpiI 20 rxns		Each	42
 Fisher Scientific	FastDigest BshTI (AgeI)		Each	57
 Fisher Scientific	FastDigest Bsu15I (50 rxn)		Each	34
-Fisher Scientific	FastDigest CpoI		Each	80
 Fisher Scientific	FastDigest CpoI, ea (Cat#FD0744) by Fisher Scientific		Each	80
 Fisher Scientific	FastDigest CsiI		Each	98
 Fisher Scientific	FastDigest DraI		Each	65
 Fisher Scientific	FastDigest DraIII (AdeI)		Each	36
 Fisher Scientific	FastDigest Eco147I		Each	66
-Fisher Scientific	FastDigest EcoRI		Each	43
 Fisher Scientific	FastDigest EcoRI, EA (Cat#FERFD0274) by Fisher Scientific		Each	43
 Fisher Scientific	FastDigest EcoRV (400 units)		Each	51
 Fisher Scientific	FastDigest Esp3I (BsmBI)		Each	75
-Fisher Scientific	FastDigest HindIII		Each	43
 Fisher Scientific	FastDigest HindIII, EA (Cat#FERFD0504) by Fisher Scientific		Each	43
 Fisher Scientific	FastDigest Kpn2I (BspEI)		Each	64
-Fisher Scientific	FASTDIGEST KpnI 300UL		Each	43
 Fisher Scientific	FASTDIGEST KpnI 300UL, EA (Cat#FERFD0524) by Fisher Scientific		Each	43
 Fisher Scientific	FastDigest MlsI (MscI)		Each	79
-Fisher Scientific	FastDigest MluI		Each	68
 Fisher Scientific	FastDigest MluI, each (Cat#FD0564) by Fisher Scientific		Each	68
 Fisher Scientific	FastDigest MssI (PmeI) (100rxn)		Each	99
-Fisher Scientific	FastDigest NcoI		Each	21
 Fisher Scientific	FastDigest NcoI, ea (Cat#FD0573) by Fisher Scientific		Each	21
 Fisher Scientific	FastDigest NcoI, ea (Cat#FD0574) by Fisher Scientific		Each	87
 Fisher Scientific	FastDigest NheI		Each	71
 Fisher Scientific	FastDigest NotI		Each	36
-Fisher Scientific	FastDigest NotI (50 units)		Each	55
-Fisher Scientific	FASTDIGEST NotI 50UL		Each	55
 Fisher Scientific	FASTDIGEST NotI 50UL, EA (Cat#FERFD0594) by Fisher Scientific		Each	55
-Fisher Scientific	FASTDIGEST NotI 50UL, EA (Cat#FERFD0594) by Fisher Scientific, EA (Cat#FERFD0594) by Fisher Scientific		Each	55
 Fisher Scientific	FastDigest NotI, ea (Cat#FD0595) by Fisher Scientific		Each	211
 Fisher Scientific	FastDigest NsbI (FspI)		Each	73
 Fisher Scientific	FastDigest PmeI (MssI)		Each	36
@@ -1629,18 +1613,15 @@ Fisher Scientific	FastDigest Psp5II (50 reactions)		Each	68
 Fisher Scientific	FastDigest PteI		Each	57
 Fisher Scientific	FASTDIGEST PVUII 400UL		Each	51
 Fisher Scientific	FastDigest SfiI		Each	59
-Fisher Scientific	FastDigest SphI (20 units)		Each	43
 Fisher Scientific	FASTDIGEST SPHI (PAEI) 20UL		Each	43
 Fisher Scientific	FASTDIGEST SSPI 100UL		Each	58
 Fisher Scientific	FastDigest VspI		Each	80
 Fisher Scientific	FastDigest XbaI (300 units)		Each	51
 Fisher Scientific	FastDigest XhoI (400 units)		Each	43
-Fisher Scientific	Fermenta FastDigest PacI (25 rxns)		Each	67
 Fisher Scientific	Fermenta FastDigest PacI (25 rxns), EA (Cat#FD2204) by Fisher Scientific		Each	67
 Fisher Scientific	Fermenta FastDigest SacI (200 rxns)		Each	59
 Fisher Scientific	Fine Science Tools SELF SEALING STERILIZING POUCH, 100		Each	43
 Fisher Scientific	Fisher Scientific* Memory Timer/Clock		Each	21
-Fisher Scientific	Fisher Scientificô Memory Timer/Clock		Each	21
 Fisher Scientific	Fisherbrand* Covered Lead Rings for Flasks 125 - 500ml		Each	17
 Fisher Scientific	Fisherbrand* Covered Lead Rings for Flasks 250-1000ml (1Lbs)		Each	21
 Fisher Scientific	Fisherbrand* Covered Lead Rings for Flasks 500-2000L (1.5lbs)		Each	20
@@ -1717,24 +1698,20 @@ Fisher Scientific	Hydrogen Peroxide		Each	69
 Trevigen	Hydrophobic Coverslips	4867-100	Each	40
 APIChem	Hydroxypropyl-beta-cyclodextrin, 1kg, CAS# 128446-35-5 (matches Kleptose)	AC-3232	Each	300
 APIChem	Hydroxypropyl-beta-cyclodextrin, 75kg, CAS# 128446-35-5	CAT# AC-3234	Each	5400
-Fisher Scientific	HYGROMYCIN B SOLUTION		Each	122
 Fisher Scientific	HYGROMYCIN B SOLUTION, EA (Cat#MT30240CR) by Fisher Scientific		Each	122
 Fisher Scientific	IgG Fc Cross-Adsorbed Goat anti-Human, HRP, Invitrogen		Each	284
 Zymo Research	IL18 elisa kit :: Monkey Interleukin 18 ELISA Kit (96 strip wells)	MBS744025	Each	675
 Fisher Scientific	Imiquimod (500ug)		Each	69
 VWR	IN VIVO-JETPEI-GAL TRANSF RGT	89129-964	Each	763
 Fisher Scientific	Indo-1, AM		Each	182
-Fisher Scientific	ISOTON II DILUENT 20L		Each	59
 Fisher Scientific	ISOTON II DILUENT 20L, EACH (Cat#NC9343512) by Fisher Scientific		Each	59
 Fisher Scientific	Isoton II Spigot Assembly (Beckman Coulter #=8531425)		Each	5
 ATCC	J26 mouse cell line expressing human beta2-microglobulin	CRL-1802	Each	459
 ATCC	K562 cells	CCL-243	Each	359
-Fisher Scientific	Kapa Hifi Hot Start ReadyMix		Each	525
 Terumo	Kapa Hifi Hot Start ReadyMix	KK2602	Each	525
 Fisher Scientific	Kapa Hifi Hot Start ReadyMix, each (Cat#KK2602) by Fisher Scientific		Each	525
 BD Biosciences	Ki-67 FITC, Clone B56, MOPC-21	556026	Each	186
 VWR	KIT GREEN FASTMIX PERFECTA-ROX 1250RXN	101414-278	Each	400
-Fisher Scientific	L-GLUTAMINE 200MM LIQ 100ML		Each	7
 Fisher Scientific	L-Glutamine; 200mM in 0.85% NaCl; 100mL L-Glutamine; 200mM in 0.85% NaCl; 500mL		Each	7
 anatech LTD	Large animal tether end plate	AT-E1	Each	46
 Takara	Lenti-X Concentrator	631231	Each	198
@@ -1744,9 +1721,7 @@ Fisher Scientific	LIGHT LABS 96-WELL ALUMINUM BLOCK		Each	99
 AIDS Reagent Program	mAb 10-1074	12477	Each	1
 Amazon.com	Magic Water Painting Paper	KN3710	Each	18
 Fisher Scientific	Maxima H Minus First Strand Synthesis Kit, 20 reactions		Each	76
-Fisher Scientific	MicroAmpÆ 8-Cap Strip, clear.  300 strips.		Each	94
 Fisher Scientific	MicroAmpÆ 8-Cap Strip, clear.  300 strips., each (Cat#N8010535) by Fisher Scientific		Each	94
-Fisher Scientific	MicroAmpÆ 8-Cap Strip, clear.  300 strips., each (Cat#N8010535) by Fisher Scientific, each (Cat#N8010535) by Fisher Scientific		Each	94
 Life Technologies	MicroAmpÆ Optical 96-Well Reaction Plate	N8010560	Each	67
 Amazon.com	Mini Displayport to VGA Cable Adapter for Apple Macbook, Macbook Pro, iMac, Macbook Air, and Mac Mini	B002HU39BS	Each	10
 Sigma-Aldrich	Mini pap pen	Z672548	Each	91
@@ -1779,7 +1754,6 @@ VWR	O.C.T. Compound	25608-930	Each	24
 Fisher Scientific	Oligos (Frwrd/Rrvse) for amplifying T7 RNA polymerase wildtype from pLEW13 plasmid		Each	106
 Fisher Scientific	Oligos for amplifying T7RNAP wt, GFPmax and pT7CFE1CHis inserts		Each	106
 Takara	pAcGFP1-N1 Vector	632469	Each	589
-Fisher Scientific	Pacific Blue Antibody Labeling Kit		Each	455
 Fisher Scientific	Pacific Blue Antibody Labeling Kit, EA (Cat#P30013) by Fisher Scientific		Each	455
 West Campus Store	Packing Tape	113596	Each	3
 VWR	Pan, Polypropylene AUTOCLAVE 10X6X4	62662-183	Each	42
@@ -1814,7 +1788,6 @@ anatech LTD	Primate Jacket Medium 3.5-kg	PJ02	Each	108
 anatech LTD	Primate Jacket Small 2kg	PJ01	Each	108
 Takara	Primescript Reverse Transcriptase, EACH (Cat#2680A) by	2680A	Each	221
 Fisher Scientific	Promega* 100bp DNA Ladder Molecular Weight Markers (100-1.5kb)		Each	80
-Fisher Scientific	Promega* 1kb DNA Ladder Molecular Weight Markers		Each	127
 Fisher Scientific	Promega* 1kb DNA Ladder Molecular Weight Markers, EA (Cat#PR-G7541) by Fisher Scientific		Each	127
 BD Biosciences	Protein Transport Inhibitor (Containing Brefeldin A)	555029	Each	65
 Fisher Scientific	PscI (PciI) (10 U/µL)		Each	76
@@ -1841,7 +1814,6 @@ Advanced Cell Diagnostics	RNAscope 2.5 HD Detection Reagents-BROWN	322310	Each	4
 Advanced Cell Diagnostics	RNAscope Probe-SIVmac239	312811	Each	396
 Advanced Cell Diagnostics	RNAscope Probe-SIVmac239-sense	314071	Each	396
 Fisher Scientific	RNAse A, 10mg		Each	41
-Fisher Scientific	RPMI-1640 WL-GLUT LM 500ML		Each	4
 Fisher Scientific	RPMI-1640 WL-GLUT LM 500ML		Each	4
 Fisher Scientific	RPMI-1640WO L-GLUT LM1000ML		Each	9
 Fisher Scientific	SALI 10U/UL 2000U		Each	54
@@ -1874,15 +1846,12 @@ Abaxis	Surveyor Mutation Detection Kit (25 reactions)	706025	Each	83
 Life Technologies	SYBRÆ Gold Nucleic Acid Gel Stain (10,000X Concentrate in DMSO)	S-11494	Each	149
 Life Technologies	SybrGold	S11494	Each	158
 Life Technologies	SybrSafe	S33102	Each	63
-Fisher Scientific	T4 DNA Ligase, 5U/µL		Each	153
 Fisher Scientific	T4 DNA Ligase, 5U/µL, EA (Cat#FEREL0011) by Fisher Scientific		Each	153
 Fisher Scientific	T7 ENDO I-1 250 UT7 ENDO I-1 2 (NEB)		Each	268
 VWR	T7 RNA Polymerase Monoclonal Antibody (Isotype: Mouse IgG1. EMD cat# 70566-3)	80030-918	Each	139
-Fisher Scientific	TC Bovine Growth Serum 500mL		Each	131
 Fisher Scientific	TC Bovine Growth Serum 500mL, Heat-Inactivated, 50 bottles total		Each	131
 AIDS Reagent Program	tenofovir disoproxil fumarate (30534)	10198	Each	0
 Fisher Scientific	test test test		Each	122
-Fisher Scientific	Thermo Scientific FastDigest BbsI (BpiI)		Each	42
 Fisher Scientific	Thermo Scientific FastDigest BbsI (BpiI), ea (Cat#FERFD1014) by Fisher Scientific		Each	42
 Fisher Scientific	Thermo Scientific FastDigest BssHII (PteI)		Each	57
 Fisher Scientific	Thermo Scientific FastDigest XbaI		Each	48
@@ -1893,7 +1862,6 @@ Fisher Scientific	Thermo Scientific* Pierce* Human In Vitro Protein Expression K
 Staples.com	Three pack of color HP Toner Cartridges (305A)	189521	Each	324
 Fisher Scientific	TMB One Component HRP Microwell Substrate, 100ml		Each	31
 SouthernBiotech	TMB One Component Microwell Substrate, Solution	0410-01	Each	45
-Fisher Scientific	Tough Spots labels (0.5-2.0ml tubes)		Each	31
 Fisher Scientific	Tough Spots labels (0.5-2.0ml tubes), Each (Cat#NC9281560) by Fisher Scientific		Each	31
 Amazon.com	Tovolo Stainless-Steel Perforated Colander, Large	B000O1DMAU	Each	21
 Sigma-Aldrich	Tritonô X-100	X100-500ML	Each	44
@@ -1968,7 +1936,6 @@ Zoetis	iStat Cg8+ cartridges (25/pack)	600-9001-25	Pack	465
 Advanced Cell Diagnostics	Lampire cell culture bag: 1-Liter Fill Volume: W/ Fitment	7810601	Pack	195
 Fisher Scientific	Microseal F, Pack (Cat#MSF1001) by		Pack	105
 Fisher Scientific	MILX GV .22UM PVDF 50/PK		Pack	104
-Fisher Scientific	MILX HA 33MM.45UM MCE STRL50PK		Pack	107
 Fisher Scientific	MILX HA 33MM.45UM MCE STRL50PK		Pack	107
 Staples.com	MSKN CAHIER JRNL RULED PK	401623	Pack	9
 VWR	Neptune 100uL Filter Tips LR S PK960	89140-162	Pack	37
