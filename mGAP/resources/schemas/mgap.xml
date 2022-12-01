@@ -1086,4 +1086,59 @@
             </column>
         </columns>
     </table>
+    <table tableName="geneticMeasurements" tableDbType="TABLE" useColumnOrder="true">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <pkColumnName>rowid</pkColumnName>
+        <tableTitle>Genetic Measurements</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowid">
+                <isAutoInc>true</isAutoInc>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <isUserEditable>false</isUserEditable>
+                <columnTitle>Row Id</columnTitle>
+            </column>
+            <column columnName="subjectname">
+                <columnTitle>Subject Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="measurementName">
+                <columnTitle>Measurement Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="measurementValue">
+                <columnTitle>Value</columnTitle>
+            </column>
+            <column columnName="qualValue">
+                <columnTitle>Text Value</columnTitle>
+            </column>
+            <column columnName="comment">
+                <columnTitle>Comment</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
 </tables>
