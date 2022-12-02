@@ -39,10 +39,10 @@ import javax.mail.Address;
 import javax.mail.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -298,6 +298,30 @@ public class TriggerHelper
         {
             _log.error("Error auto-creating MCC aliases during insert", e);
             return 0;
+        }
+    }
+
+    public void updateDemographicsColony(String Id, String destination) throws Exception
+    {
+        TableInfo ti = QueryService.get().getUserSchema(_user, _container, "study").getTable("demographics");
+        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("lsid"), new SimpleFilter(FieldKey.fromString("Id"), Id, CompareType.EQUAL), null);
+        String lsid = ts.getObject(String.class);
+        if (lsid == null)
+        {
+            _log.error("Unknown ID in demographics: " + Id);
+            return;
+        }
+
+        Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
+        toUpdate.put("lsid", lsid);
+        toUpdate.put("Id", Id);
+        toUpdate.put("colony", destination);
+
+        BatchValidationException bve = new BatchValidationException();
+        ti.getUpdateService().updateRows(_user, _container, Arrays.asList(toUpdate), Arrays.asList(Map.of("lsid", lsid)), null, null);
+        if (bve.hasErrors())
+        {
+            throw bve;
         }
     }
 }

@@ -141,7 +141,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
 
                 var commands = [];
                 if (!row['Id/MostRecentDeparture/MostRecentDeparture']) {
-                    //TODO: make this update demographics.colony
                     commands.push({
                         command: 'insert',
                         schemaName: 'study',
