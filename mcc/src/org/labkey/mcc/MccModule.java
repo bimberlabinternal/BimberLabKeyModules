@@ -92,7 +92,7 @@ public class MccModule extends ExtendedSimpleModule
     {
         JSONObject ret = super.getPageContextJson(context);
 
-        Container requestContainer = MccManager.get().getMCCRequestContainer();
+        Container requestContainer = MccManager.get().getMCCRequestContainer(context.getContainer());
         ret.put("hasRequestAdminPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRequestAdminPermission.class));
         ret.put("hasRabPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRabReviewPermission.class));
         ret.put("hasFinalDecisionPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccFinalReviewPermission.class));

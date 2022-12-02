@@ -2,6 +2,7 @@ package org.labkey.mcc;
 
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.LDKService;
@@ -37,7 +38,7 @@ public class MccMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
     private void checkForDuplicateAliases(Logger log)
     {
-        Container studyParent = MccManager.get().getMCCInternalDataContainer();
+        Container studyParent = MccManager.get().getMCCInternalDataContainer(ContainerManager.getRoot());
         if (studyParent == null)
         {
             return;

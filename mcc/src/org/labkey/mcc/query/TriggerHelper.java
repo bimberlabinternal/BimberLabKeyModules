@@ -162,7 +162,7 @@ public class TriggerHelper
     }
 
     private void sendInitialNotification() {
-        Set<Address> emails = MccManager.get().getRequestNotificationUserEmails();
+        Set<Address> emails = MccManager.get().getRequestNotificationUserEmails(_container);
         if (emails == null || emails.isEmpty())
         {
             _log.error("An MCC request was finalized but there are no notification users");
@@ -175,7 +175,7 @@ public class TriggerHelper
             mail.setFrom("mcc-do-not-reply@ohsu.edu");
             mail.setSubject("MCC Animal Request");
 
-            Container rc = MccManager.get().getMCCRequestContainer();
+            Container rc = MccManager.get().getMCCRequestContainer(_container);
             DetailsURL url = DetailsURL.fromString("/mcc/mccRequestAdmin.view", rc);
             mail.setEncodedHtmlContent("An animal request was submitted on MCC.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
             mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[0]));
@@ -247,7 +247,7 @@ public class TriggerHelper
             mail.setFrom("mcc@ohsu.edu");
             mail.setSubject("MCC RAB Review Assignment");
 
-            Container rc = MccManager.get().getMCCRequestContainer();
+            Container rc = MccManager.get().getMCCRequestContainer(_container);
             DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
             mail.setEncodedHtmlContent("One or more MCC requests were assigned to you for RAB Review. <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view and enter your review(s)</a>. Please reply to this email if you have any questions.");
             mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[0]));
