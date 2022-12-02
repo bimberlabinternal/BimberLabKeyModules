@@ -166,7 +166,7 @@ public class LabPurchasingTest extends BaseWebDriverTest
         dr = DataRegionTable.DataRegion(getDriver()).withName("query").waitFor();
         dr.goToView("Waiting for Item");
         dr.checkCheckbox(0);
-        Assert.assertEquals("OrderXXXX", dr.getRowDataAsText(0, "orderNumber").get(0));
+        Assert.assertEquals("OrderXXXX", dr.getDataAsText(0, "orderNumber"));
 
         dr.clickHeaderMenu("More Actions", false, "Mark Received");
         new Window.WindowFinder(getDriver()).withTitle("Mark Received").waitFor();
@@ -178,7 +178,7 @@ public class LabPurchasingTest extends BaseWebDriverTest
         Assert.assertEquals(0, dr.getDataRowCount());
 
         dr.goToView("All Items");
-        Assert.assertEquals("-80 Freezer", dr.getRowDataAsText(1, "itemLocation").get(0));
+        Assert.assertEquals("-80 Freezer", dr.getDataAsText(1, "itemLocation"));
     }
 
     @Override

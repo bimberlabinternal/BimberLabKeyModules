@@ -33,14 +33,20 @@ import org.labkey.test.TestTimeoutException;
 import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.components.ext4.Window;
 import org.labkey.test.util.ApiPermissionsHelper;
 import org.labkey.test.util.DataRegionTable;
+import org.labkey.test.util.Ext4Helper;
 import org.labkey.test.util.PermissionsHelper;
+import org.labkey.test.util.ext4cmp.Ext4ComboRef;
+import org.labkey.test.util.ext4cmp.Ext4FieldRef;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,12 +57,79 @@ public class MccTest extends BaseWebDriverTest
     @Test
     public void testMccModule() throws Exception
     {
-        _containerHelper.enableModule("Mcc");
+        //doRequestFormTest();
+        //doRequestFormTestWithFailure();
 
-        doRequestFormTest();
-        doRequestFormTestWithFailure();
+        //testInvalidId();
 
-        testInvalidId();
+        testAnimalImportAndTransfer();
+    }
+
+    private void testAnimalImportAndTransfer()
+    {
+        beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
+//        waitAndClickAndWait(Locator.tagWithText("a", "Import Excel-Based Data"));
+//        waitForElement(Locator.tagWithText("label", "Paste Data Below:"));
+//        Ext4FieldRef.getForLabel(this, "Center/Colony Name").setValue("SNPRC");
+//
+//        Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(
+//            "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight(grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailalble to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n" +
+//            "Animal1\t\t\t7/10/2011\t0 - male\tDam1\tSire1\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n" +
+//            "Animal2\t\t\t6/3/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal"
+//        );
+//
+//        waitAndClick(Ext4Helper.Locators.ext4Button("Preview"));
+//        waitForElement(Locator.tagWithText("td", "Animal2").withClass("dt-center"));
+//
+//        waitAndClick(getButton("Submit"));
+//        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
+//        waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
+
+        waitAndClickAndWait(Locator.tagWithText("a", "View Study Datasets"));
+        waitAndClickAndWait(Locator.tagWithText("a", "Demographics"));
+
+        DataRegionTable dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        dr.checkCheckbox(1); //Animal2
+        Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(1, "Id"));
+        Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(1, "Status"));
+        String mccId = dr.getDataAsText(1, "MCC Alias");
+
+        dr.clickHeaderMenu("More Actions", false, "Mark Animal Shipped");
+
+        new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
+        Ext4FieldRef.getForLabel(this, "Effective Date").setValue(new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+        Ext4ComboRef combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
+        combo.clickTrigger();
+        waitAndClick(Locator.tagContainingText("li", "Other"));
+
+        Window dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
+        dialog.findElement(Locator.tag("input")).sendKeys("TargetColony");
+        waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
+        sleep(100);
+
+        Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
+        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
+        waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(1, "Id"));
+        Assert.assertEquals("Incorrect Status", "<Shipped>", dr.getDataAsText(1, "Status"));
+        Assert.assertEquals("Incorrect Value", "true", dr.getDataAsText(1, "Exclude From Census?"));
+        Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(1, "Current Colony"));
+
+        // Verify result:
+        beginAt(getProjectName() + "/Colonies/Other/project-begin.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "View Study Datasets"));
+        waitAndClickAndWait(Locator.tagWithText("a", "Demographics"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(0, "Id"));
+        Assert.assertEquals("Incorrect Alias", mccId, dr.getDataAsText(0, "Id"));
+        Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(0, "Status"));
+        Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(0, "colony"));
+        Assert.assertEquals("Incorrect Source", "SNPRC", dr.getDataAsText(0, "source"));
     }
 
     private static class FormElement
@@ -628,14 +701,14 @@ public class MccTest extends BaseWebDriverTest
     @Override
     protected void doCleanup(boolean afterTest) throws TestTimeoutException
     {
-        super.doCleanup(afterTest);
+//        super.doCleanup(afterTest);
     }
 
     @BeforeClass
     public static void setupProject() throws Exception
     {
-        MccTest init = (MccTest)getCurrentTest();
-        init.doSetup();
+//        MccTest init = (MccTest)getCurrentTest();
+//        init.doSetup();
     }
 
     private void doSetup() throws Exception
@@ -644,14 +717,15 @@ public class MccTest extends BaseWebDriverTest
         _containerHelper.createProject(getProjectName());
         _containerHelper.enableModules(Arrays.asList("MCC", "Study"));
 
-        importStudy();
+        importStudy(getProjectName());
 
         _containerHelper.setFolderType("MCC");
         setModuleProperties(Arrays.asList(
                 new ModulePropertyValue("MCC", "/", "MCCContainer", "/" + getProjectName()),
                 new ModulePropertyValue("MCC", "/", "MCCRequestContainer", "/" + getProjectName()),
                 new ModulePropertyValue("MCC", "/", "MCCContactUsers", getCurrentUserName()),
-                new ModulePropertyValue("MCC", "/", "MCCRequestNotificationUsers", getCurrentUserName())
+                new ModulePropertyValue("MCC", "/", "MCCRequestNotificationUsers", getCurrentUserName()),
+                new ModulePropertyValue("MCC", "/", "MCCInternalDataContainer", "/" + getProjectName() + "/Colonies")
         ));
 
         beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
@@ -666,6 +740,14 @@ public class MccTest extends BaseWebDriverTest
         {
             log("Member already in group. This is not expected for fresh installations or TeamCity");
         }
+
+        // Raw data folders:
+        _containerHelper.createSubfolder(getProjectName(), "Colonies", "MCC Colony");
+        for (String name : Arrays.asList("SNPRC", "WNPRC", "UCSD", "Other"))
+        {
+            _containerHelper.createSubfolder(getProjectName() + "/Colonies", name, "MCC Colony");
+            importStudy(getProjectName() + "/Colonies/" + name);
+        }
     }
 
     private void testInvalidId()
@@ -676,11 +758,15 @@ public class MccTest extends BaseWebDriverTest
     }
 
 
-    private void importStudy()
+    private void importStudy(String containerPath)
     {
-        beginAt(WebTestHelper.getBaseURL() + "/mcc/" + getProjectName() + "/importStudy.view");
+        beginAt(WebTestHelper.getBaseURL() + "/mcc/" + containerPath + "/importStudy.view");
         clickButton("OK");
         waitForPipelineJobsToComplete(1, "Study import", false, MAX_WAIT_SECONDS * 2500);
+
+        beginAt(WebTestHelper.getBaseURL() + "/ehr/" + containerPath + "/ensureQcStates.view");
+        clickButton("OK");
+
     }
 
     @Before
