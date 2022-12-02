@@ -141,6 +141,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
 
                 var commands = [];
                 if (!row['Id/MostRecentDeparture/MostRecentDeparture']) {
+                    //TODO: make this update demographics.colony
                     commands.push({
                         command: 'insert',
                         schemaName: 'study',
@@ -187,6 +188,17 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                     rows: [{
                         subjectname: newId,
                         externalAlias: row['Id/mccAlias/externalAlias']
+                    }]
+                });
+
+                commands.push({
+                    command: 'update',
+                    containerPath: null, //Use current folder
+                    schemaName: 'study',
+                    queryName: 'Demographics',
+                    rows: [{
+                        Id: newId,
+                        excludeFromCensus: true
                     }]
                 });
 
