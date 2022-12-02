@@ -721,11 +721,13 @@ public class MccTest extends BaseWebDriverTest
 
         _containerHelper.setFolderType("MCC");
         setModuleProperties(Arrays.asList(
-                new ModulePropertyValue("MCC", "/", "MCCContainer", "/" + getProjectName()),
-                new ModulePropertyValue("MCC", "/", "MCCRequestContainer", "/" + getProjectName()),
-                new ModulePropertyValue("MCC", "/", "MCCContactUsers", getCurrentUserName()),
-                new ModulePropertyValue("MCC", "/", "MCCRequestNotificationUsers", getCurrentUserName()),
-                new ModulePropertyValue("MCC", "/", "MCCInternalDataContainer", "/" + getProjectName() + "/Colonies")
+                new ModulePropertyValue("MCC", "/" + getProjectName(), "MCCContainer", "/" + getProjectName()),
+                new ModulePropertyValue("MCC", "/" + getProjectName(), "MCCRequestContainer", "/" + getProjectName()),
+                new ModulePropertyValue("MCC", "/" + getProjectName(), "MCCContactUsers", getCurrentUserName()),
+                new ModulePropertyValue("MCC", "/" + getProjectName(), "MCCRequestNotificationUsers", getCurrentUserName()),
+                new ModulePropertyValue("MCC", "/" + getProjectName(), "MCCInternalDataContainer", "/" + getProjectName() + "/Colonies"),
+                new ModulePropertyValue("EHR", "/" + getProjectName(), "EHRStudyContainer", "/" + getProjectName()),
+                new ModulePropertyValue("EHR", "/" + getProjectName(), "EHRAdminUser", getCurrentUser())
         ));
 
         beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
