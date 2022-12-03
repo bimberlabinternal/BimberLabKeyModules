@@ -126,7 +126,7 @@ public class MccTest extends BaseWebDriverTest
 
         dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
         Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(0, "Id"));
-        Assert.assertEquals("Incorrect Alias", mccId, dr.getDataAsText(0, "Id"));
+        Assert.assertEquals("Incorrect Alias", mccId, dr.getDataAsText(0, "MCC Alias"));
         Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(0, "Status"));
         Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(0, "colony"));
         Assert.assertEquals("Incorrect Source", "SNPRC", dr.getDataAsText(0, "source"));
