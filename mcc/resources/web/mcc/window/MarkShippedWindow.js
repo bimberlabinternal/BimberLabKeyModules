@@ -126,7 +126,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             schemaName: 'study',
             queryName: 'Demographics',
             filterArray: [LABKEY.Filter.create('lsid', lsid)],
-            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/mccAlias/externalAlias,calculated_status',
+            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/mccAlias/externalAlias,calculated_status,dam,sire',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
@@ -169,6 +169,8 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         species: row.species,
                         birth: row.birth,
                         death: row.death,
+                        dam: row.dam,
+                        sire: row.sire,
                         colony: centerName,
                         source: row.colony,
                         calculated_status: 'Alive',
