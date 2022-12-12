@@ -24,6 +24,7 @@
         <column name="Id/MostRecentWeight/MostRecentWeightGrams"/>
         <column name="Id/MostRecentWeight/MostRecentWeightDate"/>
         <column name="alternateIds"/>
+        <column name="excludeFromCensus"/>
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>

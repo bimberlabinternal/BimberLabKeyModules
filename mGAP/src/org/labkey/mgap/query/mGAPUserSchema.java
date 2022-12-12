@@ -31,6 +31,7 @@ public class mGAPUserSchema extends SimpleUserSchema
 
         DefaultSchema.registerProvider(mGAPSchema.NAME, new DefaultSchema.SchemaProvider(m)
         {
+            @Override
             public QuerySchema createSchema(final DefaultSchema schema, Module module)
             {
                 return new mGAPUserSchema(schema.getUser(), schema.getContainer(), dbSchema);

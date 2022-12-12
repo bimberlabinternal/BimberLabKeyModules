@@ -8,6 +8,7 @@ import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.laboratory.query.ContainerIncrementingTable;
+import org.labkey.api.ldk.table.ContainerScopedTable;
 import org.labkey.api.module.Module;
 import org.labkey.api.query.DefaultSchema;
 import org.labkey.api.query.QuerySchema;
@@ -45,8 +46,20 @@ public class LabPurchasingUserSchema extends SimpleUserSchema
     protected TableInfo createWrappedTable(String name, @NotNull TableInfo sourceTable, ContainerFilter cf)
     {
         if (LabPurchasingSchema.TABLE_PURCHASES.equalsIgnoreCase(name))
+        {
             return getPurchasesTable(name, sourceTable, cf);
+        }
+        else if (LabPurchasingSchema.TABLE_UNITS.equalsIgnoreCase(name))
+        {
+            return new ContainerScopedTable<>(this, sourceTable, cf, "unit").init();
+        }
+        else if (LabPurchasingSchema.TABLE_LOCATIONS.equalsIgnoreCase(name))
+        {
+            return new ContainerScopedTable<>(this, sourceTable, cf, "location").init();
+        }
         else
+        {
             return super.createWrappedTable(name, sourceTable, cf);
+        }
     }
 }

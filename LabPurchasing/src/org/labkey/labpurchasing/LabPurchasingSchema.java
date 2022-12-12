@@ -23,6 +23,8 @@ import org.labkey.api.data.dialect.SqlDialect;
 public class LabPurchasingSchema
 {
     public static final String TABLE_PURCHASES = "purchases";
+    public static final String TABLE_UNITS = "purchasingUnits";
+    public static final String TABLE_LOCATIONS = "purchasingLocations";
     public static final String TABLE_REFERENCE_ITEMS = "referenceItems";
     private static final LabPurchasingSchema _instance = new LabPurchasingSchema();
     public static final String NAME = "labpurchasing";

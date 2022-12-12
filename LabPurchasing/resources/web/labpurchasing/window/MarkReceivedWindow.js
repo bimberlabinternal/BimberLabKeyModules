@@ -33,10 +33,20 @@ Ext4.define('LabPurchasing.window.MarkReceivedWindow', {
                     itemId: 'dateReceived',
                     value: new Date()
                 },{
-                    xtype: 'textfield',
+                    xtype: 'labkey-combo',
                     fieldLabel: 'Item Location',
+                    plugins: ['ldk-usereditablecombo'],
                     width: 350,
-                    itemId: 'itemLocation'
+                    itemId: 'itemLocation',
+                    valueField: 'location',
+                    displayField: 'location',
+                    store: {
+                        type: 'labkey-store',
+                        schemaName: 'labpurchasing',
+                        queryName: 'purchasingLocations',
+                        columns: 'location',
+                        autoLoad: true
+                    }
                 }]
             }],
             buttons: [{

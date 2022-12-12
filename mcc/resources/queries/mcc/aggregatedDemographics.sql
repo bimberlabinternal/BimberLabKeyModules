@@ -37,6 +37,7 @@ LEFT JOIN (SELECT
                    o."medical_history::observation" as medical_history,
     FROM "/data/Colonies/SNPRC/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
+WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)
 
 UNION ALL
 
@@ -79,6 +80,7 @@ FROM "/data/Colonies/WNPRC/".study.demographics d
                         o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/WNPRC/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
+WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)
 
 UNION ALL
 
@@ -118,6 +120,7 @@ FROM "/data/Colonies/UCSD/".study.demographics d
                         o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/UCSD/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
+WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)
 
 UNION ALL
 
@@ -157,3 +160,4 @@ FROM "/data/Colonies/Other/".study.demographics d
                         o."medical_history::observation" as medical_history,
                     FROM "/data/Colonies/Other/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
+WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)

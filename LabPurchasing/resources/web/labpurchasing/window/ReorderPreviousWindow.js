@@ -46,7 +46,7 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
                         store.load();
                     }
                 }
-            },{
+            }, {
                 xtype: 'labkey-combo',
                 itemId: 'itemField',
                 fieldLabel: 'Item',
@@ -77,6 +77,14 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
                         }
                     }
                 }
+            },{
+                xtype: 'ldk-linkbutton',
+                linkTarget: '_blank',
+                text: 'View/Manage Reference Items',
+                linkCls: 'labkey-text-link',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'labpurchasing', queryName: 'referenceItems'}),
+                style: 'padding-top: 10px;'
+
             }],
             buttons: [{
                 text: 'Re-order Item',
@@ -116,8 +124,8 @@ Ext4.define('LabPurchasing.window.ReorderPreviousWindow', {
             this.formPanel.getForm().setValues(data);
         }
         else {
-            var recIdx = this.gridPanel.store.add(this.gridPanel.store.createModel(data));
-            console.log(recIdx);
+            this.gridPanel.store.insert(0, this.gridPanel.store.createModel(data));
+
             var cellEditing = this.gridPanel.getPlugin(this.gridPanel.editingPluginId);
             if (cellEditing) {
                 cellEditing.completeEdit();

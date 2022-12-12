@@ -8,7 +8,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
         Ext4.apply(this, {
             border: true,
             minHeight: 300,
-            width: '100%',
+            //width: '100%',
             xtype: 'ldk-gridpanel',
             clicksToEdit: 1,
             // This causes the editor plugin to begin on the vendor column
@@ -27,7 +27,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                 queryName: 'purchases',
                 filterArray: this.rowIds && this.rowIds.length ? [LABKEY.Filter.create('rowId', this.rowIds.join(';'), LABKEY.Filter.Types.IN)] : [],
                 maxRows: this.rowIds && this.rowIds.length ? -1 : 0,
-                columns: 'requestor,vendorId,itemName,itemNumber,units,quantity,unitCost,totalCost,description,fundingSource,orderedBy,orderDate,orderNumber,emailOnArrival',
+                columns: 'requestor,vendorId,itemName,itemNumber,units,quantity,unitCost,totalCost,description,fundingSource,emailOnArrival,orderedBy,orderDate,orderNumber,purchaseOrder',
                 autoLoad: true,
                 listeners: {
                     scope: this,
@@ -69,19 +69,22 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                     vendorId: {
                         fixedWidthCol: true,
                         required: true,
+                        wordWrap: true,
                         columnConfig: {
-                            width: 250,
+                            width: 175,
                             showLink: false
                         }
                     },
                     itemName: {
                         fixedWidthCol: true,
+                        wordWrap: true,
                         columnConfig: {
                             width: 175
                         }
                     },
                     itemNumber: {
                         fixedWidthCol: true,
+                        wordWrap: true,
                         columnConfig: {
                             width: 150
                         }
@@ -92,7 +95,8 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                             plugins: ['ldk-usereditablecombo']
                         },
                         columnConfig: {
-                            width: 100
+                            width: 100,
+                            showLink: false
                         }
                     },
                     quantity: {
@@ -102,7 +106,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                             minValue: 0
                         },
                         columnConfig: {
-                            width: 100
+                            width: 75
                         }
                     },
                     unitCost: {
@@ -112,7 +116,7 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                             minValue: 0
                         },
                         columnConfig: {
-                            width: 100
+                            width: 75
                         }
                     },
                     totalCost: {
@@ -122,11 +126,12 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                             minValue: 0
                         },
                         columnConfig: {
-                            width: 100
+                            width: 75
                         }
                     },
                     description: {
                         fixedWidthCol: true,
+                        wordWrap: true,
                         columnConfig: {
                             width: 200
                         },
@@ -137,8 +142,9 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                     },
                     fundingSource: {
                         fixedWidthCol: true,
+                        wordWrap: true,
                         columnConfig: {
-                            width: 150
+                            width: 125
                         }
                     },
                     orderedBy: {
@@ -159,6 +165,15 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                     },
                     orderNumber: {
                         fixedWidthCol: true,
+                        wordWrap: true,
+                        columnConfig: {
+                            hidden: !this.showPlaceOrderUI,
+                            width: 130
+                        }
+                    },
+                    purchaseOrder: {
+                        fixedWidthCol: true,
+                        wordWrap: true,
                         columnConfig: {
                             hidden: !this.showPlaceOrderUI,
                             width: 120
@@ -234,6 +249,15 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                 text: 'Add New',
                 hidden: this.showPlaceOrderUI,
             }), {
+                text: 'Re-order Previous Item',
+                scope: this,
+                handler: function (btn) {
+                    Ext4.create('LabPurchasing.window.ReorderPreviousWindow', {
+                        gridPanel: this
+                    }).show();
+
+                }
+            },{
                 text: 'Remove Selected',
                 scope: this,
                 handler: function (btn) {
@@ -270,15 +294,6 @@ Ext4.define('LabPurchasing.panel.OrderItemsGrid', {
                             }
                         }]
                     }).show();
-                }
-            },{
-                text: 'Re-order Previous Item',
-                scope: this,
-                handler: function (btn) {
-                    Ext4.create('LabPurchasing.window.ReorderPreviousWindow', {
-                        gridPanel: this
-                    }).show();
-
                 }
             }]
         });

@@ -14,13 +14,11 @@ SELECT
 
 FROM labpurchasing.referenceItems r1
 JOIN labpurchasing.referenceItems r2 ON (
+    r1.rowId != r2.rowId AND
     r1.itemNumber = r2.itemNumber and
     r1.vendorId = r2.vendorId
 )
-WHERE (
-    r1.itemName != r2.itemName OR
-    r1.units != r2.units OR
-    r1.unitCost != r2.unitCost
-) AND r1.itemNumber NOT IN ('NA', '1')
+
+WHERE r1.itemNumber NOT IN ('NA', '1')
 
 GROUP BY r1.rowId, r1.vendorId, r1.itemNumber, r1.itemName, r1.units, r1.unitCost

@@ -1,0 +1,47 @@
+<script type="text/javascript">
+
+    Ext4.onReady(function(){
+        var webpart = <%=webpartContext%>;
+        var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+        if(!ctx)
+            return;
+
+        var webpart = <%=webpartContext%>;
+        Ext4.create('Ext.panel.Panel', {
+            renderTo: webpart.wrapperDivId,
+            border: false,
+            items: [{
+                html: 'This page should be used rarely and very carefully. This allows you to manually enter the MCC alias to use for a center-specific ID. You should almost always let the system do this automatically. One of the few times manual enter should be used is when an animal was transferred and you want to preserve a previous MCC ID. Also, if this animal has already been assigned an MCC ID, you should update that alias rather than adding a new row here. Use the link below to view MCC aliases',
+                border: false,
+                style: 'padding-bottom: 10px;'
+            },{
+                xtype: 'ldk-linkbutton',
+                linkTarget: '_blank',
+                text: 'View Existing MCC Aliases',
+                cls: 'labkey-text-link',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mcc', queryName: 'animalMapping'}),
+                style: 'padding-bottom: 10px;'
+            },{
+                xtype: 'ldk-formpanel',
+                border: false,
+                store: Ext4.create('LABKEY.ext4.data.Store', {
+                    schemaName: 'mcc',
+                    queryName: 'animalMapping',
+                    ignoreFilter: true, //always ignore filters on the default view, this record was requested by ID
+                    columns: 'rowid,subjectname,externalAlias,otherNames',
+                    maxRows: 0,
+                    autoLoad: true,
+                    metadata: {
+                        externalAlias: {
+                            hidden: false
+                        }
+                    }
+                }),
+                bindConfig: {
+                    autoCreateRecordOnChange: true,
+                    autoBindFirstRecord: true
+                }
+            }]
+        });
+    });
+</script>

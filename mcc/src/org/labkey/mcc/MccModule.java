@@ -31,6 +31,7 @@ import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
 import org.labkey.mcc.query.ReviewerNotifyButton;
 import org.labkey.mcc.security.MccDataAdminRole;
@@ -91,7 +92,7 @@ public class MccModule extends ExtendedSimpleModule
     {
         JSONObject ret = super.getPageContextJson(context);
 
-        Container requestContainer = MccManager.get().getMCCRequestContainer();
+        Container requestContainer = MccManager.get().getMCCRequestContainer(context.getContainer());
         ret.put("hasRequestAdminPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRequestAdminPermission.class));
         ret.put("hasRabPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRabReviewPermission.class));
         ret.put("hasFinalDecisionPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccFinalReviewPermission.class));
@@ -119,6 +120,7 @@ public class MccModule extends ExtendedSimpleModule
     {
         EHRService.get().registerModule(this);
         EHRService.get().registerTableCustomizer(this, MccEhrCustomizer.class);
+        EHRService.get().registerMoreActionsButton(new MarkShippedButton(), "study", "demographics");
     }
 
     @Override
