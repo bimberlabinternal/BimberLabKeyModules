@@ -74,7 +74,7 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
 
     private void customizeAnimalTable(AbstractTableInfo ti)
     {
-        for (String colName : new String[]{"MostRecentArrival", "numRoommates", "MostRecentDeparture", "curLocation", "lastHousing", "weightChange", "CageClass", "MhcStatus"})
+        for (String colName : new String[]{"MostRecentArrival", "numRoommates", "curLocation", "lastHousing", "weightChange", "CageClass", "MhcStatus"})
         {
             ColumnInfo ci = ti.getColumn(colName);
             if (ci != null)

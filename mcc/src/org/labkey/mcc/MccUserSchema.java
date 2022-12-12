@@ -9,6 +9,7 @@ import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.JdbcType;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.ldk.table.ContainerScopedTable;
 import org.labkey.api.ldk.table.CustomPermissionsTable;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
@@ -35,7 +36,11 @@ public class MccUserSchema extends SimpleUserSchema
     @Nullable
     protected TableInfo createWrappedTable(String name, @NotNull TableInfo schemaTable, ContainerFilter cf)
     {
-        if (MccSchema.TABLE_ANIMAL_REQUESTS.equalsIgnoreCase(name))
+        if (MccSchema.TABLE_ANIMAL_MAPPING.equalsIgnoreCase(name))
+        {
+            return new ContainerScopedTable<>(this, schemaTable, cf, "subjectname").init();
+        }
+        else if (MccSchema.TABLE_ANIMAL_REQUESTS.equalsIgnoreCase(name))
         {
             CustomPermissionsTable<?> ret = new CustomPermissionsTable<>(this, schemaTable, cf);
             ret.addPermissionMapping(InsertPermission.class, MccRequestorPermission.class);

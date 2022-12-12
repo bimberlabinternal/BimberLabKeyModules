@@ -44,7 +44,7 @@ public class LabPurchasingModule extends ExtendedSimpleModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.002;
+        return 20.003;
     }
 
     @Override
@@ -90,8 +90,8 @@ public class LabPurchasingModule extends ExtendedSimpleModule
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
         LaboratoryService.get().registerDataProvider(new LabPurchasingDataProvider());
-        LDKService.get().registerQueryButton(new MarkReceivedButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
         LDKService.get().registerQueryButton(new EnterOrderInfoButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
+        LDKService.get().registerQueryButton(new MarkReceivedButton(this), LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
         LaboratoryService.get().registerTableCustomizer(this, LabPurchasingCustomizer.class, LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_PURCHASES);
         LaboratoryService.get().registerTableCustomizer(this, LabPurchasingCustomizer.class, LabPurchasingSchema.NAME, LabPurchasingSchema.TABLE_REFERENCE_ITEMS);
     }

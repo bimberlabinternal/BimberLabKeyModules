@@ -41,6 +41,9 @@
                     <column columnName="source">
                         <columnTitle>Source Colony</columnTitle>
                     </column>
+                    <column columnName="excludeFromCensus">
+                        <columnTitle>Exclude From Census?</columnTitle>
+                    </column>
                     <column columnName="project">
                         <isHidden>true</isHidden>
                     </column>

@@ -91,7 +91,7 @@
                 <isHidden>true</isHidden>
             </column>
             <column columnName="orderNumber">
-                <columnTitle>Order Number</columnTitle>
+                <columnTitle>Requisition/Order #</columnTitle>
             </column>
             <column columnName="orderedBy">
                 <columnTitle>Ordered By</columnTitle>
@@ -100,6 +100,10 @@
             <column columnName="orderDate">
                 <columnTitle>Order Date</columnTitle>
                 <formatString>Date</formatString>
+            </column>
+            <column columnName="purchaseOrder">
+                <columnTitle>PO #</columnTitle>
+                <inputType>textfield</inputType>
             </column>
             <column columnName="receivedBy">
                 <columnTitle>Received By</columnTitle>
@@ -112,6 +116,12 @@
             <column columnName="itemLocation">
                 <columnTitle>Item Location</columnTitle>
                 <inputType>textfield</inputType>
+                <fk>
+                    <fkDbSchema>labpurchasing</fkDbSchema>
+                    <fkTable>locations</fkTable>
+                    <fkColumnName>location</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true" />
+                </fk>
             </column>
             <column columnName="invoiceNumber">
                 <columnTitle>Invoice Number</columnTitle>
@@ -375,6 +385,45 @@
             </column>
             <column columnName="unit">
                 <columnTitle>Unit</columnTitle>
+                <nullable>false</nullable>
+                <inputType>textfield</inputType>
+            </column>
+
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <isHidden>true</isHidden>
+            </column>
+        </columns>
+    </table>
+    <table tableName="purchasingLocations" tableDbType="TABLE">
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
+        <tableTitle>Item Locations</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <columns>
+            <column columnName="rowId">
+                <nullable>false</nullable>
+            </column>
+            <column columnName="location">
+                <columnTitle>Location</columnTitle>
                 <nullable>false</nullable>
                 <inputType>textfield</inputType>
             </column>

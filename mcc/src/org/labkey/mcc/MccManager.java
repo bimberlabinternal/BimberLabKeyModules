@@ -128,11 +128,11 @@ public class MccManager
         return _instance;
     }
 
-    public Container getMCCRequestContainer()
+    public Container getMCCRequestContainer(Container c)
     {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
         ModuleProperty mp = m.getModuleProperties().get(MccManager.MCCRequestContainer);
-        String path = mp.getEffectiveValue(ContainerManager.getRoot());
+        String path = mp.getEffectiveValue(c);
         if (path == null)
             return null;
 
@@ -144,31 +144,31 @@ public class MccManager
         return "mcc@ohsu.edu";
     }
 
-    public Container getMCCInternalDataContainer()
+    public Container getMCCInternalDataContainer(Container c)
     {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
         ModuleProperty mp = m.getModuleProperties().get(MccManager.MCCInternalDataContainerPropName);
-        String path = mp.getEffectiveValue(ContainerManager.getRoot());
+        String path = mp.getEffectiveValue(c);
         if (path == null)
             return null;
 
         return ContainerManager.getForPath(path);
     }
 
-    public Container getMCCContainer()
+    public Container getMCCContainer(Container c)
     {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
         ModuleProperty mp = m.getModuleProperties().get(MccManager.ContainerPropName);
-        String path = mp.getEffectiveValue(ContainerManager.getRoot());
+        String path = mp.getEffectiveValue(c);
         if (path == null)
             return null;
 
         return ContainerManager.getForPath(path);
     }
 
-    public boolean isRequestAdmin(User u)
+    public boolean isRequestAdmin(User u, Container container)
     {
-        Container c = getMCCRequestContainer();
+        Container c = getMCCRequestContainer(container);
         if (c == null)
         {
             _log.error("MccManager.isRequestAdmin called, but MCCRequestContainer has not been set");
@@ -191,21 +191,21 @@ public class MccManager
         return new File(val);
     }
 
-    public Set<Address> getNotificationUserEmails()
+    public Set<Address> getNotificationUserEmails(Container c)
     {
-        return getUserEmailsForProp(MccManager.NotifyPropName);
+        return getUserEmailsForProp(MccManager.NotifyPropName, c);
     }
 
-    public Set<Address> getRequestNotificationUserEmails()
+    public Set<Address> getRequestNotificationUserEmails(Container c)
     {
-        return getUserEmailsForProp(MccManager.MCCRequestNotificationUsers);
+        return getUserEmailsForProp(MccManager.MCCRequestNotificationUsers, c);
     }
 
-    private Set<Address> getUserEmailsForProp(String propName)
+    private Set<Address> getUserEmailsForProp(String propName, Container c)
     {
         Module m = ModuleLoader.getInstance().getModule(MccModule.NAME);
         ModuleProperty mp = m.getModuleProperties().get(propName);
-        String userNames = mp.getEffectiveValue(ContainerManager.getRoot());
+        String userNames = mp.getEffectiveValue(c);
         userNames = StringUtils.trimToNull(userNames);
         if (userNames == null)
             return null;
@@ -227,7 +227,7 @@ public class MccManager
             }
             else
             {
-                UserPrincipal up = SecurityManager.getPrincipal(principalName, getMCCContainer(), true);
+                UserPrincipal up = SecurityManager.getPrincipal(principalName, getMCCContainer(c), true);
                 if (up == null)
                 {
                     _log.error("Unknown user/group registered for MCC notifications: [" + principalName + "]", new Exception());

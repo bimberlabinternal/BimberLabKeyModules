@@ -8,6 +8,8 @@ require("ehr/triggers").initScript(this);
 
 var triggerHelper = new org.labkey.mcc.query.TriggerHelper(LABKEY.Security.currentUser.id, LABKEY.Security.currentContainer.id);
 
+var skipMccAliasCreation = [];
+
 function onInit(event, helper){
     helper.setScriptOptions({
         allowAnyId: true,
@@ -82,13 +84,33 @@ function onUpsert(helper, scriptErrors, row, oldRow){
                 break;
         }
     }
+
+    if (row.calculated_status && row.calculated_status.toLowerCase() === 'shipped') {
+        row.u24_status = false;
+    }
+
+    if (row.skipMccAliasCreation) {
+        skipMccAliasCreation.push(row.Id);
+    }
 }
 
 function onComplete(event, errors, helper){
     if (!helper.isETL() && helper.getPublicParticipantsModified().length) {
-        var aliasesCreated = triggerHelper.ensureMccAliasExists(helper.getPublicParticipantsModified());
-        if (aliasesCreated) {
-            console.log('Total MCC aliases assigned during import: ' + aliasesCreated);
+        var toAdd = helper.getPublicParticipantsModified();
+        if (skipMccAliasCreation.length) {
+            for (var i=0;i<skipMccAliasCreation.length;i++){
+                var arrIdx = toAdd.indexOf(skipMccAliasCreation[i]);
+                if (arrIdx !== -1) {
+                    toAdd.splice(arrIdx, 1);
+                }
+            }
+        }
+
+        if (toAdd.length) {
+            var aliasesCreated = triggerHelper.ensureMccAliasExists(helper.getPublicParticipantsModified());
+            if (aliasesCreated) {
+                console.log('Total MCC aliases assigned during import: ' + aliasesCreated);
+            }
         }
     }
 }

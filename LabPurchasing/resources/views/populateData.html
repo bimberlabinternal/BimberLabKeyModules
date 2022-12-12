@@ -151,6 +151,13 @@
                 schemaName: 'labpurchasing',
                 queryName: 'purchasingUnits',
                 pk: 'rowid'
+            }, {
+                label: 'Locations',
+                populateFn: 'populateFromFile',
+                moduleName: 'labpurchasing',
+                schemaName: 'labpurchasing',
+                queryName: 'purchasingLocations',
+                pk: 'rowid'
             },{
                 label: 'Reference Items',
                 populateFn: 'populateFromFile',

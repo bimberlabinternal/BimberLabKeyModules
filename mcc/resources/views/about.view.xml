@@ -1,8 +1,0 @@
-<view xmlns="http://labkey.org/data/xml/view" title="Citing MCC">
-    <permissions>
-        <permission name="read"/>
-    </permissions>
-    <dependencies>
-        <dependency path="ldk.context"/>
-    </dependencies>
-</view>

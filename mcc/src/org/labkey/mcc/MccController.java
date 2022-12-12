@@ -108,7 +108,7 @@ public class MccController extends SpringActionController
         @Override
         public void validateForm(RequestUserForm form, Errors errors)
         {
-            Container mccContainer = MccManager.get().getMCCContainer();
+            Container mccContainer = MccManager.get().getMCCContainer(getContainer());
             if (mccContainer == null)
             {
                 errors.reject(ERROR_MSG, "The MCC project has not been set on this server.  This is an administrator error.");
@@ -165,17 +165,17 @@ public class MccController extends SpringActionController
                 row.put("title", form.getTitle());
                 row.put("institution", form.getInstitution());
                 row.put("reason", form.getReason());
-                row.put("container", MccManager.get().getMCCContainer().getId());
+                row.put("container", MccManager.get().getMCCContainer(getContainer()).getId());
 
                 Table.insert(UserManager.getGuestUser(), ti, row);
 
-                Set<Address> emails = MccManager.get().getNotificationUserEmails();
+                Set<Address> emails = MccManager.get().getNotificationUserEmails(getContainer());
                 if (emails != null && !emails.isEmpty())
                 {
                     try
                     {
                         MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
-                        Container c = MccManager.get().getMCCContainer();
+                        Container c = MccManager.get().getMCCContainer(getContainer());
                         if (c == null)
                         {
                             c = getContainer();
@@ -299,7 +299,7 @@ public class MccController extends SpringActionController
         @Override
         public void validateForm(ApproveUserRequestsForm form, Errors errors)
         {
-            Container mccContainer = MccManager.get().getMCCContainer();
+            Container mccContainer = MccManager.get().getMCCContainer(getContainer());
             if (mccContainer == null)
             {
                 errors.reject(ERROR_MSG, "The MCC project has not been set on this server.  This is an administrator error.");
@@ -390,7 +390,7 @@ public class MccController extends SpringActionController
                 allUsers.add(st.getUser());
             }
 
-            Container mccContainer = MccManager.get().getMCCContainer();
+            Container mccContainer = MccManager.get().getMCCContainer(getContainer());
             for (User u : existingUsersGivenAccess)
             {
                 boolean isLDAP = AuthenticationManager.isLdapEmail(new ValidEmail(u.getEmail()));
@@ -460,7 +460,7 @@ public class MccController extends SpringActionController
         @Override
         public void validateForm(RequestHelpForm form, Errors errors)
         {
-            Container mccContainer = MccManager.get().getMCCContainer();
+            Container mccContainer = MccManager.get().getMCCContainer(getContainer());
             if (mccContainer == null)
             {
                 errors.reject(ERROR_MSG, "The MCC project has not been set on this server.  This is an administrator error.");
@@ -487,7 +487,7 @@ public class MccController extends SpringActionController
         @Override
         public Object execute(RequestHelpForm form, BindException errors) throws Exception
         {
-            Set<Address> emails = MccManager.get().getNotificationUserEmails();
+            Set<Address> emails = MccManager.get().getNotificationUserEmails(getContainer());
             if (emails != null && !emails.isEmpty())
             {
                 try
@@ -568,7 +568,7 @@ public class MccController extends SpringActionController
             }
 
             // Ensure groups have target roles:
-            Container requestContainer = MccManager.get().getMCCRequestContainer();
+            Container requestContainer = MccManager.get().getMCCRequestContainer(getContainer());
             if (requestContainer != null)
             {
                 Group requestGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.REQUEST_GROUP_NAME, GroupEnumType.SITE);
@@ -604,7 +604,7 @@ public class MccController extends SpringActionController
                 }
             }
 
-            Container dataContainer = MccManager.get().getMCCContainer();
+            Container dataContainer = MccManager.get().getMCCContainer(getContainer());
             if (dataContainer != null)
             {
                 Group adminGroup = GroupManager.getGroup(ContainerManager.getRoot(), MccManager.ADMIN_GROUP_NAME, GroupEnumType.SITE);
@@ -622,13 +622,13 @@ public class MccController extends SpringActionController
         @Override
         public void validateCommand(Object o, Errors errors)
         {
-            Container mccContainer = MccManager.get().getMCCContainer();
+            Container mccContainer = MccManager.get().getMCCContainer(getContainer());
             if (mccContainer == null)
             {
                 errors.reject(ERROR_MSG, "The MCC data container property has not been set");
             }
 
-            Container requestContainer = MccManager.get().getMCCRequestContainer();
+            Container requestContainer = MccManager.get().getMCCRequestContainer(getContainer());
             if (requestContainer == null)
             {
                 errors.reject(ERROR_MSG, "The MCC request container property has not been set");
@@ -760,7 +760,7 @@ public class MccController extends SpringActionController
                 mail.setFrom("mcc-do-not-reply@ohsu.edu");
                 mail.setSubject("MCC Animal Request Reviews");
 
-                Container rc = MccManager.get().getMCCRequestContainer();
+                Container rc = MccManager.get().getMCCRequestContainer(getContainer());
                 DetailsURL url = DetailsURL.fromString("/mcc/rabRequestReview.view", rc);
                 mail.setEncodedHtmlContent("You have been assigned one or more MCC Animal Requests to review. <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL() + "\">Please click here to view and complete these assignments</a>");
                 mail.addRecipients(Message.RecipientType.BCC, emails.toArray(new Address[0]));

@@ -35,7 +35,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 int requestRowId = ctx.get(getBoundKey("requestId", "rowid"), Integer.class);
-                if (MccManager.get().isRequestAdmin(ctx.getViewContext().getUser()))
+                if (MccManager.get().isRequestAdmin(ctx.getViewContext().getUser(), ctx.getContainer()))
                 {
                     int userId = ctx.get(getBoundKey("requestId", "createdby"), Integer.class);
                     User u = UserManager.getUser(userId);
@@ -60,7 +60,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         String requestId = ctx.get(getBoundKey("requestId"), String.class);
 
                         MccManager.RequestStatus st = MccManager.RequestStatus.resolveStatus(status);
-                        Container requestContainer = MccManager.get().getMCCRequestContainer();
+                        Container requestContainer = MccManager.get().getMCCRequestContainer(ctx.getContainer());
                         if (requestContainer == null)
                         {
                             _log.error("RequestScoreActionsDisplayColumnFactory was called, but MCCRequestContainer is not set", new Exception());
