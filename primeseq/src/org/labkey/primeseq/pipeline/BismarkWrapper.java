@@ -11,10 +11,8 @@ import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
-import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
-import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.FileResource;
@@ -318,6 +316,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
             ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
         }
 
+        @Override
         public BismarkAlignmentStep create(PipelineContext context)
         {
             return new BismarkAlignmentStep(this, context);
@@ -326,7 +325,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
 
     public static class BismarkExtractorStep extends AbstractCommandPipelineStep<BismarkWrapper> implements AnalysisStep
     {
-        public BismarkExtractorStep(PipelineStepProvider provider, PipelineContext ctx)
+        public BismarkExtractorStep(PipelineStepProvider<?> provider, PipelineContext ctx)
         {
             super(provider, ctx, new BismarkWrapper(ctx.getLogger()));
         }
@@ -386,6 +385,9 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 args.add("-o");
                 args.add(outputDir.getPath());
 
+                args.add("--gzip");
+                args.add("-bedGraph");
+
                 getWrapper().setWorkingDir(outputDir);
                 getWrapper().execute(args);
 
@@ -416,6 +418,10 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 output.addOutput(new File(outputDir, outputBasename + ".bam_splitting_report.txt"), "Bismark Splitting Report");
 
                 //NOTE: because the data are likely directional, we will not encounter CTOB
+                // OT    –  original top strand
+                // CTOT  –  complementary to original top strand
+                // OB    –  original bottom strand
+                // CTOB  –  complementary to original bottom strand
                 List<Pair<File, Integer>> CpGmethlyationData = Arrays.asList(
                         Pair.of(new File(outputDir, "CpG_OT_" + outputBasename + ".txt.gz"), 0),
                         Pair.of(new File(outputDir, "CpG_CTOT_" + outputBasename + ".txt.gz"), 0),
@@ -461,20 +467,6 @@ public class BismarkWrapper extends AbstractCommandWrapper
                         output.addOutput(outputGff, METHYLATION_RATES);
                         output.addSequenceOutput(outputGff, rs.getName() + " methylation rates (GFF)", RATE_GFF_CATEGORY, rs.getReadsetId(), null, referenceGenome.getGenomeId(), null);
                     }
-
-                    //                File siteReport2 = new File(outputDir, FileUtil.getBaseName(inputBam) + ".NonCpG_Site_Summary.txt");
-                    //                File outputGff2 = new File(outputDir, FileUtil.getBaseName(inputBam) + ".NonCpG_Site_Summary.gff");
-                    //
-                    //                produceSiteReport(getWrapper().getLogger(), siteReport2, outputGff2, NonCpGmethlyationData, minCoverageDepth);
-                    //                if (siteReport2.exists())
-                    //                {
-                    //                    output.addOutput(siteReport2, "Bismark NonCpG Methylation Site Report");
-                    //                }
-                    //                if (outputGff2.exists())
-                    //                {
-                    //                    output.addOutput(outputGff2, "Bismark NonCpG Methylation Site Data");
-                    //                    output.addSequenceOutput(outputGff2, rs.getName() + " methylation", "NonCpG Methylation Rate Data", rs);
-                    //                }
 
                     //NOTE: if we produce the summary report, assume these are discardable intermediates.  otherwise retain them
                     for (Pair<File, Integer> pair : CpGmethlyationData)
@@ -536,10 +528,6 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     toCreate.add(so);
                 }
             }
-
-            JSONObject additionalConfig = new JSONObject();
-            additionalConfig.put("type", "JBrowse/View/Track/Wiggle/XYPlot");
-            additionalConfig.put("max_score", 1);
 
             TableInfo ti = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("outputfiles");
             for (SequenceOutputFile so : toCreate)
