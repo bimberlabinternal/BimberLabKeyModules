@@ -295,6 +295,7 @@ public class MccTest extends BaseWebDriverTest
     private void goToAnimalRequests()
     {
         goToProjectHome();
+        waitForElement(Locator.tagWithText("div", "Age (Living Animals)")); //proxy for data loading
         waitAndClickAndWait(Locator.tagContainingText("div", "Animal Requests"));
 
         waitForElement(Locator.tagWithText("a", "Submit New Animal Request"));
