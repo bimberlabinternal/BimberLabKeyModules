@@ -733,6 +733,7 @@ public class MccTest extends BaseWebDriverTest
 
         beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
         clickButton("OK");
+        waitForElement(Locator.tagWithText("a", "Populate Lookups"));
 
         ApiPermissionsHelper helper = new ApiPermissionsHelper(this);
         if (!helper.isUserInGroup(getCurrentUser(), "MCC RAB Members", "/", PermissionsHelper.PrincipalType.USER))
