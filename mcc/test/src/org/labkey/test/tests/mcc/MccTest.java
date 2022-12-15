@@ -65,7 +65,7 @@ public class MccTest extends BaseWebDriverTest
         testAnimalImportAndTransfer();
     }
 
-    private void testAnimalImportAndTransfer()
+    private void testAnimalImportAndTransfer() throws Exception
     {
         beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
         waitAndClickAndWait(Locator.tagWithText("a", "Import Excel-Based Data"));
@@ -130,6 +130,14 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(0, "Status"));
         Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(0, "colony"));
         Assert.assertEquals("Incorrect Source", "SNPRC", dr.getDataAsText(0, "source"));
+
+        // These were inserted using a cross-folder SaveRows, and this check ensures the trigger script containerPath and serverContex works as expected:
+//        SelectRowsCommand sr = new SelectRowsCommand("study", "demographics");
+//        sr.setColumns(Arrays.asList("Id", "QCState/Label"));
+//        SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
+//        srr.getRows().forEach(row -> {
+//            Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
+//        });
     }
 
     private static class FormElement
@@ -292,12 +300,16 @@ public class MccTest extends BaseWebDriverTest
         return Locator.tagWithText("button", text);
     }
 
+    private void waitForCensusToLoad()
+    {
+        waitForElement(Locator.tagWithText("div", "Age (Living Animals)")); //proxy for data loading
+    }
+
     private void goToAnimalRequests()
     {
         goToProjectHome();
-        waitForElement(Locator.tagWithText("div", "Age (Living Animals)")); //proxy for data loading
+        waitForCensusToLoad();
         waitAndClickAndWait(Locator.tagContainingText("div", "Animal Requests"));
-
         waitForElement(Locator.tagWithText("a", "Submit New Animal Request"));
     }
 
@@ -733,7 +745,7 @@ public class MccTest extends BaseWebDriverTest
 
         beginAt("/mcc/" + getProjectName() + "/configureMcc.view");
         clickButton("OK");
-        waitForElement(Locator.tagWithText("a", "Populate Lookups"));
+        waitForCensusToLoad();
 
         ApiPermissionsHelper helper = new ApiPermissionsHelper(this);
         if (!helper.isUserInGroup(getCurrentUser(), "MCC RAB Members", "/", PermissionsHelper.PrincipalType.USER))
@@ -751,6 +763,7 @@ public class MccTest extends BaseWebDriverTest
         {
             _containerHelper.createSubfolder(getProjectName() + "/Colonies", name, "MCC Colony");
             importStudy(getProjectName() + "/Colonies/" + name);
+            waitForElement(Locator.tagWithText("a", "Populate Lookups"));
         }
     }
 
@@ -770,7 +783,6 @@ public class MccTest extends BaseWebDriverTest
 
         beginAt(WebTestHelper.getBaseURL() + "/ehr/" + containerPath + "/ensureQcStates.view");
         clickButton("OK");
-
     }
 
     @Before
