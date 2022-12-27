@@ -102,7 +102,7 @@ public class MccTest extends BaseWebDriverTest
         combo.clickTrigger();
         waitAndClick(Locator.tagContainingText("li", "Other"));
 
-        Window dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
+        Window<?> dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
         dialog.findElement(Locator.tag("input")).sendKeys("TargetColony");
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
         sleep(100);
@@ -132,12 +132,12 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect Source", "SNPRC", dr.getDataAsText(0, "source"));
 
         // These were inserted using a cross-folder SaveRows, and this check ensures the trigger script containerPath and serverContex works as expected:
-//        SelectRowsCommand sr = new SelectRowsCommand("study", "demographics");
-//        sr.setColumns(Arrays.asList("Id", "QCState/Label"));
-//        SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
-//        srr.getRows().forEach(row -> {
-//            Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
-//        });
+        SelectRowsCommand sr = new SelectRowsCommand("study", "demographics");
+        sr.setColumns(Arrays.asList("Id", "QCState/Label"));
+        SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
+        srr.getRows().forEach(row -> {
+            Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
+        });
     }
 
     private static class FormElement
