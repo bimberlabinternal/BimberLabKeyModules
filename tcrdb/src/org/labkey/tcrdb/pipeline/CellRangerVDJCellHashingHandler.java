@@ -45,7 +45,6 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
 
     public static final String TARGET_ASSAY = "targetAssay";
     public static final String DELETE_EXISTING_ASSAY_DATA = "deleteExistingAssayData";
-    public static final String USE_GEX_BARCODES = "useGexBarcodes";
 
     public CellRangerVDJCellHashingHandler()
     {
@@ -204,6 +203,27 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 parameters.outputCategory = CATEGORY;
                 parameters.basename = FileUtil.makeLegalName(rs.getName());
                 parameters.allowableHtoBarcodes = htosPerReadset;
+
+                // If demuxEM used:
+                if (parameters.methods.contains(CellHashingService.CALLING_METHOD.demuxem) || parameters.consensusMethods.contains(CellHashingService.CALLING_METHOD.demuxem))
+                {
+                    ctx.getLogger().debug("demuxEM is used, adding H5 file");
+                    if (genomeId == null)
+                    {
+                        genomeId = ctx.getSequenceSupport().getCachedGenomes().iterator().next().getGenomeId();
+                        ctx.getLogger().debug("Unable to infer genome ID from output, defaulting to the first cached genome: " + genomeId);
+                    }
+
+                    parameters.h5File = CellHashingService.get().getH5FileForGexReadset(ctx.getSequenceSupport(), rs.getReadsetId(), genomeId);
+                    if (parameters.h5File == null)
+                    {
+                        throw new PipelineJobException("Unable to find h5 file for: " + rs.getRowId());
+                    }
+                    else if (!parameters.h5File.exists())
+                    {
+                        throw new PipelineJobException("h5 file does not exist: " + parameters.h5File.getPath());
+                    }
+                }
 
                 parameters.cellBarcodeWhitelistFile = createCellbarcodeWhitelist(ctx, perCellTsv, true);
                 File existingCountMatrixUmiDir = CellHashingService.get().getExistingFeatureBarcodeCountDir(rs, CellHashingService.BARCODE_TYPE.hashing, ctx.getSequenceSupport());
