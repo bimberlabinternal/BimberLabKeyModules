@@ -231,7 +231,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
             wrapper.addToEnvironment("JAVA", SequencePipelineService.get().getJavaFilepath());
             wrapper.addToEnvironment("SAMTOOLS", SequencePipelineService.get().getExeForPackage("SAMTOOLSPATH", "samtools").getPath());
-            wrapper.addToEnvironment("PICARD", PicardWrapper.getPicardJar().getPath());
+            wrapper.addToEnvironment("PICARD", PicardWrapper.getPicardJar(true).getPath());
             wrapper.setWorkingDir(outputDir);
             wrapper.execute(Arrays.asList("bash", bamScript.getPath(), inputBam.getPath(), forwardFq.getPath(), reverseFq.getPath()));
 
