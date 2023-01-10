@@ -112,6 +112,9 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
                         case "Whole Genome: Deep Coverage":
                             setName = "WGS";
                             break;
+                        case "Whole Genome: Light Coverage":
+                            setName = "WGS";
+                            break;
                         case "Whole Exome":
                             setName = "WXS";
                             break;
