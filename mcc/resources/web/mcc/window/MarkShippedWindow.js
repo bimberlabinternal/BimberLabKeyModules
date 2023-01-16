@@ -140,7 +140,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 var newId = win.down('#newId').getValue() || row.Id;
 
                 var commands = [];
-                if (!row['Id/MostRecentDeparture/MostRecentDeparture']) {
+
+                var shouldAddDeparture = !row['Id/MostRecentDeparture/MostRecentDeparture'] || row['Id/MostRecentDeparture/MostRecentDeparture'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') || row.Id !== newId;
+                if (shouldAddDeparture) {
                     commands.push({
                         command: 'insert',
                         schemaName: 'study',
@@ -149,6 +151,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             Id: row.Id,
                             date: effectiveDate,
                             destination: centerName,
+                            description: row.colony ? 'Original center: ' + row.colony : null,
                             qcstate: null,
                             objectId: null,
                             QCStateLabel: 'Completed'
@@ -156,52 +159,85 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                     });
                 }
 
-                commands.push({
-                    command: 'insert',
-                    containerPath: targetFolder,
-                    schemaName: 'study',
-                    queryName: 'Demographics',
-                    rows: [{
-                        Id: newId,
-                        date: effectiveDate,
-                        alternateIds: row.Id !== newId ? row.Id : null,
-                        gender: row.gender,
-                        species: row.species,
-                        birth: row.birth,
-                        death: row.death,
-                        dam: row.dam,
-                        sire: row.sire,
-                        colony: centerName,
-                        source: row.colony,
-                        calculated_status: 'Alive',
-                        skipMccAliasCreation: true,
-                        QCState: null,
-                        QCStateLabel: 'Completed',
-                        objectId: null
-                    }]
-                });
+                // If going to a new LK folder, we're creating a whole new record:
+                if (targetFolder.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
+                    commands.push({
+                        command: 'insert',
+                        containerPath: targetFolder,
+                        schemaName: 'study',
+                        queryName: 'Demographics',
+                        rows: [{
+                            Id: newId,
+                            date: effectiveDate,
+                            alternateIds: row.Id !== newId ? row.Id : null,
+                            gender: row.gender,
+                            species: row.species,
+                            birth: row.birth,
+                            death: row.death,
+                            dam: row.dam,
+                            sire: row.sire,
+                            colony: centerName,
+                            source: row.colony,
+                            calculated_status: 'Alive',
+                            skipMccAliasCreation: true,
+                            QCState: null,
+                            QCStateLabel: 'Completed',
+                            objectId: null
+                        }]
+                    });
 
-                commands.push({
-                    command: 'insert',
-                    containerPath: targetFolder,
-                    schemaName: 'mcc',
-                    queryName: 'animalMapping',
-                    rows: [{
-                        subjectname: newId,
-                        externalAlias: row['Id/mccAlias/externalAlias']
-                    }]
-                });
+                    commands.push({
+                        command: 'update',
+                        containerPath: null, //Use current folder
+                        schemaName: 'study',
+                        queryName: 'Demographics',
+                        rows: [{
+                            Id: newId,
+                            excludeFromCensus: true
+                        }]
+                    });
+                }
+                else {
+                    // Otherwise update the existing:
+                    commands.push({
+                        command: 'update',
+                        containerPath: targetFolder,
+                        schemaName: 'study',
+                        queryName: 'Demographics',
+                        rows: [{
+                            Id: newId,
+                            date: effectiveDate,
+                            alternateIds: row.Id !== newId ? row.Id : null,
+                            gender: row.gender,
+                            species: row.species,
+                            birth: row.birth,
+                            death: row.death,
+                            dam: row.dam,
+                            sire: row.sire,
+                            colony: centerName,
+                            source: row.colony,
+                            calculated_status: 'Alive',
+                            skipMccAliasCreation: true,
+                            QCState: null,
+                            QCStateLabel: 'Completed',
+                            objectId: null
+                        }]
+                    });
+                }
 
-                commands.push({
-                    command: 'update',
-                    containerPath: null, //Use current folder
-                    schemaName: 'study',
-                    queryName: 'Demographics',
-                    rows: [{
-                        Id: newId,
-                        excludeFromCensus: true
-                    }]
-                });
+                // Do this insert if we're using a new container, or if the animal is being assigned a new ID
+                if (targetFolder.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
+                    commands.push({
+                        command: 'insert',
+                        containerPath: targetFolder,
+                        schemaName: 'mcc',
+                        queryName: 'animalMapping',
+                        rows: [{
+                            subjectname: newId,
+                            externalAlias: row['Id/mccAlias/externalAlias']
+                        }]
+                    });
+                }
 
                 LABKEY.Query.saveRows({
                     commands: commands,
