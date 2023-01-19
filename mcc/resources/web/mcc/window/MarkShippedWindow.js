@@ -71,7 +71,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 itemId: 'targetFolder',
                 allowBlank: false,
                 displayField: 'Name',
-                valueField: 'Path',
+                valueField: 'EntityId',
                 triggerAction: 'all',
                 queryMode: 'local',
                 forceSelection: true,

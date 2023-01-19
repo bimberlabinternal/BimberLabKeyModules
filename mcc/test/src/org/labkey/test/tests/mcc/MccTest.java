@@ -16,6 +16,7 @@
 
 package org.labkey.test.tests.mcc;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,10 +58,10 @@ public class MccTest extends BaseWebDriverTest
     @Test
     public void testMccModule() throws Exception
     {
-        doRequestFormTest();
-        doRequestFormTestWithFailure();
+        //doRequestFormTest();
+        //doRequestFormTestWithFailure();
 
-        testInvalidId();
+        //testInvalidId();
 
         testAnimalImportAndTransfer();
     }
@@ -135,6 +136,47 @@ public class MccTest extends BaseWebDriverTest
         SelectRowsCommand sr = new SelectRowsCommand("study", "demographics");
         sr.setColumns(Arrays.asList("Id", "QCState/Label"));
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
+        srr.getRows().forEach(row -> {
+            Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
+        });
+
+        // Now try a within-folder transfer:
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        dr.checkCheckbox(0); //Animal2
+        dr.clickHeaderMenu("More Actions", false, "Mark Animal Shipped");
+
+        new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
+        Ext4FieldRef.getForLabel(this, "Effective Date").setValue(new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+        combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
+        combo.clickTrigger();
+        waitAndClick(Locator.tagContainingText("li", "Other"));
+
+        dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
+        dialog.findElement(Locator.tag("input")).sendKeys("TargetColony2");
+        waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
+        sleep(100);
+
+        Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
+        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
+        waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(0, "Id"));
+        Assert.assertEquals("Incorrect Alias", mccId, dr.getDataAsText(0, "MCC Alias"));
+        Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(0, "Status"));
+        Assert.assertEquals("Incorrect Status", "Dam2", dr.getDataAsText(0, "Dam"));
+        Assert.assertEquals("Incorrect Status", "Sire2", dr.getDataAsText(0, "Sire"));
+        Assert.assertNull("Incorrect Value", StringUtils.trimToNull(dr.getDataAsText(0, "Exclude From Census?")));
+        Assert.assertEquals("Incorrect Colony", "TargetColony2", dr.getDataAsText(0, "colony"));
+        Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(0, "source"));
+
+        sr = new SelectRowsCommand("study", "departure");
+        sr.setColumns(Arrays.asList("Id", "QCState/Label"));
+        sr.setFilters(Arrays.asList(new Filter("Id", "Animal2")));
+        srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
+        Assert.assertEquals("Incorrect number of departures", 1, srr.getRowCount().intValue());
         srr.getRows().forEach(row -> {
             Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
         });

@@ -43,7 +43,7 @@
         <dataset name="demographics" id="1012" category="Colony Management" demographicData="true" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="departure" id="1013" showByDefault="false" category="Colony Management" type="Standard">
+        <dataset name="departure" id="1013" showByDefault="true" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
         <dataset name="assignment" id="1002" category="Colony Management" type="Standard">
