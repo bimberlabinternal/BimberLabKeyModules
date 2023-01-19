@@ -71,7 +71,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 itemId: 'targetFolder',
                 allowBlank: false,
                 displayField: 'Name',
-                valueField: 'EntityId',
+                valueField: 'Path',
                 triggerAction: 'all',
                 queryMode: 'local',
                 forceSelection: true,
@@ -121,6 +121,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             return;
         }
 
+        var targetFolderId = win.down('#targetFolder').store.findRecord('Path', targetFolder).get('EntityId');
         Ext4.Msg.wait('Saving...');
         LABKEY.Query.selectRows({
             schemaName: 'study',
@@ -160,7 +161,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 }
 
                 // If going to a new LK folder, we're creating a whole new record:
-                if (targetFolder.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
+                if (targetFolderId.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
                     commands.push({
                         command: 'insert',
                         containerPath: targetFolder,
@@ -223,10 +224,26 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             objectId: null
                         }]
                     });
+
+                    // And also add an arrival record:
+                    commands.push({
+                        command: 'insert',
+                        containerPath: targetFolder,
+                        schemaName: 'study',
+                        queryName: 'Arrival',
+                        rows: [{
+                            Id: newId,
+                            date: effectiveDate,
+                            source: centerName,
+                            QCState: null,
+                            QCStateLabel: 'Completed',
+                            objectId: null
+                        }]
+                    });
                 }
 
                 // Do this insert if we're using a new container, or if the animal is being assigned a new ID
-                if (targetFolder.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
+                if (targetFolderId.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
                     commands.push({
                         command: 'insert',
                         containerPath: targetFolder,
