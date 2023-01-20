@@ -857,7 +857,7 @@ public class MccTest extends BaseWebDriverTest
     {
         beginAt("/mcc/" + getProjectName() + "/animalRequest.view?requestId=foo");
 
-        assertElementPresent(Locator.tagWithText("div", "There is no request with id: foo"));
+        waitForElement(Locator.tagWithText("div", "There is no request with id: foo"));
     }
 
 
