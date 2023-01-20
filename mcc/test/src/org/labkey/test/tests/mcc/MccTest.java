@@ -201,7 +201,7 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(getButton("Process Missing IDs"));
         new Window.WindowFinder(getDriver()).withTitle("Reconcile Census with Existing IDs").waitFor();
         Ext4ComboRef statusCombo = _ext4Helper.queryOne("field.combobox[queryName^=\"calculated_status_codes\"]", Ext4ComboRef.class);
-        statusCombo.setValue("Unknown");
+        statusCombo.setComboByDisplayValue("Unknown");
         waitAndClick(Ext4Helper.Locators.ext4Button("Update IDs"));
         sleep(100);
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
