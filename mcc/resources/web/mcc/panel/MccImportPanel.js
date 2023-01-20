@@ -652,6 +652,14 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     parsedRows: parsedRows,
                     panel: this
                 }
+            },{
+                text: 'Process Missing IDs',
+                action: this.processMissingIds,
+                rowData: {
+                    colArray: colArray,
+                    parsedRows: parsedRows,
+                    panel: this
+                }
             }],
             columns: columns
         });
@@ -661,6 +669,143 @@ Ext4.define('MCC.panel.MccImportPanel', {
         if (missingValues || hasErrors){
             Ext4.Msg.alert('Error', 'One or more rows is missing data or has errors.  Any required cells without values are marked MISSING. Warnings/errors are shown to the right.');
         }
+    },
+
+    processMissingIds: function(e, dt, node, config) {
+        Ext4.Msg.wait('Loading...');
+
+        var idToColony = {};
+        var colonyToId = {};
+        config.rowData.parsedRows.forEach(function(row){
+            idToColony[row.Id] = row.colony;
+
+            if (!colonyToId[row.colony]) {
+                colonyToId[row.colony] = [];
+            }
+
+            colonyToId[row.colony].push(row.Id);
+        });
+
+        var missingIds = []
+        var multi = new LABKEY.MultiRequest();
+        for (var colony in colonyToId) {
+            multi.add(LABKEY.Query.selectRows, {
+                schemaName: 'study',
+                queryName: 'demographics',
+                columns: 'Id,colony,objectid,lsid,calculated_status',
+                filterArray: [
+                    LABKEY.Filter.create('colony', colony, LABKEY.Filter.Types.EQUAL),
+                    LABKEY.Filter.create('calculated_status', 'Alive', LABKEY.Filter.Types.EQUAL),
+                    LABKEY.Filter.create('Id', colonyToId[colony].join(';'), LABKEY.Filter.Types.NOT_IN)
+                ],
+                scope: this,
+                failure: LDK.Utils.getErrorCallback(),
+                success: function (results) {
+                    if (results.rows.length) {
+                        missingIds = missingIds.concat(results.rows);
+                    }
+                }
+            });
+        }
+
+        multi.send(function(){
+            Ext4.Msg.hide();
+            if (missingIds.length) {
+                Ext4.create('Ext.window.Window', {
+                    bodyStyle: 'padding: 5px;',
+                    width: 500,
+                    modal: true,
+                    title: 'Reconcile Census with Existing IDs',
+                    defaults: {
+                        labelWidth: 200,
+                        width: 450,
+                    },
+                    items: [{
+                        html: 'The following IDs are listed for the indicated colony, but were not in your census. Choose any status updates and hit submit:',
+                        border: false,
+                        style: 'padding-bottom: 10px;'
+                    },{
+                        layout: 'table',
+                        border: false,
+                        columns: 2,
+                        defaults: {
+                            border: false
+                        },
+                        items: config.rowData.panel.getAnimalRows(missingIds)
+                    }],
+                    buttons: [{
+                        text: 'Update IDs',
+                        scope: this,
+                        handler: function(btn) {
+                            var updates = []
+                            btn.up('window').query('combo').forEach(function(f){
+                                if (f.getValue() && f.getValue() !== f.sourceRecord.calculated_status) {
+                                    updates.push({
+                                        Id: f.sourceRecord.Id,
+                                        calculated_status: f.getValue(),
+                                        lsid: f.sourceRecord.lsid,
+                                        objectid: f.sourceRecord.objectid
+                                    });
+                                }
+                            });
+
+                            if (updates.length) {
+                                Ext4.Msg.wait('Saving...');
+                                LABKEY.Query.updateRows({
+                                    schemaName: 'study',
+                                    queryName: 'demographics',
+                                    rows: updates,
+                                    scope: this,
+                                    failure: LDK.Utils.getErrorCallback(),
+                                    success: function (results) {
+                                        Ext4.Msg.hide();
+                                        Ext4.Msg.alert('Success', 'Records updated', function(){
+                                            btn.up('window').close();
+                                        }, this);
+                                    }
+                                });
+                            }
+                            else {
+                                Ext4.Msg.alert('No updates', 'No changes, nothing to do');
+                                btn.up('window').close();
+                            }
+                        }
+
+                    },{
+                        text: 'Cancel',
+                        handler: function(btn) {
+                            btn.up('window').close();
+                        }
+                    }]
+                }).show();
+            }
+            else {
+                Ext4.Msg.alert('No missing IDs', 'All existing IDs from these colonies were present in this census, nothing to do');
+            }
+        }, this);
+    },
+
+    getAnimalRows: function(missingIds) {
+        var ret = [];
+        Ext4.Array.forEach(missingIds, function(r){
+            ret = ret.concat([{
+                xtype: 'displayfield',
+                width: 125,
+                value: r.Id + ' / ' + r.colony
+            },{
+                xtype: 'ldk-simplelabkeycombo',
+                schemaName: 'ehr_lookups',
+                queryName: 'calculated_status_codes',
+                displayField: 'code',
+                valueField: 'code',
+                forceSelection: true,
+                sourceRecord: r,
+                width: 100,
+                value: r.calculated_status
+            }]);
+        });
+
+        return(ret);
     },
 
     onSubmit: function(e, dt, node, config){
