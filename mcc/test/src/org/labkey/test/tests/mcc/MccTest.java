@@ -66,6 +66,13 @@ public class MccTest extends BaseWebDriverTest
         testAnimalImportAndTransfer();
     }
 
+    private static String ANIMAL_DATA_HEADER = "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight(grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailalble to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n";
+
+    private static String ANIMAL_DATA1 = "Animal1\t\t\t7/10/2011\t0 - male\tDam1\tSire1\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
+
+
+    private static final String ANIMAL_DATA2 = "Animal2\t\t\t6/3/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal";
+
     private void testAnimalImportAndTransfer() throws Exception
     {
         beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
@@ -73,11 +80,7 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("label", "Paste Data Below:"));
         Ext4FieldRef.getForLabel(this, "Center/Colony Name").setValue("SNPRC");
 
-        Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(
-            "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight(grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailalble to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n" +
-            "Animal1\t\t\t7/10/2011\t0 - male\tDam1\tSire1\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n" +
-            "Animal2\t\t\t6/3/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal"
-        );
+        Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(ANIMAL_DATA_HEADER + ANIMAL_DATA1 + ANIMAL_DATA2);
 
         waitAndClick(Ext4Helper.Locators.ext4Button("Preview"));
         waitForElement(Locator.tagWithText("td", "Animal2").withClass("dt-center"));
@@ -180,6 +183,33 @@ public class MccTest extends BaseWebDriverTest
         srr.getRows().forEach(row -> {
             Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
         });
+
+        // Now check status update:
+        populateLookups("SNPRC"); //status is needed for this to work
+        beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "Import Excel-Based Data"));
+        waitForElement(Locator.tagWithText("label", "Paste Data Below:"));
+        Ext4FieldRef.getForLabel(this, "Center/Colony Name").setValue("SNPRC");
+
+        Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(ANIMAL_DATA_HEADER + ANIMAL_DATA1);
+
+        waitAndClick(Ext4Helper.Locators.ext4Button("Preview"));
+        waitForElement(Locator.tagWithText("td", "Animal2").withClass("dt-center"));
+
+        waitAndClick(getButton("Process Missing IDs"));
+        new Window.WindowFinder(getDriver()).withTitle("Reconcile Census with Existing IDs").waitFor();
+        Ext4ComboRef statusCombo = _ext4Helper.queryOne("field.combobox[queryName^=\"calculated_status_codes\"]", Ext4ComboRef.class);
+        statusCombo.setValue("Unknown");
+        waitAndClick(Ext4Helper.Locators.ext4Button("Update IDs"));
+        sleep(100);
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
+        waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
+
+        sr = new SelectRowsCommand("study", "demographics");
+        sr.setColumns(Arrays.asList("Id", "calculated_status"));
+        sr.setFilters(Arrays.asList(new Filter("Id", "Animal1")));
+        srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/SNPRC");
+        Assert.assertEquals("Incorrect status", "Unknown", srr.getRows().get(0).get("calculated_status"));
     }
 
     private static class FormElement
@@ -807,6 +837,14 @@ public class MccTest extends BaseWebDriverTest
             importStudy(getProjectName() + "/Colonies/" + name);
             waitForElement(Locator.tagWithText("a", "Populate Lookups"));
         }
+    }
+
+    private void populateLookups(String name)
+    {
+        beginAt(getProjectName() + "/Colonies/" + name + "/project-begin.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "Populate Lookups"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Populate All"));
+        waitForElement(Locator.tagWithText("div", "Populate Complete"));
     }
 
     private void testInvalidId()

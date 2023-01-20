@@ -225,7 +225,8 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         }]
                     });
 
-                    // And also add an arrival record:
+                    // And also add an arrival record. NOTE: set the date after the departure to get status to update properly
+                    var arrivalDate = new Date(effectiveDate).setMinutes(effectiveDate.getMinutes() + 1);
                     commands.push({
                         command: 'insert',
                         containerPath: targetFolder,
@@ -233,7 +234,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         queryName: 'Arrival',
                         rows: [{
                             Id: newId,
-                            date: effectiveDate,
+                            date: arrivalDate,
                             source: centerName,
                             QCState: null,
                             QCStateLabel: 'Completed',
