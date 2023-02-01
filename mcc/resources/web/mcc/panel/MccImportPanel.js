@@ -713,23 +713,27 @@ Ext4.define('MCC.panel.MccImportPanel', {
             if (missingIds.length) {
                 Ext4.create('Ext.window.Window', {
                     bodyStyle: 'padding: 5px;',
-                    width: 500,
+                    width: 600,
                     modal: true,
                     title: 'Reconcile Census with Existing IDs',
+                    effectiveDate: config.rowData.panel.IMPORT_DATE,
                     defaults: {
                         labelWidth: 200,
-                        width: 450,
+                        width: 575,
                     },
                     items: [{
                         html: 'The following IDs are listed for the indicated colony, but were not in your census. Choose any status updates and hit submit:',
                         border: false,
                         style: 'padding-bottom: 10px;'
                     },{
-                        layout: 'table',
+                        layout: {
+                            type: 'table',
+                            columns: 4
+                        },
                         border: false,
-                        columns: 2,
                         defaults: {
-                            border: false
+                            border: false,
+                            bodyStyle: 'padding: 5px'
                         },
                         items: config.rowData.panel.getAnimalRows(missingIds)
                     }],
@@ -737,37 +741,104 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         text: 'Update IDs',
                         scope: this,
                         handler: function(btn) {
-                            var updates = []
-                            btn.up('window').query('combo').forEach(function(f){
+                            var demographicsUpdates = [];
+                            var deathInserts = [];
+                            var departureInserts = [];
+                            var win = btn.up('window');
+
+                            var missingValues = false;
+                            win.query('combo[dataIndex="status_code"]').forEach(function(f){
                                 if (f.getValue() && f.getValue() !== f.sourceRecord.calculated_status) {
-                                    updates.push({
-                                        Id: f.sourceRecord.Id,
-                                        calculated_status: f.getValue(),
-                                        lsid: f.sourceRecord.lsid,
-                                        objectid: f.sourceRecord.objectid
-                                    });
+                                    var fields = win.query('field[recordIdx=' + f.recordIdx + ']');
+                                    LDK.Assert.assertEquality('Incorrect number of MccImportPanel fields', 3, fields.length);
+
+                                    var dateVal = fields[1].getValue();
+                                    var otherVal = fields[2].getValue();
+                                    if (!dateVal || !otherVal) {
+                                        missingValues = true;
+                                        return false;
+                                    }
+
+                                    if (f.getValue() === 'Dead') {
+                                        deathInserts.push({
+                                            Id: f.sourceRecord.Id,
+                                            objectId: null,
+                                            QCStateLabel: 'Completed',
+                                            QCState: null,
+                                            date: dateVal,
+                                            cause: otherVal
+                                        });
+                                    } else if (f.getValue() === 'Shipped') {
+                                        departureInserts.push({
+                                            Id: f.sourceRecord.Id,
+                                            objectId: null,
+                                            QCStateLabel: 'Completed',
+                                            QCState: null,
+                                            date: dateVal,
+                                            destination: otherVal
+                                        });
+                                    } else {
+                                        // Handle unknown:
+                                        demographicsUpdates.push({
+                                            Id: f.sourceRecord.Id,
+                                            calculated_status: f.getValue(),
+                                            lsid: f.sourceRecord.lsid,
+                                            objectid: f.sourceRecord.objectid
+                                        });
+                                    }
                                 }
                             });
 
-                            if (updates.length) {
-                                Ext4.Msg.wait('Saving...');
-                                LABKEY.Query.updateRows({
+                            if (missingValues) {
+                                Ext4.Msg.alert('Error', 'One or more fields is missing a value');
+                                return;
+                            }
+
+                            var commands = [];
+                            if (demographicsUpdates.length) {
+                                commands.push({
+                                    command: 'update',
                                     schemaName: 'study',
                                     queryName: 'demographics',
-                                    rows: updates,
+                                    rows: demographicsUpdates
+                                });
+                            }
+
+                            if (departureInserts.length) {
+                                commands.push({
+                                    type: 'insert',
+                                    schemaName: 'study',
+                                    queryName: 'departure',
+                                    rows: departureInserts
+                                });
+                            }
+
+                            if (deathInserts.length) {
+                                commands.push({
+                                    command: 'insert',
+                                    schemaName: 'study',
+                                    queryName: 'deaths',
+                                    rows: deathInserts
+                                });
+                            }
+
+                            if (!commands.length) {
+                                Ext4.Msg.alert('No updates', 'No changes, nothing to do');
+                                btn.up('window').close();
+                            }
+                            else {
+                                Ext4.Msg.wait('Saving rows...');
+                                LABKEY.Query.saveRows({
+                                    commands: commands,
                                     scope: this,
-                                    failure: LDK.Utils.getErrorCallback(),
-                                    success: function (results) {
+                                    success: function() {
                                         Ext4.Msg.hide();
                                         Ext4.Msg.alert('Success', 'Records updated', function(){
                                             btn.up('window').close();
                                         }, this);
-                                    }
+                                    },
+                                    failure: LDK.Utils.getErrorCallback()
                                 });
-                            }
-                            else {
-                                Ext4.Msg.alert('No updates', 'No changes, nothing to do');
-                                btn.up('window').close();
                             }
                         }
 
@@ -786,22 +857,110 @@ Ext4.define('MCC.panel.MccImportPanel', {
     },
 
     getAnimalRows: function(missingIds) {
-        var ret = [];
-        Ext4.Array.forEach(missingIds, function(r){
+        var ret = [{
+            xtype: 'displayfield',
+            width: 125,
+            value: 'Animal Id'
+        }, {
+            xtype: 'displayfield',
+            width: 100,
+            value: 'Status'
+        }, {
+            xtype: 'displayfield',
+            width: 100,
+            value: 'Date'
+        },{
+            xtype: 'displayfield',
+            width: 125,
+            value: 'Destination/Cause'
+        }];
+
+        Ext4.Array.forEach(missingIds, function(r, idx){
             ret = ret.concat([{
                 xtype: 'displayfield',
                 width: 125,
                 value: r.Id + ' / ' + r.colony
-            },{
-                xtype: 'ldk-simplelabkeycombo',
-                schemaName: 'ehr_lookups',
-                queryName: 'calculated_status_codes',
-                displayField: 'code',
-                valueField: 'code',
+            }, {
+                xtype: 'ldk-simplecombo',
+                storeValues: Ext4.Array.unique([r.calculated_status, 'Alive', 'Dead', 'Shipped', 'Unknown']),
+                recordIdx: idx,
+                dataIndex: 'status_code',
                 forceSelection: true,
                 sourceRecord: r,
                 width: 100,
-                value: r.calculated_status
+                style: 'margin-right: 5px',
+                value: r.calculated_status,
+                listeners: {
+                    render: function (f) {
+                        if (f.getValue()) {
+                            f.fireEvent('change', f, f.getValue());
+                        }
+                    },
+                    change: function (field, val) {
+                        var target1 = field.up('panel').down('container[recordIdx=' + field.recordIdx + '][areaType="date"]');
+                        target1.removeAll();
+
+                        var target2 = field.up('panel').down('container[recordIdx=' + field.recordIdx + '][areaType="other"]');
+                        target2.removeAll();
+
+                        var effectiveDate = field.up('window').effectiveDate;
+
+                        if (val === 'Shipped') {
+                            target1.add({
+                                xtype: 'datefield',
+                                dataIndex: 'date',
+                                labelAlign: 'top',
+                                recordIdx: field.recordIdx,
+                                style: 'margin-right: 5px',
+                                value: effectiveDate
+                            });
+
+                            target2.add({
+                                xtype: 'ldk-simplelabkeycombo',
+                                dataIndex: 'destination',
+                                labelAlign: 'top',
+                                recordIdx: field.recordIdx,
+                                schemaName: 'ehr_lookups',
+                                queryName: 'source',
+                                valueField: 'code',
+                                displayField: 'code',
+                                forceSelection: true,
+                                plugins: ['ldk-usereditablecombo']
+                            });
+                        }
+                        else if (val === 'Dead') {
+                            target1.add({
+                                xtype: 'datefield',
+                                dataIndex: 'date',
+                                labelAlign: 'top',
+                                recordIdx: field.recordIdx,
+                                style: 'margin-right: 5px',
+                                value: effectiveDate
+                            });
+
+                            target2.add({
+                                xtype: 'ldk-simplelabkeycombo',
+                                dataIndex: 'cause',
+                                labelAlign: 'top',
+                                recordIdx: field.recordIdx,
+                                schemaName: 'ehr_lookups',
+                                queryName: 'death_cause',
+                                valueField: 'value',
+                                displayField: 'value',
+                                forceSelection: true,
+                                plugins: ['ldk-usereditablecombo']
+                            });
+                        }
+                    }
+                }
+            },{
+                xtype: 'container',
+                recordIdx: idx,
+                areaType: 'date'
+            },{
+                xtype: 'container',
+                recordIdx: idx,
+                areaType: 'other'
             }]);
         });
 
