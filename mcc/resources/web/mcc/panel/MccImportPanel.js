@@ -908,7 +908,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         if (val === 'Shipped') {
                             target1.add({
                                 xtype: 'datefield',
-                                dataIdx: 'date',
+                                dataIndex: 'date',
                                 labelAlign: 'top',
                                 recordIdx: field.recordIdx,
                                 style: 'margin-right: 5px',
@@ -917,7 +917,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
                             target2.add({
                                 xtype: 'ldk-simplelabkeycombo',
-                                dataIdx: 'destination',
+                                dataIndex: 'destination',
                                 labelAlign: 'top',
                                 recordIdx: field.recordIdx,
                                 schemaName: 'ehr_lookups',
@@ -931,7 +931,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         else if (val === 'Dead') {
                             target1.add({
                                 xtype: 'datefield',
-                                dataIdx: 'date',
+                                dataIndex: 'date',
                                 labelAlign: 'top',
                                 recordIdx: field.recordIdx,
                                 style: 'margin-right: 5px',
@@ -940,7 +940,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
                             target2.add({
                                 xtype: 'ldk-simplelabkeycombo',
-                                dataIdx: 'cause',
+                                dataIndex: 'cause',
                                 labelAlign: 'top',
                                 recordIdx: field.recordIdx,
                                 schemaName: 'ehr_lookups',
