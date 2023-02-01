@@ -223,7 +223,7 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect status", "Dead", srr.getRows().get(0).get("calculated_status"));
 
         sr = new SelectRowsCommand("study", "deaths");
-        sr.setColumns(Arrays.asList("Id", "calculated_status"));
+        sr.setColumns(Arrays.asList("Id", "cause"));
         sr.setFilters(Arrays.asList(new Filter("Id", "Animal3")));
         srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/SNPRC");
         Assert.assertEquals("No death record", 1, srr.getRowCount().intValue());
