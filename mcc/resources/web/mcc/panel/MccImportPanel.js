@@ -754,7 +754,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
                                     var dateVal = fields[1].getValue();
                                     var otherVal = fields[2].getValue();
-                                    if (!dateVal || ! otherVal) {
+                                    if (!dateVal || !otherVal) {
                                         missingValues = true;
                                         return false;
                                     }
@@ -769,7 +769,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                                             cause: otherVal
                                         });
                                     } else if (f.getValue() === 'Shipped') {
-                                        deathInserts.push({
+                                        departureInserts.push({
                                             Id: f.sourceRecord.Id,
                                             objectId: null,
                                             QCStateLabel: 'Completed',
