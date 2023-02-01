@@ -200,10 +200,17 @@ public class MccTest extends BaseWebDriverTest
 
         waitAndClick(getButton("Process Missing IDs"));
         new Window.WindowFinder(getDriver()).withTitle("Reconcile Census with Existing IDs").waitFor();
-        String comboQuery = "combo[queryName='calculated_status_codes']";
+
+        String comboQuery = "combo[dataIndex='status_code']";
         Ext4ComboRef.waitForComponent(this, comboQuery);
         Ext4ComboRef statusCombo = _ext4Helper.queryOne(comboQuery, Ext4ComboRef.class);
-        statusCombo.setComboByDisplayValue("Unknown");
+        statusCombo.setComboByDisplayValue("Dead");
+
+        String comboQuery2 = "combo[dataIndex='cause']";
+        Ext4ComboRef.waitForComponent(this, comboQuery2);
+        Ext4ComboRef causeCombo = _ext4Helper.queryOne(comboQuery2, Ext4ComboRef.class);
+        causeCombo.setComboByDisplayValue("Cause of Death Unknown");
+
         waitAndClick(Ext4Helper.Locators.ext4Button("Update IDs"));
         sleep(100);
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
@@ -213,7 +220,14 @@ public class MccTest extends BaseWebDriverTest
         sr.setColumns(Arrays.asList("Id", "calculated_status"));
         sr.setFilters(Arrays.asList(new Filter("Id", "Animal3")));
         srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/SNPRC");
-        Assert.assertEquals("Incorrect status", "Unknown", srr.getRows().get(0).get("calculated_status"));
+        Assert.assertEquals("Incorrect status", "Dead", srr.getRows().get(0).get("calculated_status"));
+
+        sr = new SelectRowsCommand("study", "deaths");
+        sr.setColumns(Arrays.asList("Id", "calculated_status"));
+        sr.setFilters(Arrays.asList(new Filter("Id", "Animal3")));
+        srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/SNPRC");
+        Assert.assertEquals("No death record", 1, srr.getRowCount().intValue());
+        Assert.assertEquals("Incorrect cause", "Cause of Death Unknown", srr.getRows().get(0).get("cause"));
     }
 
     private static class FormElement
@@ -849,6 +863,10 @@ public class MccTest extends BaseWebDriverTest
     {
         beginAt(getProjectName() + "/Colonies/" + name + "/project-begin.view");
         waitAndClickAndWait(Locator.tagWithText("a", "Populate Lookups"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("Populate Lookup Sets"));
+        waitForElement(Locator.tagWithText("div", "Populating lookup_sets..."));
+        waitForElement(Locator.tagWithText("div", "Populate Complete"));
+
         waitAndClick(Ext4Helper.Locators.ext4Button("Populate All"));
         waitForElement(Locator.tagWithText("div", "Populate Complete"));
     }
