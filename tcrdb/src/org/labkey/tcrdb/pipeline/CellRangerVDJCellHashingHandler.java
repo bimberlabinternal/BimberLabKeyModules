@@ -204,10 +204,10 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
                 parameters.basename = FileUtil.makeLegalName(rs.getName());
                 parameters.allowableHtoBarcodes = htosPerReadset;
 
-                // If demuxEM used:
-                if (parameters.methods.contains(CellHashingService.CALLING_METHOD.demuxem) || parameters.consensusMethods.contains(CellHashingService.CALLING_METHOD.demuxem))
+                // If demuxEM/demuxmix used:
+                if (CellHashingService.CALLING_METHOD.requiresH5(parameters.methods) || CellHashingService.CALLING_METHOD.requiresH5(parameters.consensusMethods))
                 {
-                    ctx.getLogger().debug("demuxEM is used, adding H5 file");
+                    ctx.getLogger().debug("demuxEM/demuxmix is used, adding H5 file");
                     if (genomeId == null)
                     {
                         genomeId = ctx.getSequenceSupport().getCachedGenomes().iterator().next().getGenomeId();

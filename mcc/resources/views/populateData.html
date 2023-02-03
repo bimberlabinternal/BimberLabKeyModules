@@ -179,6 +179,13 @@ Ext4.onReady(function(){
             queryName: 'conc_units',
             pk: 'rowid'
         },{
+            label: 'Death Cause',
+            populateFn: 'populateFromFile',
+            moduleName: 'mcc',
+            schemaName: 'ehr_lookups',
+            queryName: 'death_cause',
+            pk: 'rowid'
+        },{
             label: 'Dosage Units',
             populateFn: 'populateFromFile',
             moduleName: 'ehr',
