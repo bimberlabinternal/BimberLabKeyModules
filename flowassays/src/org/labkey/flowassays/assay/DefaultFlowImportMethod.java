@@ -1,6 +1,6 @@
 package org.labkey.flowassays.assay;
 
-import org.json.old.JSONObject;
+import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.exp.api.ExpProtocol;
@@ -64,7 +64,7 @@ public class DefaultFlowImportMethod extends DefaultAssayImportMethod
 
             while (rowsIter.hasNext())
             {
-                Map<String, Object> row = new CaseInsensitiveHashMap(rowsIter.next());
+                Map<String, Object> row = new CaseInsensitiveHashMap<>(rowsIter.next());
                 appendPromotedResultFields(row, context);
 
                 helper.normalizePopulationField(row, "population", context);

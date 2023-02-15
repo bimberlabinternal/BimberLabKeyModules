@@ -1,7 +1,7 @@
 package org.labkey.genotypeassays.assay;
 
+import org.apache.commons.lang3.StringUtils;
 import org.labkey.api.data.Container;
-import org.labkey.api.gwt.client.util.StringUtils;
 import org.labkey.api.laboratory.assay.AssayImportMethod;
 import org.labkey.api.laboratory.assay.AssayParser;
 import org.labkey.api.laboratory.assay.DefaultAssayImportMethod;
@@ -33,7 +33,7 @@ public class DefaultGenotypeAssaysImportMethod extends DefaultAssayImportMethod
         return new DefaultGenotypeAssayParser(this, c, u, assayId);
     }
 
-    public class DefaultGenotypeAssayParser extends DefaultAssayParser
+    public static class DefaultGenotypeAssayParser extends DefaultAssayParser
     {
         public DefaultGenotypeAssayParser(AssayImportMethod method, Container c, User u, int assayId)
         {

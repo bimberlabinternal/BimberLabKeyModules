@@ -1,10 +1,10 @@
 package org.labkey.flowassays.assay;
 
-import org.json.old.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
-import org.labkey.api.gwt.client.util.StringUtils;
 import org.labkey.api.laboratory.assay.ImportContext;
 import org.labkey.flowassays.FlowAssaysSchema;
 
@@ -28,10 +28,10 @@ public class FlowImportHelper
 
     public void normalizePopulationField(Map<String, Object> row, String populationField, ImportContext context)
     {
-        if (!row.containsKey(populationField))
+        if (!row.containsKey(populationField) || row.get(populationField) == null)
             return;
 
-        String population = StringUtils.trimToNull((String) row.get(populationField));
+        String population = row.get(populationField) == null ? null : StringUtils.trimToNull(row.get(populationField).toString());
         if (population == null)
             return;
 
@@ -79,7 +79,7 @@ public class FlowImportHelper
 
     public Map<String, String> getGuessedValues(Map<String, String> allowable)
     {
-        Map<String, String> guesses = new CaseInsensitiveHashMap();
+        Map<String, String> guesses = new CaseInsensitiveHashMap<>();
         for (String key : allowable.keySet())
         {
             String guess = key.replaceAll(" ", "");
@@ -103,7 +103,7 @@ public class FlowImportHelper
         TableInfo ti = FlowAssaysSchema.getInstance().getTable(FlowAssaysSchema.TABLE_POPULATIONS);
         TableSelector ts = new TableSelector(ti);
         Map<String, Object>[] rows = ts.getMapArray();
-        Map<String, String> ret = new CaseInsensitiveHashMap();
+        Map<String, String> ret = new CaseInsensitiveHashMap<>();
         for (Map<String, Object> row : rows)
         {
             ret.put((String)row.get(NAME_FIELD), (String)row.get(NAME_FIELD));
@@ -159,6 +159,6 @@ public class FlowImportHelper
 
     private  static JSONObject getJsonObject(JSONObject parent, String key)
     {
-        return parent.containsKey(key) ? parent.getJSONObject(key): new JSONObject();
+        return parent.has(key) ? parent.getJSONObject(key): new JSONObject();
     }
 }

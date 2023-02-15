@@ -7,8 +7,8 @@ import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.stat.inference.TestUtils;
 import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
-import org.json.old.JSONArray;
-import org.json.old.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ConvertHelper;
@@ -21,6 +21,7 @@ import org.labkey.api.laboratory.assay.ImportContext;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.ValidationException;
 import org.labkey.api.security.User;
+import org.labkey.api.util.JsonUtil;
 import org.labkey.api.view.ViewContext;
 
 import java.text.DecimalFormat;
@@ -106,12 +107,12 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
     {
         String delim = "/";
 
-        JSONObject runProperties = context.getRunProperties();
-        List<Map<String, Object>> newRows = new ArrayList<Map<String, Object>>();
-        Map<String, List<Double>> negWellMap = new CaseInsensitiveHashMap<List<Double>>();
-        Map<String, String> sampleKeyToNegCtlKey = new HashMap<String, String>();
+        Map<String, Object> runProperties = context.getRunProperties();
+        List<Map<String, Object>> newRows = new ArrayList<>();
+        Map<String, List<Double>> negWellMap = new CaseInsensitiveHashMap<>();
+        Map<String, String> sampleKeyToNegCtlKey = new HashMap<>();
 
-        Map<String, List<Map<String, Object>>> map = new CaseInsensitiveHashMap<List<Map<String, Object>>>();
+        Map<String, List<Map<String, Object>>> map = new CaseInsensitiveHashMap<>();
         for (Map<String, Object> row : rows)
         {
             //build a map of rows, grouped by id/date/peptide
@@ -123,7 +124,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
 
             List<Map<String, Object>> foundRows = map.get(key);
             if (foundRows == null)
-                foundRows = new ArrayList<Map<String, Object>>();
+                foundRows = new ArrayList<>();
 
             foundRows.add(row);
             map.put(key, foundRows);
@@ -169,14 +170,14 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
             }
         }
 
-        Integer minspots = runProperties.containsKey(MIN_SPOTS_FIELD) ? Integer.valueOf(runProperties.getInt(MIN_SPOTS_FIELD)) : null;
+        Integer minspots = runProperties.get(MIN_SPOTS_FIELD) != null ? Integer.valueOf(runProperties.get(MIN_SPOTS_FIELD).toString()) : null;
         if (minspots == null)
         {
             minspots = 0;
             runProperties.put(MIN_SPOTS_FIELD, minspots);
         }
 
-        Double threshold = runProperties.containsKey(THRESHOLD_FIELD) ? runProperties.getDouble(THRESHOLD_FIELD) : null;
+        Double threshold = runProperties.get(THRESHOLD_FIELD) != null ? Double.parseDouble(runProperties.get(THRESHOLD_FIELD).toString()) : null;
         if (threshold == null)
         {
             threshold = 0.05;
@@ -295,7 +296,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Map<String, Double> negCtlCounts = new HashMap<String, Double>();
-        for (JSONObject row : rawResults.toJSONObjectArray())
+        for (JSONObject row : JsonUtil.toJSONObjectList(rawResults))
         {
             for (String prop : resultDefaults.keySet())
             {
