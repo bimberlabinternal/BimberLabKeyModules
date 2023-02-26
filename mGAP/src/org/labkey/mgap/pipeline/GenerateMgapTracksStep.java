@@ -70,7 +70,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
     {
         public Provider()
         {
-            super("GenerateMgapTracksStep", "Generate mGAP Tracks Step", "GenerateMgapTracksStep", "This will use the set of sample IDs from the table mgap.releaseTrackSubsets to subset the input VCF and produce one VCF per track. It will perform basic validation and also update mgap.releaseTracks.", Arrays.asList(
+            super("GenerateMgapTracksStep", "Generate mGAP Tracks", "GenerateMgapTracksStep", "This will use the set of sample IDs from the table mgap.releaseTrackSubsets to subset the input VCF and produce one VCF per track. It will perform basic validation and also update mgap.releaseTracks.", Arrays.asList(
 
             ), null, null);
         }
