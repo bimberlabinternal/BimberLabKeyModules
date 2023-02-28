@@ -41,6 +41,7 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.pipeline.AnnotationStep;
+import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
 import org.labkey.mgap.pipeline.SampleSpecificGenotypeFiltrationStep;
@@ -120,6 +121,7 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseComparisonStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new SampleSpecificGenotypeFiltrationStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseAnnotateNovelSitesStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new GenerateMgapTracksStep.Provider());
 
                 _hasRegistered = true;
             }
