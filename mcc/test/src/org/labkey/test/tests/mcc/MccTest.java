@@ -118,7 +118,7 @@ public class MccTest extends BaseWebDriverTest
 
         // This should fail initially:
         new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
-        waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
+        waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
 
         Ext4FieldRef.getForLabel(this, "Animal Will Use Previous Id").setChecked(true);
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
