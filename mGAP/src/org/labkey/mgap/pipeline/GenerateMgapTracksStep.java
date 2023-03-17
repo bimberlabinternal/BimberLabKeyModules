@@ -6,7 +6,9 @@ import htsjdk.samtools.util.Interval;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.jetbrains.annotations.Nullable;
+import org.json.old.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -31,6 +33,7 @@ import org.labkey.api.sequenceanalysis.pipeline.PipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
+import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
@@ -71,6 +74,10 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         public Provider()
         {
             super("GenerateMgapTracksStep", "Generate mGAP Tracks", "GenerateMgapTracksStep", "This will use the set of sample IDs from the table mgap.releaseTrackSubsets to subset the input VCF and produce one VCF per track. It will perform basic validation and also update mgap.releaseTracks.", Arrays.asList(
+                    ToolParameterDescriptor.create("releaseVersion", "mGAP Version", "This is the string that was used to annotate novel variants.", "textfield", new JSONObject(){{
+                        put("allowBlank", false);
+                        put("doNotIncludeInTemplates", true);
+                    }}, null)
 
             ), null, null);
         }
@@ -108,12 +115,11 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             String mgapAlias = sampleIdToMgapAlias.get(rs.getString(FieldKey.fromString("subjectId")));
             if (mgapAlias == null)
             {
-                throw new IllegalArgumentException("Saple requested in track " + rs.getString(FieldKey.fromString("trackName")) + " was not in the VCF: " + rs.getString(FieldKey.fromString("subjectId")));
+                throw new IllegalArgumentException("Sample requested in track " + rs.getString(FieldKey.fromString("trackName")) + " was not in the VCF: " + rs.getString(FieldKey.fromString("subjectId")));
             }
 
             trackToSubject.get(rs.getString(FieldKey.fromString("trackName"))).add(mgapAlias);
         });
-
 
         File outputFile = getSampleNameFile(getPipelineCtx().getSourceDirectory(true));
         getPipelineCtx().getLogger().debug("caching mGAP tracks to file: " + outputFile.getPath() + ", total: "+ trackToSubject.size());
@@ -136,14 +142,53 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
     public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
     {
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
-
         Map<String, List<String>> trackToSamples = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory(true)));
+
+        VCFHeader header;
+        try (VCFFileReader reader = new VCFFileReader(inputVCF))
+        {
+            header = reader.getFileHeader();
+        }
+
+        if (!header.hasInfoLine("mGAPV"))
+        {
+            throw new IllegalStateException("VCF is missing the annotation: mGAPV");
+        }
 
         for (String trackName : trackToSamples.keySet())
         {
             File vcf = processTrack(inputVCF, trackName, trackToSamples.get(trackName), outputDirectory, genome, intervals);
-            output.addSequenceOutput(vcf, trackName, TRACK_CATEGORY, null, null, genome.getGenomeId(), "Total Samples: " + trackToSamples.get(trackName).size());
+            output.addSequenceOutput(vcf, trackName, TRACK_CATEGORY, null, null, genome.getGenomeId(), "mGAP track: " + trackName + ", total samples: " + trackToSamples.get(trackName).size());
         }
+
+        // Also create the Novel Sites track:
+        String releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class);
+        if (releaseVersion.toLowerCase().startsWith("v"))
+        {
+            releaseVersion = releaseVersion.substring(1);
+        }
+
+        if (!NumberUtils.isCreatable(releaseVersion))
+        {
+            throw new IllegalArgumentException("Expected the release version to be numeric: " + releaseVersion);
+        }
+
+        File novelSitesOutput = new File(outputDirectory, "mGAP_v" + releaseVersion + "_NovelSites.vcf.gz");
+        if (new File(novelSitesOutput.getPath() + ".tbi").exists())
+        {
+            getPipelineCtx().getLogger().debug("Index exists, will not remake novel sites VCF");
+        }
+        else
+        {
+            SelectVariantsWrapper sv = new SelectVariantsWrapper(getPipelineCtx().getLogger());
+            List<String> svArgs = new ArrayList<>();
+            svArgs.add("-select");
+            svArgs.add("mGAPV == '" + releaseVersion + "'");
+            sv.execute(genome.getWorkingFastaFile(), inputVCF, novelSitesOutput, svArgs);
+        }
+
+        getPipelineCtx().getJob().getLogger().info("total variants: " + SequenceAnalysisService.get().getVCFLineCount(novelSitesOutput, getPipelineCtx().getJob().getLogger(), false));
+        output.addSequenceOutput(novelSitesOutput, "Novel Sites in This Release", TRACK_CATEGORY, null, null, genome.getGenomeId(), "These are novel sites in mGAP v" + releaseVersion);
 
         return output;
     }
