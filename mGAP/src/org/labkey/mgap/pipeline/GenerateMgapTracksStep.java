@@ -99,7 +99,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
 
         SequenceOutputFile so = inputFiles.get(0);
 
-        // Verify all IDs in header are mGAP aliases.
+        // Verify all IDs in header are mGAP aliases. This map is the true ID to mGAP alias
         Map<String, String> sampleIdToMgapAlias = getSampleToAlias(so.getFile());
 
         // Now read track list, validate IDs present, and write to file:
@@ -322,8 +322,8 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
 
     private Map<String, String> getSampleToAlias(File input) throws PipelineJobException
     {
-        // This is mGAP ID to real ID
-        Map<String, String> sampleNameMap = new HashMap<>();
+        Map<String, String> trueIdToMgapId = new HashMap<>();
+        Map<String, String> mGapIdToTrueId = new HashMap<>();
         try
         {
             SequenceAnalysisService.get().ensureVcfIndex(input, getPipelineCtx().getLogger());
@@ -336,27 +336,32 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         try (VCFFileReader reader = new VCFFileReader(input))
         {
             VCFHeader header = reader.getFileHeader();
-            List<String> subjects = header.getSampleNamesInOrder();
-            if (subjects.isEmpty())
+            List<String> allMgapIds = header.getSampleNamesInOrder();
+            if (allMgapIds.isEmpty())
             {
                 return Collections.emptyMap();
             }
 
-            Set<String> sampleNames = new HashSet<>(header.getSampleNamesInOrder());
-            getPipelineCtx().getLogger().info("total samples in input VCF: " + sampleNames.size());
+            getPipelineCtx().getLogger().info("total samples in input VCF: " + allMgapIds.size());
 
             // validate all VCF samples are using aliases:
-            querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("externalAlias"), subjects, CompareType.IN));
+            SimpleFilter filter = new SimpleFilter(FieldKey.fromString("externalAlias"), allMgapIds, CompareType.IN);
+            TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
+            TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(filter), null);
+            ts.forEachResults(rs -> {
+                trueIdToMgapId.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
+                mGapIdToTrueId.put(rs.getString(FieldKey.fromString("externalAlias")), rs.getString(FieldKey.fromString("subjectname")));
+            });
 
-            List<String> missingSamples = new ArrayList<>(sampleNames);
-            missingSamples.removeAll(sampleNameMap.values());
+            List<String> missingSamples = new ArrayList<>(allMgapIds);
+            missingSamples.removeAll(mGapIdToTrueId.keySet());
             if (!missingSamples.isEmpty())
             {
                 throw new PipelineJobException("The following samples in this VCF do not match known mGAP IDs: " + StringUtils.join(missingSamples, ", "));
             }
 
             // Now ensure we dont have duplicate mappings:
-            List<String> translated = new ArrayList<>(header.getSampleNamesInOrder().stream().map(sampleNameMap::get).toList());
+            List<String> translated = new ArrayList<>(header.getSampleNamesInOrder().stream().map(mGapIdToTrueId::get).toList());
             Set<String> unique = new HashSet<>();
             List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).toList();
             if (!duplicates.isEmpty())
@@ -365,13 +370,6 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             }
         }
 
-        return sampleNameMap;
-    }
-
-    private void querySampleBatch(final Map<String, String> sampleNameMap, SimpleFilter filter)
-    {
-        TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
-        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), new SimpleFilter(filter), null);
-        ts.forEachResults(rs -> sampleNameMap.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias"))));
+        return trueIdToMgapId;
     }
 }
