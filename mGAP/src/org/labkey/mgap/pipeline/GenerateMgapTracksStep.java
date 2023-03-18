@@ -322,6 +322,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
 
     private Map<String, String> getSampleToAlias(File input) throws PipelineJobException
     {
+        // This is mGAP ID to real ID
         Map<String, String> sampleNameMap = new HashMap<>();
         try
         {
@@ -348,7 +349,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("externalAlias"), subjects, CompareType.IN));
 
             List<String> missingSamples = new ArrayList<>(sampleNames);
-            missingSamples.removeAll(sampleNameMap.keySet());
+            missingSamples.removeAll(sampleNameMap.values());
             if (!missingSamples.isEmpty())
             {
                 throw new PipelineJobException("The following samples in this VCF do not match known mGAP IDs: " + StringUtils.join(missingSamples, ", "));
