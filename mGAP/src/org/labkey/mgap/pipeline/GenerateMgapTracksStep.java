@@ -105,6 +105,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         // Now read track list, validate IDs present, and write to file:
         TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS);
         TableSelector ts = new TableSelector(ti, PageFlowUtil.set("trackName", "subjectId"));
+        Set<String> requestedNotInVcf = new HashSet<>();
         Map<String, Set<String>> trackToSubject = new HashMap<>();
         ts.forEachResults(rs -> {
             if (!trackToSubject.containsKey(rs.getString(FieldKey.fromString("trackName"))))
@@ -115,11 +116,16 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             String mgapAlias = sampleIdToMgapAlias.get(rs.getString(FieldKey.fromString("subjectId")));
             if (mgapAlias == null)
             {
-                throw new IllegalArgumentException("Sample requested in track " + rs.getString(FieldKey.fromString("trackName")) + " was not in the VCF: " + rs.getString(FieldKey.fromString("subjectId")));
+                requestedNotInVcf.add(rs.getString(FieldKey.fromString("trackName") + ": " + rs.getString(FieldKey.fromString("subjectId"))));
             }
 
             trackToSubject.get(rs.getString(FieldKey.fromString("trackName"))).add(mgapAlias);
         });
+
+        if (!requestedNotInVcf.isEmpty())
+        {
+            throw new IllegalArgumentException("The following track/sample pairs were requested but not in the VCF. Please check the source table: " + StringUtils.join(requestedNotInVcf, ", "));
+        }
 
         File outputFile = getSampleNameFile(getPipelineCtx().getSourceDirectory(true));
         getPipelineCtx().getLogger().debug("caching mGAP tracks to file: " + outputFile.getPath() + ", total: "+ trackToSubject.size());
