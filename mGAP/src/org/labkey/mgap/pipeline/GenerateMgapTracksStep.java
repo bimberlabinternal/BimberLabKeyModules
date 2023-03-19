@@ -116,7 +116,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             String mgapAlias = sampleIdToMgapAlias.get(rs.getString(FieldKey.fromString("subjectId")));
             if (mgapAlias == null)
             {
-                requestedNotInVcf.add(rs.getString(FieldKey.fromString("trackName") + ": " + rs.getString(FieldKey.fromString("subjectId"))));
+                requestedNotInVcf.add(rs.getString(FieldKey.fromString("trackName")) + ": " + rs.getString(FieldKey.fromString("subjectId")));
             }
 
             trackToSubject.get(rs.getString(FieldKey.fromString("trackName"))).add(mgapAlias);
