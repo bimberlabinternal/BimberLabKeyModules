@@ -78,7 +78,6 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
                         put("allowBlank", false);
                         put("doNotIncludeInTemplates", true);
                     }}, null)
-
             ), null, null);
         }
 
@@ -134,6 +133,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         {
             for (String trackName : trackToSubject.keySet())
             {
+                getPipelineCtx().getLogger().info(trackToSubject + ": " + trackToSubject.get(trackName).size());
                 trackToSubject.get(trackName).forEach(x -> {
                     writer.writeNext(new String[]{trackName, x});
                 });
@@ -211,44 +211,61 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
                 continue;
             }
 
-            try
+            createOrUpdateTrack(so, job);
+        }
+
+        createOrUpdatePrimaryTrack(inputs.get(0), job);
+    }
+
+    private void createOrUpdatePrimaryTrack(SequenceOutputFile so, PipelineJob job) throws PipelineJobException
+    {
+        createOrUpdateTrack(so, job, "mGAP Release", true);
+    }
+
+    private void createOrUpdateTrack(SequenceOutputFile so, PipelineJob job) throws PipelineJobException
+    {
+        createOrUpdateTrack(so, job, so.getName(), false);
+    }
+
+    private void createOrUpdateTrack(SequenceOutputFile so, PipelineJob job, String trackName, boolean isPrimaryTrack) throws PipelineJobException
+    {
+        try
+        {
+            Container targetContainer = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
+            TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
+            TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), so.getName()), null);
+            if (!ts.exists())
             {
-                Container targetContainer = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
-                TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
-                TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), so.getName()), null);
-                if (!ts.exists())
+                job.getLogger().debug("Creating new track: " + so.getName());
+                Map<String, Object> newRow = new CaseInsensitiveHashMap<>();
+                newRow.put("trackName", trackName);
+                newRow.put("label", trackName);
+                newRow.put("vcfId", so.getRowid());
+                newRow.put("isprimarytrack", isPrimaryTrack);
+
+                BatchValidationException bve = new BatchValidationException();
+                releaseTracks.getUpdateService().insertRows(job.getUser(), targetContainer, Arrays.asList(newRow), bve, null, null);
+                if (bve.hasErrors())
                 {
-                    job.getLogger().debug("Creating new track: " + so.getName());
-                    Map<String, Object> newRow = new CaseInsensitiveHashMap<>();
-                    newRow.put("trackName", so.getName());
-                    newRow.put("label", so.getName());
-                    newRow.put("vcfId", so.getRowid());
-                    newRow.put("isprimarytrack", false);
-
-                    BatchValidationException bve = new BatchValidationException();
-                    releaseTracks.getUpdateService().insertRows(job.getUser(), targetContainer, Arrays.asList(newRow), bve, null, null);
-                    if (bve.hasErrors())
-                    {
-                        throw bve;
-                    }
-                }
-                else
-                {
-                    job.getLogger().debug("Updating existing track: " + so.getName());
-                    Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
-                    toUpdate.put("rowId", ts.getObject(Integer.class));
-                    toUpdate.put("vcfId", so.getRowid());
-
-                    Map<String, Object> oldKeys = new CaseInsensitiveHashMap<>();
-                    toUpdate.put("rowId", ts.getObject(Integer.class));
-
-                    releaseTracks.getUpdateService().updateRows(job.getUser(), targetContainer, Arrays.asList(toUpdate), Arrays.asList(oldKeys), null, null);
+                    throw bve;
                 }
             }
-            catch (QueryUpdateServiceException | SQLException | BatchValidationException | DuplicateKeyException | InvalidKeyException e)
+            else
             {
-                throw new PipelineJobException(e);
+                job.getLogger().debug("Updating existing track: " + so.getName());
+                Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
+                toUpdate.put("rowId", ts.getObject(Integer.class));
+                toUpdate.put("vcfId", so.getRowid());
+
+                Map<String, Object> oldKeys = new CaseInsensitiveHashMap<>();
+                toUpdate.put("rowId", ts.getObject(Integer.class));
+
+                releaseTracks.getUpdateService().updateRows(job.getUser(), targetContainer, Arrays.asList(toUpdate), Arrays.asList(oldKeys), null, null);
             }
+        }
+        catch (QueryUpdateServiceException | SQLException | BatchValidationException | DuplicateKeyException | InvalidKeyException e)
+        {
+            throw new PipelineJobException(e);
         }
     }
 
