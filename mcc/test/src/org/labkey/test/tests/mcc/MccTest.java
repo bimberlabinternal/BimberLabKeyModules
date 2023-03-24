@@ -116,6 +116,13 @@ public class MccTest extends BaseWebDriverTest
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
+        // This should fail initially:
+        new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
+        waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
+
+        Ext4FieldRef.getForLabel(this, "Animal Will Use Previous Id").setChecked(true);
+        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
 
@@ -162,6 +169,7 @@ public class MccTest extends BaseWebDriverTest
         sleep(100);
 
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
+        Ext4FieldRef.getForLabel(this, "Animal Will Use Previous Id").setChecked(true);
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();

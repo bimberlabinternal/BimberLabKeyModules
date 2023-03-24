@@ -931,7 +931,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                 if (!skipAnnotationChecks)
                 {
-                    for (String info : Arrays.asList("CADD_PH", "OMIMN", "CLN_ALLELE", "AF"))
+                    for (String info : Arrays.asList("CADD_PH", "OMIMN", "CLN_ALLELE", "AF", "mGAPV"))
                     {
                         if (!header.hasInfoLine(info))
                         {

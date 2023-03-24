@@ -1,6 +1,7 @@
 package org.labkey.mgap.pipeline;
 
 import htsjdk.samtools.util.Interval;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.labkey.api.data.SimpleFilter;
@@ -81,6 +82,16 @@ public class mGapReleaseAnnotateNovelSitesStep extends AbstractCommandPipelineSt
         getPipelineCtx().getLogger().info("Annotating VCF by mGAP Release");
 
         String releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, "0.0");
+        if (releaseVersion.toLowerCase().startsWith("v"))
+        {
+            releaseVersion = releaseVersion.substring(1);
+        }
+
+        if (!NumberUtils.isCreatable(releaseVersion))
+        {
+            throw new IllegalArgumentException("Expected the release version to be numeric: " + releaseVersion);
+        }
+
         String priorReleaseLabel = getPipelineCtx().getSequenceSupport().getCachedObject(PRIOR_RELEASE_LABEL, String.class);
         int sitesOnlyExpDataId = getPipelineCtx().getSequenceSupport().getCachedObject(SITES_ONLY_DATA, Integer.class);
         File sitesOnlyVcf = getPipelineCtx().getSequenceSupport().getCachedData(sitesOnlyExpDataId);

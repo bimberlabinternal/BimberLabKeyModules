@@ -38,9 +38,22 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 border: false,
                 style: 'padding-bottom: 10px;'
             },{
+                xtype: 'checkbox',
+                fieldLabel: 'Animal Will Use Previous Id',
+                itemId: 'usePreviousId',
+                listeners: {
+                    scope: this,
+                    change: function (field, val) {
+                        var target = field.up('panel').down('#newId');
+                        target.allowBlank = !!val;
+                        target.setVisible(!val);
+                    }
+                },
+            },{
                 xtype: 'textfield',
                 fieldLabel: 'New ID (blank if unchanged)',
-                itemId: 'newId'
+                itemId: 'newId',
+                allowBlank: false
             },{
                 xtype: 'datefield',
                 fieldLabel: 'Effective Date',
@@ -121,6 +134,12 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             return;
         }
 
+        if (!win.down('#usePreviousId').getValue() && !win.down('#newId').getValue()) {
+            Ext4.Msg.hide();
+            Ext4.Msg.alert('Error', 'Must enter the new ID');
+            return;
+        }
+
         var targetFolderId = win.down('#targetFolder').store.findRecord('Path', targetFolder).get('EntityId');
         Ext4.Msg.wait('Saving...');
         LABKEY.Query.selectRows({
@@ -139,7 +158,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
 
                 var row = results.rows[0];
                 var newId = win.down('#newId').getValue() || row.Id;
-
                 var commands = [];
 
                 var shouldAddDeparture = !row['Id/MostRecentDeparture/MostRecentDeparture'] || row['Id/MostRecentDeparture/MostRecentDeparture'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') || row.Id !== newId;
