@@ -143,20 +143,22 @@
                     </column>
                     <column columnName="dam">
                         <columnTitle>Dam</columnTitle>
+                        <facetingBehavior>ALWAYS_OFF</facetingBehavior>
                         <fk>
                             <fkDbSchema>study</fkDbSchema>
                             <fkTable>animal</fkTable>
-                            <fkColumnName>id</fkColumnName>
+                            <fkColumnName>Id</fkColumnName>
                             <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                         <url></url>
                     </column>
                     <column columnName="sire">
                         <columnTitle>Sire</columnTitle>
+                        <facetingBehavior>ALWAYS_OFF</facetingBehavior>
                         <fk>
                             <fkDbSchema>study</fkDbSchema>
                             <fkTable>animal</fkTable>
-                            <fkColumnName>id</fkColumnName>
+                            <fkColumnName>Id</fkColumnName>
                             <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                         <url></url>

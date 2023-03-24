@@ -1,15 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { getServerContext, Query } from '@labkey/api';
-import { TSV } from 'tsv';
+import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 import './../Dashboard/dashboard.css';
 import ScatterChart from './ScatterChart';
 import { ErrorBoundary } from '@labkey/components';
 import { Box, Tab, Tabs } from '@material-ui/core';
 import KinshipTable from './KinshipTable';
 
+
+function GenomeBrowser(props: {jbrowseId: any}) {
+    const { jbrowseId } = props;
+
+    return (
+        <div>
+            <a href={ActionURL.buildURL('jbrowse', 'jbrowse', null, {session: jbrowseId})}>Click here to view Marmoset SNP data in the genome browser</a>
+        </div>
+    );
+}
+
 export function GeneticsPlot() {
     const [pcaData, setPcaData] = useState([]);
     const [kinshipData, setKinshipData] = useState([]);
+    const [jbrowseId, setJBrowseId] = useState(null);
     const [value, setValue] = React.useState(0);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
@@ -26,6 +37,25 @@ export function GeneticsPlot() {
             },
             failure: function(response) {
                 alert('There was an error loading data');
+                console.log(response);
+            },
+            scope: this
+        });
+
+        Query.selectRows({
+            containerPath: containerPath,
+            schemaName: 'jbrowse',
+            queryName: 'databases',
+            columns: 'objectid',
+            filterArray: [
+                Filter.create('name', 'Marmoset Variant Data')
+            ],
+            success: function(results) {
+                const data = results.rows
+                setJBrowseId(data.length ? data[0].objectid : null)
+            },
+            failure: function(response) {
+                alert('There was an error loading JBrowse data');
                 console.log(response);
             },
             scope: this
@@ -87,6 +117,7 @@ export function GeneticsPlot() {
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                     <Tab label="Population Genetic Diversity" {...a11yProps(0)} />
                     <Tab label="Kinship" {...a11yProps(1)} />
+                    <Tab label="Genetic Variants" {...a11yProps(2)} hidden={jbrowseId == null}/>
                 </Tabs>
             </Box>
             <div className="row">
@@ -95,6 +126,7 @@ export function GeneticsPlot() {
                         <div className="panel-body">
                             {value === 0 && <ScatterChart data={pcaData}/>}
                             {value === 1 && <KinshipTable data={kinshipData}/>}
+                            {value === 2 && <GenomeBrowser jbrowseId={jbrowseId}/>}
                         </div>
                     </div>
                 </div>
