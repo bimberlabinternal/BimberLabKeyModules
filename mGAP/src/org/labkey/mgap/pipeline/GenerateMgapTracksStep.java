@@ -162,8 +162,12 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             throw new IllegalStateException("VCF is missing the annotation: mGAPV");
         }
 
+        int idx = 0;
         for (String trackName : trackToSamples.keySet())
         {
+            idx++;
+            getPipelineCtx().getJob().setStatus(PipelineJob.TaskStatus.running, "Processing track " + idx + " of " + trackToSamples.size());
+
             File vcf = processTrack(inputVCF, trackName, trackToSamples.get(trackName), outputDirectory, genome, intervals);
             output.addSequenceOutput(vcf, trackName, TRACK_CATEGORY, null, null, genome.getGenomeId(), "mGAP track: " + trackName + ", total samples: " + trackToSamples.get(trackName).size());
         }
@@ -187,6 +191,8 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         }
         else
         {
+            getPipelineCtx().getJob().setStatus(PipelineJob.TaskStatus.running, "Processing novel sites track");
+
             SelectVariantsWrapper sv = new SelectVariantsWrapper(getPipelineCtx().getLogger());
             List<String> svArgs = new ArrayList<>();
             svArgs.add("-select");
