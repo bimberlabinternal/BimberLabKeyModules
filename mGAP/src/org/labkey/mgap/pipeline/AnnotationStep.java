@@ -55,7 +55,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
     public static final String CHAIN_FILE = "CHAIN_FILE";
 
-    public AnnotationStep(PipelineStepProvider provider, PipelineContext ctx)
+    public AnnotationStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
         super(provider, ctx, new CassandraRunner(ctx.getLogger()));
     }
