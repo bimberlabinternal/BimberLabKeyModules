@@ -1617,6 +1617,20 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
+            if (af != null && !NumberUtils.isCreatable(af.toString()))
+            {
+                log.error("Non-numeric AF: " +  vc.getContig() + " " + vc.getStart() + ". " + vc.getAttributeAsString("AF", ""));
+            }
+            else if (af != null)
+            {
+                double afNumber = Double.parseDouble(af.toString());
+                if (afNumber == 0.0)
+                {
+                    log.error("Found record with AF=0: " +  vc.getContig() + " " + vc.getStart() + ". " + vc.getAttributeAsString("AF", ""));
+                    return;
+                }
+            }
+
             Object cadd = vc.getAttribute("CADD_PH");
 
             queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier, cadd == null ? "" : cadd.toString()));
