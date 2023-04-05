@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class GenerateMgapTracksStep extends AbstractPipelineStep implements VariantProcessingStep
@@ -327,7 +328,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
 
     private Map<String, List<String>> parseSampleMap(File sampleMapFile) throws PipelineJobException
     {
-        Map<String, List<String>> ret = new HashMap<>();
+        Map<String, List<String>> ret = new TreeMap<>();
         try (CSVReader reader = new CSVReader(Readers.getReader(sampleMapFile), '\t'))
         {
             String[] line;
