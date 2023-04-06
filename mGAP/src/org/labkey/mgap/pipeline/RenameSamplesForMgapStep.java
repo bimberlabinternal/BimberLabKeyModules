@@ -2,7 +2,6 @@ package org.labkey.mgap.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
-import com.google.common.collect.Lists;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.Interval;
 import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
@@ -14,6 +13,7 @@ import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.Selector;
@@ -51,7 +51,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class RenameSamplesForMgapStep extends AbstractPipelineStep implements VariantProcessingStep
 {
@@ -253,7 +252,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             getPipelineCtx().getLogger().info("total samples in input VCF: " + sampleNames.size());
 
             // Pass 1: match on proper ID:
-            querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN));
+            querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN), subjects);
 
             // Pass 2: add others using otherNames:
             List<String> missingSamples = new ArrayList<>(sampleNames);
@@ -261,7 +260,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             if (!missingSamples.isEmpty())
             {
                 getPipelineCtx().getLogger().debug("Querying " + missingSamples.size() + " samples using otherNames field");
-                querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("otherNames"), missingSamples, CompareType.CONTAINS_ONE_OF));
+                querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("otherNames"), missingSamples, CompareType.CONTAINS_ONE_OF), subjects);
             }
 
             getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
@@ -285,8 +284,13 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         return sampleNameMap;
     }
 
-    private void querySampleBatch(Map<String, String> sampleNameMap, SimpleFilter filter)
+    private void querySampleBatch(Map<String, String> sampleNameMap, SimpleFilter filter, List<String> sampleNames)
     {
+        final Map<String, String> subjectToOrigCase = new CaseInsensitiveHashMap<>();
+        sampleNames.forEach(x -> {
+            subjectToOrigCase.put(x, x);
+        });
+
         TableInfo ti = QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), (getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer()), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_ANIMAL_MAPPING);
         TableSelector ts = new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias", "otherNames"), new SimpleFilter(filter), null);
         ts.forEachResults(new Selector.ForEachBlock<Results>()
@@ -294,7 +298,13 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             @Override
             public void exec(Results rs) throws SQLException
             {
-                sampleNameMap.put(rs.getString(FieldKey.fromString("subjectname")), rs.getString(FieldKey.fromString("externalAlias")));
+                String subjectId = rs.getString(FieldKey.fromString("subjectname"));
+                if (subjectToOrigCase.containsKey(subjectId) && !subjectToOrigCase.get(subjectId).equals(subjectId))
+                {
+                    subjectId = subjectToOrigCase.get(subjectId);
+                }
+
+                sampleNameMap.put(subjectId, rs.getString(FieldKey.fromString("externalAlias")));
 
                 if (rs.getObject(FieldKey.fromString("otherNames")) != null)
                 {
@@ -313,6 +323,11 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                             if (sampleNameMap.containsKey(name) && !sampleNameMap.get(name).equals(rs.getString(FieldKey.fromString("externalAlias"))))
                             {
                                 throw new IllegalStateException("Improper data in mgap.aliases table. Dual/conflicting aliases: " + name + ": " + rs.getString(FieldKey.fromString("externalAlias")) + " / " + sampleNameMap.get(name));
+                            }
+
+                            if (subjectToOrigCase.containsKey(name) && !subjectToOrigCase.get(name).equals(name))
+                            {
+                                name = subjectToOrigCase.get(name);
                             }
 
                             getPipelineCtx().getLogger().debug("Adding otherName: " + name);

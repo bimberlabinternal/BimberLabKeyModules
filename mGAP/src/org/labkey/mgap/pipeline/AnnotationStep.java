@@ -51,9 +51,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 {
     public static final String GRCH37 = "genome37";
     private static final String CLINVAR_VCF = "clinvar37";
+    private static final String DBNSFP_FILE = "dbnsfpFile";
+
     public static final String CHAIN_FILE = "CHAIN_FILE";
 
-    public AnnotationStep(PipelineStepProvider provider, PipelineContext ctx)
+    public AnnotationStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
         super(provider, ctx, new CassandraRunner(ctx.getLogger()));
     }
@@ -64,6 +66,10 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         {
             super("AnnotateVariants", "Annotate VCF for mGAP", "VCF Annotation", "This will annotate an input NHP VCF using human ClinVar and Cassandra annotations.  This jobs will automatically look for chain files based on the source VCF genome and GRCh37/38 targets and will fail if these are not found.", Arrays.asList(
                     ToolParameterDescriptor.createExpDataParam(CLINVAR_VCF, "Clinvar 2.0 VCF (GRCh37)", "This is the DataId of the VCF containing human Clinvar variants, which should use the GRCh37 genome. After liftover of the rhesus data, any matching variants are annotated.", "ldk-expdatafield", new JSONObject()
+                    {{
+                        put("allowBlank", false);
+                    }}, null),
+                    ToolParameterDescriptor.createExpDataParam(DBNSFP_FILE, "dbNSFP Database (GRCh37)", "This is the DataId of the dbNSFP database (txt.gz file) using the GRCh37 genome.", "ldk-expdatafield", new JSONObject()
                     {{
                         put("allowBlank", false);
                     }}, null),
@@ -126,9 +132,20 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
 
         File clinvarVCF = getPipelineCtx().getSequenceSupport().getCachedData(getProvider().getParameterByName(CLINVAR_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
+        if (!clinvarVCF.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + clinvarVCF.getPath());
+        }
+
         ReferenceGenome grch37Genome = getPipelineCtx().getSequenceSupport().getCachedGenome(getProvider().getParameterByName(GRCH37).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
         Integer chainFileId = getPipelineCtx().getSequenceSupport().getCachedObject(CHAIN_FILE, Integer.class);
         File chainFile = getPipelineCtx().getSequenceSupport().getCachedData(chainFileId);
+
+        File dbnsfpFile = getPipelineCtx().getSequenceSupport().getCachedData(getProvider().getParameterByName(DBNSFP_FILE).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
+        if (!dbnsfpFile.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + dbnsfpFile.getPath());
+        }
 
         getPipelineCtx().getLogger().info("processing file: " + inputVCF.getName());
 
@@ -292,6 +309,22 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.addOutput(clinvarAnnotated, "VCF Annotated With ClinVar2.0");
         output.addIntermediateFile(clinvarAnnotated);
         output.addIntermediateFile(new File(clinvarAnnotated.getPath() + ".tbi"));
+
+        //annotate with SnpSift
+        getPipelineCtx().getLogger().info("annotating with SnpSift");
+        File snpSiftAnnotated = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".snpSift.vcf.gz");
+        if (forceRecreate || !indexExists(snpSiftAnnotated))
+        {
+            SnpSiftWrapper ssRunner = new SnpSiftWrapper(getPipelineCtx().getLogger());
+            ssRunner.runSnpSift(dbnsfpFile, clinvarAnnotated, snpSiftAnnotated);
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("resuming with existing file: " + snpSiftAnnotated.getPath());
+        }
+        output.addOutput(snpSiftAnnotated, "VCF Annotated With SnpSift");
+        output.addIntermediateFile(snpSiftAnnotated);
+        output.addIntermediateFile(new File(snpSiftAnnotated.getPath() + ".tbi"));
 
         //annotate with cassandra
         getPipelineCtx().getLogger().info("annotating with Cassandra");

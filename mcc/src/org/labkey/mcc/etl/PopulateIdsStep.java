@@ -3,6 +3,7 @@ package org.labkey.mcc.etl;
 import org.apache.xmlbeans.XmlException;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
@@ -94,7 +95,7 @@ public class PopulateIdsStep implements TaskRefTask
         TableSelector ts = new TableSelector(sourceTi, PageFlowUtil.set(originalIdField, "container"), filter, null);
         if (ts.exists())
         {
-            Set<String> idsEncountered = new HashSet<>();
+            Set<String> idsEncountered = new CaseInsensitiveHashSet();
             ts.forEachResults(rs -> {
                 Container c = ContainerManager.getForId(rs.getString(FieldKey.fromString("container")));
                 List<Map<String, Object>> rows = toAdd.containsKey(c) ? toAdd.get(c) : new ArrayList<>();

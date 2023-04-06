@@ -689,7 +689,7 @@
     <table tableName="releaseTrackSubsets" tableDbType="TABLE" useColumnOrder="true">
         <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <pkColumnName>rowid</pkColumnName>
-        <tableTitle>mGAP Release Track Sample Sets</tableTitle>
+        <tableTitle>mGAP Samples To Include Per Track</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <columns>
             <column columnName="rowid">
