@@ -931,7 +931,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                 if (!skipAnnotationChecks)
                 {
-                    for (String info : Arrays.asList("CADD_PH", "OMIMN", "CLN_ALLELE", "AF"))
+                    for (String info : Arrays.asList("CADD_PH", "OMIMN", "CLN_ALLELE", "AF", "mGAPV"))
                     {
                         if (!header.hasInfoLine(info))
                         {
@@ -1614,6 +1614,20 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
 
                     i++;
+                }
+            }
+
+            if (af != null && !NumberUtils.isCreatable(af.toString()))
+            {
+                log.error("Non-numeric AF: " +  vc.getContig() + " " + vc.getStart() + ". " + vc.getAttributeAsString("AF", ""));
+            }
+            else if (af != null)
+            {
+                double afNumber = Double.parseDouble(af.toString());
+                if (afNumber == 0.0)
+                {
+                    log.error("Found record with AF=0: " +  vc.getContig() + " " + vc.getStart() + ". " + vc.getAttributeAsString("AF", ""));
+                    return;
                 }
             }
 
