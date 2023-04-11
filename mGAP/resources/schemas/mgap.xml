@@ -1076,8 +1076,7 @@
                 <datatype>lsidtype</datatype>
                 <isReadOnly>true</isReadOnly>
                 <isHidden>true</isHidden>
-                <isUserEditable>false</isUserEditable>
-                <isUnselectable>true</isUnselectable>
+                <isUserEditable>false</isUserEditable>                
                 <fk>
                     <fkColumnName>ObjectUri</fkColumnName>
                     <fkTable>Object</fkTable>
