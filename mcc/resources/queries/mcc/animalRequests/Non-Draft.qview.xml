@@ -1,6 +1,8 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
     <filters>
         <filter column="status" operator="neqornull" value="draft" />
+        <filter column="status" operator="neqornull" value="withdrawn" />
+        <filter column="status" operator="neqornull" value="fulfilled" />
     </filters>
     <sorts>
         <sort column="rowid" descending="true"/>

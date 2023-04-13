@@ -132,6 +132,13 @@ export function AnimalRequest() {
         return "Draft" === requestData.request.status
     }
 
+    function shouldShowWithdraw()
+    {
+        const ctx = getServerContext().getModuleContext('mcc') || {};
+
+        return !!ctx.hasRequestAdminPermission
+    }
+
     function handleSubmitButton(e, isSubmitting) {
         setIsSubmitting(isSubmitting);
 
@@ -273,6 +280,7 @@ export function AnimalRequest() {
                         "title": data.get("project-title"),
                         "narrative": data.get("project-narrative"),
                         "neuroscience": data.get("neuroscience"),
+                        "diseasefocus": data.get("diseasefocus"),
                         "lastname": data.get("investigator-last-name"),
                         "firstname": data.get("investigator-first-name"),
                         "middleinitial": data.get("investigator-middle-initial"),
@@ -453,7 +461,14 @@ export function AnimalRequest() {
                 </ErrorMessageHandler>
             </div>
 
-            <Title text="3. How does the research relate to neuroscience?*"/>
+            <Title text="3. Research/Disease Focus*"/>
+            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <Input id="diseasefocus" ariaLabel="Research/Disease Focus" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="What is the research area or disease focus of this project" defaultValue={requestData.request.diseasefocus}/>
+                </ErrorMessageHandler>
+            </div>
+
+            <Title text="4. How does the research relate to neuroscience?*"/>
             <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <TextArea id="neuroscience" ariaLabel="Connection to neuroscience" isSubmitting={isSubmitting} placeholder="How does the research relate to neuroscience" required={doEnforceRequiredFields()} defaultValue={requestData.request.neuroscience}/>
@@ -694,6 +709,11 @@ export function AnimalRequest() {
                 <Button onClick={(e) => {
                     handleSubmitButton(e, true);
                  }} text={getSubmitButtonText()} display={hasEditPermission()}/>
+
+                <Button onClick={(e) => {
+                    requestData.request.status = "withdrawn"
+                    handleSubmitButton(e, false);
+                }} text={"Widthdraw"} display={shouldShowWithdraw()}/>
             </div>
         </form>
 

@@ -14,6 +14,7 @@ export class AnimalRequestProps {
     narrative: string;
     title: string;
     neuroscience: string;
+    diseasefocus: string;
     census: boolean;
     censusreason: string;
     middleinitial: string;
@@ -88,6 +89,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 "narrative",
                 "title",
                 "neuroscience",
+                "diseasefocus",
                 "census",
                 "censusreason",
                 "terminalprocedures",
