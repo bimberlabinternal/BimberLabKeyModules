@@ -1,6 +1,5 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" label="Pending Requests" canOverride="false">
     <filters>
-        <filter column="requestId/status" operator="neqornull" value="Approved"/>
         <filter column="requestId/status" operator="neqornull" value="Withdrawn"/>
         <filter column="requestId/status" operator="neqornull" value="Fulfilled"/>
     </filters>
