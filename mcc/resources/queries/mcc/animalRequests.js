@@ -121,10 +121,11 @@ function calculatePreliminaryScore(row, oldRow) {
         console.error('Unknown MCC institutiontype: ' + row.institutiontype)
     }
 
-    if (['nih', 'other-federal', 'start-up', 'foundation'].indexOf(row.fundingsource) !== -1) {
+    var fs = row.fundingsource ? row.fundingsource.split(',') : []
+    if (fs.indexOf('nih') !== -1 || fs.indexOf('other-federal') !== -1 || fs.indexOf('start-up') !== -1 || fs.indexOf('foundation') !== -1) {
         score += 1;
     }
-    else if (row.fundingsource === 'private' || row.fundingsource === 'no-funding') {
+    else if (fs.indexOf('private') !== -1 || fs.indexOf('no-funding') !== -1) {
         // no score change
     }
     else {
