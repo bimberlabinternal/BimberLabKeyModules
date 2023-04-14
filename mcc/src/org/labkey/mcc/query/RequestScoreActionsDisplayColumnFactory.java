@@ -97,7 +97,8 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {
-                            out.write("<br><a class=\"labkey-text-link\" href=\"javascript:alert('This is not enabled yet')\">Update Animal Availability</a>");
+                            out.write("<br><a class=\"labkey-text-link\" onclick=\"MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + "," + requestRowId + ", 'Fulfilled')\">Mark Fulfilled</a>");
+                            out.write(getWithdrawnLine(ctx, requestRowId));
                         }
                     }
                     catch (IllegalArgumentException e)
