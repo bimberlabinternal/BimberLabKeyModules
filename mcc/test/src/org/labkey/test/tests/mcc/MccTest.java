@@ -362,6 +362,7 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("project-narrative", "narrative", "the narrative").inputType("textarea"),
             new FormElement("investigator-last-name", "lastName", "last name"),
             new FormElement("neuroscience", "neuroscience", "neuroscience connection").inputType("textarea"),
+            new FormElement("diseasefocus", "diseasefocus", "my disease focus"),
             new FormElement("investigator-first-name", "firstName", "first name"),
             new FormElement("investigator-middle-initial", "middleinitial", "m"),
             new FormElement("is-early-stage-investigator", "earlystageinvestigator", true).radio(),

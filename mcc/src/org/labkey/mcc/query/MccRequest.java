@@ -13,6 +13,7 @@ public class MccRequest
     private String _title;
     private String _narrative;
     private String _neuroscience;
+    private String _diseasefocus;
     private boolean _census;
     private String _censusReason;
 

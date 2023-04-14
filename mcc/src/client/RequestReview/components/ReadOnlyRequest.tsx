@@ -92,6 +92,12 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     {requestData.request.narrative}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
+                    Research/disease focus:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.diseasefocus}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
                     Relation to neuroscience:
                 </Grid>
                 <Grid item xs={10}>
