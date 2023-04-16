@@ -252,13 +252,15 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             }
             else
             {
-                job.getLogger().debug("Updating existing track: " + so.getName());
+                int rowId = ts.getObject(Integer.class);
+                job.getLogger().debug("Updating existing track: " + so.getName() + " / " + rowId);
+
                 Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
-                toUpdate.put("rowId", ts.getObject(Integer.class));
+                toUpdate.put("rowId", rowId);
                 toUpdate.put("vcfId", so.getRowid());
 
                 Map<String, Object> oldKeys = new CaseInsensitiveHashMap<>();
-                toUpdate.put("rowId", ts.getObject(Integer.class));
+                oldKeys.put("rowId", rowId);
 
                 releaseTracks.getUpdateService().updateRows(job.getUser(), targetContainer, Arrays.asList(toUpdate), Arrays.asList(oldKeys), null, null);
             }
