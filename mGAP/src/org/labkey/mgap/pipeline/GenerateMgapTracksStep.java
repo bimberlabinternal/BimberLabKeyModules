@@ -231,7 +231,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         {
             Container targetContainer = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
             TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
-            TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), so.getName()), null);
+            TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), trackName), null);
             if (!ts.exists())
             {
                 job.getLogger().debug("Creating new track: " + so.getName());
