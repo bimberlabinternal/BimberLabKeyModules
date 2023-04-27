@@ -234,7 +234,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), trackName), null);
             if (!ts.exists())
             {
-                job.getLogger().debug("Creating new track: " + so.getName());
+                job.getLogger().debug("Creating new track: " + trackName + " / " + so.getName());
                 Map<String, Object> newRow = new CaseInsensitiveHashMap<>();
                 newRow.put("trackName", trackName);
                 newRow.put("label", trackName);
