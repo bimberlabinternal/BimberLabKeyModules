@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml" standalone="false">
+    <name>PRIME_Demographics_Data</name>
+    <description>PRIMe Demographics Data</description>
+    <transforms>
+        <transform type="RemoteQueryTransformStep" id="demographics">
+            <description>Copy to target</description>
+            <source remoteSource="PRIME" schemaName="study" queryName="Demographics" sourceTimeout="0">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>gender</column>
+                    <column>geographic_origin</column>
+                    <column>birth</column>
+                    <column>death</column>
+                    <column>species</column>
+                    <column>status</column>
+                    <column>objectid</column>
+                    <column>QCState</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="Demographics" targetOption="merge" bulkLoad="true">
+
+            </destination>
+        </transform>
+    </transforms>
+    <incrementalFilter timestampColumnName="modified" pkColumnName="lsid" className="ModifiedSinceFilterStrategy" >
+        <deletedRowsSource remoteSource="PRIME" schemaName="auditlog" queryName="DatasetAuditEvent" timestampColumnName="Created" sourceTimeout="0" deletedSourceKeyColumnName="lsid" targetKeyColumnName="lsid">
+            <sourceFilters>
+                <sourceFilter column="datasetid/Name" operator="eq" value="blood" />
+            </sourceFilters>
+        </deletedRowsSource>
+    </incrementalFilter>
+</etl>
