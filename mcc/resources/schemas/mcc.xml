@@ -302,6 +302,9 @@
                 <columnTitle>Neuroscience Relevance</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="diseasefocus">
+                <columnTitle>Research/Disease Focus</columnTitle>
+            </column>
             <column columnName="census">
                 <columnTitle>Participate In Census?</columnTitle>
                 <nullable>true</nullable>

@@ -7,6 +7,7 @@ SELECT
   d.birth,
   d.death,
   d.colony,
+  d.source,
   d.damMccAlias.externalAlias as dam,
   d.sireMccAlias.externalAlias as sire,
   d.dam as originalDam,
@@ -18,6 +19,7 @@ SELECT
     WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
+  d.Id.mostRecentDeparture.mostRecentDeparture,
   o.availability,
   o.current_housing_status,
   o.infant_history,
@@ -50,6 +52,7 @@ SELECT
   d.birth,
   d.death,
   d.colony,
+  d.source,
   d.damMccAlias.externalAlias as dam,
   d.sireMccAlias.externalAlias as sire,
   d.dam as originalDam,
@@ -61,6 +64,7 @@ SELECT
     WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
+  d.Id.mostRecentDeparture.mostRecentDeparture,
   o.availability,
   o.current_housing_status,
   o.infant_history,
@@ -93,6 +97,7 @@ SELECT
     d.birth,
     d.death,
     d.colony,
+    d.source,
     d.damMccAlias.externalAlias as dam,
     d.sireMccAlias.externalAlias as sire,
     d.dam as originalDam,
@@ -101,6 +106,7 @@ SELECT
     d.objectid,
     d.calculated_status,
     d.u24_status,
+    d.Id.mostRecentDeparture.mostRecentDeparture,
     o.availability,
     o.current_housing_status,
     o.infant_history,
@@ -133,6 +139,7 @@ SELECT
     d.birth,
     d.death,
     d.colony,
+    d.source,
     d.damMccAlias.externalAlias as dam,
     d.sireMccAlias.externalAlias as sire,
     d.dam as originalDam,
@@ -141,6 +148,7 @@ SELECT
     d.objectid,
     d.calculated_status,
     d.u24_status,
+    d.Id.mostRecentDeparture.mostRecentDeparture,
     o.availability,
     o.current_housing_status,
     o.infant_history,

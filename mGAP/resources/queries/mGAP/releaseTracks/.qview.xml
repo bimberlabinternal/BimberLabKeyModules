@@ -1,0 +1,23 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView">
+    <columns>
+        <column name="rowid"/>
+        <column name="trackName"/>
+        <column name="label"/>
+        <column name="source"/>
+        <column name="category"/>
+        <column name="url"/>
+        <column name="vcfId"/>
+        <column name="description"/>
+        <column name="isprimarytrack"/>
+        <column name="mergepriority"/>
+        <column name="skipvalidation"/>
+        <column name="vcfId/container/Name">
+            <properties>
+                <property name="columnTitle" value="Workbook"/>
+            </properties>
+        </column>
+    </columns>
+    <sorts>
+        <sort column="trackName" descending="false"/>
+    </sorts>
+</customView>

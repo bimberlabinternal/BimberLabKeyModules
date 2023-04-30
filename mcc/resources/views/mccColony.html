@@ -41,6 +41,9 @@ Ext4.onReady(function (){
                     },{
                         name: 'View Files',
                         url: LABKEY.ActionURL.buildURL('filecontent', 'begin.view')
+                    },{
+                        name: 'View All MCC Transfers',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'mcc', queryName: 'aggregatedDemographics', 'query.viewName': 'Transfers'})
                     }]
                 },{
                     header: 'Configuration/Data Management',
