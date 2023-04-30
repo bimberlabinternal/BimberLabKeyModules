@@ -11,16 +11,12 @@ import org.labkey.test.TestTimeoutException;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
 import org.labkey.test.components.ext4.Window;
-import org.labkey.test.util.DataRegion;
 import org.labkey.test.util.DataRegionTable;
 import org.labkey.test.util.Ext4Helper;
-import org.labkey.test.util.LogMethod;
-import org.labkey.test.util.LoggedParam;
 import org.labkey.test.util.ext4cmp.Ext4ComboRef;
 import org.labkey.test.util.ext4cmp.Ext4FieldRef;
 import org.labkey.test.util.ext4cmp.Ext4GridRef;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +94,26 @@ public class LabPurchasingTest extends BaseWebDriverTest
 
         // Adding the new vendor should have updated the combo:
         grid.clickTbarButton("Add New");
+        checker().withScreenshot("LabPurchasingBeforeVendor");
         grid.setGridCell(1, "vendorId", "New Vendor 1");
+        try
+        {
+            Assert.assertTrue("Missing vendor cell", isElementPresent(Ext4GridRef.locateExt4GridCell("New Vendor 1")));
+        }
+        catch (AssertionError e)
+        {
+            checker().withScreenshot("LabPurchasingVendor0");
+            WebElement el = grid.startEditing(1, "vendorId");
+            checker().withScreenshot("LabPurchasingVendor1");
+
+            setFormElementJS(el, "");
+            el.sendKeys("New Vendor 1");
+            sleep(1000);
+
+            checker().withScreenshot("LabPurchasingVendor2");
+
+            throw e;
+        }
 
         // Try to save, expect error:
         click(Ext4Helper.Locators.ext4Button("Order Items"));
