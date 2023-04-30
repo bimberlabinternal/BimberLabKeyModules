@@ -98,7 +98,25 @@ public class LabPurchasingTest extends BaseWebDriverTest
 
         // Adding the new vendor should have updated the combo:
         grid.clickTbarButton("Add New");
+        checker().withScreenshot("LabPurchasingBeforeVendor");
         grid.setGridCell(1, "vendorId", "New Vendor 1");
+        try
+        {
+            Assert.assertEquals("New Vendor 1", grid.getFieldValue(1, "vendorId"));
+        }
+        catch (AssertionError e)
+        {
+            log("Incorrect value, was: " + grid.getFieldValue(1, "vendorId"));
+            WebElement el = grid.startEditing(1, "vendorId");
+            checker().withScreenshot("LabPurchasingVendor1");
+
+            el.sendKeys("New Vendor 1");
+            sleep(1000);
+
+            checker().withScreenshot("LabPurchasingVendor2");
+
+            throw e;
+        }
 
         // Try to save, expect error:
         click(Ext4Helper.Locators.ext4Button("Order Items"));
