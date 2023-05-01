@@ -131,9 +131,10 @@
                 </columnTransforms>
             </destination>
         </transform>
+
         <transform id="step5" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
-            <source schemaName="mGAP" queryName="variantList" remoteSource="PRIMESEQ">
+            <source schemaName="mGAP" queryName="variantList" remoteSource="PRIMESEQ" sourceTimeout="0">
                 <sourceColumns>
                     <column>releaseId</column>
                     <column>contig</column>

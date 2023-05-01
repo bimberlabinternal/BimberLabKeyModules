@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>PRIME_Data</name>
+    <description>PRIMe Clinical/Demographics Data</description>
+    <transforms>
+        <transform id="demographics" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{primeseq}/prime-demographics"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="parentage" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{primeseq}/prime-parentage"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="weight" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{primeseq}/prime-weight"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="blooddraws" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{primeseq}/prime-blooddraws"/>
+                </settings>
+            </taskref>
+        </transform>
+
+    </transforms>
+
+    <schedule>
+        <cron expression="0 0 3 * * ?"/>
+    </schedule>
+</etl>

@@ -1,0 +1,29 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false" label="MCC Transfers">
+    <columns>
+        <column name="Id"/>
+        <column name="originalId"/>
+        <column name="species"/>
+        <column name="colony"/>
+        <column name="mostRecentDeparture"/>
+        <column name="source"/>
+        <column name="gender"/>
+        <column name="birth"/>
+        <column name="death"/>
+        <column name="mostRecentWeight"/>
+        <column name="calculated_status"/>
+        <column name="u24_status"/>
+        <column name="date_of_observations"/>
+        <column name="medical_history"/>
+        <column name="availability"/>
+        <column name="current_housing_status"/>
+        <column name="infant_history"/>
+        <column name="fertility_status"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="true"/>
+    </sorts>
+    <filters>
+        <filter column="mostRecentDeparture" operator="isnonblank" value=""/>
+        <filter column="source" operator="isnonblank" value=""/>
+    </filters>
+</customView>

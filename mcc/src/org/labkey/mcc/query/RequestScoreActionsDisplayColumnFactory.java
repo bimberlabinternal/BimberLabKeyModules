@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.Container;
-import org.labkey.api.data.DataColumn;
 import org.labkey.api.data.DisplayColumn;
 import org.labkey.api.data.DisplayColumnFactory;
 import org.labkey.api.data.RenderContext;
@@ -13,6 +12,7 @@ import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
+import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.template.ClientDependency;
 import org.labkey.mcc.MccManager;
 import org.labkey.mcc.security.MccFinalReviewPermission;
@@ -20,6 +20,7 @@ import org.labkey.mcc.security.MccRequestAdminPermission;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFactory
@@ -73,6 +74,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                             {
                                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=primaryReview", requestContainer);
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter MCC Internal Review</a>");
+                                out.write(getWithdrawnLine(ctx, requestRowId));
                             }
                         }
                         else if (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
@@ -81,6 +83,7 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                             {
                                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=resourceAvailability", requestContainer);
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Resource Availability Assessment</a>");
+                                out.write(getWithdrawnLine(ctx, requestRowId));
                             }
                         }
                         else if (st == MccManager.RequestStatus.PendingDecision)
@@ -89,11 +92,13 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                             {
                                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");
+                                out.write(getWithdrawnLine(ctx, requestRowId));
                             }
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {
-                            out.write("<br><a class=\"labkey-text-link\" href=\"javascript:alert('This is not enabled yet')\">Update Animal Availability</a>");
+                            out.write("<br><a class=\"labkey-text-link\" onclick=\"MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + "," + requestRowId + ", 'Fulfilled')\">Mark Fulfilled</a>");
+                            out.write(getWithdrawnLine(ctx, requestRowId));
                         }
                     }
                     catch (IllegalArgumentException e)
@@ -115,6 +120,21 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                 keys.add(getBoundKey("requestId", "status"));
                 keys.add(getBoundKey("requestId" , "rowid"));
             }
+
+            @Override
+            public @NotNull Set<ClientDependency> getClientDependencies()
+            {
+                Set<ClientDependency> ret = new LinkedHashSet<>(super.getClientDependencies());
+                ret.add(ClientDependency.fromPath("LDK/LDKApi.lib.xml"));
+                ret.add(ClientDependency.fromPath("mcc/window/ChangeStatusWindow.js"));
+
+                return ret;
+            }
         };
+    }
+
+    private String getWithdrawnLine(RenderContext ctx, int requestRowId)
+    {
+        return "<br><a class=\"labkey-text-link\" onclick=\"MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + "," + requestRowId + ", 'Withdrawn')\">Withdraw Request</a>";
     }
 }

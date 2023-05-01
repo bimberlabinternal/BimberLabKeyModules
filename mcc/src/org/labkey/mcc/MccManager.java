@@ -53,7 +53,8 @@ public class MccManager
         Approved(5, "Approved", MccRequestAdminPermission.class),
         Rejected(6, "Rejected", MccRequestAdminPermission.class),
         Processing(7, "Processing", MccRequestAdminPermission.class),
-        Fulfilled(8, "Fulfilled", MccRequestAdminPermission.class);
+        Fulfilled(8, "Fulfilled", MccRequestAdminPermission.class),
+        Withdrawn(9, "Withdrawn", MccRequestorPermission.class);
 
         int sortOrder;
         String label;

@@ -75,8 +75,9 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         public Provider()
         {
             super("GenerateMgapTracksStep", "Generate mGAP Tracks", "GenerateMgapTracksStep", "This will use the set of sample IDs from the table mgap.releaseTrackSubsets to subset the input VCF and produce one VCF per track. It will perform basic validation and also update mgap.releaseTracks.", Arrays.asList(
-                    ToolParameterDescriptor.create("releaseVersion", "mGAP Version", "This is the string that was used to annotate novel variants.", "textfield", new JSONObject(){{
+                    ToolParameterDescriptor.create("releaseVersion", "mGAP Version", "This is the string that was used to annotate novel variants.", "ldk-numberfield", new JSONObject(){{
                         put("allowBlank", false);
+                        put("decimalPrecision", 1);
                         put("doNotIncludeInTemplates", true);
                     }}, null)
             ), null, null);
@@ -174,17 +175,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         }
 
         // Also create the Novel Sites track:
-        String releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class);
-        if (releaseVersion.toLowerCase().startsWith("v"))
-        {
-            releaseVersion = releaseVersion.substring(1);
-        }
-
-        if (!NumberUtils.isCreatable(releaseVersion))
-        {
-            throw new IllegalArgumentException("Expected the release version to be numeric: " + releaseVersion);
-        }
-
+        Double releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Double.class);
         File novelSitesOutput = new File(outputDirectory, "mGAP_v" + releaseVersion + "_NovelSites.vcf.gz");
         if (new File(novelSitesOutput.getPath() + ".tbi").exists())
         {
@@ -240,10 +231,10 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         {
             Container targetContainer = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
             TableInfo releaseTracks = QueryService.get().getUserSchema(job.getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACKS);
-            TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), so.getName()), null);
+            TableSelector ts = new TableSelector(releaseTracks, PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("trackName"), trackName), null);
             if (!ts.exists())
             {
-                job.getLogger().debug("Creating new track: " + so.getName());
+                job.getLogger().debug("Creating new track: " + trackName + " / " + so.getName());
                 Map<String, Object> newRow = new CaseInsensitiveHashMap<>();
                 newRow.put("trackName", trackName);
                 newRow.put("label", trackName);
@@ -259,13 +250,15 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             }
             else
             {
-                job.getLogger().debug("Updating existing track: " + so.getName());
+                int rowId = ts.getObject(Integer.class);
+                job.getLogger().debug("Updating existing track: " + so.getName() + " / " + rowId);
+
                 Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
-                toUpdate.put("rowId", ts.getObject(Integer.class));
+                toUpdate.put("rowId", rowId);
                 toUpdate.put("vcfId", so.getRowid());
 
                 Map<String, Object> oldKeys = new CaseInsensitiveHashMap<>();
-                toUpdate.put("rowId", ts.getObject(Integer.class));
+                oldKeys.put("rowId", rowId);
 
                 releaseTracks.getUpdateService().updateRows(job.getUser(), targetContainer, Arrays.asList(toUpdate), Arrays.asList(oldKeys), null, null);
             }
