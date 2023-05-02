@@ -315,13 +315,13 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
             File alleleFreqDir = new File(job.getJobSupport(FileAnalysisJobSupport.class).getAnalysisDirectory(), "alleleFreqs");
             alleleFreqDir.mkdirs();
 
-            if (params.get("minGenotypeQual") != null)
+            if (!params.isNull("minGenotypeQual"))
             {
                 job.getLogger().info("setting minGenotypeQual: " + params.get("minGenotypeQual"));
                 runner.setMinGenotypeQual(params.getInt("minGenotypeQual"));
             }
 
-            if (params.get("minGenotypeDepth") != null)
+            if (!params.isNull("minGenotypeDepth"))
             {
                 job.getLogger().info("setting minGenotypeDepth: " + params.get("minGenotypeDepth"));
                 runner.setMinGenotypeDepth(params.getInt("minGenotypeDepth"));
@@ -373,7 +373,7 @@ public class ImputationAnalysis implements SequenceOutputHandler<SequenceOutputH
 
                     //now actually perform imputation
                     job.setStatus(PipelineJob.TaskStatus.running, "Imputing: " + idx + " of " + sets.size());
-                    String callMethod = params.get("callMethod") != null ? params.getString("callMethod") : "1";
+                    String callMethod = !params.isNull("callMethod") ? params.getString("callMethod") : "1";
                     runner.processSet(baseDir, alleleFreqDir, job.getLogger(), ss.wgsSampleIds, ss.imputedSampleIds, callMethod);
 
                     job.setStatus(PipelineJob.TaskStatus.running, "Making VCF / Evaluating Accuracy");

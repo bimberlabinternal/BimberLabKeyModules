@@ -68,11 +68,11 @@ Ext4.define('LabPurchasing.panel.VendorPanel', {
             return;
         }
 
-        function onSuccess(store){
+        function onSuccess(){
             this.mun(this.store, onError);
             btn.setDisabled(false);
 
-            var store = Ext4.StoreManager.get('labpurchasing||vendors||rowId||vendorName||');
+            var store = Ext4.StoreManager.get(LABKEY.ext4.Util.getLookupStoreId({lookup: {schemaName: 'labpurchasing', queryName: 'vendors', keyColumn: 'rowId', displayColumn: 'vendorName'}}));
             if (store) {
                 store.load();
             }
