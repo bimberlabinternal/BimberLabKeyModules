@@ -373,6 +373,10 @@
                 <columnTitle>IACUC Protocol #</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="comments">
+                <columnTitle>Other Comments</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="status">
                 <defaultValue>Draft</defaultValue>
             </column>

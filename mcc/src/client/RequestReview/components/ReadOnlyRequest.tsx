@@ -262,6 +262,12 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                     {requestData.request.censusreason || 'N/A'}
                 </Grid>
                 <Grid item xs={2} className={styles.fieldLabel}>
+                    Other Comments:
+                </Grid>
+                <Grid item xs={10}>
+                    {requestData.request.comments}
+                </Grid>
+                <Grid item xs={2} className={styles.fieldLabel}>
                     Status:
                 </Grid>
                 <Grid item xs={10}>
