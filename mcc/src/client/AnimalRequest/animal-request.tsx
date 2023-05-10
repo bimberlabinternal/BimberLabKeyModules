@@ -21,25 +21,38 @@ import AnimalCohorts from './components/animal-cohort';
 import Button from './components/button';
 import SavingOverlay from './saving-overlay';
 import ErrorMessageHandler from './components/error-message-handler';
+import {
+    Box,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    TextField
+} from '@material-ui/core';
 
 import {
     animalWellfarePlaceholder,
+    censusToolTip,
     certificationLabel,
-    terminalProceduresLabel,
     collaborationsPlaceholder,
+    commentsPlaceholder,
     earlyInvestigatorTooltip,
     existingMarmosetColonyOptions,
     existingNHPFacilityOptions,
     experimentalRationalePlaceholder,
     institutionTypeOptions,
     methodsProposedPlaceholder,
-    signingOfficialTooltip, censusToolTip
+    signingOfficialTooltip,
+    terminalProceduresLabel
 } from './components/values';
 import AnimalCensus from './components/census';
 
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
 
+    const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
+    const [withdrawReasonText, setWithdrawReasonText] = useState<string>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [displayOverlay, setDisplayOverlay] = useState(false)
     const [requestData, setRequestData] = useState<AnimalRequestModel>(null)
@@ -114,7 +127,7 @@ export function AnimalRequest() {
     }
 
     function doEnforceRequiredFields() {
-        return isSubmitting || requestData.request.status !== "Draft"
+        return "Withdrawn" === requestData.request.status ? false : isSubmitting || requestData.request.status !== "Draft"
     }
 
     // The general idea is that users with MCCRequestAdminPermission can edit all states.
@@ -140,6 +153,7 @@ export function AnimalRequest() {
     }
 
     function handleSubmitButton(e, isSubmitting) {
+        console.log('handleSubmitButton')
         setIsSubmitting(isSubmitting);
 
         if (!isSubmitting) {
@@ -313,6 +327,7 @@ export function AnimalRequest() {
                         "iacucprotocol": data.get("iacuc-protocol"),
                         "grantnumber" : data.get("funding-grant-number"),
                         "applicationduedate": data.get("funding-application-due-date"),
+                        "comments": data.get("comments"),
                         "status": requestData.request.status,
                     }]
                 },
@@ -689,6 +704,15 @@ export function AnimalRequest() {
                 <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
             </div>
 
+            <Title text={"8. " + commentsPlaceholder}/>
+            <div className="tw-w-full tw-px-3 tw-mb-6">
+                <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <TextArea id="comments" ariaLabel="Comments" isSubmitting={isSubmitting} placeholder={commentsPlaceholder} required={false} defaultValue={requestData.request.comments}/>
+                    </div>
+                </ErrorMessageHandler>
+            </div>
+
             <div className="tw-flex tw-flex-wrap tw-mx-2">
                 <Title text="Request Status: "/>{requestData.request.status}
             </div>
@@ -711,13 +735,49 @@ export function AnimalRequest() {
                  }} text={getSubmitButtonText()} display={hasEditPermission()}/>
 
                 <Button onClick={(e) => {
-                    requestData.request.status = "withdrawn"
-                    handleSubmitButton(e, false);
-                }} text={"Widthdraw"} display={shouldShowWithdraw()}/>
+                    setShowWithdrawDialog(true)
+                    console.log('onClick done')
+                }} text={"Withdraw"} display={shouldShowWithdraw()}/>
             </div>
         </form>
 
         <SavingOverlay display={displayOverlay} />
+
+        <Dialog open={showWithdrawDialog}>
+            <DialogTitle>Withdraw Request</DialogTitle>
+            <DialogContent>
+                <DialogContentText>Please enter a reason for withdrawing this request</DialogContentText>
+                <TextField
+                    minRows={4}
+                    variant={"outlined"}
+                    multiline={true}
+                    id="withdrawReason"
+                    required={true}
+                    defaultValue={withdrawReasonText}
+                    onChange={(e) => setWithdrawReasonText(e.target.value)}
+
+                />
+            </DialogContent>
+            <DialogActions>
+                <Box mr="5px">
+                    <Button onClick={(e) => {
+                        if (!withdrawReasonText) {
+                            alert("Must enter the reason")
+                            return
+                        }
+
+                        console.log('dialog onClick')
+
+                        // TODO: if not saved, just leave
+                        requestData.request.status = "Withdrawn"
+                        requestData.request.comments = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
+                        setShowWithdrawDialog(false)
+                        handleSubmitButton(e, true);
+                    }} disabled={false} text={"Submit"}/>
+                    <Button onClick={(e) => setShowWithdrawDialog(false)} text={"Close"}/>
+                </Box>
+            </DialogActions>
+        </Dialog>
         </>
      )
 }
