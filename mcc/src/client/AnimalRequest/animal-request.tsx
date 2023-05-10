@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useRef, useState } from 'react';
 import { ActionURL, getServerContext, Query } from '@labkey/api';
 import {
     AnimalCohort,
@@ -27,7 +27,7 @@ import {
     DialogActions,
     DialogContent,
     DialogContentText,
-    DialogTitle,
+    DialogTitle, TextareaAutosize,
     TextField
 } from '@material-ui/core';
 
@@ -60,6 +60,7 @@ export function AnimalRequest() {
 
     const [ deletedCohortRecords, setDeletedCohortRecords ] = useState(new Set<number>())
     const [ deletedCoIRecords, setDeletedCoIRecords ] = useState(new Set<number>())
+    const formRef = useRef(null)
 
     function onAddCohort() {
         requestData.cohorts.push(new AnimalCohort())
@@ -153,7 +154,6 @@ export function AnimalRequest() {
     }
 
     function handleSubmitButton(e, isSubmitting) {
-        console.log('handleSubmitButton')
         setIsSubmitting(isSubmitting);
 
         if (!isSubmitting) {
@@ -251,6 +251,7 @@ export function AnimalRequest() {
     }
 
     function handleSubmit(e: FormEvent) {
+        console.log('handleSubmit')
         e.preventDefault()
         setDisplayOverlay(true)
 
@@ -267,6 +268,7 @@ export function AnimalRequest() {
     
         const el = e.currentTarget as HTMLFormElement
         const data = new FormData(el)
+        console.log(data)
         el.querySelectorAll<HTMLSelectElement>('select[multiple]').forEach(function(x){
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
         })
@@ -459,7 +461,7 @@ export function AnimalRequest() {
 
     return (
         <>
-        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
+        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off" ref={formRef}>
             <h3>Overview</h3>
 
             <Title text="1. Project Title*"/>
@@ -735,8 +737,8 @@ export function AnimalRequest() {
                  }} text={getSubmitButtonText()} display={hasEditPermission()}/>
 
                 <Button onClick={(e) => {
+                    e.preventDefault()
                     setShowWithdrawDialog(true)
-                    console.log('onClick done')
                 }} text={"Withdraw"} display={shouldShowWithdraw()}/>
             </div>
         </form>
@@ -747,15 +749,13 @@ export function AnimalRequest() {
             <DialogTitle>Withdraw Request</DialogTitle>
             <DialogContent>
                 <DialogContentText>Please enter a reason for withdrawing this request</DialogContentText>
-                <TextField
+                <TextareaAutosize
                     minRows={4}
-                    variant={"outlined"}
-                    multiline={true}
                     id="withdrawReason"
                     required={true}
+                    autoFocus={true}
                     defaultValue={withdrawReasonText}
                     onChange={(e) => setWithdrawReasonText(e.target.value)}
-
                 />
             </DialogContent>
             <DialogActions>
@@ -766,13 +766,19 @@ export function AnimalRequest() {
                             return
                         }
 
-                        console.log('dialog onClick')
+                        // The record was never saved, so just leave the page
+                        if (!requestData.request.rowid) {
+                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        }
+                        else {
+                            requestData.request.status = "Withdrawn"
+                            requestData.request.comments = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
+                            setWithdrawReasonText(null)
+                            setShowWithdrawDialog(false)
+                            setIsSubmitting(true);
 
-                        // TODO: if not saved, just leave
-                        requestData.request.status = "Withdrawn"
-                        requestData.request.comments = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
-                        setShowWithdrawDialog(false)
-                        handleSubmitButton(e, true);
+                            formRef.current.dispatchEvent(new Event("submit"));
+                        }
                     }} disabled={false} text={"Submit"}/>
                     <Button onClick={(e) => setShowWithdrawDialog(false)} text={"Close"}/>
                 </Box>
