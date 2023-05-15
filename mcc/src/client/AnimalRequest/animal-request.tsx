@@ -154,6 +154,7 @@ export function AnimalRequest() {
     }
 
     function handleSubmitButton(e, isSubmitting) {
+        console.log('handleSubmitButton: ' + isSubmitting)
         setIsSubmitting(isSubmitting);
 
         if (!isSubmitting) {
@@ -257,6 +258,7 @@ export function AnimalRequest() {
 
     function doSubmit() {
         setDisplayOverlay(true)
+        console.log('doSubmit: ' + isSubmitting)
 
         // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
         // Any other action preserved the status as-is
@@ -443,6 +445,7 @@ export function AnimalRequest() {
                 })
 
                 setDisplayOverlay(false)
+                console.log(isSubmitting)
                 if (isSubmitting) {
                     const returnURL = (new URLSearchParams(window.location.search)).get("requestId")
                     let dest = ActionURL.buildURL('mcc', 'mccRequests.view')
@@ -776,9 +779,12 @@ export function AnimalRequest() {
                         else {
                             requestData.request.status = "Withdrawn"
                             requestData.request.comments = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
+                            console.log('title: ' + requestData.request.title)
+                            console.log('comments: ' + requestData.request.comments)
+
                             setWithdrawReasonText(null)
                             setShowWithdrawDialog(false)
-                            setIsSubmitting(true);
+                            setIsSubmitting(true)
 
                             doSubmit()
                         }
