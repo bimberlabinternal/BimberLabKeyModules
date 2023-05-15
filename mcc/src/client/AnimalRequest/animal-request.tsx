@@ -251,8 +251,11 @@ export function AnimalRequest() {
     }
 
     function handleSubmit(e: FormEvent) {
-        console.log('handleSubmit')
         e.preventDefault()
+        doSubmit()
+    }
+
+    function doSubmit() {
         setDisplayOverlay(true)
 
         // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
@@ -265,8 +268,8 @@ export function AnimalRequest() {
                 setRequestData({...requestData})
             }
         }
-    
-        const el = e.currentTarget as HTMLFormElement
+
+        const el = formRef.current as HTMLFormElement
         const data = new FormData(el)
         console.log(data)
         el.querySelectorAll<HTMLSelectElement>('select[multiple]').forEach(function(x){
@@ -777,7 +780,7 @@ export function AnimalRequest() {
                             setShowWithdrawDialog(false)
                             setIsSubmitting(true);
 
-                            formRef.current.dispatchEvent(new Event("submit"));
+                            doSubmit()
                         }
                     }} disabled={false} text={"Submit"}/>
                     <Button onClick={(e) => setShowWithdrawDialog(false)} text={"Close"}/>
