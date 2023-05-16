@@ -60,6 +60,7 @@ public class MccTest extends BaseWebDriverTest
     {
         doRequestFormTest();
         doRequestFormTestWithFailure();
+        doRequestFormTestWithWithdraw()
 
         testInvalidId();
 
@@ -553,6 +554,54 @@ public class MccTest extends BaseWebDriverTest
         dataRegionName = getDataRegionName("webpartPending");
         dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 1);
+    }
+
+    private void doRequestFormTestWithWithdraw() throws Exception
+    {
+        goToAnimalRequests();
+        waitAndClickAndWait(Locator.tagWithText("a", "Submit New Animal Request"));
+        waitForElement(getButton("Save"));
+
+        setAllFormValues();
+
+        addCohort(0);
+
+        addCoinvestigator(0, true);
+        addCoinvestigator(1, true);
+
+        int expectedRequests = getRequestRows().size();
+
+        waitAndClick(getButton("Withdraw"));
+        waitForElement(Locator.tagWithText("h2", "Withdraw Request"));
+        waitForElement(Locator.tagWithId("textarea", "withdrawReason"));
+        setFormElement(Locator.tagWithId("textarea", "withdrawReason"), "The reason");
+        waitAndClickAndWait(getButton("Submit"));
+
+        List<Map<String, Object>> requestRows = getRequestRows();
+        Assert.assertEquals(expectedRequests, requestRows.size());
+
+        goToAnimalRequests();
+        waitAndClickAndWait(Locator.tagWithText("a", "Submit New Animal Request"));
+        waitForElement(getButton("Save"));
+
+        setAllFormValues();
+
+        addCohort(0);
+
+        addCoinvestigator(0, true);
+        addCoinvestigator(1, true);
+        waitAndClick(getButton("Save"));
+        waitForSaveToComplete();
+
+        waitAndClick(getButton("Withdraw"));
+        waitForElement(Locator.tagWithText("h2", "Withdraw Request"));
+        waitForElement(Locator.tagWithId("textarea", "withdrawReason"));
+        setFormElement(Locator.tagWithId("textarea", "withdrawReason"), "The reason");
+        waitAndClickAndWait(getButton("Submit"));
+
+        requestRows = getRequestRows();
+        Assert.assertEquals(expectedRequests + 1, requestRows.size());
+        Assert.assertEquals("Incorect status", requestRows.get(0).get("status"), "Widthdrawn");
     }
 
     private String getDataRegionName(String divName)
