@@ -154,7 +154,6 @@ export function AnimalRequest() {
     }
 
     function handleSubmitButton(e, isSubmitting) {
-        console.log('handleSubmitButton: ' + isSubmitting)
         setIsSubmitting(isSubmitting);
 
         if (!isSubmitting) {
@@ -257,8 +256,9 @@ export function AnimalRequest() {
     }
 
     function doSubmit() {
-        setDisplayOverlay(true)
         console.log('doSubmit: ' + isSubmitting)
+
+        setDisplayOverlay(true)
 
         // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
         // Any other action preserved the status as-is
@@ -273,7 +273,6 @@ export function AnimalRequest() {
 
         const el = formRef.current as HTMLFormElement
         const data = new FormData(el)
-        console.log(data)
         el.querySelectorAll<HTMLSelectElement>('select[multiple]').forEach(function(x){
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
         })
@@ -355,8 +354,8 @@ export function AnimalRequest() {
                     requestData.request.rowid = rowId
                 }
 
-                if (response.result[0].rows[0].rowid.status) {
-                    requestData.request.status = response.result[0].rows[0].rowid.status
+                if (response.result[0].rows[0].status) {
+                    requestData.request.status = response.result[0].rows[0].status
                 }
                 else {
                     console.error('Status was null for the animalrequest row after save. This is not expected.')
@@ -445,7 +444,6 @@ export function AnimalRequest() {
                 })
 
                 setDisplayOverlay(false)
-                console.log(isSubmitting)
                 if (isSubmitting) {
                     const returnURL = (new URLSearchParams(window.location.search)).get("requestId")
                     let dest = ActionURL.buildURL('mcc', 'mccRequests.view')
@@ -467,7 +465,7 @@ export function AnimalRequest() {
 
     return (
         <>
-        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off" ref={formRef}>
+        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off" id={"animalRequestForm"} ref={formRef}>
             <h3>Overview</h3>
 
             <Title text="1. Project Title*"/>
@@ -761,6 +759,7 @@ export function AnimalRequest() {
                     required={true}
                     autoFocus={true}
                     defaultValue={withdrawReasonText}
+                    form={"animalRequestForm"}
                     onChange={(e) => setWithdrawReasonText(e.target.value)}
                 />
             </DialogContent>
@@ -778,17 +777,13 @@ export function AnimalRequest() {
                         }
                         else {
                             requestData.request.status = "Withdrawn"
-                            requestData.request.comments = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
-                            console.log('title: ' + requestData.request.title)
-                            console.log('comments: ' + requestData.request.comments)
+                            formRef.current.querySelectorAll('#comments')[0].value = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
 
                             setWithdrawReasonText(null)
                             setShowWithdrawDialog(false)
                             setIsSubmitting(true)
-
-                            doSubmit()
                         }
-                    }} disabled={false} text={"Submit"}/>
+                    }} form={"animalRequestForm"} disabled={false} text={"Submit"}/>
                     <Button onClick={(e) => setShowWithdrawDialog(false)} text={"Close"}/>
                 </Box>
             </DialogActions>
