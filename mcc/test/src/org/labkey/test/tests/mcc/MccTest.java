@@ -60,7 +60,7 @@ public class MccTest extends BaseWebDriverTest
     {
         doRequestFormTest();
         doRequestFormTestWithFailure();
-        doRequestFormTestWithWithdraw()
+        doRequestFormTestWithWithdraw();
 
         testInvalidId();
 
