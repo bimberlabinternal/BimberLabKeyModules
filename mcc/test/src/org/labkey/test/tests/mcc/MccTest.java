@@ -395,7 +395,7 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("census-participate-in-census", "census", true).radio()
     };
 
-    private Locator getButton(String text)
+    private Locator.XPathLocator getButton(String text)
     {
         return Locator.tagWithText("button", text);
     }
@@ -575,7 +575,7 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("h2", "Withdraw Request"));
         waitForElement(Locator.tagWithId("textarea", "withdrawReason"));
         setFormElement(Locator.tagWithId("textarea", "withdrawReason"), "The reason");
-        waitAndClickAndWait(getButton("Submit"));
+        waitAndClickAndWait(getButton("Submit").descendant(Locator.tagWithClass("div", "MuiDialogActions-root")));
 
         List<Map<String, Object>> requestRows = getRequestRows();
         Assert.assertEquals(expectedRequests, requestRows.size());
@@ -597,7 +597,7 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("h2", "Withdraw Request"));
         waitForElement(Locator.tagWithId("textarea", "withdrawReason"));
         setFormElement(Locator.tagWithId("textarea", "withdrawReason"), "The reason");
-        waitAndClickAndWait(getButton("Submit"));
+        waitAndClickAndWait(getButton("Submit").descendant(Locator.tagWithClass("div", "MuiDialogActions-root")));
 
         requestRows = getRequestRows();
         Assert.assertEquals(expectedRequests + 1, requestRows.size());
