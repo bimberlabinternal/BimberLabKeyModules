@@ -575,7 +575,8 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("h2", "Withdraw Request"));
         waitForElement(Locator.tagWithId("textarea", "withdrawReason"));
         setFormElement(Locator.tagWithId("textarea", "withdrawReason"), "The reason");
-        waitAndClickAndWait(Locator.tagWithClass("div", "MuiDialogActions-root").child(getButton("Submit")));
+        waitForElementToBeVisible(Locator.tagWithClass("div", "MuiDialogActions-root").descendant(getButton("Submit")));
+        waitAndClickAndWait(Locator.tagWithClass("div", "MuiDialogActions-root").descendant(getButton("Submit")));
 
         List<Map<String, Object>> requestRows = getRequestRows();
         Assert.assertEquals(expectedRequests, requestRows.size());
@@ -597,7 +598,8 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("h2", "Withdraw Request"));
         waitForElement(Locator.tagWithId("textarea", "withdrawReason"));
         setFormElement(Locator.tagWithId("textarea", "withdrawReason"), "The reason");
-        waitAndClickAndWait(Locator.tagWithClass("div", "MuiDialogActions-root").child(getButton("Submit")));
+        waitForElementToBeVisible(Locator.tagWithClass("div", "MuiDialogActions-root").descendant(getButton("Submit")));
+        waitAndClickAndWait(Locator.tagWithClass("div", "MuiDialogActions-root").descendant(getButton("Submit")));
 
         requestRows = getRequestRows();
         Assert.assertEquals(expectedRequests + 1, requestRows.size());

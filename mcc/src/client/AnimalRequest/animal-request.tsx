@@ -252,12 +252,6 @@ export function AnimalRequest() {
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
-        doSubmit()
-    }
-
-    function doSubmit() {
-        console.log('doSubmit: ' + isSubmitting)
-
         setDisplayOverlay(true)
 
         // NOTE: the idea is that when the user hits 'submit', this changes Draft to Submitted.
@@ -773,7 +767,8 @@ export function AnimalRequest() {
 
                         // The record was never saved, so just leave the page
                         if (!requestData.request.rowid) {
-                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                            e.preventDefault()
+                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
                         }
                         else {
                             requestData.request.status = "Withdrawn"
