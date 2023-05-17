@@ -603,7 +603,7 @@ public class MccTest extends BaseWebDriverTest
 
         requestRows = getRequestRows();
         Assert.assertEquals(expectedRequests + 1, requestRows.size());
-        Assert.assertEquals("Incorect status", requestRows.get(0).get("status"), "Widthdrawn");
+        Assert.assertEquals("Incorect status", requestRows.get(0).get("status"), "Withdrawn");
     }
 
     private String getDataRegionName(String divName)
