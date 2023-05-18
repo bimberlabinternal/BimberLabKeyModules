@@ -46,6 +46,7 @@ export class AnimalRequestProps {
     vetemail: string;
     vetfirstname: string;
     objectid: string;
+    comments: string;
 }
 
 export class CoInvestigatorModel {
@@ -122,6 +123,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 "iacucprotocol",
                 "grantnumber",
                 "applicationduedate",
+                "comments",
                 "status"
             ],
             filterArray: [

@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useRef, useState } from 'react';
 import { ActionURL, getServerContext, Query } from '@labkey/api';
 import {
     AnimalCohort,
@@ -21,25 +21,38 @@ import AnimalCohorts from './components/animal-cohort';
 import Button from './components/button';
 import SavingOverlay from './saving-overlay';
 import ErrorMessageHandler from './components/error-message-handler';
+import {
+    Box,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle, TextareaAutosize,
+    TextField
+} from '@material-ui/core';
 
 import {
     animalWellfarePlaceholder,
+    censusToolTip,
     certificationLabel,
-    terminalProceduresLabel,
     collaborationsPlaceholder,
+    commentsPlaceholder,
     earlyInvestigatorTooltip,
     existingMarmosetColonyOptions,
     existingNHPFacilityOptions,
     experimentalRationalePlaceholder,
     institutionTypeOptions,
     methodsProposedPlaceholder,
-    signingOfficialTooltip, censusToolTip
+    signingOfficialTooltip,
+    terminalProceduresLabel
 } from './components/values';
 import AnimalCensus from './components/census';
 
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
 
+    const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
+    const [withdrawReasonText, setWithdrawReasonText] = useState<string>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [displayOverlay, setDisplayOverlay] = useState(false)
     const [requestData, setRequestData] = useState<AnimalRequestModel>(null)
@@ -47,6 +60,7 @@ export function AnimalRequest() {
 
     const [ deletedCohortRecords, setDeletedCohortRecords ] = useState(new Set<number>())
     const [ deletedCoIRecords, setDeletedCoIRecords ] = useState(new Set<number>())
+    const formRef = useRef(null)
 
     function onAddCohort() {
         requestData.cohorts.push(new AnimalCohort())
@@ -114,7 +128,7 @@ export function AnimalRequest() {
     }
 
     function doEnforceRequiredFields() {
-        return isSubmitting || requestData.request.status !== "Draft"
+        return "Withdrawn" === requestData.request.status ? false : isSubmitting || requestData.request.status !== "Draft"
     }
 
     // The general idea is that users with MCCRequestAdminPermission can edit all states.
@@ -250,8 +264,8 @@ export function AnimalRequest() {
                 setRequestData({...requestData})
             }
         }
-    
-        const el = e.currentTarget as HTMLFormElement
+
+        const el = formRef.current as HTMLFormElement
         const data = new FormData(el)
         el.querySelectorAll<HTMLSelectElement>('select[multiple]').forEach(function(x){
             data.set(x.id, Array.from(x.selectedOptions, option => option.value).join(','))
@@ -313,6 +327,7 @@ export function AnimalRequest() {
                         "iacucprotocol": data.get("iacuc-protocol"),
                         "grantnumber" : data.get("funding-grant-number"),
                         "applicationduedate": data.get("funding-application-due-date"),
+                        "comments": data.get("comments"),
                         "status": requestData.request.status,
                     }]
                 },
@@ -333,8 +348,8 @@ export function AnimalRequest() {
                     requestData.request.rowid = rowId
                 }
 
-                if (response.result[0].rows[0].rowid.status) {
-                    requestData.request.status = response.result[0].rows[0].rowid.status
+                if (response.result[0].rows[0].status) {
+                    requestData.request.status = response.result[0].rows[0].status
                 }
                 else {
                     console.error('Status was null for the animalrequest row after save. This is not expected.')
@@ -444,7 +459,7 @@ export function AnimalRequest() {
 
     return (
         <>
-        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off">
+        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off" id={"animalRequestForm"} ref={formRef}>
             <h3>Overview</h3>
 
             <Title text="1. Project Title*"/>
@@ -689,6 +704,15 @@ export function AnimalRequest() {
                 <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
             </div>
 
+            <Title text={"8. " + commentsPlaceholder}/>
+            <div className="tw-w-full tw-px-3 tw-mb-6">
+                <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <TextArea id="comments" ariaLabel="Comments" isSubmitting={isSubmitting} placeholder={commentsPlaceholder} required={false} defaultValue={requestData.request.comments}/>
+                    </div>
+                </ErrorMessageHandler>
+            </div>
+
             <div className="tw-flex tw-flex-wrap tw-mx-2">
                 <Title text="Request Status: "/>{requestData.request.status}
             </div>
@@ -711,13 +735,54 @@ export function AnimalRequest() {
                  }} text={getSubmitButtonText()} display={hasEditPermission()}/>
 
                 <Button onClick={(e) => {
-                    requestData.request.status = "withdrawn"
-                    handleSubmitButton(e, false);
-                }} text={"Widthdraw"} display={shouldShowWithdraw()}/>
+                    e.preventDefault()
+                    setShowWithdrawDialog(true)
+                }} text={"Withdraw"} display={shouldShowWithdraw()}/>
             </div>
         </form>
 
         <SavingOverlay display={displayOverlay} />
+
+        <Dialog open={showWithdrawDialog}>
+            <DialogTitle>Withdraw Request</DialogTitle>
+            <DialogContent>
+                <DialogContentText>Please enter a reason for withdrawing this request</DialogContentText>
+                <TextareaAutosize
+                    minRows={4}
+                    id="withdrawReason"
+                    required={true}
+                    autoFocus={true}
+                    defaultValue={withdrawReasonText}
+                    form={"animalRequestForm"}
+                    onChange={(e) => setWithdrawReasonText(e.target.value)}
+                />
+            </DialogContent>
+            <DialogActions>
+                <Box mr="5px">
+                    <Button onClick={(e) => {
+                        if (!withdrawReasonText) {
+                            alert("Must enter the reason")
+                            return
+                        }
+
+                        // The record was never saved, so just leave the page
+                        if (!requestData.request.rowid) {
+                            e.preventDefault()
+                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
+                        }
+                        else {
+                            requestData.request.status = "Withdrawn"
+                            formRef.current.querySelectorAll('#comments')[0].value = (requestData.request.comments ? requestData.request.comments + '\n' : '') + withdrawReasonText
+
+                            setWithdrawReasonText(null)
+                            setShowWithdrawDialog(false)
+                            setIsSubmitting(true)
+                        }
+                    }} form={"animalRequestForm"} disabled={false} text={"Submit"}/>
+                    <Button onClick={(e) => setShowWithdrawDialog(false)} text={"Close"}/>
+                </Box>
+            </DialogActions>
+        </Dialog>
         </>
      )
 }

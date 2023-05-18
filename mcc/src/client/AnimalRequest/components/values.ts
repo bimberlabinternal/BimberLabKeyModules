@@ -8,6 +8,8 @@ export const otherCharacteristicsPlaceholder = "Other characteristics (ie. age, 
 export const methodsProposedPlaceholder = "Methods proposed and investigators' experience in the methods"
 export const animalBreedingPlaceholder = "Purpose of the animal breeding program"
 export const collaborationsPlaceholder = "Any collaborations, pilot studies, and/or publications"
+
+export const commentsPlaceholder = "Other comments"
 export const animalWellfarePlaceholder = "Animal welfare (proposed care and use)"
 export const censusReasonPlaceholder = "Reason for not participating"
 
