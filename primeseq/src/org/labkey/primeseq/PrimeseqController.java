@@ -263,7 +263,7 @@ public class PrimeseqController extends SpringActionController
                     "The following SQL will be executed. Please check carefully before hitting confirm:" +
                     "<br>" +
                     "<pre>" +
-                    getSql(form, true) +
+                    getSql(form) +
                     "</pre>" +
                     "<br>" +
                     "Note: if the URL of the folder changed you may also want to execute something like the following (manually):<br>" +
@@ -296,42 +296,31 @@ public class PrimeseqController extends SpringActionController
             return input;
         }
 
-        private String getSql(UpdateFilePathsForm form, boolean calculateCounts)
+        private SQLFragment getSql(UpdateFilePathsForm form)
         {
             // Ensure start/end with slash:
             String sourcePrefix = ensureSlashes(form.getSourcePrefix());
             String replacementPrefix = ensureSlashes(form.getReplacementPrefix());
 
-            StringBuilder sql = new StringBuilder();
+            SQLFragment sql = new SQLFragment();
 
-            if (calculateCounts)
-            {
-                int count = new SqlExecutor(DbScope.getLabKeyScope()).execute(new SQLFragment("SELECT count(*) FROM Exp.Data WHERE DataFileUrl like 'file://" + sourcePrefix + "%'"));
-                sql.append("--Matching rows: " + count + "\n");
-            }
+            sql.append("UPDATE Exp.Data SET DataFileUrl = replace(DataFileUrl, ").appendValue("file://" + sourcePrefix).append(", ").appendValue("file://" + replacementPrefix).append(") ");
+            sql.append("WHERE DataFileUrl like ").appendValue("file://" + sourcePrefix + "%").append("\n");
 
-            sql.append("UPDATE Exp.Data SET DataFileUrl = replace(DataFileUrl, 'file://" + sourcePrefix + "', 'file://" + replacementPrefix + "') ");
-            sql.append("WHERE DataFileUrl like 'file://" + sourcePrefix + "%';\n");
+            sql.append("UPDATE pipeline.StatusFiles SET FilePath = replace(FilePath, ").appendValue(sourcePrefix).append(", ").appendValue(replacementPrefix).append(" ");
+            sql.append("WHERE FilePath like ").appendValue(sourcePrefix + "%");
 
-            if (calculateCounts)
-            {
-                int count = new SqlExecutor(DbScope.getLabKeyScope()).execute(new SQLFragment("SELECT count(*) FROM pipeline.StatusFiles WHERE FilePath like '" + sourcePrefix + "%'"));
-                sql.append("--Matching rows: " + count + "\n");
-            }
-            sql.append("UPDATE pipeline.StatusFiles SET FilePath = replace(FilePath, '" + sourcePrefix + "', '" + replacementPrefix + "') ");
-            sql.append("WHERE FilePath like '" + sourcePrefix + "%';");
-
-            return sql.toString();
+            return sql;
         }
         @Override
         public boolean handlePost(UpdateFilePathsForm form, BindException errors) throws Exception
         {
             if (form.isUpdateDatabase())
             {
-                String sql = getSql(form, false);
+                SQLFragment sql = getSql(form);
 
                 SqlExecutor se = new SqlExecutor(DbScope.getLabKeyScope());
-                se.execute(new SQLFragment(sql));
+                se.execute(sql);
             }
 
             return true;
