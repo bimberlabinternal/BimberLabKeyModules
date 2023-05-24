@@ -144,7 +144,7 @@ public class GeneticsTableCustomizer extends AbstractTableCustomizer implements 
             ti.addColumn(newCol);
 
             String chr = ti.getSqlDialect().isPostgreSQL() ? "chr" : "char";
-            SQLFragment sql3 = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("hs.haplotype"), true, true, chr + "(10)")).append(" as expr FROM assayresult." + d.getStorageTableName() + " a JOIN sequenceanalysis.haplotype_sequences hs ON (a.marker = hs.haplotype AND hs.type = 'Lineage' AND hs.present = " + ti.getSqlDialect().getBooleanTRUE() + ") WHERE a.analysisId = " + ExprColumn.STR_TABLE_ALIAS + ".analysis_id AND a.result IS NULL AND hs.name = " + ExprColumn.STR_TABLE_ALIAS + ".lineages)");
+            SQLFragment sql3 = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("hs.haplotype"), true, true, chr + "(10)")).append(" as expr FROM assayresult.").append(d.getStorageTableName()).append(" a JOIN sequenceanalysis.haplotype_sequences hs ON (a.marker = hs.haplotype AND hs.type = 'Lineage' AND hs.present = ").append(ti.getSqlDialect().getBooleanTRUE()).append(") WHERE a.analysisId = ").append(ExprColumn.STR_TABLE_ALIAS).append(".analysis_id AND a.result IS NULL AND hs.name = ").append(ExprColumn.STR_TABLE_ALIAS).append(".lineages)");
             ExprColumn newCol3 = new ExprColumn(ti, "cachedHaplotypes", sql3, JdbcType.VARCHAR, ti.getColumn("analysis_id"), ti.getColumn("lineages"));
             newCol3.setLabel("Matching Cached Haplotypes");
             ti.addColumn(newCol3);
