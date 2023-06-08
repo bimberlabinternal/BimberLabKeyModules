@@ -167,10 +167,7 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
         Integer wgsMinQual = getProvider().getParameterByName("wgsMinQual").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
         if (wgsMinQual != null)
         {
-            params.add("--genotype-filter-name");
-            params.add("GQ-LT" + wgsMinQual);
-            params.add("--genotype-filter-expression");
-            params.add("WGS:GQ<" + wgsMinQual);
+            params.addAll(addGTFilter("WGS", wgsMinQual));
         }
 
         Integer wxsMinDepth = getProvider().getParameterByName("wxsMinDepth").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
@@ -194,10 +191,7 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
         Integer wxsMinQual = getProvider().getParameterByName("wxsMinQual").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
         if (wxsMinQual != null)
         {
-            params.add("--genotype-filter-name");
-            params.add("GQ-LT" + wxsMinQual);
-            params.add("--genotype-filter-expression");
-            params.add("WXS:GQ<" + wxsMinQual);
+            params.addAll(addGTFilter("WXS", wxsMinQual));
         }
 
         params.add("--sample-map");
@@ -220,6 +214,38 @@ public class SampleSpecificGenotypeFiltrationStep extends AbstractCommandPipelin
         output.setVcf(outputVcf);
 
         return output;
+    }
+
+    private List<String> addGTFilter(String setName, int minQual)
+    {
+        // g.hasGQ() && !g.hasExtendedAttribute('RGQ') && GQ<20
+        // !g.hasGQ() && g.hasExtendedAttribute('RGQ') && RGQ<20
+        // g.hasGQ() && g.hasExtendedAttribute('RGQ') && GQ<20 && RGQ<20
+        // !g.hasGQ() && !g.hasExtendedAttribute('RGQ')
+
+        List<String> params = new ArrayList<>();
+
+        params.add("--genotype-filter-name");
+        params.add("GQ-LT" + minQual + "a");
+        params.add("--genotype-filter-expression");
+        params.add(setName + ":g.hasGQ() && !g.hasExtendedAttribute('RGQ') && GQ<" + minQual);
+
+        params.add("--genotype-filter-name");
+        params.add("GQ-LT" + minQual + "b");
+        params.add("--genotype-filter-expression");
+        params.add(setName + ":!g.hasGQ() && g.hasExtendedAttribute('RGQ') && RGQ<" + minQual);
+
+        params.add("--genotype-filter-name");
+        params.add("GQ-LT" + minQual + "c");
+        params.add("--genotype-filter-expression");
+        params.add(setName + ":g.hasGQ() && g.hasExtendedAttribute('RGQ') && GQ<" + minQual + " && RGQ<" + minQual);
+
+        params.add("--genotype-filter-name");
+        params.add("GQ-LT" + minQual + "d");
+        params.add("--genotype-filter-expression");
+        params.add(setName + ":!g.hasGQ() && !g.hasExtendedAttribute('RGQ')");
+
+        return params;
     }
 
     public static class Wrapper extends AbstractDiscvrSeqWrapper
