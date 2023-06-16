@@ -49,6 +49,7 @@ public class MccRequest
     private String _vetemail;
     private String _iacucapproval;
     private String _iacucprotocol;
+    private String _comments;
     private String _status;
 
     private String _objectId;
@@ -281,6 +282,16 @@ public class MccRequest
     public void setExistingmarmosetcolony(Boolean existingmarmosetcolony)
     {
         _existingmarmosetcolony = existingmarmosetcolony;
+    }
+
+    public String getComments()
+    {
+        return _comments;
+    }
+
+    public void setComments(String comments)
+    {
+        _comments = comments;
     }
 
     public Boolean getExistingnhpfacilities()
