@@ -51,7 +51,7 @@ public class OverlappingGenesDisplayColumnFactory implements DisplayColumnFactor
                     String url = null;
                     if (geneName.startsWith("ENSMMUT"))
                     {
-                        url = "http://uswest.ensembl.org/Macaca_mulatta/Transcript/Summary?db=core;t=" + geneName;
+                        url = "http://ensembl.org/Macaca_mulatta/Transcript/Summary?db=core;t=" + geneName;
                     }
                     else if (geneName.startsWith("ENSMMUE"))
                     {
@@ -61,7 +61,7 @@ public class OverlappingGenesDisplayColumnFactory implements DisplayColumnFactor
                     else //if (geneName.startsWith("ENSMMUG"))
                     {
                         //this appears to also work based on gene name
-                        url = "http://uswest.ensembl.org/Macaca_mulatta/Gene/Summary?db=core;g=" + geneName;
+                        url = "http://ensembl.org/Macaca_mulatta/Gene/Summary?db=core;g=" + geneName;
                     }
 
                     out.write(delim + "<a target=\"_blank\" href=\"" + url + "\">" + geneName + "</a>");

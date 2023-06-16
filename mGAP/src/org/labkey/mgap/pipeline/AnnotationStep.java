@@ -16,6 +16,7 @@ import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.pipeline.PipelineJobService;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
@@ -84,6 +85,14 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                         put("valueField", "rowid");
                         put("allowBlank", false);
                     }}, null),
+                    ToolParameterDescriptor.create("useCassandra", "Use Cassandra", "If checked, Cassandra will be run.", "checkbox", new JSONObject()
+                    {{
+                        put("checked", true);
+                    }}, true),
+                    ToolParameterDescriptor.create("useFuncotator", "Use Funcotator", "If checked, Extended Funcotator will be run.", "checkbox", new JSONObject()
+                    {{
+                        put("checked", true);
+                    }}, true),
                     ToolParameterDescriptor.create("dropFiltered", "Drop Filtered Sites", "If checked, filtered sites will be discarded, which can substantially improve speed.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
@@ -145,6 +154,13 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         if (!dbnsfpFile.exists())
         {
             throw new PipelineJobException("Unable to find file: " + dbnsfpFile.getPath());
+        }
+
+        boolean useFuncotator = getProvider().getParameterByName("useFuncotator").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+        File funcotatorSourceDir = new File(PipelineJobService.get().getAppProperties().getToolsDirectory(), "funcotatorDataSource");
+        if (useFuncotator && !funcotatorSourceDir.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + funcotatorSourceDir.getPath());
         }
 
         getPipelineCtx().getLogger().info("processing file: " + inputVCF.getName());
@@ -310,43 +326,6 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.addIntermediateFile(clinvarAnnotated);
         output.addIntermediateFile(new File(clinvarAnnotated.getPath() + ".tbi"));
 
-        //annotate with SnpSift
-        getPipelineCtx().getLogger().info("annotating with SnpSift");
-        File snpSiftAnnotated = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".snpSift.vcf.gz");
-        if (forceRecreate || !indexExists(snpSiftAnnotated))
-        {
-            SnpSiftWrapper ssRunner = new SnpSiftWrapper(getPipelineCtx().getLogger());
-            ssRunner.runSnpSift(dbnsfpFile, clinvarAnnotated, snpSiftAnnotated);
-        }
-        else
-        {
-            getPipelineCtx().getLogger().info("resuming with existing file: " + snpSiftAnnotated.getPath());
-        }
-        output.addOutput(snpSiftAnnotated, "VCF Annotated With SnpSift");
-        output.addIntermediateFile(snpSiftAnnotated);
-        output.addIntermediateFile(new File(snpSiftAnnotated.getPath() + ".tbi"));
-
-        //annotate with cassandra
-        getPipelineCtx().getLogger().info("annotating with Cassandra");
-        String basename = SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".cassandra";
-        File cassandraAnnotated = new File(outputDirectory, basename + ".vcf.gz");
-        if (forceRecreate || !indexExists(cassandraAnnotated))
-        {
-            //we can assume splitting happened upstream, so run over the full VCF
-            cassandraAnnotated = runCassandra(liftedToGRCh37, cassandraAnnotated, output, forceRecreate);
-        }
-        else
-        {
-            getPipelineCtx().getLogger().info("resuming with existing file: " + cassandraAnnotated.getPath());
-        }
-
-        if (cassandraAnnotated != null)
-        {
-            output.addOutput(cassandraAnnotated, "VCF Annotated With Cassandra");
-            output.addIntermediateFile(cassandraAnnotated);
-            output.addIntermediateFile(new File(cassandraAnnotated.getPath() + ".tbi"));
-        }
-
         //backport ClinVar
         getPipelineCtx().getLogger().info("backport ClinVar 2.0 to source genome");
         File clinvarAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(clinvarAnnotated.getName()) + ".bp.vcf.gz");
@@ -363,11 +342,62 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.addIntermediateFile(clinvarAnnotatedBackport);
         output.addIntermediateFile(new File(clinvarAnnotatedBackport.getPath() + ".tbi"));
 
-        //backport Cassandra
-        getPipelineCtx().getLogger().info("backport Cassandra to source genome");
-        File cassandraAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(cassandraAnnotated.getName()) + ".bp.vcf.gz");
-        if (cassandraAnnotated != null)
+        //annotate with SnpSift
+        getPipelineCtx().getLogger().info("annotating with SnpSift/dbnsfp");
+        File snpSiftAnnotated = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".snpSift.vcf.gz");
+        if (forceRecreate || !indexExists(snpSiftAnnotated))
         {
+            SnpSiftWrapper ssRunner = new SnpSiftWrapper(getPipelineCtx().getLogger());
+            ssRunner.runSnpSift(dbnsfpFile, liftedToGRCh37, snpSiftAnnotated);
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("resuming with existing file: " + snpSiftAnnotated.getPath());
+        }
+        output.addOutput(snpSiftAnnotated, "VCF Annotated With SnpSift");
+        output.addIntermediateFile(snpSiftAnnotated);
+        output.addIntermediateFile(new File(snpSiftAnnotated.getPath() + ".tbi"));
+
+        //backport SnpSift
+        getPipelineCtx().getLogger().info("Backport SnpSift to source genome");
+        File snpSiftAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(snpSiftAnnotated.getName()) + ".bp.vcf.gz");
+        if (forceRecreate || !indexExists(snpSiftAnnotatedBackport))
+        {
+            BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
+            bpRunner.execute(snpSiftAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), snpSiftAnnotatedBackport);
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("resuming with existing file: " + snpSiftAnnotatedBackport.getPath());
+        }
+        output.addOutput(snpSiftAnnotatedBackport, "VCF Annotated With SnpSift, Backported");
+        output.addIntermediateFile(snpSiftAnnotatedBackport);
+        output.addIntermediateFile(new File(snpSiftAnnotatedBackport.getPath() + ".tbi"));
+
+        //annotate with cassandra
+        File cassandraAnnotatedBackport = null;
+        if (getProvider().getParameterByName("useCassandra").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
+        {
+            getPipelineCtx().getLogger().info("annotating with Cassandra");
+            String basename = SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".cassandra";
+            File cassandraAnnotated = new File(outputDirectory, basename + ".vcf.gz");
+            if (forceRecreate || !indexExists(cassandraAnnotated))
+            {
+                //we can assume splitting happened upstream, so run over the full VCF
+                runCassandra(liftedToGRCh37, cassandraAnnotated, output, forceRecreate);
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("resuming with existing file: " + cassandraAnnotated.getPath());
+            }
+
+            output.addOutput(cassandraAnnotated, "VCF Annotated With Cassandra");
+            output.addIntermediateFile(cassandraAnnotated);
+            output.addIntermediateFile(new File(cassandraAnnotated.getPath() + ".tbi"));
+
+            //backport Cassandra
+            getPipelineCtx().getLogger().info("backport Cassandra to source genome");
+            cassandraAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(cassandraAnnotated.getName()) + ".bp.vcf.gz");
             if (forceRecreate || !indexExists(cassandraAnnotatedBackport))
             {
                 BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
@@ -383,8 +413,50 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         }
         else
         {
-            getPipelineCtx().getLogger().info("No cassandra output, will not backport");
-            cassandraAnnotatedBackport = null;
+            getPipelineCtx().getLogger().debug("Cassandra will be skipped");
+        }
+
+        //annotate with funcotator
+        File funcotatorAnnotatedBackport = null;
+        if (useFuncotator)
+        {
+            getPipelineCtx().getLogger().info("annotating with Funcotator");
+            String basename = SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".funcotator";
+            File funcotatorAnnotated = new File(outputDirectory, basename + ".vcf.gz");
+            if (forceRecreate || !indexExists(funcotatorAnnotated))
+            {
+                //we can assume splitting happened upstream, so run over the full VCF
+                FuncotatorWrapper fr = new FuncotatorWrapper(getPipelineCtx().getLogger());
+                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, snpSiftAnnotated, genome);
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("resuming with existing file: " + funcotatorAnnotated.getPath());
+            }
+
+            output.addOutput(funcotatorAnnotated, "VCF Annotated With Funcotator");
+            output.addIntermediateFile(funcotatorAnnotated);
+            output.addIntermediateFile(new File(funcotatorAnnotated.getPath() + ".tbi"));
+
+            //backport Funcotator
+            getPipelineCtx().getLogger().info("backport Funcotator to source genome");
+            funcotatorAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(funcotatorAnnotated.getName()) + ".bp.vcf.gz");
+            if (forceRecreate || !indexExists(funcotatorAnnotatedBackport))
+            {
+                BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
+                bpRunner.execute(funcotatorAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), funcotatorAnnotatedBackport);
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("resuming with existing file: " + funcotatorAnnotatedBackport.getPath());
+            }
+            output.addOutput(funcotatorAnnotatedBackport, "VCF Annotated With Funcotator, Backported");
+            output.addIntermediateFile(funcotatorAnnotatedBackport);
+            output.addIntermediateFile(new File(funcotatorAnnotatedBackport.getPath() + ".tbi"));
+        }
+        else
+        {
+            getPipelineCtx().getLogger().debug("Funcotator will be skipped");
         }
 
         //multiannotator
@@ -405,7 +477,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 needToSubsetToInterval = false;
             }
 
-            maRunner.execute(inputVCF, cassandraAnnotatedBackport, clinvarAnnotatedBackport, liftoverRejects, multiAnnotated, options);
+            maRunner.execute(inputVCF, cassandraAnnotatedBackport, clinvarAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
         else
         {
@@ -422,7 +494,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         return output;
     }
 
-    private File runCassandra(File liftedToGRCh37, File finalOutput, VariantProcessingStepOutputImpl output, boolean forceRecreate) throws PipelineJobException
+    private void runCassandra(File liftedToGRCh37, File finalOutput, VariantProcessingStepOutputImpl output, boolean forceRecreate) throws PipelineJobException
     {
         List<String> extraArgs = new ArrayList<>();
 
@@ -489,8 +561,6 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         {
             throw new PipelineJobException(e);
         }
-
-        return finalOutput;
     }
 
     protected static boolean indexExists(File vcf)

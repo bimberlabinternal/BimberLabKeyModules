@@ -1,1 +1,0 @@
-CREATE INDEX IDX_Variants ON variantdb.variants (sequenceid, startPosition, endPosition, allele);
