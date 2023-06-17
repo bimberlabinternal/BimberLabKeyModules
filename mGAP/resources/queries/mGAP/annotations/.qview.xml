@@ -1,7 +1,7 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
     <columns>
         <column name="category"/>
-        <column name="name"/>
+        <column name="label"/>
         <column name="description"/>
         <column name="datasource"/>
     </columns>

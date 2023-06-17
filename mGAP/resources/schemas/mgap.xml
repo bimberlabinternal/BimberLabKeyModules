@@ -1159,7 +1159,7 @@
             </column>
             <column columnName="label">
                 <columnTitle>Annotation Name</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="dataSource">
                 <columnTitle>Data Source</columnTitle>
@@ -1180,7 +1180,11 @@
                 <isHidden>true</isHidden>
             </column>
             <column columnName="url">
-                <columnTitle>URL</columnTitle>
+                <columnTitle>Website URL</columnTitle>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="dataurl">
+                <columnTitle>Data URL</columnTitle>
                 <isHidden>true</isHidden>
             </column>
             <column columnName="description">

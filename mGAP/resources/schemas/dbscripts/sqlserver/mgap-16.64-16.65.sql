@@ -7,6 +7,7 @@ CREATE TABLE mGAP.annotations (
   datanumber varchar(500),
   infoKey varchar(100),
   url varchar(4000),
+  dataurl varchar(4000),
   description varchar(4000),
 
   container entityid,
