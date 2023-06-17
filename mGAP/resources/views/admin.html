@@ -22,6 +22,14 @@
                 xtype: 'ldk-linkbutton',
                 text: 'Manage JBrowse Tracks',
                 href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mgap', queryName: 'releaseTracks'})
+            },{
+                xtype: 'ldk-linkbutton',
+                text: 'Manage Annotations',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mgap', queryName: 'annotations'})
+            },{
+                xtype: 'ldk-linkbutton',
+                text: 'Manage Genetic Measurements',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mgap', queryName: 'geneticMeasurements'})
             }]
         });
 
