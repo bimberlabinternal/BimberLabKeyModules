@@ -16,6 +16,7 @@
 
 package org.labkey.mgap;
 
+import au.com.bytecode.opencsv.CSVReader;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
@@ -51,9 +52,11 @@ import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryAction;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.UserSchema;
+import org.labkey.api.reader.Readers;
 import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
 import org.labkey.api.security.GroupManager;
@@ -99,6 +102,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1043,6 +1047,80 @@ public class mGAPController extends SpringActionController
                 _log.error("Unable to find the default jbrowse session associated with genome: " + genomeId);
             }
             return ret;
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public static class UpdateAnnotationsAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Update Annotation Table");
+
+            HtmlView view = new HtmlView("This will update the annotation table using the VariantAnnotation github repo. Do you want to continue?");
+            return view;
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            List<Map<String, Object>> toAdd = new ArrayList<>();
+
+            final URL url = new URL("https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/fieldConfig.txt");
+            try (CSVReader reader = new CSVReader(Readers.getReader(url.openStream()), '\t'))
+            {
+                String[] line;
+                List<String> header = null;
+                int idx = 0;
+                while ((line = reader.readNext()) != null)
+                {
+                    idx++;
+                    if (idx == 1)
+                    {
+                        header = Arrays.asList(line);
+                        continue;
+                    }
+
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+
+                    row.put("category", line[header.indexOf("Category")]);
+                    row.put("label", line[header.indexOf("Label")]);
+                    row.put("dataSource", line[header.indexOf("DataSource")]);
+                    row.put("infoKey", line[header.indexOf("ID")]);
+                    row.put("dataType", line[header.indexOf("Type")]);
+                    row.put("dataNumber", line[header.indexOf("Number")]);
+                    row.put("description", line[header.indexOf("Description")]);
+                    row.put("url", line[header.indexOf("URL")]);
+
+                    toAdd.add(row);
+                }
+            }
+
+            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);
+            TableInfo ti = us.getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS);
+            ti.getUpdateService().truncateRows(getUser(), getContainer(), null, null);
+
+            BatchValidationException bve = new BatchValidationException();
+            ti.getUpdateService().insertRows(getUser(), getContainer(), toAdd, bve, null, null);
+            if (bve.hasErrors())
+            {
+                throw bve;
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @Override
+        public @NotNull URLHelper getSuccessURL(Object o)
+        {
+            return QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, mGAPSchema.NAME, mGAPSchema.TABLE_VARIANT_ANNOTATIONS);
         }
     }
 }

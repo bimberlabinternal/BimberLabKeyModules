@@ -1,0 +1,12 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+    <columns>
+        <column name="category"/>
+        <column name="label"/>
+        <column name="description"/>
+        <column name="datasource"/>
+    </columns>
+    <sorts>
+        <sort column="category" descending="false"/>
+        <sort column="label" descending="false"/>
+    </sorts>
+</customView>

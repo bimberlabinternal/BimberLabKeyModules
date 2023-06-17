@@ -157,10 +157,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         }
 
         boolean useFuncotator = getProvider().getParameterByName("useFuncotator").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
-        File funcotatorSourceDir = new File(PipelineJobService.get().getAppProperties().getToolsDirectory(), "funcotatorDataSource");
-        if (useFuncotator && !funcotatorSourceDir.exists())
+        File funcotatorSourceDir = null;
+        if (useFuncotator)
         {
-            throw new PipelineJobException("Unable to find file: " + funcotatorSourceDir.getPath());
+            // this will throw if not found
+            funcotatorSourceDir = getFuncotatorSource();
         }
 
         getPipelineCtx().getLogger().info("processing file: " + inputVCF.getName());
@@ -595,5 +596,27 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
         support.cacheExpData(data);
         support.cacheObject(CHAIN_FILE, chainId);
+    }
+
+    private File getFuncotatorSource()
+    {
+        File ret;
+
+        String path = PipelineJobService.get().getConfigProperties().getSoftwarePackagePath("FUNCOTATOR_DATA_SOURCE");
+        if (path != null)
+        {
+            ret = new File(path);
+        }
+        else
+        {
+            ret = new File(PipelineJobService.get().getAppProperties().getToolsDirectory(), "VariantAnnotation");
+        }
+
+        if (!ret.exists())
+        {
+            throw new IllegalArgumentException("Unable to find funcotator source: " + ret.getPath());
+        }
+
+        return ret;
     }
 }
