@@ -32,12 +32,11 @@ public class SnpSiftWrapper extends AbstractCommandWrapper
         params.addAll(SequencePipelineService.get().getJavaOpts());
         params.add("-jar");
         params.add(getSnpSiftJar().getPath());
-        params.add("dbnsfp");
+        params.add("DbNsfp");
         params.add("-db");
         params.add(dbnsfpFile.getPath());
 
-        params.add("-noStats");
-        params.add("-nodownload");
+        params.add("-noDownload");
 
         params.add(input.getPath());
 
