@@ -25,7 +25,7 @@ public class FuncotatorWrapper extends AbstractDiscvrSeqWrapper
     {
         getLogger().info("Annotating VCF with Funcotator");
 
-        List<String> params = new ArrayList<>(getBaseArgs());
+        List<String> params = new ArrayList<>(getBaseArgs("ExtendedFuncotator"));
 
         params.add("-R");
         params.add(genome.getWorkingFastaFile().getPath());
