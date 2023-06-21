@@ -428,7 +428,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             {
                 //we can assume splitting happened upstream, so run over the full VCF
                 FuncotatorWrapper fr = new FuncotatorWrapper(getPipelineCtx().getLogger());
-                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, snpSiftAnnotated, grch37Genome);
+                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome);
             }
             else
             {
