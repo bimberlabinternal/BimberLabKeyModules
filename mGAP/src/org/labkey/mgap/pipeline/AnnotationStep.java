@@ -93,6 +93,10 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                     {{
                         put("checked", true);
                     }}, true),
+                    ToolParameterDescriptor.create("funcotatorExcludedContigs", "Excluded Funcotator Contigs", "A comma-separated list of contigs to exclude from Funcotator", "textfield", new JSONObject()
+                    {{
+
+                    }}, "MT"),
                     ToolParameterDescriptor.create("dropFiltered", "Drop Filtered Sites", "If checked, filtered sites will be discarded, which can substantially improve speed.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
@@ -428,7 +432,19 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             {
                 //we can assume splitting happened upstream, so run over the full VCF
                 FuncotatorWrapper fr = new FuncotatorWrapper(getPipelineCtx().getLogger());
-                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome);
+
+                List<String> extraArgs = new ArrayList<>();
+                String excludedContigs = StringUtils.trimToNull(getProvider().getParameterByName("funcotatorExcludedContigs").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+                if (excludedContigs != null)
+                {
+                    for (String token : excludedContigs.split(","))
+                    {
+                        extraArgs.add("-XL");
+                        extraArgs.add(token);
+                    }
+                }
+
+                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome, extraArgs);
             }
             else
             {

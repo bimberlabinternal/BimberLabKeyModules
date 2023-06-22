@@ -1,6 +1,7 @@
 package org.labkey.mgap.pipeline;
 
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
@@ -21,7 +22,7 @@ public class FuncotatorWrapper extends AbstractDiscvrSeqWrapper
         super(log);
     }
 
-    public void runFuncotator(File dataDir, File input, File output, ReferenceGenome genome) throws PipelineJobException
+    public void runFuncotator(File dataDir, File input, File output, ReferenceGenome genome, @Nullable List<String> extraArgs) throws PipelineJobException
     {
         getLogger().info("Annotating VCF with Funcotator");
 
@@ -47,6 +48,11 @@ public class FuncotatorWrapper extends AbstractDiscvrSeqWrapper
 
         params.add("-O");
         params.add(output.getPath());
+
+        if (extraArgs != null)
+        {
+            params.addAll(extraArgs);
+        }
 
         execute(params);
 
