@@ -93,6 +93,10 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                     {{
                         put("checked", true);
                     }}, true),
+                    ToolParameterDescriptor.create("printMissingFields", "Print Unused Funcotator Fields", "If checked, a list of all fields present in the data sources but not included in the output will be printed.", "checkbox", new JSONObject()
+                    {{
+
+                    }}, false),
                     ToolParameterDescriptor.create("funcotatorExcludedContigs", "Excluded Funcotator Contigs", "A comma-separated list of contigs to exclude from Funcotator", "textfield", new JSONObject()
                     {{
 
@@ -442,6 +446,12 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                         extraArgs.add("-XL");
                         extraArgs.add(token);
                     }
+                }
+
+                boolean printMissingFields = getProvider().getParameterByName("printMissingFields").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+                if (printMissingFields)
+                {
+                    extraArgs.add("-pmf");
                 }
 
                 fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome, extraArgs);
