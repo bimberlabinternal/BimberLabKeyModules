@@ -190,10 +190,22 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
             }
         }
 
+        String group1Raw = StringUtils.trimToNull(getProvider().getParameterByName(GROUP1).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+        List<String> group1 = Arrays.asList(group1Raw.split(";"));
+        getPipelineCtx().getLogger().info("Total group 1 samples: " + group1.size());
+
+        String group2Raw = StringUtils.trimToNull(getProvider().getParameterByName(GROUP2).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+        List<String> group2 = null;
+        if (group2Raw != null)
+        {
+            group2 = Arrays.asList(group2Raw.split(";"));
+            getPipelineCtx().getLogger().info("Total group 2 samples: " + group2.size());
+        }
+
         File outputVcf = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".gc.vcf.gz");
         File outputTable = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".gc.txt");
 
-        getWrapper().runTool(inputVCF, refVcf, outputTable, genome.getWorkingFastaFile(), extraArgs);
+        getWrapper().runTool(inputVCF, refVcf, outputTable, genome.getWorkingFastaFile(), group1, group2, extraArgs);
         if (!outputTable.exists())
         {
             throw new PipelineJobException("Unable to find output: " + outputTable.getPath());
