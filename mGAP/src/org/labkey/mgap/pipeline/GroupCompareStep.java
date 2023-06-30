@@ -1,23 +1,35 @@
 package org.labkey.mgap.pipeline;
 
 import htsjdk.samtools.util.Interval;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
+import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
+import org.labkey.api.sequenceanalysis.pipeline.TaskFileManager;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
+import org.labkey.api.writer.PrintWriters;
 
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,14 +61,79 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
                     ToolParameterDescriptor.createExpDataParam(REF_VCF, "Reference VCF", "This is the file ID of the VCF to use as the reference.", "ldk-expdatafield", new JSONObject()
                     {{
                         put("allowBlank", false);
-                    }}, null)
-            ), null, null);
+                    }}, null),
+                    ToolParameterDescriptor.create("selects", "Select Expressions", "Filter expressions that can be used to subset variants. Passing variants will be written to a separate TSV file.", "sequenceanalysis-variantfilterpanel", new JSONObject(){{
+                        put("mode", "SELECT");
+                        put("showFilterName", false);
+                        put("title", "Select Expressions");
+                    }}, null),
+                    ToolParameterDescriptor.create("extraFields", "Additional Fields", "A list of additional fields to include in the table output", "sequenceanalysis-trimmingtextarea", null, null)
+                ), Arrays.asList("/sequenceanalysis/field/TrimmingTextArea.js", "sequenceanalysis/panel/VariantFilterPanel.js"), null);
         }
 
         @Override
         public GroupCompareStep create(PipelineContext ctx)
         {
             return new GroupCompareStep(this, ctx);
+        }
+
+        @Override
+        public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs) throws PipelineJobException
+        {
+            job.getLogger().info("Merging variant tables");
+            List<File> toConcat = orderedScatterOutputs.stream().map(f -> {
+                f = new File(f.getParentFile(), f.getName().replaceAll("vcf.gz", "txt"));
+                if (!f.exists())
+                {
+                    throw new IllegalStateException("Missing file: " + f.getPath());
+                }
+
+                ctx.getFileManager().addIntermediateFile(f);
+                ctx.getFileManager().addIntermediateFile(new File(f.getPath() + ".tbi"));
+
+                return f;
+            }).toList();
+
+            String basename = SequenceAnalysisService.get().getUnzippedBaseName(toConcat.get(0).getName());
+            File combined = new File(ctx.getSourceDirectory(), basename + ".txt");
+            try (PrintWriter writer = PrintWriters.getPrintWriter(combined))
+            {
+                boolean hasWrittenHeader = false;
+                for (File f : toConcat)
+                {
+                    try (BufferedReader reader = Readers.getReader(f))
+                    {
+                        String line;
+                        int idx = 0;
+                        while ((line = reader.readLine()) != null)
+                        {
+                            idx++;
+                            if (idx == 1)
+                            {
+                                if (!hasWrittenHeader) {
+                                    writer.println(line);
+                                    hasWrittenHeader = true;
+                                }
+                            }
+                            else
+                            {
+                                writer.println(line);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            SequenceOutputFile so = new SequenceOutputFile();
+            so.setName(basename + ": Selected Variants");
+            so.setFile(combined);
+            so.setCategory("Variant List");
+            so.setLibrary_id(genome.getGenomeId());
+            manager.addSequenceOutput(so);
         }
     }
 
@@ -82,6 +159,35 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         {
             extraArgs.add("-RV");
             extraArgs.add(refVcf.getPath());
+        }
+
+        //JEXL
+        String selectText = getProvider().getParameterByName("selects").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null);
+        if (selectText != null)
+        {
+            JSONArray filterArr = new JSONArray(selectText);
+            for (int i = 0; i < filterArr.length(); i++)
+            {
+                JSONArray arr = filterArr.getJSONArray(i);
+                if (arr.length() < 2)
+                {
+                    throw new PipelineJobException("Improper select expression: " + filterArr.getString(i));
+                }
+
+                extraArgs.add("-select");
+                extraArgs.add(arr.getString(1));
+            }
+        }
+
+        String fieldsText = StringUtils.trimToNull(getProvider().getParameterByName("extraFields").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+        if (fieldsText != null)
+        {
+            String[] names = fieldsText.split(";");
+            for (String name : names)
+            {
+                extraArgs.add("-F");
+                extraArgs.add(name);
+            }
         }
 
         File outputVcf = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".gc.vcf.gz");
