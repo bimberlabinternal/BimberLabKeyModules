@@ -214,7 +214,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
             super(log);
         }
 
-        public void runTool(File inputVCF, File outputVcf, File outputTable, File genomeFasta, List<String> extraArgs) throws PipelineJobException
+        public void runTool(File inputVCF, File outputVcf, File outputTable, File genomeFasta, List<String> group1, @Nullable List<String> group2, List<String> extraArgs) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
             args.add("GroupCompare");
@@ -232,12 +232,46 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
 
             args.add("--ignore-variants-starting-outside-interval");
 
+            File group1File = new File(outputVcf.getParentFile(), "group1.args");
+            File group2File = new File(outputVcf.getParentFile(), "group2.args");
+            try (PrintWriter writer = PrintWriters.getPrintWriter(group1File))
+            {
+                group1.forEach(writer::println);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+            args.add("-G1");
+            args.add(group1File.getPath());
+
+            if (group2 != null)
+            {
+                try (PrintWriter writer = PrintWriters.getPrintWriter(group2File))
+                {
+                    group2.forEach(writer::println);
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+
+                args.add("-G2");
+                args.add(group2File.getPath());
+            }
+
             if (extraArgs != null)
             {
                 args.addAll(extraArgs);
             }
 
             execute(args);
+
+            group1File.delete();
+            if (group2File != null)
+            {
+                group2File.delete();
+            }
         }
     }
 }
