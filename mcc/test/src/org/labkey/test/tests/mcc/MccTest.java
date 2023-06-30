@@ -408,8 +408,7 @@ public class MccTest extends BaseWebDriverTest
 
     private void goToAnimalRequests()
     {
-        goToProjectHome();
-        waitForCensusToLoad();
+        beginAt("/mcc/" + getProjectName() + "/begin.view");
         waitAndClickAndWait(Locator.tagContainingText("div", "Animal Requests"));
         waitForElement(Locator.tagWithText("a", "Submit New Animal Request"));
     }
