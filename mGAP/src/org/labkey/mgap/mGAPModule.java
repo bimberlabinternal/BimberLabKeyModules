@@ -42,6 +42,7 @@ import org.labkey.api.writer.ContainerUser;
 import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
+import org.labkey.mgap.pipeline.GroupCompareStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
 import org.labkey.mgap.pipeline.SampleSpecificGenotypeFiltrationStep;
@@ -115,6 +116,7 @@ public class mGAPModule extends ExtendedSimpleModule
             {
                 SequenceAnalysisService.get().registerFileHandler(new mGapReleaseGenerator());
                 SequencePipelineService.get().registerPipelineStep(new AnnotationStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new GroupCompareStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RenameSamplesForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new VcfComparisonStep.Provider());
