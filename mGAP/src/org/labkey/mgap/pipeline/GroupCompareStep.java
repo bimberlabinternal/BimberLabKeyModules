@@ -217,7 +217,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         public void runTool(File inputVCF, File outputVcf, File outputTable, File genomeFasta, List<String> extraArgs) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
-            args.add("GroupComparison");
+            args.add("GroupCompare");
             args.add("-R");
             args.add(genomeFasta.getPath());
 
