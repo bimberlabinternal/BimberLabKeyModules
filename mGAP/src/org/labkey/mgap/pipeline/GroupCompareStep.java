@@ -155,7 +155,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         }
 
         File refVcf = getPipelineCtx().getSequenceSupport().getCachedData(refFileId);
-        if (refVcf == null || !refVcf.exists())
+        if (refVcf != null)
         {
             extraArgs.add("-RV");
             extraArgs.add(refVcf.getPath());
@@ -205,7 +205,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         File outputVcf = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".gc.vcf.gz");
         File outputTable = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputVCF.getName()) + ".gc.txt");
 
-        getWrapper().runTool(inputVCF, refVcf, outputTable, genome.getWorkingFastaFile(), group1, group2, extraArgs);
+        getWrapper().runTool(inputVCF, outputVcf, outputTable, genome.getWorkingFastaFile(), group1, group2, extraArgs);
         if (!outputTable.exists())
         {
             throw new PipelineJobException("Unable to find output: " + outputTable.getPath());
