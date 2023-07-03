@@ -1099,7 +1099,7 @@ public class mGAPController extends SpringActionController
                         row.put("dataNumber", line[header.indexOf("Number")]);
                         row.put("description", line[header.indexOf("Description")]);
                         row.put("url", line[header.indexOf("URL")]);
-                        row.put("dataurl", line[header.indexOf("DataUrl")]);
+                        row.put("dataurl", line[header.indexOf("DataURL")]);
                         row.put("toolName", line[header.indexOf("ToolName")]);
 
                         if (header.contains("Hidden"))
