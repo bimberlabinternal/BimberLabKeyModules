@@ -28,6 +28,7 @@ import org.labkey.api.pipeline.TaskId;
 import org.labkey.api.pipeline.TaskPipeline;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
@@ -52,6 +53,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
 
     private boolean _dropDisabledResults = true;
     private double _lineageThreshold = 0.25;
+    private double _alleleGroupThreshold = 0.1;
     private boolean _dropMultiLineageMHC = true;
     private boolean _combineRedundantGroups = true;
 
@@ -117,6 +119,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
     public double getLineageThreshold()
     {
         return _lineageThreshold;
+    }
+
+    public double getAlleleGroupThreshold()
+    {
+        return _alleleGroupThreshold;
     }
 
     public boolean doPerformDeletes()
@@ -194,8 +201,10 @@ public class MhcCleanupPipelineJob extends PipelineJob
         @Override
         public RecordedActionSet run() throws PipelineJobException
         {
-            TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
-            TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
+            UserSchema sequenceAnalysisSchema = QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis");
+            TableInfo alignmentSummary = sequenceAnalysisSchema.getTable("alignment_summary");
+            TableInfo alignmentSummaryJunction = sequenceAnalysisSchema.getTable("alignment_summary_junction");
+
             getJob().getLogger().info("Starting rows in alignment_summary: " + new TableSelector(alignmentSummary).getRowCount());
             getJob().getLogger().info("Starting rows in alignment_summary_junction: " + new TableSelector(alignmentSummaryJunction).getRowCount());
             getJob().getLogger().info(getPipelineJob().doPerformDeletes() ? "**This is a production run, records will be deleted" : "**This is a test run, records will not be deleted");
@@ -208,11 +217,14 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 filter.addCondition(FieldKey.fromString("rowid"), getPipelineJob().getMinAnalysisId(), CompareType.GT);
             }
 
-            new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("sequence_analyses"), PageFlowUtil.set("rowId"), filter, new Sort("-rowid")).forEachResults(rs -> {
+            TableInfo sequenceAnalyses = sequenceAnalysisSchema.getTable("sequence_analyses");
+            final long totalAnalyses = new TableSelector(sequenceAnalyses).getRowCount();
+
+            new TableSelector(sequenceAnalyses, PageFlowUtil.set("rowId"), filter, new Sort("-rowid")).forEachResults(rs -> {
                 ai.getAndIncrement();
-                if (ai.get() % 100 == 0)
+                if (ai.get() % 50 == 0)
                 {
-                    getJob().getLogger().info("Processed " + ai.get() + " analysis records");
+                    getJob().getLogger().info("Processed " + ai.get() + " analysis records of " + totalAnalyses);
                 }
 
                 if (getJob().isCancelled())
@@ -243,7 +255,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
             TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
             TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
 
-            // First find all lineages above threshold. Delete groups from lineages not represented here:
+            // Delete low-freq lineages:
             if (getPipelineJob().getLineageThreshold() > 0)
             {
                 SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
@@ -257,6 +269,24 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     if (!alignmentIdsToDelete.isEmpty())
                     {
                         deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "below lineage threshold");
+                    }
+                }
+            }
+
+            // Delete low-freq allele groups:
+            if (getPipelineJob().getAlleleGroupThreshold() > 0)
+            {
+                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getAlleleGroupThreshold(), CompareType.LT);
+
+                List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                if (!lowFreqRowIdList.isEmpty())
+                {
+                    getJob().getLogger().info("Analysis: " + analysisId + ", low freq allele groups: " + lowFreqRowIdList.size());
+                    List<Integer> alignmentIdsToDelete = lowFreqRowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
+                    if (!alignmentIdsToDelete.isEmpty())
+                    {
+                        deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "below allele-group threshold");
                     }
                 }
             }
