@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.SimpleFilter;
@@ -18,6 +19,7 @@ import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineJobService;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
@@ -35,14 +37,19 @@ import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.writer.PrintWriters;
+import org.labkey.mgap.mGAPSchema;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -141,6 +148,33 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         //find chain files:
         job.getLogger().debug("Caching chain file");
         findChainFile(sourceGenome, genomeId, support, job);
+
+        // find/cache annotations:
+        Container targetContainer = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
+        final HashMap<String, List<String>> sourceFieldMap = new HashMap<>();
+        final HashMap<String, List<String>> targetFieldMap = new HashMap<>();
+        new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS)).forEachResults(rs -> {
+            if (!sourceFieldMap.containsKey(rs.getString(FieldKey.fromString("toolName"))))
+            {
+                sourceFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
+                targetFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
+            }
+
+            sourceFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("sourceField")));
+            targetFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("targetField")));
+        });
+
+        getPipelineCtx().getSequenceSupport().cacheObject(SOURCE_FIELDS, sourceFieldMap);
+        getPipelineCtx().getSequenceSupport().cacheObject(TARGET_FIELDS, targetFieldMap);
+    }
+
+    private static String SOURCE_FIELDS = "sourceFields";
+    private static String TARGET_FIELDS = "targetFields";
+
+    private List<String> getCachedFields(String key, String toolName) throws PipelineJobException
+    {
+        Map<String, List<?>> fieldMap = getPipelineCtx().getSequenceSupport().getCachedObject(key, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, String.class, List.class));
+        return fieldMap.get(toolName).stream().map(String::valueOf).toList();
     }
 
     @Override
@@ -357,7 +391,13 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         if (forceRecreate || !indexExists(snpSiftAnnotated))
         {
             SnpSiftWrapper ssRunner = new SnpSiftWrapper(getPipelineCtx().getLogger());
-            ssRunner.runSnpSift(dbnsfpFile, liftedToGRCh37, snpSiftAnnotated);
+            List<String> fieldList = getCachedFields(SOURCE_FIELDS, "SnpSift");
+            if (fieldList.isEmpty())
+            {
+                throw new PipelineJobException("No fields found for SnpSift");
+            }
+
+            ssRunner.runSnpSift(dbnsfpFile, liftedToGRCh37, snpSiftAnnotated, fieldList);
         }
         else
         {
@@ -385,7 +425,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
         //annotate with cassandra
         File cassandraAnnotatedBackport = null;
-        if (getProvider().getParameterByName("useCassandra").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
+        boolean useCassandra = getProvider().getParameterByName("useCassandra").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+        if (useCassandra)
         {
             getPipelineCtx().getLogger().info("annotating with Cassandra");
             String basename = SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".cassandra";
@@ -504,6 +545,14 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 needToSubsetToInterval = false;
             }
 
+            if (useFuncotator)
+            {
+                addToolFieldNames("Funcotator", "-ff", options, multiAnnotated.getParentFile(), output);
+            }
+
+            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output);
+            addToolFieldNames("ClinVar", "-cvf", options, multiAnnotated.getParentFile(), output);
+
             maRunner.execute(inputVCF, cassandraAnnotatedBackport, clinvarAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
         else
@@ -519,6 +568,25 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.setVcf(multiAnnotated);
 
         return output;
+    }
+
+    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output) throws PipelineJobException
+    {
+        List<String> fields = getCachedFields(TARGET_FIELDS, toolName);
+        File fieldFile = new File(outDir, toolName + "Fields.args");
+        try (PrintWriter writer = PrintWriters.getPrintWriter(fieldFile))
+        {
+            fields.forEach(writer::println);
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+
+        output.addIntermediateFile(fieldFile);
+
+        options.add(argName);
+        options.add(fieldFile.getPath());
     }
 
     private void runCassandra(File liftedToGRCh37, File finalOutput, VariantProcessingStepOutputImpl output, boolean forceRecreate) throws PipelineJobException

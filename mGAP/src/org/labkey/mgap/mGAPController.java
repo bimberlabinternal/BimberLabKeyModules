@@ -1067,33 +1067,63 @@ public class mGAPController extends SpringActionController
         {
             List<Map<String, Object>> toAdd = new ArrayList<>();
 
-            final URL url = new URL("https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/fieldConfig.txt");
-            try (CSVReader reader = new CSVReader(Readers.getReader(url.openStream()), '\t'))
+            final List<String> urls = Arrays.asList(
+                    "https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/fieldConfig.txt",
+                    "https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/otherFieldConfig.txt"
+            );
+
+            for (String urlStr : urls)
             {
-                String[] line;
-                List<String> header = null;
-                int idx = 0;
-                while ((line = reader.readNext()) != null)
+                final URL url = new URL(urlStr);
+                try (CSVReader reader = new CSVReader(Readers.getReader(url.openStream()), '\t'))
                 {
-                    idx++;
-                    if (idx == 1)
+                    String[] line;
+                    List<String> header = null;
+                    int idx = 0;
+                    while ((line = reader.readNext()) != null)
                     {
-                        header = Arrays.asList(line);
-                        continue;
+                        idx++;
+                        if (idx == 1)
+                        {
+                            header = Arrays.asList(line);
+                            continue;
+                        }
+
+                        Map<String, Object> row = new CaseInsensitiveHashMap<>();
+
+                        row.put("category", line[header.indexOf("Category")]);
+                        row.put("label", line[header.indexOf("Label")]);
+                        row.put("dataSource", line[header.indexOf("DataSource")]);
+                        row.put("infoKey", line[header.indexOf("ID")]);
+                        row.put("dataType", line[header.indexOf("Type")]);
+                        row.put("dataNumber", line[header.indexOf("Number")]);
+                        row.put("description", line[header.indexOf("Description")]);
+                        row.put("url", line[header.indexOf("URL")]);
+                        row.put("dataurl", line[header.indexOf("DataUrl")]);
+                        row.put("toolName", line[header.indexOf("ToolName")]);
+
+                        if (header.contains("Hidden"))
+                        {
+                            row.put("hidden", line[header.indexOf("Hidden")]);
+                        }
+
+                        if (header.contains("FormatString"))
+                        {
+                            row.put("formatString", line[header.indexOf("FormatString")]);
+                        }
+
+                        if (header.contains("AllowableValues"))
+                        {
+                            row.put("allowableValues", line[header.indexOf("AllowableValues")]);
+                        }
+
+                        if (header.contains("IsIndexed"))
+                        {
+                            row.put("isIndexed", line[header.indexOf("IsIndexed")]);
+                        }
+
+                        toAdd.add(row);
                     }
-
-                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
-
-                    row.put("category", line[header.indexOf("Category")]);
-                    row.put("label", line[header.indexOf("Label")]);
-                    row.put("dataSource", line[header.indexOf("DataSource")]);
-                    row.put("infoKey", line[header.indexOf("ID")]);
-                    row.put("dataType", line[header.indexOf("Type")]);
-                    row.put("dataNumber", line[header.indexOf("Number")]);
-                    row.put("description", line[header.indexOf("Description")]);
-                    row.put("url", line[header.indexOf("URL")]);
-
-                    toAdd.add(row);
                 }
             }
 
