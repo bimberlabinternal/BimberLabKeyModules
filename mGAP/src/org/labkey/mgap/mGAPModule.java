@@ -39,6 +39,7 @@ import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mgap.buttons.PopulateAnnotationsButton;
 import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
@@ -85,6 +86,7 @@ public class mGAPModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING), mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING);
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE), mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE);
         LDKService.get().registerQueryButton(new ReleaseButton(this), mGAPSchema.NAME, mGAPSchema.TABLE_RELEASE_TRACKS);
+        LDKService.get().registerQueryButton(new PopulateAnnotationsButton(this), mGAPSchema.NAME, mGAPSchema.TABLE_VARIANT_ANNOTATIONS);
 
         NotificationService.get().registerNotification(new mGAPUserNotification(this));
 
