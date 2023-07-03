@@ -1107,17 +1107,17 @@ public class mGAPController extends SpringActionController
                             row.put("hidden", line[header.indexOf("Hidden")]);
                         }
 
-                        if (header.contains("FormatString"))
+                        if (header.contains("FormatString") && line.length > header.indexOf("FormatString"))
                         {
                             row.put("formatString", line[header.indexOf("FormatString")]);
                         }
 
-                        if (header.contains("AllowableValues"))
+                        if (header.contains("AllowableValues") && line.length > header.indexOf("AllowableValues"))
                         {
                             row.put("allowableValues", line[header.indexOf("AllowableValues")]);
                         }
 
-                        if (header.contains("IsIndexed"))
+                        if (header.contains("IsIndexed")  && line.length > header.indexOf("IsIndexed"))
                         {
                             row.put("isIndexed", line[header.indexOf("IsIndexed")]);
                         }
