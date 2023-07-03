@@ -9,7 +9,7 @@ public class PopulateAnnotationsButton extends SimpleButtonConfigFactory
 {
     public PopulateAnnotationsButton(Module owner)
     {
-        super(owner, "Create mGAP Release", DetailsURL.fromString("/mgap/updateAnnotations.view"));
+        super(owner, "Reload Annotations from GitHub", DetailsURL.fromString("/mgap/updateAnnotations.view"));
         setPermission(AdminPermission.class);
     }
 }
