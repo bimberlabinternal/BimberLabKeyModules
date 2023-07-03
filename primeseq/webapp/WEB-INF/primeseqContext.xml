@@ -6,7 +6,7 @@
     <bean id="primeseqPipelineRegistry" class="org.labkey.api.pipeline.TaskPipelineRegistrar">
         <property name="factoryImpls">
             <list>
-                <bean class="org.labkey.primeseq.pipeline.MhcMigrationPipelineJob.Task$Factory">
+                <bean class="org.labkey.primeseq.pipeline.MhcCleanupPipelineJob.Task$Factory">
                     <property name="location" value="webserver" />
                 </bean>
             </list>
@@ -14,10 +14,10 @@
         <property name="pipelines">
             <list>
                 <bean class="org.labkey.api.pipeline.TaskPipelineSettings">
-                    <constructor-arg type="java.lang.Class" value="org.labkey.primeseq.pipeline.MhcMigrationPipelineJob"/>
+                    <constructor-arg type="java.lang.Class" value="org.labkey.primeseq.pipeline.MhcCleanupPipelineJob"/>
                     <property name="taskProgressionSpec">
                         <list>
-                            <value type="java.lang.Class">org.labkey.primeseq.pipeline.MhcMigrationPipelineJob.Task</value>
+                            <value type="java.lang.Class">org.labkey.primeseq.pipeline.MhcCleanupPipelineJob.Task</value>
                         </list>
                     </property>
                 </bean>
