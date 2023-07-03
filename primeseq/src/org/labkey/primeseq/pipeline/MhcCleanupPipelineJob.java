@@ -40,6 +40,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +52,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
 
     private boolean _dropDisabledResults = true;
     private double _lineageThreshold = 0.25;
-    private boolean _dropMultiLineage = true;
+    private boolean _dropMultiLineageMHC = true;
     private boolean _combineRedundantGroups = true;
 
     public static class Provider extends PipelineProvider
@@ -133,9 +134,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
         return _combineRedundantGroups;
     }
 
-    public boolean isDropMultiLineage()
+    public boolean isDropMultiLineageMHC()
     {
-        return _dropMultiLineage;
+        return _dropMultiLineageMHC;
     }
 
     public static class Task extends PipelineJob.Task<Task.Factory>
@@ -188,8 +189,8 @@ public class MhcCleanupPipelineJob extends PipelineJob
             return (MhcCleanupPipelineJob) getJob();
         }
 
-        private int alignmentSummaryDeleted = 0;
-        private int alignmentSummaryJunctionDeleted = 0;
+        private Map<String, Integer> alignmentSummaryDeleted = new HashMap<>();
+        private Map<String, Integer> alignmentSummaryJunctionDeleted = new HashMap<>();
         @Override
         public RecordedActionSet run() throws PipelineJobException
         {
@@ -197,6 +198,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
             TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
             getJob().getLogger().info("Starting rows in alignment_summary: " + new TableSelector(alignmentSummary).getRowCount());
             getJob().getLogger().info("Starting rows in alignment_summary_junction: " + new TableSelector(alignmentSummaryJunction).getRowCount());
+            getJob().getLogger().info(getPipelineJob().doPerformDeletes() ? "**This is a production run, records will be deleted" : "**This is a test run, records will not be deleted");
 
             // Iterate each analysis:
             AtomicInteger ai = new AtomicInteger(0);
@@ -222,8 +224,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 processAnalysis(rowId);
             });
 
-            getJob().getLogger().info("Deleted rows in alignment_summary: " + alignmentSummaryDeleted);
-            getJob().getLogger().info("Deleted rows in alignment_summary_junction: " + alignmentSummaryJunctionDeleted);
+            getJob().getLogger().info("Deleted rows in alignment_summary:");
+            alignmentSummaryDeleted.keySet().forEach(x -> getJob().getLogger().info(x + ": " + alignmentSummaryDeleted.get(x)));
+
+            getJob().getLogger().info("Deleted rows in alignment_summary_junction: ");
+            alignmentSummaryJunctionDeleted.keySet().forEach(x -> getJob().getLogger().info(x + ": " + alignmentSummaryJunctionDeleted.get(x)));
 
             getJob().getLogger().info("Ending rows in alignment_summary: " + new TableSelector(alignmentSummary).getRowCount());
             getJob().getLogger().info("Ending rows in alignment_summary_junction: " + new TableSelector(alignmentSummaryJunction).getRowCount());
@@ -265,21 +270,21 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 if (!junctionRecordsToDelete.isEmpty())
                 {
                     getJob().getLogger().info("Deleting " + junctionRecordsToDelete.size() + " disabled records from alignment_summary_junction");
+                    alignmentSummaryJunctionDeleted.put("disabled records", alignmentSummaryJunctionDeleted.getOrDefault("disabled records", 0) + junctionRecordsToDelete.size());
                     if (getPipelineJob().doPerformDeletes())
                     {
                         junctionRecordsToDelete.forEach(rowId -> {
                             Table.delete(alignmentSummaryJunction, rowId);
-                            alignmentSummaryJunctionDeleted++;
                         });
                     }
                 }
             }
 
-            // TODO: limit to MHC
-            if (getPipelineJob().isDropMultiLineage())
+            if (getPipelineJob().isDropMultiLineageMHC())
             {
                 SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
                 filter.addCondition(FieldKey.fromString("totalLineages"), 1, CompareType.GT);
+                filter.addCondition(FieldKey.fromString("loci"), "MHC", CompareType.CONTAINS);
 
                 List<String> rowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
                 if (!rowIdList.isEmpty())
@@ -288,7 +293,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     List<Integer> alignmentIdsToDelete = rowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
                     if (!alignmentIdsToDelete.isEmpty())
                     {
-                        deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "multi-lineage");
+                        deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "multi-lineage MHC");
                     }
                 }
             }
@@ -348,11 +353,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
             if (!alignmentIdsToDelete.isEmpty())
             {
                 getJob().getLogger().info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records lacking alignment_summary_junction");
+                alignmentSummaryDeleted.put("lacking alignment_summary_junction records", alignmentSummaryDeleted.getOrDefault("lacking alignment_summary_junction records", 0) + alignmentIdsToDelete.size());
                 if (getPipelineJob().doPerformDeletes())
                 {
                     alignmentIdsToDelete.forEach(rowId -> {
                         Table.delete(alignmentSummary, rowId);
-                        alignmentSummaryDeleted++;
                     });
                 }
             }
@@ -361,11 +366,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
         private void deleteAlignmentSummaryAndJunction(List<Integer> alignmentIdsToDelete, int analysisId, TableInfo alignmentSummary, TableInfo alignmentSummaryJunction, String reason)
         {
             getJob().getLogger().info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records. reason: " + reason);
+            alignmentSummaryDeleted.put(reason, alignmentSummaryDeleted.getOrDefault(reason, 0) + alignmentIdsToDelete.size());
             if (getPipelineJob().doPerformDeletes())
             {
                 alignmentIdsToDelete.forEach(rowId -> {
                     Table.delete(alignmentSummary, rowId);
-                    alignmentSummaryDeleted++;
                 });
             }
 
@@ -376,12 +381,12 @@ public class MhcCleanupPipelineJob extends PipelineJob
             getJob().getLogger().info("Deleting " + junctionRecordsToDelete.size() + " alignment_summary_junction records");
             if (!junctionRecordsToDelete.isEmpty())
             {
+                alignmentSummaryJunctionDeleted.put(reason, alignmentSummaryJunctionDeleted.getOrDefault(reason, 0) + junctionRecordsToDelete.size());
                 if (getPipelineJob().doPerformDeletes())
                 {
                     junctionRecordsToDelete.forEach(rowId -> {
                         Table.delete(alignmentSummaryJunction, rowId);
                     });
-                    alignmentSummaryJunctionDeleted++;
                 }
             }
         }
