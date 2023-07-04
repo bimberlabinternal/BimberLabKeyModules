@@ -423,7 +423,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                         double pctDiff = Math.abs(existingData.get(l) - endingData.get(l)) / existingData.get(l);
                         if (pctDiff > 0.35)
                         {
-                            Level lvl = existingData.get(l) > 2 ? Level.WARN : Level.ERROR;
+                            Level lvl = existingData.get(l) < 2 ? Level.INFO : Level.ERROR;
                             getJob().getLogger().log(lvl, "Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
                         }
                     }
