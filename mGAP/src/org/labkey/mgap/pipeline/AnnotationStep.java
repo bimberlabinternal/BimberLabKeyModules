@@ -153,7 +153,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         Container targetContainer = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
         final HashMap<String, List<String>> sourceFieldMap = new HashMap<>();
         final HashMap<String, List<String>> targetFieldMap = new HashMap<>();
-        new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS)).forEachResults(rs -> {
+        new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("toolName", "sourceField", "infoKey")).forEachResults(rs -> {
             if (!sourceFieldMap.containsKey(rs.getString(FieldKey.fromString("toolName"))))
             {
                 sourceFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
@@ -161,7 +161,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             }
 
             sourceFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("sourceField")));
-            targetFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("targetField")));
+            targetFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("infoKey")));
         });
 
         getPipelineCtx().getSequenceSupport().cacheObject(SOURCE_FIELDS, sourceFieldMap);
