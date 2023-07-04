@@ -1100,28 +1100,13 @@ public class mGAPController extends SpringActionController
                         row.put("dataNumber", line[header.indexOf("Number")]);
                         row.put("description", line[header.indexOf("Description")]);
                         row.put("url", line[header.indexOf("URL")]);
-                        row.put("dataurl", line[header.indexOf("DataURL")]);
                         row.put("toolName", line[header.indexOf("ToolName")]);
 
-                        if (header.contains("Hidden"))
-                        {
-                            row.put("hidden", line[header.indexOf("Hidden")]);
-                        }
-
-                        if (header.contains("FormatString") && line.length > header.indexOf("FormatString"))
-                        {
-                            row.put("formatString", line[header.indexOf("FormatString")]);
-                        }
-
-                        if (header.contains("AllowableValues") && line.length > header.indexOf("AllowableValues"))
-                        {
-                            row.put("allowableValues", line[header.indexOf("AllowableValues")]);
-                        }
-
-                        if (header.contains("IsIndexed")  && line.length > header.indexOf("IsIndexed"))
-                        {
-                            row.put("isIndexed", line[header.indexOf("IsIndexed")]);
-                        }
+                        row.put("dataurl", getOptionalField(line, header, "DataURL"));
+                        row.put("hidden", getOptionalField(line, header, "Hidden"));
+                        row.put("formatString", getOptionalField(line, header, "FormatString"));
+                        row.put("allowableValues", getOptionalField(line, header, "AllowableValues"));
+                        row.put("isIndexed", getOptionalField(line, header, "IsIndexed"));
 
                         toAdd.add(row);
                     }
@@ -1140,6 +1125,11 @@ public class mGAPController extends SpringActionController
             }
 
             return true;
+        }
+
+        private String getOptionalField(String[] line, List<String> header, String name)
+        {
+            return header.contains(name) && line.length > header.indexOf(name) ? line[header.indexOf(name)] : null;
         }
 
         @Override
