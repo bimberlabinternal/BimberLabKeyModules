@@ -414,13 +414,13 @@ public class MhcCleanupPipelineJob extends PipelineJob
             allLineages.forEach(l -> {
                 if (!existingData.containsKey(l))
                 {
-                    getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l);
+                    getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + endingData.get(l));
                 }
                 else if (!endingData.containsKey(l))
                 {
                     if (!l.contains("\n"))
                     {
-                        getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l);
+                        getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + existingData.get(l));
                     }
                 }
                 else
