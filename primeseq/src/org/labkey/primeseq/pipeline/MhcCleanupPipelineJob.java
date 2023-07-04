@@ -5,6 +5,7 @@ import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.DbScope;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
@@ -236,6 +237,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 }
 
                 int rowId = rs.getInt(FieldKey.fromString("rowId"));
+                getJob().setStatus(TaskStatus.running, "Processing: " + ai.get() + " of " + totalAnalyses);
                 processAnalysis(rowId);
             });
 
@@ -254,196 +256,192 @@ public class MhcCleanupPipelineJob extends PipelineJob
         private void processAnalysis(int analysisId)
         {
             getJob().getLogger().info("Processing: " + analysisId);
-
-            TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
-            TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
-
-            // snapshot data:
-            final Map<String, Double> existingData = new HashMap<>();
-            SimpleFilter dataFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
-            dataFilter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.GT);
-            new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
-                existingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
-            });
-
-            // Delete low-freq lineages:
-            if (getPipelineJob().getLineageThreshold() > 0)
+            try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
-                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
-                filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.LT);
+                TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
+                TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
 
-                List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
-                if (!lowFreqRowIdList.isEmpty())
+                // snapshot data:
+                final Map<String, Double> existingData = new HashMap<>();
+                SimpleFilter dataFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                dataFilter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.GT);
+                new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
+                    existingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
+                });
+
+                // Delete low-freq lineages:
+                if (getPipelineJob().getLineageThreshold() > 0)
                 {
-                    getJob().getLogger().info("Analysis: " + analysisId + ", low freq lineages: " + lowFreqRowIdList.size());
-                    List<Integer> alignmentIdsToDelete = lowFreqRowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
-                    if (!alignmentIdsToDelete.isEmpty())
+                    SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.LT);
+
+                    List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                    if (!lowFreqRowIdList.isEmpty())
                     {
-                        deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "below lineage threshold");
+                        getJob().getLogger().info("Analysis: " + analysisId + ", low freq lineages: " + lowFreqRowIdList.size());
+                        List<Integer> alignmentIdsToDelete = lowFreqRowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
+                        if (!alignmentIdsToDelete.isEmpty())
+                        {
+                            deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "below lineage threshold");
+                        }
                     }
                 }
-            }
 
-            // Delete low-freq allele groups:
-            if (getPipelineJob().getAlleleGroupThreshold() > 0)
-            {
-                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
-                filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getAlleleGroupThreshold(), CompareType.LT);
-
-                List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
-                if (!lowFreqRowIdList.isEmpty())
+                // Delete low-freq allele groups:
+                if (getPipelineJob().getAlleleGroupThreshold() > 0)
                 {
-                    getJob().getLogger().info("Analysis: " + analysisId + ", low freq allele groups: " + lowFreqRowIdList.size());
-                    List<Integer> alignmentIdsToDelete = lowFreqRowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
-                    if (!alignmentIdsToDelete.isEmpty())
+                    SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getAlleleGroupThreshold(), CompareType.LT);
+
+                    List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                    if (!lowFreqRowIdList.isEmpty())
                     {
-                        deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "below allele-group threshold");
+                        getJob().getLogger().info("Analysis: " + analysisId + ", low freq allele groups: " + lowFreqRowIdList.size());
+                        List<Integer> alignmentIdsToDelete = lowFreqRowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
+                        if (!alignmentIdsToDelete.isEmpty())
+                        {
+                            deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "below allele-group threshold");
+                        }
                     }
                 }
-            }
 
-            if (getPipelineJob().isDropDisabledResults())
-            {
-                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
-                filter.addCondition(FieldKey.fromString("status"), false, CompareType.EQUAL);
-
-                List<Integer> junctionRecordsToDelete = new TableSelector(alignmentSummaryJunction, PageFlowUtil.set("rowid"), filter, null).getArrayList(Integer.class);
-                if (!junctionRecordsToDelete.isEmpty())
+                if (getPipelineJob().isDropDisabledResults())
                 {
-                    getJob().getLogger().info("Deleting " + junctionRecordsToDelete.size() + " disabled records from alignment_summary_junction");
-                    alignmentSummaryJunctionDeleted.put("disabled records", alignmentSummaryJunctionDeleted.getOrDefault("disabled records", 0) + junctionRecordsToDelete.size());
-                    if (getPipelineJob().doPerformDeletes())
+                    SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("status"), false, CompareType.EQUAL);
+
+                    List<Integer> junctionRecordsToDelete = new TableSelector(alignmentSummaryJunction, PageFlowUtil.set("rowid"), filter, null).getArrayList(Integer.class);
+                    if (!junctionRecordsToDelete.isEmpty())
                     {
+                        getJob().getLogger().info("Deleting " + junctionRecordsToDelete.size() + " disabled records from alignment_summary_junction");
+                        alignmentSummaryJunctionDeleted.put("disabled records", alignmentSummaryJunctionDeleted.getOrDefault("disabled records", 0) + junctionRecordsToDelete.size());
                         junctionRecordsToDelete.forEach(rowId -> {
                             Table.delete(alignmentSummaryJunction, rowId);
                         });
                     }
                 }
-            }
 
-            if (getPipelineJob().isDropMultiLineageMHC())
-            {
-                SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
-                filter.addCondition(FieldKey.fromString("totalLineages"), 1, CompareType.GT);
-                filter.addCondition(FieldKey.fromString("loci"), "MHC", CompareType.CONTAINS);
-
-                List<String> rowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
-                if (!rowIdList.isEmpty())
+                if (getPipelineJob().isDropMultiLineageMHC())
                 {
-                    getJob().getLogger().info("Analysis: " + analysisId + ", multi-lineage records: " + rowIdList.size());
-                    List<Integer> alignmentIdsToDelete = rowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
-                    if (!alignmentIdsToDelete.isEmpty())
+                    SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                    filter.addCondition(FieldKey.fromString("totalLineages"), 1, CompareType.GT);
+                    filter.addCondition(FieldKey.fromString("loci"), "MHC", CompareType.CONTAINS);
+
+                    List<String> rowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                    if (!rowIdList.isEmpty())
                     {
-                        deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "multi-lineage MHC");
+                        getJob().getLogger().info("Analysis: " + analysisId + ", multi-lineage records: " + rowIdList.size());
+                        List<Integer> alignmentIdsToDelete = rowIdList.stream().map(x -> Arrays.asList(x.split(","))).flatMap(List::stream).map(Integer::parseInt).toList();
+                        if (!alignmentIdsToDelete.isEmpty())
+                        {
+                            deleteAlignmentSummaryAndJunction(alignmentIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "multi-lineage MHC");
+                        }
                     }
                 }
-            }
 
-            // Redundant groups:
-            if (getPipelineJob().isCombineRedundantGroups())
-            {
-                SimpleFilter nAlignmentFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
-                nAlignmentFilter.addCondition(FieldKey.fromString("nAlignments"), 1, CompareType.GT);
-                List<String> redundantAlignmentSets = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), nAlignmentFilter, null).getArrayList(String.class);
-                if (!redundantAlignmentSets.isEmpty())
+                // Redundant groups:
+                if (getPipelineJob().isCombineRedundantGroups())
                 {
-                    getJob().getLogger().info("Analysis: " + analysisId + ", redundant alignment sets: " + redundantAlignmentSets.size());
-                    redundantAlignmentSets.forEach(x -> {
-                        List<Integer> alignmentIds = Arrays.stream(x.split(",")).map(Integer::parseInt).toList();
-                        if (!alignmentIds.isEmpty())
-                        {
-                            final AtomicInteger rowIdToAppend = new AtomicInteger(-1);
-                            final AtomicInteger originalTotal = new AtomicInteger(0);
-                            final AtomicInteger totalToAppend = new AtomicInteger(0);
-                            final List<Integer> rowIdsToDelete = new ArrayList<>();
-                            new TableSelector(alignmentSummary, PageFlowUtil.set("rowid", "total"), new SimpleFilter(FieldKey.fromString("rowid"), alignmentIds, CompareType.IN), new Sort("-total")).forEachResults(rs -> {
-                                if (rowIdToAppend.get() == -1)
-                                {
-                                    rowIdToAppend.set(rs.getInt(FieldKey.fromString("rowid")));
-                                    originalTotal.set(rs.getInt(FieldKey.fromString("total")));
-                                }
-                                else
-                                {
-                                    rowIdsToDelete.add(rs.getInt(FieldKey.fromString("rowid")));
-                                    totalToAppend.getAndAdd(rs.getInt(FieldKey.fromString("total")));
-                                }
-                            });
-
-                            deleteAlignmentSummaryAndJunction(rowIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "redundant allele sets");
-                            getJob().getLogger().info("increasing total by: " + totalToAppend.get());
-                            if (getPipelineJob().doPerformDeletes())
+                    SimpleFilter nAlignmentFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                    nAlignmentFilter.addCondition(FieldKey.fromString("nAlignments"), 1, CompareType.GT);
+                    List<String> redundantAlignmentSets = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), nAlignmentFilter, null).getArrayList(String.class);
+                    if (!redundantAlignmentSets.isEmpty())
+                    {
+                        getJob().getLogger().info("Analysis: " + analysisId + ", redundant alignment sets: " + redundantAlignmentSets.size());
+                        redundantAlignmentSets.forEach(x -> {
+                            List<Integer> alignmentIds = Arrays.stream(x.split(",")).map(Integer::parseInt).toList();
+                            if (!alignmentIds.isEmpty())
                             {
+                                final AtomicInteger rowIdToAppend = new AtomicInteger(-1);
+                                final AtomicInteger originalTotal = new AtomicInteger(0);
+                                final AtomicInteger totalToAppend = new AtomicInteger(0);
+                                final List<Integer> rowIdsToDelete = new ArrayList<>();
+                                new TableSelector(alignmentSummary, PageFlowUtil.set("rowid", "total"), new SimpleFilter(FieldKey.fromString("rowid"), alignmentIds, CompareType.IN), new Sort("-total")).forEachResults(rs -> {
+                                    if (rowIdToAppend.get() == -1)
+                                    {
+                                        rowIdToAppend.set(rs.getInt(FieldKey.fromString("rowid")));
+                                        originalTotal.set(rs.getInt(FieldKey.fromString("total")));
+                                    }
+                                    else
+                                    {
+                                        rowIdsToDelete.add(rs.getInt(FieldKey.fromString("rowid")));
+                                        totalToAppend.getAndAdd(rs.getInt(FieldKey.fromString("total")));
+                                    }
+                                });
+
+                                deleteAlignmentSummaryAndJunction(rowIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "redundant allele sets");
+                                getJob().getLogger().info("increasing total by: " + totalToAppend.get());
                                 Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
                                 toUpdate.put("rowid", rowIdToAppend.get());
                                 toUpdate.put("total", originalTotal.get() + totalToAppend.get());
                                 Table.update(getJob().getUser(), alignmentSummary, toUpdate, rowIdToAppend.get());
                             }
-                        }
-                    });
+                        });
+                    }
                 }
-            }
 
-            // Find alignment_summary records without any remaining results:
-            List<Integer> alignmentIdsToDelete = new SqlSelector(alignmentSummary.getSchema().getScope(),
-                    new SQLFragment("SELECT x.rowId FROM sequenceanalysis.alignment_summary x ")
-                    .append(new SQLFragment("WHERE x.analysis_id = ? ", analysisId))
-                    .append(new SQLFragment(" AND x.valid_pairs IS NOT NULL"))
-                    .append(new SQLFragment(" AND (SELECT count(*) FROM sequenceanalysis.alignment_summary_junction j WHERE j.analysis_id = ? AND j.alignment_id = x.rowid) = 0", analysisId))
-            ).getArrayList(Integer.class);
+                // Find alignment_summary records without any remaining results:
+                List<Integer> alignmentIdsToDelete = new SqlSelector(alignmentSummary.getSchema().getScope(),
+                        new SQLFragment("SELECT x.rowId FROM sequenceanalysis.alignment_summary x ")
+                                .append(new SQLFragment("WHERE x.analysis_id = ? ", analysisId))
+                                .append(new SQLFragment(" AND x.valid_pairs IS NOT NULL"))
+                                .append(new SQLFragment(" AND (SELECT count(*) FROM sequenceanalysis.alignment_summary_junction j WHERE j.analysis_id = ? AND j.alignment_id = x.rowid) = 0", analysisId))
+                ).getArrayList(Integer.class);
 
-            if (!alignmentIdsToDelete.isEmpty())
-            {
-                getJob().getLogger().info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records lacking alignment_summary_junction");
-                alignmentSummaryDeleted.put("lacking alignment_summary_junction records", alignmentSummaryDeleted.getOrDefault("lacking alignment_summary_junction records", 0) + alignmentIdsToDelete.size());
-                if (getPipelineJob().doPerformDeletes())
+                if (!alignmentIdsToDelete.isEmpty())
                 {
+                    getJob().getLogger().info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records lacking alignment_summary_junction");
+                    alignmentSummaryDeleted.put("lacking alignment_summary_junction records", alignmentSummaryDeleted.getOrDefault("lacking alignment_summary_junction records", 0) + alignmentIdsToDelete.size());
                     alignmentIdsToDelete.forEach(rowId -> {
                         Table.delete(alignmentSummary, rowId);
                     });
                 }
+
+                // verify ending data:
+                final Map<String, Double> endingData = new HashMap<>();
+                new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
+                    endingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
+                });
+
+                Set<String> allLineages = new TreeSet<>(existingData.keySet());
+                allLineages.addAll(endingData.keySet());
+                allLineages.forEach(l -> {
+                    if (!existingData.containsKey(l))
+                    {
+                        getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + endingData.get(l));
+                    }
+                    else if (!endingData.containsKey(l))
+                    {
+                        if (!l.contains("\n"))
+                        {
+                            getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + existingData.get(l));
+                        }
+                    }
+                    else
+                    {
+                        double pctDiff = Math.abs(existingData.get(l) - endingData.get(l)) / existingData.get(l);
+                        if (pctDiff > 0.3)
+                        {
+                            getJob().getLogger().error("Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
+                        }
+                    }
+                });
+
+                if (getPipelineJob().doPerformDeletes())
+                {
+                    getJob().getLogger().info("committing changes");
+                    transaction.commit();
+                }
             }
-
-            // verify ending data:
-            final Map<String, Double> endingData = new HashMap<>();
-            new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
-                endingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
-            });
-
-            Set<String> allLineages = new TreeSet<>(existingData.keySet());
-            allLineages.addAll(endingData.keySet());
-            allLineages.forEach(l -> {
-                if (!existingData.containsKey(l))
-                {
-                    getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + endingData.get(l));
-                }
-                else if (!endingData.containsKey(l))
-                {
-                    if (!l.contains("\n"))
-                    {
-                        getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + existingData.get(l));
-                    }
-                }
-                else
-                {
-                    double pctDiff = Math.abs(existingData.get(l) - endingData.get(l)) / existingData.get(l);
-                    if (pctDiff > 0.3)
-                    {
-                        getJob().getLogger().error("Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
-                    }
-                }
-            });
         }
 
         private void deleteAlignmentSummaryAndJunction(List<Integer> alignmentIdsToDelete, int analysisId, TableInfo alignmentSummary, TableInfo alignmentSummaryJunction, String reason)
         {
             getJob().getLogger().info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records. reason: " + reason);
             alignmentSummaryDeleted.put(reason, alignmentSummaryDeleted.getOrDefault(reason, 0) + alignmentIdsToDelete.size());
-            if (getPipelineJob().doPerformDeletes())
-            {
-                alignmentIdsToDelete.forEach(rowId -> {
-                    Table.delete(alignmentSummary, rowId);
-                });
-            }
+            alignmentIdsToDelete.forEach(rowId -> {
+                Table.delete(alignmentSummary, rowId);
+            });
 
             // also junction records:
             SimpleFilter alignmentIdFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
@@ -453,12 +451,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
             if (!junctionRecordsToDelete.isEmpty())
             {
                 alignmentSummaryJunctionDeleted.put(reason, alignmentSummaryJunctionDeleted.getOrDefault(reason, 0) + junctionRecordsToDelete.size());
-                if (getPipelineJob().doPerformDeletes())
-                {
-                    junctionRecordsToDelete.forEach(rowId -> {
-                        Table.delete(alignmentSummaryJunction, rowId);
-                    });
-                }
+                junctionRecordsToDelete.forEach(rowId -> {
+                    Table.delete(alignmentSummaryJunction, rowId);
+                });
             }
         }
     }
