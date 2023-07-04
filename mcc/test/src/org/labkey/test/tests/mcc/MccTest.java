@@ -917,6 +917,8 @@ public class MccTest extends BaseWebDriverTest
             importStudy(getProjectName() + "/Colonies/" + name);
             waitForElement(Locator.tagWithText("a", "Populate Lookups"));
         }
+
+        goToHome();
     }
 
     private void populateLookups(String name)

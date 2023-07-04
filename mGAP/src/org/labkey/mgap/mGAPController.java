@@ -1102,11 +1102,11 @@ public class mGAPController extends SpringActionController
                         row.put("url", line[header.indexOf("URL")]);
                         row.put("toolName", line[header.indexOf("ToolName")]);
 
-                        row.put("dataurl", getOptionalField(line, header, "DataURL"));
-                        row.put("hidden", getOptionalField(line, header, "Hidden"));
-                        row.put("formatString", getOptionalField(line, header, "FormatString"));
-                        row.put("allowableValues", getOptionalField(line, header, "AllowableValues"));
-                        row.put("isIndexed", getOptionalField(line, header, "IsIndexed"));
+                        getOptionalField(line, header, "DataURL", row, "dataurl");
+                        getOptionalField(line, header, "Hidden", row, "hidden");
+                        getOptionalField(line, header, "FormatString", row, "formatString");
+                        getOptionalField(line, header, "AllowableValues", row, "allowableValues");
+                        getOptionalField(line, header, "IsIndexed", row, "isIndexed");
 
                         toAdd.add(row);
                     }
@@ -1127,9 +1127,12 @@ public class mGAPController extends SpringActionController
             return true;
         }
 
-        private String getOptionalField(String[] line, List<String> header, String name)
+        private void getOptionalField(String[] line, List<String> header, String name, Map<String, Object> row, String rowKey)
         {
-            return header.contains(name) && line.length > header.indexOf(name) ? line[header.indexOf(name)] : null;
+            if (header.contains(name) && line.length > header.indexOf(name))
+            {
+                row.put(rowKey, line[header.indexOf(name)]);
+            }
         }
 
         @Override
