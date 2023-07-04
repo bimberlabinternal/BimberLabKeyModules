@@ -1095,7 +1095,7 @@ public class mGAPController extends SpringActionController
                         row.put("label", line[header.indexOf("Label")]);
                         row.put("dataSource", line[header.indexOf("DataSource")]);
                         row.put("infoKey", line[header.indexOf("ID")]);
-                        row.put("sourceField", line[header.indexOf("sourceField")]);
+                        row.put("sourceField", line[header.indexOf("SourceField")]);
                         row.put("dataType", line[header.indexOf("Type")]);
                         row.put("dataNumber", line[header.indexOf("Number")]);
                         row.put("description", line[header.indexOf("Description")]);
