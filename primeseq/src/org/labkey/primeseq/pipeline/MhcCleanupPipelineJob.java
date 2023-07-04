@@ -44,6 +44,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MhcCleanupPipelineJob extends PipelineJob
@@ -158,6 +160,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
             public Factory()
             {
                 super(Task.class);
+                setLocation("webserver-high-priority");
             }
 
             @Override
@@ -254,6 +257,14 @@ public class MhcCleanupPipelineJob extends PipelineJob
 
             TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
             TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
+
+            // snapshot data:
+            final Map<String, Double> existingData = new HashMap<>();
+            SimpleFilter dataFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+            dataFilter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.GT);
+            new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
+                existingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
+            });
 
             // Delete low-freq lineages:
             if (getPipelineJob().getLineageThreshold() > 0)
@@ -391,6 +402,36 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     });
                 }
             }
+
+            // verify ending data:
+            final Map<String, Double> endingData = new HashMap<>();
+            new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
+                endingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
+            });
+
+            Set<String> allLineages = new TreeSet<>(existingData.keySet());
+            allLineages.addAll(endingData.keySet());
+            allLineages.forEach(l -> {
+                if (!existingData.containsKey(l))
+                {
+                    getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l);
+                }
+                else if (!endingData.containsKey(l))
+                {
+                    if (!l.contains("\n"))
+                    {
+                        getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l);
+                    }
+                }
+                else
+                {
+                    double pctDiff = Math.abs(existingData.get(l) - endingData.get(l)) / existingData.get(l);
+                    if (pctDiff > 0.3)
+                    {
+                        getJob().getLogger().error("Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
+                    }
+                }
+            });
         }
 
         private void deleteAlignmentSummaryAndJunction(List<Integer> alignmentIdsToDelete, int analysisId, TableInfo alignmentSummary, TableInfo alignmentSummaryJunction, String reason)
