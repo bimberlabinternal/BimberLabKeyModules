@@ -1,5 +1,6 @@
 package org.labkey.primeseq.pipeline;
 
+import org.apache.logging.log4j.Level;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -408,21 +409,22 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 allLineages.forEach(l -> {
                     if (!existingData.containsKey(l))
                     {
-                        getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + endingData.get(l));
+                        getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", new value: " + endingData.get(l));
                     }
                     else if (!endingData.containsKey(l))
                     {
                         if (!l.contains("\n"))
                         {
-                            getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", value: " + existingData.get(l));
+                            getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", was: " + existingData.get(l));
                         }
                     }
                     else
                     {
                         double pctDiff = Math.abs(existingData.get(l) - endingData.get(l)) / existingData.get(l);
-                        if (pctDiff > 0.3)
+                        if (pctDiff > 0.35)
                         {
-                            getJob().getLogger().error("Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
+                            Level lvl = existingData.get(l) > 2 ? Level.WARN : Level.ERROR;
+                            getJob().getLogger().log(lvl, "Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
                         }
                     }
                 });
