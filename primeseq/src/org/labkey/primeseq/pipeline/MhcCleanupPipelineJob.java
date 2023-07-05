@@ -1,6 +1,8 @@
 package org.labkey.primeseq.pipeline;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -43,8 +45,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -257,8 +261,12 @@ public class MhcCleanupPipelineJob extends PipelineJob
         private void processAnalysis(int analysisId)
         {
             getJob().getLogger().info("Processing: " + analysisId);
+
             try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
+                AlignmentGroupCompare agc = new AlignmentGroupCompare(analysisId, getJob().getContainer(), getJob().getUser());
+                agc.collapseGroups(getJob().getLogger());
+
                 TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
                 TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
 
@@ -456,6 +464,185 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 junctionRecordsToDelete.forEach(rowId -> {
                     Table.delete(alignmentSummaryJunction, rowId);
                 });
+            }
+        }
+    }
+
+    public static class AlignmentGroupCompare
+    {
+        private int analysisId;
+        private List<AlignmentGroup> groups = new ArrayList<>();
+
+        public AlignmentGroupCompare(final int analysisId, Container c, User u)
+        {
+            this.analysisId = analysisId;
+
+            new TableSelector(QueryService.get().getUserSchema(u, c, "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("analysis_id", "alleles", "lineages", "totalLineages", "total_reads", "rowids"), new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId), null).forEachResults(rs -> {
+                if (rs.getString(FieldKey.fromString("alleles")) == null)
+                {
+                    return;
+                }
+
+                AlignmentGroup g = new AlignmentGroup();
+                g.analysisId = analysisId;
+                g.alleles.addAll(Arrays.stream(rs.getString(FieldKey.fromString("alleles")).split("\n")).toList());
+                g.lineages = rs.getString(FieldKey.fromString("lineages"));
+                g.totalLineages = rs.getInt(FieldKey.fromString("totalLineages"));
+                g.totalReads = rs.getInt(FieldKey.fromString("total_reads"));
+                g.rowIds.addAll(Arrays.stream(rs.getString(FieldKey.fromString("rowids")).split(",")).map(Integer::parseInt).toList());
+
+                groups.add(g);
+            });
+
+            sortGroups();
+        }
+
+        private void sortGroups()
+        {
+            groups.sort(Comparator.comparingInt(o -> o.alleles.size()));
+            Collections.reverse(groups);
+        }
+
+        public void collapseGroups(Logger log)
+        {
+            final long initialCounts = groups.stream().map(x -> x.totalReads).mapToInt(Integer::intValue).sum();
+
+            if (groups.isEmpty())
+            {
+                return;
+            }
+
+            while (doCollapse(log))
+            {
+                //do work. each time we have any groups collapsed, we will restart. once there are no collapsed allele groups, we finish
+                sortGroups();
+            }
+
+            final int endCounts = groups.stream().map(x -> x.totalReads).mapToInt(Integer::intValue).sum();
+            if (initialCounts != endCounts)
+            {
+                throw new IllegalStateException("Starting/ending counts not equal: " + initialCounts + " / " + endCounts);
+            }
+
+            List<Integer> alignmentIdsToDelete = groups.stream().map(x -> x.rowIdsToDelete).flatMap(List::stream).toList();
+            log.info("Alignment IDs to delete: " + alignmentIdsToDelete.size());
+
+            if (!alignmentIdsToDelete.isEmpty())
+            {
+                log.info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records after collapse");
+                TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
+                TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
+
+                alignmentIdsToDelete.forEach(rowId -> {
+                    Table.delete(alignmentSummary, rowId);
+                });
+
+                // also junction records:
+                SimpleFilter alignmentIdFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
+                alignmentIdFilter.addCondition(FieldKey.fromString("alignment_id"), alignmentIdsToDelete, CompareType.IN);
+                List<Integer> junctionRecordsToDelete = new TableSelector(alignmentSummaryJunction, PageFlowUtil.set("rowid"), alignmentIdFilter, null).getArrayList(Integer.class);
+                log.info("Deleting " + junctionRecordsToDelete.size() + " alignment_summary_junction records");
+                if (!junctionRecordsToDelete.isEmpty())
+                {
+                    junctionRecordsToDelete.forEach(rowId -> {
+                        Table.delete(alignmentSummaryJunction, rowId);
+                    });
+                }
+            }
+        }
+
+        private boolean doCollapse(Logger log)
+        {
+            ListIterator<AlignmentGroup> it = groups.listIterator();
+            AlignmentGroup g1 = it.next();
+            while (it.hasNext())
+            {
+                if (compareGroupToOthers(g1))
+                {
+                    log.info("Collapsed: " + g1.lineages + ", with: " + g1.alleles.size());
+                    return true; // abort and restart the process with a new list iterator
+                }
+
+                g1 = it.next();
+            }
+
+            return false;
+        }
+
+        private boolean compareGroupToOthers(AlignmentGroup g1)
+        {
+            boolean didCollapse = false;
+            int idx = groups.indexOf(g1);
+            if (idx == groups.size() - 1)
+            {
+                return false;
+            }
+
+            List<AlignmentGroup> groupsClone = new ArrayList<>(groups.subList(idx + 1, groups.size()));
+            ListIterator<AlignmentGroup> it = groupsClone.listIterator();
+            while (it.hasNext())
+            {
+                AlignmentGroup g2 = it.next();
+                if (g2.equals(g1))
+                {
+                    throw new IllegalStateException("Should not happen");
+                }
+
+                if (g1.canCombine(g2))
+                {
+                    AlignmentGroup combined = g1.combine(g2);
+                    groups.remove(g1);
+                    groups.add(idx, combined);
+                    g1 = combined;
+                    groups.remove(g2);
+
+                    didCollapse = true;
+                }
+            }
+
+            return didCollapse;
+        }
+
+        public static class AlignmentGroup
+        {
+            int analysisId;
+            Set<String> alleles = new TreeSet<>();
+            String lineages;
+            int totalLineages;
+            int totalReads;
+            List<Integer> rowIds = new ArrayList<>();
+
+            List<Integer> rowIdsToDelete = new ArrayList<>();
+
+            public boolean canCombine(AlignmentGroup g2)
+            {
+                if (this.totalLineages > 1 || g2.totalLineages > 1 || this.alleles.size() < 4 || g2.alleles.size() < 4)
+                {
+                    return false;
+                }
+
+                return CollectionUtils.disjunction(this.alleles, g2.alleles).size() == 1;
+            }
+
+            public AlignmentGroup combine(AlignmentGroup g2)
+            {
+                // Take the larger allele set:
+                if (g2.alleles.size() > this.alleles.size())
+                {
+                    g2.rowIdsToDelete.addAll(this.rowIds);
+                    g2.rowIdsToDelete.addAll(this.rowIdsToDelete);
+                    g2.totalReads = g2.totalReads + totalReads;
+
+                    return g2;
+                }
+                else
+                {
+                    this.rowIdsToDelete.addAll(g2.rowIds);
+                    this.rowIdsToDelete.addAll(g2.rowIdsToDelete);
+                    this.totalReads = g2.totalReads + totalReads;
+
+                    return this;
+                }
             }
         }
     }
