@@ -417,13 +417,13 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 allLineages.forEach(l -> {
                     if (!existingData.containsKey(l))
                     {
-                        getJob().getLogger().error("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", new value: " + endingData.get(l));
+                        getJob().getLogger().warn("New lineage >0.25 for analysis: " + analysisId + ", " + l + ", new value: " + endingData.get(l));
                     }
                     else if (!endingData.containsKey(l))
                     {
                         if (!l.contains("\n"))
                         {
-                            getJob().getLogger().error("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", was: " + existingData.get(l));
+                            getJob().getLogger().warn("Missing lineage >0.25 for analysis: " + analysisId + ", " + l + ", was: " + existingData.get(l));
                         }
                     }
                     else
@@ -431,7 +431,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                         double pctDiff = Math.abs(existingData.get(l) - endingData.get(l)) / existingData.get(l);
                         if (pctDiff > 0.35)
                         {
-                            Level lvl = existingData.get(l) < 2 ? Level.INFO : Level.ERROR;
+                            Level lvl = existingData.get(l) < 2 ? Level.INFO : Level.WARN;
                             getJob().getLogger().log(lvl, "Significant change in freq for lineage: " + l + ", for analysis: " + analysisId + ", change: " + existingData.get(l) + " -> " + endingData.get(l) + ", pct diff: " + pctDiff);
                         }
                     }
