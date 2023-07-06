@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class MhcCleanupPipelineJob extends PipelineJob
 {
@@ -60,8 +61,8 @@ public class MhcCleanupPipelineJob extends PipelineJob
     private int _minAnalysisId;
 
     private boolean _dropDisabledResults = true;
-    private double _lineageThreshold = 0.25;
-    private double _alleleGroupThreshold = 0.1;
+    private double _lineageThreshold = 0.20;
+    private double _alleleGroupThreshold = 0.05;
     private boolean _dropMultiLineageMHC = true;
     private boolean _combineRedundantGroups = true;
 
@@ -265,7 +266,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
             try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
                 AlignmentGroupCompare agc = new AlignmentGroupCompare(analysisId, getJob().getContainer(), getJob().getUser());
-                agc.collapseGroups(getJob().getLogger());
+                agc.collapseGroups(getJob().getLogger(), getJob().getUser());
 
                 TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
                 TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
@@ -364,8 +365,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
                                 final AtomicInteger rowIdToAppend = new AtomicInteger(-1);
                                 final AtomicInteger originalTotal = new AtomicInteger(0);
                                 final AtomicInteger totalToAppend = new AtomicInteger(0);
+                                final AtomicInteger totalF = new AtomicInteger(0);
+                                final AtomicInteger totalR = new AtomicInteger(0);
+                                final AtomicInteger totalVP = new AtomicInteger(0);
                                 final List<Integer> rowIdsToDelete = new ArrayList<>();
-                                new TableSelector(alignmentSummary, PageFlowUtil.set("rowid", "total"), new SimpleFilter(FieldKey.fromString("rowid"), alignmentIds, CompareType.IN), new Sort("-total")).forEachResults(rs -> {
+                                new TableSelector(alignmentSummary, PageFlowUtil.set("rowid", "total", "total_forward", "total_reverse", "valid_pairs"), new SimpleFilter(FieldKey.fromString("rowid"), alignmentIds, CompareType.IN), new Sort("-total")).forEachResults(rs -> {
                                     if (rowIdToAppend.get() == -1)
                                     {
                                         rowIdToAppend.set(rs.getInt(FieldKey.fromString("rowid")));
@@ -376,13 +380,21 @@ public class MhcCleanupPipelineJob extends PipelineJob
                                         rowIdsToDelete.add(rs.getInt(FieldKey.fromString("rowid")));
                                         totalToAppend.getAndAdd(rs.getInt(FieldKey.fromString("total")));
                                     }
+
+                                    // Just keep a running total, rather than separate new/old:
+                                    totalF.getAndAdd(rs.getInt(FieldKey.fromString("total_forward")));
+                                    totalR.getAndAdd(rs.getInt(FieldKey.fromString("total_reverse")));
+                                    totalVP.getAndAdd(rs.getInt(FieldKey.fromString("valid_pairs")));
                                 });
 
                                 deleteAlignmentSummaryAndJunction(rowIdsToDelete, analysisId, alignmentSummary, alignmentSummaryJunction, "redundant allele sets");
-                                getJob().getLogger().info("increasing total by: " + totalToAppend.get());
+                                getJob().getLogger().info("increasing total by: " + totalToAppend.get() + ", from: " + originalTotal.get());
                                 Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
                                 toUpdate.put("rowid", rowIdToAppend.get());
                                 toUpdate.put("total", originalTotal.get() + totalToAppend.get());
+                                toUpdate.put("total_forward", totalF.get());
+                                toUpdate.put("total_reverse", totalR.get());
+                                toUpdate.put("valid_pairs", totalVP.get());
                                 Table.update(getJob().getUser(), alignmentSummary, toUpdate, rowIdToAppend.get());
                             }
                         });
@@ -442,6 +454,10 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     getJob().getLogger().info("committing changes");
                     transaction.commit();
                 }
+                else
+                {
+                    getJob().getLogger().info("will not commit, rolling back changes");
+                }
             }
         }
 
@@ -477,7 +493,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
         {
             this.analysisId = analysisId;
 
-            new TableSelector(QueryService.get().getUserSchema(u, c, "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("analysis_id", "alleles", "lineages", "totalLineages", "total_reads", "rowids"), new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId), null).forEachResults(rs -> {
+            new TableSelector(QueryService.get().getUserSchema(u, c, "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("analysis_id", "alleles", "lineages", "totalLineages", "total_reads", "total_forward", "total_reverse", "valid_pairs", "rowids"), new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId), null).forEachResults(rs -> {
                 if (rs.getString(FieldKey.fromString("alleles")) == null)
                 {
                     return;
@@ -489,6 +505,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 g.lineages = rs.getString(FieldKey.fromString("lineages"));
                 g.totalLineages = rs.getInt(FieldKey.fromString("totalLineages"));
                 g.totalReads = rs.getInt(FieldKey.fromString("total_reads"));
+                g.totalForward = rs.getInt(FieldKey.fromString("total_forward"));
+                g.totalReverse = rs.getInt(FieldKey.fromString("total_reverse"));
+                g.validPairs = rs.getInt(FieldKey.fromString("valid_pairs"));
                 g.rowIds.addAll(Arrays.stream(rs.getString(FieldKey.fromString("rowids")).split(",")).map(Integer::parseInt).toList());
 
                 groups.add(g);
@@ -503,7 +522,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
             Collections.reverse(groups);
         }
 
-        public void collapseGroups(Logger log)
+        public void collapseGroups(Logger log, User user)
         {
             final long initialCounts = groups.stream().map(x -> x.totalReads).mapToInt(Integer::intValue).sum();
 
@@ -525,7 +544,30 @@ public class MhcCleanupPipelineJob extends PipelineJob
             }
 
             List<Integer> alignmentIdsToDelete = groups.stream().map(x -> x.rowIdsToDelete).flatMap(List::stream).toList();
+            List<AlignmentGroup> alignmentGroupsToUpdate = groups.stream().filter(g -> !g.rowIdsToDelete.isEmpty()).toList();
             log.info("Alignment IDs to delete: " + alignmentIdsToDelete.size());
+            log.info("Alignment groups to update counts: " + alignmentGroupsToUpdate.size());
+
+            if (!alignmentGroupsToUpdate.isEmpty())
+            {
+                log.info("Updating counts in " + alignmentGroupsToUpdate.size() + " groups after collapse");
+                TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
+
+                alignmentGroupsToUpdate.forEach(ag -> {
+                    Map<String, Object> toUpdate = new CaseInsensitiveHashMap<>();
+                    toUpdate.put("rowId", ag.rowIds.get(0));
+                    toUpdate.put("total", ag.totalReads);
+                    toUpdate.put("total_forward", ag.totalForward);
+                    toUpdate.put("total_reverse", ag.totalReverse);
+                    toUpdate.put("valid_pairs", ag.validPairs);
+                    Table.update(user, alignmentSummary, toUpdate, ag.rowIds.get(0));
+
+                    if (ag.rowIds.size() > 1) {
+                        log.info("The following IDs are redundant and will also be removed: " + ag.rowIds.subList(1, ag.rowIds.size()).stream().map(String::valueOf).collect(Collectors.joining(", ")));
+                        alignmentIdsToDelete.addAll(ag.rowIds.subList(1, ag.rowIds.size()));
+                    }
+                });
+            }
 
             if (!alignmentIdsToDelete.isEmpty())
             {
@@ -610,6 +652,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
             String lineages;
             int totalLineages;
             int totalReads;
+            int totalForward;
+            int totalReverse;
+            int validPairs;
             List<Integer> rowIds = new ArrayList<>();
 
             List<Integer> rowIdsToDelete = new ArrayList<>();
@@ -632,6 +677,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     g2.rowIdsToDelete.addAll(this.rowIds);
                     g2.rowIdsToDelete.addAll(this.rowIdsToDelete);
                     g2.totalReads = g2.totalReads + totalReads;
+                    g2.totalForward = g2.totalForward + totalForward;
+                    g2.totalReverse = g2.totalReverse + totalReverse;
+                    g2.validPairs = g2.validPairs + validPairs;
 
                     return g2;
                 }
@@ -640,6 +688,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     this.rowIdsToDelete.addAll(g2.rowIds);
                     this.rowIdsToDelete.addAll(g2.rowIdsToDelete);
                     this.totalReads = g2.totalReads + totalReads;
+                    this.totalForward = g2.totalForward + totalForward;
+                    this.totalReverse = g2.totalReverse + totalReverse;
+                    this.validPairs = g2.validPairs + validPairs;
 
                     return this;
                 }
