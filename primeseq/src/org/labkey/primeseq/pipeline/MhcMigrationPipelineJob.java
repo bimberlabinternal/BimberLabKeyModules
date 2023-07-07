@@ -449,8 +449,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         }
                         map.put("ref_nt_id", localNT);
                         map.put("status", rs.getValue("status"));
-
-                        map.put("alignment_id", alignmentSummaryMap.get("alignment_id"));
+                        map.put("alignment_id", alignmentSummaryMap.get(rs.getValue("alignment_id")));
 
                         Container c = workbookMap.get((int) rs.getValue("analysis_id/workbook/workbookId"));
                         map.put("container", c.getId());
