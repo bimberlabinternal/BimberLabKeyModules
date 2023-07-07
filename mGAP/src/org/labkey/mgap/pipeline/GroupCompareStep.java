@@ -60,7 +60,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
                     ToolParameterDescriptor.create(GROUP2, "Group 2 Sample(s)", "Optional. Only variants of the selected type(s) will be included", "sequenceanalysis-trimmingtextarea", null, null),
                     ToolParameterDescriptor.createExpDataParam(REF_VCF, "Reference VCF", "This is the file ID of the VCF to use as the reference.", "ldk-expdatafield", new JSONObject()
                     {{
-                        put("allowBlank", false);
+
                     }}, null),
                     ToolParameterDescriptor.create("selects", "Select Expressions", "Filter expressions that can be used to subset variants. Passing variants will be written to a separate TSV file.", "sequenceanalysis-variantfilterpanel", new JSONObject(){{
                         put("mode", "SELECT");
@@ -89,7 +89,6 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
                 }
 
                 ctx.getFileManager().addIntermediateFile(f);
-                ctx.getFileManager().addIntermediateFile(new File(f.getPath() + ".tbi"));
 
                 return f;
             }).toList();
@@ -143,8 +142,6 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
         getPipelineCtx().getLogger().info("Running GroupCompare");
 
-        Integer refFileId = getProvider().getParameterByName(REF_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-
         List<String> extraArgs = new ArrayList<>();
         if (intervals != null)
         {
@@ -154,9 +151,15 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
             });
         }
 
-        File refVcf = getPipelineCtx().getSequenceSupport().getCachedData(refFileId);
-        if (refVcf != null)
+        Integer refFileId = getProvider().getParameterByName(REF_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
+        if (refFileId != null)
         {
+            File refVcf = getPipelineCtx().getSequenceSupport().getCachedData(refFileId);
+            if (!refVcf.exists())
+            {
+                throw new PipelineJobException("Unable to find file: " + refVcf.getPath());
+            }
+
             extraArgs.add("-RV");
             extraArgs.add(refVcf.getPath());
         }
