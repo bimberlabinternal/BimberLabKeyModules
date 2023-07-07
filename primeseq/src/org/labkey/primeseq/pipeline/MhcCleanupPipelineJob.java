@@ -37,6 +37,7 @@ import org.labkey.api.security.User;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.Pair;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.ViewBackgroundInfo;
 import org.labkey.api.view.ViewContext;
@@ -266,7 +267,18 @@ public class MhcCleanupPipelineJob extends PipelineJob
             try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
                 AlignmentGroupCompare agc = new AlignmentGroupCompare(analysisId, getJob().getContainer(), getJob().getUser());
-                agc.collapseGroups(getJob().getLogger(), getJob().getUser());
+                Pair<Integer, Integer> collapsed = agc.collapseGroups(getJob().getLogger(), getJob().getUser());
+                if (!alignmentSummaryDeleted.containsKey("collapsed groups"))
+                {
+                    alignmentSummaryDeleted.put("collapsed groups", 0);
+                }
+                alignmentSummaryDeleted.put("collapsed groups", alignmentSummaryDeleted.get("collapsed groups") + collapsed.first);
+
+                if (!alignmentSummaryJunctionDeleted.containsKey("collapsed groups"))
+                {
+                    alignmentSummaryJunctionDeleted.put("collapsed groups", 0);
+                }
+                alignmentSummaryJunctionDeleted.put("collapsed groups", alignmentSummaryJunctionDeleted.get("collapsed groups") + collapsed.second);
 
                 TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
                 TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
@@ -454,10 +466,6 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     getJob().getLogger().info("committing changes");
                     transaction.commit();
                 }
-                else
-                {
-                    getJob().getLogger().info("will not commit, rolling back changes");
-                }
             }
         }
 
@@ -486,8 +494,8 @@ public class MhcCleanupPipelineJob extends PipelineJob
 
     public static class AlignmentGroupCompare
     {
-        private int analysisId;
-        private List<AlignmentGroup> groups = new ArrayList<>();
+        private final int analysisId;
+        private final List<AlignmentGroup> groups = new ArrayList<>();
 
         public AlignmentGroupCompare(final int analysisId, Container c, User u)
         {
@@ -522,15 +530,16 @@ public class MhcCleanupPipelineJob extends PipelineJob
             Collections.reverse(groups);
         }
 
-        public void collapseGroups(Logger log, User user)
+        public Pair<Integer, Integer> collapseGroups(Logger log, User user)
         {
             final long initialCounts = groups.stream().map(x -> x.totalReads).mapToInt(Integer::intValue).sum();
 
             if (groups.isEmpty())
             {
-                return;
+                return null;
             }
 
+            Pair<Integer, Integer> ret = Pair.of(0, 0);
             while (doCollapse(log))
             {
                 //do work. each time we have any groups collapsed, we will restart. once there are no collapsed allele groups, we finish
@@ -572,12 +581,14 @@ public class MhcCleanupPipelineJob extends PipelineJob
             if (!alignmentIdsToDelete.isEmpty())
             {
                 log.info("Deleting " + alignmentIdsToDelete.size() + " alignment_summary records after collapse");
+
                 TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
                 TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
 
                 alignmentIdsToDelete.forEach(rowId -> {
                     Table.delete(alignmentSummary, rowId);
                 });
+                ret.first += alignmentIdsToDelete.size();
 
                 // also junction records:
                 SimpleFilter alignmentIdFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
@@ -589,8 +600,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     junctionRecordsToDelete.forEach(rowId -> {
                         Table.delete(alignmentSummaryJunction, rowId);
                     });
+                    ret.second += junctionRecordsToDelete.size();
                 }
             }
+
+            return ret;
         }
 
         private boolean doCollapse(Logger log)
