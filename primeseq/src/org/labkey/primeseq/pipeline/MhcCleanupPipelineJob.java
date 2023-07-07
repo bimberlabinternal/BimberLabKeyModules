@@ -45,6 +45,7 @@ import org.labkey.api.view.ViewContext;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -55,6 +56,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MhcCleanupPipelineJob extends PipelineJob
 {
@@ -62,8 +64,8 @@ public class MhcCleanupPipelineJob extends PipelineJob
     private int _minAnalysisId;
 
     private boolean _dropDisabledResults = true;
-    private double _lineageThreshold = 0.20;
-    private double _alleleGroupThreshold = 0.05;
+    private double _lineageThreshold = 0.15;
+    private double _alleleGroupThreshold = 0.02;
     private boolean _dropMultiLineageMHC = true;
     private boolean _combineRedundantGroups = true;
 
@@ -216,8 +218,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
             TableInfo alignmentSummary = sequenceAnalysisSchema.getTable("alignment_summary");
             TableInfo alignmentSummaryJunction = sequenceAnalysisSchema.getTable("alignment_summary_junction");
 
-            getJob().getLogger().info("Starting rows in alignment_summary: " + new TableSelector(alignmentSummary).getRowCount());
-            getJob().getLogger().info("Starting rows in alignment_summary_junction: " + new TableSelector(alignmentSummaryJunction).getRowCount());
+            long startingRowsAlignmentSummary = new TableSelector(alignmentSummary).getRowCount();
+            getJob().getLogger().info("Starting rows in alignment_summary: " + startingRowsAlignmentSummary);
+
+            long startingRowsAlignmentSummaryJ = new TableSelector(alignmentSummaryJunction).getRowCount();
+            getJob().getLogger().info("Starting rows in alignment_summary_junction: " + startingRowsAlignmentSummaryJ);
             getJob().getLogger().info(getPipelineJob().doPerformDeletes() ? "**This is a production run, records will be deleted" : "**This is a test run, records will not be deleted");
 
             // Iterate each analysis:
@@ -254,8 +259,8 @@ public class MhcCleanupPipelineJob extends PipelineJob
             getJob().getLogger().info("Deleted rows in alignment_summary_junction: ");
             alignmentSummaryJunctionDeleted.keySet().forEach(x -> getJob().getLogger().info(x + ": " + alignmentSummaryJunctionDeleted.get(x)));
 
-            getJob().getLogger().info("Ending rows in alignment_summary: " + new TableSelector(alignmentSummary).getRowCount());
-            getJob().getLogger().info("Ending rows in alignment_summary_junction: " + new TableSelector(alignmentSummaryJunction).getRowCount());
+            getJob().getLogger().info("Ending rows in alignment_summary: " + new TableSelector(alignmentSummary).getRowCount() + " (from " + startingRowsAlignmentSummary + ")");
+            getJob().getLogger().info("Ending rows in alignment_summary_junction: " + new TableSelector(alignmentSummaryJunction).getRowCount() + " (from " + startingRowsAlignmentSummaryJ + ")");
 
             return new RecordedActionSet();
         }
@@ -266,20 +271,6 @@ public class MhcCleanupPipelineJob extends PipelineJob
 
             try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
-                AlignmentGroupCompare agc = new AlignmentGroupCompare(analysisId, getJob().getContainer(), getJob().getUser());
-                Pair<Integer, Integer> collapsed = agc.collapseGroups(getJob().getLogger(), getJob().getUser());
-                if (!alignmentSummaryDeleted.containsKey("collapsed groups"))
-                {
-                    alignmentSummaryDeleted.put("collapsed groups", 0);
-                }
-                alignmentSummaryDeleted.put("collapsed groups", alignmentSummaryDeleted.get("collapsed groups") + collapsed.first);
-
-                if (!alignmentSummaryJunctionDeleted.containsKey("collapsed groups"))
-                {
-                    alignmentSummaryJunctionDeleted.put("collapsed groups", 0);
-                }
-                alignmentSummaryJunctionDeleted.put("collapsed groups", alignmentSummaryJunctionDeleted.get("collapsed groups") + collapsed.second);
-
                 TableInfo alignmentSummary = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary");
                 TableInfo alignmentSummaryJunction = DbSchema.get("sequenceanalysis", DbSchemaType.Module).getTable("alignment_summary_junction");
 
@@ -290,6 +281,24 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
                     existingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
                 });
+
+                // This is important to run first, since it will adjust percentages for many:
+                AlignmentGroupCompare agc = new AlignmentGroupCompare(analysisId, getJob().getContainer(), getJob().getUser());
+                Pair<Integer, Integer> collapsed = agc.collapseGroups(getJob().getLogger(), getJob().getUser());
+                if (collapsed != null)
+                {
+                    if (!alignmentSummaryDeleted.containsKey("collapsed groups"))
+                    {
+                        alignmentSummaryDeleted.put("collapsed groups", 0);
+                    }
+                    alignmentSummaryDeleted.put("collapsed groups", alignmentSummaryDeleted.get("collapsed groups") + collapsed.first);
+
+                    if (!alignmentSummaryJunctionDeleted.containsKey("collapsed groups"))
+                    {
+                        alignmentSummaryJunctionDeleted.put("collapsed groups", 0);
+                    }
+                    alignmentSummaryJunctionDeleted.put("collapsed groups", alignmentSummaryJunctionDeleted.get("collapsed groups") + collapsed.second);
+                }
 
                 // Delete low-freq lineages:
                 if (getPipelineJob().getLineageThreshold() > 0)
@@ -613,9 +622,10 @@ public class MhcCleanupPipelineJob extends PipelineJob
             AlignmentGroup g1 = it.next();
             while (it.hasNext())
             {
+                int orig = g1.alleles.size();
                 if (compareGroupToOthers(g1))
                 {
-                    log.info("Collapsed: " + g1.lineages + ", with: " + g1.alleles.size());
+                    log.info("Collapsed: " + g1.lineages + ", from: " + orig + " to " + g1.alleles.size() + " alleles");
                     return true; // abort and restart the process with a new list iterator
                 }
 
@@ -680,14 +690,36 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     return false;
                 }
 
-                return CollectionUtils.disjunction(this.alleles, g2.alleles).size() == 1;
+                // Allow greater level of collapse with highly ambiguous results:
+                // Require similar sizes, but disjoint allele sets (e.g., A/B/D and A/C/D, but not A/B/C and A/D/E)
+                int setDiffThreshold;
+                int sizeDiffThreshold;
+                if (this.alleles.size() >= 16)
+                {
+                    setDiffThreshold = 6;
+                    sizeDiffThreshold = 3;
+                }
+                else if (this.alleles.size() >= 8)
+                {
+                    setDiffThreshold = 4;
+                    sizeDiffThreshold = 2;
+                }
+                else
+                {
+                    setDiffThreshold = 2;
+                    sizeDiffThreshold = 1;
+                }
+
+                return Math.abs(this.alleles.size() - g2.alleles.size()) <= sizeDiffThreshold && CollectionUtils.disjunction(this.alleles, g2.alleles).size() <= setDiffThreshold;
             }
 
             public AlignmentGroup combine(AlignmentGroup g2)
             {
-                // Take the larger allele set:
+                // Take the union of the allele sets:
+                TreeSet<String> allAlleles = Stream.of(this.alleles, g2.alleles).flatMap(Collection::stream).collect(Collectors.toCollection(TreeSet::new));
                 if (g2.alleles.size() > this.alleles.size())
                 {
+                    g2.alleles = allAlleles;
                     g2.rowIdsToDelete.addAll(this.rowIds);
                     g2.rowIdsToDelete.addAll(this.rowIdsToDelete);
                     g2.totalReads = g2.totalReads + totalReads;
@@ -699,6 +731,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 }
                 else
                 {
+                    this.alleles = allAlleles;
                     this.rowIdsToDelete.addAll(g2.rowIds);
                     this.rowIdsToDelete.addAll(g2.rowIdsToDelete);
                     this.totalReads = g2.totalReads + totalReads;
