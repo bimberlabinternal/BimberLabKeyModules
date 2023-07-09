@@ -163,8 +163,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         getPipelineCtx().getSequenceSupport().cacheObject(TARGET_FIELDS, targetFieldMap);
     }
 
-    private static String SOURCE_FIELDS = "sourceFields";
-    private static String TARGET_FIELDS = "targetFields";
+    private static final String SOURCE_FIELDS = "sourceFields";
+    private static final String TARGET_FIELDS = "targetFields";
 
     private List<String> getCachedFields(String key, String toolName) throws PipelineJobException
     {
