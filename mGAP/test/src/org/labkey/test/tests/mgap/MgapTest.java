@@ -61,7 +61,7 @@ public class MgapTest extends BaseWebDriverTest
         goToProjectHome();
 
         beginAt("/mgap/" + getProjectName() + "/updateAnnotations.view");
-        waitAndClickAndWait(Locator.button("OK"));
+        clickButton("OK");
 
         if (!SequenceTest.isExternalPipelineEnabled(getProjectName()))
         {
