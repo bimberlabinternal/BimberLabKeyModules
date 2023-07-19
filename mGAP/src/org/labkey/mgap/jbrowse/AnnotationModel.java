@@ -2,7 +2,7 @@ package org.labkey.mgap.jbrowse;
 
 public class AnnotationModel
 {
-    private int _rowid;
+    private Integer _rowid;
     private String _category;
     private String _label;
     private String _dataSource;
@@ -15,8 +15,8 @@ public class AnnotationModel
     private String _description;
     private String _toolName;
     private String _formatString;
-    private boolean _hidden = false;
-    private boolean _isIndexed = false;
+    private Boolean _hidden = false;
+    private Boolean _isIndexed = false;
     private String _allowableValues;
 
     public AnnotationModel()
@@ -156,20 +156,20 @@ public class AnnotationModel
 
     public boolean isHidden()
     {
-        return _hidden;
+        return _hidden != null && _hidden;
     }
 
-    public void setHidden(boolean hidden)
+    public void setHidden(Boolean hidden)
     {
         _hidden = hidden;
     }
 
     public boolean isIndexed()
     {
-        return _isIndexed;
+        return _isIndexed == null || _isIndexed;
     }
 
-    public void setIndexed(boolean indexed)
+    public void setIndexed(Boolean indexed)
     {
         _isIndexed = indexed;
     }

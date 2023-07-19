@@ -25,7 +25,7 @@ public class mGAPFieldCustomizer implements JBrowseFieldCustomizer
     @Override
     public void customizeField(JBrowseFieldDescriptor field, Container c, User u)
     {
-        List<AnnotationModel> ams = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), new SimpleFilter(FieldKey.fromString("infoField"), field.getFieldName()), null).getArrayList(AnnotationModel.class);
+        List<AnnotationModel> ams = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), new SimpleFilter(FieldKey.fromString("infoKey"), field.getFieldName()), null).getArrayList(AnnotationModel.class);
         if (ams.isEmpty())
         {
             return;
