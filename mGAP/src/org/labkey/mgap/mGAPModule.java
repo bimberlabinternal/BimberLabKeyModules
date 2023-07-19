@@ -41,6 +41,8 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mgap.buttons.PopulateAnnotationsButton;
 import org.labkey.mgap.buttons.ReleaseButton;
+import org.labkey.mgap.jbrowse.mGAPFieldCustomizer;
+import org.labkey.mgap.jbrowse.mGAPGroupsProvider;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
 import org.labkey.mgap.pipeline.GroupCompareStep;
@@ -91,6 +93,8 @@ public class mGAPModule extends ExtendedSimpleModule
         NotificationService.get().registerNotification(new mGAPUserNotification(this));
 
         JBrowseService.get().registerDemographicsSource(new mGAPDemographicsSource());
+        JBrowseService.get().registerFieldCustomizer(new mGAPFieldCustomizer());
+        JBrowseService.get().registerGroupsProvider(new mGAPGroupsProvider());
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
 
