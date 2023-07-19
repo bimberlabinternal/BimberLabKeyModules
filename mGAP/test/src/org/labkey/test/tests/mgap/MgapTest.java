@@ -22,11 +22,14 @@ import org.junit.experimental.categories.Category;
 import org.labkey.api.util.Pair;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
+import org.labkey.test.TestTimeoutException;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
 import org.labkey.test.tests.external.labModules.JBrowseTest;
 import org.labkey.test.tests.external.labModules.SequenceTest;
 import org.labkey.test.util.external.labModules.LabModuleHelper;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 
 import java.util.List;
 
@@ -40,6 +43,15 @@ public class MgapTest extends BaseWebDriverTest
     {
         setupTest();
 
+        testSessionCardDisplay();
+        testmGapSessionCardDisplay();
+        testFullTextSearch();
+    }
+
+    @Override
+    protected void doCleanup(boolean afterTest) throws TestTimeoutException
+    {
+        super.doCleanup(afterTest);
     }
 
     private void setupTest() throws Exception
@@ -62,6 +74,32 @@ public class MgapTest extends BaseWebDriverTest
         SequenceTest.createReferenceGenome(this, 1, JBrowseTest.JB_GENOME_NAME, "1");
 
         SequenceTest.addOutputFile(this, JBrowseTest.MGAP_TEST_VCF, JBrowseTest.JB_GENOME_NAME, "TestVCF", "VCF File", "This is an output file to test VCF full-text search", false);
+    }
+
+    private void testSessionCardDisplay()
+    {
+        beginAt("/" + getProjectName() + "/jbrowse-jbrowse.view?session=mgap&location=1:8328..8842");
+        JBrowseTest.waitForJBrowseToLoad(this);
+
+        Actions actions = new Actions(getDriver());
+        WebElement toClick = getDriver().findElements(JBrowseTest.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> G")).stream().filter(WebElement::isDisplayed).collect(JBrowseTest.toSingleton());
+        actions.click(toClick).perform();
+        waitForElement(Locator.tagWithText("span", "Section 1"));
+
+        waitForElement(Locator.tagWithText("td", "Allele Count"));
+    }
+
+    private void testmGapSessionCardDisplay()
+    {
+        beginAt("/" + getProjectName() + "/jbrowse-jbrowse.view?session=mgapF&location=1:8328..8842");
+        JBrowseTest.waitForJBrowseToLoad(this);
+
+        Actions actions = new Actions(getDriver());
+        WebElement toClick = getDriver().findElements(JBrowseTest.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T")).stream().filter(WebElement::isDisplayed).collect(JBrowseTest.toSingleton());
+        actions.click(toClick).perform();
+        waitForElement(Locator.tagWithText("span", "Genes And Gene Predictions"));
+
+        waitForElement(Locator.tagWithText("td", "Unable to Lift to Human"));
     }
 
     private void testFullTextSearch() throws Exception
