@@ -49,6 +49,7 @@ import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.module.AllowedDuringUpgrade;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
@@ -77,12 +78,15 @@ import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
+import org.labkey.api.studies.StudiesService;
 import org.labkey.api.util.ConfigurationException;
 import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.GUID;
+import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
@@ -1145,6 +1149,39 @@ public class mGAPController extends SpringActionController
         public @NotNull URLHelper getSuccessURL(Object o)
         {
             return QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, mGAPSchema.NAME, mGAPSchema.TABLE_VARIANT_ANNOTATIONS);
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public class ImportStudyAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Import mGAP Study");
+
+            return new HtmlView(HtmlString.unsafe("This will import the default mGAP study in this folder and set the EHRStudyContainer property to point to this container. Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            StudiesService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(mGAPModule.NAME), new Path("referenceStudy"));
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
         }
     }
 }
