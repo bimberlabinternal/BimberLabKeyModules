@@ -16,10 +16,10 @@
 
 package org.labkey.test.tests.mgap;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.labkey.api.util.Pair;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
 import org.labkey.test.TestTimeoutException;
@@ -27,6 +27,7 @@ import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
 import org.labkey.test.tests.external.labModules.JBrowseTest;
+import org.labkey.test.tests.external.labModules.JBrowseTestHelper;
 import org.labkey.test.tests.external.labModules.SequenceTest;
 import org.labkey.test.util.external.labModules.LabModuleHelper;
 import org.openqa.selenium.WebElement;
@@ -74,20 +75,20 @@ public class MgapTest extends BaseWebDriverTest
             return;
         }
 
-        String seq = SequenceTest.readSeqFromFile(JBrowseTest.GRCH37_GENOME);
+        String seq = SequenceTest.readSeqFromFile(JBrowseTestHelper.GRCH37_GENOME);
         SequenceTest.ensureRefSeqExists(this, "1", seq);
         SequenceTest.createReferenceGenome(this, 1, JBrowseTest.JB_GENOME_NAME, "1");
 
-        SequenceTest.addOutputFile(this, JBrowseTest.MGAP_TEST_VCF, JBrowseTest.JB_GENOME_NAME, "TestVCF", "VCF File", "This is an output file to test VCF full-text search", false);
+        SequenceTest.addOutputFile(this, JBrowseTestHelper.MGAP_TEST_VCF, JBrowseTest.JB_GENOME_NAME, "TestVCF", "VCF File", "This is an output file to test VCF full-text search", false);
     }
 
     private void testSessionCardDisplay()
     {
         beginAt("/" + getProjectName() + "/jbrowse-jbrowse.view?session=mgap&location=1:8328..8842");
-        JBrowseTest.waitForJBrowseToLoad(this);
+        JBrowseTestHelper.waitForJBrowseToLoad(this);
 
         Actions actions = new Actions(getDriver());
-        WebElement toClick = getDriver().findElements(JBrowseTest.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> G")).stream().filter(WebElement::isDisplayed).collect(JBrowseTest.toSingleton());
+        WebElement toClick = getDriver().findElements(JBrowseTestHelper.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> G")).stream().filter(WebElement::isDisplayed).collect(JBrowseTestHelper.toSingleton());
         actions.click(toClick).perform();
         waitForElement(Locator.tagWithText("span", "Section 1"));
 
@@ -97,10 +98,10 @@ public class MgapTest extends BaseWebDriverTest
     private void testmGapSessionCardDisplay()
     {
         beginAt("/" + getProjectName() + "/jbrowse-jbrowse.view?session=mgapF&location=1:8328..8842");
-        JBrowseTest.waitForJBrowseToLoad(this);
+        JBrowseTestHelper.waitForJBrowseToLoad(this);
 
         Actions actions = new Actions(getDriver());
-        WebElement toClick = getDriver().findElements(JBrowseTest.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T")).stream().filter(WebElement::isDisplayed).collect(JBrowseTest.toSingleton());
+        WebElement toClick = getDriver().findElements(JBrowseTestHelper.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T")).stream().filter(WebElement::isDisplayed).collect(JBrowseTestHelper.toSingleton());
         actions.click(toClick).perform();
         waitForElement(Locator.tagWithText("span", "Genes and Gene Predictions"));
 
@@ -115,9 +116,10 @@ public class MgapTest extends BaseWebDriverTest
             return;
         }
 
-        Pair<String, String> info = JBrowseTest.prepareSearchSession(this, _helper, getProjectName(), false);
-        String sessionId = info.first;
-        String trackId = info.second;
+        JBrowseTestHelper.prepareSearchSession(this, getProjectName());
+        Pair<String, String> info = JBrowseTestHelper.configureSearchSession(this, getProjectName());
+        String sessionId = info.getKey();
+        String trackId = info.getValue();
 
 
     }
