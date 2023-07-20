@@ -740,8 +740,7 @@ public class mGAPController extends SpringActionController
         {
             setTitle("Update Update SnpEff Annotation");
 
-            HtmlView view = new HtmlView("Do you want to continue?");
-            return view;
+            return new HtmlView("Do you want to continue?");
         }
 
         @Override
@@ -750,7 +749,7 @@ public class mGAPController extends SpringActionController
             UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);
             TableSelector ts = new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowId", "objectId", "container"), null, new Sort("-releaseDate"));
             ts.setMaxRows(1);
-            Integer releaseRowId;
+            int releaseRowId;
             String releaseObjectId;
             String releaseContainerId;
             try (Results rs = ts.getResults())
@@ -875,6 +874,7 @@ public class mGAPController extends SpringActionController
         private String _databaseId;
         private String _species;
         private String _trackName;
+        private String _target = "browser";
 
         public String getDatabaseId()
         {
@@ -905,6 +905,16 @@ public class mGAPController extends SpringActionController
         {
             _trackName = trackName;
         }
+
+        public String getTarget()
+        {
+            return _target;
+        }
+
+        public void setTarget(String target)
+        {
+            _target = target;
+        }
     }
 
     @RequiresPermission(ReadPermission.class)
@@ -925,6 +935,10 @@ public class mGAPController extends SpringActionController
             }
 
             JSONObject ctx = ModuleLoader.getInstance().getModule(mGAPModule.class).getPageContextJson(getViewContext());
+            if (ctx.isNull("mgapJBrowse"))
+            {
+                throw new NotFoundException("There is no mGAP release on this server");
+            }
 
             String jbrowseDatabaseId = StringUtils.trimToNull(form.getDatabaseId());
             String species = StringUtils.trimToNull(form.getSpecies());
@@ -938,13 +952,19 @@ public class mGAPController extends SpringActionController
                 throw new NotFoundException("No databaseId provided");
             }
 
+            String actionName = form.getTarget() == null ? "browser" : form.getTarget();
+            if (!"browser".equals(actionName) && !"variantSearch".equals(actionName))
+            {
+                throw new IllegalArgumentException("Unknown target: " + actionName);
+            }
+
+
             Map<String, String[]> params = new HashMap<>(getViewContext().getRequest().getParameterMap());
             params.put("session", new String[]{jbrowseDatabaseId});
 
             String trackName = StringUtils.trimToNull(form.getTrackName());
             if (trackName != null)
             {
-
                 List<String> trackNames = Arrays.asList(trackName.split(","));
                 Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
                 if (!trackIDs.isEmpty())
@@ -953,7 +973,7 @@ public class mGAPController extends SpringActionController
                 }
             }
 
-            ActionURL ret = DetailsURL.fromString("/jbrowse/browser.view", target).getActionURL();
+            ActionURL ret = DetailsURL.fromString("/jbrowse/" + actionName + ".view", target).getActionURL();
             params.forEach((key, value) -> {
                 Arrays.stream(value).forEach(v -> {
                     // This is a convenience to allow shorter URLs for active sample filters:
