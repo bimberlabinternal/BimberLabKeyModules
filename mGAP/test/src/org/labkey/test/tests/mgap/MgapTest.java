@@ -102,7 +102,7 @@ public class MgapTest extends BaseWebDriverTest
         Actions actions = new Actions(getDriver());
         WebElement toClick = getDriver().findElements(JBrowseTest.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T")).stream().filter(WebElement::isDisplayed).collect(JBrowseTest.toSingleton());
         actions.click(toClick).perform();
-        waitForElement(Locator.tagWithText("span", "Genes And Gene Predictions"));
+        waitForElement(Locator.tagWithText("span", "Genes and Gene Predictions"));
 
         waitForElement(Locator.tagWithText("td", "Unable to Lift to Human"));
     }
