@@ -23,6 +23,7 @@ import org.labkey.api.util.Pair;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
 import org.labkey.test.TestTimeoutException;
+import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
 import org.labkey.test.tests.external.labModules.JBrowseTest;
@@ -62,6 +63,10 @@ public class MgapTest extends BaseWebDriverTest
 
         beginAt("/mgap/" + getProjectName() + "/updateAnnotations.view");
         clickButton("OK");
+
+        beginAt(WebTestHelper.getBaseURL() + "/mcc/" + getProjectName() + "/importStudy.view");
+        clickButton("OK");
+        waitForPipelineJobsToComplete(1, "Study import", false, MAX_WAIT_SECONDS * 2500);
 
         if (!SequenceTest.isExternalPipelineEnabled(getProjectName()))
         {
