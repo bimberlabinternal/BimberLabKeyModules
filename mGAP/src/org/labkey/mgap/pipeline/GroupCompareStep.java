@@ -62,7 +62,12 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
                     {{
 
                     }}, null),
-                    ToolParameterDescriptor.create("selects", "Select Expressions", "Filter expressions that can be used to subset variants. Passing variants will be written to a separate TSV file.", "sequenceanalysis-variantfilterpanel", new JSONObject(){{
+                    ToolParameterDescriptor.create("vcfSelects", "VCF Select Expressions", "Filter expressions that can be used to subset variants output in the VCF.", "sequenceanalysis-variantfilterpanel", new JSONObject(){{
+                        put("mode", "SELECT");
+                        put("showFilterName", false);
+                        put("title", "Select Expressions");
+                    }}, null),
+                    ToolParameterDescriptor.create("tableSelects", "Table Select Expressions", "Filter expressions that can be used to subset variants. Passing variants will be written to a separate TSV file. This does not impact the VCF", "sequenceanalysis-variantfilterpanel", new JSONObject(){{
                         put("mode", "SELECT");
                         put("showFilterName", false);
                         put("title", "Select Expressions");
@@ -165,22 +170,8 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         }
 
         //JEXL
-        String selectText = getProvider().getParameterByName("selects").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null);
-        if (selectText != null)
-        {
-            JSONArray filterArr = new JSONArray(selectText);
-            for (int i = 0; i < filterArr.length(); i++)
-            {
-                JSONArray arr = filterArr.getJSONArray(i);
-                if (arr.length() < 2)
-                {
-                    throw new PipelineJobException("Improper select expression: " + filterArr.getString(i));
-                }
-
-                extraArgs.add("-select");
-                extraArgs.add(arr.getString(1));
-            }
-        }
+        addSelects("vcfSelects", "-select", extraArgs);
+        addSelects("tableSelects", "-table-select", extraArgs);
 
         String fieldsText = StringUtils.trimToNull(getProvider().getParameterByName("extraFields").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
         if (fieldsText != null)
@@ -220,6 +211,26 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         output.setVcf(outputVcf);
 
         return output;
+    }
+
+    private void addSelects(String param, String arg, List<String> extraArgs) throws PipelineJobException
+    {
+        String selectText = getProvider().getParameterByName(param).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null);
+        if (selectText != null)
+        {
+            JSONArray filterArr = new JSONArray(selectText);
+            for (int i = 0; i < filterArr.length(); i++)
+            {
+                JSONArray arr = filterArr.getJSONArray(i);
+                if (arr.length() < 2)
+                {
+                    throw new PipelineJobException("Improper select expression: " + filterArr.getString(i));
+                }
+
+                extraArgs.add(arg);
+                extraArgs.add(arr.getString(1));
+            }
+        }
     }
 
     public static class GroupComparison extends AbstractDiscvrSeqWrapper
