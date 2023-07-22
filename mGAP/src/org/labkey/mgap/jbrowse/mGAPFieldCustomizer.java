@@ -39,6 +39,7 @@ public class mGAPFieldCustomizer implements JBrowseFieldCustomizer
         if (am.isHidden())
         {
             field.setHidden(true);
+            field.setInDefaultColumns(false);
         }
 
         if (am.isIndexed())
