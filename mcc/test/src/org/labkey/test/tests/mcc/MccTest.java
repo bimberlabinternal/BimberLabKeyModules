@@ -829,7 +829,9 @@ public class MccTest extends BaseWebDriverTest
         assertElementNotPresent(getButton("Submit"));
         assertElementNotPresent(getButton("Approve Request"));
 
-        stopImpersonating(true);
+        stopImpersonating(false);
+
+        getFormElementByName("lastName").waitFor(this);
     }
 
     private FormElement getFormElementByName(String name)
@@ -919,6 +921,18 @@ public class MccTest extends BaseWebDriverTest
         }
 
         goToHome();
+    }
+
+    @Override
+    public void goToProjectHome()
+    {
+        super.goToProjectHome();
+
+        // NOTE: if we prematurely leave this page, there is an error alert
+        if (isElementPresent(Locator.tagWithText("a", "MCC Dashboard")))
+        {
+            waitForCensusToLoad();
+        }
     }
 
     private void populateLookups(String name)
