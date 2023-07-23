@@ -829,7 +829,7 @@ public class MccTest extends BaseWebDriverTest
         assertElementNotPresent(getButton("Submit"));
         assertElementNotPresent(getButton("Approve Request"));
 
-        stopImpersonating(false);
+        stopImpersonating(true);
     }
 
     private FormElement getFormElementByName(String name)
