@@ -15,7 +15,9 @@ import org.labkey.api.util.logging.LogHelper;
 import org.labkey.mgap.mGAPModule;
 import org.labkey.mgap.mGAPSchema;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class mGAPFieldCustomizer implements JBrowseFieldCustomizer
@@ -77,6 +79,23 @@ public class mGAPFieldCustomizer implements JBrowseFieldCustomizer
         {
             field.setUrl(am.getUrl());
         }
+    }
+
+    @Override
+    public List<String> getPromotedFilters(Collection<String> indexedFields, Container c, User u)
+    {
+        List<String> ret = new ArrayList<>();
+        if (indexedFields.contains("IMPACT"))
+        {
+            ret.add("Protein Coding Variants;IMPACT,does not equal,MODIFIER");
+        }
+
+        if (indexedFields.contains("OG"))
+        {
+            ret.add("Overlapping a Gene;OG,is not empty,");
+        }
+
+        return ret;
     }
 
     @Override
