@@ -21,8 +21,8 @@ public class mGAPGroupsProvider implements GroupsProvider
     @Override
     public @Nullable List<String> getGroupMembers(String trackId, String groupName, Container c, User u)
     {
-        // TODO: new table?
-        TableInfo ti = QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS);
+        Container target = c.isWorkbook() ? c.getParent() : c;
+        TableInfo ti = QueryService.get().getUserSchema(u, target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS);
 
         return new TableSelector(ti, PageFlowUtil.set("subjectId"), new SimpleFilter(FieldKey.fromString("trackName"), groupName).addCondition(FieldKey.fromString("trackId"), trackId), null).getArrayList(String.class);
     }
