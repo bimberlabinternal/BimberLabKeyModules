@@ -958,9 +958,27 @@ public class mGAPController extends SpringActionController
                 throw new IllegalArgumentException("Unknown target: " + actionName);
             }
 
-
             Map<String, String[]> params = new HashMap<>(getViewContext().getRequest().getParameterMap());
             params.put("session", new String[]{jbrowseDatabaseId});
+
+            // This requires trackId
+            if ("variantSearch".equals(actionName))
+            {
+                Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), Collections.singletonList("mGAP Release"));
+                if (!trackIDs.isEmpty())
+                {
+                    if (trackIDs.size() > 1)
+                    {
+                        _log.error("More than one track found matching 'mGAP Release' for release: " + ctx.getString("mgapReleaseGUID"));
+                    }
+
+                    params.put("trackId", new String[]{trackIDs.iterator().next()});
+                }
+                else
+                {
+                    throw new IllegalArgumentException("Unable to find primary track for release: " + ctx.getString("mgapReleaseGUID"));
+                }
+            }
 
             String trackName = StringUtils.trimToNull(form.getTrackName());
             if (trackName != null)
