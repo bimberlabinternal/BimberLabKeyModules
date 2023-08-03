@@ -106,8 +106,9 @@ public class MccTest extends BaseWebDriverTest
         new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
         Ext4FieldRef.getForLabel(this, "Effective Date").setValue(new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
         Ext4ComboRef combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
-        combo.clickTrigger();
         combo.waitForStoreLoad();
+        sleep(200);
+        combo.clickTrigger();
         waitAndClick(Locator.tagContainingText("li", "Other"));
 
         Window<?> dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();

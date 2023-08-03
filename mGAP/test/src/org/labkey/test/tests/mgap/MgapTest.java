@@ -17,6 +17,7 @@
 package org.labkey.test.tests.mgap;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -99,8 +100,11 @@ public class MgapTest extends BaseWebDriverTest
     {
         beginAt("/" + getProjectName() + "/jbrowse-jbrowse.view?session=mgapF&location=1:8328..8842");
         JBrowseTestHelper.waitForJBrowseToLoad(this);
+        sleep(200); // The session can refresh after filter applied
 
         Actions actions = new Actions(getDriver());
+        Assert.assertEquals("Incorrect number of variants", 1, JBrowseTestHelper.getTotalVariantFeatures(this));
+
         WebElement toClick = getDriver().findElements(JBrowseTestHelper.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T")).stream().filter(WebElement::isDisplayed).collect(JBrowseTestHelper.toSingleton());
         actions.click(toClick).perform();
         waitForElement(Locator.tagWithText("span", "Genes and Gene Predictions"));
