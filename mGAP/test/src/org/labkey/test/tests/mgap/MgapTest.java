@@ -66,7 +66,7 @@ public class MgapTest extends BaseWebDriverTest
         beginAt("/mgap/" + getProjectName() + "/updateAnnotations.view");
         clickButton("OK");
 
-        beginAt(WebTestHelper.getBaseURL() + "/mcc/" + getProjectName() + "/importStudy.view");
+        beginAt(WebTestHelper.getBaseURL() + "/mgap/" + getProjectName() + "/importStudy.view");
         clickButton("OK");
         waitForPipelineJobsToComplete(1, "Study import", false, MAX_WAIT_SECONDS * 2500);
 
