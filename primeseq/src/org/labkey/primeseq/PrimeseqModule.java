@@ -39,8 +39,9 @@ import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
 import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
 import org.labkey.primeseq.pipeline.GeographicOriginStep;
-import org.labkey.primeseq.pipeline.MhcMigrationPipelineJob;
+import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
 import org.labkey.primeseq.pipeline.SequenceJobResourceAllocator;
+import org.labkey.primeseq.query.PerformMhcCleanupButton;
 import org.labkey.primeseq.query.UpdateResourcesButton;
 
 import java.util.Collection;
@@ -80,12 +81,13 @@ public class PrimeseqModule extends ExtendedSimpleModule
         ClusterService.get().registerResourceAllocator(new BlastPipelineJobResourceAllocator.Factory());
         ClusterService.get().registerResourceAllocator(new SequenceJobResourceAllocator.Factory());
 
-        PipelineService.get().registerPipelineProvider(new MhcMigrationPipelineJob.Provider(this));
+        PipelineService.get().registerPipelineProvider(new MhcCleanupPipelineJob.Provider(this));
 
         //register resources
         new PipelineStartup();
 
         LDKService.get().registerQueryButton(new UpdateResourcesButton(), "pipeline", "job");
+        LDKService.get().registerQueryButton(new PerformMhcCleanupButton(), "sequenceanalysis", "sequence_analyses");
     }
 
     @Override
