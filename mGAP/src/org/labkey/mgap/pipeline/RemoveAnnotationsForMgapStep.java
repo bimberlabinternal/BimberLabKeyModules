@@ -3,17 +3,25 @@ package org.labkey.mgap.pipeline;
 import htsjdk.samtools.util.Interval;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.data.Container;
+import org.labkey.api.data.TableSelector;
+import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
+import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
+import org.labkey.api.util.PageFlowUtil;
+import org.labkey.mgap.mGAPSchema;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,9 +31,10 @@ import java.util.List;
 
 public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<RemoveAnnotationsForMgapStep.RemoveAnnotationsWrapper> implements VariantProcessingStep
 {
+    // TODO: base this on annotation table
     public static List<String> ALLOWABLE_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR", "ReverseComplementedAlleles", "LiftedContig", "LiftedStart", "LiftedStop"));
 
-    public RemoveAnnotationsForMgapStep(PipelineStepProvider provider, PipelineContext ctx)
+    public RemoveAnnotationsForMgapStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
         super(provider, ctx, new RemoveAnnotationsWrapper(ctx.getLogger()));
     }
@@ -44,6 +53,24 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         }
     }
 
+    private static final String INFO_FIELDS = "infoFields";
+
+    @Override
+    public void init(PipelineJob job, SequenceAnalysisJobSupport support, List<SequenceOutputFile> inputFiles) throws PipelineJobException
+    {
+        // find/cache annotations:
+        Container targetContainer = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
+        ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey")).getArrayList(String.class);
+
+        getPipelineCtx().getSequenceSupport().cacheObject(INFO_FIELDS, infoFields);
+
+    }
+
+    private List<String> getInfoFields() throws PipelineJobException
+    {
+        return getPipelineCtx().getSequenceSupport().getCachedObject(INFO_FIELDS, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(List.class, String.class));
+    }
+
     @Override
     public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
     {
@@ -56,7 +83,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         }
         else
         {
-            getWrapper().execute(inputVCF, outputFile, genome.getWorkingFastaFile(), intervals);
+            getWrapper().execute(inputVCF, outputFile, genome.getWorkingFastaFile(), getInfoFields(), intervals);
         }
 
         output.setVcf(outputFile);
@@ -78,7 +105,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
             super(log);
         }
 
-        public void execute(File input, File outputFile, File referenceFasta, @Nullable List<Interval> intervals) throws PipelineJobException
+        public void execute(File input, File outputFile, File referenceFasta, List<String> allowableFields, @Nullable List<Interval> intervals) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
             args.add("RemoveAnnotations");
@@ -97,7 +124,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
                 });
             }
 
-            for (String key : ALLOWABLE_ANNOTATIONS)
+            for (String key : allowableFields)
             {
                 args.add("-A");
                 args.add(key);

@@ -39,9 +39,13 @@ import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mgap.buttons.PopulateAnnotationsButton;
 import org.labkey.mgap.buttons.ReleaseButton;
+import org.labkey.mgap.jbrowse.mGAPFieldCustomizer;
+import org.labkey.mgap.jbrowse.mGAPGroupsProvider;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
+import org.labkey.mgap.pipeline.GroupCompareStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
 import org.labkey.mgap.pipeline.SampleSpecificGenotypeFiltrationStep;
@@ -66,7 +70,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.65;
+        return 16.67;
     }
 
     @Override
@@ -84,10 +88,13 @@ public class mGAPModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING), mGAPSchema.NAME, mGAPSchema.TABLE_ANIMAL_MAPPING);
         LDKService.get().registerQueryButton(new ShowBulkEditButton(this, mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE), mGAPSchema.NAME, mGAPSchema.TABLE_TRACKS_PER_RELEASE);
         LDKService.get().registerQueryButton(new ReleaseButton(this), mGAPSchema.NAME, mGAPSchema.TABLE_RELEASE_TRACKS);
+        LDKService.get().registerQueryButton(new PopulateAnnotationsButton(this), mGAPSchema.NAME, mGAPSchema.TABLE_VARIANT_ANNOTATIONS);
 
         NotificationService.get().registerNotification(new mGAPUserNotification(this));
 
         JBrowseService.get().registerDemographicsSource(new mGAPDemographicsSource());
+        JBrowseService.get().registerFieldCustomizer(new mGAPFieldCustomizer());
+        JBrowseService.get().registerGroupsProvider(new mGAPGroupsProvider());
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
 
@@ -115,6 +122,7 @@ public class mGAPModule extends ExtendedSimpleModule
             {
                 SequenceAnalysisService.get().registerFileHandler(new mGapReleaseGenerator());
                 SequencePipelineService.get().registerPipelineStep(new AnnotationStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new GroupCompareStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RenameSamplesForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new VcfComparisonStep.Provider());
