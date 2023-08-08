@@ -3,7 +3,7 @@
  * any form or by any electronic or mechanical means without written permission from LabKey Corporation.
  */
 import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 
 // Enzyme expects an adapter to be configured
 // http://airbnb.io/enzyme/docs/installation/react-16.html

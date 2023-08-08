@@ -63,16 +63,28 @@
             </destination>
         </transform>
 
-        <!--<transform id="releaseTrackSubsets" type="RemoteQueryTransformStep">-->
-        <!--<description>Copy to local table</description>-->
-        <!--<source schemaName="mGAP" queryName="releaseTrackSubsets" remoteSource="PRIMESEQ">-->
-        <!--<sourceColumns>-->
-        <!--<column>trackName</column>-->
-        <!--<column>subjectId</column>-->
-        <!--</sourceColumns>-->
-        <!--</source>-->
-        <!--<destination schemaName="mGAP" queryName="releaseTrackSubsets" targetOption="truncate"/>-->
-        <!--</transform>-->
+        <transform id="variantAnnotations" type="RemoteQueryTransformStep">
+        <description>Copy to local table</description>
+        <source schemaName="mGAP" queryName="annotations" remoteSource="PRIMESEQ">
+            <sourceColumns>
+                <column>category</column>
+                <column>label</column>
+                <column>dataSource</column>
+                <column>infoKey</column>
+                <column>dataType</column>
+                <column>dataNumber</column>
+                <column>url</column>
+                <column>dataurl</column>
+                <column>description</column>
+                <column>toolName</column>
+                <column>formatString</column>
+                <column>hidden</column>
+                <column>isIndexed</column>
+                <column>allowableValues</column>
+            </sourceColumns>
+        </source>
+        <destination schemaName="mGAP" queryName="annotations" targetOption="truncate"/>
+        </transform>
 
         <transform id="step3" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>

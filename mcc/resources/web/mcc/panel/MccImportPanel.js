@@ -806,7 +806,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
                             if (departureInserts.length) {
                                 commands.push({
-                                    type: 'insert',
+                                    command: 'insert',
                                     schemaName: 'study',
                                     queryName: 'departure',
                                     rows: departureInserts

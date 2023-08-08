@@ -1,6 +1,7 @@
 package org.labkey.mgap.pipeline;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineJobService;
@@ -23,7 +24,7 @@ public class SnpSiftWrapper extends AbstractCommandWrapper
         super(log);
     }
 
-    public void runSnpSift(File dbnsfpFile, File input, File output) throws PipelineJobException
+    public void runSnpSift(File dbnsfpFile, File input, File output, List<String> fieldList) throws PipelineJobException
     {
         getLogger().info("Annotating VCF with SnpSift");
 
@@ -37,6 +38,9 @@ public class SnpSiftWrapper extends AbstractCommandWrapper
         params.add(dbnsfpFile.getPath());
 
         params.add("-noDownload");
+
+        params.add("-f");
+        params.add(StringUtils.join(fieldList, ","));
 
         params.add(input.getPath());
 

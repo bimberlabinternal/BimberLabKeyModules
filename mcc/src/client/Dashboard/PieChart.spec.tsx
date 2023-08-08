@@ -1,13 +1,13 @@
+import 'jsdom-global/register';
 import React from 'react';
 import { mount, shallow } from 'enzyme';
-import { mocked } from 'ts-jest/utils';
-import { jest, describe, expect, test, beforeEach } from '@jest/globals';
+import { mocked } from 'jest-mock';
+import { describe, expect, jest, test } from '@jest/globals';
 
 import { Chart } from 'chart.js';
 import PieChart from './PieChart';
 
 jest.mock('chart.js');
-const MockChart = mocked(Chart, true);
 
 const mockData = [
     {
@@ -22,6 +22,8 @@ const mockData = [
 ];
 
 describe('PieChart', () => {
+    const MockChart = mocked(Chart);
+
     test('it has a canvas element', () => {
         const wrapper = shallow(<PieChart fieldName = "gender" demographics={mockData} />);
         expect(wrapper.find('canvas')).toHaveLength(1);

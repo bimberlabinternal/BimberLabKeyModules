@@ -16,7 +16,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -933,7 +932,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                 if (!skipAnnotationChecks)
                 {
-                    for (String info : Arrays.asList("CADD_PH", "OMIMN", "CLN_ALLELE", "AF", "mGAPV"))
+                    for (String info : Arrays.asList("CADD_PH", "OMIM_PHENO", "CLN_ALLELE", "AF", "mGAPV"))
                     {
                         if (!header.hasInfoLine(info))
                         {
@@ -1080,16 +1079,16 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         }
                     }
 
-                    Set<String> omims = new LinkedHashSet<>();
-                    Set<String> omimds = new LinkedHashSet<>();
-                    if (vc.getAttribute("OMIMN") != null)
+                    Set<String> omimIds = new LinkedHashSet<>();
+                    Set<String> omimPhenotypes = new LinkedHashSet<>();
+                    if (vc.getAttribute("MIMNUMBER") != null)
                     {
-                        omims.add(vc.getAttributeAsString("OMIMN", null));
+                        omimIds.add(vc.getAttributeAsString("MIMNUMBER", null));
                     }
 
-                    if (vc.getAttribute("OMIMD") != null)
+                    if (vc.getAttribute("OMIM_PHENO") != null)
                     {
-                        omimds.addAll(parseRawOmimd(vc, ctx.getLogger()));
+                        omimPhenotypes.addAll(parseRawOmimPheno(vc, ctx.getLogger()));
                     }
 
                     Set<String> overlappingGenes = new TreeSet<>();
@@ -1131,6 +1130,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     geneName = translator.getGeneMap().get(geneName).get("gene_name");
                                 }
 
+                                if (tokens.length > 7 && !"protein_coding".equals(tokens[7])) {
+                                    ctx.getLogger().info("skipping non protein_coding ANN: " + ann);
+                                    continue;
+                                }
+
                                 overlappingGenes.add(geneName);
                             }
                         }
@@ -1162,7 +1166,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 String overlappingGenesJoin = StringUtils.join(overlappingGenes, ",");
                                 if (!overlappingGenesReported.contains(overlappingGenesJoin))
                                 {
-                                    maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
+                                    maybeWriteVariantLine(queuedLines, vc, tokens[0], "SNPEff", "Predicted High Impact", description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), null);
 
                                     // NOTE: a given site could have multiple overlapping ORFs (usually different isoforms), so if we hit one allow this to tag that site and skip the remaining.
                                     overlappingGenesReported.add(overlappingGenesJoin);
@@ -1173,14 +1177,24 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     if (vc.getAttribute("CLN_SIG") != null)
                     {
-                        List<String> clnAlleles = vc.getAttributeAsStringList("CLN_ALLELE", "");
                         List<String> clnSigs = vc.getAttributeAsStringList("CLN_SIG", "");
+                        if (clnSigs.size() != vc.getAlternateAlleles().size())
+                        {
+                            throw new IllegalStateException("CLN_SIG and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
+                        }
+
                         List<String> clnDisease = vc.getAttributeAsStringList("CLN_DN", "");
                         List<String> clnAlleleIds = vc.getAttributeAsStringList("CLN_ALLELEID", "");
                         int i = -1;
                         for (String sigList : clnSigs)
                         {
                             i++;
+                            if (sigList.isEmpty())
+                            {
+                                continue;
+                            }
+
+                            Allele altAllele = vc.getAlternateAllele(i);
 
                             String[] sigSplit = sigList.split("\\|");
                             List<String> diseaseSplit = Arrays.asList(clnDisease.get(i).split("\\|"));
@@ -1196,8 +1210,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                                     try
                                     {
-                                        String allele = clnAlleles.get(i);
-                                        maybeWriteVariantLine(queuedLines, vc, allele, "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omims, omimds, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
+                                        maybeWriteVariantLine(queuedLines, vc, altAllele.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
 
                                     }
                                     catch (IndexOutOfBoundsException e)
@@ -1214,36 +1227,57 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         }
                     }
 
-                    //NE: nsdb Polyphen2_HVAR_score: Polyphen2 score based on HumVar, i.e. hvar_prob. The score ranges from 0 to 1, and the corresponding prediction is 'probably damaging' if it is in [0.909,1], 'possibly damaging' if it is in [0.447,0.908], 'benign' if it is in [0,0.446]. Score cutoff for binary classification is 0.5, i.e. the prediction is 'neutral' if the score is smaller than 0.5 and 'deleterious' if the score is larger than 0.5. Multiple entries separated by
-                    //NF: nsdb Polyphen2_HVAR_pred: Polyphen2 prediction based on HumVar, 'D' ('probably damaging'),'P' ('possibly damaging') and 'B' ('benign'). Multiple entries separated by
-                    if (vc.getAttribute("NF") != null && !".".equals(vc.getAttribute("NF")))
+                    //Polyphen2_HVAR_S: Polyphen2 score based on HumVar, i.e. hvar_prob. The score ranges from 0 to 1, and the corresponding prediction is 'probably damaging' if it is in [0.909,1], 'possibly damaging' if it is in [0.447,0.908], 'benign' if it is in [0,0.446]. Score cutoff for binary classification is 0.5, i.e. the prediction is 'neutral' if the score is smaller than 0.5 and 'deleterious' if the score is larger than 0.5. Multiple entries separated by
+                    //Polyphen2_HVAR_pred: Polyphen2 prediction based on HumVar, 'D' ('probably damaging'),'P' ('possibly damaging') and 'B' ('benign'). Multiple entries separated by
+                    if (vc.getAttribute("Polyphen2_HVAR_pred") != null && !".".equals(vc.getAttribute("Polyphen2_HVAR_pred")))
                     {
-                        Set<String> polyphenPredictions = new HashSet<>(vc.getAttributeAsStringList("NF", null));
-                        polyphenPredictions.remove("B");
-                        polyphenPredictions.remove("P");
+                        List<String> polyphenPredictions = vc.getAttributeAsStringList("Polyphen2_HVAR_pred", null);
+                        List<Double> polyphenScores = vc.getAttributeAsDoubleList("Polyphen2_HVAR_S", 0.0);
 
-                        String description = null;
-                        if (!polyphenPredictions.isEmpty())
+                        if (polyphenPredictions.size() != vc.getAlternateAlleles().size())
                         {
+                            throw new IllegalStateException("Polyphen2_HVAR_pred and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
+                        }
+
+                        if (polyphenScores.size() != vc.getAlternateAlleles().size())
+                        {
+                            throw new IllegalStateException("Polyphen2_HVAR_S and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
+                        }
+
+                        int alleleIdx = -1;
+                        for (Allele alt : vc.getAlternateAlleles())
+                        {
+                            alleleIdx++;
+
+                            String prediction = polyphenPredictions.get(alleleIdx);
+                            if (StringUtils.isEmpty(prediction) || "B".equals(prediction) || "P".equals(prediction) || ".".equals(prediction))
+                            {
+                                continue;
+                            }
+
+                            String description = null;
                             try
                             {
-                                Double maxScore = Collections.max(vc.getAttributeAsDoubleList("NE", 0.0));
-                                description = StringUtils.join(new String[]{
-                                        "Score: " + maxScore
-                                }, ",");
+                                Double maxScore = polyphenScores.get(alleleIdx);
+                                if (maxScore == 0.0)
+                                {
+                                    ctx.getLogger().error("Suspicious values for Polyphen2_HVAR_S: " + maxScore + ", at position: " + vc.toStringWithoutGenotypes());
+                                }
+
+                                description = "Score: " + maxScore;
                             }
                             catch (NumberFormatException e)
                             {
-                                ctx.getLogger().warn("Unable to parse NE attribute decimal (" + vc.getAttribute("NE") + ") for variant at position: " + vc.toStringWithoutGenotypes());
+                                ctx.getLogger().error("Unable to parse Polyphen2_HVAR_S attribute decimal (" + vc.getAttribute("Polyphen2_HVAR_S") + ") for variant at position: " + vc.toStringWithoutGenotypes());
                             }
 
-                            maybeWriteVariantLine(queuedLines, vc, null, "Polyphen2", "Prediction: " + StringUtils.join(polyphenPredictions, ","), description, overlappingGenes, omims, omimds, ctx.getLogger(), null);
+                            maybeWriteVariantLine(queuedLines, vc, alt.getBaseString(), "Polyphen2", "Prediction: " + prediction, description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), null);
                         }
                     }
 
                     for (List<String> line : queuedLines)
                     {
-                        writer.writeNext(line.toArray(new String[line.size()]));
+                        writer.writeNext(line.toArray(new String[0]));
                     }
                 }
             }
@@ -1264,17 +1298,17 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             }
         }
 
-        public Collection<String> parseRawOmimd(VariantContext vc, Logger log)
+        public Collection<String> parseRawOmimPheno(VariantContext vc, Logger log)
         {
             //NOTE: because this field can have internal commas, this can be parsed incorrectly, so ignore this and re-join
             String rawVal;
-            if (vc.getAttribute("OMIMD") instanceof Collection)
+            if (vc.getAttribute("OMIM_PHENO") instanceof Collection)
             {
-                rawVal = StringUtils.join(vc.getAttributeAsStringList("OMIMD", null), ",");
+                rawVal = StringUtils.join(vc.getAttributeAsStringList("OMIM_PHENO", null), ",");
             }
             else
             {
-                rawVal = vc.getAttributeAsString("OMIMD", null);
+                rawVal = vc.getAttributeAsString("OMIM_PHENO", null);
             }
 
             if (!StringUtils.isEmpty(rawVal) && ! ".".equals(rawVal))
@@ -1331,7 +1365,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
         }
 
-        private static final List<String> allowedFields = Arrays.asList("CHROM", "ANN", "CLN_SIG", "GRASP_PH", "ENCTFBS_TF", "FE", "NF", "ENCSEG_NM");
+        private static final List<String> allowedFields = Arrays.asList("CHROM", "ANN", "CLN_SIG", "FANTOM5_TFBS", "FANTOM_ENHANCER", "Polyphen2_HVAR_pred");
 
         private class FieldTracker
         {
@@ -1413,29 +1447,17 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                             addForValue("AnnotationSummary", "ClinVar Overlap");
                         }
                     }
-                    else if ("GRASP_PH".equals(fieldName))
-                    {
-                        addForValue("AnnotationSummary", "GWAS Associations (GRASP)");
-                    }
-                    else if ("FE".equals(fieldName) && "Y".equals(val))
+                    else if ("FANTOM_ENHANCER".equals(fieldName) && "Y".equals(val))
                     {
                         addForValue("AnnotationSummary", "Enhancer Region (FANTOM5)");
                     }
-                    else if ("ENCTFBS_TF".equals(fieldName))
+                    else if ("FANTOM5_TFBS".equals(fieldName))
                     {
-                        addForValue("AnnotationSummary", "Transcription Factor Binding (ENCODE)");
+                        addForValue("AnnotationSummary", "Transcription Factor Binding (FANTOM5)");
                     }
-                    else if ("NF".equals(fieldName) && val.contains("D"))
+                    else if ("Polyphen2_HVAR_pred".equals(fieldName) && val.contains("D"))
                     {
                         addForValue("AnnotationSummary", "Damaging (Polyphen2)");
-                    }
-                    else if ("ENCSEG_NM".equals(fieldName))
-                    {
-                        List<String> values = Arrays.asList(val.split(","));
-                        if (values.contains("E"))
-                        {
-                            addForValue("AnnotationSummary", "Predicted Enhancer (ENCODE)");
-                        }
                     }
                     else if ("CHROM".equals(fieldName))
                     {
@@ -1586,7 +1608,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             }
         }
 
-        private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omims, Collection<String> omimds, Logger log, String identifier)
+        private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omimIds, Collection<String> omimPhenotypes, Logger log, String identifier)
         {
             if (allele == null)
             {
@@ -1635,7 +1657,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             Object cadd = vc.getAttribute("CADD_PH");
 
-            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omims, ";"), StringUtils.join(omimds, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier, cadd == null ? "" : cadd.toString()));
+            queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omimIds, ";"), StringUtils.join(omimPhenotypes, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier, cadd == null ? "" : cadd.toString()));
         }
 
         private boolean indexExists(File vcf)
@@ -1658,7 +1680,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             {
                 if (StringUtils.isEmpty(token))
                 {
-                    log.warn("OMIMD was empty: " + input + ", " + StringUtils.join(tokens, ";"));
+                    log.warn("OMIM_PHENO was empty: " + input + ", " + StringUtils.join(tokens, ";"));
                     continue;
                 }
 
@@ -1830,13 +1852,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             {
                 Set<String> ret = pr.parseOmim(pair.getLeft(), _log);
                 Assert.assertEquals(pair.getRight(), ret);
-
-                //NOTE: since this requires an API key and queries OMIM not suitable to general testing, but this can be uncommented for local dev
-                //for (String term : ret)
-                //{
-                //    String updated = pr.updateOmimD(term, ContainerManager.getRoot(), _log);
-                //    Assert.assertNotNull(updated);
-                //}
             }
         }
     }

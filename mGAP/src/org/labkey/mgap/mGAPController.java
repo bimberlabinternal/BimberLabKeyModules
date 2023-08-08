@@ -49,6 +49,7 @@ import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.module.AllowedDuringUpgrade;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
@@ -77,12 +78,15 @@ import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
+import org.labkey.api.studies.StudiesService;
 import org.labkey.api.util.ConfigurationException;
 import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.GUID;
+import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
@@ -736,8 +740,7 @@ public class mGAPController extends SpringActionController
         {
             setTitle("Update Update SnpEff Annotation");
 
-            HtmlView view = new HtmlView("Do you want to continue?");
-            return view;
+            return new HtmlView("Do you want to continue?");
         }
 
         @Override
@@ -746,7 +749,7 @@ public class mGAPController extends SpringActionController
             UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);
             TableSelector ts = new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowId", "objectId", "container"), null, new Sort("-releaseDate"));
             ts.setMaxRows(1);
-            Integer releaseRowId;
+            int releaseRowId;
             String releaseObjectId;
             String releaseContainerId;
             try (Results rs = ts.getResults())
@@ -871,6 +874,7 @@ public class mGAPController extends SpringActionController
         private String _databaseId;
         private String _species;
         private String _trackName;
+        private String _target = "browser";
 
         public String getDatabaseId()
         {
@@ -901,6 +905,16 @@ public class mGAPController extends SpringActionController
         {
             _trackName = trackName;
         }
+
+        public String getTarget()
+        {
+            return _target;
+        }
+
+        public void setTarget(String target)
+        {
+            _target = target;
+        }
     }
 
     @RequiresPermission(ReadPermission.class)
@@ -921,6 +935,10 @@ public class mGAPController extends SpringActionController
             }
 
             JSONObject ctx = ModuleLoader.getInstance().getModule(mGAPModule.class).getPageContextJson(getViewContext());
+            if (ctx.isNull("mgapJBrowse"))
+            {
+                throw new NotFoundException("There is no mGAP release on this server");
+            }
 
             String jbrowseDatabaseId = StringUtils.trimToNull(form.getDatabaseId());
             String species = StringUtils.trimToNull(form.getSpecies());
@@ -934,13 +952,37 @@ public class mGAPController extends SpringActionController
                 throw new NotFoundException("No databaseId provided");
             }
 
+            String actionName = form.getTarget() == null ? "browser" : form.getTarget();
+            if (!"browser".equals(actionName) && !"variantSearch".equals(actionName))
+            {
+                throw new IllegalArgumentException("Unknown target: " + actionName);
+            }
+
             Map<String, String[]> params = new HashMap<>(getViewContext().getRequest().getParameterMap());
             params.put("session", new String[]{jbrowseDatabaseId});
+
+            // This requires trackId
+            if ("variantSearch".equals(actionName))
+            {
+                Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), Collections.singletonList("mGAP Release"));
+                if (!trackIDs.isEmpty())
+                {
+                    if (trackIDs.size() > 1)
+                    {
+                        _log.error("More than one track found matching 'mGAP Release' for release: " + ctx.getString("mgapReleaseGUID"));
+                    }
+
+                    params.put("trackId", new String[]{trackIDs.iterator().next()});
+                }
+                else
+                {
+                    throw new IllegalArgumentException("Unable to find primary track for release: " + ctx.getString("mgapReleaseGUID"));
+                }
+            }
 
             String trackName = StringUtils.trimToNull(form.getTrackName());
             if (trackName != null)
             {
-
                 List<String> trackNames = Arrays.asList(trackName.split(","));
                 Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
                 if (!trackIDs.isEmpty())
@@ -949,7 +991,7 @@ public class mGAPController extends SpringActionController
                 }
             }
 
-            ActionURL ret = DetailsURL.fromString("/jbrowse/browser.view", target).getActionURL();
+            ActionURL ret = DetailsURL.fromString("/jbrowse/" + actionName + ".view", target).getActionURL();
             params.forEach((key, value) -> {
                 Arrays.stream(value).forEach(v -> {
                     // This is a convenience to allow shorter URLs for active sample filters:
@@ -1067,33 +1109,49 @@ public class mGAPController extends SpringActionController
         {
             List<Map<String, Object>> toAdd = new ArrayList<>();
 
-            final URL url = new URL("https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/fieldConfig.txt");
-            try (CSVReader reader = new CSVReader(Readers.getReader(url.openStream()), '\t'))
+            final List<String> urls = Arrays.asList(
+                    "https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/fieldConfig.txt",
+                    "https://raw.githubusercontent.com/bimberlabinternal/VariantAnnotation/master/otherFieldConfig.txt"
+            );
+
+            for (String urlStr : urls)
             {
-                String[] line;
-                List<String> header = null;
-                int idx = 0;
-                while ((line = reader.readNext()) != null)
+                final URL url = new URL(urlStr);
+                try (CSVReader reader = new CSVReader(Readers.getReader(url.openStream()), '\t'))
                 {
-                    idx++;
-                    if (idx == 1)
+                    String[] line;
+                    List<String> header = null;
+                    int idx = 0;
+                    while ((line = reader.readNext()) != null)
                     {
-                        header = Arrays.asList(line);
-                        continue;
+                        idx++;
+                        if (idx == 1)
+                        {
+                            header = Arrays.asList(line);
+                            continue;
+                        }
+
+                        Map<String, Object> row = new CaseInsensitiveHashMap<>();
+
+                        row.put("category", line[header.indexOf("Category")]);
+                        row.put("label", line[header.indexOf("Label")]);
+                        row.put("dataSource", line[header.indexOf("DataSource")]);
+                        row.put("infoKey", line[header.indexOf("ID")]);
+                        row.put("sourceField", line[header.indexOf("SourceField")]);
+                        row.put("dataType", line[header.indexOf("Type")]);
+                        row.put("dataNumber", line[header.indexOf("Number")]);
+                        row.put("description", line[header.indexOf("Description")]);
+                        row.put("url", line[header.indexOf("URL")]);
+                        row.put("toolName", line[header.indexOf("ToolName")]);
+
+                        getOptionalField(line, header, "DataURL", row, "dataurl");
+                        getOptionalField(line, header, "Hidden", row, "hidden");
+                        getOptionalField(line, header, "FormatString", row, "formatString");
+                        getOptionalField(line, header, "AllowableValues", row, "allowableValues");
+                        getOptionalField(line, header, "IsIndexed", row, "isIndexed");
+
+                        toAdd.add(row);
                     }
-
-                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
-
-                    row.put("category", line[header.indexOf("Category")]);
-                    row.put("label", line[header.indexOf("Label")]);
-                    row.put("dataSource", line[header.indexOf("DataSource")]);
-                    row.put("infoKey", line[header.indexOf("ID")]);
-                    row.put("dataType", line[header.indexOf("Type")]);
-                    row.put("dataNumber", line[header.indexOf("Number")]);
-                    row.put("description", line[header.indexOf("Description")]);
-                    row.put("url", line[header.indexOf("URL")]);
-
-                    toAdd.add(row);
                 }
             }
 
@@ -1111,6 +1169,14 @@ public class mGAPController extends SpringActionController
             return true;
         }
 
+        private void getOptionalField(String[] line, List<String> header, String name, Map<String, Object> row, String rowKey)
+        {
+            if (header.contains(name) && line.length > header.indexOf(name))
+            {
+                row.put(rowKey, line[header.indexOf(name)]);
+            }
+        }
+
         @Override
         public void validateCommand(Object o, Errors errors)
         {
@@ -1121,6 +1187,39 @@ public class mGAPController extends SpringActionController
         public @NotNull URLHelper getSuccessURL(Object o)
         {
             return QueryService.get().urlFor(getUser(), getContainer(), QueryAction.executeQuery, mGAPSchema.NAME, mGAPSchema.TABLE_VARIANT_ANNOTATIONS);
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public class ImportStudyAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Import mGAP Study");
+
+            return new HtmlView(HtmlString.unsafe("This will import the default mGAP study in this folder and set the EHRStudyContainer property to point to this container. Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            StudiesService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(mGAPModule.NAME), new Path("referenceStudy"));
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
         }
     }
 }
