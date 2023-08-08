@@ -106,8 +106,9 @@ public class MccTest extends BaseWebDriverTest
         new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
         Ext4FieldRef.getForLabel(this, "Effective Date").setValue(new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
         Ext4ComboRef combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
-        combo.clickTrigger();
         combo.waitForStoreLoad();
+        sleep(200);
+        combo.clickTrigger();
         waitAndClick(Locator.tagContainingText("li", "Other"));
 
         Window<?> dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
@@ -408,8 +409,7 @@ public class MccTest extends BaseWebDriverTest
 
     private void goToAnimalRequests()
     {
-        goToProjectHome();
-        waitForCensusToLoad();
+        beginAt("/mcc/" + getProjectName() + "/begin.view");
         waitAndClickAndWait(Locator.tagContainingText("div", "Animal Requests"));
         waitForElement(Locator.tagWithText("a", "Submit New Animal Request"));
     }
@@ -831,6 +831,8 @@ public class MccTest extends BaseWebDriverTest
         assertElementNotPresent(getButton("Approve Request"));
 
         stopImpersonating(false);
+
+        getFormElementByName("lastName").waitFor(this);
     }
 
     private FormElement getFormElementByName(String name)
@@ -917,6 +919,20 @@ public class MccTest extends BaseWebDriverTest
             _containerHelper.createSubfolder(getProjectName() + "/Colonies", name, "MCC Colony");
             importStudy(getProjectName() + "/Colonies/" + name);
             waitForElement(Locator.tagWithText("a", "Populate Lookups"));
+        }
+
+        goToHome();
+    }
+
+    @Override
+    public void goToProjectHome()
+    {
+        super.goToProjectHome();
+
+        // NOTE: if we prematurely leave this page, there is an error alert
+        if (isElementPresent(Locator.tagWithText("a", "MCC Dashboard")))
+        {
+            waitForCensusToLoad();
         }
     }
 

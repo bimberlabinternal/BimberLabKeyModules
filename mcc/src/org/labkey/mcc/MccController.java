@@ -33,7 +33,6 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
-import org.labkey.api.ehr.EHRService;
 import org.labkey.api.module.AllowedDuringUpgrade;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
@@ -57,6 +56,7 @@ import org.labkey.api.security.permissions.AdminPermission;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
+import org.labkey.api.studies.StudiesService;
 import org.labkey.api.util.ConfigurationException;
 import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.HtmlString;
@@ -78,7 +78,6 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.mail.Address;
 import javax.mail.Message;
-import javax.mail.internet.InternetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -691,7 +690,7 @@ public class MccController extends SpringActionController
             ModuleProperty mp = ehr.getModuleProperties().get("EHRStudyContainer");
             mp.saveValue(getUser(), getContainer(), getContainer().getPath());
 
-            EHRService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
+            StudiesService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
 
             return true;
         }

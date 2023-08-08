@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.data.CompareType;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.SimpleFilter;
@@ -18,6 +19,7 @@ import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineJobService;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
@@ -35,14 +37,19 @@ import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.writer.PrintWriters;
+import org.labkey.mgap.mGAPSchema;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,7 +58,6 @@ import java.util.Set;
 public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner> implements VariantProcessingStep
 {
     public static final String GRCH37 = "genome37";
-    private static final String CLINVAR_VCF = "clinvar37";
     private static final String DBNSFP_FILE = "dbnsfpFile";
 
     public static final String CHAIN_FILE = "CHAIN_FILE";
@@ -65,11 +71,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
     {
         public Provider()
         {
-            super("AnnotateVariants", "Annotate VCF for mGAP", "VCF Annotation", "This will annotate an input NHP VCF using human ClinVar and Cassandra annotations.  This jobs will automatically look for chain files based on the source VCF genome and GRCh37/38 targets and will fail if these are not found.", Arrays.asList(
-                    ToolParameterDescriptor.createExpDataParam(CLINVAR_VCF, "Clinvar 2.0 VCF (GRCh37)", "This is the DataId of the VCF containing human Clinvar variants, which should use the GRCh37 genome. After liftover of the rhesus data, any matching variants are annotated.", "ldk-expdatafield", new JSONObject()
-                    {{
-                        put("allowBlank", false);
-                    }}, null),
+            super("AnnotateVariants", "Annotate VCF for mGAP", "VCF Annotation", "This will annotate an input NHP VCF using human annotations including funcotator and SnpSift.  This jobs will automatically look for chain files based on the source VCF genome and GRCh37/38 targets and will fail if these are not found.", Arrays.asList(
                     ToolParameterDescriptor.createExpDataParam(DBNSFP_FILE, "dbNSFP Database (GRCh37)", "This is the DataId of the dbNSFP database (txt.gz file) using the GRCh37 genome.", "ldk-expdatafield", new JSONObject()
                     {{
                         put("allowBlank", false);
@@ -93,6 +95,14 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                     {{
                         put("checked", true);
                     }}, true),
+                    ToolParameterDescriptor.create("printMissingFields", "Print Unused Funcotator Fields", "If checked, a list of all fields present in the data sources but not included in the output will be printed.", "checkbox", new JSONObject()
+                    {{
+
+                    }}, false),
+                    ToolParameterDescriptor.create("funcotatorExcludedContigs", "Excluded Funcotator Contigs", "A comma-separated list of contigs to exclude from Funcotator", "textfield", new JSONObject()
+                    {{
+
+                    }}, "MT"),
                     ToolParameterDescriptor.create("dropFiltered", "Drop Filtered Sites", "If checked, filtered sites will be discarded, which can substantially improve speed.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
@@ -133,18 +143,39 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         //find chain files:
         job.getLogger().debug("Caching chain file");
         findChainFile(sourceGenome, genomeId, support, job);
+
+        // find/cache annotations:
+        Container targetContainer = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
+        final HashMap<String, List<String>> sourceFieldMap = new HashMap<>();
+        final HashMap<String, List<String>> targetFieldMap = new HashMap<>();
+        new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("toolName", "sourceField", "infoKey")).forEachResults(rs -> {
+            if (!sourceFieldMap.containsKey(rs.getString(FieldKey.fromString("toolName"))))
+            {
+                sourceFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
+                targetFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
+            }
+
+            sourceFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("sourceField")));
+            targetFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("infoKey")));
+        });
+
+        getPipelineCtx().getSequenceSupport().cacheObject(SOURCE_FIELDS, sourceFieldMap);
+        getPipelineCtx().getSequenceSupport().cacheObject(TARGET_FIELDS, targetFieldMap);
+    }
+
+    private static final String SOURCE_FIELDS = "sourceFields";
+    private static final String TARGET_FIELDS = "targetFields";
+
+    private List<String> getCachedFields(String key, String toolName) throws PipelineJobException
+    {
+        Map<String, List<?>> fieldMap = getPipelineCtx().getSequenceSupport().getCachedObject(key, PipelineJob.createObjectMapper().getTypeFactory().constructParametricType(Map.class, String.class, List.class));
+        return fieldMap.get(toolName).stream().map(String::valueOf).toList();
     }
 
     @Override
     public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
     {
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
-
-        File clinvarVCF = getPipelineCtx().getSequenceSupport().getCachedData(getProvider().getParameterByName(CLINVAR_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
-        if (!clinvarVCF.exists())
-        {
-            throw new PipelineJobException("Unable to find file: " + clinvarVCF.getPath());
-        }
 
         ReferenceGenome grch37Genome = getPipelineCtx().getSequenceSupport().getCachedGenome(getProvider().getParameterByName(GRCH37).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
         Integer chainFileId = getPipelineCtx().getSequenceSupport().getCachedObject(CHAIN_FILE, Integer.class);
@@ -311,45 +342,19 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.addIntermediateFile(liftedToGRCh37);
         output.addIntermediateFile(new File(liftedToGRCh37.getPath() + ".tbi"));
 
-        //annotate with clinvar
-        getPipelineCtx().getLogger().info("annotating with ClinVar 2.0");
-        File clinvarAnnotated = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".cv.vcf.gz");
-        if (forceRecreate || !indexExists(clinvarAnnotated))
-        {
-            ClinvarAnnotatorRunner cvRunner = new ClinvarAnnotatorRunner(getPipelineCtx().getLogger());
-            cvRunner.execute(liftedToGRCh37, clinvarVCF, clinvarAnnotated);
-        }
-        else
-        {
-            getPipelineCtx().getLogger().info("resuming with existing file: " + clinvarAnnotated.getPath());
-        }
-        output.addOutput(clinvarAnnotated, "VCF Annotated With ClinVar2.0");
-        output.addIntermediateFile(clinvarAnnotated);
-        output.addIntermediateFile(new File(clinvarAnnotated.getPath() + ".tbi"));
-
-        //backport ClinVar
-        getPipelineCtx().getLogger().info("backport ClinVar 2.0 to source genome");
-        File clinvarAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(clinvarAnnotated.getName()) + ".bp.vcf.gz");
-        if (forceRecreate || !indexExists(clinvarAnnotatedBackport ))
-        {
-            BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
-            bpRunner.execute(clinvarAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), clinvarAnnotatedBackport);
-        }
-        else
-        {
-            getPipelineCtx().getLogger().info("resuming with existing file: " + clinvarAnnotatedBackport.getPath());
-        }
-        output.addOutput(clinvarAnnotatedBackport, "VCF Annotated With Clinvar, Backported");
-        output.addIntermediateFile(clinvarAnnotatedBackport);
-        output.addIntermediateFile(new File(clinvarAnnotatedBackport.getPath() + ".tbi"));
-
         //annotate with SnpSift
         getPipelineCtx().getLogger().info("annotating with SnpSift/dbnsfp");
         File snpSiftAnnotated = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".snpSift.vcf.gz");
         if (forceRecreate || !indexExists(snpSiftAnnotated))
         {
             SnpSiftWrapper ssRunner = new SnpSiftWrapper(getPipelineCtx().getLogger());
-            ssRunner.runSnpSift(dbnsfpFile, liftedToGRCh37, snpSiftAnnotated);
+            List<String> fieldList = getCachedFields(SOURCE_FIELDS, "SnpSift");
+            if (fieldList.isEmpty())
+            {
+                throw new PipelineJobException("No fields found for SnpSift");
+            }
+
+            ssRunner.runSnpSift(dbnsfpFile, liftedToGRCh37, snpSiftAnnotated, fieldList);
         }
         else
         {
@@ -377,7 +382,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
         //annotate with cassandra
         File cassandraAnnotatedBackport = null;
-        if (getProvider().getParameterByName("useCassandra").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
+        boolean useCassandra = getProvider().getParameterByName("useCassandra").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+        if (useCassandra)
         {
             getPipelineCtx().getLogger().info("annotating with Cassandra");
             String basename = SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".cassandra";
@@ -428,7 +434,25 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             {
                 //we can assume splitting happened upstream, so run over the full VCF
                 FuncotatorWrapper fr = new FuncotatorWrapper(getPipelineCtx().getLogger());
-                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, snpSiftAnnotated, genome);
+
+                List<String> extraArgs = new ArrayList<>();
+                String excludedContigs = StringUtils.trimToNull(getProvider().getParameterByName("funcotatorExcludedContigs").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+                if (excludedContigs != null)
+                {
+                    for (String token : excludedContigs.split(","))
+                    {
+                        extraArgs.add("-XL");
+                        extraArgs.add(token);
+                    }
+                }
+
+                boolean printMissingFields = getProvider().getParameterByName("printMissingFields").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+                if (printMissingFields)
+                {
+                    extraArgs.add("-pmf");
+                }
+
+                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome, extraArgs);
             }
             else
             {
@@ -478,7 +502,14 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 needToSubsetToInterval = false;
             }
 
-            maRunner.execute(inputVCF, cassandraAnnotatedBackport, clinvarAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
+            if (useFuncotator)
+            {
+                addToolFieldNames("Funcotator", "-ff", options, multiAnnotated.getParentFile(), output);
+            }
+
+            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output);
+
+            maRunner.execute(inputVCF, cassandraAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
         else
         {
@@ -493,6 +524,25 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.setVcf(multiAnnotated);
 
         return output;
+    }
+
+    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output) throws PipelineJobException
+    {
+        List<String> fields = getCachedFields(TARGET_FIELDS, toolName);
+        File fieldFile = new File(outDir, toolName + "Fields.args");
+        try (PrintWriter writer = PrintWriters.getPrintWriter(fieldFile))
+        {
+            fields.forEach(writer::println);
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+
+        output.addIntermediateFile(fieldFile);
+
+        options.add(argName);
+        options.add(fieldFile.getPath());
     }
 
     private void runCassandra(File liftedToGRCh37, File finalOutput, VariantProcessingStepOutputImpl output, boolean forceRecreate) throws PipelineJobException

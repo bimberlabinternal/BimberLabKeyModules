@@ -1,5 +1,6 @@
 package org.labkey.mgap.columnTransforms;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
@@ -23,6 +24,7 @@ import org.labkey.api.util.PageFlowUtil;
 import org.labkey.mgap.mGAPSchema;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -307,6 +309,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     protected String getTrackJson()
     {
-        return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"}";
+        ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey"), new SimpleFilter(FieldKey.fromString("isIndexed"), true), null).getArrayList(String.class);
+        return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\", \"createFullTextIndex\": true,\"infoFieldsForFullTextSearch\":\"" + (infoFields.isEmpty() ? "null" : StringUtils.join(infoFields, ",")) + "\"}";
     }
 }

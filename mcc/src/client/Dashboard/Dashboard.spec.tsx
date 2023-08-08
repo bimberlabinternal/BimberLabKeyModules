@@ -1,12 +1,11 @@
+import 'jsdom-global/register';
 import React from 'react';
 import { mount } from 'enzyme';
-import { mocked } from 'ts-jest/utils';
-import { jest, beforeEach, describe, expect, test } from '@jest/globals';
+import { mocked } from 'jest-mock';
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { Dashboard } from './Dashboard';
 import { Query } from '@labkey/api';
-import { getServerContext } from '@labkey/api';
-import { Chart } from 'chart.js';
 
 jest.mock('chart.js');
 jest.mock('@labkey/api', () => {
@@ -27,7 +26,6 @@ jest.mock('@labkey/api', () => {
     }
 });
 
-const mockedQuery = mocked(Query, true);
 const mockData = [
     {
         gender: 'M'
@@ -41,6 +39,8 @@ const mockData = [
 ];
 
 describe('Dashboard', () => {
+    const mockedQuery = mocked(Query);
+
     beforeEach(() => {
         mockedQuery.selectRows.mockReset();
         mockedQuery.selectRows.mockImplementation(({ success }) => {
@@ -64,7 +64,7 @@ describe('Dashboard', () => {
 
     test('it renders a grid of cards', () => {
         const wrapper = mount(<Dashboard />);
-        expect(wrapper.find('.row')).toHaveLength(2);
+        expect(wrapper.find('.row')).toHaveLength(4);
         expect(wrapper.find('.panel')).toHaveLength(4);
     });
 

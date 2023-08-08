@@ -1,9 +1,10 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
     <columns>
         <column name="category"/>
+        <column name="datasource"/>
         <column name="label"/>
         <column name="description"/>
-        <column name="datasource"/>
+        <column name="toolName"/>
     </columns>
     <sorts>
         <sort column="category" descending="false"/>

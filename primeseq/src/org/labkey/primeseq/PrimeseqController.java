@@ -36,6 +36,7 @@ import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SqlExecutor;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipeRoot;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineService;
@@ -44,6 +45,7 @@ import org.labkey.api.pipeline.PipelineUrls;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.permissions.ReadPermission;
+import org.labkey.api.security.permissions.UpdatePermission;
 import org.labkey.api.sequenceanalysis.pipeline.JobResourceSettings;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.HtmlString;
@@ -52,6 +54,7 @@ import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.writer.PrintWriters;
+import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
 import org.labkey.sequenceanalysis.SequencePipelineServiceImpl;
 import org.labkey.sequenceanalysis.pipeline.SequenceJob;
 import org.springframework.validation.BindException;
@@ -160,7 +163,7 @@ public class PrimeseqController extends SpringActionController
     }
 
     @RequiresSiteAdmin
-    public class EnsureModuleActiveAction extends ConfirmAction<Object>
+    public static class EnsureModuleActiveAction extends ConfirmAction<Object>
     {
         @Override
         public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
@@ -616,6 +619,68 @@ public class PrimeseqController extends SpringActionController
             }
 
             return ret;
+        }
+    }
+
+    @RequiresPermission(UpdatePermission.class)
+    public static class PerformMhcCleanupAction extends ConfirmAction<PerformMhcCleanupForm>
+    {
+        @Override
+        public ModelAndView getConfirmView(PerformMhcCleanupForm o, BindException errors) throws Exception
+        {
+            setTitle("Run MHC Maintenance");
+
+            return new HtmlView(HtmlString.unsafe(HtmlString.of("This will run a pipeline job to delete low-frequency MHC results to save space.  Do you want to continue?") +
+                    "<br>Check box to delete records: <input type=\"checkbox\" name=\"performDeletes\" />" +
+                    "<br>Min Analysis ID: <input type=\"input\" name=\"minAnalysisId\" value=\"1\" />"
+            ));
+        }
+
+        @Override
+        public boolean handlePost(PerformMhcCleanupForm o, BindException errors) throws Exception
+        {
+            PipeRoot pipelineRoot = PipelineService.get().findPipelineRoot(getContainer());
+            PipelineService.get().queueJob(new MhcCleanupPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, o.isPerformDeletes(), o.getMinAnalysisId()));
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(PerformMhcCleanupForm o, Errors errors)
+        {
+
+        }
+
+        @Override
+        public @NotNull URLHelper getSuccessURL(PerformMhcCleanupForm o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
+
+    public static class PerformMhcCleanupForm
+    {
+        private boolean _performDeletes = false;
+        private int _minAnalysisId = 0;
+
+        public boolean isPerformDeletes()
+        {
+            return _performDeletes;
+        }
+
+        public void setPerformDeletes(boolean performDeletes)
+        {
+            _performDeletes = performDeletes;
+        }
+
+        public int getMinAnalysisId()
+        {
+            return _minAnalysisId;
+        }
+
+        public void setMinAnalysisId(int minAnalysisId)
+        {
+            _minAnalysisId = minAnalysisId;
         }
     }
 }
