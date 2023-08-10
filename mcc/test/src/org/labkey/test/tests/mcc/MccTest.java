@@ -108,8 +108,9 @@ public class MccTest extends BaseWebDriverTest
         Ext4ComboRef combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
         combo.waitForStoreLoad();
         sleep(200);
+        combo.waitForStoreLoad();
         combo.clickTrigger();
-        waitAndClick(Locator.tagContainingText("li", "Other"));
+        waitAndClick(Locator.tagContainingText("li", "Other").notHidden());
 
         Window<?> dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
         dialog.findElement(Locator.tag("input")).sendKeys("TargetColony");
@@ -163,8 +164,11 @@ public class MccTest extends BaseWebDriverTest
         new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
         Ext4FieldRef.getForLabel(this, "Effective Date").setValue(new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
         combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
+        combo.waitForStoreLoad();
+        sleep(200);
+        combo.waitForStoreLoad();
         combo.clickTrigger();
-        waitAndClick(Locator.tagContainingText("li", "Other"));
+        waitAndClick(Locator.tagContainingText("li", "Other").notHidden());
 
         dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
         dialog.findElement(Locator.tag("input")).sendKeys("TargetColony2");
