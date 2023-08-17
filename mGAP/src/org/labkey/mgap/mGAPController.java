@@ -969,7 +969,7 @@ public class mGAPController extends SpringActionController
                 {
                     if (trackIDs.size() > 1)
                     {
-                        _log.error("More than one track found matching 'mGAP Release' for release: " + ctx.getString("mgapReleaseGUID"));
+                        _log.error("More than one track found matching 'mGAP Release' for release: " + ctx.getString("mgapReleaseGUID") + ", with jbrowse ID: " + jbrowseDatabaseId + ". they were: " + StringUtils.join(trackIDs, ";"));
                     }
 
                     params.put("trackId", new String[]{trackIDs.iterator().next()});
