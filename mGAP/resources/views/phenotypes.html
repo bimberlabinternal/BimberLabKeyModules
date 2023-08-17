@@ -8,56 +8,56 @@
     (function ($){
         $(function(){
             var rawData = [
-                ['Genetic Association Reported','SIV progression','Nomura , et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22754552'],
-                ['Genetic Association Reported','SIV progression','Letvin , et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21543722'],
-                ['Genetic Association Reported','SIV progression','Lim , et al. 2010','https://www.ncbi.nlm.nih.gov/pubmed/20585621'],
-                ['Genetic Association Reported','Age-related macular degeneration','Francis , et al. 2008','https://www.ncbi.nlm.nih.gov/pubmed/18535016'],
-                ['Genetic Association Reported','Age-related macular degeneration','Singh, et al. 2009','https://www.ncbi.nlm.nih.gov/pubmed/19028492'],
-                ['Genetic Association Reported','Colorectal cancer','Brammer, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/29490919'],
-                ['Genetic Association Reported','Krabbe disease ','Luzi, et al. 1997','https://www.ncbi.nlm.nih.gov/pubmed/9192853'],
-                ['Genetic Association Reported','Amenorrhea','Lomniczi, et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22128021'],
-                ['Genetic Association Reported','Naltrexone response','Vallender, et al. 2010','https://www.ncbi.nlm.nih.gov/pubmed/20153935'],
-                ['Genetic Association Reported','HPA axis dysregulation','Ferguson, et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22998353'],
-                ['Genetic Association Reported','Alcohol intake levels','Lindell, et al. 2010','https://www.ncbi.nlm.nih.gov/pubmed/20368518'],
-                ['Genetic Association Reported','Alcohol intake levels','Barr, et al. 2009','https://www.ncbi.nlm.nih.gov/pubmed/19706546'],
-                ['Genetic Association Reported','Alcohol intake levels','Cervera-Juanes, et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/26148813'],
-                ['Genetic Association Reported','Anxiety','Spinelli , et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/22293001'],
-                ['Genetic Association Reported','Anxiety','Rogers, et al. 2013','https://www.ncbi.nlm.nih.gov/pubmed/23147386'],
-                ['No Genetic Association Reported','Autism','Bauman, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/28774750'],
-                ['No Genetic Association Reported','Age-associated cognitive decline','Paspalas, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/29241829'],
-                ['No Genetic Association Reported','Polycystic ovary syndrome (PCOS)','Abbott, et al. 2017','https://www.ncbi.nlm.nih.gov/pubmed/28333238'],
-                ['No Genetic Association Reported','Endometriosis','Assaf, et al. 2012','https://www.ncbi.nlm.nih.gov/pubmed/21521902'],
-                ['No Genetic Association Reported','Endometriosis','Franasiak, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/25031316'],
-                ['No Genetic Association Reported','Endometriosis','Zondervan, et al. 2004','https://www.ncbi.nlm.nih.gov/pubmed/14747196'],
-                ['No Genetic Association Reported','Left ventricular hypertrophy','Reader, et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/27053572'],
-                ['No Genetic Association Reported','Type III Von-Willebrand','Patterson, et al. 2002','https://www.ncbi.nlm.nih.gov/pubmed/12211283'],
-                ['No Genetic Association Reported','Type II Diabetes','Qian, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/26113016'],
-                ['No Genetic Association Reported','Type II Diabetes','Pare, et al. 2007','https://www.ncbi.nlm.nih.gov/pubmed/17278131'],
-                ['No Genetic Association Reported','Type II Diabetes','Bremer, et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21884510'],
-                ['No Genetic Association Reported','Squamous cell carcinoma','Jean, et al. 2011','https://www.ncbi.nlm.nih.gov/pubmed/21640039'],
-                ['No Genetic Association Reported','Coat-like retinopathy','Liu, et al. 2015','https://www.ncbi.nlm.nih.gov/pubmed/25656754'],
-                ['No Genetic Association Reported','TB progression','Maiello, et al. 2018','https://www.ncbi.nlm.nih.gov/pubmed/28947646'],
-                ['No Genetic Association Reported','Osteoporosis ','Simmons, et al. 2016','https://www.ncbi.nlm.nih.gov/pubmed/26864889'],
-                ['No Genetic Association Reported','Cardiovascular Phenotypes','Ueda, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/30723724'],
-                ['Genetic Association Reported','Retinal Disease','Moshiri, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/30667376'],
-                ['Genetic Association Reported','Bardet-Biedl Syndrome','Peterson, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/31589838'],
-                ['Genetic Association Reported','Epidermolysis Bullosa','Johnson, et al. 2019','https://www.ncbi.nlm.nih.gov/pubmed/32096448']
+                ['Nervous system','Vision','Achromotopsia','PDE6C','c.1694G>A; p.Arg565Gln','Moshiri, et al. 2019:30667376'],
+                ['Nervous system','Vision','Age-related macular degeneration','HTRA1, ARMS2','','Francis , et al. 2008:18535016;Singh, et al. 2009:19028492'],
+                ['Nervous system','Vision','Bardet-Beidl syndrome','BBS7','c.160delG; p.Ala54fs','Peterson, et al. 2019:31589838'],
+                ['Nervous system','Vision','Oculocuateous albinism','TYRP1','c.1,028A>G; p.Asp343Gly<br>c.1,244T>C; p.Leu415Pro',''],
+                ['Nervous system','Vision','Oculocuateous albinism','TYR1','c.768C>G; p.His256Gln',''],
+                ['Nervous system','Vision','Coats-like retinopathy','','','Liu, et al. 2015:25656754'],
+                ['Nervous system','Neurological','Batten disease','CLN7','c.769delA; p.Ile257LeufsTer36','McBride, et al. 2018:30048804'],
+                ['Nervous system','Neurological','Krabbe disease','GALC','c.435_436delAC; p.Leu146fs','Luzi, et al. 1997:9192853;Baskin, et al. 1998:10090061'],
+                ['Nervous system','Neurological','Pelizaiaeus-Merzbacher disease','PLP1','c.682 T > C; p.Cys228Arg','Sherman, et al. 2021:34364975'],
+                ['Nervous system','Neurological','Epilepsy','','','Salinas, et al. 2015:26290449;Akos Szabo, et al. 2019:31592545'],
+                ['Nervous system','Psychiatric','Naltrexone response','OPRM1','c.77C>G; p.Pro26Arg','Vallender, et al. 2010:20153935'],
+                ['Nervous system','Psychiatric','Anxiety ','5-HTT','5-HTTLPR','Spinelli , et al. 2012:22293001'],
+                ['Nervous system','Psychiatric','Anxiety ','CRHR1','multiple','Rogers, et al. 2013:23147386'],
+                ['Cardiovascular system','','Left ventricular hypertrophy','','N/A','Reader, et al. 2016:27053572;Haertel, et al. 2016:27538864;Ueda, et al. 2019:30723724'],
+                ['Cardiovascular system','','Type-3 von Willebrand\'s disease','VWF','N/A','Patterson, et al. 2002:12211283'],
+                ['Reproductive system','','Endometriosis','NSPR1','Multiple','Assaf, et al. 2012:21521902;Keator, et al. 2012:22307145;D\'Hooghe, et al. 2009:19208783;Nair, et al. 2016:26908459'],
+                ['Reproductive system','','Polycystic ovarian syndrome','','','Abbott, et al. 2017:28333238;Abbott, et al. 2019:31783681;Abbott, et al. 2019:30767580'],
+                ['Reproductive system','','Amenorrhea','EAP1','promoter','Lomniczi, et al. 2012:22128021'],
+                ['Skeletal system','','Osteoporosis','','','Simmons, et al. 2016:26864889;Colman 2018:28729086;Paschalis, et al. 2019:30414509'],
+                ['Integumentary system','','Epidermolysis bullosa simplex','KRT5','c.1087_1088insGTCTTGGTACCAGCTTGGTCTTGGTACCAGACCA; p.Lys363 fs','Johnson, et al. 2019:32096448'],
+                ['Cancers','','Hereditary nonpolyposis colorectal cancer syndrome','MLH1','c.1029C<G, p.Tyr343Ter','Brammer, et al. 2018:29490919;Dray, et al. 2018:30108684'],
+                ['Cancers','','Squamous cell carcinoma','','','Stockinger, et al. 2014:24956217'],
+                ['Unpublished','','Cobblestone Lissencephaly ','POMT1','',''],
+                ['Unpublished','','Ferroportin Disease Nonclassical 4B','SLC40A1','',''],
+                ['Unpublished','','Complex Lethal Osteochondrodysplasia','TAPT1','',''],
+                ['Unpublished','','Dyshomongenetic goiter','TG','',''],
+                ['Unpublished','','Leukodystrophy','CLCN2','',''],
+                ['Suspected','','Ferric chelate reductase- Iron Refractory Anemia','FRRS1','',''],
+                ['Suspected','','Cholangiodysplasia -Cheeto','SLC39A14','',''],
+                ['Suspected','','Hemochromatosis','','','']
             ];
 
-            var dataMap = {};
-            $.each(rawData, function(idx, row){
-                dataMap[row[0]] = dataMap[row[0]] || {};
-                dataMap[row[0]][row[1]] = dataMap[row[0]][row[1]] || [];
-                dataMap[row[0]][row[1]].push(row[3] ? '<a target="_blank" href="' + row[3] + '">' +  row[2] + '</a>' : row[2]);
-            });
-
             var dataSet = [];
-            $.each(dataMap['Genetic Association Reported'], function(key, value){
-                dataSet.push(['Genetic Association Reported', key, value.join(', ')]);
-            });
+            $.each(rawData, function(idx, row){
+                var subcategory = row[1]
+                if (subcategory) {
+                    row[2] = subcategory + ": " + row[2]
+                }
 
-            $.each(dataMap['No Genetic Association Reported'], function(key, value){
-                dataSet.push(['No Genetic Association Reported', key, value.join(', ')]);
+                row[3] = row[3] || 'N/A'
+
+                if (row[5]) {
+                    row[5] = row[5].split(';').map(x => {
+                        var y = x.split(':')
+
+                        return '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + y[1] + '">' +  y[0] + '</a>'
+                    }).join('<br>')
+                }
+
+                dataSet.push(row)
             });
 
             var table = $('#phenotypeTable').DataTable({
@@ -67,135 +67,76 @@
                     dataSrc: 0
                 },
                 dom: '',
-                buttons: [],
-                order: [],
+                //buttons: [],
+                //order: [],
                 columns: [
                     {title: 'Group', visible: false},
-                    {title: 'Model', sortable: false, width: 250},
-                    {title: 'References'}
+                    {title: 'Subcategory', visible: false},
+                    {title: 'Model', sortable: false},
+                    {title: 'Gene'},
+                    {title: 'Mutation(s)', maxWidth: 100},
+                    {title: 'References', width: 200}
                 ]
             });
 
             table.table().header().remove();
 
             var rowId = mGAP.Utils.getMGapReleaseId();
-            var url = LABKEY.ActionURL.buildURL('mgap', 'phenotypeList', null, {release: rowId});
-            $('#traitUrl').attr('href', url);
+            LDK.Assert.assertNotEmpty('Missing MGapReleaseId on phenotypes page', rowId);
+            if (rowId) {
+                var url = LABKEY.ActionURL.buildURL('mgap', 'phenotypeList', null, {release: rowId});
+                $('#highImpactUrl').attr('href', url);
 
-
-            //COVID data:
-            var covidRows = [
-                ['LZTFL1','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:101823807..101843715'],
-                ['CXCR6','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:101948255..101953190'],
-                ['CCR9','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:101888276..101907994'],
-                ['CCR1','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:102205536..102212086'],
-                ['CCR3','SARS-CoV-2 Infection, COVID-19 severity','x','x','x','x','x','x','2:102268893..102269960'],
-                ['RPL24','SARS-CoV-2 Infection','','','','','','x','2:174444785..174450351'],
-                ['NXPE3','SARS-CoV-2 Infection','','','','','','x','2:174323787..174365577'],
-                ['ZBTB1','SARS-CoV-2 Infection','','','','','','x','7:126570101..126598047'],
-                ['CEP97','SARS-CoV-2 Infection','','','','','','x','2:174379912..174413230'],
-                ['FOXP4','COVID-19 severity','','','','','','x','4:127783384..127837788'],
-                ['CCHCR1','COVID-19 severity','','x','','x','','','4:138774693..138790019'],
-                ['ABO','SARS-CoV-2 Infection','x','x','x','','x','x','15:7086376..7107347'],
-                ['OAS1','COVID-19 severity','x','','','x','','x','11:112632314..112654759'],
-                ['OAS2','COVID-19 severity','x','','','x','','x','11:112695363..112728626'],
-                ['OAS3','COVID-19 severity','x','','','x','','x','11:112661047..112689871'],
-                ['KANSL1','COVID-19 severity','','','','','','x','16:57818339..58014773'],
-                ['WNT3','COVID-19 severity','','','','','','x','16:57171387..57225633'],
-                ['TAC4','COVID-19 severity','','','','','','x','X:89,480,106..89,483,948'],
-                ['KAT7','COVID-19 severity','','','','','','x','16:46957860..47008121'],
-                ['DPP9','COVID-19 severity','x','x','','x','','x','19:4604356..4656762'],
-                ['TYK2','COVID-19 severity','','','','x','','x','19:10110204..10144759'],
-                ['ICAM5','COVID-19 severity','','','','x','','x','19:10044223..10051556'],
-                ['ICAM3','COVID-19 severity','','','','x','','x','19:10088945..10110262'],
-                ['ICAM4','COVID-19 severity','','','','x','','x','19:10041723..10043298'],
-                ['ICAM1','COVID-19 severity','','','','x','','x','19:10024950..10040084'],
-                ['PLEKHA4','SARS-CoV-2 Infection','','','','','','x','19:48819628..48850822'],
-                ['PPP1R15A','SARS-CoV-2 Infection','','','','','','x','19:48854619..48858778'],
-                ['TULP2','SARS-CoV-2 Infection','','','','','','x','19:48864508..48880575'],
-                ['NUCB1','SARS-CoV-2 Infection','','','','','','x','19:48881525..48906138'],
-                ['IFNAR2','COVID-19 severity','x','x','','x','','x','3:13289046..13325302'],
-                ['IL10RB','COVID-19 severity','x','x','','x','','x','3:13,254,913..13,288,351'],
-                ['TMPRSS2','COVID-19 severity','x','x','','x','','x','3:5139757..5184755'],
-                ['ACE2','SARS-CoV-2 Infection','','','','','','','X:15247646..15300547']
-            ];
-
-            covidRows = covidRows.map(function(r){
-                var publications = []
-                if (r[2]) {
-                    publications.push('<a href="https://www.nature.com/articles/s41588-022-01042-x">Roberts et al.</a>')
-                }
-                if (r[3]) {
-                    publications.push('<a href="https://pubmed.ncbi.nlm.nih.gov/35241825/">Horowitz et al.</a>')
-                }
-                if (r[4]) {
-                    publications.push('<a href="https://doi.org/10.1038%2Fs41588-021-00854-7">Shelton et al.</a>')
-                }
-                if (r[5]) {
-                    publications.push('<a href="https://doi.org/10.1038%2Fs41586-020-03065-y">Pairo-Castineira et al.</a>')
-                }
-                if (r[6]) {
-                    publications.push('<a href="https://doi.org/10.1056%2FNEJMoa2020283">Ellinghaus et al.</a>')
-                }
-                if (r[7]) {
-                    publications.push('<a href="https://doi.org/10.1038/s41586-021-03767-x">COVID-19 HGI</a>')
-                }
-
-                var url = LABKEY.ActionURL.buildURL('mgap', 'genomebrowser', null, {location: r[8]})
-                return ['<a href="' + url + '">' + r[0] + '</a>', r[1], publications.join('<br>')]
-            })
-
-            var table = $('#covidPublicationsTable').DataTable({
-                data: covidRows,
-                pageLength: 500,
-
-                dom: '',
-                buttons: [],
-                order: [],
-                columns: [
-                    {title: 'Candidate Gene'},
-                    {title: 'Phenotype', sortable: false, width: 250},
-                    {title: 'Publications', sortable: false}
-                ]
-            });
+                LDK.Utils.getBasicQWP({
+                    title: 'Diseases/Phenotypes Implicated By mGAP Variant Data',
+                    schemaName: 'mgap',
+                    queryName: 'phenotypes',
+                    showRecordSelectors: false,
+                    showDetailsColumn: false,
+                    maxRows: 10,
+                    filterArray: [LABKEY.Filter.create('releaseId/rowId', rowId)]
+                }).render('highImpactQWP');
+            }
         });
     })(jQuery);
 </script>
 
-<h4 style="text-decoration: underline">Diseases/Phenotypes Implicated By Variant Data:</h4>
-<div style="padding-bottom: 10px;">
-    From each mGAP release, we generate a list of 'High Impact' variants, including variants overlapping with human disease-associated variants or those predicted to have a deleterious impact on protein coding. Using OMIM annotations, we generate a list of putative disease models based on these variants.
-    <br><br>
+
+<div>
+    Macaques serve as essential pre-clinical models for a range of human diseases. Research in macaques has been essential for advances in genetics, immunology, endocrinology, reproductive biology, stem cell biology, biological imaging, and neuroscience.
+    For the study of genetic disorders, the close evolutionary history of macaques and humans is a major advantage, and evident in their highly similar breadth of natural disease susceptibilities.
+    <br>
+    <br>
+    The mGAP disease/phenotype data can be divided into two categories (see more below):
+    <ul style="font-weight: bold">
+        <li><a href="#variantData">Disease/phenotypes Implicated from mGAP Variant Data</a></li>
+        <li><a href="#publishedData">Published NHP Disease/Phenotypic Models</a></li>
+    </ul>
+    We also recommend the following review:
     <ul>
-        <li><a id="traitUrl">Click here to view the current list of phenotypes</a></li>
+        <li>
+            <span style="font-weight: bold;"><a href="https://doi.org/10.1186/s13023-023-02619-3">Vallender, E.J., Hotchkiss, C.E., Lewis, A.D. et al. Nonhuman primate genetic models for the study of rare diseases. Orphanet J Rare Dis 18, 20 (2023).</a></span>
+        </li>
     </ul>
 </div>
-<h4 style="text-decoration: underline">Published Macaque Models:</h4>
-<div class="colDiv">
-    <div style="flex: 1;max-width: 40%;margin-right: 20px;">
-        Macaques serve as essential pre-clinical models for a range of human diseases. Research in macaques has been essential for advances in genetics, immunology, endocrinology, reproductive biology, stem cell biology, biological imaging, and neuroscience.
-        For the study of genetic disorders, the close evolutionary history of macaques and humans is a major advantage, and evident in their highly similar breadth of natural disease susceptibilities.
-        <br><br>
-        There are many examples of parallel genetic associations already reported for common diseases, which suggests opportunity to leverage the macaque for developing pharmacogenomic or personalized medicine approaches (Table 1, top).
-        For example, genetic associations in macaques that are orthologous to those associated with human, have been reported for cancers, reproductive disorders, retinal and infectious diseases.
-        Similarly, complex behavioral traits such as heightened anxiety, and variable response to commonly used pharmacological agents such as naltrexone, have been linked to the variants in the same genes as found in humans.
-        Other macaque disease models, such as for autism, polycystic ovarian syndrome (PCOS) or type II diabetes, have been reported, but genetic linkages have yet to be uncovered (Table 1, bottom).
-        The growing list of macaque traits are likely the ‘tip of the iceberg’ of the natural models of human disease, as other diseases likely go undetected either due to a less obvious phenotype (e.g., hearing loss) or due to early life lethality.
-        Together, the broad spectrum of natural models in rhesus macaque populations presents largely untapped opportunities for translational study, and may negate the need for more costly model development approaches, such as gene-editing.
-    </div>
-    <div style="width: 600px;">
-        <span><b>Table I. Published macaque disease models with and without reported genetic associations.</b></span>
-        <table id="phenotypeTable" class="stripe hover"></table>
-    </div>
+
+<h4 style="text-decoration: underline" id="variantData">Diseases/Phenotypes Implicated By mGAP Variant Data:</h4>
+<div style="padding-bottom: 10px;">
+    From each mGAP release, we generate a list of 'High Impact' variants, including variants overlapping with human disease-associated variants or those predicted to have a deleterious impact on protein coding. Using OMIM data, we generate a list of diseases/phenotypes linked to these genes, which is shown below.
+    <br><br>
+    <a id="highImpactUrl" class="labkey-text-link">Click here to view the complete list of diseases/phenotypes implicated by mGap data</a>
+    <br><br>
+    <div id="highImpactQWP"></div>
 </div>
-<hr>
-<h4 style="text-decoration: underline">COVID Genetic Associations:</h4>
-<div class="colDiv">
-    <div style="flex: 1;max-width: 40%;margin-right: 20px;">
-        The development of COVID-19 vaccines and therapies required extensive testing of their safety and efficacy in nonhuman primates (NHPs) before these new treatments could be used in humans (<a href="https://www.nature.com/articles/s41684-021-00760-9">reviewed in this article</a>). A growing number of human genes have been implicated in COVID-19 disease severity and hospitalization. The table to the right list many of these genes (summarized in: <a href="https://www.covid19hg.org/">https://www.covid19hg.org/</a>), and provides links to mGAP variants in each gene.
-    </div>
-    <div style="width: 600px;">
-        <span><b>Table II. Genes associated with COVID-19 severity and links to macaque variants (<a href = "https://www.nature.com/articles/s41588-021-00985-x">Based on Karlsen et al.</a>). Click the gene name to load the genome browser, showing macaque variants in that gene.</b></span>
-        <table id="covidPublicationsTable" class="stripe hover"></table>
-    </div>
+<h4 style="text-decoration: underline" id="publishedData">Published NHP Disease/Phenotypic Models:</h4>
+There are many examples of parallel genetic associations already reported for common diseases, which suggests opportunity to leverage the macaque for developing pharmacogenomic or personalized medicine approaches (Table 1, top).
+For example, genetic associations in macaques that are orthologous to those associated with human, have been reported for cancers, reproductive disorders, retinal and infectious diseases.
+Similarly, complex behavioral traits such as heightened anxiety, and variable response to commonly used pharmacological agents such as naltrexone, have been linked to the variants in the same genes as found in humans.
+Other macaque disease models, such as for autism, polycystic ovarian syndrome (PCOS) or type II diabetes, have been reported, but genetic linkages have yet to be uncovered (Table 1, bottom).
+The growing list of macaque traits are likely the ‘tip of the iceberg’ of the natural models of human disease, as other diseases likely go undetected either due to a less obvious phenotype (e.g., hearing loss) or due to early life lethality.
+<br>
+<br>
+<div style="width: 1200px;">
+    <span><b>Table I. Published macaque disease models with and without reported genetic associations.</b></span>
+    <table id="phenotypeTable" class="stripe hover"></table>
 </div>
