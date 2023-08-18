@@ -1191,7 +1191,7 @@ public class mGAPController extends SpringActionController
     }
 
     @RequiresPermission(AdminPermission.class)
-    public class ImportStudyAction extends ConfirmAction<Object>
+    public static class ImportStudyAction extends ConfirmAction<Object>
     {
         @Override
         public ModelAndView getConfirmView(Object o, BindException errors) throws Exception

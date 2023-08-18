@@ -216,6 +216,7 @@ mGAP.Utils = (function($){
             return ctx['mgapJBrowseHuman'];
         },
 
+        // This is the numeric RowId
         getMGapReleaseId: function(){
             var ctx = LABKEY.getModuleContext('mgap') || {};
 

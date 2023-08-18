@@ -11,32 +11,33 @@
                 ['Nervous system','Vision','Achromotopsia','PDE6C','c.1694G>A; p.Arg565Gln','Moshiri, et al. 2019:30667376'],
                 ['Nervous system','Vision','Age-related macular degeneration','HTRA1, ARMS2','','Francis , et al. 2008:18535016;Singh, et al. 2009:19028492'],
                 ['Nervous system','Vision','Bardet-Beidl syndrome','BBS7','c.160delG; p.Ala54fs','Peterson, et al. 2019:31589838'],
-                ['Nervous system','Vision','Oculocuateous albinism','TYRP1','c.1,028A>G; p.Asp343Gly<br>c.1,244T>C; p.Leu415Pro',''],
+                ['Nervous system','Vision','Oculocuateous albinism','TYRP1','c.1,028A>G; p.Asp343Gly<br>c.1,244T>C; p.Leu415Pro','Peterson, et al., 2023:'],
                 ['Nervous system','Vision','Oculocuateous albinism','TYR1','c.768C>G; p.His256Gln',''],
                 ['Nervous system','Vision','Coats-like retinopathy','','','Liu, et al. 2015:25656754'],
                 ['Nervous system','Neurological','Batten disease','CLN7','c.769delA; p.Ile257LeufsTer36','McBride, et al. 2018:30048804'],
-                ['Nervous system','Neurological','Krabbe disease','GALC','c.435_436delAC; p.Leu146fs','Luzi, et al. 1997:9192853;Baskin, et al. 1998:10090061'],
+                ['Nervous system','Neurological','Krabbe disease','GALC','c.435_436delAC; p.Leu146fs','Luzi, et al. 1997:9192853;Baskin, et al. 1998:10090061', 'Hordeaux, et al. 2022:35333110'],
                 ['Nervous system','Neurological','Pelizaiaeus-Merzbacher disease','PLP1','c.682 T > C; p.Cys228Arg','Sherman, et al. 2021:34364975'],
                 ['Nervous system','Neurological','Epilepsy','','','Salinas, et al. 2015:26290449;Akos Szabo, et al. 2019:31592545'],
                 ['Nervous system','Psychiatric','Naltrexone response','OPRM1','c.77C>G; p.Pro26Arg','Vallender, et al. 2010:20153935'],
                 ['Nervous system','Psychiatric','Anxiety ','5-HTT','5-HTTLPR','Spinelli , et al. 2012:22293001'],
                 ['Nervous system','Psychiatric','Anxiety ','CRHR1','multiple','Rogers, et al. 2013:23147386'],
-                ['Cardiovascular system','','Left ventricular hypertrophy','','N/A','Reader, et al. 2016:27053572;Haertel, et al. 2016:27538864;Ueda, et al. 2019:30723724'],
+                ['Cardiovascular system','','Left ventricular hypertrophy','','N/A','Reader, et al. 2016:27053572;Haertel, et al. 2016:27538864;Ueda, et al. 2019:30723724', 'Ueda, et al. 2021:34150876', 'Oldt, et al. 2020:32753092'],
                 ['Cardiovascular system','','Type-3 von Willebrand\'s disease','VWF','N/A','Patterson, et al. 2002:12211283'],
                 ['Reproductive system','','Endometriosis','NSPR1','Multiple','Assaf, et al. 2012:21521902;Keator, et al. 2012:22307145;D\'Hooghe, et al. 2009:19208783;Nair, et al. 2016:26908459'],
                 ['Reproductive system','','Polycystic ovarian syndrome','','','Abbott, et al. 2017:28333238;Abbott, et al. 2019:31783681;Abbott, et al. 2019:30767580'],
                 ['Reproductive system','','Amenorrhea','EAP1','promoter','Lomniczi, et al. 2012:22128021'],
                 ['Skeletal system','','Osteoporosis','','','Simmons, et al. 2016:26864889;Colman 2018:28729086;Paschalis, et al. 2019:30414509'],
                 ['Integumentary system','','Epidermolysis bullosa simplex','KRT5','c.1087_1088insGTCTTGGTACCAGCTTGGTCTTGGTACCAGACCA; p.Lys363 fs','Johnson, et al. 2019:32096448'],
-                ['Cancers','','Hereditary nonpolyposis colorectal cancer syndrome','MLH1','c.1029C<G, p.Tyr343Ter','Brammer, et al. 2018:29490919;Dray, et al. 2018:30108684'],
+                ['Cancers','','Colorectal Cancer','MLH1','c.1029C<G, p.Tyr343Ter','Brammer, et al. 2018:29490919;Dray, et al. 2018:30108684', 'Deycmar, et al. 2023:36593067'],
                 ['Cancers','','Squamous cell carcinoma','','','Stockinger, et al. 2014:24956217'],
+                ['Cancers','','Breast Cancer','','','Deycmar, et al. 2023:36593067'],
                 ['Unpublished','','Cobblestone Lissencephaly ','POMT1','',''],
                 ['Unpublished','','Ferroportin Disease Nonclassical 4B','SLC40A1','',''],
                 ['Unpublished','','Complex Lethal Osteochondrodysplasia','TAPT1','',''],
                 ['Unpublished','','Dyshomongenetic goiter','TG','',''],
                 ['Unpublished','','Leukodystrophy','CLCN2','',''],
                 ['Suspected','','Ferric chelate reductase- Iron Refractory Anemia','FRRS1','',''],
-                ['Suspected','','Cholangiodysplasia -Cheeto','SLC39A14','',''],
+                ['Suspected','','Cholangiodysplasia','SLC39A14','',''],
                 ['Suspected','','Hemochromatosis','','','']
             ];
 
@@ -53,7 +54,7 @@
                     row[5] = row[5].split(';').map(x => {
                         var y = x.split(':')
 
-                        return '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + y[1] + '">' +  y[0] + '</a>'
+                        return y[1] ? '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + y[1] + '">' +  y[0] + '</a>' : y[0];
                     }).join('<br>')
                 }
 
@@ -67,8 +68,6 @@
                     dataSrc: 0
                 },
                 dom: '',
-                //buttons: [],
-                //order: [],
                 columns: [
                     {title: 'Group', visible: false},
                     {title: 'Subcategory', visible: false},
@@ -123,9 +122,9 @@
 <h4 style="text-decoration: underline" id="variantData">Diseases/Phenotypes Implicated By mGAP Variant Data:</h4>
 <div style="padding-bottom: 10px;">
     From each mGAP release, we generate a list of 'High Impact' variants, including variants overlapping with human disease-associated variants or those predicted to have a deleterious impact on protein coding. Using OMIM data, we generate a list of diseases/phenotypes linked to these genes, which is shown below.
-    <br><br>
-    <a id="highImpactUrl" class="labkey-text-link">Click here to view the complete list of diseases/phenotypes implicated by mGap data</a>
-    <br><br>
+    <br>
+    <h4><a id="highImpactUrl" style="font-weight: bold">Click here to view the complete list of diseases/phenotypes implicated by mGap data</a></h4>
+
     <div id="highImpactQWP"></div>
 </div>
 <h4 style="text-decoration: underline" id="publishedData">Published NHP Disease/Phenotypic Models:</h4>

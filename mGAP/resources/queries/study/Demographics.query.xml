@@ -23,9 +23,6 @@
                     <item hidden="true">
                         <originalText>Groups</originalText>
                     </item>
-                    <item hidden="true">
-                        <originalText>View Specimens</originalText>
-                    </item>
                 </buttonBarOptions>
             </table>
         </tables>
