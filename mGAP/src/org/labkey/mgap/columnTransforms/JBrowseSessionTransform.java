@@ -119,7 +119,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     protected String getSessionJson()
     {
-        return "{\"trackSelector\": {\"sortHierarchical\": false},\"defaultLocation\":\"4:137934540..137937146\"}";
+        return "{\"trackSelector\": {\"sortHierarchical\": false},\"trackHeight\": 400,\"defaultLocation\":\"4:137934540..137937146\"}";
     }
 
     private void recreateSession(final String databaseId)
