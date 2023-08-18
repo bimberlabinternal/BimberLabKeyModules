@@ -22,24 +22,33 @@ export function Dashboard() {
         );
     }
 
+    let isApiSubscribed = true;
     useEffect(() => {
         Query.selectRows({
-                containerPath: containerPath,
-                schemaName: 'study',
-                queryName: 'demographics',
-                columns: 'Id,birth,death,gender/meaning,species,colony,calculated_status,u24_status,Id/age/AgeFriendly,Id/ageClass/label',
-                success: function(results) {
+            containerPath: containerPath,
+            schemaName: 'study',
+            queryName: 'demographics',
+            columns: 'Id,birth,death,gender/meaning,species,colony,calculated_status,u24_status,Id/age/AgeFriendly,Id/ageClass/label',
+            success: function(results) {
+                if (isApiSubscribed) {
                     setLiving(results.rows.filter(row => row.calculated_status === 'Alive' || row.calculated_status === 'alive'));
                     setu24Assigned(results.rows.filter(row => row.u24_status === true));
                     setDemographics(results.rows);
-                },
-                failure: function(response) {
+                }
+            },
+            failure: function(response) {
+                if (isApiSubscribed) {
                     alert('There was an error loading data');
-                    console.log(response);
-                },
-                scope: this
-            });
-    }, [] /* only run the effect on mount */);
+                    console.error(response);
+                }
+            },
+            scope: this
+        });
+
+        return function cleanup() {
+            isApiSubscribed = false
+        }
+    }, []);
 
     if (demographics === null) {
         return (
