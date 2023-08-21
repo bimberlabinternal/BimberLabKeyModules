@@ -964,15 +964,10 @@ public class mGAPController extends SpringActionController
             // This requires trackId
             if ("variantSearch".equals(actionName))
             {
-                Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), Collections.singletonList("mGAP Release"));
-                if (!trackIDs.isEmpty())
+                String trackGUID = getPrimaryTrackUUID(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"));
+                if (trackGUID != null)
                 {
-                    if (trackIDs.size() > 1)
-                    {
-                        _log.error("More than one track found matching 'mGAP Release' for release: " + ctx.getString("mgapReleaseGUID") + ", with jbrowse ID: " + jbrowseDatabaseId + ". they were: " + StringUtils.join(trackIDs, ";"));
-                    }
-
-                    params.put("trackId", new String[]{trackIDs.iterator().next()});
+                    params.put("trackId", new String[]{trackGUID});
                 }
                 else
                 {
@@ -984,7 +979,7 @@ public class mGAPController extends SpringActionController
             if (trackName != null)
             {
                 List<String> trackNames = Arrays.asList(trackName.split(","));
-                Collection<String> trackIDs = getTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
+                Collection<String> trackIDs = getAllVisibleTracks(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), trackNames);
                 if (!trackIDs.isEmpty())
                 {
                     params.put("tracks", new String[]{StringUtils.join(trackIDs, ",")});
@@ -1015,7 +1010,46 @@ public class mGAPController extends SpringActionController
             return ret;
         }
 
-        public Collection<String> getTracks(Container target, String jbrowseSession, String releaseId, List<String> trackNames)
+        public String getPrimaryTrackUUID(Container target, String jbrowseSession, String releaseId)
+        {
+            final String trackName = "mGAP Release";
+
+            UserSchema mgap = QueryService.get().getUserSchema(getUser(), target, mGAPSchema.NAME);
+            UserSchema jbrowse = QueryService.get().getUserSchema(getUser(), target, "jbrowse");
+
+            //find the selected track:
+            SimpleFilter trackFilter = new SimpleFilter(FieldKey.fromString("releaseId"), releaseId);
+            trackFilter.addCondition(FieldKey.fromString("trackName"), trackName, CompareType.EQUAL);
+            List<Integer> outputFileIds = new TableSelector(mgap.getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE), PageFlowUtil.set("vcfId"), trackFilter, null).getArrayList(Integer.class);
+            if (outputFileIds.isEmpty())
+            {
+                _log.error("Unable to find track: " + jbrowseSession + " / " + releaseId + " / " + trackName);
+                return null;
+            }
+            else if (outputFileIds.size() > 1)
+            {
+                _log.error("More than one matching outputfile found, using first: " + jbrowseSession + " / " + releaseId + " / " + trackName);
+            }
+
+            //now database members from these outputFileIds:
+            TableInfo databaseMembers = jbrowse.getTable("database_members");
+            SimpleFilter dbFilter = new SimpleFilter(FieldKey.fromString("database"), jbrowseSession);
+            dbFilter.addCondition(FieldKey.fromString("jsonfile/outputfile"), outputFileIds.get(0), CompareType.EQUAL);
+            List<String> guids = new TableSelector(databaseMembers, PageFlowUtil.set("jsonfile"), dbFilter, null).getArrayList(String.class);
+            if (guids.isEmpty())
+            {
+                _log.error("No database_members found for track: " + jbrowseSession + " / " + releaseId + " / " + trackName + " / " + outputFileIds.get(0));
+                return null;
+            }
+            else if (guids.size() > 1)
+            {
+                _log.error("More than one matching database_member record found, using first: " + jbrowseSession + " / " + releaseId + " / " + trackName + " / " + outputFileIds.get(0));
+            }
+
+            return guids.get(0);
+        }
+
+        public Collection<String> getAllVisibleTracks(Container target, String jbrowseSession, String releaseId, List<String> trackNames)
         {
             Set<String> ret = new LinkedHashSet<>();
 
@@ -1088,6 +1122,7 @@ public class mGAPController extends SpringActionController
             {
                 _log.error("Unable to find the default jbrowse session associated with genome: " + genomeId);
             }
+
             return ret;
         }
     }
