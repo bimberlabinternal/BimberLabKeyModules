@@ -561,7 +561,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 throw new IllegalStateException("Starting/ending counts not equal: " + initialCounts + " / " + endCounts);
             }
 
-            List<Integer> alignmentIdsToDelete = groups.stream().map(x -> x.rowIdsToDelete).flatMap(List::stream).toList();
+            List<Integer> alignmentIdsToDelete = new ArrayList<>(groups.stream().map(x -> x.rowIdsToDelete).flatMap(List::stream).toList());
             List<AlignmentGroup> alignmentGroupsToUpdate = groups.stream().filter(g -> !g.rowIdsToDelete.isEmpty()).toList();
             log.info("Alignment IDs to delete: " + alignmentIdsToDelete.size());
             log.info("Alignment groups to update counts: " + alignmentGroupsToUpdate.size());
