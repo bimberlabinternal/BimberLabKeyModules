@@ -158,6 +158,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
         return _dropMultiLineageMHC;
     }
 
+    public void setDropMultiLineageMHC(boolean dropMultiLineageMHC)
+    {
+        _dropMultiLineageMHC = dropMultiLineageMHC;
+    }
+
     public static class Task extends PipelineJob.Task<Task.Factory>
     {
         protected Task(Factory factory, PipelineJob job)

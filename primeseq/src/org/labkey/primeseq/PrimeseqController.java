@@ -632,6 +632,7 @@ public class PrimeseqController extends SpringActionController
 
             return new HtmlView(HtmlString.unsafe(HtmlString.of("This will run a pipeline job to delete low-frequency MHC results to save space.  Do you want to continue?") +
                     "<br>Check box to delete records: <input type=\"checkbox\" name=\"performDeletes\" />" +
+                    "<br>Delete multi-lineage records: <input type=\"checkbox\" name=\"deleteMultiLineage\" />" +
                     "<br>Min Analysis ID: <input type=\"input\" name=\"minAnalysisId\" value=\"1\" />"
             ));
         }
@@ -640,7 +641,12 @@ public class PrimeseqController extends SpringActionController
         public boolean handlePost(PerformMhcCleanupForm o, BindException errors) throws Exception
         {
             PipeRoot pipelineRoot = PipelineService.get().findPipelineRoot(getContainer());
-            PipelineService.get().queueJob(new MhcCleanupPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, o.isPerformDeletes(), o.getMinAnalysisId()));
+            MhcCleanupPipelineJob job = new MhcCleanupPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, o.isPerformDeletes(), o.getMinAnalysisId());
+            if (o.isDeleteMultiLineage()) {
+                job.setDropMultiLineageMHC(o.isDeleteMultiLineage());
+            }
+
+            PipelineService.get().queueJob(job);
 
             return true;
         }
@@ -661,6 +667,7 @@ public class PrimeseqController extends SpringActionController
     public static class PerformMhcCleanupForm
     {
         private boolean _performDeletes = false;
+        private boolean _deleteMultiLineage = false;
         private int _minAnalysisId = 0;
 
         public boolean isPerformDeletes()
@@ -681,6 +688,16 @@ public class PrimeseqController extends SpringActionController
         public void setMinAnalysisId(int minAnalysisId)
         {
             _minAnalysisId = minAnalysisId;
+        }
+
+        public boolean isDeleteMultiLineage()
+        {
+            return _deleteMultiLineage;
+        }
+
+        public void setDeleteMultiLineage(boolean deleteMultiLineage)
+        {
+            _deleteMultiLineage = deleteMultiLineage;
         }
     }
 }
