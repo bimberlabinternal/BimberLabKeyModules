@@ -57,7 +57,7 @@
                 </webPart>
             </preferredWebParts>
             <permissions>
-                <permission name="admin"/>
+                <permission name="org.labkey.api.security.permissions.AdminPermission"/>
             </permissions>
         </folderTab>
     </folderTabs>
