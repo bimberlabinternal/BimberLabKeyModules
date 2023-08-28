@@ -26,13 +26,14 @@ import org.labkey.test.TestTimeoutException;
 import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
+import org.labkey.test.util.SqlserverOnlyTest;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 @Category({External.class, LabModule.class})
-public class PMRTest extends BaseWebDriverTest
+public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
 {
     @Override
     protected void doCleanup(boolean afterTest) throws TestTimeoutException

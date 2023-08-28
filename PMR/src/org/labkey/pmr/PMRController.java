@@ -19,6 +19,7 @@ package org.labkey.pmr;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.ehr.EHRService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.module.ModuleProperty;
@@ -64,6 +65,8 @@ public class PMRController extends SpringActionController
             mp.saveValue(getUser(), getContainer(), getContainer().getPath());
 
             StudiesService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(PMRModule.NAME), new Path("referenceStudy"));
+
+            EHRService.get().ensureStudyQCStates(getContainer(), getUser(), true);
 
             return true;
         }
