@@ -51,7 +51,9 @@ public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
 
     private void doSetup()
     {
+        _containerHelper.createProject(getProjectName());
         _containerHelper.setFolderType("PMR");
+
         setModuleProperties(Arrays.asList(
                 new ModulePropertyValue("EHR", "/" + getProjectName(), "EHRStudyContainer", "/" + getProjectName()),
                 new ModulePropertyValue("EHR", "/" + getProjectName(), "EHRAdminUser", getCurrentUser())
