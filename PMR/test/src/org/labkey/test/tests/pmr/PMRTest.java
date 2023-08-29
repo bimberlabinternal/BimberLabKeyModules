@@ -59,9 +59,6 @@ public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
 
         importStudy(getProjectName());
 
-        beginAt("/pmr/" + getProjectName() + "/configurePmr.view");
-        clickButton("OK");
-
         goToHome();
     }
 
