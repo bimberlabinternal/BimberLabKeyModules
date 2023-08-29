@@ -1,0 +1,10 @@
+<view xmlns="http://labkey.org/data/xml/view" title="PMR Animal History">
+    <permissions>
+        <permission name="read"/>
+    </permissions>
+    <dependencies>
+        <dependency path="ehr.context" />
+        <dependency path="onprc_ehr/panel/MultiAnimalFilterType.js"/>
+        <dependency path="ehr/panel/AnimalHistoryPanel.js"/>
+    </dependencies>
+</view>

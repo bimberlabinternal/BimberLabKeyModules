@@ -21,33 +21,55 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.labkey.test.BaseWebDriverTest;
+import org.labkey.test.ModulePropertyValue;
 import org.labkey.test.TestTimeoutException;
-import org.labkey.test.categories.InDevelopment;
+import org.labkey.test.WebTestHelper;
+import org.labkey.test.categories.External;
+import org.labkey.test.categories.LabModule;
+import org.labkey.test.util.SqlserverOnlyTest;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@Category({InDevelopment.class})
-public class PMRTest extends BaseWebDriverTest
+@Category({External.class, LabModule.class})
+public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
 {
     @Override
     protected void doCleanup(boolean afterTest) throws TestTimeoutException
     {
-        _containerHelper.deleteProject(getProjectName(), afterTest);
+        super.doCleanup(afterTest);
     }
 
     @BeforeClass
-    public static void setupProject()
+    public static void setupProject() throws Exception
     {
         PMRTest init = (PMRTest)getCurrentTest();
-
         init.doSetup();
     }
 
+
     private void doSetup()
     {
-        _containerHelper.createProject(getProjectName(), null);
+        _containerHelper.createProject(getProjectName(), "PMR");
+
+        setModuleProperties(Arrays.asList(
+                new ModulePropertyValue("EHR", "/" + getProjectName(), "EHRStudyContainer", "/" + getProjectName()),
+                new ModulePropertyValue("EHR", "/" + getProjectName(), "EHRAdminUser", getCurrentUser())
+        ));
+
+        importStudy(getProjectName());
+
+        goToHome();
     }
+
+    private void importStudy(String containerPath)
+    {
+        beginAt(WebTestHelper.getBaseURL() + "/pmr/" + containerPath + "/importStudy.view");
+        clickButton("OK");
+        waitForPipelineJobsToComplete(1, "Study import", false, MAX_WAIT_SECONDS * 2500);
+    }
+
 
     @Before
     public void preTest()
