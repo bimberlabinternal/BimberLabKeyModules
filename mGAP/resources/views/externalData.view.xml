@@ -1,4 +1,4 @@
-<view xmlns="http://labkey.org/data/xml/view" title="External Data and Cohorts">
+<view xmlns="http://labkey.org/data/xml/view" title="mGAP Datasets and Cohorts">
     <permissions>
         <permission name="read"/>
     </permissions>
