@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 import './../Dashboard/dashboard.css';
 import ScatterChart from './ScatterChart';
-import { ErrorBoundary } from '@labkey/components';
-import { Box, Tab, Tabs } from '@material-ui/core';
+import { Box, Tab, Tabs } from '@mui/material';
 import KinshipTable from './KinshipTable';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 
 function GenomeBrowser(props: {jbrowseId: any}) {

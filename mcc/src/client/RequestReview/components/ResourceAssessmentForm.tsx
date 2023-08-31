@@ -1,38 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { ActionURL, Filter, Query } from '@labkey/api';
-import {
-    Box,
-    Button,
-    makeStyles,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TextField
-} from '@material-ui/core';
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { AnimalRequestModel } from '../../components/RequestUtils';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
+import { styled } from '@mui/styles';
+
+const StyledTableHead = styled(TableCell)(({ theme }) => ({
+    fontWeight: "bold",
+    padding: 5,
+    paddingTop: 0
+}))
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    border: 1,
+    borderColor: "black",
+    borderStyle: "solid",
+    padding: 5
+}))
 
 export default function ResourceAssessmentForm(props: {requestData: AnimalRequestModel}) {
     const { requestData } = props
     const [ recordData, setRecordData ] = useState(null)
     const [ reviewData, setReviewData ] = useState(null)
     const [ displayOverlay, setDisplayOverlay ] = useState(false)
-
-    const styles = makeStyles({
-        tableHead: {
-            fontWeight: "bold",
-            padding: 5,
-            paddingTop: 0
-        },
-        tableCell: {
-            border: 1,
-            borderColor: "black",
-            borderStyle: "solid",
-            padding: 5
-        }
-    })()
 
     useEffect(() => {
         Query.selectRows({
@@ -143,18 +133,18 @@ export default function ResourceAssessmentForm(props: {requestData: AnimalReques
         <Table style={{display: "inline-block", padding: 5}}>
             <TableHead>
                 <TableRow key={"header"}>
-                    <TableCell className={styles.tableHead}>Reviewer</TableCell>
-                    <TableCell className={styles.tableHead}>Review</TableCell>
-                    <TableCell className={styles.tableHead}>Comments</TableCell>
+                    <StyledTableHead>Reviewer</StyledTableHead>
+                    <StyledTableHead>Review</StyledTableHead>
+                    <StyledTableHead>Comments</StyledTableHead>
                 </TableRow>
             </TableHead>
             <TableBody>
                 {reviewData.map((row, idx) => {
                     return(
                         <TableRow key={"review-" + row.reviewerid} style = { idx % 2 ? { background : "#fdffe0" }:{ background : "white" }}>
-                            <TableCell className={styles.tableCell}>{row['reviewerid/displayName']}</TableCell>
-                            <TableCell className={styles.tableCell}>{row.review}</TableCell>
-                            <TableCell className={styles.tableCell}>{row.comments}</TableCell>
+                            <StyledTableCell>{row['reviewerid/displayName']}</StyledTableCell>
+                            <StyledTableCell>{row.review}</StyledTableCell>
+                            <StyledTableCell>{row.comments}</StyledTableCell>
                         </TableRow>
                     )
                 })}
