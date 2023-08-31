@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActionURL, Filter, Query } from '@labkey/api';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@material-ui/core';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import { AnimalRequestModel } from '../../components/RequestUtils';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
 

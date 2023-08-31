@@ -1,11 +1,11 @@
 import React from 'react';
-import { DataGrid, GridColumns, GridToolbar } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridPaginationModel, GridToolbar } from '@mui/x-data-grid';
 
 export default function KinshipTable(props: {data: any}) {
     const { data } = props;
-    const [pageSize, setPageSize] = React.useState<number>(25);
+    const [pageModel, setPageModel] = React.useState<GridPaginationModel>({page: 0, pageSize: 25});
 
-    const columns: GridColumns = [
+    const columns: GridColDef[] = [
         { field: 'Id', headerName: 'Animal 1', width: 150, type: "string", headerAlign: 'left' },
         { field: 'Id2', headerName: 'Animal 2', width: 150, type: "string", headerAlign: 'left' },
         { field: 'kinship', headerName: 'Kinship', width: 125, type: "number", headerAlign: 'right' },
@@ -17,10 +17,12 @@ export default function KinshipTable(props: {data: any}) {
             autoHeight={true}
             columns={columns}
             rows={data}
-            components={{ Toolbar: GridToolbar }}
-            rowsPerPageOptions={[10,25,50,100]}
-            pageSize={pageSize}
-            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+            // slots: {{
+            //     toolbar: GridToolbar
+            // }}
+            pageSizeOptions={[10,25,50,100]}
+            paginationModel={pageModel}
+            onPaginationModelChange={(model) => setPageModel(model)}
         />
     );
 }
