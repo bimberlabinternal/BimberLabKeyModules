@@ -46,7 +46,9 @@ import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
+import org.labkey.api.sequenceanalysis.pipeline.HasJobParams;
 import org.labkey.api.sequenceanalysis.pipeline.JobResourceSettings;
+import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.PageFlowUtil;
@@ -55,8 +57,6 @@ import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
-import org.labkey.sequenceanalysis.SequencePipelineServiceImpl;
-import org.labkey.sequenceanalysis.pipeline.SequenceJob;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -411,7 +411,7 @@ public class PrimeseqController extends SpringActionController
             }
 
             List<JSONObject> resourceSettings = new ArrayList<>();
-            for (JobResourceSettings settings : SequencePipelineServiceImpl.get().getResourceSettings())
+            for (JobResourceSettings settings : SequencePipelineService.get().getResourceSettings())
             {
                 if (settings.isAvailable(getContainer()))
                 {
@@ -448,7 +448,7 @@ public class PrimeseqController extends SpringActionController
                 try
                 {
                     PipelineJob job = PipelineJob.readFromFile(json);
-                    if (!(job instanceof SequenceJob sj))
+                    if (!(job instanceof HasJobParams sj))
                     {
                         errors.reject(ERROR_MSG, "Altering cluster params is only supported for sequence jobs");
                         return null;
@@ -539,7 +539,7 @@ public class PrimeseqController extends SpringActionController
                 try
                 {
                     job = PipelineJob.readFromFile(jobJson);
-                    if (!(job instanceof SequenceJob sj))
+                    if (!(job instanceof HasJobParams sj))
                     {
                         errors.reject(ERROR_MSG, "Changing cluster parameters is only supported for Sequence jobs");
                         return null;
