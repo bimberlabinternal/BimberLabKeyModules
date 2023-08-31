@@ -17,9 +17,9 @@ export default function KinshipTable(props: {data: any}) {
             autoHeight={true}
             columns={columns}
             rows={data}
-            // slots: {{
-            //     toolbar: GridToolbar
-            // }}
+            slots={{
+                toolbar: GridToolbar
+            }}
             pageSizeOptions={[10,25,50,100]}
             paginationModel={pageModel}
             onPaginationModelChange={(model) => setPageModel(model)}
