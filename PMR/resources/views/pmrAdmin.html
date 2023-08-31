@@ -1,0 +1,47 @@
+<script type="text/javascript">
+
+Ext4.onReady(function (){
+    var webpart = <%=webpartContext%>;
+
+    Ext4.create('Ext.panel.Panel', {
+        renderTo: webpart.wrapperDivId,
+        border: false,
+        items: [{
+            xtype: 'panel',
+            border: false,
+            defaults: {
+                border: false
+            },
+            items: [{
+                html: 'This page contains information related to the setup and administration of the PMR site.'
+            }]
+        },{
+            xtype: 'ldk-navpanel',
+            style: 'padding-top: 20px;',
+            border: false,
+            sections: [
+                {
+                    header: 'Configuration/Data Management',
+                    items: [{
+                        name: 'Import/Re-import PMR Study',
+                        url: LABKEY.ActionURL.buildURL('pmr', 'importStudy.view')
+                    },{
+                        name: 'Ensure Study QC States Present',
+                        url: LABKEY.ActionURL.buildURL('ehr', 'ensureQcStates.view')
+                    },{
+                        name: 'Populate Lookups',
+                        url: LABKEY.ActionURL.buildURL('pmr', 'populateData.view')
+                    },{
+                        name: 'ETL Settings',
+                        url: LABKEY.ActionURL.buildURL('dataintegration', 'begin.view')
+                    },{
+                        name: 'Generics Calculation Settings',
+                        url: LABKEY.ActionURL.buildURL('ehr', 'geneticCalculationSettings.view')
+                    }]
+                }
+            ]
+        }]
+    });
+});
+
+</script>

@@ -17,6 +17,7 @@
                     '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'variantList', null, {release: releaseId}) + '">Predicted Damaging Variants</a></li>' +
                     (jbrowseId ? '<li><a href="' + LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: jbrowseId}) + '">Genome Browser (Macaque)</a></li>' : '') +
                     (humanJbrowseId ? '<li><a href="' + LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: humanJbrowseId}) + '">Genome Browser (Human)</a></li>' : '') +
+                    // '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'genomeBrowser', null, {target: 'variantSearch'}) + '">Full-text Variant Search</a></li>' +
                 '</ul>'
             );
         }
@@ -28,14 +29,13 @@
 <p></p>
 <span>Other Links:</span><br>
 <ul class="mgapList">
-    <li><a href="<%=contextPath%>/mgap/<%=containerPath%>/genomeBrowser.view?target=variantSearch" >Free-text Variant Search</a></li>
     <li><a href="<%=contextPath%>/project/<%=containerPath%>/begin.view?pageId=variants" >All Variant Catalog Releases</a></li>
     <li><a href="<%=contextPath%>/project/<%=containerPath%>/begin.view?pageId=datasets" >Raw Sequence Data</a></li>
     <li><a href="<%=contextPath%>/mgap/<%=containerPath%>/annotation.view" >Annotation Strategy</a></li>
-    <li><a href="<%=contextPath%>/mgap/<%=containerPath%>/externalData.view" >Collaborators and External Data</a></li>
+    <li><a href="<%=contextPath%>/mgap/<%=containerPath%>/externalData.view" >Datasets and Cohorts</a></li>
 </ul>
 
 <br>
-<span style="max-width: 200px;">
+<div style="max-width: 350px;">
 We'd love to hear your feedback!  <a href="<%=contextPath%><%=containerPath%>/mgap-contact.view">Click here</a> to send a help or feature request, or email <a href="mailto:mgap@ohsu.edu">mgap@ohsu.edu</a> for any questions.
-</span>
+</div>

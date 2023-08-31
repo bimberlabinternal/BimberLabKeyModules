@@ -66,7 +66,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
     private boolean _dropDisabledResults = true;
     private double _lineageThreshold = 0.15;
     private double _alleleGroupThreshold = 0.02;
-    private boolean _dropMultiLineageMHC = true;
+    private boolean _dropMultiLineageMHC = false;
     private boolean _combineRedundantGroups = true;
 
     public static class Provider extends PipelineProvider
@@ -156,6 +156,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
     public boolean isDropMultiLineageMHC()
     {
         return _dropMultiLineageMHC;
+    }
+
+    public void setDropMultiLineageMHC(boolean dropMultiLineageMHC)
+    {
+        _dropMultiLineageMHC = dropMultiLineageMHC;
     }
 
     public static class Task extends PipelineJob.Task<Task.Factory>
@@ -561,7 +566,7 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 throw new IllegalStateException("Starting/ending counts not equal: " + initialCounts + " / " + endCounts);
             }
 
-            List<Integer> alignmentIdsToDelete = groups.stream().map(x -> x.rowIdsToDelete).flatMap(List::stream).toList();
+            List<Integer> alignmentIdsToDelete = new ArrayList<>(groups.stream().map(x -> x.rowIdsToDelete).flatMap(List::stream).toList());
             List<AlignmentGroup> alignmentGroupsToUpdate = groups.stream().filter(g -> !g.rowIdsToDelete.isEmpty()).toList();
             log.info("Alignment IDs to delete: " + alignmentIdsToDelete.size());
             log.info("Alignment groups to update counts: " + alignmentGroupsToUpdate.size());

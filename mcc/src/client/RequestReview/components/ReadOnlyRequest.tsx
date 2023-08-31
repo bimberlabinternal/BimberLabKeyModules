@@ -4,22 +4,11 @@ import {
     existingMarmosetColonyOptions,
     existingNHPFacilityOptions,
     IACUCApprovalOptions,
-    institutionTypeOptions,
-    researchAreaOptions
+    institutionTypeOptions
 } from '../../AnimalRequest/components/values';
-import {
-    Box,
-    Button,
-    Grid,
-    makeStyles,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Typography
-} from '@material-ui/core';
+import { Box, Button, Grid, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { ActionURL } from '@labkey/api';
+import { styled } from '@mui/styles';
 
 function formatPIName(request: AnimalRequestProps) {
     return(formatName(request.lastname, request.firstname, request.middleinitial))
@@ -49,25 +38,27 @@ function translateRawToDisplayValue(value, translationMap: any[], isMulti = fals
         return findDisplayValue(value, translationMap)
     }
 }
+
+const StyledTableHead = styled(TableCell)(({ theme }) => ({
+    fontWeight: "bold",
+    padding: 5,
+    paddingTop: 0
+}))
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    border: 1,
+    borderColor: "black",
+    borderStyle: "solid",
+    padding: 5
+}))
+
+const StyledGridFieldLabel = styled(Grid)(({ theme }) => ({
+    fontSize: "14px",
+    fontWeight: "bold"
+}))
+
 export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}) {
     const { requestData } = props
-    const styles = makeStyles({
-        fieldLabel: {
-            fontSize: "14px",
-            fontWeight: "bold"
-        },
-        tableHead: {
-            fontWeight: "bold",
-            padding: 5,
-            paddingTop: 0
-        },
-        tableCell: {
-            border: 1,
-            borderColor: "black",
-            borderStyle: "solid",
-            padding: 5
-        }
-    })()
 
     if (!requestData?.dataLoaded) {
         return null
@@ -79,73 +70,73 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
         <Box display={"inline-block"} style={{marginBottom: 30}}>
             <h4 style={{marginTop: 10}}>Overview</h4>
             <Grid container spacing={1} style={{marginLeft: 10}}>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Project Title:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.title}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Project Narrative:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.narrative}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Research/disease focus:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.diseasefocus}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Relation to neuroscience:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.neuroscience}
                 </Grid>
             </Grid>
             <h4 style={{marginTop: 10}}>General Information</h4>
             <Grid container spacing={1} style={{marginLeft: 10}}>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     PI Name:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {formatPIName(requestData.request)}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Early State Investigator:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.earlystageinvestigator ? 'Yes' : 'No'}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     <div>Institution: </div>
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.institutionname || ''}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     <div>Institution City: </div>
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.institutioncity}, {requestData.request.institutionstate} {requestData.request.institutioncountry}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     <div>Institution Type: </div>
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.institutiontype, institutionTypeOptions)}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     <div>Signing Official: </div>
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {formatName(requestData.request.officiallastname, requestData.request.officialfirstname, null)}
                     {requestData.request.officialemail ? ' (' + requestData.request.officialemail + ')' : ''}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     <div>Co-Investigators: </div>
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.coinvestigators.length ? requestData.coinvestigators.map((coi, idx) => {
                         return([
@@ -158,27 +149,27 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
             <p />
             <h4 style={{marginTop: 20}}>Institutional Animal Facilities and Capabilities</h4>
             <Grid container spacing={1}  style={{marginLeft: 10}}>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Has Existing NHP Facilities:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.existingnhpfacilities, existingNHPFacilityOptions)}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Has Existing Marmoset Colony:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.existingmarmosetcolony, existingMarmosetColonyOptions)}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Plans to Breed Marmosets:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.breedinganimals || ''}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Breeding Purpose:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.breedingpurpose || 'N/A'}
                 </Grid>
@@ -187,23 +178,25 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
             <p />
             <h4 style={{marginTop: 20}}>Research Details</h4>
             <Grid container spacing={1}  style={{marginLeft: 10}}>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Animal Cohorts:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.cohorts.length ? (
                         <Table style={{display: "inline-block", padding: 5}}>
                             <TableHead><TableRow key={"cohorts-header"}>
-                                <TableCell className={styles.tableHead}>Number of Animals</TableCell><TableCell className={styles.tableHead}>Sex</TableCell><TableCell className={styles.tableHead}>Other Characteristics</TableCell>
+                                <StyledTableHead>Number of Animals</StyledTableHead>
+                                <StyledTableHead>Sex</StyledTableHead>
+                                <StyledTableHead>Other Characteristics</StyledTableHead>
                             </TableRow>
                             </TableHead>
                             <TableBody style={{border: 1, borderColor: 'black'}}>
                             {requestData.cohorts.map((cohort, idx) => {
                                 return(
                                     <TableRow key={cohort.rowid} style = { idx % 2 ? { background : "#fdffe0" }:{ background : "white" }}>
-                                        <TableCell className={styles.tableCell}>{cohort.numberofanimals}</TableCell>
-                                        <TableCell className={styles.tableCell}>{cohort.sex}</TableCell>
-                                        <TableCell className={styles.tableCell}>{cohort.othercharacteristics}</TableCell>
+                                        <StyledTableCell>{cohort.numberofanimals}</StyledTableCell>
+                                        <StyledTableCell>{cohort.sex}</StyledTableCell>
+                                        <StyledTableCell>{cohort.othercharacteristics}</StyledTableCell>
                                     </TableRow>
                                 )
                             })}
@@ -211,65 +204,65 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                             </Table>
                     ) : 'No cohorts entered'}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Methods Proposed:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.methodsproposed}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Includes Terminal Procedures:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.terminalprocedures ? 'Yes' : 'No'}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Collaborations:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.collaborations || 'N/A'}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Animal Welfare:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.animalwelfare}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                 Attending Veterinarian:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.vetlastname ? (requestData.request.vetlastname + (requestData.request.vetfirstname ? ', ' + requestData.request.vetfirstname : '')) : ''}
                     {requestData.request.vetemail ? ' (' + requestData.request.vetemail + ')' : ''}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     IACUC Approval:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.iacucapproval, IACUCApprovalOptions)}
                     {requestData.request.iacucprotocol ? ' (' + requestData.request.iacucprotocol + ')' : ''}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Participate In MCC Census:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.census ? 'Yes' : 'No'}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Reason for not participating:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.censusreason || 'N/A'}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Other Comments:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.comments}
                 </Grid>
-                <Grid item xs={2} className={styles.fieldLabel}>
+                <StyledGridFieldLabel item xs={2}>
                     Status:
-                </Grid>
+                </StyledGridFieldLabel>
                 <Grid item xs={10}>
                     {requestData.request.status}
                 </Grid>

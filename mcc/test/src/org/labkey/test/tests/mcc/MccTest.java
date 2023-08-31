@@ -506,7 +506,7 @@ public class MccTest extends BaseWebDriverTest
         dr.clickRowDetails(0);
 
         // Reset status to Submitted:
-        waitAndClickAndWait(Locator.tagWithText("span", "Edit Request"));
+        waitAndClickAndWait(Locator.tagWithText("a", "Edit Request"));
         waitAndClickAndWait(getButton("Submit"));
 
         beginAt("/mcc/" + getProjectName() + "/mccRequestAdmin.view");
@@ -514,29 +514,29 @@ public class MccTest extends BaseWebDriverTest
         new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();
         waitAndClickAndWait(Locator.tagWithText("a", "Enter MCC Internal Review"));
 
-        waitAndClick(Locator.tagWithText("span", "Assign to RAB Reviewers"));
+        waitAndClick(Locator.tagWithText("button", "Assign to RAB Reviewers"));
         waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
         waitForElement(Locator.tagWithText("p", getCurrentUserName()));
-        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
+        waitAndClickAndWait(Locator.tagWithText("button", "Submit"));
 
         goBack();
 
         // Repeat to ensure the assignment is picked up
-        waitAndClick(Locator.tagWithText("span", "Assign to RAB Reviewers"));
+        waitAndClick(Locator.tagWithText("button", "Assign to RAB Reviewers"));
         waitForElement(Locator.tagWithText("h2", "Assign for RAB Review").notHidden());
         waitForElement(Locator.tagWithText("p", getCurrentUserName() + " (already assigned)"));
-        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
+        waitAndClickAndWait(Locator.tagWithText("button", "Submit"));
 
         beginAt("/mcc/" + getProjectName() + "/rabRequestReview.view");
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Review"));
         waitForElement(Locator.tagWithText("td", "cohort-othercharacteristics"));
 
-        waitAndClick(Locator.tagWithText("span", "Submit Review"));
+        waitAndClick(Locator.tagWithText("button", "Submit Review"));
         waitForElement(Locator.tagWithClass("div", "Mui-error"));
 
         waitAndClick(Locator.tagWithText("div", "Not Decided"));
         waitAndClick(Locator.tagWithText("li", "I recommend this proposal"));
-        waitAndClickAndWait(Locator.tagWithText("span", "Submit Review"));
+        waitAndClickAndWait(Locator.tagWithText("button", "Submit Review"));
         dr = new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
         Assert.assertEquals(dr.getDataRowCount(), 0);
 
@@ -547,14 +547,14 @@ public class MccTest extends BaseWebDriverTest
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Resource Availability Assessment"));
 
         // Assessment missing so form should not be valid
-        waitAndClick(Locator.tagWithText("span", "Submit"));
+        waitAndClick(Locator.tagWithText("button", "Submit"));
         waitForElement(Locator.tagWithClass("label", "Mui-focused"));
 
         setFormElement(Locator.tagWithAttribute("textarea", "name",  "resourceAvailabilityAssessment"), "This is the assessment");
-        waitAndClickAndWait(Locator.tagWithText("span", "Submit"));
+        waitAndClickAndWait(Locator.tagWithText("button", "Submit"));
 
         waitAndClickAndWait(Locator.tagWithText("a", "Enter Final Review"));
-        waitAndClick(Locator.tagWithText("span", "Approve Request"));
+        waitAndClick(Locator.tagWithText("button", "Approve Request"));
 
         dataRegionName = getDataRegionName("webpartPending");
         dr = new DataRegionTable.DataRegionFinder(getDriver()).withName(dataRegionName).waitFor();

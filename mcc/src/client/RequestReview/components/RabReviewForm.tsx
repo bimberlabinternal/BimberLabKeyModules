@@ -1,6 +1,6 @@
 import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 import React, { useEffect, useState } from 'react';
-import { Box, Button, MenuItem, Select, Table, TableBody, TableCell, TableRow, TextField } from '@material-ui/core';
+import { Box, Button, MenuItem, Select, Table, TableBody, TableCell, TableRow, TextField } from '@mui/material';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
 
 export default function RabReviewForm(props: {requestId: string}) {

@@ -2,18 +2,6 @@ import org.labkey.gradle.util.BuildUtils
 
 repositories {
     mavenCentral()
-    // Added for org.clojars.chapmanb:sam dependency required by com.github.samtools:htsjdk
-    maven {
-        url "https://clojars.org/repo"
-    }
-    // Added for org.clojars.chapmanb:sam (required by SequenceAnalysis)
-    maven {
-        url "https://maven.scijava.org/content/groups/public"
-    }
-    // Added to support ancient sam JAR needed by FASTQC (in sequenceanalysis)
-    maven {
-        url "https://clojars.org/repo"
-    }
 }
 
 dependencies {
@@ -22,7 +10,6 @@ dependencies {
     BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:LabDevKitModules:LDK", depProjectConfig: "apiJarFile")
     BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:LabDevKitModules:laboratory", depProjectConfig: "apiJarFile")
     BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:DiscvrLabKeyModules:SequenceAnalysis", depProjectConfig: "apiJarFile")
-    BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:DiscvrLabKeyModules:SequenceAnalysis", depProjectConfig: "runtimeElements")
     BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:DiscvrLabKeyModules:cluster", depProjectConfig: "apiJarFile")
     BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:DiscvrLabKeyModules:jbrowse", depProjectConfig: "apiJarFile")
 
@@ -31,6 +18,7 @@ dependencies {
     BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:DiscvrLabKeyModules:SequenceAnalysis", depProjectConfig: "published", depExtension: "module")
     BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:DiscvrLabKeyModules:cluster", depProjectConfig: "published", depExtension: "module")
     BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:DiscvrLabKeyModules:jbrowse", depProjectConfig: "published", depExtension: "module")
+    BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:DiscvrLabKeyModules:discvrcore", depProjectConfig: "published", depExtension: "module")
 
     BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:dataintegration", depProjectConfig: "apiJarFile")
     BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:dataintegration", depProjectConfig: "published", depExtension: "module")

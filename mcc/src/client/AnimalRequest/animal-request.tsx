@@ -27,9 +27,9 @@ import {
     DialogActions,
     DialogContent,
     DialogContentText,
-    DialogTitle, TextareaAutosize,
-    TextField
-} from '@material-ui/core';
+    DialogTitle,
+    TextareaAutosize
+} from '@mui/material';
 
 import {
     animalWellfarePlaceholder,
