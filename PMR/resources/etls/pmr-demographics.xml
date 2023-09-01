@@ -15,11 +15,14 @@
                     <column>death</column>
                     <column>status</column>
                     <column>calculated_status</column>
-                    <column>QCState</column>
+                    <column>QCState/Label</column>
                     <column>objectid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="demographics" targetOption="truncate" bulkLoad="true" batchSize="2500">
+                <columnTransforms>
+                    <column source="QCState/Label" target="QCStateLabel"/>
+                </columnTransforms>
                 <alternateKeys>
                     <column name="Id"/>
                 </alternateKeys>

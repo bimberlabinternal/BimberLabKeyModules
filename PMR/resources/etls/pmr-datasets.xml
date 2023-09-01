@@ -142,6 +142,9 @@
                     <column>method</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="parentage" targetOption="truncate" bulkLoad="true" batchSize="2500">
                 <alternateKeys>
