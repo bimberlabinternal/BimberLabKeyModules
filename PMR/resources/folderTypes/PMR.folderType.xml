@@ -1,0 +1,69 @@
+<folderType xmlns="http://labkey.org/data/xml/folderType">
+    <name>PMR</name>
+    <description>The default folder layout for the PMR</description>
+    <folderTabs>
+        <folderTab>
+            <name>overview</name>
+            <caption>Overview</caption>
+            <preferredWebParts>
+                <webPart>
+                    <name>PMR Overview</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>animalHistory</name>
+            <caption>Animal History</caption>
+            <selectors>
+                <selector>
+                    <view>animalHistory</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>PMR Animal History</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>animalSearch</name>
+            <caption>Animal Search</caption>
+            <selectors>
+                <selector>
+                    <view>animalSearch</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>PMR Animal Search</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>admin</name>
+            <caption>Admin</caption>
+            <selectors>
+                <selector>
+                    <view>admin</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>PMR Admin</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+            <permissions>
+                <permission name="org.labkey.api.security.permissions.AdminPermission"/>
+            </permissions>
+        </folderTab>
+    </folderTabs>
+    <modules>
+        <moduleName>PMR</moduleName>
+        <moduleName>EHR</moduleName>
+    </modules>
+    <defaultModule>PMR</defaultModule>
+</folderType>

@@ -6,7 +6,6 @@ plugins {
 
 dependencies
         {
-            implementation "com.sun.mail:jakarta.mail:${javaMailVersion}"
             implementation project(path: ':server:modules:LabDevKitModules:LDK')
             BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:LabDevKitModules:LDK", depProjectConfig: "apiJarFile")
             BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:ehrModules:ehr", depProjectConfig: "apiJarFile")
@@ -16,4 +15,6 @@ dependencies
             BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:dataintegration", depProjectConfig: 'published', depExtension: 'module')
             BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:premium", depProjectConfig: 'published', depExtension: 'module')
             BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:ehrModules:ehr", depProjectConfig: 'published', depExtension: 'module')
+            BuildUtils.addLabKeyDependency(project: project, config: "modules", depProjectPath: ":server:modules:DiscvrLabKeyModules:Studies", depProjectConfig: "published", depExtension: "module")
+            BuildUtils.addLabKeyDependency(project: project, config: "implementation", depProjectPath: ":server:modules:DiscvrLabKeyModules:Studies", depProjectConfig: "apiJarFile")
         }

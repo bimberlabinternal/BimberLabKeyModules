@@ -5,12 +5,12 @@ import Title from '../AnimalRequest/components/title';
 import RabReviewForm from './components/RabReviewForm';
 import InternalReviewForm from './components/InternalReviewForm';
 
-import { ThemeProvider } from '@material-ui/styles';
-import { createTheme } from '@material-ui/core/styles';
+import { ThemeProvider } from '@mui/styles';
+import { createTheme } from '@mui/material/styles';
 import '../labkeyOverrides.css';
 import FinalReviewForm from './components/FinalReviewForm';
-import { ErrorBoundary } from '@labkey/components';
 import ResourceAssessmentForm from './components/ResourceAssessmentForm';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export function RequestView() {
     const mode = (new URLSearchParams(window.location.search)).get("mode")
@@ -83,10 +83,12 @@ export function RequestView() {
     }
 
     const theme = createTheme({
-        overrides: {
+        components: {
             MuiTableCell: {
-                root: {
-                    borderBottom: "none"
+                styleOverrides: {
+                    root: {
+                        borderBottom: "none"
+                    }
                 }
             }
         }

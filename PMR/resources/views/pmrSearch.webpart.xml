@@ -1,0 +1,3 @@
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="PMR Animal Search">
+   <view name="pmrSearch"/>
+</webpart>

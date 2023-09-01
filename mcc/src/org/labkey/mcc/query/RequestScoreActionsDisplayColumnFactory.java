@@ -74,7 +74,6 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                             {
                                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=primaryReview", requestContainer);
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter MCC Internal Review</a>");
-                                out.write(getWithdrawnLine(ctx, requestRowId));
                             }
                         }
                         else if (st == MccManager.RequestStatus.RabReview && ctx.get(FieldKey.fromString("pendingRabReviews"), Integer.class) == 0)
@@ -83,7 +82,6 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                             {
                                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=resourceAvailability", requestContainer);
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Resource Availability Assessment</a>");
-                                out.write(getWithdrawnLine(ctx, requestRowId));
                             }
                         }
                         else if (st == MccManager.RequestStatus.PendingDecision)
@@ -92,13 +90,11 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                             {
                                 DetailsURL url = DetailsURL.fromString("/mcc/requestReview.view?requestId=" + requestId + "&mode=finalReview", requestContainer);
                                 out.write("<br><a class=\"labkey-text-link\" href=\"" + url.getActionURL().addReturnURL(ctx.getViewContext().getActionURL()) + "\">Enter Final Review</a>");
-                                out.write(getWithdrawnLine(ctx, requestRowId));
                             }
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {
                             out.write("<br><a class=\"labkey-text-link\" onclick=\"MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + "," + requestRowId + ", 'Fulfilled')\">Mark Fulfilled</a>");
-                            out.write(getWithdrawnLine(ctx, requestRowId));
                         }
                     }
                     catch (IllegalArgumentException e)
