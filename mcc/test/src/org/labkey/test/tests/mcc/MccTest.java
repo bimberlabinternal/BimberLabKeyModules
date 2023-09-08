@@ -829,7 +829,7 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(getButton("Update Request"));
         assertElementNotPresent(getButton("Submit"));
         impersonateRoles("Editor", "MCC Requestor");  // this will refresh the page
-        waitForElement(getButton("Update Request"));
+        waitForElement(getButton("Cancel"));
 
         assertElementNotPresent(getButton("Save"));
         assertElementNotPresent(getButton("Submit"));
