@@ -25,15 +25,10 @@ import org.labkey.mgap.mGAPSchema;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<RemoveAnnotationsForMgapStep.RemoveAnnotationsWrapper> implements VariantProcessingStep
 {
-    // TODO: base this on annotation table
-    public static List<String> ALLOWABLE_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList("AF", "AC", "END", "ANN", "LOF", "MAF", "CADD_PH", "CADD_RS", "CCDS", "ENC", "ENCDNA_CT", "ENCDNA_SC", "ENCSEG_CT", "ENCSEG_NM", "ENCTFBS_CL", "ENCTFBS_SC", "ENCTFBS_TF", "ENN", "ERBCTA_CT", "ERBCTA_NM", "ERBCTA_SC", "ERBSEG_CT", "ERBSEG_NM", "ERBSEG_SC", "ERBSUM_NM", "ERBSUM_SC", "ERBTFBS_PB", "ERBTFBS_TF", "FC", "FE", "FS_EN", "FS_NS", "FS_SC", "FS_SN", "FS_TG", "FS_US", "FS_WS", "GRASP_AN", "GRASP_P", "GRASP_PH", "GRASP_PL", "GRASP_PMID", "GRASP_RS", "LOF", "NC", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NMD", "OMIMC", "OMIMD", "OMIMM", "OMIMMUS", "OMIMN", "OMIMS", "OMIMT", "OREGANNO_PMID", "OREGANNO_TYPE", "PC_PL", "PC_PR", "PC_VB", "PP_PL", "PP_PR", "PP_VB", "RDB_MF", "RDB_WS", "RFG", "RSID", "SCSNV_ADA", "SCSNV_RS", "SD", "SF", "SM", "SP_SC", "SX", "TMAF", "LF", "CLN_ALLELE", "CLN_ALLELEID", "CLN_DN", "CLN_DNINCL", "CLN_DISDB", "CLN_DISDBINCL", "CLN_HGVS", "CLN_REVSTAT", "CLN_SIG", "CLN_SIGINCL", "CLN_VC", "CLN_VCSO", "CLN_VI", "CLN_DBVARID", "CLN_GENEINFO", "CLN_MC", "CLN_ORIGIN", "CLN_RS", "CLN_SSR", "ReverseComplementedAlleles", "LiftedContig", "LiftedStart", "LiftedStop"));
-
     public RemoveAnnotationsForMgapStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
         super(provider, ctx, new RemoveAnnotationsWrapper(ctx.getLogger()));
@@ -43,7 +38,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
     {
         public Provider()
         {
-            super("RemoveAnnotations", "Remove Annotations For mGAP", "RemoveAnnotations", "This will remove annotations from the selected VCF, limiting to only those expected for mGAP.", List.of(), null, null);
+            super("RemoveAnnotationsForMgap", "Remove Annotations For mGAP", "RemoveAnnotations", "This will remove annotations from the selected VCF, limiting to only those expected for mGAP.", List.of(), null, null);
         }
 
         @Override
@@ -63,7 +58,6 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey")).getArrayList(String.class);
 
         getPipelineCtx().getSequenceSupport().cacheObject(INFO_FIELDS, infoFields);
-
     }
 
     private List<String> getInfoFields() throws PipelineJobException
@@ -83,7 +77,17 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         }
         else
         {
-            getWrapper().execute(inputVCF, outputFile, genome.getWorkingFastaFile(), getInfoFields(), intervals);
+            List<String> args = new ArrayList<>();
+            for (String key : getInfoFields())
+            {
+                args.add("-A");
+                args.add(key);
+            }
+
+            args.add("-ef");
+            args.add("--clearGenotypeFilter");
+
+            getWrapper().execute(inputVCF, outputFile, genome.getWorkingFastaFile(), args, intervals);
         }
 
         output.setVcf(outputFile);
@@ -105,7 +109,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
             super(log);
         }
 
-        public void execute(File input, File outputFile, File referenceFasta, List<String> allowableFields, @Nullable List<Interval> intervals) throws PipelineJobException
+        public void execute(File input, File outputFile, File referenceFasta, List<String> extraArgs, @Nullable List<Interval> intervals) throws PipelineJobException
         {
             List<String> args = new ArrayList<>(getBaseArgs());
             args.add("RemoveAnnotations");
@@ -123,21 +127,6 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
                     args.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
                 });
             }
-
-            for (String key : allowableFields)
-            {
-                args.add("-A");
-                args.add(key);
-            }
-
-            //for (String key : Arrays.asList("DP", "AD"))
-            //{
-            //    args.add("-GA");
-            //    args.add(key);
-            //}
-
-            args.add("-ef");
-            args.add("--clearGenotypeFilter");
 
             super.execute(args);
         }
