@@ -128,6 +128,11 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
                 });
             }
 
+            if (extraArgs != null)
+            {
+                args.addAll(extraArgs);
+            }
+
             super.execute(args);
         }
     }
