@@ -98,9 +98,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
     public mGapReleaseGenerator()
     {
         super(ModuleLoader.getInstance().getModule(mGAPModule.class), "Create mGAP Release", "This will prepare an input VCF for use as an mGAP public release.  This will optionally include: removing excess annotations and program records, limiting to SNVs (optional) and removing genotype data (optional).  If genotypes are retained, the subject names will be checked for mGAP aliases and replaced as needed.", new LinkedHashSet<>(PageFlowUtil.set("sequenceanalysis/field/GenomeFileSelectorField.js")), Arrays.asList(
-                ToolParameterDescriptor.create("releaseVersion", "Version", "This value will be used as the version when published.", "ldk-numberfield", new JSONObject(){{
+                ToolParameterDescriptor.create("releaseVersion", "Version", "This value will be used as the version when published.", "textfield", new JSONObject(){{
                     put("allowBlank", false);
-                    put("decimalPrecision", 1);
                     put("doNotIncludeInTemplates", true);
                 }}, null),
                 ToolParameterDescriptor.createExpDataParam("gtfFile", "GTF File", "The gene file used to create these annotations.", "sequenceanalysis-genomefileselectorfield", new JSONObject()
