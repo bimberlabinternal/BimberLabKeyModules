@@ -146,7 +146,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             schemaName: 'study',
             queryName: 'Demographics',
             filterArray: [LABKEY.Filter.create('lsid', lsid)],
-            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/mccAlias/externalAlias,calculated_status,dam,sire',
+            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/mccAlias/externalAlias,calculated_status,dam,sire,damMccAlias/externalAlias,sireMccAlias/externalAlias',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
@@ -195,9 +195,12 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             death: row.death,
                             dam: row.dam,
                             sire: row.sire,
+                            damMccAlias: row['damMccAlias/externalAlias'],
+                            sireMccAlias: row['sireMccAlias/externalAlias'],
                             colony: centerName,
                             source: row.colony,
                             calculated_status: 'Alive',
+                            mccAlias: row['Id/mccAlias/externalAlias'],
                             skipMccAliasCreation: true,
                             QCState: null,
                             QCStateLabel: 'Completed',
@@ -257,20 +260,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             QCState: null,
                             QCStateLabel: 'Completed',
                             objectId: null
-                        }]
-                    });
-                }
-
-                // Do this insert if we're using a new container, or if the animal is being assigned a new ID
-                if (targetFolderId.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || newId !== row.Id) {
-                    commands.push({
-                        command: 'insert',
-                        containerPath: targetFolder,
-                        schemaName: 'mcc',
-                        queryName: 'animalMapping',
-                        rows: [{
-                            subjectname: newId,
-                            externalAlias: row['Id/mccAlias/externalAlias']
                         }]
                     });
                 }

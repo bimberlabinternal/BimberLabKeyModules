@@ -9,6 +9,7 @@ require("ehr/triggers").initScript(this);
 var triggerHelper = new org.labkey.mcc.query.TriggerHelper(LABKEY.Security.currentUser.id, LABKEY.Security.currentContainer.id);
 
 var skipMccAliasCreation = [];
+var idToMccAlias = {};
 
 function onInit(event, helper){
     helper.setScriptOptions({
@@ -92,22 +93,48 @@ function onUpsert(helper, scriptErrors, row, oldRow){
     if (row.skipMccAliasCreation) {
         skipMccAliasCreation.push(row.Id);
     }
+
+    if (row.mccAlias) {
+        idToMccAlias[row.Id] = row.mccAlias;
+    }
+
+    if (row.dam && row.damMccAlias) {
+        idToMccAlias[row.dam] = row.damMccAlias;
+    }
+
+    if (row.sire && row.sireMccAlias) {
+        idToMccAlias[row.sire] = row.sireMccAlias;
+    }
 }
 
 function onComplete(event, errors, helper){
-    if (!helper.isETL() && helper.getPublicParticipantsModified().length) {
-        var toAdd = helper.getPublicParticipantsModified();
-        if (skipMccAliasCreation.length) {
-            for (var i=0;i<skipMccAliasCreation.length;i++){
-                var arrIdx = toAdd.indexOf(skipMccAliasCreation[i]);
-                if (arrIdx !== -1) {
-                    toAdd.splice(arrIdx, 1);
+    if (!helper.isETL()) {
+        var toAdd;
+        if (helper.getPublicParticipantsModified().length) {
+            toAdd = helper.getPublicParticipantsModified();
+            if (skipMccAliasCreation.length) {
+                for (var i = 0; i < skipMccAliasCreation.length; i++) {
+                    var arrIdx = toAdd.indexOf(skipMccAliasCreation[i]);
+                    if (arrIdx !== -1) {
+                        toAdd.splice(arrIdx, 1);
+                    }
+                }
+            }
+        }
+        else {
+            toAdd = [];
+        }
+
+        if (!LABKEY.ExtAdapter.isEmpty(idToMccAlias)) {
+            for (var i in idToMccAlias) {
+                if (idToMccAlias.hasOwnProperty(i)) {
+                    toAdd = toAdd.concat(i);
                 }
             }
         }
 
         if (toAdd.length) {
-            var aliasesCreated = triggerHelper.ensureMccAliasExists(helper.getPublicParticipantsModified());
+            var aliasesCreated = triggerHelper.ensureMccAliasExists(toAdd, idToMccAlias);
             if (aliasesCreated) {
                 console.log('Total MCC aliases assigned during import: ' + aliasesCreated);
             }
