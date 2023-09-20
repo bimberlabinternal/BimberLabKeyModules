@@ -422,14 +422,14 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
     }
 
     @Override
-    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs) throws PipelineJobException
+    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
     {
         job.getLogger().info("Merging additional track VCFs");
         Map<String, List<String>> trackToSamples = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory(true)));
         for (String trackName : trackToSamples.keySet())
         {
-            List<File> toConcat = orderedScatterOutputs.stream().map(f -> {
-                f = getOutputVcf(trackName, f.getParentFile());
+            List<File> toConcat = orderedJobDirs.stream().map(dirName -> {
+                File f = getOutputVcf(trackName, new File(ctx.getWorkingDirectory(), dirName));
                 if (!f.exists())
                 {
                     throw new IllegalStateException("Missing file: " + f.getPath());
