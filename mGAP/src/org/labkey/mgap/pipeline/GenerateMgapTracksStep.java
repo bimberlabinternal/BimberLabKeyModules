@@ -6,7 +6,7 @@ import htsjdk.samtools.util.Interval;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
@@ -36,6 +36,7 @@ import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
+import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
@@ -163,14 +164,10 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             throw new IllegalStateException("VCF is missing the annotation: mGAPV");
         }
 
-        int idx = 0;
-        for (String trackName : trackToSamples.keySet())
+        Map<String, File> outputs = processTracks(output, inputVCF, trackToSamples, outputDirectory, genome, intervals);
+        for (String trackName : outputs.keySet())
         {
-            idx++;
-            getPipelineCtx().getJob().setStatus(PipelineJob.TaskStatus.running, "Processing track " + idx + " of " + trackToSamples.size());
-
-            File vcf = processTrack(inputVCF, trackName, trackToSamples.get(trackName), outputDirectory, genome, intervals);
-            output.addSequenceOutput(vcf, trackName, TRACK_CATEGORY, null, null, genome.getGenomeId(), "mGAP track: " + trackName + ", total samples: " + trackToSamples.get(trackName).size());
+            output.addSequenceOutput(outputs.get(trackName), trackName, TRACK_CATEGORY, null, null, genome.getGenomeId(), "mGAP track: " + trackName + ", total samples: " + trackToSamples.get(trackName).size());
         }
 
         // Also create the Novel Sites track:
@@ -195,6 +192,11 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         output.addSequenceOutput(novelSitesOutput, "Novel Sites in This Release", TRACK_CATEGORY, null, null, genome.getGenomeId(), "These are novel sites in mGAP v" + releaseVersion);
 
         return output;
+    }
+
+    private File getOutputVcf(String trackName, File outputDirectory)
+    {
+        return new File(outputDirectory, FileUtil.makeLegalName(trackName) + ".vcf.gz");
     }
 
     @Override
@@ -278,44 +280,56 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         return new File(outputDir, "sampleMapping.txt");
     }
 
-    private File processTrack(File currentVCF, String trackName, List<String> samples, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
+    private Map<String, File> processTracks(VariantProcessingStepOutputImpl output, File currentVCF, Map<String, List<String>> trackToSamples, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
     {
-        getPipelineCtx().getLogger().info("Creating track: " + trackName);
+        getPipelineCtx().getJob().setStatus(PipelineJob.TaskStatus.running, "Preparing release tracks");
+        File sampleFile = new File(outputDirectory, "samples.txt");
+        output.addIntermediateFile(sampleFile);
 
-        File outputFile = new File(outputDirectory, FileUtil.makeLegalName(trackName) + ".vcf.gz");
-        getPipelineCtx().getLogger().debug("output: " + outputFile.getPath());
-
-        if (indexExists(outputFile))
+        try (CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(sampleFile), '\t', CSVWriter.NO_QUOTE_CHARACTER))
         {
-            getPipelineCtx().getLogger().info("re-using existing output: " + outputFile.getPath());
-            return outputFile;
-        }
-
-        // Step 1: SelectVariants:
-        SelectVariantsWrapper sv = new SelectVariantsWrapper(getPipelineCtx().getLogger());
-        List<String> options = new ArrayList<>();
-        options.add("--exclude-non-variants");
-        options.add("--exclude-filtered");
-        options.add("--remove-unused-alternates");
-
-        samples.forEach(sn -> {
-            options.add("-sn");
-            options.add(sn);
-        });
-
-        sv.execute(genome.getWorkingFastaFile(), currentVCF, outputFile, options);
-        getPipelineCtx().getJob().getLogger().info("total variants: " + SequenceAnalysisService.get().getVCFLineCount(outputFile, getPipelineCtx().getJob().getLogger(), false));
-
-        try
-        {
-            SequenceAnalysisService.get().ensureVcfIndex(outputFile, getPipelineCtx().getLogger());
+            for (String trackName : trackToSamples.keySet())
+            {
+                File outputVcf = getOutputVcf(trackName, outputDirectory);
+                trackToSamples.get(trackName).forEach(s -> {
+                    writer.writeNext(new String[]{outputVcf.getPath(), s});
+                });
+            }
         }
         catch (IOException e)
         {
             throw new PipelineJobException(e);
         }
 
-        return outputFile;
+        List<String> options = new ArrayList<>();
+        options.add("--remove-unused-alternates");
+
+        options.add("--sample-mapping-file");
+        options.add(sampleFile.getPath());
+
+        if (intervals != null)
+        {
+            intervals.forEach(interval -> {
+                options.add("-L");
+                options.add(interval.getContig() + ":" + interval.getStart() + "-" + interval.getEnd());
+            });
+        }
+
+        new SplitVcfBySamplesWrapper(getPipelineCtx().getLogger()).execute(currentVCF, outputDirectory, options);
+
+        Map<String, File> outputs = new HashMap<>();
+        for (String trackName : trackToSamples.keySet())
+        {
+            File vcf = getOutputVcf(trackName, outputDirectory);
+            if (!vcf.exists())
+            {
+                throw new PipelineJobException("Missing expected file: " + vcf.getPath());
+            }
+
+            outputs.put(trackName, vcf);
+        }
+
+        return outputs;
     }
 
     private Map<String, List<String>> parseSampleMap(File sampleMapFile) throws PipelineJobException
@@ -394,5 +408,30 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         }
 
         return trueIdToMgapId;
+    }
+
+    public static class SplitVcfBySamplesWrapper extends AbstractDiscvrSeqWrapper
+    {
+        public SplitVcfBySamplesWrapper(Logger log)
+        {
+            super(log);
+        }
+
+        public void execute(File inputVCF, File outputDirectory, List<String> options) throws PipelineJobException
+        {
+            List<String> args = new ArrayList<>(getBaseArgs());
+            args.add("SplitVcfBySamples");
+            args.add("-V");
+            args.add(inputVCF.getPath());
+            args.add("-O");
+            args.add(outputDirectory.getPath());
+
+            if (options != null)
+            {
+                args.addAll(options);
+            }
+
+            execute(args);
+        }
     }
 }
