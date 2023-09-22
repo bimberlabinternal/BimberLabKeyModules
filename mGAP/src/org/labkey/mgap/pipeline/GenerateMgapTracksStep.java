@@ -428,6 +428,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         Map<String, List<String>> trackToSamples = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory(true)));
         for (String trackName : trackToSamples.keySet())
         {
+            job.getLogger().debug("Merging track: " + trackName);
             List<File> toConcat = orderedJobDirs.stream().map(dirName -> {
                 File f = getOutputVcf(trackName, new File(ctx.getWorkingDirectory(), dirName));
                 if (!f.exists())
@@ -440,6 +441,11 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
 
                 return f;
             }).toList();
+            job.getLogger().debug("Total VCFs to merge: " + toConcat.size());
+            if (toConcat.isEmpty())
+            {
+                throw new PipelineJobException("No VCFs found for track: " + trackName);
+            }
 
             String basename = SequenceAnalysisService.get().getUnzippedBaseName(toConcat.get(0).getName());
             File combined = new File(ctx.getSourceDirectory(), basename + ".vcf.gz");
