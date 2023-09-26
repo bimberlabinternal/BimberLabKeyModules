@@ -193,6 +193,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
 
                     SequenceOutputFile so = SequenceOutputFile.getForId(rs.getInt(FieldKey.fromString("vcfId")));
+                    if (so == null)
+                    {
+                        throw new SQLException("No output file found for: " + rs.getInt(FieldKey.fromString("vcfId")));
+                    }
+
                     ExpData d = ExperimentService.get().getExpData(so.getDataId());
                     ctx.getSequenceSupport().cacheExpData(d);
 
