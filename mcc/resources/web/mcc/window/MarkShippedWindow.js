@@ -214,7 +214,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         schemaName: 'study',
                         queryName: 'Demographics',
                         rows: [{
-                            Id: newId,
+                            Id: row.Id, // NOTE: always change the original record
                             excludeFromCensus: true
                         }]
                     });

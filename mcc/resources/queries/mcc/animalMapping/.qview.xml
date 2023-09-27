@@ -1,0 +1,12 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Requests" canOverride="false">
+    <columns>
+        <column name="subjectname"/>
+        <column name="externalAlias"/>
+        <column name="otherNames"/>
+        <column name="biosample_accession"/>
+        <column name="container"/>
+    </columns>
+    <sorts>
+        <sort column="subjectname" descending="true"/>
+    </sorts>
+</customView>
