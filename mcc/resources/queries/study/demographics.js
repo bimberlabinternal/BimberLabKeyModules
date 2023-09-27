@@ -34,6 +34,9 @@ function onUpsert(helper, scriptErrors, row, oldRow){
     if (row.calculated_status === 'alive') {
         row.calculated_status = 'Alive';
     }
+    else if (row.calculated_status === 'Other') {
+        row.calculated_status = 'Unknown';
+    }
 
     if (row.death) {
         row.calculated_status = 'Dead';
