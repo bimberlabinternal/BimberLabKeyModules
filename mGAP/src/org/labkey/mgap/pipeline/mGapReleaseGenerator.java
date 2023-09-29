@@ -936,7 +936,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                 if (!skipAnnotationChecks)
                 {
-                    for (String info : Arrays.asList("CADD_PH", "OMIM_PHENO", "CLN_ALLELE", "AF", "mGAPV"))
+                    for (String info : Arrays.asList("CADD_Score", "OMIM_PHENO", "CLN_SIG", "AF", "mGAPV"))
                     {
                         if (!header.hasInfoLine(info))
                         {
@@ -1032,7 +1032,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
             try (VCFFileReader reader = new VCFFileReader(vcfInput); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
-                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "Identifier", "CADD_PH"});
+                writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "Identifier", "CADD_Score"});
                 while (it.hasNext())
                 {
                     Set<List<String>> queuedLines = new LinkedHashSet<>();
@@ -1659,7 +1659,29 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
             }
 
-            Object cadd = vc.getAttribute("CADD_PH");
+            Object cadd = null;
+            if (allele != null && !allele.contains(",") && vc.hasAttribute("CADD_Score"))
+            {
+                List<Object> cadds = vc.getAttributeAsList("CADD_Score");
+                int i = 0;
+                for (Allele a : vc.getAlternateAlleles())
+                {
+                    if (allele.equals(a.getBaseString()))
+                    {
+                        if (i < cadds.size())
+                        {
+                            af = cadds.get(i);
+                            break;
+                        }
+                        else
+                        {
+                            log.error("alleles and CADD values not same length for " + vc.getContig() + " " + vc.getStart() + ". " + vc.getAttributeAsString("CADD_Score", ""));
+                        }
+                    }
+
+                    i++;
+                }
+            }
 
             queuedLines.add(Arrays.asList(vc.getContig(), String.valueOf(vc.getStart()), vc.getReference().getDisplayString(), allele, source, reason, (description == null ? "" : description), StringUtils.join(overlappingGenes, ";"), StringUtils.join(omimIds, ";"), StringUtils.join(omimPhenotypes, ";"), af == null ? "" : af.toString(), identifier == null ? "" : identifier, cadd == null ? "" : cadd.toString()));
         }
