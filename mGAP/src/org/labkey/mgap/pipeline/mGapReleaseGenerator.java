@@ -1135,7 +1135,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 }
 
                                 if (tokens.length > 7 && !"protein_coding".equals(tokens[7])) {
-                                    ctx.getLogger().info("skipping non protein_coding ANN: " + ann);
+//                                    ctx.getLogger().info("skipping non protein_coding ANN: " + ann);
                                     continue;
                                 }
 
