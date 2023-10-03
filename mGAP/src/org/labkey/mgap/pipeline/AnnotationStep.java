@@ -159,7 +159,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         {
             writer.println(StringUtils.join(Arrays.asList("DataSource", "SourceField", "ID", "Number", "Type", "Description"), "\t"));
 
-            new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("toolName", "sourceField", "infoKey")).forEachResults(rs -> {
+            new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("toolName", "sourceField", "infoKey", "dataSource", "dataNumber", "dataType", "description")).forEachResults(rs -> {
                 if (!sourceFieldMap.containsKey(rs.getString(FieldKey.fromString("toolName"))))
                 {
                     sourceFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
