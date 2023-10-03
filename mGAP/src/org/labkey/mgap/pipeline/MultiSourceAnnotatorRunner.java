@@ -15,7 +15,7 @@ public class MultiSourceAnnotatorRunner extends DISCVRSeqRunner
         super(log);
     }
 
-    public File execute(File inputVcf, @Nullable File cassandraVcf, File liftoverRejects, @Nullable File funcotator, @Nullable File snpSift, File outputVcf, @Nullable List<String> options)  throws PipelineJobException
+    public File execute(File inputVcf, @Nullable File cassandraVcf, File clinvarAnnotatedBackport, File liftoverRejects, @Nullable File funcotator, @Nullable File snpSift, File outputVcf, @Nullable List<String> options)  throws PipelineJobException
     {
         List<String> args = getBaseArgs("MultiSourceAnnotator");
 
@@ -30,6 +30,9 @@ public class MultiSourceAnnotatorRunner extends DISCVRSeqRunner
 
         args.add("-lr");
         args.add(liftoverRejects.getPath());
+
+        args.add("-cv");
+        args.add(clinvarAnnotatedBackport.getPath());
 
         if (funcotator != null)
         {

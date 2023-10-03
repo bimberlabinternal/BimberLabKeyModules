@@ -60,6 +60,7 @@ import java.util.Set;
 public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner> implements VariantProcessingStep
 {
     public static final String GRCH37 = "genome37";
+    private static final String CLINVAR_VCF = "clinvar37";
     private static final String DBNSFP_FILE = "dbnsfpFile";
 
     public static final String CHAIN_FILE = "CHAIN_FILE";
@@ -74,6 +75,10 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         public Provider()
         {
             super("AnnotateVariants", "Annotate VCF for mGAP", "VCF Annotation", "This will annotate an input NHP VCF using human annotations including funcotator and SnpSift.  This jobs will automatically look for chain files based on the source VCF genome and GRCh37/38 targets and will fail if these are not found.", Arrays.asList(
+                    ToolParameterDescriptor.createExpDataParam(CLINVAR_VCF, "Clinvar 2.0 VCF (GRCh37)", "This is the DataId of the VCF containing human Clinvar variants, which should use the GRCh37 genome. After liftover of the rhesus data, any matching variants are annotated.", "ldk-expdatafield", new JSONObject()
+                    {{
+                        put("allowBlank", false);
+                    }}, null),
                     ToolParameterDescriptor.createExpDataParam(DBNSFP_FILE, "dbNSFP Database (GRCh37)", "This is the DataId of the dbNSFP database (txt.gz file) using the GRCh37 genome.", "ldk-expdatafield", new JSONObject()
                     {{
                         put("allowBlank", false);
@@ -204,6 +209,12 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
     public Output processVariants(File inputVCF, File outputDirectory, ReferenceGenome genome, @Nullable List<Interval> intervals) throws PipelineJobException
     {
         VariantProcessingStepOutputImpl output = new VariantProcessingStepOutputImpl();
+
+        File clinvarVCF = getPipelineCtx().getSequenceSupport().getCachedData(getProvider().getParameterByName(CLINVAR_VCF).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
+        if (!clinvarVCF.exists())
+        {
+            throw new PipelineJobException("Unable to find file: " + clinvarVCF.getPath());
+        }
 
         ReferenceGenome grch37Genome = getPipelineCtx().getSequenceSupport().getCachedGenome(getProvider().getParameterByName(GRCH37).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class));
         Integer chainFileId = getPipelineCtx().getSequenceSupport().getCachedObject(CHAIN_FILE, Integer.class);
@@ -369,6 +380,38 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.addOutput(liftedToGRCh37, "VCF Lifted to GRCh37");
         output.addIntermediateFile(liftedToGRCh37);
         output.addIntermediateFile(new File(liftedToGRCh37.getPath() + ".tbi"));
+
+        //annotate with clinvar
+        getPipelineCtx().getLogger().info("annotating with ClinVar 2.0");
+        File clinvarAnnotated = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(liftedToGRCh37.getName()) + ".cv.vcf.gz");
+        if (forceRecreate || !indexExists(clinvarAnnotated))
+        {
+            ClinvarAnnotatorRunner cvRunner = new ClinvarAnnotatorRunner(getPipelineCtx().getLogger());
+            cvRunner.execute(liftedToGRCh37, clinvarVCF, clinvarAnnotated);
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("resuming with existing file: " + clinvarAnnotated.getPath());
+        }
+        output.addOutput(clinvarAnnotated, "VCF Annotated With ClinVar2.0");
+        output.addIntermediateFile(clinvarAnnotated);
+        output.addIntermediateFile(new File(clinvarAnnotated.getPath() + ".tbi"));
+
+        //backport ClinVar
+        getPipelineCtx().getLogger().info("backport ClinVar 2.0 to source genome");
+        File clinvarAnnotatedBackport = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(clinvarAnnotated.getName()) + ".bp.vcf.gz");
+        if (forceRecreate || !indexExists(clinvarAnnotatedBackport ))
+        {
+            BackportLiftedVcfRunner bpRunner = new BackportLiftedVcfRunner(getPipelineCtx().getLogger());
+            bpRunner.execute(clinvarAnnotated, originalGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), clinvarAnnotatedBackport);
+        }
+        else
+        {
+            getPipelineCtx().getLogger().info("resuming with existing file: " + clinvarAnnotatedBackport.getPath());
+        }
+        output.addOutput(clinvarAnnotatedBackport, "VCF Annotated With Clinvar, Backported");
+        output.addIntermediateFile(clinvarAnnotatedBackport);
+        output.addIntermediateFile(new File(clinvarAnnotatedBackport.getPath() + ".tbi"));
 
         //annotate with SnpSift
         getPipelineCtx().getLogger().info("annotating with SnpSift/dbnsfp");
@@ -543,7 +586,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output, liftFields, SOURCE_FIELDS);
             addToolFieldNames("SnpSift", "-rssf", options, multiAnnotated.getParentFile(), output, liftFields, TARGET_FIELDS);
 
-            maRunner.execute(inputVCF, cassandraAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
+            maRunner.execute(inputVCF, cassandraAnnotatedBackport, clinvarAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
         else
         {
