@@ -540,7 +540,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 addToolFieldNames("Funcotator", "-ff", options, multiAnnotated.getParentFile(), output, liftFields);
             }
 
-            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output, liftFields);
+            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output, liftFields, SOURCE_FIELDS);
+            addToolFieldNames("SnpSift", "-rssf", options, multiAnnotated.getParentFile(), output, liftFields, TARGET_FIELDS);
 
             maRunner.execute(inputVCF, cassandraAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
@@ -566,7 +567,12 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
     private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields) throws PipelineJobException
     {
-        List<String> fields = getCachedFields(TARGET_FIELDS, toolName);
+        addToolFieldNames(toolName, argName, options, outDir, output, extraFields, TARGET_FIELDS);
+    }
+
+    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields, @Nullable String type) throws PipelineJobException
+    {
+        List<String> fields = getCachedFields(type, toolName);
         File fieldFile = new File(outDir, toolName + "Fields.args");
         try (PrintWriter writer = PrintWriters.getPrintWriter(fieldFile))
         {
