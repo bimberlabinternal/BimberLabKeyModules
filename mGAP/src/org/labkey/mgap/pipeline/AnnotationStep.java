@@ -502,12 +502,14 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 needToSubsetToInterval = false;
             }
 
+            final List<String> liftFields = Arrays.asList("LiftedContig", "LiftedStart", "LiftedStop", "ReverseComplementedAlleles");
+
             if (useFuncotator)
             {
-                addToolFieldNames("Funcotator", "-ff", options, multiAnnotated.getParentFile(), output);
+                addToolFieldNames("Funcotator", "-ff", options, multiAnnotated.getParentFile(), output, liftFields);
             }
 
-            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output);
+            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output, liftFields);
 
             maRunner.execute(inputVCF, cassandraAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
@@ -526,13 +528,17 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         return output;
     }
 
-    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output) throws PipelineJobException
+    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields) throws PipelineJobException
     {
         List<String> fields = getCachedFields(TARGET_FIELDS, toolName);
         File fieldFile = new File(outDir, toolName + "Fields.args");
         try (PrintWriter writer = PrintWriters.getPrintWriter(fieldFile))
         {
             fields.forEach(writer::println);
+            if (extraFields != null)
+            {
+                extraFields.forEach(writer::println);
+            }
         }
         catch (IOException e)
         {

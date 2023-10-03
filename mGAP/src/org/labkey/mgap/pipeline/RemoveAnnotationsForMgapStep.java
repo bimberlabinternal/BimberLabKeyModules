@@ -78,7 +78,14 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         else
         {
             List<String> args = new ArrayList<>();
-            for (String key : getInfoFields())
+            List<String> infoFields = getInfoFields();
+            getPipelineCtx().getLogger().info("Total INFO fields to retain: " + infoFields.size());
+            if (infoFields.isEmpty())
+            {
+                throw new PipelineJobException("Info fields is empty");
+            }
+
+            for (String key : infoFields)
             {
                 args.add("-A");
                 args.add(key);
