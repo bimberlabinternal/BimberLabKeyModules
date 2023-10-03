@@ -10,6 +10,7 @@ import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.Results;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableSelector;
@@ -43,6 +44,7 @@ import org.labkey.mgap.mGAPSchema;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -148,19 +150,45 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         Container targetContainer = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
         final HashMap<String, List<String>> sourceFieldMap = new HashMap<>();
         final HashMap<String, List<String>> targetFieldMap = new HashMap<>();
-        new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("toolName", "sourceField", "infoKey")).forEachResults(rs -> {
-            if (!sourceFieldMap.containsKey(rs.getString(FieldKey.fromString("toolName"))))
-            {
-                sourceFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
-                targetFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
-            }
+        try (PrintWriter writer = PrintWriters.getPrintWriter(getFieldConfigFile()))
+        {
+            writer.println(StringUtils.join(Arrays.asList("DataSource", "SourceField", "ID", "Number", "Type", "Description"), "\t"));
 
-            sourceFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("sourceField")));
-            targetFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("infoKey")));
-        });
+            new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("toolName", "sourceField", "infoKey")).forEachResults(rs -> {
+                if (!sourceFieldMap.containsKey(rs.getString(FieldKey.fromString("toolName"))))
+                {
+                    sourceFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
+                    targetFieldMap.put(rs.getString(FieldKey.fromString("toolName")), new ArrayList<>());
+                }
+
+                sourceFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("sourceField")));
+                targetFieldMap.get(rs.getString(FieldKey.fromString("toolName"))).add(rs.getString(FieldKey.fromString("infoKey")));
+
+                if ("Funcotator".equals(rs.getString(FieldKey.fromString("toolName"))))
+                {
+                    writer.println(StringUtils.join(Arrays.asList(
+                            getFieldValue(rs, "dataSource"),
+                            getFieldValue(rs, "sourceField"),
+                            getFieldValue(rs, "infoKey"),
+                            getFieldValue(rs, "dataNumber"),
+                            getFieldValue(rs, "dataType"),
+                            getFieldValue(rs, "description")
+                    ), "\t"));
+                }
+            });
+        }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
 
         getPipelineCtx().getSequenceSupport().cacheObject(SOURCE_FIELDS, sourceFieldMap);
         getPipelineCtx().getSequenceSupport().cacheObject(TARGET_FIELDS, targetFieldMap);
+    }
+
+    private String getFieldValue(Results rs, String fieldName) throws SQLException
+    {
+        return rs.getObject(FieldKey.fromString(fieldName)) == null ? "" : rs.getString(FieldKey.fromString(fieldName));
     }
 
     private static final String SOURCE_FIELDS = "sourceFields";
@@ -452,7 +480,10 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                     extraArgs.add("-pmf");
                 }
 
-                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome, extraArgs);
+                File configFile = getFieldConfigFile();
+                output.addIntermediateFile(configFile);
+
+                fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome, configFile, extraArgs);
             }
             else
             {
@@ -526,6 +557,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         output.setVcf(multiAnnotated);
 
         return output;
+    }
+
+    private File getFieldConfigFile()
+    {
+        return new File(getPipelineCtx().getSourceDirectory(), "funcotatorFields.txt");
     }
 
     private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields) throws PipelineJobException

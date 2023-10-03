@@ -22,7 +22,7 @@ public class FuncotatorWrapper extends AbstractDiscvrSeqWrapper
         super(log);
     }
 
-    public void runFuncotator(File dataDir, File input, File output, ReferenceGenome genome, @Nullable List<String> extraArgs) throws PipelineJobException
+    public void runFuncotator(File dataDir, File input, File output, ReferenceGenome genome, File configFile, @Nullable List<String> extraArgs) throws PipelineJobException
     {
         getLogger().info("Annotating VCF with Funcotator");
 
@@ -41,7 +41,7 @@ public class FuncotatorWrapper extends AbstractDiscvrSeqWrapper
         params.add("VCF");
 
         params.add("-cf");
-        params.add(new File(dataDir, "fieldConfig.txt").getPath());
+        params.add(configFile.getPath());
 
         params.add("-V");
         params.add(input.getPath());
