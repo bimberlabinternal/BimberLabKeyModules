@@ -605,7 +605,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
     private File getFieldConfigFile()
     {
-        return new File(getPipelineCtx().getSourceDirectory(), "funcotatorFields.txt");
+        return new File(getPipelineCtx().getSourceDirectory(true), "funcotatorFields.txt");
     }
 
     private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields) throws PipelineJobException
