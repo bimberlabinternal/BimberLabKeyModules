@@ -524,8 +524,6 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 }
 
                 File configFile = getFieldConfigFile();
-                output.addIntermediateFile(configFile);
-
                 fr.runFuncotator(funcotatorSourceDir, liftedToGRCh37, funcotatorAnnotated, grch37Genome, configFile, extraArgs);
             }
             else
