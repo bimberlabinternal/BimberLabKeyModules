@@ -7,21 +7,21 @@ import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 import { Chart } from 'chart.js';
 import BarChart from './BarChart';
 
-describe('BarChart', () => {
-    jest.mock('chart.js');
-    const MockChart = mocked(Chart);
+jest.mock('chart.js');
 
-    const mockData = [
-        {
-            gender: 'M'
-        },
-        {
-            gender: 'F'
-        },
-        {
-            gender: 'F'
-        }
-    ];
+const mockData = [
+    {
+        gender: 'M'
+    },
+    {
+        gender: 'F'
+    },
+    {
+        gender: 'F'
+    }
+];
+describe('BarChart', () => {
+    const MockChart = mocked(Chart);
 
     test('it has a canvas element', () => {
         const wrapper = shallow(<BarChart fieldName = "gender" demographics={mockData} />);
