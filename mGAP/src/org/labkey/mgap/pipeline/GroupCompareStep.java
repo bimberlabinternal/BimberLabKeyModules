@@ -37,7 +37,7 @@ import java.util.List;
  * Date: 6/15/2014
  * Time: 12:39 PM
  */
-public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareStep.GroupComparison> implements VariantProcessingStep
+public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareStep.GroupComparison> implements VariantProcessingStep, VariantProcessingStep.SupportsScatterGather
 {
     public static final String REF_VCF = "refVcf";
     public static String GROUP1 = "group1";
@@ -81,64 +81,64 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         {
             return new GroupCompareStep(this, ctx);
         }
+    }
 
-        @Override
-        public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs) throws PipelineJobException
-        {
-            job.getLogger().info("Merging variant tables");
-            List<File> toConcat = orderedScatterOutputs.stream().map(f -> {
-                f = new File(f.getParentFile(), f.getName().replaceAll("vcf.gz", "txt"));
-                if (!f.exists())
-                {
-                    throw new IllegalStateException("Missing file: " + f.getPath());
-                }
-
-                ctx.getFileManager().addIntermediateFile(f);
-
-                return f;
-            }).toList();
-
-            String basename = SequenceAnalysisService.get().getUnzippedBaseName(toConcat.get(0).getName());
-            File combined = new File(ctx.getSourceDirectory(), basename + ".txt");
-            try (PrintWriter writer = PrintWriters.getPrintWriter(combined))
+    @Override
+    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
+    {
+        job.getLogger().info("Merging variant tables");
+        List<File> toConcat = orderedScatterOutputs.stream().map(f -> {
+            f = new File(f.getParentFile(), f.getName().replaceAll("vcf.gz", "txt"));
+            if (!f.exists())
             {
-                boolean hasWrittenHeader = false;
-                for (File f : toConcat)
+                throw new IllegalStateException("Missing file: " + f.getPath());
+            }
+
+            ctx.getFileManager().addIntermediateFile(f);
+
+            return f;
+        }).toList();
+
+        String basename = SequenceAnalysisService.get().getUnzippedBaseName(toConcat.get(0).getName());
+        File combined = new File(ctx.getSourceDirectory(), basename + ".txt");
+        try (PrintWriter writer = PrintWriters.getPrintWriter(combined))
+        {
+            boolean hasWrittenHeader = false;
+            for (File f : toConcat)
+            {
+                try (BufferedReader reader = Readers.getReader(f))
                 {
-                    try (BufferedReader reader = Readers.getReader(f))
+                    String line;
+                    int idx = 0;
+                    while ((line = reader.readLine()) != null)
                     {
-                        String line;
-                        int idx = 0;
-                        while ((line = reader.readLine()) != null)
+                        idx++;
+                        if (idx == 1)
                         {
-                            idx++;
-                            if (idx == 1)
-                            {
-                                if (!hasWrittenHeader) {
-                                    writer.println(line);
-                                    hasWrittenHeader = true;
-                                }
-                            }
-                            else
-                            {
+                            if (!hasWrittenHeader) {
                                 writer.println(line);
+                                hasWrittenHeader = true;
                             }
+                        }
+                        else
+                        {
+                            writer.println(line);
                         }
                     }
                 }
             }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
-
-            SequenceOutputFile so = new SequenceOutputFile();
-            so.setName(basename + ": Selected Variants");
-            so.setFile(combined);
-            so.setCategory("Variant List");
-            so.setLibrary_id(genome.getGenomeId());
-            manager.addSequenceOutput(so);
         }
+        catch (IOException e)
+        {
+            throw new PipelineJobException(e);
+        }
+
+        SequenceOutputFile so = new SequenceOutputFile();
+        so.setName(basename + ": Selected Variants");
+        so.setFile(combined);
+        so.setCategory("Variant List");
+        so.setLibrary_id(genome.getGenomeId());
+        manager.addSequenceOutput(so);
     }
 
     @Override

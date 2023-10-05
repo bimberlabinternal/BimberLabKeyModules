@@ -94,7 +94,7 @@ public class UpdatePedigreeStep implements TaskRefTask
                         return;
                 }
 
-                //santity check:
+                //sanity check:
                 String expectedOriginalValue = StringUtils.trimToNull(rs.getString("originalValue"));
                 String actualOriginalValue = StringUtils.trimToNull((String)existing.get(targetField));
                 if (!((actualOriginalValue == null && expectedOriginalValue == null) || (actualOriginalValue != null && actualOriginalValue.equals(expectedOriginalValue))))
