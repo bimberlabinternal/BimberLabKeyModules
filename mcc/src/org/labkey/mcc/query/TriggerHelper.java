@@ -260,15 +260,24 @@ public class TriggerHelper
         }
     }
 
-    public int ensureMccAliasExists(Collection<String> ids)
+    public int ensureMccAliasExists(Collection<String> ids, Map<String, String> existingAliases)
     {
         ids = new HashSet<>(ids);
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN);
 
+        final Set<String> aliasesFound = new HashSet<>();
         TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
-        List<String> hasAlias = new TableSelector(ti, PageFlowUtil.set("subjectname"), filter, null).getArrayList(String.class);
+        new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), filter, null).forEachResults(rs -> {
+            aliasesFound.add(rs.getString(FieldKey.fromString("subjectname")));
+            if (existingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
+                if (!existingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
+                {
+                    _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + " does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));
+                }
+            }
+        });
 
-        ids.removeAll(hasAlias);
+        ids.removeAll(aliasesFound);
         if (ids.isEmpty())
         {
             return 0;
@@ -280,7 +289,7 @@ public class TriggerHelper
             ids.forEach(id -> {
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
                 row.put("subjectname", id);
-                row.put("externalAlias", null); //NOTE: the trigger script will auto-assign a value, but we need to include this property on the input JSON
+                row.put("externalAlias", existingAliases.get(id)); //NOTE: the trigger script will auto-assign a value if null, but we need to include this property on the input JSON
 
                 toAdd.add(row);
             });

@@ -141,6 +141,15 @@
             <column columnName="type">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="birth_condition">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="conception">
+                <datatype>timestamp</datatype>
+            </column>
+            <column columnName="conceptualDay">
+                <datatype>integer</datatype>
+            </column>
             <column columnName="objectid">
                 <datatype>varchar</datatype>
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>

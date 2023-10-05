@@ -47,6 +47,7 @@ import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
 import org.labkey.mgap.pipeline.GroupCompareStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
+import org.labkey.mgap.pipeline.RemoveAnnotationsStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
 import org.labkey.mgap.pipeline.SampleSpecificGenotypeFiltrationStep;
 import org.labkey.mgap.pipeline.VcfComparisonStep;
@@ -124,6 +125,7 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new AnnotationStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new GroupCompareStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsForMgapStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new RemoveAnnotationsStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new RenameSamplesForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new VcfComparisonStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseComparisonStep.Provider());
