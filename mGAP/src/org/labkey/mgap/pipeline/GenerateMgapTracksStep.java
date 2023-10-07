@@ -430,7 +430,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         {
             job.getLogger().debug("Merging track: " + trackName);
             List<File> toConcat = orderedJobDirs.stream().map(dirName -> {
-                File f = getOutputVcf(trackName, new File(ctx.getWorkingDirectory(), dirName));
+                File f = getOutputVcf(trackName, new File(ctx.getSourceDirectory(), dirName));
                 if (!f.exists())
                 {
                     throw new IllegalStateException("Missing file: " + f.getPath());
