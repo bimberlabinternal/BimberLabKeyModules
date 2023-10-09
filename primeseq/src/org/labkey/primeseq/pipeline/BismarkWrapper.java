@@ -136,9 +136,8 @@ public class BismarkWrapper extends AbstractCommandWrapper
 
             args.add("--samtools_path");
             args.add(new SamtoolsRunner(getPipelineCtx().getLogger()).getSamtoolsPath().getParentFile().getPath());
-            args.add("--path_to_bowtie");
 
-            //TODO: consider param for bowtie vs. bowtie2
+            args.add("--path_to_aligner");
             args.add(getBowtie2Exe().getParentFile().getPath());
 
             if (getClientCommandArgs() != null)
@@ -247,11 +246,11 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     }
                 }
 
-                //first build for bowtie2
+                // build for bowtie2
                 List<String> args = new ArrayList<>();
                 args.add(getWrapper().getBuildExe().getPath());
                 args.add("--bowtie2");
-                args.add("--path_to_bowtie");
+                args.add("--path_to_aligner");
                 args.add(getBowtie2Exe().getParentFile().getPath());
                 args.add(indexOutputDir.getPath());
                 getWrapper().execute(args);
@@ -261,21 +260,6 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 if (!bowtie2TestFile.exists())
                 {
                     throw new PipelineJobException("Unable to find file, expected: " + bowtie2TestFile.getPath());
-                }
-
-                //then build for bowtie
-                List<String> args2 = new ArrayList<>();
-                args2.add(getWrapper().getBuildExe().getPath());
-                args2.add("--bowtie1");
-                args2.add("--path_to_bowtie");
-                args2.add(getBowtieExe().getParentFile().getPath());
-                args2.add(indexOutputDir.getPath());
-                getWrapper().execute(args2);
-
-                File bowtieTestFile = new File(genomeBuild, "CT_conversion/BS_CT.1.ebwt");
-                if (!bowtieTestFile.exists())
-                {
-                    throw new PipelineJobException("Unable to find file, expected: " + bowtieTestFile.getPath());
                 }
 
                 File indexBaseDir = new File(localFasta.getParentFile(), getIndexCachedDirName(getPipelineCtx().getJob()));
@@ -307,8 +291,8 @@ public class BismarkWrapper extends AbstractCommandWrapper
     {
         public Provider()
         {
-            super("Bismark", "Bismark is a tool to map bisulfite converted sequence reads and determine cytosine methylation states.  It will use bowtie for the alignment itself.", Arrays.asList(
-                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-L"), "seed_length", "Seed Length", "Sets the length of the seed substrings to align during multiseed alignment. Smaller values make alignment slower but more sensitive.", "ldk-numberfield", null, 30),
+            super("Bismark", "Bismark is a tool to map bisulfite converted sequence reads and determine cytosine methylation states.  It will use bowtie2 for the alignment itself.", Arrays.asList(
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-L"), "seed_length", "Seed Length", "Sets the length of the seed substrings to align during multi-seed alignment. Smaller values make alignment slower but more sensitive.", "ldk-numberfield", null, 30),
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-N"), "max_seed_mismatches", "Max Seed Mismatches", "Sets the number of mismatches to be allowed in a seed alignment during multiseed alignment. Can be set to 0 or 1. Setting this higher makes alignment slower (often much slower) but increases sensitivity. Default: 0.", "ldk-numberfield", new JSONObject(){{
                         put("minValue", 0);
                         put("maxValue", 1);
@@ -843,10 +827,5 @@ public class BismarkWrapper extends AbstractCommandWrapper
     private static File getBowtie2Exe()
     {
         return SequencePipelineService.get().getExeForPackage("BOWTIE2PATH", "bowtie2");
-    }
-
-    private static File getBowtieExe()
-    {
-        return SequencePipelineService.get().getExeForPackage("BOWTIEPATH", "bowtie");
     }
 }
