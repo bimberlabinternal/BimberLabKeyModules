@@ -1182,11 +1182,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     if (vc.getAttribute("CLN_SIG") != null)
                     {
                         List<String> clnSigs = vc.getAttributeAsStringList("CLN_SIG", "");
-                        if (clnSigs.size() != vc.getAlternateAlleles().size())
+                        if (clnSigs.size() != vc.getAlleles().size())
                         {
-                            throw new IllegalStateException("CLN_SIG and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
+                            throw new IllegalStateException("CLN_SIG and alleles were not the same length: " + vc.toStringWithoutGenotypes());
                         }
 
+                        // NOTE: we iterate REF + ALT here:
                         List<String> clnDisease = vc.getAttributeAsStringList("CLN_DN", "");
                         List<String> clnAlleleIds = vc.getAttributeAsStringList("CLN_ALLELEID", "");
                         int i = -1;
@@ -1198,7 +1199,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 continue;
                             }
 
-                            Allele altAllele = vc.getAlternateAllele(i);
+                            Allele a = vc.getAlleles().get(i);
 
                             String[] sigSplit = sigList.split("\\|");
                             List<String> diseaseSplit = Arrays.asList(clnDisease.get(i).split("\\|"));
@@ -1214,7 +1215,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                                     try
                                     {
-                                        maybeWriteVariantLine(queuedLines, vc, altAllele.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
+                                        maybeWriteVariantLine(queuedLines, vc, a.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
 
                                     }
                                     catch (IndexOutOfBoundsException e)
