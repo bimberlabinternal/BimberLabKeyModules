@@ -280,28 +280,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddGpus(job, engine, lines);
             possiblyAddExclusive(job, engine, lines);
             possiblyAddInfiniband(job, engine, lines);
-            possiblyAddCOVID(job, lines);
-        }
-    }
-
-    private void possiblyAddCOVID(PipelineJob job, List<String> lines)
-    {
-        Map<String, String> params = ((HasJobParams)job).getJobParams();
-        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.covidRelated"));
-        if (val == null)
-        {
-            return;
-        }
-
-        boolean parsed = Boolean.parseBoolean(val);
-        if (parsed)
-        {
-            job.getLogger().info("Flagging as COVID-related");
-            String line = "#SBATCH --comment=COVID";
-            if (!lines.contains(line))
-            {
-                lines.add(line);
-            }
         }
     }
 
