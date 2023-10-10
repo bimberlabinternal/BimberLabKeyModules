@@ -137,7 +137,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
             args.add("--samtools_path");
             args.add(new SamtoolsRunner(getPipelineCtx().getLogger()).getSamtoolsPath().getParentFile().getPath());
 
-            args.add("--path_to_aligner");
+            args.add("--path_to_bowtie2");
             args.add(getBowtie2Exe().getParentFile().getPath());
 
             if (getClientCommandArgs() != null)
