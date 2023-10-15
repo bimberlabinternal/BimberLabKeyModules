@@ -1,8 +1,6 @@
-import 'jsdom-global/register';
 import React from 'react';
 import { mount } from 'enzyme';
 import { mocked } from 'jest-mock';
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { Dashboard } from './Dashboard';
 import { Query } from '@labkey/api';

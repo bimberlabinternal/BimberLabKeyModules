@@ -1,8 +1,6 @@
-import 'jsdom-global/register';
 import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { mocked } from 'jest-mock';
-import { describe, expect, jest, test } from '@jest/globals';
 
 import { Chart } from 'chart.js';
 import PieChart from './PieChart';
