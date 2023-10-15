@@ -2,6 +2,7 @@ package org.labkey.mgap.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
+import com.google.common.io.Files;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.variant.variantcontext.Allele;
@@ -1024,6 +1025,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
         private void inspectAndSummarizeVcf(JobContext ctx, File vcfInput, GeneToNameTranslator translator, ReferenceGenome genome, boolean generateSummaries) throws PipelineJobException
         {
+            File doneFile = new File(ctx.getWorkingDirectory(), "vcfInspect.done");
+            ctx.getFileManager().addIntermediateFile(doneFile);
+
+            if (doneFile.exists())
+            {
+                ctx.getLogger().info("VCF inspection already done, skipping");
+                return;
+            }
+
             long sitesInspected = 0L;
             long totalVariants = 0L;
             long totalPrivateVariants = 0L;
@@ -1041,6 +1051,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     if (sitesInspected % 1000000 == 0)
                     {
+                        ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Inspected " + sitesInspected + " variants");
                         ctx.getLogger().info("inspected " + sitesInspected + " variants");
                     }
 
@@ -1300,6 +1311,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
 
                 generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
+            }
+
+            try
+            {
+                Files.touch(doneFile);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
             }
         }
 
