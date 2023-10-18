@@ -2,6 +2,7 @@ package org.labkey.mgap.pipeline;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
+import com.google.common.io.Files;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.variant.variantcontext.Allele;
@@ -1024,6 +1025,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
         private void inspectAndSummarizeVcf(JobContext ctx, File vcfInput, GeneToNameTranslator translator, ReferenceGenome genome, boolean generateSummaries) throws PipelineJobException
         {
+            File doneFile = new File(ctx.getWorkingDirectory(), "vcfInspect.done");
+            ctx.getFileManager().addIntermediateFile(doneFile);
+
+            if (doneFile.exists())
+            {
+                ctx.getLogger().info("VCF inspection already done, skipping");
+                return;
+            }
+
             long sitesInspected = 0L;
             long totalVariants = 0L;
             long totalPrivateVariants = 0L;
@@ -1041,6 +1051,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     if (sitesInspected % 1000000 == 0)
                     {
+                        ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Inspected " + sitesInspected + " variants");
                         ctx.getLogger().info("inspected " + sitesInspected + " variants");
                     }
 
@@ -1182,11 +1193,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     if (vc.getAttribute("CLN_SIG") != null)
                     {
                         List<String> clnSigs = vc.getAttributeAsStringList("CLN_SIG", "");
-                        if (clnSigs.size() != vc.getAlternateAlleles().size())
+                        if (clnSigs.size() != vc.getAlleles().size())
                         {
-                            throw new IllegalStateException("CLN_SIG and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
+                            throw new IllegalStateException("CLN_SIG and alleles were not the same length: " + vc.toStringWithoutGenotypes());
                         }
 
+                        // NOTE: we iterate REF + ALT here:
                         List<String> clnDisease = vc.getAttributeAsStringList("CLN_DN", "");
                         List<String> clnAlleleIds = vc.getAttributeAsStringList("CLN_ALLELEID", "");
                         int i = -1;
@@ -1198,7 +1210,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 continue;
                             }
 
-                            Allele altAllele = vc.getAlternateAllele(i);
+                            Allele a = vc.getAlleles().get(i);
 
                             String[] sigSplit = sigList.split("\\|");
                             List<String> diseaseSplit = Arrays.asList(clnDisease.get(i).split("\\|"));
@@ -1214,7 +1226,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                                     try
                                     {
-                                        maybeWriteVariantLine(queuedLines, vc, altAllele.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
+                                        maybeWriteVariantLine(queuedLines, vc, a.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
 
                                     }
                                     catch (IndexOutOfBoundsException e)
@@ -1299,6 +1311,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
 
                 generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
+            }
+
+            try
+            {
+                Files.touch(doneFile);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
             }
         }
 
