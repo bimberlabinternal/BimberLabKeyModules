@@ -296,9 +296,8 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-N"), "max_seed_mismatches", "Max Seed Mismatches", "Sets the number of mismatches to be allowed in a seed alignment during multiseed alignment. Can be set to 0 or 1. Setting this higher makes alignment slower (often much slower) but increases sensitivity. Default: 0.", "ldk-numberfield", new JSONObject(){{
                         put("minValue", 0);
                         put("maxValue", 1);
-                    }}, 1),
-                    ToolParameterDescriptor.create("forceSingleEnd", "Force Single-End", "If checked, this will force the resulting data to be processed as single-end, even if the input readsets are paired end. This would be used primarily if a tool like FLASH is applied to merge reads.", "checkbox", null, false)
-                    ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
+                    }}, 1)
+            ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
         }
 
         @Override
@@ -796,15 +795,12 @@ public class BismarkWrapper extends AbstractCommandWrapper
                         put("checked", true);
                     }}, true),
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--mbias_only"), "mbias_only", "M-bias Only", "The methylation extractor will read the entire file but only output the M-bias table and plots as well as a report (optional) and then quit.", "checkbox", null, false),
-//                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--bedGraph"), "bedGraph", "Produce BED Graph", "After finishing the methylation extraction, the methylation output is written into a sorted bedGraph file that reports the position of a given cytosine and its methylation state (in %, see details below). The methylation extractor output is temporarily split up into temporary files, one per chromosome (written into the current directory or folder specified with -o/--output); these temp files are then used for sorting and deleted afterwards. By default, only cytosines in CpG context will be sorted. The option '--CX_context' may be used to report all cytosines irrespective of sequence context (this will take MUCH longer!). The default folder for temporary files during the sorting process is the output directory. The bedGraph conversion step is performed by the external module 'bismark2bedGraph'; this script needs to reside in the same folder as the bismark_methylation_extractor itself.", "checkbox", new JSONObject()
-//                    {{
-//                        put("checked", true);
-//                    }}, true),
                     ToolParameterDescriptor.create("siteReport", "Produce Site Summary Report", "If selected, the raw methylation data will be processed to produce a simplified report showing rates per site, rather than per position in the genome.", "checkbox", new JSONObject()
                     {{
                         put("checked", true);
                     }}, true),
-                    ToolParameterDescriptor.create("minCoverageDepth", "Min Coverage Depth (For Site Report)", "If provided, only sites with at least this coverage depth will be included in the site-based rate calculation.", "ldk-integerfield", null, 10)
+                    ToolParameterDescriptor.create("minCoverageDepth", "Min Coverage Depth (For Site Report)", "If provided, only sites with at least this coverage depth will be included in the site-based rate calculation.", "ldk-integerfield", null, 10),
+                    ToolParameterDescriptor.create("forceSingleEnd", "Force Single-End", "If checked, this will force the resulting data to be processed as single-end, even if the input readsets are paired end. This would be used primarily if a tool like FLASH is applied to merge reads.", "checkbox", null, false)
             ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/");
         }
 
