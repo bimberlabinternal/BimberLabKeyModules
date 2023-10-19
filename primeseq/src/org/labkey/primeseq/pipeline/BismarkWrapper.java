@@ -296,8 +296,9 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-N"), "max_seed_mismatches", "Max Seed Mismatches", "Sets the number of mismatches to be allowed in a seed alignment during multiseed alignment. Can be set to 0 or 1. Setting this higher makes alignment slower (often much slower) but increases sensitivity. Default: 0.", "ldk-numberfield", new JSONObject(){{
                         put("minValue", 0);
                         put("maxValue", 1);
-                    }}, 1)
-            ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
+                    }}, 1),
+                    ToolParameterDescriptor.create("forceSingleEnd", "Force Single-End", "If checked, this will force the resulting data to be processed as single-end, even if the input readsets are paired end. This would be used primarily if a tool like FLASH is applied to merge reads.", "checkbox", null, false)
+                    ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
         }
 
         @Override
@@ -352,7 +353,12 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 args.add(new SamtoolsRunner(getPipelineCtx().getLogger()).getSamtoolsPath().getParentFile().getPath());
 
                 //paired end vs. single
-                if (!rs.hasPairedData())
+                boolean forceSingleEnd = getProvider().getParameterByName("forceSingleEnd").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+                if (forceSingleEnd)
+                {
+                    args.add("-s");
+                }
+                else if (!rs.hasPairedData())
                 {
                     args.add("-s");
                 }
