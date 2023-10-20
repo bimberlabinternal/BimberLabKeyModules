@@ -297,9 +297,12 @@ public class BismarkWrapper extends AbstractCommandWrapper
                         put("minValue", 0);
                         put("maxValue", 1);
                     }}, 1),
-                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-e"), "maqerr", "Max Error", "Maximum permitted total of quality values at all mismatched read positions throughout the entire alignment, not just in the seed.", "ldk-numberfield", new JSONObject(){{
-                        put("minValue", 0);
-                    }}, 70)
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--local"), "local", "Local Alignment", "In this mode, it is not required that the entire read aligns from one end to the other. Rather, some characters may be omitted (“soft-clipped”) from the ends in order to achieve the greatest possible alignment score. For Bowtie 2, the match bonus --ma (default: 2) is used in this mode, and the best possible alignment score is equal to the match bonus (--ma) times the length of the read. This is mutually exclusive with end-to-end alignments.", "checkbox", new JSONObject(){{
+
+                    }}, false),
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--non_directional"), "non_directional", "Non-Directional", "The sequencing library was constructed in a non strand-specific manner, alignments to all four bisulfite strands will be reported", "checkbox", new JSONObject(){{
+
+                    }}, false)
             ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
         }
 
