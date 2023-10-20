@@ -1692,6 +1692,22 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         if (i < cadds.size())
                         {
                             cadd = cadds.get(i);
+                            if (String.valueOf(cadd).contains("\\|"))
+                            {
+                                cadd = Arrays.stream(String.valueOf(cadd).split("\\|")).map(x -> {
+                                    try
+                                    {
+                                        double y = Double.parseDouble(x);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        log.warn("Non-numeric CADD: " + x + " at position: " + vc.toStringWithoutGenotypes());
+                                    }
+
+                                    return 0.0;
+                                }).max(Double::compareTo);
+                            }
+
                             break;
                         }
                         else
