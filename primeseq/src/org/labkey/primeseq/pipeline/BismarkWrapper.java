@@ -296,7 +296,10 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-N"), "max_seed_mismatches", "Max Seed Mismatches", "Sets the number of mismatches to be allowed in a seed alignment during multiseed alignment. Can be set to 0 or 1. Setting this higher makes alignment slower (often much slower) but increases sensitivity. Default: 0.", "ldk-numberfield", new JSONObject(){{
                         put("minValue", 0);
                         put("maxValue", 1);
-                    }}, 1)
+                    }}, 1),
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("-e"), "maqerr", "Max Error", "Maximum permitted total of quality values at all mismatched read positions throughout the entire alignment, not just in the seed.", "ldk-numberfield", new JSONObject(){{
+                        put("minValue", 0);
+                    }}, 70)
             ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
         }
 
