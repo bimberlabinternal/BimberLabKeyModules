@@ -1691,7 +1691,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     {
                         if (i < cadds.size())
                         {
-                            af = cadds.get(i);
+                            cadd = cadds.get(i);
                             break;
                         }
                         else
