@@ -952,6 +952,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
         {
             //drop genotypes for performance:
             ctx.getLogger().info("creating VCF without genotypes");
+            ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Creating Site-only VCF");
             File noGenotypes = getSitesOnlyVcfName(ctx.getOutputDir(), primaryTrackVcf);
             if (indexExists(noGenotypes))
             {
@@ -980,6 +981,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             File chainFile = ctx.getSequenceSupport().getCachedData(chainFileId);
 
             ctx.getLogger().info("lift to genome: " + grch37Genome.getGenomeId());
+            ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Running Liftover");
 
             File liftedToGRCh37 = getLiftedVcfName(ctx.getOutputDir(), primaryTrackVcf);
             File liftoverRejects = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".liftoverRejectGRCh37.vcf.gz");
@@ -1357,6 +1359,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
         {
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
+            ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Running VariantsToTable");
             File variantsToTable = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".variantsToTable.txt");
             File tableCheck = new File(variantsToTable.getPath() + ".done");
             if (!tableCheck.exists())
