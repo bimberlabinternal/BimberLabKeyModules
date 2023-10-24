@@ -480,7 +480,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 map.put("omim_phenotype", queryOmim(line[9], job.getContainer(), job.getLogger()));
                                 map.put("af", line[10]);
                                 map.put("identifier", line[11]);
-                                Double cadd = StringUtils.trimToNull(line[12]) == null ? null : Double.parseDouble(line[12]);
+                                Double cadd = StringUtils.trimToNull(line[12]) == null ? null : parseCadd(line[12]);
                                 map.put("cadd", cadd);
                                 map.put("objectId", new GUID().toString());
 
@@ -607,6 +607,24 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             else
             {
                 job.getLogger().info("This was selected as a test-only run, so skipping creation of release record");
+            }
+        }
+
+        private Double parseCadd(String cadd)
+        {
+            try
+            {
+                if (cadd.contains("|"))
+                {
+                    return Arrays.stream(cadd.split("\\|")).map(Double::parseDouble).max(Double::compare).get();
+                }
+
+                return Double.parseDouble(cadd);
+            }
+            catch (Exception e)
+            {
+                // Ignore
+                return null;
             }
         }
 
