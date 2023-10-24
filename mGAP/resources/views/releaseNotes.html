@@ -1,3 +1,9 @@
+<h4>Release 2.5:</h4>
+<ul>
+    <li>This release includes a major change in how we perform variant annotation, <a href="mgap-annotation.view">described in more detail here.</a></li>
+    <li>This release includes 107 additional datasets. The total number of variants dropped relative to release 2.4 due to a change in our filtering. Previously, certain conditions would allow a variant to remain in the dataset, even if no subjects had this genotype. After this correction, ~4m sites were removed, although no genotype calls should be changed.</li>
+</ul>
+
 <h4>Release 2.4:</h4>
 <ul>
     <li>This is an additional 470 animals over the prior version. All processing and informatics steps are identical.</li>
@@ -9,7 +15,7 @@
     <li>There are a sizable number of data processing changes, largely adaptations to handle the rapidly growing dataset size:</li>
     <ol>
         <li>All data used <a href="https://gatk.broadinstitute.org/hc/en-us/articles/4405443600667-ReblockGVCF">GATK Reblocked gVCFs</a> as inputs. This reduces processing, but can reduce sensitivity at homozygous-reference sites (resulting in greater numbers of no-call genotypes at homozygous ref sites)</li>
-        <li>Also to adapt to larger data size, we changed the structure of data processing. Previously, samples were each aggregated into one GenomicsDB workspace per data type (WGS or WXS). Next, GenotypeGVCFs was run on each workspace, with one job per contig. The resulting VCFs were filtered and merged. In this release, the upfront aggregation step was dropped, and we instead: 1) use reblocked gVCFs as input (entire set of samples), 2) chunk the genome into ~1000 bins with one job/bin, 3) per bin, run GenomicsDbImport to make a transient workspace using the job's intervals +/- 1000bp, 4) run GenotypeGVCFs against that workspace, 5) filter the result, including technology-aware thresholds (i.e. different depth filters for WGS/WXS). This process is both considerably more efficient and has the advantage of joint-genotyping across the entire cohort at once.</li>
+        <li>To adapt to larger data size, we changed the structure of data processing. Previously, samples were each aggregated into one GenomicsDB workspace per data type (WGS or WXS). Next, GenotypeGVCFs was run on each workspace, with one job per contig. The resulting VCFs were filtered and merged. In this release, the upfront aggregation step was dropped, and we instead: 1) use reblocked gVCFs as input (entire set of samples), 2) chunk the genome into ~1000 bins with one job/bin, 3) per bin, run GenomicsDbImport to make a transient workspace using the job's intervals +/- 1000bp, 4) run GenotypeGVCFs against that workspace, 5) filter the result, including technology-aware thresholds (i.e. different depth filters for WGS/WXS). This process is both considerably more efficient and has the advantage of joint-genotyping across the entire cohort at once.</li>
     </ol>
 </ul>
 
