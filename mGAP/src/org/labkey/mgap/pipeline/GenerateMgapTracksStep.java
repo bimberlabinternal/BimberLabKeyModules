@@ -318,6 +318,8 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         options.add("--sample-mapping-file");
         options.add(sampleFile.getPath());
 
+        options.add("--exclude-non-variants");
+
         if (intervals != null)
         {
             intervals.forEach(interval -> {
