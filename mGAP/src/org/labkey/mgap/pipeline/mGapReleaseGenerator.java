@@ -1238,7 +1238,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                             for (String sig : sigSplit)
                             {
                                 //TODO: consider disease = not_provided
-                                if (isAllowableClinVarSig(sig))
+                                if (mGapSummarizer.isAllowableClinVarSig(sig))
                                 {
                                     String description = StringUtils.join(new String[]{
                                             "Significance: " + sig
@@ -1368,12 +1368,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             return Collections.emptySet();
         }
 
-        private boolean isAllowableClinVarSig(String x)
-        {
-            return !(StringUtils.isEmpty(x) || x.toLowerCase().contains("benign") || x.toLowerCase().contains("unknown") || x.toLowerCase().contains("uncertain") || x.contains("not_specified") || x.contains("not_provided"));
-        }
-
-        private void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
+        private static void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
         {
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
@@ -1384,7 +1379,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             {
                 VariantsToTableRunner vtt = new VariantsToTableRunner(ctx.getLogger());
                 List<String> fields = new ArrayList<>(Arrays.asList("POS", "REF", "ALT", "FILTER"));
-                fields.addAll(allowedFields);
+                fields.addAll(mGapSummarizer.SUMMARY_FIELDS);
                 vtt.execute(vcf, variantsToTable, genome.getWorkingFastaFile(), fields);
 
                 try
@@ -1408,250 +1403,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ctx.getLogger().info("Generating summary stats from: " + variantsToTable.getName());
             File summaryTable = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summary.txt");
             File summaryTableByField = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summaryByField.txt");
-            generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
-        }
-
-        private static final List<String> allowedFields = Arrays.asList("CHROM", "ANN", "CLN_SIG", "FANTOM5_TFBS", "FANTOM_ENHANCER", "Polyphen2_HVAR_pred");
-
-        private class FieldTracker
-        {
-            private final Map<String, FieldData> perField;
-
-            public FieldTracker(int size)
-            {
-                perField = new HashMap<>(size);
-            }
-
-            public void add(String fieldName, String val)
-            {
-                if (!allowedFields.contains(fieldName))
-                {
-                    return;
-                }
-
-                if (!StringUtils.isEmpty(val) && !"NA".equals(val))
-                {
-                    if ("ANN".equals(fieldName))
-                    {
-                        boolean isHighImpact = false;
-                        Set<String> codingPotential = new HashSet<>();
-                        String[] tokens = val.split(",");
-                        for (String v : tokens)
-                        {
-                            String[] split = v.split("\\|");
-                            if ("HIGH".equals(split[2]))
-                            {
-                                isHighImpact = true;
-                            }
-
-                            String[] types = split[1].split("&");
-                            codingPotential.addAll(Arrays.asList(types));
-                        }
-
-                        if (isHighImpact)
-                        {
-                            addForValue("AnnotationSummary", "Predicted High Impact (SnpEff)");
-                        }
-
-                        filterCodingPotential(codingPotential);
-                        String type = StringUtils.join(new TreeSet<>(codingPotential), ";");
-                        addForValue("CodingPotential", type);
-                    }
-                    else if ("CLN_SIG".equals(fieldName))
-                    {
-                        boolean hasOverlap = false;
-                        boolean hasAnyOverlap = false;
-                        String[] tokens = val.split(",");
-                        for (String v : tokens)
-                        {
-                            if (StringUtils.isEmpty(v))
-                            {
-                                continue;
-                            }
-
-                            hasAnyOverlap = true;
-
-                            String[] split = v.split("\\|");
-                            for (String sig : split)
-                            {
-                                //TODO: consider disease = not_provided
-                                if (isAllowableClinVarSig(sig))
-                                {
-                                    hasOverlap = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (hasOverlap)
-                        {
-                            addForValue("AnnotationSummary", "ClinVar Overlap (Pathogenic)");
-                        }
-
-                        if (hasAnyOverlap)
-                        {
-                            addForValue("AnnotationSummary", "ClinVar Overlap");
-                        }
-                    }
-                    else if ("FANTOM_ENHANCER".equals(fieldName) && "Y".equals(val))
-                    {
-                        addForValue("AnnotationSummary", "Enhancer Region (FANTOM5)");
-                    }
-                    else if ("FANTOM5_TFBS".equals(fieldName))
-                    {
-                        addForValue("AnnotationSummary", "Transcription Factor Binding (FANTOM5)");
-                    }
-                    else if ("Polyphen2_HVAR_pred".equals(fieldName) && val.contains("D"))
-                    {
-                        addForValue("AnnotationSummary", "Damaging (Polyphen2)");
-                    }
-                    else if ("CHROM".equals(fieldName))
-                    {
-                        addForValue("PerChromosome", val);
-                    }
-                }
-            }
-
-            private void addForValue(String fieldName, String val)
-            {
-                if (allowForLevel(val))
-                {
-                    FieldData data = perField.get(fieldName);
-                    if (data == null)
-                    {
-                        data = new FieldData();
-                    }
-
-                    Integer count = data.countsPerLevel.get(val);
-                    if (count == null)
-                    {
-                        count = 0;
-                    }
-                    count++;
-
-                    data.countsPerLevel.put(val, count);
-
-                    perField.put(fieldName, data);
-                }
-            }
-
-            private boolean allowForLevel(String val)
-            {
-                //if not numeric, accept it
-                if (!NumberUtils.isCreatable(val))
-                {
-                    return true;
-                }
-
-                //otherwise allow only integers
-                return NumberUtils.isDigits(val);
-            }
-        }
-
-        private class FieldData
-        {
-            int nonNull = 0;
-            Map<String, Integer> countsPerLevel = new HashMap<>(20);
-        }
-
-        public static void filterCodingPotential(Set<String> codingPotential)
-        {
-            //due to overlapping transcripts, this is often added.  remove these less-specific terms in order
-            for (String type : Arrays.asList("intragenic_variant", "non_coding_transcript_variant", "intron_variant"))
-            {
-                if (codingPotential.size() > 1)
-                {
-                    codingPotential.remove(type);
-                }
-            }
-
-            if (codingPotential.contains("synonymous_variant") || codingPotential.contains("missense_variant"))
-            {
-                codingPotential.remove("intragenic_variant");
-                codingPotential.remove("non_coding_transcript_variant");
-                codingPotential.contains("intron_variant");
-            }
-        }
-
-        private void generateSummary(JobContext ctx, File variantsToTable, File output, File outputPerValue, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
-        {
-            ctx.getLogger().info("reading variant table");
-            int lineNo = 0;
-            FieldTracker tracker = new FieldTracker(130);
-            try (BufferedReader reader = Readers.getReader(variantsToTable))
-            {
-                lineNo++;
-                if (lineNo % 500000 == 0)
-                {
-                    ctx.getLogger().info("processed " + lineNo + " lines");
-                }
-
-                String lineStr;
-                List<String> header = new ArrayList<>();
-                int lineCount = 0;
-                while ((lineStr = reader.readLine()) != null)
-                {
-                    String[] line = lineStr.split("\t");
-                    lineCount++;
-                    if (lineCount == 1)
-                    {
-                        //skip header
-                        header = Arrays.asList(line);
-                        continue;
-                    }
-
-                    //skip basic site information, but do include CHROM, since that might be useful to see summarized
-                    for (int i = 4; i < line.length; i++)
-                    {
-                        tracker.add(header.get(i), line[i]);
-                    }
-                }
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
-
-            ctx.getLogger().info("writing summary tables");
-            try (CSVWriter writer = new CSVWriter(IOUtil.openFileForBufferedWriting(output), '\t', CSVWriter.NO_QUOTE_CHARACTER); CSVWriter valWriter = new CSVWriter(IOUtil.openFileForBufferedWriting(outputPerValue), '\t', CSVWriter.NO_QUOTE_CHARACTER))
-            {
-                writer.writeNext(new String[]{"Field", "Category", "NonNull", "TotalDistinct", "Levels"});
-                for (String fn : new TreeSet<>(tracker.perField.keySet()))
-                {
-                    FieldData data = tracker.perField.get(fn);
-
-                    String vals = "";
-                    if (data.countsPerLevel.size() < 10)
-                    {
-                        vals = StringUtils.join(data.countsPerLevel.keySet(), ",");
-                    }
-
-                    writer.writeNext(new String[]{fn, "None", String.valueOf(data.nonNull), (data.countsPerLevel.isEmpty() ? "" : String.valueOf(data.countsPerLevel.size())), vals});
-                }
-
-                valWriter.writeNext(new String[]{"Field", "Level", "Total"});
-                valWriter.writeNext(new String[]{"Counts", "TotalVariants", String.valueOf(totalVariants)});
-                valWriter.writeNext(new String[]{"Counts", "TotalPrivateVariants", String.valueOf(totalPrivateVariants)});
-                valWriter.writeNext(new String[]{"Counts", "TotalSamples", String.valueOf(totalSubjects)});
-
-                for (VariantContext.Type type : typeCounts.keySet())
-                {
-                    valWriter.writeNext(new String[]{"VariantType", type.name(), String.valueOf(typeCounts.get(type))});
-                }
-
-                for (String fn : new TreeSet<>(tracker.perField.keySet()))
-                {
-                    FieldData data = tracker.perField.get(fn);
-                    for (String val : data.countsPerLevel.keySet())
-                    {
-                        valWriter.writeNext(new String[]{fn, val, String.valueOf(data.countsPerLevel.get(val))});
-                    }
-                }
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
+            new mGapSummarizer().generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
         }
 
         private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omimIds, Collection<String> omimPhenotypes, Logger log, String identifier)
