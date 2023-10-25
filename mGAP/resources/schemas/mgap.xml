@@ -456,7 +456,7 @@
             </column>
             <column columnName="af">
                 <columnTitle>Allele Frequency</columnTitle>
-                <formatString>##0.###</formatString>
+                <formatString>##0.######</formatString>
             </column>
             <column columnName="cadd">
                 <columnTitle>CADD Score</columnTitle>

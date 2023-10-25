@@ -581,8 +581,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 addToolFieldNames("Funcotator", "-ff", options, multiAnnotated.getParentFile(), output, liftFields);
             }
 
-            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output, liftFields, SOURCE_FIELDS);
-            addToolFieldNames("SnpSift", "-rssf", options, multiAnnotated.getParentFile(), output, liftFields, TARGET_FIELDS);
+            addToolFieldNames("SnpSift", "-ssf", options, multiAnnotated.getParentFile(), output, liftFields, SOURCE_FIELDS, true, "dbNSFP_");
+            addToolFieldNames("SnpSift", "-rssf", options, multiAnnotated.getParentFile(), output, liftFields, TARGET_FIELDS, false, null);
 
             maRunner.execute(inputVCF, cassandraAnnotatedBackport, clinvarAnnotatedBackport, liftoverRejects, funcotatorAnnotatedBackport, snpSiftAnnotatedBackport, multiAnnotated, options);
         }
@@ -608,12 +608,22 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
     private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields) throws PipelineJobException
     {
-        addToolFieldNames(toolName, argName, options, outDir, output, extraFields, TARGET_FIELDS);
+        addToolFieldNames(toolName, argName, options, outDir, output, extraFields, TARGET_FIELDS, false, null);
     }
 
-    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields, @Nullable String type) throws PipelineJobException
+    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields, @Nullable String type, boolean replaceProblematicChars, @Nullable String prefix) throws PipelineJobException
     {
         List<String> fields = getCachedFields(type, toolName);
+        if (replaceProblematicChars)
+        {
+            fields = fields.stream().map(x -> x.replaceAll("\\+", "_")).map(x -> x.replaceAll("-", "_")).toList();
+        }
+
+        if (prefix != null)
+        {
+            fields = fields.stream().map(x -> prefix + x).toList();
+        }
+
         File fieldFile = new File(outDir, toolName + "Fields.args");
         try (PrintWriter writer = PrintWriters.getPrintWriter(fieldFile))
         {
