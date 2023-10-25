@@ -157,6 +157,12 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return 48;
         }
 
+        if (isLuceneIndexJob(job))
+        {
+            job.getLogger().debug("setting memory to 128");
+            return 128;
+        }
+
         Long totalFileSize = getFileSize(job);
         if (UNABLE_TO_DETERMINE.equals(totalFileSize))
         {
