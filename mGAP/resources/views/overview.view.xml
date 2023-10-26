@@ -6,5 +6,10 @@
         <dependency path="ldk.context"/>
         <dependency path="internal/jQuery"/>
         <dependency path="https://cdn.plot.ly/plotly-latest.min.js"/>
+        <dependency path="https://code.jquery.com/jquery-3.6.0.js"/>
+        <dependency path="https://code.jquery.com/ui/1.13.2/jquery-ui.js"/>
+        <dependency path="https://kit.fontawesome.com/d2fb21907d.js"/>
+        <dependency path="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"/>
+        <dependency path="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css"/>
     </dependencies>
 </view>
