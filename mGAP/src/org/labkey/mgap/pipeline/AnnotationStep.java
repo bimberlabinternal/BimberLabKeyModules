@@ -574,6 +574,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 needToSubsetToInterval = false;
             }
 
+            options.add("--throw-on-missing-fields");
+
             final List<String> liftFields = Arrays.asList("LiftedContig", "LiftedStart", "LiftedStop", "ReverseComplementedAlleles");
 
             if (useFuncotator)
