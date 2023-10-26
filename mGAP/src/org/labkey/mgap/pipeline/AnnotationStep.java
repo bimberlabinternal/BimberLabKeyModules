@@ -624,6 +624,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
             fields = fields.stream().map(x -> prefix + x).toList();
         }
 
+        if (!fields.isEmpty())
+        {
+            getPipelineCtx().getLogger().debug("First field for tool: " + toolName + ", arg: " + argName + ", was: " + fields.get(0));
+        }
+
         File fieldFile = new File(outDir, toolName + "Fields.args");
         try (PrintWriter writer = PrintWriters.getPrintWriter(fieldFile))
         {
