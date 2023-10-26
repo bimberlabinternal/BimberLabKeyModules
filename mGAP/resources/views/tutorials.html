@@ -1,0 +1,38 @@
+<script type="text/javascript">
+    (function($){
+        $( document ).ready(function() {
+            const videos = [{
+                Title: 'Overview',
+                src: 'overview',
+            },{
+                Title: 'Genome Browser Overview',
+                src: 'genome-browser',
+            },{
+                Title: 'Phenotypes and Phenotype Searches',
+                src: 'phenotypes-and-models',
+            },{
+                Title: 'Using the Variant Table',
+                src: 'mgap-table-view-tutorial',
+            }]
+
+            // $('#tileview').dxTileView({
+            //     items: videos,
+            //     height: 390,
+            //     baseItemHeight: 120,
+            //     baseItemWidth: 185,
+            //     itemMargin: 10,
+            //     itemTemplate(itemData, itemIndex, itemElement) {
+            //         const $image = $('<div>')
+            //                 .addClass('image')
+            //                 .css('background-image', `url(${itemData.src})`);
+            //
+            //         itemElement
+            //                 .append(`<div>${itemData.Title}</div>`)
+            //                 .append($image);
+            //     },
+            // });
+        });
+    })(jQuery);
+</script>
+
+<div id="tileview">Videos will be added shortly</div>
