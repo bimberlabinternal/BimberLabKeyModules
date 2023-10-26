@@ -1,0 +1,11 @@
+<view xmlns="http://labkey.org/data/xml/view" title="mGAP Tutorials">
+    <permissions>
+        <permission name="read"/>
+    </permissions>
+    <dependencies>
+        <dependency path="ldk.context"/>
+        <dependency path="internal/jQuery"/>
+        <dependency path="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"/>
+        <dependency path="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"/>
+    </dependencies>
+</view>
