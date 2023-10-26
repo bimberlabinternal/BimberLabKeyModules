@@ -14,16 +14,30 @@
 <script>
     $( function() {
         $( "i.mgap-help" ).on("click", function(e){
-            const video = $(e.target).attr('data-video');
+            const el = $(e.target);
+            const video = el.attr('data-video');
+            const title = el.attr('data-video-title') || 'mGAP Help';
+
             LDK.Assert.assertNotEmpty('Missing data-video attribute.', video);
             const videoURL = LABKEY.ActionURL.getContextPath() + '/mgap/videos/' + video + ".mp4";
 
-            $('<div class="modal">' +
+            $('<div>' +
                 '<video width="100%" controls>' +
                     'Your browser does not support the video tag.' +
                 '<source src="' + videoURL + '" type="video/mp4" />' +
                 '</video>' +
-            '</div>').appendTo('body').modal()
+            '</div>').dialog({
+                width: '60%',
+                modal: true,
+                title: title,
+                close: function(event, ui) {
+                    $(this).remove();
+                },
+                open : function(event, ui){
+                    console.log('open')
+                    $(this).closest('[role="dialog"]').css({ opacity: '.9' });
+                }
+            });
         });
     } );
 </script>
