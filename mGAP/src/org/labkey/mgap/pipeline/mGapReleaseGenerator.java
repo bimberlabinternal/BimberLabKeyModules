@@ -884,7 +884,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         SequenceOutputFile output = new SequenceOutputFile();
                         output.setFile(renamedVcf);
                         output.setName(track.getTrackName());
-                        output.setCategory("Release Track");
+                        output.setCategory(GenerateMgapTracksStep.TRACK_CATEGORY);
                         output.setLibrary_id(genome.getGenomeId());
                         ctx.getFileManager().addSequenceOutput(output);
                     }
