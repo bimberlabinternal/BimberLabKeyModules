@@ -130,10 +130,8 @@ mGAP.Utils = (function($){
 
                     var data2 = map.AnnotationSummary || {};
                     var annotationData = [];
-                    annotationData.push(data2['GWAS Associations (GRASP)'] || 0);
                     annotationData.push(data2['Enhancer Region (FANTOM5)'] || 0);
-                    annotationData.push(data2['Predicted Enhancer (ENCODE)'] || 0);
-                    annotationData.push(data2['Transcription Factor Binding (ENCODE)'] || 0);
+                    annotationData.push(data2['Transcription Factor Binding (FANTOM5)'] || 0);
                     annotationData.push(data2['Predicted High Impact (SnpEff)'] || 0);
                     annotationData.push(data2['Damaging (Polyphen2)'] || 0);
                     annotationData.push(data2['ClinVar Overlap'] || 0);
