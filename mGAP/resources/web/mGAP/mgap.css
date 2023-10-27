@@ -7,3 +7,7 @@
 html {
     font-size: 14px; !important;
 }
+
+.mgap-video-icon {
+    cursor: help;
+}

@@ -227,6 +227,24 @@ mGAP.Utils = (function($){
             var ctx = LABKEY.getModuleContext('mgap') || {};
 
             return ctx['mgapReleaseVersion'];
+        },
+
+        showVideoDialog: function(videoName, title) {
+            const videoURL = LABKEY.ActionURL.getContextPath() + '/mgap/videos/' + videoName + ".mp4";
+
+            $('<div>' +
+                    '<video width="100%" controls>' +
+                    'Your browser does not support the video tag.' +
+                    '<source src="' + videoURL + '" type="video/mp4" />' +
+                    '</video>' +
+                    '</div>').dialog({
+                width: '60%',
+                modal: true,
+                title: title || 'mGAP Help',
+                close: function(event, ui) {
+                    $(this).remove();
+                }
+            });
         }
     }
 })(jQuery);

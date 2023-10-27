@@ -92,7 +92,7 @@ import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
-import org.labkey.mgap.pipeline.mGapReleaseGenerator;
+import org.labkey.mgap.pipeline.mGapSummarizer;
 import org.labkey.security.xml.GroupEnumType;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -197,6 +197,7 @@ public class mGAPController extends SpringActionController
                 row.put("lastName", form.getLastName());
                 row.put("title", form.getTitle());
                 row.put("institution", form.getInstitution());
+                row.put("category", form.getCategory());
                 row.put("reason", form.getReason());
                 row.put("container", mGAPManager.get().getMGapContainer().getId());
 
@@ -259,6 +260,7 @@ public class mGAPController extends SpringActionController
         private String lastName;
         private String title;
         private String institution;
+        private String category;
         private String reason;
 
         public void setEmail(String email)
@@ -319,6 +321,16 @@ public class mGAPController extends SpringActionController
         public void setInstitution(String institution)
         {
             this.institution = institution;
+        }
+
+        public String getCategory()
+        {
+            return category;
+        }
+
+        public void setCategory(String category)
+        {
+            this.category = category;
         }
 
         public String getReason()
@@ -792,7 +804,7 @@ public class mGAPController extends SpringActionController
                             codingPotential.addAll(Arrays.asList(types));
                         }
 
-                        mGapReleaseGenerator.Processor.filterCodingPotential(codingPotential);
+                        mGapSummarizer.filterCodingPotential(codingPotential);
                         //coding potential:
                         String type = StringUtils.join(new TreeSet<>(codingPotential), ";");
                         Long v = map.getOrDefault(type, 0L);
