@@ -3,36 +3,53 @@
         $( document ).ready(function() {
             const videos = [{
                 Title: 'Overview',
-                src: 'overview',
+                name: 'overview',
             },{
                 Title: 'Genome Browser Overview',
-                src: 'genome-browser',
+                name: 'genome-browser',
             },{
                 Title: 'Phenotypes and Phenotype Searches',
-                src: 'phenotypes-and-models',
+                name: 'phenotypes-and-models',
+            },{
+                Title: 'Predicted Damaging Variant List',
+                name: 'predicted-damaging-variants',
             },{
                 Title: 'Using the Variant Table',
-                src: 'mgap-table-view-tutorial',
+                name: 'mgap-table-view-tutorial',
             }]
 
-            // $('#tileview').dxTileView({
-            //     items: videos,
-            //     height: 390,
-            //     baseItemHeight: 120,
-            //     baseItemWidth: 185,
-            //     itemMargin: 10,
-            //     itemTemplate(itemData, itemIndex, itemElement) {
-            //         const $image = $('<div>')
-            //                 .addClass('image')
-            //                 .css('background-image', `url(${itemData.src})`);
-            //
-            //         itemElement
-            //                 .append(`<div>${itemData.Title}</div>`)
-            //                 .append($image);
-            //     },
-            // });
+            videos.forEach(itemData => {
+                const videoURL = LABKEY.ActionURL.getContextPath() + '/mgap/videos/' + itemData.name + ".mp4";
+
+                const $video = $(`<video src="${videoURL}" type="video/mp4" alt="Overview" width="200"/>`)
+                        .css('background-image', `url(${videoURL})`)
+                        .attr('data-video', itemData.name)
+                        .attr('data-video-title', itemData.Title)
+                        .addClass('mgap-video-icon')
+                        .css('border', 'solid')
+                        .on("click", function(e){
+                            const el = $(e.target);
+                            const videoName = el.attr('data-video');
+                            const title = el.attr('data-video-title');
+
+                            mGAP.Utils.showVideoDialog(videoName, title);
+                        });
+
+                const $div = $('<div>')
+                        .css('float', 'left')
+                        .css('text-align', 'center')
+                        .css('margin', '10px')
+                        .css('width', '245')
+                        .css('height', '175')
+                        .append(`<div>${itemData.Title}</div>`)
+                        .append($video)
+
+                $('div.thumbnail-panel').append($div)
+            })
         });
     })(jQuery);
 </script>
 
-<div id="tileview">Videos will be added shortly</div>
+Click any of the thumbnails below to view the help video. If you have additional questions, <a href="<%=contextPath%><%=containerPath%>/mgap-contact.view">click here</a> to send a help or feature request, or email <a href="mailto:mgap@ohsu.edu">mgap@ohsu.edu</a>.
+<br><br>
+<div class="thumbnail-panel" />
