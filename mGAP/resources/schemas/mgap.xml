@@ -362,6 +362,10 @@
                 <columnTitle>Institution</columnTitle>
                 <nullable>false</nullable>
             </column>
+            <column columnName="category">
+                <columnTitle>Category</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="reason">
                 <columnTitle>Reason For Request</columnTitle>
                 <nullable>false</nullable>

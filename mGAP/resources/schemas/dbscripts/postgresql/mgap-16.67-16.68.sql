@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.userRequests ADD category varchar(1000);
