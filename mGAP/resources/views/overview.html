@@ -23,6 +23,12 @@
             mGAP.Utils.showVideoDialog(videoName, title);
         });
     } );
+
+    $(document).on('click', function(event) {
+        if (!$(event.target).closest('.ui-dialog').length && !$(event.target).closest('.ui-dialog-buttonpane').length) {
+            $(".ui-dialog-content").dialog("close");
+        }
+    }); 
 </script>
 <div class="colDiv">
     <div style="flex: 1;margin-right: 20px;">

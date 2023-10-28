@@ -241,6 +241,9 @@ mGAP.Utils = (function($){
                 title: title || 'mGAP Help',
                 close: function(event, ui) {
                     $(this).remove();
+                },
+                open: function(event, ui) {
+                    $('.ui-dialog-titlebar-close').attr('title', '');
                 }
             });
         }
