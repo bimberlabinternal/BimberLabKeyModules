@@ -3,10 +3,13 @@ package org.labkey.mgap.pipeline;
 import htsjdk.samtools.util.Interval;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
@@ -55,7 +58,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
     {
         // find/cache annotations:
         Container targetContainer = getPipelineCtx().getJob().getContainer().isWorkbook() ? getPipelineCtx().getJob().getContainer().getParent() : getPipelineCtx().getJob().getContainer();
-        ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey")).getArrayList(String.class);
+        ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getPipelineCtx().getJob().getUser(), targetContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey"), new SimpleFilter(FieldKey.fromString("category"), "Legacy Fields", CompareType.NEQ_OR_NULL), null).getArrayList(String.class);
 
         getPipelineCtx().getSequenceSupport().cacheObject(INFO_FIELDS, infoFields);
     }

@@ -52,6 +52,11 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("SequenceNormalizationTask"));
     }
 
+    private boolean isLuceneIndexJob(PipelineJob job)
+    {
+        return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("JBrowseLuceneTask"));
+    }
+
     private boolean isSequenceAlignmentTask(PipelineJob job)
     {
         return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("SequenceAlignmentTask"));
@@ -88,6 +93,11 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             job.getLogger().debug("setting max CPUs to 8");
             return 8;
+        }
+        if (isLuceneIndexJob(job))
+        {
+            job.getLogger().debug("setting max CPUs to 24");
+            return 24;
         }
 
         Long totalFileSize = getFileSize(job);
@@ -145,6 +155,12 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             job.getLogger().debug("setting memory to 48");
             return 48;
+        }
+
+        if (isLuceneIndexJob(job))
+        {
+            job.getLogger().debug("setting memory to 128");
+            return 128;
         }
 
         Long totalFileSize = getFileSize(job);
