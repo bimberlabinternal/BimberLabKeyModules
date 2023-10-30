@@ -230,6 +230,12 @@ mGAP.Utils = (function($){
         showVideoDialog: function(videoName, title) {
             const videoURL = LABKEY.ActionURL.getContextPath() + '/mgap/videos/' + videoName + ".mp4";
 
+            const eventListener = function(event) {
+                if (!$(event.target).closest('.ui-dialog').length && !$(event.target).closest('.ui-dialog-buttonpanel').length) {
+                    $(".ui-dialog-content").dialog("close");
+                }
+            }
+
             $('<div>' +
                     '<video width="100%" controls>' +
                     'Your browser does not support the video tag.' +
@@ -241,9 +247,11 @@ mGAP.Utils = (function($){
                 title: title || 'mGAP Help',
                 close: function(event, ui) {
                     $(this).remove();
+                    $(document).off('click', eventListener)
                 },
                 open: function(event, ui) {
                     $('.ui-dialog-titlebar-close').attr('title', '');
+                    $(document).on('click', eventListener);
                 }
             });
         }
