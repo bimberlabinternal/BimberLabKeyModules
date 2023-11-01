@@ -60,7 +60,15 @@
                 name: 'category',
                 width: 500,
                 allowBlank: false,
-                storeValues: ['Academic/NPRC', 'Academic/Non-NPRC', 'Foundation', 'Industry', 'Other']
+                storeValues: ['NPRC', 'Academic/Non-NPRC', 'Foundation', 'Industry', 'NIH', 'Other']
+            },{
+                xtype: 'ldk-simplecombo',
+                labelWidth: 130,
+                fieldLabel: 'Country',
+                name: 'country',
+                width: 500,
+                allowBlank: false,
+                storeValues: ['United States', 'International']
             },{
                 xtype: 'textarea',
                 labelAlign: 'top',
@@ -86,7 +94,7 @@
                     }
 
                     var values = form.getValues();
-                    if (values.email != values.emailConfirmation){
+                    if (values.email !== values.emailConfirmation){
                         Ext4.Msg.alert('Error', 'Emails do not match');
                         return;
                     }

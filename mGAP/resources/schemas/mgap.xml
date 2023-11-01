@@ -366,6 +366,10 @@
                 <columnTitle>Category</columnTitle>
                 <nullable>true</nullable>
             </column>
+            <column columnName="country">
+                <columnTitle>Country</columnTitle>
+                <nullable>true</nullable>
+            </column>
             <column columnName="reason">
                 <columnTitle>Reason For Request</columnTitle>
                 <nullable>false</nullable>
