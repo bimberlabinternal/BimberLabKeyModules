@@ -39,7 +39,6 @@ import javax.mail.Address;
 import javax.mail.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -47,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -285,14 +285,27 @@ public class TriggerHelper
 
         try
         {
+            AtomicInteger aliasesReused = new AtomicInteger(0);
             final List<Map<String, Object>> toAdd = new ArrayList<>();
             ids.forEach(id -> {
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
                 row.put("subjectname", id);
+                if (existingAliases.containsKey(id))
+                {
+                    _log.info("Will re-use existing MCC alias: " + existingAliases.get(id) + ", for ID: " + id);
+                    aliasesReused.getAndIncrement();
+                }
+
                 row.put("externalAlias", existingAliases.get(id)); //NOTE: the trigger script will auto-assign a value if null, but we need to include this property on the input JSON
 
                 toAdd.add(row);
             });
+
+            if (existingAliases != null && !existingAliases.isEmpty() && aliasesReused.get() != existingAliases.size())
+            {
+                _log.info("The existing aliases map does not equal the number of aliases actually used, which was: " + aliasesReused.get());
+                _log.info(existingAliases);
+            }
 
             BatchValidationException bve = new BatchValidationException();
             ti.getUpdateService().insertRows(_user, _container, toAdd, bve, null, null);
