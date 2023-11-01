@@ -69,7 +69,7 @@ public class MccTest extends BaseWebDriverTest
 
     private static final String ANIMAL_DATA_HEADER = "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight(grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailalble to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n";
 
-    private static final String ANIMAL_DATA1 = "Animal1\t\t\t7/10/2011\t0 - male\tDam1\tSire1\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
+    private static final String ANIMAL_DATA1 = "12345\t\t\t7/10/2011\t0 - male\tDam1\t3939\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
 
 
     private static final String ANIMAL_DATA2 = "Animal2\t\t\t6/3/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
@@ -148,7 +148,7 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(0, "colony"));
         Assert.assertEquals("Incorrect Source", "SNPRC", dr.getDataAsText(0, "source"));
 
-        // These were inserted using a cross-folder SaveRows, and this check ensures the trigger script containerPath and serverContex works as expected:
+        // These were inserted using a cross-folder SaveRows, and this check ensures the trigger script containerPath and serverContext work as expected:
         SelectRowsCommand sr = new SelectRowsCommand("study", "demographics");
         sr.setColumns(Arrays.asList("Id", "QCState/Label"));
         SelectRowsResponse srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
@@ -201,6 +201,67 @@ public class MccTest extends BaseWebDriverTest
             Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
         });
 
+        // One more transfer, this time assigning a new ID:
+        beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "View Study Datasets"));
+        waitAndClickAndWait(Locator.tagWithText("a", "Demographics"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        dr.uncheckAllOnPage();
+        int rowIdx = 0;
+        dr.checkCheckbox(rowIdx); //12345
+        Assert.assertEquals("Incorrect ID", "12345", dr.getDataAsText(rowIdx, "Id"));
+        Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(rowIdx, "Status"));
+        mccId = dr.getDataAsText(rowIdx, "MCC Alias");
+        dr.clickHeaderMenu("More Actions", false, "Mark Animal Shipped");
+
+        new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
+        Ext4FieldRef.getForLabel(this, "Effective Date").setValue(new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+        combo = Ext4ComboRef.getForLabel(this, "Destination Center Name");
+        combo.waitForStoreLoad();
+        sleep(200);
+        combo.waitForStoreLoad();
+        combo.clickTrigger();
+        waitAndClick(Locator.tagContainingText("li", "Other").notHidden());
+
+        dialog = new Window.WindowFinder(getDriver()).withTitle("Enter Value").waitFor();
+        dialog.findElement(Locator.tag("input")).sendKeys("TargetColony2");
+        waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
+        sleep(100);
+
+        Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
+        Ext4FieldRef.getForLabel(this, "New ID (blank if unchanged)").setValue("TheNewId");
+        waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
+
+        new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
+        waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        Assert.assertEquals("Incorrect ID", "12345", dr.getDataAsText(rowIdx, "Id"));
+        Assert.assertEquals("Incorrect Status", "<Shipped>", dr.getDataAsText(rowIdx, "Status"));
+        Assert.assertEquals("Incorrect Value", "true", dr.getDataAsText(rowIdx, "Exclude From Census?"));
+        Assert.assertEquals("Incorrect Colony", "TargetColony2", dr.getDataAsText(rowIdx, "Current Colony"));
+
+        // Verify result:
+        beginAt(getProjectName() + "/Colonies/Other/project-begin.view");
+        waitAndClickAndWait(Locator.tagWithText("a", "View Study Datasets"));
+        waitAndClickAndWait(Locator.tagWithText("a", "Demographics"));
+
+        dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
+        Assert.assertEquals("Incorrect ID", "TheNewId", dr.getDataAsText(1, "Id"));
+        Assert.assertEquals("Incorrect Alias", mccId, dr.getDataAsText(1, "MCC Alias"));
+        Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(1, "Status"));
+        Assert.assertEquals("Incorrect Colony", "TargetColony2", dr.getDataAsText(1, "colony"));
+        Assert.assertEquals("Incorrect Source", "SNPRC", dr.getDataAsText(1, "source"));
+
+        // These were inserted using a cross-folder SaveRows, and this check ensures the trigger script containerPath and serverContext work as expected:
+        sr = new SelectRowsCommand("study", "demographics");
+        sr.setColumns(Arrays.asList("Id", "QCState/Label"));
+        srr = sr.execute(createDefaultConnection(), getProjectName() + "/Colonies/Other");
+        srr.getRows().forEach(row -> {
+            Assert.assertEquals("Incorrect QCState", "Completed", row.get("QCState/Label"));
+        });
+
         // Now check status update:
         populateLookups("SNPRC"); //status is needed for this to work
         beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
@@ -211,7 +272,7 @@ public class MccTest extends BaseWebDriverTest
         Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(ANIMAL_DATA_HEADER + ANIMAL_DATA1);
 
         waitAndClick(Ext4Helper.Locators.ext4Button("Preview"));
-        waitForElement(Locator.tagWithText("td", "Animal1").withClass("dt-center"));
+        waitForElement(Locator.tagWithText("td", "12345").withClass("dt-center"));
 
         waitAndClick(getButton("Process Missing IDs"));
         new Window.WindowFinder(getDriver()).withTitle("Reconcile Census with Existing IDs").waitFor();
