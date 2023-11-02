@@ -5,7 +5,11 @@
                 <tableTitle>Duplicate MCC Aliases</tableTitle>
                 <columns>
                     <column columnName="mccIds">
+                        <columnTitle>MCC IDs</columnTitle>
                         <url>/query/executeQuery.view?schemaName=${schemaName}&amp;query.queryName=animalMapping&amp;query.subjectname~eq=${subjectname}</url>
+                    </column>
+                    <column columnName="numMccIds">
+                        <columnTitle># MCC IDs</columnTitle>
                     </column>
                 </columns>
             </table>
