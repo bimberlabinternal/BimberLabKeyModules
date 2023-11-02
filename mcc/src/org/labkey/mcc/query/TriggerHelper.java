@@ -260,17 +260,22 @@ public class TriggerHelper
         }
     }
 
-    public int ensureMccAliasExists(Collection<String> ids, Map<String, String> existingAliases)
+    public int ensureMccAliasExists(Collection<String> ids, Map<Object, Object> existingAliases)
     {
         ids = new HashSet<>(ids);
+
+        // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
+        CaseInsensitiveHashMap<String> ciExistingAliases = new CaseInsensitiveHashMap<>();
+        existingAliases.forEach((key, val) -> ciExistingAliases.put(String.valueOf(key), String.valueOf(val)));
+
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN);
 
         final Set<String> aliasesFound = new HashSet<>();
         TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
         new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), filter, null).forEachResults(rs -> {
             aliasesFound.add(rs.getString(FieldKey.fromString("subjectname")));
-            if (existingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
-                if (!existingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
+            if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
+                if (!ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
                 {
                     _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + " does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));
                 }
@@ -290,21 +295,21 @@ public class TriggerHelper
             ids.forEach(id -> {
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
                 row.put("subjectname", id);
-                if (existingAliases.containsKey(id))
+                if (ciExistingAliases.containsKey(id))
                 {
-                    _log.info("Will re-use existing MCC alias: " + existingAliases.get(id) + ", for ID: " + id);
+                    _log.info("Will re-use existing MCC alias: " + ciExistingAliases.get(id) + ", for ID: " + id);
                     aliasesReused.getAndIncrement();
                 }
 
-                row.put("externalAlias", existingAliases.get(id)); //NOTE: the trigger script will auto-assign a value if null, but we need to include this property on the input JSON
+                row.put("externalAlias", ciExistingAliases.get(id)); //NOTE: the trigger script will auto-assign a value if null, but we need to include this property on the input JSON
 
                 toAdd.add(row);
             });
 
-            if (existingAliases != null && !existingAliases.isEmpty() && aliasesReused.get() != existingAliases.size())
+            if (ciExistingAliases != null && !ciExistingAliases.isEmpty() && aliasesReused.get() != ciExistingAliases.size())
             {
-                _log.info("The existing aliases map does not equal the number of aliases actually used, which was: " + aliasesReused.get());
-                _log.info(existingAliases);
+                _log.info("The existing aliases map, size: " + ciExistingAliases.size() + " does not equal the number of aliases actually used, which was: " + aliasesReused.get());
+                _log.info(ciExistingAliases);
             }
 
             BatchValidationException bve = new BatchValidationException();

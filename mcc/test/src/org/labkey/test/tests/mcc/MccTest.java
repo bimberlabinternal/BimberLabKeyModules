@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.labkey.remoteapi.query.ContainerFilter;
 import org.labkey.remoteapi.query.Filter;
 import org.labkey.remoteapi.query.SelectRowsCommand;
 import org.labkey.remoteapi.query.SelectRowsResponse;
@@ -71,13 +72,14 @@ public class MccTest extends BaseWebDriverTest
 
     private static final String ANIMAL_DATA1 = "12345\t\t\t7/10/2011\t0 - male\t23456\t23453\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
 
-
     private static final String ANIMAL_DATA2 = "Animal2\t\t\t6/3/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
 
     private static final String ANIMAL_DATA3 = "Animal3\t\t\t6/4/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal";
 
     private void testAnimalImportAndTransfer() throws Exception
     {
+        checkForDuplicateAliases();
+
         beginAt(getProjectName() + "/Colonies/SNPRC/project-begin.view");
         waitAndClickAndWait(Locator.tagWithText("a", "Import Excel-Based Data"));
         waitForElement(Locator.tagWithText("label", "Paste Data Below:"));
@@ -100,6 +102,8 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(1, "Id"));
         Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(1, "Status"));
         String mccId = dr.getDataAsText(1, "MCC Alias");
+        Assert.assertFalse("Missing Dam MCC ID", dr.getDataAsText(1, "damMccAlias").isEmpty());
+        Assert.assertFalse("Missing Sire MCC ID", dr.getDataAsText(1, "sireMccAlias").isEmpty());
 
         dr.clickHeaderMenu("More Actions", false, "Mark Animal Shipped");
 
@@ -137,6 +141,7 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect Colony", "TargetColony", dr.getDataAsText(1, "Current Colony"));
 
         // Verify result:
+        checkForDuplicateAliases();
         beginAt(getProjectName() + "/Colonies/Other/project-begin.view");
         waitAndClickAndWait(Locator.tagWithText("a", "View Study Datasets"));
         waitAndClickAndWait(Locator.tagWithText("a", "Demographics"));
@@ -182,6 +187,7 @@ public class MccTest extends BaseWebDriverTest
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
         waitAndClickAndWait(Ext4Helper.Locators.ext4Button("OK"));
 
+        checkForDuplicateAliases();
         dr = DataRegionTable.DataRegion(getDriver()).withName("Dataset").waitFor();
         Assert.assertEquals("Incorrect ID", "Animal2", dr.getDataAsText(0, "Id"));
         Assert.assertEquals("Incorrect Alias", mccId, dr.getDataAsText(0, "MCC Alias"));
@@ -213,6 +219,8 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect ID", "12345", dr.getDataAsText(rowIdx, "Id"));
         Assert.assertEquals("Incorrect Status", "<Alive>", dr.getDataAsText(rowIdx, "Status"));
         mccId = dr.getDataAsText(rowIdx, "MCC Alias");
+        Assert.assertFalse("Missing Dam MCC ID", dr.getDataAsText(rowIdx, "damMccAlias").isEmpty());
+        Assert.assertFalse("Missing Sire MCC ID", dr.getDataAsText(rowIdx, "sireMccAlias").isEmpty());
         dr.clickHeaderMenu("More Actions", false, "Mark Animal Shipped");
 
         new Window.WindowFinder(getDriver()).withTitle("Mark ID Shipped").waitFor();
@@ -243,6 +251,7 @@ public class MccTest extends BaseWebDriverTest
         Assert.assertEquals("Incorrect Colony", "TargetColony2", dr.getDataAsText(rowIdx, "Current Colony"));
 
         // Verify result:
+        checkForDuplicateAliases();
         beginAt(getProjectName() + "/Colonies/Other/project-begin.view");
         waitAndClickAndWait(Locator.tagWithText("a", "View Study Datasets"));
         waitAndClickAndWait(Locator.tagWithText("a", "Demographics"));
@@ -1048,5 +1057,17 @@ public class MccTest extends BaseWebDriverTest
     public List<String> getAssociatedModules()
     {
         return Collections.singletonList("Mcc");
+    }
+
+    private void checkForDuplicateAliases() throws Exception
+    {
+        SelectRowsCommand cmd = new SelectRowsCommand("mcc", "duplicateAliases");
+        cmd.setContainerFilter(ContainerFilter.AllFolders);
+        cmd.setColumns(Collections.singletonList("subjectname"));
+        cmd.addFilter(new Filter("numMccIds", 1, Filter.Operator.GT));
+
+        SelectRowsResponse srr = cmd.execute(createDefaultConnection(), getProjectName());
+        List<String> duplicates = srr.getRows().stream().map(r -> r.get("subjectname").toString()).toList();
+        Assert.assertEquals("Duplicate aliases found: " + StringUtils.join(duplicates, ", "), 0, duplicates.size());
     }
 }
