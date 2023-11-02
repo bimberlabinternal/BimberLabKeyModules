@@ -17,7 +17,9 @@
             </properties>
         </column>
         <column name="dam"/>
+        <column name="damMccAlias"/>
         <column name="sire"/>
+        <column name="sireMccAlias"/>
         <column name="birth"/>
         <column name="death"/>
         <column name="species"/>

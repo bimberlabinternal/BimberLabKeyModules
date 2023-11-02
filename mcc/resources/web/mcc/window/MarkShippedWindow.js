@@ -226,9 +226,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         schemaName: 'study',
                         queryName: 'Demographics',
                         rows: [{
-                            Id: newId,
+                            Id: row.Id,
                             date: effectiveDate,
-                            alternateIds: row.Id !== newId ? row.Id : null,
+                            alternateIds: null,
                             gender: row.gender,
                             species: row.species,
                             birth: row.birth,
