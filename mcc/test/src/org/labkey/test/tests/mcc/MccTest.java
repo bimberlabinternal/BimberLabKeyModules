@@ -69,7 +69,7 @@ public class MccTest extends BaseWebDriverTest
 
     private static final String ANIMAL_DATA_HEADER = "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight(grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailalble to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n";
 
-    private static final String ANIMAL_DATA1 = "12345\t\t\t7/10/2011\t0 - male\tDam1\t3939\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
+    private static final String ANIMAL_DATA1 = "12345\t\t\t7/10/2011\t0 - male\t23456\t23453\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family group\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
 
 
     private static final String ANIMAL_DATA2 = "Animal2\t\t\t6/3/2015\t1 - female\tDam2\tSire2\t361.2\t1/28/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t2 - active breeding\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
@@ -269,7 +269,7 @@ public class MccTest extends BaseWebDriverTest
         waitForElement(Locator.tagWithText("label", "Paste Data Below:"));
         Ext4FieldRef.getForLabel(this, "Center/Colony Name").setValue("SNPRC");
 
-        Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(ANIMAL_DATA_HEADER + ANIMAL_DATA1);
+        Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(ANIMAL_DATA_HEADER + ANIMAL_DATA3.replaceAll("Animal3", "ANewId"));
 
         waitAndClick(Ext4Helper.Locators.ext4Button("Preview"));
         waitForElement(Locator.tagWithText("td", "12345").withClass("dt-center"));
