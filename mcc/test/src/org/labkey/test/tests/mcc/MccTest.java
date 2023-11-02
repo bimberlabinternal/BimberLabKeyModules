@@ -272,7 +272,7 @@ public class MccTest extends BaseWebDriverTest
         Ext4FieldRef.getForLabel(this, "Paste Data Below").setValue(ANIMAL_DATA_HEADER + ANIMAL_DATA3.replaceAll("Animal3", "ANewId"));
 
         waitAndClick(Ext4Helper.Locators.ext4Button("Preview"));
-        waitForElement(Locator.tagWithText("td", "Animal3").withClass("dt-center"));
+        waitForElement(Locator.tagWithText("td", "ANewId").withClass("dt-center"));
 
         waitAndClick(getButton("Process Missing IDs"));
         new Window.WindowFinder(getDriver()).withTitle("Reconcile Census with Existing IDs").waitFor();
