@@ -28,11 +28,7 @@
                         .addClass('mgap-video-icon')
                         .css('border', 'solid')
                         .on("click", function(e){
-                            const el = $(e.target);
-                            const videoName = el.attr('data-video');
-                            const title = el.attr('data-video-title');
-
-                            mGAP.Utils.showVideoDialog(videoName, title);
+                            mGAP.Utils.showVideoDialog(e);
                         });
 
                 const $div = $('<div>')

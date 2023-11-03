@@ -14,15 +14,7 @@
 <script>
     $( function() {
         $( "i.mgap-video-icon" ).on("click", function(e){
-            const el = $(e.target);
-            const videoName = el.attr('data-video');
-            const title = el.attr('data-video-title');
-
-            LDK.Assert.assertNotEmpty('Missing data-video attribute.', videoName);
-
-            e.preventDefault();
-            e.stopPropagation();
-            mGAP.Utils.showVideoDialog(videoName, title);
+            mGAP.Utils.showVideoDialog(e);
         });
     } );
 </script>

@@ -227,8 +227,16 @@ mGAP.Utils = (function($){
             return ctx['mgapReleaseVersion'];
         },
 
-        showVideoDialog: function(videoName, title) {
+        showVideoDialog: function(e) {
+            const el = $(e.target);
+            const videoName = el.attr('data-video');
+            const title = el.attr('data-video-title');
+
+            LDK.Assert.assertNotEmpty('Missing data-video attribute.', videoName);
             const videoURL = LABKEY.ActionURL.getContextPath() + '/mgap/videos/' + videoName + ".mp4";
+
+            e.preventDefault();
+            e.stopPropagation();
 
             const eventListener = function(event) {
                 if (!$(event.target).closest('.ui-dialog').length && !$(event.target).closest('.ui-dialog-buttonpanel').length) {
@@ -244,13 +252,13 @@ mGAP.Utils = (function($){
                     '</div>').dialog({
                 width: '60%',
                 modal: true,
+                closeText: '',
                 title: title || 'mGAP Help',
                 close: function(event, ui) {
                     $(this).remove();
                     $(document).off('click', eventListener)
                 },
                 open: function(event, ui) {
-                    $('.ui-dialog-titlebar-close').attr('title', '');
                     $(document).on('click', eventListener);
                 }
             });
