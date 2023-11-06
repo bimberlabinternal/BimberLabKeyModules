@@ -557,22 +557,10 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
 
     private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields) throws PipelineJobException
     {
-        addToolFieldNames(toolName, argName, options, outDir, output, extraFields, TARGET_FIELDS, false, null);
-    }
+        List<String> fields = getCachedFields(TARGET_FIELDS, toolName);
 
-    private void addToolFieldNames(String toolName, String argName, List<String> options, File outDir, VariantProcessingStepOutputImpl output, @Nullable List<String> extraFields, @Nullable String type, boolean replaceProblematicChars, @Nullable String prefix) throws PipelineJobException
-    {
-        List<String> fields = getCachedFields(type, toolName);
-        if (replaceProblematicChars)
-        {
-            fields = fields.stream().map(x -> x.replaceAll("\\+", "_")).map(x -> x.replaceAll("-", "_")).toList();
-        }
-
-        if (prefix != null)
-        {
-            fields = fields.stream().map(x -> prefix + x).toList();
-        }
-
+        // Replace problem chars
+        fields = fields.stream().map(x -> x.replaceAll("\\+", "_")).map(x -> x.replaceAll("-", "_")).toList();
         if (!fields.isEmpty())
         {
             getPipelineCtx().getLogger().debug("First field for tool: " + toolName + ", arg: " + argName + ", was: " + fields.get(0));
