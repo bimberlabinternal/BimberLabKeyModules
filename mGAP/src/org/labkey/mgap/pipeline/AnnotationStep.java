@@ -167,7 +167,9 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
                 {
                     writer.println(StringUtils.join(Arrays.asList(
                             getFieldValue(rs, "dataSource"),
-                            getFieldValue(rs, "sourceField"),
+                            // NOTE: the dbNSFP fields have misleading values in the source. For some, their raw values in dbNSFP have special characters, which we need to
+                            // retain to built that source. However, the Funcotator VCF replaces them in the header
+                            getFieldValue(rs, "sourceField").replaceAll("\\+", "_").replaceAll("-", "_"),
                             getFieldValue(rs, "infoKey"),
                             getFieldValue(rs, "dataNumber"),
                             getFieldValue(rs, "dataType"),
