@@ -1177,20 +1177,16 @@
             <column columnName="infoKey">
                 <columnTitle>INFO Key</columnTitle>
                 <nullable>true</nullable>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="sourceField">
                 <columnTitle>Source Field</columnTitle>
                 <nullable>true</nullable>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="dataType">
                 <columnTitle>Data Type</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="dataNumber">
                 <columnTitle>Data Number</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="url">
                 <columnTitle>Website URL</columnTitle>
@@ -1206,23 +1202,18 @@
             </column>
             <column columnName="toolName">
                 <columnTitle>Tool Name</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="formatString">
                 <columnTitle>Format String</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="hidden">
                 <columnTitle>Hidden?</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="isIndexed">
                 <columnTitle>Is Indexed?</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="allowableValues">
                 <columnTitle>Allowable Values</columnTitle>
-                <isHidden>true</isHidden>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
