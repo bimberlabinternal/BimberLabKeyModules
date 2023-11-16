@@ -6,7 +6,7 @@ SELECT
     m.gender,
     m.birth,
     m.death,
-    m.status,
+    m.calculated_status as status,
     m.colony,
     m.originalId,
     m.originalDam,
