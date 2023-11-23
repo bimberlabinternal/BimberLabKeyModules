@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
@@ -262,9 +263,9 @@ public class TriggerHelper
 
     public int ensureMccAliasExists(Collection<String> ids, Map<Object, Object> existingAliases)
     {
-        ids = new HashSet<>(ids);
-
         // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
+        ids = new CaseInsensitiveHashSet(ids.stream().map(String::valueOf).collect(Collectors.toSet()));
+
         CaseInsensitiveHashMap<String> ciExistingAliases = new CaseInsensitiveHashMap<>();
         existingAliases.forEach((key, val) -> ciExistingAliases.put(String.valueOf(key), String.valueOf(val)));
 
@@ -288,10 +289,10 @@ public class TriggerHelper
             return 0;
         }
 
+        final List<Map<String, Object>> toAdd = new ArrayList<>();
         try
         {
             AtomicInteger aliasesReused = new AtomicInteger(0);
-            final List<Map<String, Object>> toAdd = new ArrayList<>();
             ids.forEach(id -> {
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
                 row.put("subjectname", id);
@@ -306,7 +307,7 @@ public class TriggerHelper
                 toAdd.add(row);
             });
 
-            if (ciExistingAliases != null && !ciExistingAliases.isEmpty() && aliasesReused.get() != ciExistingAliases.size())
+            if (!ciExistingAliases.isEmpty() && aliasesReused.get() != ciExistingAliases.size())
             {
                 _log.info("The existing aliases map, size: " + ciExistingAliases.size() + " does not equal the number of aliases actually used, which was: " + aliasesReused.get());
                 _log.info(ciExistingAliases);
@@ -323,7 +324,8 @@ public class TriggerHelper
         }
         catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
         {
-            _log.error("Error auto-creating MCC aliases during insert", e);
+            _log.error("Error auto-creating MCC aliases during insert for folder: " + _container.getPath(), e);
+            toAdd.forEach(_log::error);
             return 0;
         }
     }
