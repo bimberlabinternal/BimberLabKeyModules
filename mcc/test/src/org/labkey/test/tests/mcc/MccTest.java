@@ -1068,13 +1068,13 @@ public class MccTest extends BaseWebDriverTest
 
         SelectRowsResponse srr = cmd.execute(createDefaultConnection(), getProjectName());
         List<String> duplicates = srr.getRows().stream().map(r -> r.get("subjectname").toString()).toList();
-        if (duplicates.isEmpty())
+        if (!duplicates.isEmpty())
         {
             // NOTE: leave the UI here for easier debugging
-            beginAt("/query/" + getProjectName() + "/executeQuery.view?schemaName=mcc&query.queryName=duplicateAliases&query.containerFilterName=AllFolders");
+            beginAt("/query/" + getProjectName() + "/executeQuery.view?schemaName=mcc&query.queryName=duplicateAliases&query.containerFilterName=AllFolders&query.numMccIds~gt=1");
             new DataRegionTable.DataRegionFinder(getDriver()).waitFor();
-            Assert.assertEquals("Duplicate aliases found: " + StringUtils.join(duplicates, ", "), 0, duplicates.size());
         }
 
+        Assert.assertEquals("Duplicate aliases found: " + StringUtils.join(duplicates, ", "), 0, duplicates.size());
     }
 }
