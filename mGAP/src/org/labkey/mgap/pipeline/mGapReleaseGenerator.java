@@ -1267,47 +1267,55 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     //Polyphen2_HVAR_pred: Polyphen2 prediction based on HumVar, 'D' ('probably damaging'),'P' ('possibly damaging') and 'B' ('benign'). Multiple entries separated by
                     if (vc.getAttribute("Polyphen2_HVAR_pred") != null && !".".equals(vc.getAttribute("Polyphen2_HVAR_pred")))
                     {
-                        List<String> polyphenPredictions = vc.getAttributeAsStringList("Polyphen2_HVAR_pred", null);
-                        List<Double> polyphenScores = vc.getAttributeAsDoubleList("Polyphen2_HVAR_S", 0.0);
-
-                        if (polyphenPredictions.size() != vc.getAlternateAlleles().size())
+                        try
                         {
-                            throw new IllegalStateException("Polyphen2_HVAR_pred and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
-                        }
-
-                        if (polyphenScores.size() != vc.getAlternateAlleles().size())
-                        {
-                            throw new IllegalStateException("Polyphen2_HVAR_S and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
-                        }
-
-                        int alleleIdx = -1;
-                        for (Allele alt : vc.getAlternateAlleles())
-                        {
-                            alleleIdx++;
-
-                            String prediction = polyphenPredictions.get(alleleIdx);
-                            if (StringUtils.isEmpty(prediction) || "B".equals(prediction) || "P".equals(prediction) || ".".equals(prediction))
+                            List<String> polyphenPredictions = vc.getAttributeAsStringList("Polyphen2_HVAR_pred", null);
+                            List<String> polyphenScores = Arrays.asList(vc.getAttribute("Polyphen2_HVAR_S").toString().split(";"));
+                            if (polyphenPredictions.size() != vc.getAlternateAlleles().size())
                             {
-                                continue;
+                                throw new IllegalStateException("Polyphen2_HVAR_pred and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
                             }
 
-                            String description = null;
-                            try
+                            if (polyphenScores.size() != vc.getAlternateAlleles().size())
                             {
-                                Double maxScore = polyphenScores.get(alleleIdx);
-                                if (maxScore == 0.0)
+                                throw new IllegalStateException("Polyphen2_HVAR_S and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
+                            }
+
+                            int alleleIdx = -1;
+                            for (Allele alt : vc.getAlternateAlleles())
+                            {
+                                alleleIdx++;
+
+                                String prediction = polyphenPredictions.get(alleleIdx);
+                                if (StringUtils.isEmpty(prediction) || "B".equals(prediction) || "P".equals(prediction) || ".".equals(prediction))
                                 {
-                                    ctx.getLogger().error("Suspicious values for Polyphen2_HVAR_S: " + maxScore + ", at position: " + vc.toStringWithoutGenotypes());
+                                    continue;
                                 }
 
-                                description = "Score: " + maxScore;
-                            }
-                            catch (NumberFormatException e)
-                            {
-                                ctx.getLogger().error("Unable to parse Polyphen2_HVAR_S attribute decimal (" + vc.getAttribute("Polyphen2_HVAR_S") + ") for variant at position: " + vc.toStringWithoutGenotypes());
-                            }
+                                String description = null;
+                                try
+                                {
+                                    Double maxScore = Arrays.stream(polyphenScores.get(alleleIdx).split("\\|")).filter(x -> !x.isEmpty()).map(Double::parseDouble).max(Double::compare).orElse(-1.0);
+                                    if (maxScore == 0.0)
+                                    {
+                                        ctx.getLogger().error("Suspicious values for Polyphen2_HVAR_S: " + maxScore + ", at position: " + vc.toStringWithoutGenotypes());
+                                    }
+                                    else if (maxScore > 0.0)
+                                    {
+                                        description = "Score: " + maxScore;
+                                    }
+                                }
+                                catch (NumberFormatException e)
+                                {
+                                    ctx.getLogger().error("Unable to parse Polyphen2_HVAR_S attribute decimal (" + vc.getAttribute("Polyphen2_HVAR_S") + ") for variant at position: " + vc.toStringWithoutGenotypes(), e);
+                                }
 
-                            maybeWriteVariantLine(queuedLines, vc, alt.getBaseString(), "Polyphen2", "Prediction: " + prediction, description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), null);
+                                maybeWriteVariantLine(queuedLines, vc, alt.getBaseString(), "Polyphen2", "Prediction: " + prediction, description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), null);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            ctx.getLogger().error("Error parsing Polyphen: " + vc.toStringWithoutGenotypes(), e);
                         }
                     }
 
