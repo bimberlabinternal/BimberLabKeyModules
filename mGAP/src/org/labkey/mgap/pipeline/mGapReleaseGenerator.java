@@ -1270,7 +1270,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         try
                         {
                             List<String> polyphenPredictions = vc.getAttributeAsStringList("Polyphen2_HVAR_pred", null);
-                            List<String> polyphenScores = Arrays.asList(vc.getAttribute("Polyphen2_HVAR_S").toString().split(";"));
+                            List<String> polyphenScores = vc.getAttributeAsStringList("Polyphen2_HVAR_S", null);
                             if (polyphenPredictions.size() != vc.getAlternateAlleles().size())
                             {
                                 throw new IllegalStateException("Polyphen2_HVAR_pred and alt alleles were not the same length: " + vc.toStringWithoutGenotypes());
@@ -1295,7 +1295,13 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 String description = null;
                                 try
                                 {
-                                    Double maxScore = Arrays.stream(polyphenScores.get(alleleIdx).split("\\|")).filter(x -> !x.isEmpty()).map(Double::parseDouble).max(Double::compare).orElse(-1.0);
+                                    String as = StringUtils.trimToNull(polyphenScores.get(alleleIdx));
+                                    if (as == null)
+                                    {
+                                        continue;
+                                    }
+
+                                    Double maxScore = Arrays.stream(as.split("\\|")).filter(x -> !x.isEmpty()).map(Double::parseDouble).max(Double::compare).orElse(-1.0);
                                     if (maxScore == 0.0)
                                     {
                                         ctx.getLogger().error("Suspicious values for Polyphen2_HVAR_S: " + maxScore + ", at position: " + vc.toStringWithoutGenotypes());
