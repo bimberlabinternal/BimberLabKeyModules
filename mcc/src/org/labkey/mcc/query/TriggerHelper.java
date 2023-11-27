@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
-import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
@@ -261,15 +260,17 @@ public class TriggerHelper
         }
     }
 
-    public int ensureMccAliasExists(Collection<String> ids, Map<Object, Object> existingAliases)
+    public int ensureMccAliasExists(Collection<String> rawIds, Map<Object, Object> existingAliases)
     {
         // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
-        ids = new CaseInsensitiveHashSet(ids.stream().map(String::valueOf).collect(Collectors.toSet()));
+        // Also, CaseInsensitiveSet will convert the keys to lowercase, which is problematic for case-sensitive databases
+        final CaseInsensitiveHashMap<String> idMap = new CaseInsensitiveHashMap<>();
+        rawIds.stream().map(String::valueOf).forEach(x -> idMap.put(x, x));
 
         CaseInsensitiveHashMap<String> ciExistingAliases = new CaseInsensitiveHashMap<>();
         existingAliases.forEach((key, val) -> ciExistingAliases.put(String.valueOf(key), String.valueOf(val)));
 
-        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), idMap.values(), CompareType.IN);
 
         final Set<String> aliasesFound = new HashSet<>();
         TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
@@ -283,8 +284,8 @@ public class TriggerHelper
             }
         });
 
-        ids.removeAll(aliasesFound);
-        if (ids.isEmpty())
+        aliasesFound.forEach(idMap::remove);
+        if (idMap.isEmpty())
         {
             return 0;
         }
@@ -293,7 +294,7 @@ public class TriggerHelper
         try
         {
             AtomicInteger aliasesReused = new AtomicInteger(0);
-            ids.forEach(id -> {
+            idMap.forEach((key, id) -> {
                 CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
                 row.put("subjectname", id);
                 if (ciExistingAliases.containsKey(id))
