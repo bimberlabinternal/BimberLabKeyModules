@@ -1287,7 +1287,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 alleleIdx++;
 
                                 String prediction = polyphenPredictions.get(alleleIdx);
-                                if (StringUtils.isEmpty(prediction) || "B".equals(prediction) || "P".equals(prediction) || ".".equals(prediction))
+                                if (!prediction.contains("D"))
                                 {
                                     continue;
                                 }
