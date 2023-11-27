@@ -46,6 +46,7 @@ import org.labkey.mgap.jbrowse.mGAPGroupsProvider;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
 import org.labkey.mgap.pipeline.GroupCompareStep;
+import org.labkey.mgap.pipeline.IndexVariantsForMgapStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
@@ -71,7 +72,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.69;
+        return 16.70;
     }
 
     @Override
@@ -132,6 +133,7 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new SampleSpecificGenotypeFiltrationStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseAnnotateNovelSitesStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new GenerateMgapTracksStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new IndexVariantsForMgapStep.Provider());
 
                 _hasRegistered = true;
             }
