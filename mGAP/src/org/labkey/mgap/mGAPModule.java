@@ -43,6 +43,7 @@ import org.labkey.mgap.buttons.PopulateAnnotationsButton;
 import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.jbrowse.mGAPFieldCustomizer;
 import org.labkey.mgap.jbrowse.mGAPGroupsProvider;
+import org.labkey.mgap.jbrowse.mGAPLuceneDetector;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
 import org.labkey.mgap.pipeline.GroupCompareStep;
@@ -97,6 +98,7 @@ public class mGAPModule extends ExtendedSimpleModule
         JBrowseService.get().registerDemographicsSource(new mGAPDemographicsSource());
         JBrowseService.get().registerFieldCustomizer(new mGAPFieldCustomizer());
         JBrowseService.get().registerGroupsProvider(new mGAPGroupsProvider());
+        JBrowseService.get().registerLuceneIndexDetector(new mGAPLuceneDetector());
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
 

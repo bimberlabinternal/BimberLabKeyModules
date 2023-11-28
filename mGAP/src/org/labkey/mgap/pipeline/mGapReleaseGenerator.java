@@ -31,6 +31,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
+import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
@@ -119,6 +120,14 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     put("displayField", "name");
                     put("valueField", "rowid");
                     put("allowBlank", false);
+                }}, null),
+                ToolParameterDescriptor.create("luceneIndex", "Lucene Index", "A pre-made lucene index created from this VCF.", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject()
+                {{
+                    put("allowBlank", false);
+                    put("category", IndexVariantsForMgapStep.CATEGORY);
+                    put("performGenomeFilter", true);
+                    put("doNotIncludeInTemplates", true);
+                    put("valueField", "rowid");
                 }}, null),
                 ToolParameterDescriptor.create("testOnly", "Test Only", "If selected, the various files will be created, but a record will not be created in the releases table, meaning it will not be synced to mGAP.", "checkbox", new JSONObject()
                 {{
@@ -265,10 +274,57 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             TableInfo ti = QueryService.get().getUserSchema(ctx.getJob().getUser(), target, mGAPSchema.NAME).getTable("subjectsSource", null);
             List<String> idsWithRecord = new TableSelector(ti, PageFlowUtil.set("subjectname"), new SimpleFilter(FieldKey.fromString("subjectname"), ids, CompareType.IN), null).getArrayList(String.class);
 
-            ids.removeAll(idsWithRecord);
+            idsWithRecord.forEach(ids::remove);
             if (!ids.isEmpty())
             {
                 throw new PipelineJobException("Some ids are missing demographics data: " + StringUtils.join(ids, ","));
+            }
+
+            // NOTE: this is a bit of a cludge
+            Integer luceneIndexId = ctx.getParams().optInt("luceneIndex");
+            if (luceneIndexId == null)
+            {
+                throw new PipelineJobException("Missing luceneIndex ID");
+            }
+
+            ExpData d = ExperimentService.get().getExpData(luceneIndexId);
+            if (d == null)
+            {
+                throw new PipelineJobException("Unable to find lucene index file for: " + luceneIndexId);
+            }
+
+            if (d.getFile() == null || !d.getFile().exists())
+            {
+                throw new PipelineJobException("Unable to find lucene index file for: " + luceneIndexId);
+            }
+
+            File fieldList = new File(d.getFile().getParentFile(), "fieldList.txt");
+            if (!fieldList.exists())
+            {
+                throw new PipelineJobException("Lucene index missing fieldList.txt: " + luceneIndexId);
+            }
+
+            List<String> fields = new ArrayList<>();
+            try (BufferedReader reader = Readers.getReader(fieldList))
+            {
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    line = StringUtils.trimToNull(line);
+                    if (line != null)
+                    {
+                        fields.add(line);
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            if (!IndexVariantsForMgapStep.getInfoFieldsToIndex(ctx.getJob().getContainer(), ctx.getJob().getUser()).equals(fields))
+            {
+                throw new PipelineJobException("The fields in the lucene index do not match the expected fields: " + luceneIndexId);
             }
         }
 
@@ -376,6 +432,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Unable to find novel sites VCF for release: " + release);
                 }
 
+                SequenceOutputFile luceneIndex = JBrowseService.get().findMatchingLuceneIndex(inputs.get(0), IndexVariantsForMgapStep.getInfoFieldsToIndex(job.getContainer(), job.getUser()), job.getUser(), job.getLogger());
+                if (luceneIndex == null)
+                {
+                    throw new PipelineJobException("Unable to lucene index matching the input VCF: " + inputs.get(0).getFile().getPath());
+                }
+
                 //find basic stats:
                 job.getLogger().info("inspecting file: " + so.getName());
                 int totalSubjects;
@@ -441,6 +503,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 row.put("liftedVcfId", liftedVcf.getRowid());
                 row.put("sitesOnlyVcfId", sitesOnlyVcf.getRowid());
                 row.put("novelSitesVcfId", novelSitesVcf.getRowid());
+                row.put("luceneIndex", luceneIndex.getRowid());
                 row.put("variantTable", so2.getRowid());
                 row.put("genomeId", so.getLibrary_id());
                 row.put("totalSubjects", totalSubjects);
