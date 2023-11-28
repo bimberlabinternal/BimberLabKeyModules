@@ -24,6 +24,7 @@ import org.labkey.api.util.PageFlowUtil;
 import org.labkey.mgap.mGAPManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -118,71 +119,8 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             }
             else
             {
-                PipeRoot pr = PipelineService.get().getPipelineRootSetting(getContainerUser().getContainer());
-                File baseDir = new File(pr.getRootPath(), mGAPManager.DATA_DIR_NAME);
-                if (!baseDir.exists())
-                {
-                    baseDir.mkdirs();
-                }
-
-                String folderNameString = StringUtils.trimToNull(String.valueOf(folderName));
-                if (folderNameString == null)
-                {
-                    throw new PipelineJobException("Unable to find folderName");
-                }
-
-                File subdir = new File(baseDir, folderNameString);
-                if (!subdir.exists())
-                {
-                    subdir.mkdirs();
-                }
-
-                getStatusLogger().info("preparing to copy file: " + f.getPath());
-
-                //Copy file locally, plus index if exists:
-                File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v")? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
-                boolean doCopy = true;
-                if (localCopy.exists())
-                {
-                    getStatusLogger().info("file exists: " + localCopy.getPath());
-                    if (localCopy.lastModified() >= f.lastModified())
-                    {
-                        doCopy = false;
-                    }
-                    else
-                    {
-                        getStatusLogger().info("source file has been modified, deleting copy and re-syncing");
-                        localCopy.delete();
-                    }
-                }
-
-                if (doCopy)
-                {
-                    getStatusLogger().info("copying file locally: " + localCopy.getPath());
-                    if (localCopy.exists())
-                    {
-                        localCopy.delete();
-                    }
-
-                    FileUtils.copyFile(f, localCopy);
-                }
-
-                File index = new File(f.getPath() + ".tbi");
-                if (index.exists())
-                {
-                    File indexLocal = new File(localCopy.getPath() + ".tbi");
-                    if (doCopy && indexLocal.exists())
-                    {
-                        getStatusLogger().info("deleting local copy of index since file was re-copied");
-                        indexLocal.delete();
-                    }
-
-                    if (!indexLocal.exists())
-                    {
-                        getStatusLogger().info("copying index locally: " + indexLocal.getPath());
-                        FileUtils.copyFile(index, indexLocal);
-                    }
-                }
+                File subDir = getLocalSubdir(folderName);
+                File localCopy = doFileCopy(f, subDir, name);
 
                 //first create the ExpData
                 ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
@@ -204,7 +142,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 else
                 {
                     Map<String, Object> row = new CaseInsensitiveHashMap<>();
-                    row.put("category", "VCF File");
+                    row.put("category", getOutputFileCategory());
                     row.put("dataid", d.getRowId());
                     row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
                     row.put("description", getDescription());
@@ -228,6 +166,101 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         }
 
         return null;
+    }
+
+    protected File getLocalSubdir(Object folderName) throws PipelineJobException
+    {
+        PipeRoot pr = PipelineService.get().getPipelineRootSetting(getContainerUser().getContainer());
+        File baseDir = new File(pr.getRootPath(), mGAPManager.DATA_DIR_NAME);
+        if (!baseDir.exists())
+        {
+            baseDir.mkdirs();
+        }
+
+        String folderNameString = StringUtils.trimToNull(String.valueOf(folderName));
+        if (folderNameString == null)
+        {
+            throw new PipelineJobException("Unable to find folderName");
+        }
+
+        File subdir = new File(baseDir, folderNameString);
+        if (!subdir.exists())
+        {
+            subdir.mkdirs();
+        }
+
+        return subdir;
+    }
+
+    protected File doFileCopy(File f, File subdir, String name) throws PipelineJobException
+    {
+        getStatusLogger().info("preparing to copy file: " + f.getPath());
+
+        //Copy file locally, plus index if exists:
+        File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v") ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
+        boolean doCopy = true;
+        if (localCopy.exists())
+        {
+            getStatusLogger().info("file exists: " + localCopy.getPath());
+            if (localCopy.lastModified() >= f.lastModified())
+            {
+                doCopy = false;
+            }
+            else
+            {
+                getStatusLogger().info("source file has been modified, deleting copy and re-syncing");
+                localCopy.delete();
+            }
+        }
+
+        if (doCopy)
+        {
+            getStatusLogger().info("copying file locally: " + localCopy.getPath());
+            if (localCopy.exists())
+            {
+                localCopy.delete();
+            }
+
+            try
+            {
+                FileUtils.copyFile(f, localCopy);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+
+        File index = new File(f.getPath() + ".tbi");
+        if (index.exists())
+        {
+            File indexLocal = new File(localCopy.getPath() + ".tbi");
+            if (doCopy && indexLocal.exists())
+            {
+                getStatusLogger().info("deleting local copy of index since file was re-copied");
+                indexLocal.delete();
+            }
+
+            if (!indexLocal.exists())
+            {
+                getStatusLogger().info("copying index locally: " + indexLocal.getPath());
+                try
+                {
+                    FileUtils.copyFile(index, indexLocal);
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
+        }
+
+        return localCopy;
+    }
+
+    protected String getOutputFileCategory()
+    {
+        return "VCF File";
     }
 
     protected String getDescription()

@@ -188,6 +188,15 @@
                     <fkColumnName>RowId</fkColumnName>
                 </fk>
             </column>
+            <column columnName="luceneIndex">
+                <columnTitle>Lucene Index File</columnTitle>
+                <nullable>true</nullable>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="totalSubjects">
                 <columnTitle>Total Subjects</columnTitle>
             </column>
