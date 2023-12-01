@@ -1,0 +1,17 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="" tableDbType="TABLE">
+                <tableTitle>MCC IDs Duplicated Across Folders</tableTitle>
+                <columns>
+                    <column columnName="Id">
+                        <columnTitle>MCC ID</columnTitle>
+                    </column>
+                    <column columnName="originalIds">
+                        <columnTitle>Center Id(s)</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

@@ -26,4 +26,4 @@ d.id.demographics.species,
 'Demographics' as source
 
 FROM study.demographicsParents d
-WHERE d.numParents > 0
+WHERE d.numParents > 0 and d.id.demographics.species IS NOT NULL
