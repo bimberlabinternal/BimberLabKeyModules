@@ -432,10 +432,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Unable to find novel sites VCF for release: " + release);
                 }
 
-                SequenceOutputFile luceneIndex = JBrowseService.get().findMatchingLuceneIndex(inputs.get(0), IndexVariantsForMgapStep.getInfoFieldsToIndex(job.getContainer(), job.getUser()), job.getUser(), job.getLogger());
+                SequenceOutputFile luceneIndex = JBrowseService.get().findMatchingLuceneIndex(so, IndexVariantsForMgapStep.getInfoFieldsToIndex(job.getContainer(), job.getUser()), job.getUser(), job.getLogger());
                 if (luceneIndex == null)
                 {
-                    throw new PipelineJobException("Unable to lucene index matching the input VCF: " + inputs.get(0).getFile().getPath());
+                    throw new PipelineJobException("Unable to lucene index matching the input VCF: " + so.getFile().getPath());
                 }
 
                 //find basic stats:
