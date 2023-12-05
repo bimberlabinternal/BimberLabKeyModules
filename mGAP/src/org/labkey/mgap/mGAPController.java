@@ -198,6 +198,7 @@ public class mGAPController extends SpringActionController
                 row.put("title", form.getTitle());
                 row.put("institution", form.getInstitution());
                 row.put("category", form.getCategory());
+                row.put("country", form.getCountry());
                 row.put("reason", form.getReason());
                 row.put("container", mGAPManager.get().getMGapContainer().getId());
 
@@ -261,6 +262,8 @@ public class mGAPController extends SpringActionController
         private String title;
         private String institution;
         private String category;
+
+        private String country;
         private String reason;
 
         public void setEmail(String email)
@@ -341,6 +344,16 @@ public class mGAPController extends SpringActionController
         public void setReason(String reason)
         {
             this.reason = reason;
+        }
+
+        public String getCountry()
+        {
+            return country;
+        }
+
+        public void setCountry(String country)
+        {
+            this.country = country;
         }
     }
 

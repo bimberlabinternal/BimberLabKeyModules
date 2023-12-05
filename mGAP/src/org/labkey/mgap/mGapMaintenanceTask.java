@@ -9,11 +9,14 @@ import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipeRoot;
+import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.security.User;
+import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
+import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SystemMaintenance;
 
@@ -105,6 +108,23 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         }
 
         releaseIds.forEach(f -> inspectReleaseFolder(f, baseDir, c, u, log, toDelete));
+
+        // Also verify genomes:
+        Set<Integer> genomesIds = new HashSet<>(new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("genomeId")).getArrayList(Integer.class));
+        for (int genomeId : genomesIds)
+        {
+            try
+            {
+                ReferenceGenome rg = SequenceAnalysisService.get().getReferenceGenome(genomeId, u);
+                checkSymlink(log, rg.getSourceFastaFile());
+                checkSymlink(log, new File(rg.getSourceFastaFile().getPath() + ".fai"));
+                checkSymlink(log, new File(rg.getSourceFastaFile().getPath().replace(".fasta", ".dict")));
+            }
+            catch (PipelineJobException e)
+            {
+                log.error("Error validating genome: " + genomeId, e);
+            }
+        }
     }
 
     private void inspectReleaseFolder(String releaseId, File baseDir, Container c, User u, final Logger log, final Set<File> toDelete)
@@ -134,7 +154,9 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             }
 
             expectedFiles.add(f);
+            checkSymlink(log, f);
             expectedFiles.add(new File(f.getPath() + ".tbi"));
+            checkSymlink(log, new File(f.getPath() + ".tbi"));
         });
 
         final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId");
@@ -185,6 +207,15 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         for (File f : missingFiles)
         {
             log.error("Missing expected file: " + f.getPath());
+        }
+    }
+
+    private void checkSymlink(Logger log, File f)
+    {
+        File expectedSymlink = new File("/var/www/html/", f.getName());
+        if (!expectedSymlink.exists())
+        {
+            log.error("Missing symlink, should run: ln -s " + f.getPath() + " " + expectedSymlink.getPath());
         }
     }
 

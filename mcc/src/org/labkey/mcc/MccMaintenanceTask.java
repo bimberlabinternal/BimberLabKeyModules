@@ -58,15 +58,16 @@ public class MccMaintenanceTask implements SystemMaintenance.MaintenanceTask
             log.error("The LDK module property BackgroundAdminUser must be set for the MCC Maintenance code to function");
         }
 
-        Container animalData = MccManager.get().getMCCContainer(ContainerManager.getRoot());
-        if (animalData != null)
-        {
-            TableInfo ti = QueryService.get().getUserSchema(u, animalData, MccSchema.NAME).getTable("duplicatedAggregatedDemographicsParents");
-            if (new TableSelector(ti).exists())
-            {
-                log.error("Duplicate MCC aliases for parents found. Please load the query mcc/duplicatedAggregatedDemographicsParents for more detail");
-            }
-        }
+        // NOTE: restore this once data is cleaned up:
+        // Container animalData = MccManager.get().getMCCContainer(ContainerManager.getRoot());
+        // if (animalData != null)
+        // {
+        //     TableInfo ti = QueryService.get().getUserSchema(u, animalData, MccSchema.NAME).getTable("duplicatedAggregatedDemographicsParents");
+        //     if (new TableSelector(ti).exists())
+        //     {
+        //         log.error("Duplicate MCC aliases for parents found. Please load the query mcc/duplicatedAggregatedDemographicsParents for more detail");
+        //     }
+        // }
 
         for (Study s : studies)
         {

@@ -136,7 +136,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             newCol3.setURL(details);
             ti.addColumn(newCol3);
 
-            SQLFragment sql4 = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("CDR3"), true, true, getChr(ti) + "(10)")).append(" FROM (").append(selectSql).append(") a ").append(whereClause).append(" )");
+            SQLFragment sql4 = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("CDR3"), true, true, getNewlineSql(ti))).append(" FROM (").append(selectSql).append(") a ").append(whereClause).append(" )");
             ExprColumn newCol4 = new ExprColumn(ti, "distinctCDR3s" + colNameSuffix, sql4, JdbcType.VARCHAR, ti.getColumn("rowid"));
             newCol4.setLabel("Distinct CDR3s" + colLabelSuffix);
             newCol4.setURL(details);
@@ -199,7 +199,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         SQLFragment selectSql = QueryService.get().getSelectSQL(ti, Arrays.asList(ti.getColumn("analysisId"), ti.getColumn("cloneId"), ti.getColumn("Run"), ti.getColumn("cDNA"), ti.getColumn("cdr3"), ti.getColumn("locus")), filter, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
 
         String whereClause = " WHERE (a.cloneId = " + ExprColumn.STR_TABLE_ALIAS + ".cloneId AND a.analysisId = " + ExprColumn.STR_TABLE_ALIAS + ".analysisId AND a.Run = " + ExprColumn.STR_TABLE_ALIAS + ".Run AND a.cDNA = " + ExprColumn.STR_TABLE_ALIAS + ".cDNA) ";
-        SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment(ti.getSqlDialect().concatenate("a.locus", "':'", "a.CDR3")), true, true, getChr(ti) + "(10)")).append(" FROM (").append(selectSql).append(") a ").append(whereClause).append(" )");
+        SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment(ti.getSqlDialect().concatenate("a.locus", "':'", "a.CDR3")), true, true, getNewlineSql(ti))).append(" FROM (").append(selectSql).append(") a ").append(whereClause).append(" )");
         ExprColumn newCol = new ExprColumn(ti, "clonotypes", sql, JdbcType.VARCHAR, ti.getColumn("analysisId"), ti.getColumn("cloneId"));
         newCol.setLabel("Clonotype for Clone");
         newCol.setDescription("CDR3 clonotypes for this cloneId");
@@ -215,7 +215,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         DetailsURL detailsURL = details.clone();
         detailsURL.addParameter("data.locus~eq", locus);
 
-        SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("CDR3"), true, true, getChr(ti) + "(10)")).append(" FROM (").append(selectSql).append(") a ").append(whereClause).append(" )");
+        SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("CDR3"), true, true, getNewlineSql(ti))).append(" FROM (").append(selectSql).append(") a ").append(whereClause).append(" )");
         ExprColumn newCol = new ExprColumn(ti, "clonotype" + locus + colNameSuffix, sql, JdbcType.VARCHAR, ti.getColumn("rowid"));
         newCol.setLabel("Clonotype: " + locus + colLabelSuffix);
         newCol.setDescription("Showing CDR3 clonotypes for " + locus + " with fraction >=0.05");
@@ -250,7 +250,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             TableInfo data = schema.createDataTable(null,false);
             SQLFragment dataSelectSql = QueryService.get().getSelectSQL(data, Arrays.asList(data.getColumn("subjectId"), data.getColumn("cdr3"), data.getColumn("fraction")), null, null, Table.ALL_ROWS, Table.NO_OFFSET, false);
 
-            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("a.subjectId"), true, true, getChr(ti) + "(10)")).append(" as expr FROM (").append(dataSelectSql).append(") a WHERE a.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3 AND a.fraction >= 0.005)");
+            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("a.subjectId"), true, true, getNewlineSql(ti))).append(" as expr FROM (").append(dataSelectSql).append(") a WHERE a.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3 AND a.fraction >= 0.005)");
             ExprColumn col = new ExprColumn(ti, colName, sql, JdbcType.VARCHAR, ti.getColumn("cdr3"));
             col.setLabel("Animals with CDR3");
             col.setURL(details);
@@ -265,7 +265,7 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         String colName = "cloneNames";
         if (ti.getColumn(colName) == null)
         {
-            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("c.cloneName"), true, true, getChr(ti) + "(10)")).append(" as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CLONES + " c WHERE c.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3)");
+            SQLFragment sql = new SQLFragment("(select ").append(ti.getSqlDialect().getGroupConcat(new SQLFragment("c.cloneName"), true, true, getNewlineSql(ti))).append(" as expr FROM " + TCRdbSchema.NAME + "." + TCRdbSchema.TABLE_CLONES + " c WHERE c.cdr3 = " + ExprColumn.STR_TABLE_ALIAS + ".cdr3)");
             ExprColumn col = new ExprColumn(ti, colName, sql, JdbcType.VARCHAR, ti.getColumn("cdr3"));
             col.setLabel("Clone Name(s)");
             ti.addColumn(col);
