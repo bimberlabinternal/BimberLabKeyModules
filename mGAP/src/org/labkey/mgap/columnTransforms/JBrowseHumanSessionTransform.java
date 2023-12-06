@@ -30,7 +30,7 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
     }
 
     @Override
-    protected String getTrackJson()
+    protected String getTrackJson(Results rs)
     {
         return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**These annotations are created by lifting the macaque variants to human coordinates, and must be viewed in that context.</h2>\"}";
     }
