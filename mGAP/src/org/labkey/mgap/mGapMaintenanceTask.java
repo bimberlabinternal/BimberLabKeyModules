@@ -181,7 +181,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             checkSymlink(log, new File(f.getPath() + ".tbi"), releaseId, commandsToRun);
         });
 
-        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId");
+        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId", "luceneIndex");
         new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), fields, new SimpleFilter(FieldKey.fromString("objectid"), releaseId), null).forEachResults(rs -> {
             for (String field : fields)
             {
@@ -203,6 +203,12 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 {
                     log.error("No file for outputfile: " + rowId + " for release: " + releaseId);
                     continue;
+                }
+
+                // NOTE: lucene points to a file, but the parent dir is what we need to manage:
+                if ("write.lock".equals(f.getName()))
+                {
+                    expectedFiles.add(f.getParentFile().getParentFile());
                 }
 
                 expectedFiles.add(f);
