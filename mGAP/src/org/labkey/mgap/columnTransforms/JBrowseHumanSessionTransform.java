@@ -9,7 +9,6 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.PageFlowUtil;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
     }
 
     @Override
-    protected String getTrackJson(Results rs)
+    protected String getTrackJson(boolean hasLuceneIndex)
     {
         return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"additionalFeatureMsg\":\"<h2>**These annotations are created by lifting the macaque variants to human coordinates, and must be viewed in that context.</h2>\"}";
     }
@@ -93,7 +92,7 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
             row.put("createdby", getContainerUser().getUser().getUserId());
             row.put("modified", new Date());
             row.put("modifiedby", getContainerUser().getUser().getUserId());
-            row.put("trackJson", getTrackJson());
+            row.put("trackJson", getTrackJson(false));
 
             getStatusLogger().info("creating jsonfile for output: " + outputFileId);
             List<Map<String, Object>> rows = jsonFiles.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(row), new BatchValidationException(), null, new HashMap<>());
