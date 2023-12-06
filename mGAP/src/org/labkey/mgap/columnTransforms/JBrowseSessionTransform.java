@@ -270,7 +270,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                row.put("trackJson", getTrackJson());
+                row.put("trackJson", getTrackJson(rs));
             }
             else
             {
@@ -307,9 +307,24 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         return "mGAP Release: " + getInputValue("version");
     }
 
-    protected String getTrackJson()
+    protected String getTrackJson(Results rs)
     {
-        ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey"), new SimpleFilter(FieldKey.fromString("isIndexed"), true), null).getArrayList(String.class);
-        return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\", \"createFullTextIndex\": true,\"infoFieldsForFullTextSearch\":\"" + (infoFields.isEmpty() ? "null" : StringUtils.join(infoFields, ",")) + "\"}";
+        String indexString = "";
+
+        try
+        {
+            String luceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("luceneIndex/dataid/DataFileUrl")));
+            if (luceneIndex != null)
+            {
+                ArrayList<String> infoFields = new TableSelector(QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey"), new SimpleFilter(FieldKey.fromString("isIndexed"), true), null).getArrayList(String.class);
+                indexString = ", \"createFullTextIndex\": true,\"infoFieldsForFullTextSearch\":\"" + (infoFields.isEmpty() ? "null" : StringUtils.join(infoFields, ",")) + "\"";
+            }
+        }
+        catch (SQLException e)
+        {
+            getStatusLogger().error("Error extracting luceneIndex", e);
+        }
+
+        return "{\"category\":\"mGAP Variant Catalog\",\"visibleByDefault\": true,\"ensemblId\":\"Macaca_mulatta\",\"additionalFeatureMsg\":\"<h2>**The annotations below are primarily derived from human data sources (not macaque), and must be viewed in that context.</h2>\"" + indexString + "}";
     }
 }

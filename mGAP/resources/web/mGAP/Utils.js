@@ -221,6 +221,12 @@ mGAP.Utils = (function($){
             return ctx['mgapReleaseId'];
         },
 
+        releaseHasLuceneIndex: function(){
+            var ctx = LABKEY.getModuleContext('mgap') || {};
+
+            return !!ctx['luceneIndexId'];
+        },
+
         getMGapReleaseVersion: function(){
             var ctx = LABKEY.getModuleContext('mgap') || {};
 
