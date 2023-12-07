@@ -234,7 +234,11 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         missingFiles.removeAll(filesPresent);
         for (File f : missingFiles)
         {
-            log.error("Missing expected file: " + f.getPath());
+            // NOTE: the write.lock file is technically one directory lower and not caught with the check above
+            if (!f.exists())
+            {
+                log.error("Missing expected file: " + f.getPath());
+            }
         }
     }
 
