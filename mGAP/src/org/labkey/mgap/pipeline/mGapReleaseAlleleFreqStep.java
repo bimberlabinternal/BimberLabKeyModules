@@ -39,7 +39,7 @@ public class mGapReleaseAlleleFreqStep extends AbstractCommandPipelineStep<mGapR
     {
         public Provider()
         {
-            super("mGapReleaseAlleleFreq", "Compare VCF to mGap Release", "DiscvrVariantAnnotator", "Annotate a VCF using the AF field from an mGAP release.", List.of(
+            super("mGapReleaseAlleleFreq", "Annotate using mGap Release AFs", "DiscvrVariantAnnotator", "Annotate a VCF using the AF field from an mGAP release.", List.of(
                     ToolParameterDescriptor.createExpDataParam(REF_VCF, "mGAP Release", "The mGAP release VCF to use for annotation", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject()
                     {{
                         put("allowBlank", false);

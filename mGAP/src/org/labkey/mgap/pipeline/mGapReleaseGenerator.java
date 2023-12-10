@@ -1141,9 +1141,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 return;
             }
 
+            String releaseVersion = ctx.getParams().optString("releaseVersion");
+
             long sitesInspected = 0L;
             long totalVariants = 0L;
             long totalPrivateVariants = 0L;
+            long newInThisRelease = 0L;
             Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
 
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
@@ -1412,6 +1415,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         }
                     }
 
+                    if (vc.getAttribute("mGAPV") != null && releaseVersion.equals(vc.getAttributeAsString("mGAPV", null)))
+                    {
+                        newInThisRelease++;
+                    }
+
                     for (List<String> line : queuedLines)
                     {
                         writer.writeNext(line.toArray(new String[0]));
@@ -1431,7 +1439,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
+                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, newInThisRelease, totalSubjects, typeCounts);
             }
 
             try
@@ -1469,7 +1477,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             return Collections.emptySet();
         }
 
-        private static void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
+        private static void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, long newInThisRelease, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
         {
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
@@ -1504,7 +1512,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ctx.getLogger().info("Generating summary stats from: " + variantsToTable.getName());
             File summaryTable = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summary.txt");
             File summaryTableByField = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summaryByField.txt");
-            new mGapSummarizer().generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
+            new mGapSummarizer().generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, newInThisRelease, totalSubjects, typeCounts);
         }
 
         private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omimIds, Collection<String> omimPhenotypes, Logger log, String identifier)
