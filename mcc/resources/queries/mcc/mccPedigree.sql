@@ -32,7 +32,7 @@ SELECT
     null as originalSire,
     'Added' as category
 FROM mcc.aggregatedDemographics s
-WHERE s.sire NOT IN (SELECT distinct Id FROM mcc.aggregatedDemographics)
+WHERE s.sire IS NOT NULL AND s.sire NOT IN (SELECT distinct ad.Id FROM mcc.aggregatedDemographics ad WHERE ad.Id IS NOT NULL)
 GROUP BY s.sire
 
 UNION ALL
@@ -51,5 +51,5 @@ SELECT
     null as originalSire,
     'Added' as category
 FROM mcc.aggregatedDemographics s
-WHERE s.dam NOT IN (SELECT distinct Id FROM mcc.aggregatedDemographics)
+WHERE s.dam IS NOT NULL AND s.dam NOT IN (SELECT distinct ad.Id FROM mcc.aggregatedDemographics ad WHERE ad.Id IS NOT NULL)
 GROUP BY s.dam
