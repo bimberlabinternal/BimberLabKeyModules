@@ -54,7 +54,21 @@ public class FuncotatorWrapper extends AbstractDiscvrSeqWrapper
             params.addAll(extraArgs);
         }
 
-        execute(params);
+        try
+        {
+            execute(params);
+        }
+        catch (Exception e)
+        {
+            // NOTE: for some reason Funcotator creates in index even if failed
+            File idx = new File(output.getPath() + ".tbi");
+            if (idx.exists())
+            {
+                getLogger().debug("Deleting funcotator output index after failure: " + idx.getPath());
+                idx.delete();
+            }
+            throw e;
+        }
 
         if (!output.exists())
         {

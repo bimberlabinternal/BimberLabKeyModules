@@ -201,7 +201,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             source: row.colony,
                             calculated_status: 'Alive',
                             mccAlias: row['Id/mccAlias/externalAlias'],
-                            skipMccAliasCreation: true,
                             QCState: null,
                             QCStateLabel: 'Completed',
                             objectId: null
@@ -227,9 +226,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         schemaName: 'study',
                         queryName: 'Demographics',
                         rows: [{
-                            Id: newId,
+                            Id: row.Id,
                             date: effectiveDate,
-                            alternateIds: row.Id !== newId ? row.Id : null,
+                            alternateIds: null,
                             gender: row.gender,
                             species: row.species,
                             birth: row.birth,
@@ -239,7 +238,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             colony: centerName,
                             source: row.colony,
                             calculated_status: 'Alive',
-                            skipMccAliasCreation: true,
                             QCState: null,
                             QCStateLabel: 'Completed',
                             objectId: null

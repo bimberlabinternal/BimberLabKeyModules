@@ -8,7 +8,7 @@ require("ehr/triggers").initScript(this);
 
 var triggerHelper = new org.labkey.mcc.query.TriggerHelper(LABKEY.Security.currentUser.id, LABKEY.Security.currentContainer.id);
 
-var skipMccAliasCreation = [];
+var additionalIdsModified = [];
 var idToMccAlias = {};
 
 function onInit(event, helper){
@@ -93,20 +93,22 @@ function onUpsert(helper, scriptErrors, row, oldRow){
         row.u24_status = false;
     }
 
-    if (row.skipMccAliasCreation) {
-        skipMccAliasCreation.push(row.Id);
-    }
-
     if (row.mccAlias) {
         idToMccAlias[row.Id] = row.mccAlias;
     }
 
-    if (row.dam && row.damMccAlias) {
-        idToMccAlias[row.dam] = row.damMccAlias;
+    if (row.dam) {
+        additionalIdsModified.push(row.dam);
+        if (row.damMccAlias) {
+            idToMccAlias[row.dam] = row.damMccAlias;
+        }
     }
 
-    if (row.sire && row.sireMccAlias) {
-        idToMccAlias[row.sire] = row.sireMccAlias;
+    if (row.sire) {
+        additionalIdsModified.push(row.sire);
+        if (row.sireMccAlias) {
+            idToMccAlias[row.sire] = row.sireMccAlias;
+        }
     }
 }
 
@@ -115,25 +117,13 @@ function onComplete(event, errors, helper){
         var toAdd;
         if (helper.getPublicParticipantsModified().length) {
             toAdd = helper.getPublicParticipantsModified();
-            if (skipMccAliasCreation.length) {
-                for (var i = 0; i < skipMccAliasCreation.length; i++) {
-                    var arrIdx = toAdd.indexOf(skipMccAliasCreation[i]);
-                    if (arrIdx !== -1) {
-                        toAdd.splice(arrIdx, 1);
-                    }
-                }
-            }
         }
         else {
             toAdd = [];
         }
 
-        if (!LABKEY.ExtAdapter.isEmpty(idToMccAlias)) {
-            for (var i in idToMccAlias) {
-                if (idToMccAlias.hasOwnProperty(i)) {
-                    toAdd = toAdd.concat(i);
-                }
-            }
+        if (additionalIdsModified.length) {
+            toAdd = toAdd.concat(additionalIdsModified)
         }
 
         if (toAdd.length) {
