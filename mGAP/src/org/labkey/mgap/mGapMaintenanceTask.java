@@ -1,6 +1,7 @@
 package org.labkey.mgap;
 
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.SimpleFilter;
@@ -19,8 +20,11 @@ import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SystemMaintenance;
+import org.labkey.api.writer.PrintWriters;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -107,7 +111,8 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             log.error("Missing expected directory: " + dirName);
         }
 
-        releaseIds.forEach(f -> inspectReleaseFolder(f, baseDir, c, u, log, toDelete));
+        List<String> commandsToRun = new ArrayList<>();
+        releaseIds.forEach(f -> inspectReleaseFolder(f, baseDir, c, u, log, toDelete, commandsToRun));
 
         // Also verify genomes:
         Set<Integer> genomesIds = new HashSet<>(new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("genomeId")).getArrayList(Integer.class));
@@ -116,18 +121,35 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             try
             {
                 ReferenceGenome rg = SequenceAnalysisService.get().getReferenceGenome(genomeId, u);
-                checkSymlink(log, rg.getSourceFastaFile());
-                checkSymlink(log, new File(rg.getSourceFastaFile().getPath() + ".fai"));
-                checkSymlink(log, new File(rg.getSourceFastaFile().getPath().replace(".fasta", ".dict")));
+                checkSymlink(log, rg.getSourceFastaFile(), null, commandsToRun);
+                checkSymlink(log, new File(rg.getSourceFastaFile().getPath() + ".fai"), null, commandsToRun);
+                checkSymlink(log, new File(rg.getSourceFastaFile().getPath().replace(".fasta", ".dict")), null, commandsToRun);
             }
             catch (PipelineJobException e)
             {
                 log.error("Error validating genome: " + genomeId, e);
             }
         }
+
+        if (!commandsToRun.isEmpty())
+        {
+            log.error("There are missing symlinks. Please run makeSymlinks.sh");
+
+            try (PrintWriter writer = PrintWriters.getPrintWriter(new File(baseDir, "makeSymlinks.sh")))
+            {
+                writer.println("#!/bin/bash");
+                writer.println("set -e");
+                writer.println("set -x");
+                commandsToRun.forEach(writer::println);
+            }
+            catch (IOException e)
+            {
+                log.error("Error generating symlink script", e);
+            }
+        }
     }
 
-    private void inspectReleaseFolder(String releaseId, File baseDir, Container c, User u, final Logger log, final Set<File> toDelete)
+    private void inspectReleaseFolder(String releaseId, File baseDir, Container c, User u, final Logger log, final Set<File> toDelete, List<String> commandsToRun)
     {
         File releaseDir = new File(baseDir, releaseId);
         if (!releaseDir.exists())
@@ -154,12 +176,12 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             }
 
             expectedFiles.add(f);
-            checkSymlink(log, f);
+            checkSymlink(log, f, releaseId, commandsToRun);
             expectedFiles.add(new File(f.getPath() + ".tbi"));
-            checkSymlink(log, new File(f.getPath() + ".tbi"));
+            checkSymlink(log, new File(f.getPath() + ".tbi"), releaseId, commandsToRun);
         });
 
-        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId");
+        final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId", "luceneIndex");
         new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), fields, new SimpleFilter(FieldKey.fromString("objectid"), releaseId), null).forEachResults(rs -> {
             for (String field : fields)
             {
@@ -181,6 +203,12 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 {
                     log.error("No file for outputfile: " + rowId + " for release: " + releaseId);
                     continue;
+                }
+
+                // NOTE: lucene points to a file, but the parent dir is what we need to manage:
+                if ("write.lock".equals(f.getName()))
+                {
+                    expectedFiles.add(f.getParentFile().getParentFile());
                 }
 
                 expectedFiles.add(f);
@@ -206,16 +234,31 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         missingFiles.removeAll(filesPresent);
         for (File f : missingFiles)
         {
-            log.error("Missing expected file: " + f.getPath());
+            // NOTE: the write.lock file is technically one directory lower and not caught with the check above
+            if (!f.exists())
+            {
+                log.error("Missing expected file: " + f.getPath());
+            }
         }
     }
 
-    private void checkSymlink(Logger log, File f)
+    private void checkSymlink(Logger log, File f, @Nullable String dirName, List<String> commandsToRun)
     {
-        File expectedSymlink = new File("/var/www/html/", f.getName());
+        File expectedSymlink = new File("/var/www/html/", (dirName == null ? "" : dirName + "/") + f.getName());
+        if (dirName != null)
+        {
+            File expectedDir = new File("/var/www/html/", dirName);
+            if (!expectedDir.exists())
+            {
+                log.error("Missing expected subdir: " + expectedDir);
+                commandsToRun.add("mkdir -p " + expectedDir.getPath());
+            }
+        }
+
         if (!expectedSymlink.exists())
         {
-            log.error("Missing symlink, should run: ln -s " + f.getPath() + " " + expectedSymlink.getPath());
+            log.error("Missing symlink:  " + expectedSymlink.getPath());
+            commandsToRun.add("ln -s " + f.getPath() + " " + expectedSymlink.getPath());
         }
     }
 

@@ -9,5 +9,6 @@
     </columns>
     <sorts>
         <sort column="version" descending="true"/>
+        <sort column="releaseDate" descending="true"/>
     </sorts>
 </customView>

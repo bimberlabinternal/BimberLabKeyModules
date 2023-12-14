@@ -10,6 +10,7 @@
         var releaseId = mGAP.Utils.getMGapReleaseId();
         var jbrowseId = mGAP.Utils.getMGapJBrowseSession();
         var humanJbrowseId = mGAP.Utils.getHumanMGapJBrowseSession();
+        var releaseHasLuceneIndex = mGAP.Utils.releaseHasLuceneIndex();
         if (releaseId){
             Ext4.fly(Ext4.query('#currentReleaseDiv')[0]).update(
                 '<span>Current Release:</span>' +
@@ -17,7 +18,7 @@
                     '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'variantList', null) + '">Predicted Damaging Variants</a></li>' +
                     (jbrowseId ? '<li><a href="' + LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: jbrowseId}) + '">Genome Browser (Macaque)</a></li>' : '') +
                     (humanJbrowseId ? '<li><a href="' + LABKEY.ActionURL.buildURL('jbrowse', 'browser', null, {database: humanJbrowseId}) + '">Genome Browser (Human)</a></li>' : '') +
-                    // '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'genomeBrowser', null, {target: 'variantSearch'}) + '">Full-text Variant Search (BETA)</a></li>' +
+                    (releaseHasLuceneIndex ? '<li><a href="' + LABKEY.ActionURL.buildURL('mgap', 'genomeBrowser', null, {target: 'variantSearch'}) + '">Full-text Variant Search (BETA)</a></li>' : '') +
                 '</ul>'
             );
         }

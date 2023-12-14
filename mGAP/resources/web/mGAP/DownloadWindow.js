@@ -39,7 +39,7 @@ Ext4.define('mGAP.window.DownloadWindow', {
             method: 'POST',
             schemaName: 'mgap',
             queryName: 'variantCatalogReleases',
-            columns: 'vcfId/dataid/Name,vcfId/library_id/fasta_file/Name,sitesOnlyVcfId/dataid/Name',
+            columns: 'objectId,vcfId/dataid/Name,vcfId/library_id/fasta_file/Name,sitesOnlyVcfId/dataid/Name',
             filterArray: [LABKEY.Filter.create('rowid', this.releaseId, LABKEY.Filter.Types.EQUAL)],
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
@@ -52,9 +52,11 @@ Ext4.define('mGAP.window.DownloadWindow', {
                     return;
                 }
 
-                var releaseVcf = results.rows[0]['vcfId/dataid/Name'];
+                LDK.Assert.assertNotEmpty('Missing objectId variantCatalogReleases', results.rows[0].objectId);
+
+                var releaseVcf = results.rows[0].objectId + '/' + results.rows[0]['vcfId/dataid/Name'];
                 var urlFasta = results.rows[0]['vcfId/library_id/fasta_file/Name'];
-                var sitesOnlyVcf = results.rows[0]['sitesOnlyVcfId/dataid/Name'];
+                var sitesOnlyVcf = results.rows[0].objectId + '/' + results.rows[0]['sitesOnlyVcfId/dataid/Name'];
 
                 var toAdd = [{
                     html: 'Due to the large file size, the preferred option is to download using wget or curl on the command line, such as the exmaples below. Nonetheless, you also are able to paste the URLs into your browser and download through this way as well, although it will be slower and possibly not able to resume if your connection is disrupted.<br><br>' +

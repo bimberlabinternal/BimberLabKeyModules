@@ -69,7 +69,8 @@ public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<Select
 
     public static List<String> getInfoFieldsToIndex(Container c, User u)
     {
-        return new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey"), new SimpleFilter(FieldKey.fromString("isIndexed"), true), null).getArrayList(String.class).stream().sorted().toList();
+        Container target = c.isWorkbook() ? c.getParent() : c;
+        return new TableSelector(QueryService.get().getUserSchema(u, target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_ANNOTATIONS), PageFlowUtil.set("infoKey"), new SimpleFilter(FieldKey.fromString("isIndexed"), true), null).getArrayList(String.class).stream().sorted().toList();
     }
 
     @Override

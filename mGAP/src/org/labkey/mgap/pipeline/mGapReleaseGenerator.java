@@ -50,6 +50,7 @@ import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractParameterizedOutputHandler;
+import org.labkey.api.sequenceanalysis.pipeline.HasJobParams;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
@@ -280,17 +281,27 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException("Some ids are missing demographics data: " + StringUtils.join(ids, ","));
             }
 
-            // NOTE: this is a bit of a cludge
-            Integer luceneIndexId = ctx.getParams().optInt("luceneIndex");
-            if (luceneIndexId == null)
+            getAndValidateLuceneIndex(ctx.getJob(), ctx.getParams());
+        }
+
+        private SequenceOutputFile getAndValidateLuceneIndex(PipelineJob job, JSONObject params) throws PipelineJobException
+        {
+            Integer luceneIndexId = params.optInt("luceneIndex");
+            if (luceneIndexId == null || luceneIndexId == 0)
             {
                 throw new PipelineJobException("Missing luceneIndex ID");
             }
 
-            ExpData d = ExperimentService.get().getExpData(luceneIndexId);
+            SequenceOutputFile so = SequenceOutputFile.getForId(luceneIndexId);
+            if (so == null)
+            {
+                throw new PipelineJobException("Unable to find lucene index output file for: " + luceneIndexId);
+            }
+
+            ExpData d = so.getExpData();
             if (d == null)
             {
-                throw new PipelineJobException("Unable to find lucene index file for: " + luceneIndexId);
+                throw new PipelineJobException("Unable to find lucene index expdata for: " + luceneIndexId);
             }
 
             if (d.getFile() == null || !d.getFile().exists())
@@ -301,7 +312,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             File fieldList = new File(d.getFile().getParentFile(), "fieldList.txt");
             if (!fieldList.exists())
             {
-                throw new PipelineJobException("Lucene index missing fieldList.txt: " + luceneIndexId);
+                throw new PipelineJobException("Lucene index missing fieldList.txt: " + fieldList.getPath());
             }
 
             List<String> fields = new ArrayList<>();
@@ -322,10 +333,18 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 throw new PipelineJobException(e);
             }
 
-            if (!IndexVariantsForMgapStep.getInfoFieldsToIndex(ctx.getJob().getContainer(), ctx.getJob().getUser()).equals(fields))
+            List<String> expectedFields = IndexVariantsForMgapStep.getInfoFieldsToIndex(job.getContainer(), job.getUser());
+            if (!expectedFields.equals(fields))
             {
+                job.getLogger().warn("Expected fields:");
+                job.getLogger().warn(StringUtils.join(expectedFields, ";"));
+                job.getLogger().warn("Found:");
+                job.getLogger().warn(StringUtils.join(fields, ";"));
+
                 throw new PipelineJobException("The fields in the lucene index do not match the expected fields: " + luceneIndexId);
             }
+
+            return so;
         }
 
         private File getTrackListFile(File outputDir)
@@ -432,10 +451,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     throw new PipelineJobException("Unable to find novel sites VCF for release: " + release);
                 }
 
-                SequenceOutputFile luceneIndex = JBrowseService.get().findMatchingLuceneIndex(inputs.get(0), IndexVariantsForMgapStep.getInfoFieldsToIndex(job.getContainer(), job.getUser()), job.getUser(), job.getLogger());
+                if (!(job instanceof HasJobParams hjp))
+                {
+                    throw new PipelineJobException("Expected PipelineJob to implement HasJobParams");
+                }
+
+                SequenceOutputFile luceneIndex = getAndValidateLuceneIndex(job, hjp.getParameterJson());
                 if (luceneIndex == null)
                 {
-                    throw new PipelineJobException("Unable to lucene index matching the input VCF: " + inputs.get(0).getFile().getPath());
+                    throw new PipelineJobException("Unable to lucene index matching the input VCF: " + so.getFile().getPath());
                 }
 
                 //find basic stats:
@@ -1117,9 +1141,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 return;
             }
 
+            String releaseVersion = ctx.getParams().optString("releaseVersion");
+
             long sitesInspected = 0L;
             long totalVariants = 0L;
             long totalPrivateVariants = 0L;
+            long newInThisRelease = 0L;
             Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
 
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
@@ -1388,6 +1415,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                         }
                     }
 
+                    if (vc.getAttribute("mGAPV") != null && releaseVersion.equals(vc.getAttributeAsString("mGAPV", null)))
+                    {
+                        newInThisRelease++;
+                    }
+
                     for (List<String> line : queuedLines)
                     {
                         writer.writeNext(line.toArray(new String[0]));
@@ -1407,7 +1439,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
+                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, newInThisRelease, totalSubjects, typeCounts);
             }
 
             try
@@ -1445,7 +1477,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             return Collections.emptySet();
         }
 
-        private static void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
+        private static void generateSummaries(JobContext ctx, File vcf, ReferenceGenome genome, long totalVariants, long totalPrivateVariants, long newInThisRelease, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
         {
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
@@ -1480,7 +1512,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ctx.getLogger().info("Generating summary stats from: " + variantsToTable.getName());
             File summaryTable = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summary.txt");
             File summaryTableByField = new File(vcf.getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".summaryByField.txt");
-            new mGapSummarizer().generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, totalSubjects, typeCounts);
+            new mGapSummarizer().generateSummary(ctx, variantsToTable, summaryTable, summaryTableByField, totalVariants, totalPrivateVariants, newInThisRelease, totalSubjects, typeCounts);
         }
 
         private void maybeWriteVariantLine(Set<List<String>> queuedLines, VariantContext vc, @Nullable String allele, String source, String reason, String description, Collection<String> overlappingGenes, Collection<String> omimIds, Collection<String> omimPhenotypes, Logger log, String identifier)

@@ -46,7 +46,7 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
                     ToolParameterDescriptor.createExpDataParam(REF_VCF, "mGAP Release", "The mGAP release VCF to use for comparison", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject()
                     {{
                         put("allowBlank", false);
-                        put("category", "mGAP Release");
+                        put("category", "mGAP Release: Sites Only");
                         put("performGenomeFilter", false);
                         put("doNotIncludeInTemplates", true);
                     }}, null)
