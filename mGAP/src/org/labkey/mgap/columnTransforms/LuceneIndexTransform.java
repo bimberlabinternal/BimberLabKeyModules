@@ -33,7 +33,7 @@ public class LuceneIndexTransform extends OutputFileTransform
                 "rsync", "-r", "-a", "--delete", "--no-owner", "--no-group", "--chmod=D2770,F660", sourceDir.getPath(), targetDir.getPath()
         ));
 
-        return new File(targetDir, f.getName());
+        return new File(targetDir, sourceDir.getName() + "/" + f.getName());
     }
 
     @Override

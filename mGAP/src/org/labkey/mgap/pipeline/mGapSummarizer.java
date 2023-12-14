@@ -190,19 +190,12 @@ public class mGapSummarizer
         }
     }
 
-    public void generateSummary(SequenceOutputHandler.JobContext ctx, File variantsToTable, File output, File outputPerValue, long totalVariants, long totalPrivateVariants, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
+    public void generateSummary(SequenceOutputHandler.JobContext ctx, File variantsToTable, File output, File outputPerValue, long totalVariants, long totalPrivateVariants, long newInThisRelease, int totalSubjects, Map<VariantContext.Type, Long> typeCounts) throws PipelineJobException
     {
         ctx.getLogger().info("reading variant table");
-        int lineNo = 0;
         FieldTracker tracker = new FieldTracker(130);
         try (BufferedReader reader = Readers.getReader(variantsToTable))
         {
-            lineNo++;
-            if (lineNo % 500000 == 0)
-            {
-                ctx.getLogger().info("processed " + lineNo + " lines");
-            }
-
             String lineStr;
             List<String> header = new ArrayList<>();
             int lineCount = 0;
@@ -210,6 +203,11 @@ public class mGapSummarizer
             {
                 String[] line = lineStr.split("\t");
                 lineCount++;
+                if (lineCount % 500000 == 0)
+                {
+                    ctx.getLogger().info("processed " + lineCount + " lines");
+                }
+
                 if (lineCount == 1)
                 {
                     //skip header
@@ -249,6 +247,7 @@ public class mGapSummarizer
             valWriter.writeNext(new String[]{"Field", "Level", "Total"});
             valWriter.writeNext(new String[]{"Counts", "TotalVariants", String.valueOf(totalVariants)});
             valWriter.writeNext(new String[]{"Counts", "TotalPrivateVariants", String.valueOf(totalPrivateVariants)});
+            valWriter.writeNext(new String[]{"Counts", "TotalVariantsNewInRelease", String.valueOf(newInThisRelease)});
             valWriter.writeNext(new String[]{"Counts", "TotalSamples", String.valueOf(totalSubjects)});
 
             for (VariantContext.Type type : typeCounts.keySet())

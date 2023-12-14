@@ -53,6 +53,7 @@ import org.labkey.mgap.pipeline.RemoveAnnotationsStep;
 import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
 import org.labkey.mgap.pipeline.SampleSpecificGenotypeFiltrationStep;
 import org.labkey.mgap.pipeline.VcfComparisonStep;
+import org.labkey.mgap.pipeline.mGapReleaseAlleleFreqStep;
 import org.labkey.mgap.pipeline.mGapReleaseAnnotateNovelSitesStep;
 import org.labkey.mgap.pipeline.mGapReleaseComparisonStep;
 import org.labkey.mgap.pipeline.mGapReleaseGenerator;
@@ -136,6 +137,7 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseAnnotateNovelSitesStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new GenerateMgapTracksStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new IndexVariantsForMgapStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new mGapReleaseAlleleFreqStep.Provider());
 
                 _hasRegistered = true;
             }
@@ -150,7 +152,7 @@ public class mGAPModule extends ExtendedSimpleModule
 
         SimpleFilter filter = new SimpleFilter();
         filter.addClause(ContainerFilter.current(context.getContainer()).createFilterClause(mGAPSchema.getInstance().getSchema(), FieldKey.fromString("container")));
-        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "objectid", "version", "jbrowseId", "humanJbrowseId"), filter, new Sort("-releaseDate"));
+        TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "objectid", "version", "jbrowseId", "humanJbrowseId", "luceneIndex"), filter, new Sort("-releaseDate"));
         ts.setMaxRows(1);
         ts.forEachResults(rs -> {
             String jbrowseId = rs.getString(FieldKey.fromString("jbrowseId"));
@@ -166,9 +168,15 @@ public class mGAPModule extends ExtendedSimpleModule
             }
 
             Integer rowId = rs.getInt(FieldKey.fromString("rowid"));
-            if (rowId != null)
+            if (rowId != null && rowId > 0)
             {
                 ret.put("mgapReleaseId", rowId);
+            }
+
+            Integer luceneIndexId = rs.getInt(FieldKey.fromString("luceneIndex"));
+            if (luceneIndexId != null && luceneIndexId > 0)
+            {
+                ret.put("luceneIndexId", luceneIndexId);
             }
 
             String releaseVersion = rs.getString(FieldKey.fromString("version"));
