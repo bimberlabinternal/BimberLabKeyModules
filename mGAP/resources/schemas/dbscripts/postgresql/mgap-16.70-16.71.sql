@@ -1,1 +1,1 @@
-ALTER TABLE mGAP.variantCatalogReleases ADD annotations boolean;
+ALTER TABLE mGAP.annotations ADD inDefaultColumns boolean;
