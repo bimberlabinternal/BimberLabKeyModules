@@ -1,1 +1,1 @@
-ALTER TABLE mGAP.variantCatalogReleases ADD inDefaultColumns bit;
+ALTER TABLE mGAP.annotations ADD inDefaultColumns bit;
