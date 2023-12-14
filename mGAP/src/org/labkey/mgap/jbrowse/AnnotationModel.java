@@ -17,6 +17,7 @@ public class AnnotationModel
     private String _formatString;
     private Boolean _hidden = false;
     private Boolean _isIndexed = false;
+    private Boolean _inDefaultColumns = false;
     private String _allowableValues;
 
     public AnnotationModel()
@@ -182,5 +183,15 @@ public class AnnotationModel
     public void setAllowableValues(String allowableValues)
     {
         _allowableValues = allowableValues;
+    }
+
+    public Boolean isInDefaultColumns()
+    {
+        return _inDefaultColumns;
+    }
+
+    public void setInDefaultColumns(Boolean inDefaultColumns)
+    {
+        _inDefaultColumns = inDefaultColumns;
     }
 }
