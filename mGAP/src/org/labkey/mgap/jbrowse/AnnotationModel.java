@@ -167,7 +167,8 @@ public class AnnotationModel
 
     public boolean isIndexed()
     {
-        return _isIndexed == null || _isIndexed;
+        // Defaults to false when null
+        return _isIndexed != null && _isIndexed;
     }
 
     public void setIndexed(Boolean indexed)
@@ -187,7 +188,8 @@ public class AnnotationModel
 
     public Boolean isInDefaultColumns()
     {
-        return _inDefaultColumns;
+        // Defaults to false when null
+        return _inDefaultColumns != null && _inDefaultColumns;
     }
 
     public void setInDefaultColumns(Boolean inDefaultColumns)
