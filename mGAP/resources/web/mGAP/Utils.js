@@ -43,7 +43,9 @@ mGAP.Utils = (function($){
                         versionLine = '<tr><td>Current Version:</td><td>' + mGAP.Utils.getMGapReleaseVersion() + '</td></tr>';
                     }
                     var data0 = map.Counts || {};
-                    $('#' + tableId).html('<table>' + versionLine + '<tr><td>Total Variants:</td><td>' + numberWithCommas(data0.TotalVariants) + '</td></tr><tr><td>Total Animals:</td><td>' + numberWithCommas(data0.TotalSamples) + '</td></tr><tr><td style="padding-right: 20px;">Private Variants:</td><td>' + numberWithCommas(data0.TotalPrivateVariants) + '</td></tr></table>');
+                    $('#' + tableId).html('<table>' + versionLine + '<tr><td>Total Variants:</td><td>' + numberWithCommas(data0.TotalVariants) + '</td></tr><tr><td>Total Animals:</td><td>' + numberWithCommas(data0.TotalSamples) + '</td></tr><tr><td style="padding-right: 20px;">Private Variants:</td><td>' + numberWithCommas(data0.TotalPrivateVariants) + '</td></tr>' +
+                        (data0.TotalVariantsNewInRelease ? '<tr><td style="padding-right: 20px;">Variants New In Release:</td><td>' + numberWithCommas(data0.TotalVariantsNewInRelease) + '</td></tr>' : '') +
+                    '</table>');
 
                     var data1 = map.CodingPotential || {};
                     var codingLabels = ["Exonic", "Downstream<br>Gene", "Upstream<br>Gene", "Intergenic", "Intronic/<br>Non-coding"];
