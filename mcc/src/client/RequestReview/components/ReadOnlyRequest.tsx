@@ -2,7 +2,7 @@ import React from 'react';
 import { AnimalRequestModel, AnimalRequestProps } from '../../components/RequestUtils';
 import {
     existingMarmosetColonyOptions,
-    existingNHPFacilityOptions,
+    existingNHPFacilityOptions, fundingSourceOptions,
     IACUCApprovalOptions,
     institutionTypeOptions
 } from '../../AnimalRequest/components/values';
@@ -143,6 +143,12 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                             <Typography key={'coi-' + idx}>{formatName(coi.lastname, coi.firstname, coi.middleinitial) + ': ' +coi.institutionname}</Typography>
                         ])
                     }) : 'N/A'}
+                </Grid>
+                <StyledGridFieldLabel item xs={2}>
+                    <div>Funding Source(s): </div>
+                </StyledGridFieldLabel>
+                <Grid item xs={10}>
+                    {translateRawToDisplayValue(requestData.request.fundingsource, fundingSourceOptions, true)}
                 </Grid>
             </Grid>
 
