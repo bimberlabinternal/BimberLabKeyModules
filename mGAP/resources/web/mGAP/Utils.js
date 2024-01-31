@@ -142,7 +142,7 @@ mGAP.Utils = (function($){
                         "name": "# Variants",
                         "mode": "markers",
                         "x": annotationData,
-                        "y": ["GWAS Associations<br>(GRASP)", "Enhancer Region<br>(FANTOM5)", "Predicted Enhancer<br>(ENCODE)", "Transcription Factor<br>Binding (ENCODE)", "Predicted High<br>Impact (SnpEff)", "Damaging<br>(Polyphen2)", "ClinVar Overlap"],
+                        "y": ["Enhancer Region<br>(FANTOM5)", "Predicted Enhancer<br>(ENCODE)", "Transcription Factor<br>Binding (ENCODE)", "Predicted High<br>Impact (SnpEff)", "Damaging<br>(Polyphen2)", "ClinVar Overlap"],
                         "type": "bar",
                         "orientation": "h",
                         "autobiny": true
