@@ -150,6 +150,12 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                 <Grid item xs={10}>
                     {translateRawToDisplayValue(requestData.request.fundingsource, fundingSourceOptions, true)}
                 </Grid>
+                <StyledGridFieldLabel item xs={2}>
+                    <div>Grant Number(s): </div>
+                </StyledGridFieldLabel>
+                <Grid item xs={10}>
+                    {requestData.request.grantnumber}
+                </Grid>
             </Grid>
 
             <p />
