@@ -22,8 +22,8 @@ import org.labkey.api.security.permissions.UpdatePermission;
 import org.labkey.mcc.security.MccRabReviewPermission;
 import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequestorPermission;
+import org.labkey.mcc.security.MccViewRequestsPermission;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 public class MccUserSchema extends SimpleUserSchema
@@ -65,9 +65,9 @@ public class MccUserSchema extends SimpleUserSchema
         else if (MccSchema.TABLE_REQUEST_SCORE.equalsIgnoreCase(name))
         {
             CustomPermissionsTable<?> ret = new CustomPermissionsTable<>(this, schemaTable, cf);
-            ret.addPermissionMapping(ReadPermission.class, MccRequestAdminPermission.class);
-            ret.addPermissionMapping(InsertPermission.class, MccRequestAdminPermission.class);
-            ret.addPermissionMapping(UpdatePermission.class, MccRequestAdminPermission.class);
+            ret.addPermissionMapping(ReadPermission.class, MccViewRequestsPermission.class);
+            ret.addPermissionMapping(InsertPermission.class, MccViewRequestsPermission.class);
+            ret.addPermissionMapping(UpdatePermission.class, MccViewRequestsPermission.class);
             ret.addPermissionMapping(DeletePermission.class, MccRequestAdminPermission.class);
 
             ret = ret.init();

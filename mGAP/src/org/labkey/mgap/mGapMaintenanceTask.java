@@ -121,9 +121,9 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             try
             {
                 ReferenceGenome rg = SequenceAnalysisService.get().getReferenceGenome(genomeId, u);
-                checkSymlink(log, rg.getSourceFastaFile(), null, commandsToRun);
-                checkSymlink(log, new File(rg.getSourceFastaFile().getPath() + ".fai"), null, commandsToRun);
-                checkSymlink(log, new File(rg.getSourceFastaFile().getPath().replace(".fasta", ".dict")), null, commandsToRun);
+                checkSymlink(log, rg.getSourceFastaFile(), "genomes", commandsToRun);
+                checkSymlink(log, new File(rg.getSourceFastaFile().getPath() + ".fai"), "genomes", commandsToRun);
+                checkSymlink(log, new File(rg.getSourceFastaFile().getPath().replace(".fasta", ".dict")), "genomes", commandsToRun);
             }
             catch (PipelineJobException e)
             {

@@ -10,7 +10,7 @@ public class MccFinalReviewerRole extends AbstractRole
 {
     public MccFinalReviewerRole()
     {
-        super("MccFinalReviewer", "These users can enter the final reviews for MCC requests", ReadPermission.class, InsertPermission.class, UpdatePermission.class, MccRequestorPermission.class, MccRabReviewPermission.class, MccFinalReviewPermission.class);
+        super("MccFinalReviewer", "These users can enter the final reviews for MCC requests", ReadPermission.class, InsertPermission.class, UpdatePermission.class, MccRequestorPermission.class, MccRabReviewPermission.class, MccViewRequestsPermission.class, MccFinalReviewPermission.class);
     }
 
     @Override
