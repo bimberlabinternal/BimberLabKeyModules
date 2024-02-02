@@ -68,9 +68,9 @@ Ext4.define('mGAP.window.DownloadWindow', {
                             '<pre>wget https://mgapdownload.ohsu.edu/' + sitesOnlyVcf + '<br>' +
                             'wget https://mgapdownload.ohsu.edu/' + sitesOnlyVcf + '.tbi</pre>' : '') +
                             'and genome:<br>' +
-                            '<pre>wget https://mgapdownload.ohsu.edu/' + urlFasta + '<br>' +
-                            'wget https://mgapdownload.ohsu.edu/' + urlFasta + '.fai<br>' +
-                            'wget https://mgapdownload.ohsu.edu/' + urlFasta.replace(/fasta$/, 'dict') + '</pre>'
+                            '<pre>wget https://mgapdownload.ohsu.edu/genomes/' + urlFasta + '<br>' +
+                            'wget https://mgapdownload.ohsu.edu/genomes/' + urlFasta + '.fai<br>' +
+                            'wget https://mgapdownload.ohsu.edu/genomes/' + urlFasta.replace(/fasta$/, 'dict') + '</pre>'
                 },{
                     html: '<br><b>mGAP is an NIH funded project.  If you use these data in a publication, we ask that you please include R24OD021324 in the acknowledgements.</b>',
                     border: false,

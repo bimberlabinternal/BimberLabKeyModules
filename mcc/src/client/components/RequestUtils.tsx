@@ -29,6 +29,8 @@ export class AnimalRequestProps {
     officiallastname: string;
     officialfirstname: string;
     officialemail: string;
+    fundingsource: string;
+    grantnumber: string;
     experimentalrationale: string;
     breedinganimals: string;
     breedingpurpose: string;

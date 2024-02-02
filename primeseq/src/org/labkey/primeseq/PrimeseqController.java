@@ -65,6 +65,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -698,6 +699,100 @@ public class PrimeseqController extends SpringActionController
         public void setDeleteMultiLineage(boolean deleteMultiLineage)
         {
             _deleteMultiLineage = deleteMultiLineage;
+        }
+    }
+
+    @RequiresPermission(UpdatePermission.class)
+    public static class DeleteJobCheckpointAction extends MutatingApiAction<DeleteJobCheckpointForm>
+    {
+        @Override
+        public Object execute(DeleteJobCheckpointForm form, BindException errors) throws Exception
+        {
+            String jobIDs = StringUtils.trimToNull(form.getJobIds());
+            if (jobIDs == null)
+            {
+                errors.reject(ERROR_MSG, "No JobIds provided");
+                return false;
+            }
+
+            int jobsUpdated = 0;
+            int jobsRestarted = 0;
+
+            Set<String> jobs = new HashSet<>(Arrays.asList(jobIDs.split(",")));
+            for (String id : jobs)
+            {
+                int jobId = Integer.parseInt(StringUtils.trimToNull(id));
+                PipelineStatusFile sf = PipelineService.get().getStatusFile(jobId);
+                if (sf == null)
+                {
+                    errors.reject(ERROR_MSG, "Unable to find job: " + id);
+                    return false;
+                }
+
+                if (sf.getFilePath() == null)
+                {
+                    errors.reject(ERROR_MSG, "Unable to find log file: " + sf.getJobId());
+                    return false;
+                }
+
+                File dir = new File(sf.getFilePath()).getParentFile();
+                if (!dir.exists())
+                {
+                    errors.reject(ERROR_MSG, "Unable to find job directory: " + sf.getJobId());
+                    return false;
+                }
+
+                for (String fn : Arrays.asList("processVariantsCheckpoint.json", "alignmentCheckpoint.json", "processSingleCellCheckpoint.json"))
+                {
+                    File checkpoint = new File(dir, fn);
+                    if (checkpoint.exists())
+                    {
+                        jobsUpdated++;
+                        checkpoint.delete();
+
+                        break;
+                    }
+                }
+
+                if (form.isRestartJobs())
+                {
+                    if (PipelineJob.TaskStatus.error.name().equalsIgnoreCase(sf.getStatus()) || PipelineJob.TaskStatus.cancelled.name().equalsIgnoreCase(sf.getStatus()))
+                    {
+                        jobsRestarted++;
+                        PipelineJob job = sf.createJobInstance();
+                        PipelineService.get().queueJob(job);
+                    }
+                }
+            }
+
+            return new ApiSimpleResponse(Map.of("success", true, "jobsUpdated", jobsUpdated, "jobsRestarted", jobsRestarted));
+        }
+    }
+
+    public static class DeleteJobCheckpointForm
+    {
+        private String _jobIds;
+
+        private boolean _restartJobs = false;
+
+        public String getJobIds()
+        {
+            return _jobIds;
+        }
+
+        public void setJobIds(String jobIds)
+        {
+            _jobIds = jobIds;
+        }
+
+        public boolean isRestartJobs()
+        {
+            return _restartJobs;
+        }
+
+        public void setRestartJobs(boolean restartJobs)
+        {
+            _restartJobs = restartJobs;
         }
     }
 }

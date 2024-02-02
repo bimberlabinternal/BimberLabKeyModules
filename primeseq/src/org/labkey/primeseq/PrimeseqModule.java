@@ -37,6 +37,7 @@ import org.labkey.primeseq.pipeline.BisSnpIndelRealignerStep;
 import org.labkey.primeseq.pipeline.BismarkWrapper;
 import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
+import org.labkey.primeseq.pipeline.DeleteJobCheckpointButton;
 import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
 import org.labkey.primeseq.pipeline.GeographicOriginStep;
 import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
@@ -88,6 +89,7 @@ public class PrimeseqModule extends ExtendedSimpleModule
 
         LDKService.get().registerQueryButton(new UpdateResourcesButton(), "pipeline", "job");
         LDKService.get().registerQueryButton(new PerformMhcCleanupButton(), "sequenceanalysis", "sequence_analyses");
+        LDKService.get().registerQueryButton(new DeleteJobCheckpointButton(), "pipeline", "job");
     }
 
     @Override
