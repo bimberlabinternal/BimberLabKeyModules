@@ -39,7 +39,7 @@ LEFT JOIN (SELECT
                    o."medical_history::observation" as medical_history,
     FROM "/data/Colonies/SNPRC/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
-WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false) and d.calculated_status NOT IN ('Unknown', 'Other')
+WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false) and d.calculated_status NOT IN ('Other')
 
 UNION ALL
 
