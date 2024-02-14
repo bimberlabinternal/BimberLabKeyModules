@@ -1062,8 +1062,6 @@ Ext4.define('MCC.panel.MccImportPanel', {
         var departureInserts = []
 
         Ext4.Array.forEach(rawData, function(row){
-            // TODO: check status and update death/departure
-
             if (row.existingRecord) {
                 demographicsUpdates.push({
                     Id: row.Id,
