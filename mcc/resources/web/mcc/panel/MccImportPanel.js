@@ -251,7 +251,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         sex: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['male', 'female'], row);
+            val = panel.enforceAllowableValues(val, ['male', 'female', 'unknown'], row);
 
             return(val);
         },
