@@ -145,12 +145,13 @@ Ext4.onReady(function(){
             schemaName: 'ehr_lookups',
             queryName: 'lookup_sets'
         },{
-            //     label: 'Reports',
-        //     populateFn: 'populateFromFile',
-        //     schemaName: 'ehr',
-        //     queryName: 'reports',
-        //     pk: 'rowid'
-        // },{
+            label: 'Reports',
+            populateFn: 'populateFromFile',
+            moduleName: 'mcc',
+            schemaName: 'ehr',
+            queryName: 'reports',
+            pk: 'rowid'
+        },{
             label: 'Species',
             populateFn: 'populateFromFile',
             moduleName: 'mcc',

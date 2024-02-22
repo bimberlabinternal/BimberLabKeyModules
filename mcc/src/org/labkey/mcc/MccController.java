@@ -24,6 +24,8 @@ import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
@@ -38,8 +40,11 @@ import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.module.ModuleProperty;
 import org.labkey.api.pipeline.PipelineUrls;
+import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
+import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
 import org.labkey.api.security.GroupManager;
@@ -57,8 +62,12 @@ import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.settings.AppProps;
 import org.labkey.api.settings.LookAndFeelProperties;
 import org.labkey.api.studies.StudiesService;
+import org.labkey.api.study.Dataset;
+import org.labkey.api.study.Study;
+import org.labkey.api.study.StudyService;
 import org.labkey.api.util.ConfigurationException;
 import org.labkey.api.util.ExceptionUtil;
+import org.labkey.api.util.GUID;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
@@ -66,6 +75,7 @@ import org.labkey.api.util.Path;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
 import org.labkey.mcc.etl.ZimsImportTask;
+import org.labkey.mcc.security.MccDataAdminPermission;
 import org.labkey.mcc.security.MccDataAdminRole;
 import org.labkey.mcc.security.MccFinalReviewerRole;
 import org.labkey.mcc.security.MccRabReviewerRole;
@@ -78,6 +88,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.mail.Address;
 import javax.mail.Message;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -85,7 +96,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class MccController extends SpringActionController
 {
@@ -690,6 +703,9 @@ public class MccController extends SpringActionController
             ModuleProperty mp = ehr.getModuleProperties().get("EHRStudyContainer");
             mp.saveValue(getUser(), getContainer(), getContainer().getPath());
 
+            ModuleProperty mp2 = ehr.getModuleProperties().get("DefaultAnimalHistoryReport");
+            mp2.saveValue(getUser(), getContainer(), "demographics");
+
             StudiesService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
 
             return true;
@@ -779,6 +795,102 @@ public class MccController extends SpringActionController
         public void setRowIds(Integer[] rowIds)
         {
             this.rowIds = rowIds;
+        }
+    }
+
+    @RequiresPermission(MccDataAdminPermission.class)
+    public class RenameIdsAction extends MutatingApiAction<RenameIdsForm>
+    {
+        @Override
+        public Object execute(RenameIdsForm form, BindException errors) throws Exception
+        {
+            if (form.getOriginalIds() == null || form.getOriginalIds().length == 0)
+            {
+                errors.reject(ERROR_MSG, "Must provide a list of IDs to change");
+                return null;
+            }
+
+            if (form.getNewIds() == null || form.getOriginalIds().length != form.getNewIds().length)
+            {
+                errors.reject(ERROR_MSG, "Differing number of Original/New IDs were provided");
+                return null;
+            }
+
+            Study s = StudyService.get().getStudy(getContainer());
+            if (s == null)
+            {
+                errors.reject(ERROR_MSG, "There is no study in this container");
+                return null;
+            }
+
+            final Map<String, String> oldToNew = new CaseInsensitiveHashMap<>();
+            IntStream.range(0, form.getOriginalIds().length).forEach(i -> oldToNew.put(form.getOriginalIds()[i], form.getNewIds()[i]));
+
+            final Set<String> idsUpdated = new CaseInsensitiveHashSet();
+            final AtomicInteger totalRecordsUpdated = new AtomicInteger();
+
+            // NOTE: include this value so it will get added to the audit trail. This is a loose way to connect changes made in this transaction
+            final String batchId = "MCC.Rename." + new GUID();
+            for (Dataset ds : s.getDatasets())
+            {
+                TableInfo ti = ds.getTableInfo(getUser());
+                TableSelector ts = new TableSelector(ti, PageFlowUtil.set("Id", "lsid"), new SimpleFilter(FieldKey.fromString("Id"), oldToNew.keySet(), CompareType.IN), null);
+                if (!ts.exists())
+                {
+                    continue;
+                }
+
+                List<Map<String, Object>> toUpdate = new ArrayList<>();
+                List<Map<String, Object>> oldKeys = new ArrayList<>();
+                ts.forEachResults(rs -> {
+                    toUpdate.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid")), "Id", oldToNew.get(rs.getString(FieldKey.fromString("Id"))), "_batchId_", batchId));
+                    oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
+                    idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
+                    totalRecordsUpdated.getAndIncrement();
+                });
+
+                if (!toUpdate.isEmpty())
+                {
+                    try
+                    {
+                        ti.getUpdateService().updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, null);
+                    }
+                    catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+                    {
+                        _log.error("Error updating MCC dataset rows", e);
+                        errors.reject(ERROR_MSG, "Error updating MCC dataset rows: " + e.getMessage());
+                        return null;
+                    }
+                }
+            }
+
+            return new ApiSimpleResponse(Map.of("success", true, "totalIdsUpdated", idsUpdated.size(), "totalRecordsUpdated", totalRecordsUpdated.get()));
+        }
+    }
+
+    public static class RenameIdsForm
+    {
+        private String[] _originalIds;
+        private String[] _newIds;
+
+        public String[] getOriginalIds()
+        {
+            return _originalIds;
+        }
+
+        public void setOriginalIds(String[] originalIds)
+        {
+            _originalIds = originalIds;
+        }
+
+        public String[] getNewIds()
+        {
+            return _newIds;
+        }
+
+        public void setNewIds(String[] newIds)
+        {
+            _newIds = newIds;
         }
     }
 }

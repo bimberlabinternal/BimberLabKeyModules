@@ -776,4 +776,89 @@
             </item>
         </buttonBarOptions>
     </table>
+    <table tableName="census" tableDbType="TABLE">
+        <insertUrl />
+        <importUrl />
+        <updateUrl />
+        <deleteUrl />
+        <tableTitle>MCC Census</tableTitle>
+        <auditLogging>DETAILED</auditLogging>
+        <pkColumnName>rowid</pkColumnName>
+        <columns>
+            <column columnName="rowid">
+                <columnTitle>Row Id</columnTitle>
+                <nullable>false</nullable>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="yearNo">
+                <columnTitle>Year #</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="startdate">
+                <columnTitle>Period Start</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="enddate">
+                <columnTitle>Period End</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="centerName">
+                <columnTitle>Center Name</columnTitle>
+                <nullable>false</nullable>
+            </column>
+            <column columnName="totalBreedingPairs">
+                <columnTitle># Breeding Pairs</columnTitle>
+            </column>
+            <column columnName="totalLivingOffspring">
+                <columnTitle># Living Offspring</columnTitle>
+            </column>
+            <column columnName="survivalRates">
+                <columnTitle>Survival Rates</columnTitle>
+            </column>
+            <column columnName="marmosetsShipped">
+                <columnTitle># Animals Shipped</columnTitle>
+            </column>
+            <column columnName="container">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="createdby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="created">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modifiedby">
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="modified">
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <nullable>true</nullable>
+                <scale>29</scale>
+                <isHidden>true</isHidden>
+            </column>
+            <column columnName="actions" wrappedColumnName="rowid">
+                <columnTitle>Actions</columnTitle>
+                <displayWidth>200</displayWidth>
+                <displayColumnFactory>
+                    <className>org.labkey.mcc.query.RequestScoreActionsDisplayColumnFactory</className>
+                </displayColumnFactory>
+            </column>
+        </columns>
+        <buttonBarOptions includeStandardButtons="true">
+            <includeScript>ldk.context</includeScript>
+            <item hidden="true">
+                <originalText>Charts</originalText>
+            </item>
+            <item hidden="true">
+                <originalText>Print</originalText>
+            </item>
+        </buttonBarOptions>
+    </table>
 </tables>

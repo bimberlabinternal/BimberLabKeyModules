@@ -33,6 +33,7 @@ import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.writer.ContainerUser;
 import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
+import org.labkey.mcc.query.RenameIdButton;
 import org.labkey.mcc.query.ReviewerNotifyButton;
 import org.labkey.mcc.security.MccDataAdminRole;
 import org.labkey.mcc.security.MccFinalReviewPermission;
@@ -59,7 +60,7 @@ public class MccModule extends ExtendedSimpleModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 20.015;
+        return 20.016;
     }
 
     @Override
@@ -121,6 +122,7 @@ public class MccModule extends ExtendedSimpleModule
         EHRService.get().registerModule(this);
         EHRService.get().registerTableCustomizer(this, MccEhrCustomizer.class);
         EHRService.get().registerMoreActionsButton(new MarkShippedButton(), "study", "demographics");
+        EHRService.get().registerMoreActionsButton(new RenameIdButton(), "study", "demographics");
     }
 
     @Override

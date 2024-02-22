@@ -1,6 +1,6 @@
 <folderType xmlns="http://labkey.org/data/xml/folderType">
-    <name>MCC Colony</name>
-    <description>The default folder layout for MCC Colonies</description>
+    <name>MCC Data</name>
+    <description>The default folder layout for the MCC data aggregation folder</description>
     <preferredWebParts>
         <webPart>
             <name>MCC Menu</name>
@@ -10,7 +10,7 @@
     <folderTabs>
         <folderTab>
             <name>mcc</name>
-            <caption>Data</caption>
+            <caption>Overview</caption>
             <selectors>
                 <selector>
                     <regex>overview</regex>
@@ -21,14 +21,29 @@
             </requiredWebParts>
             <preferredWebParts>
                 <webPart>
-                    <name>MCC Colony</name>
+                    <name>MCC Dashboard Webpart</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>animalData</name>
+            <caption>All Animals</caption>
+            <selectors>
+                <selector>
+                    <view>animalData</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Demographics</name>
                     <location>body</location>
                 </webPart>
             </preferredWebParts>
         </folderTab>
         <folderTab>
             <name>animalHistory</name>
-            <caption>Animal History</caption>
+            <caption>Animal Detail</caption>
             <selectors>
                 <selector>
                     <view>animalHistory</view>
@@ -59,11 +74,10 @@
     </folderTabs>
     <modules>
         <moduleName>MCC</moduleName>
-        <moduleName>MccColony</moduleName>
         <moduleName>Study</moduleName>
         <moduleName>Query</moduleName>
         <moduleName>Pipeline</moduleName>
         <moduleName>Core</moduleName>
     </modules>
-    <defaultModule>MCC</defaultModule>
+    <defaultModule>Core</defaultModule>
 </folderType>

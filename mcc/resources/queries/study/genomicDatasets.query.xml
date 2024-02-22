@@ -1,0 +1,25 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="genomicDatasets" tableDbType="TABLE">
+                <tableUrl />
+                <insertUrl />
+                <importUrl />
+                <updateUrl />
+                <deleteUrl />
+                <columns>
+                    <column columnName="Id">
+
+                    </column>
+                    <column columnName="datatype">
+                        <columnTitle>Data Type</columnTitle>
+                    </column>
+                    <column columnName="sra_accession">
+                        <columnTitle>SRA Accession</columnTitle>
+                        <url>https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=${sraAccession}</url>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>
