@@ -92,7 +92,7 @@ public class mGAPFieldCustomizer implements JBrowseFieldCustomizer
         List<String> ret = new ArrayList<>();
         if (indexedFields.contains("IMPACT"))
         {
-            ret.add("Protein Coding Variants|IMPACT,does not equal,MODIFIER");
+            ret.add("Protein Coding Variants|IMPACT,does not equal,MODIFIER&IMPACT,is not empty,");
         }
 
         if (indexedFields.contains("OG"))
