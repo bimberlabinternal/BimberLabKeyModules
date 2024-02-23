@@ -1,0 +1,34 @@
+<folderType xmlns="http://labkey.org/data/xml/folderType">
+    <name>HIVRC Analyses</name>
+    <description>Workbook template for HIVRC analyses</description>
+    <requiredWebParts>
+        <webPart>
+            <name>HIVRC Header</name>
+            <location>body</location>
+        </webPart>
+    </requiredWebParts>
+    <preferredWebParts>
+        <webPart>
+            <name>Pipeline Files</name>
+            <location>body</location>
+            <property name="title" value="Files" />
+        </webPart>
+        <webPart>
+            <name>Messages</name>
+            <location>body</location>
+            <property name="boardName" value="Comments" />
+            <property name="conversationName" value="Comment" />
+        </webPart>
+    </preferredWebParts>
+    <modules>
+        <moduleName>HIVRC</moduleName>
+        <moduleName>laboratory</moduleName>
+        <moduleName>Pipeline</moduleName>
+        <moduleName>Experiment</moduleName>
+        <moduleName>Query</moduleName>
+        <moduleName>Core</moduleName>
+    </modules>
+    <defaultModule>Core</defaultModule>
+    <workbookType>true</workbookType>
+    <forceAssayUploadIntoWorkbooks>true</forceAssayUploadIntoWorkbooks>
+</folderType>

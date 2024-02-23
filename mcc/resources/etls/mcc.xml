@@ -87,7 +87,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="genomicData" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="genomicDatasets" targetOption="truncate" bulkLoad="true">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
