@@ -60,6 +60,75 @@
                 </alternateKeys>
             </destination>
         </transform>
+        <transform type="SimpleQueryTransformStep" id="weight">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedWeight" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>weight</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+        <transform type="SimpleQueryTransformStep" id="genomicData">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedGenomicDatasets" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>datatype</column>
+                    <column>sra_accession</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="genomicData" targetOption="truncate" bulkLoad="true">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+        <transform type="SimpleQueryTransformStep" id="clinicalObservations">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedObservations" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>category</column>
+                    <column>observation</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+        <transform type="SimpleQueryTransformStep" id="census">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedCensus" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>yearNo</column>
+                    <column>startdate</column>
+                    <column>enddate</column>
+                    <column>centerName</column>
+                    <column>totalBreedingPairs</column>
+                    <column>totalLivingOffspring</column>
+                    <column>survivalRates</column>
+                    <column>marmosetsShipped</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="mcc" queryName="census" targetOption="truncate" bulkLoad="true">
+
+            </destination>
+        </transform>
     </transforms>
     <schedule>
         <!--11PM-->
