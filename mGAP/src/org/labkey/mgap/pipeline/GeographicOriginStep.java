@@ -1,29 +1,46 @@
-package org.labkey.primeseq.pipeline;
+package org.labkey.mgap.pipeline;
 
+import au.com.bytecode.opencsv.CSVReader;
 import htsjdk.samtools.util.Interval;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.data.TableInfo;
+import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.BatchValidationException;
+import org.labkey.api.query.DuplicateKeyException;
+import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateServiceException;
+import org.labkey.api.reader.Readers;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractPipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
+import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
+import org.labkey.mgap.mGAPSchema;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class GeographicOriginStep extends AbstractPipelineStep implements VariantProcessingStep
 {
-    public GeographicOriginStep(PipelineStepProvider provider, PipelineContext ctx)
+    public static final String CATEGORY = "Macaque Geographic Origin Scores";
+
+    public GeographicOriginStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
         super(provider, ctx);
     }
@@ -31,7 +48,7 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
     private static final String INDIAN_MARKERS = "indianMarkers";
     private static final String CHINESE_MARKERS = "chineseMarkers";
 
-    public static class Provider extends AbstractVariantProcessingStepProvider<GeographicOriginStep> implements VariantProcessingStep.RequiresPedigree
+    public static class Provider extends AbstractVariantProcessingStepProvider<GeographicOriginStep> implements RequiresPedigree
     {
         public Provider()
         {
@@ -43,7 +60,8 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
                     ToolParameterDescriptor.createExpDataParam(CHINESE_MARKERS, "Chinese-origin Markers", "This is the ID of a VCF file with markers of chinese-origin.", "ldk-expdatafield", new JSONObject()
                     {{
                         put("allowBlank", false);
-                    }}, null)
+                    }}, null),
+                    ToolParameterDescriptor.create("storeResults", "Store Results", "If checked, the results will be stored in the database", "checkbox", null, null)
             ), null, "https://bimberlab.github.io/DISCVRSeq/");
         }
 
@@ -51,6 +69,54 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
         public GeographicOriginStep create(PipelineContext ctx)
         {
             return new GeographicOriginStep(this, ctx);
+        }
+    }
+
+    @Override
+    public void complete(PipelineJob job, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated, SequenceAnalysisJobSupport support) throws PipelineJobException
+    {
+        // TODO: store in DB
+        for (SequenceOutputFile so : outputsCreated)
+        {
+            if (!CATEGORY.equals(so.getCategory()))
+            {
+                continue;
+            }
+
+            List<Map<String, Object>> toInsert = new ArrayList<>();
+            try (CSVReader reader = new CSVReader(Readers.getReader(so.getFile()), '\t'))
+            {
+                String[] line;
+                while ((line = reader.readNext()) != null)
+                {
+                    // SampleName	ReferenceName	MarkersWithData	MarkersNoData	FractionWithData	UniqueContigs	CumulativeAF	MinPossible	MaxPossible	Score
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                    row.put("sampleName", line[0]);
+                    row.put("measurementName", line[1]);
+                    row.put("measurementValue", line[9]);
+                    row.put("dataId", so.getDataId());
+
+                    toInsert.add(row);
+                }
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            if (!toInsert.isEmpty())
+            {
+                TableInfo ti = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_GENETIC_MEASUREMENTS);
+                BatchValidationException bve = new BatchValidationException();
+                try
+                {
+                    ti.getUpdateService().insertRows(job.getUser(), job.getContainer(), toInsert, bve, null, null);
+                }
+                catch (DuplicateKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
         }
     }
 
@@ -97,7 +163,7 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
         output.addInput(genome.getWorkingFastaFile(), "Reference Genome");
         output.addOutput(outputTable, "Macaque Geographic Origin Scores");
 
-        output.addSequenceOutput(outputTable, "Macaque Geographic Origin Scores for: " + inputVCF.getName(), "Macaque Geographic Origin Scores", null, null, genome.getGenomeId(), null);
+        output.addSequenceOutput(outputTable, "Macaque Geographic Origin Scores for: " + inputVCF.getName(), CATEGORY, null, null, genome.getGenomeId(), null);
 
         return output;
     }

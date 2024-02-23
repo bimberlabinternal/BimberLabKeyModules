@@ -1,0 +1,1 @@
+ALTER TABLE mGAP.geneticMeasurements ADD dataid int;

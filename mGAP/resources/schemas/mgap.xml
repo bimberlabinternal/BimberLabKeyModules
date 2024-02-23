@@ -1132,6 +1132,17 @@
             <column columnName="comment">
                 <columnTitle>Comment</columnTitle>
             </column>
+            <column columnName="dataId">
+                <columnTitle>File</columnTitle>
+                <isUserEditable>false</isUserEditable>
+                <shownInInsertView>false</shownInInsertView>
+                <shownInUpdateView>false</shownInUpdateView>
+                <fk>
+                    <fkDbSchema>exp</fkDbSchema>
+                    <fkTable>data</fkTable>
+                    <fkColumnName>RowId</fkColumnName>
+                </fk>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>

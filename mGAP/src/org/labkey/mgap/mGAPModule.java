@@ -46,6 +46,7 @@ import org.labkey.mgap.jbrowse.mGAPGroupsProvider;
 import org.labkey.mgap.jbrowse.mGAPLuceneDetector;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
+import org.labkey.mgap.pipeline.GeographicOriginStep;
 import org.labkey.mgap.pipeline.GroupCompareStep;
 import org.labkey.mgap.pipeline.IndexVariantsForMgapStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
@@ -74,7 +75,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.71;
+        return 16.72;
     }
 
     @Override
@@ -138,6 +139,7 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new GenerateMgapTracksStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new IndexVariantsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseAlleleFreqStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new GeographicOriginStep.Provider());
 
                 _hasRegistered = true;
             }
