@@ -3,7 +3,7 @@
     <description>Workbook template for HIVRC analyses</description>
     <requiredWebParts>
         <webPart>
-            <name>HIVRC Header</name>
+            <name>HIVRC Analysis Header</name>
             <location>body</location>
         </webPart>
     </requiredWebParts>
@@ -16,7 +16,7 @@
         <webPart>
             <name>Messages</name>
             <location>body</location>
-            <property name="boardName" value="Comments" />
+            <property name="boardName" value="Discussion" />
             <property name="conversationName" value="Comment" />
         </webPart>
     </preferredWebParts>
