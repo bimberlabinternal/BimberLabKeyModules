@@ -222,6 +222,13 @@ Ext4.onReady(function(){
             queryName: 'geographic_origins',
             pk: 'rowid'
         },{
+            label: 'Parentage Relationships',
+            populateFn: 'populateFromFile',
+            moduleName: 'mcc',
+            schemaName: 'ehr_lookups',
+            queryName: 'parentageRelationship',
+            pk: 'rowid'
+        },{
             label: 'Gender Codes',
             populateFn: 'populateFromFile',
             moduleName: 'mcc',

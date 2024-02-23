@@ -76,7 +76,7 @@
                 </alternateKeys>
             </destination>
         </transform>
-        <transform type="SimpleQueryTransformStep" id="genomicData">
+        <transform type="SimpleQueryTransformStep" id="genomicDatasets">
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedGenomicDatasets" >
                 <sourceColumns>
