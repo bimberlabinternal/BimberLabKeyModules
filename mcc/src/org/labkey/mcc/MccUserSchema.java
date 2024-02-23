@@ -205,8 +205,6 @@ public class MccUserSchema extends SimpleUserSchema
     private TableInfo getCensusQuery()
     {
         String template = "SELECT\n" +
-                "    d.Id.mccAlias.externalAlias as Id,\n" +
-                "    d.Id as originalId,\n" +
                 "    d.yearNo,\n" +
                 "    d.startdate,\n" +
                 "    d.enddate,\n" +
