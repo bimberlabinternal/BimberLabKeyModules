@@ -62,7 +62,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'species'
     },{
         name: 'birth',
-        labels: ['Birth', 'DOB'],
+        labels: ['Birth', 'DOB', 'DOB (mm/dd/yyyy)'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'genericDate'
@@ -81,13 +81,13 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'status'
     },{
         name: 'dam',
-        labels: ['Dam', 'maternal ID', 'maternal ID (previous)'],
+        labels: ['Dam', 'maternal ID'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'damOrSire'
     },{
         name: 'sire',
-        labels: ['Sire', 'paternal ID', 'paternal ID (previous)'],
+        labels: ['Sire', 'paternal ID'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'damOrSire'
@@ -481,9 +481,9 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
     mergeWithDemographics: function(rows, demographicsRecords, errorMsgs) {
         Ext4.Array.forEach(rows, function(row){
-            row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id) > -1;
+            row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id.toLowerCase()) > -1;
             if (row.existingRecord) {
-                var existingRecord = demographicsRecords.rowMap[row.Id];
+                var existingRecord = demographicsRecords.rowMap[row.Id.toLowerCase()];
                 if (existingRecord.colony !== row.colony) {
                     row.errors.push('Colony does not match existing row: ' + existingRecord.colony);
                 }
@@ -504,7 +504,6 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     }
                 }
 
-                console.log(existingRecord)
                 if (existingRecord['Id/death/date']) {
                     row.existingDeathRecord = true;
                 }
@@ -537,8 +536,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
             ret.idsByCenter[center] = ret.idsByCenter[center] || [];
             ret.idsByCenter[center].push(row.Id);
 
-            ret.allIds.push(row.Id);
-            ret.rowMap[row.Id] = row;
+            ret.allIds.push(row.Id.toLowerCase());
+            ret.rowMap[row.Id.toLowerCase()] = row;
 
             if (row.alternateIds) {
                 var alterateIds = LDK.Utils.textToArray(row.alternateIds);
