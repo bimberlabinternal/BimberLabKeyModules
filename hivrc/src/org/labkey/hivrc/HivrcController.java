@@ -8,6 +8,7 @@ import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.module.ModuleProperty;
 import org.labkey.api.security.RequiresPermission;
+import org.labkey.api.security.permissions.AdminPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.URLHelper;
@@ -29,6 +30,7 @@ public class HivrcController extends SpringActionController
         setActionResolver(_actionResolver);
     }
 
+    @RequiresPermission(AdminPermission.class)
     public static class SetupDefaultsAction extends ConfirmAction<Object>
     {
         @Override

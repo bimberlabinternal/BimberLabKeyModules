@@ -5,14 +5,8 @@
                 <tableTitle>HIVRC Analyses</tableTitle>
                 <titleColumn>workbookId</titleColumn>
                 <columns>
-                    <column columnName="workbookId" wrappedColumnName="entityId">
+                    <column columnName="workbookId">
                         <columnTitle>Analysis #</columnTitle>
-                        <fk>
-                            <fkDbSchema>laboratory</fkDbSchema>
-                            <fkTable>workbooks</fkTable>
-                            <fkColumnName>container</fkColumnName>
-                            <fkDisplayColumnName>workbookId</fkDisplayColumnName>
-                        </fk>
                     </column>
                 </columns>
             </table>
