@@ -44,6 +44,7 @@ import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.InvalidKeyException;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
@@ -828,43 +829,112 @@ public class MccController extends SpringActionController
 
             final Set<String> idsUpdated = new CaseInsensitiveHashSet();
             final AtomicInteger totalRecordsUpdated = new AtomicInteger();
+            final TableInfo mccAliases = QueryService.get().getUserSchema(getUser(), getContainer(), MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
 
-            // NOTE: include this value so it will get added to the audit trail. This is a loose way to connect changes made in this transaction
-            final String batchId = "MCC.Rename." + new GUID();
-            for (Dataset ds : s.getDatasets())
+            try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
-                TableInfo ti = ds.getTableInfo(getUser());
-                TableSelector ts = new TableSelector(ti, PageFlowUtil.set("Id", "lsid"), new SimpleFilter(FieldKey.fromString("Id"), oldToNew.keySet(), CompareType.IN), null);
-                if (!ts.exists())
+                // NOTE: include this value so it will get added to the audit trail. This is a loose way to connect changes made in this transaction
+                final String batchId = "MCC.Rename." + new GUID();
+                Set<String> messages = new HashSet<>();
+                for (Dataset ds : s.getDatasets())
                 {
-                    continue;
+                    TableInfo ti = ds.getTableInfo(getUser());
+                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("Id", "lsid"), new SimpleFilter(FieldKey.fromString("Id"), oldToNew.keySet(), CompareType.IN), null);
+                    if (!ts.exists())
+                    {
+                        continue;
+                    }
+
+                    List<Map<String, Object>> toUpdate = new ArrayList<>();
+                    List<Map<String, Object>> oldKeys = new ArrayList<>();
+                    ts.forEachResults(rs -> {
+                        if (ds.isDemographicData())
+                        {
+                            // test if a record exists with the new ID
+                            if (new TableSelector(ti, new SimpleFilter(FieldKey.fromString("Id"), oldToNew.get(rs.getString(FieldKey.fromString("Id")))), null).exists())
+                            {
+                                messages.add("Existing record for ID: " + oldToNew.get(rs.getString(FieldKey.fromString("Id"))) + " for dataset: " + ds.getLabel() + " in container: " + getContainer().getPath() + ", skipping rename");
+                                return;
+                            }
+                        }
+
+                        toUpdate.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid")), "Id", oldToNew.get(rs.getString(FieldKey.fromString("Id"))), "_batchId_", batchId));
+                        oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
+                        idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
+                        totalRecordsUpdated.getAndIncrement();
+                    });
+
+                    if (!toUpdate.isEmpty())
+                    {
+                        try
+                        {
+                            ti.getUpdateService().updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, null);
+                        }
+                        catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+                        {
+                            _log.error("Error updating MCC dataset rows", e);
+                            errors.reject(ERROR_MSG, "Error updating MCC dataset rows: " + e.getMessage());
+                            return null;
+                        }
+                    }
                 }
 
-                List<Map<String, Object>> toUpdate = new ArrayList<>();
-                List<Map<String, Object>> oldKeys = new ArrayList<>();
-                ts.forEachResults(rs -> {
-                    toUpdate.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid")), "Id", oldToNew.get(rs.getString(FieldKey.fromString("Id"))), "_batchId_", batchId));
-                    oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
-                    idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
-                    totalRecordsUpdated.getAndIncrement();
-                });
-
-                if (!toUpdate.isEmpty())
+                for (String oldId : oldToNew.keySet())
                 {
-                    try
+                    // Find the MCC ID of the new ID:
+                    String mccIdForOldId = new TableSelector(mccAliases, PageFlowUtil.set("externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), oldId), null).getObject(String.class);
+                    String mccIdForNewId = new TableSelector(mccAliases, PageFlowUtil.set("externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), oldToNew.get(oldId)), null).getObject(String.class);
+
+                    if (mccIdForOldId == null)
                     {
-                        ti.getUpdateService().updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, null);
+                        // This should not really happen...
+                        _log.error("An MCC rename was performed where the original ID lacked an MCC alias: " + oldId);
+                        messages.add("Missing MCC alias: " + oldId);
                     }
-                    catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+
+                    if (mccIdForNewId == null)
                     {
-                        _log.error("Error updating MCC dataset rows", e);
-                        errors.reject(ERROR_MSG, "Error updating MCC dataset rows: " + e.getMessage());
-                        return null;
+                        if (mccIdForOldId != null)
+                        {
+                            // Create record for the new ID pointing to the MCC ID of the original
+                            List<Map<String, Object>> toInsert = Arrays.asList(Map.of(
+                                    "subjectname", mccIdForOldId,
+                                    "_batchId_", batchId
+                            ));
+                            BatchValidationException bve = new BatchValidationException();
+                            mccAliases.getUpdateService().insertRows(getUser(), getContainer(), toInsert, bve, null, null);
+                            if (bve.hasErrors())
+                            {
+                                throw bve;
+                            }
+                        }
+                    }
+                    else if (mccIdForOldId != null)
+                    {
+                        messages.add("Both IDs have existing MCC aliases, no changes were made: " + oldId + " / " + oldToNew.get(oldId));
                     }
                 }
+
+                transaction.commit();
+
+                return new ApiSimpleResponse(Map.of(
+                        "success", true,
+                        "totalIdsUpdated", idsUpdated.size(),
+                        "totalRecordsUpdated", totalRecordsUpdated.get(),
+                        "messages", StringUtils.join(messages, "<br>")
+                ));
+            }
+            catch (Exception e)
+            {
+                _log.error("Error renaming MCC IDs", e);
+
+                return new ApiSimpleResponse(Map.of(
+                        "success", false,
+                        "error", e.getMessage()
+                ));
             }
 
-            return new ApiSimpleResponse(Map.of("success", true, "totalIdsUpdated", idsUpdated.size(), "totalRecordsUpdated", totalRecordsUpdated.get()));
+
         }
     }
 

@@ -3,8 +3,10 @@ package org.labkey.mcc.query;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.AbstractTableInfo;
+import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.JdbcType;
+import org.labkey.api.data.MutableColumnInfo;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.WrappedColumn;
@@ -12,6 +14,7 @@ import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.LookupForeignKey;
+import org.labkey.api.query.QueryForeignKey;
 import org.labkey.api.query.UserSchema;
 import org.labkey.mcc.MccSchema;
 
@@ -84,6 +87,30 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
         }
 
         addMccAlias(ti, "Id", "mccAlias", "MCC Alias");
+
+        if (ti.getColumn("mostRecentObservations") == null)
+        {
+            MutableColumnInfo col = getWrappedIdCol(ti.getUserSchema(), ti, "mostRecentObservations", "mostRecentObservationsPivoted");
+            col.setLabel("Most Recent Observations");
+            col.setDescription("Displays the most recent observation of each category");
+            ti.addColumn(col);
+        }
+
+    }
+
+    private BaseColumnInfo getWrappedIdCol(UserSchema us, AbstractTableInfo ds, String name, String queryName)
+    {
+
+        String colName = "Id";
+        String targetCol = "Id";
+
+        WrappedColumn col = new WrappedColumn(ds.getColumn(colName), name);
+        col.setReadOnly(true);
+        col.setIsUnselectable(true);
+        col.setUserEditable(false);
+        col.setFk(new QueryForeignKey(us, null, queryName, targetCol, targetCol));
+
+        return col;
     }
 
     private void addMccAlias(AbstractTableInfo ti, String sourceCol, String name, String label)

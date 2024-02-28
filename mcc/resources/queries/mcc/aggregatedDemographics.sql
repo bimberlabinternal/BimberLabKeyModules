@@ -25,6 +25,8 @@ SELECT
   o.infant_history,
   o.fertility_status,
   o.medical_history,
+  null as usage_current,
+  null as usage_future,
   o.date_of_observations,
   d.container
 
@@ -36,7 +38,7 @@ LEFT JOIN (SELECT
                    o."current_housing_status::observation" as current_housing_status,
                    o."infant_history::observation" as infant_history,
                    o."fertility_status::observation" as fertility_status,
-                   o."medical_history::observation" as medical_history,
+                   o."medical_history::observation" as medical_history
     FROM "/data/Colonies/SNPRC/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false) and d.calculated_status NOT IN ('Other')
@@ -70,6 +72,8 @@ SELECT
   o.infant_history,
   o.fertility_status,
   o.medical_history,
+  null as usage_current,
+  null as usage_future,
   o.date_of_observations,
   d.container
 
@@ -112,6 +116,8 @@ SELECT
     o.infant_history,
     o.fertility_status,
     o.medical_history,
+    null as usage_current,
+    null as usage_future,
     o.date_of_observations,
     d.container
 
@@ -154,6 +160,8 @@ SELECT
     o.infant_history,
     o.fertility_status,
     o.medical_history,
+    o.usage_current,
+    o.usage_future,
     o.date_of_observations,
     d.container
 
@@ -166,6 +174,8 @@ FROM "/data/Colonies/Other/".study.demographics d
                         o."infant_history::observation" as infant_history,
                         o."fertility_status::observation" as fertility_status,
                         o."medical_history::observation" as medical_history,
+                        o."usage_current::observation" as usage_current,
+                        o."usage_current::observation" as usage_future,
                     FROM "/data/Colonies/Other/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)

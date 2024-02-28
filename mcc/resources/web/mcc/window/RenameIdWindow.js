@@ -85,9 +85,13 @@ Ext4.define('MCC.window.RenameIdWindow', {
             success: LABKEY.Utils.getCallbackWrapper(function (response) {
                 Ext4.Msg.hide();
                 this.close();
-                console.log(response);
 
-                Ext4.Msg.alert('Success', 'Total IDs Updated: ' + response.totalIdsUpdated + '<br>Total Records Updated: ' + response.totalRecordsUpdated);
+                if (response.success) {
+                    Ext4.Msg.alert('Success', 'Total IDs Updated: ' + response.totalIdsUpdated + '<br>Total Records Updated: ' + response.totalRecordsUpdated + (response.messages ? '<br>' + response.messages : ''));
+                }
+                else {
+                    Ext4.Msg.alert('Error', 'Error renaming IDs: ' + response.error);
+                }
             }),
             failure: LDK.Utils.getErrorCallback()
         });

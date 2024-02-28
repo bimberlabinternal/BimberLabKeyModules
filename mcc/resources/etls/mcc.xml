@@ -29,6 +29,8 @@
                     <column>infant_history</column>
                     <column>fertility_status</column>
                     <column>medical_history</column>
+                    <column>usage_current</column>
+                    <column>usage_future</column>
                     <column>date_of_observations</column>
                     <column>colony</column>
                     <column>dam</column>
