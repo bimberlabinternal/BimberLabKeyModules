@@ -67,7 +67,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         }
 
         @Override
-        public PipelineStep create(PipelineContext context)
+        public RenameSamplesForMgapStep create(PipelineContext context)
         {
             return new RenameSamplesForMgapStep(this, context);
         }

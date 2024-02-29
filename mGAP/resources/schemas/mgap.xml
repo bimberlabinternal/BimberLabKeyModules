@@ -1060,6 +1060,12 @@
                     <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
+            <column columnName="sire">
+                <columnTitle>Sire</columnTitle>
+            </column>
+            <column columnName="dam">
+                <columnTitle>Dam</columnTitle>
+            </column>
             <column columnName="center">
                 <columnTitle>Center</columnTitle>
             </column>

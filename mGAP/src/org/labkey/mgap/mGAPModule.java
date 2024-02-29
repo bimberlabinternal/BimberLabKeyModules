@@ -27,6 +27,7 @@ import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.data.UpgradeCode;
 import org.labkey.api.jbrowse.JBrowseService;
+import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.buttons.ShowBulkEditButton;
@@ -75,7 +76,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.72;
+        return 16.73;
     }
 
     @Override
@@ -101,6 +102,8 @@ public class mGAPModule extends ExtendedSimpleModule
         JBrowseService.get().registerFieldCustomizer(new mGAPFieldCustomizer());
         JBrowseService.get().registerGroupsProvider(new mGAPGroupsProvider());
         JBrowseService.get().registerLuceneIndexDetector(new mGAPLuceneDetector());
+
+        LaboratoryService.get().registerDemographicsProvider(new mGAPDemographicsProvider());
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
 

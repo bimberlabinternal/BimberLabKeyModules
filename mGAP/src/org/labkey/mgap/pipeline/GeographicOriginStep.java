@@ -16,6 +16,7 @@ import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractPipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
+import org.labkey.api.sequenceanalysis.pipeline.PedigreeToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
@@ -25,6 +26,7 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
+import org.labkey.api.util.PageFlowUtil;
 import org.labkey.mgap.mGAPSchema;
 
 import javax.annotation.Nullable;
@@ -61,8 +63,9 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
                     {{
                         put("allowBlank", false);
                     }}, null),
-                    ToolParameterDescriptor.create("storeResults", "Store Results", "If checked, the results will be stored in the database", "checkbox", null, null)
-            ), null, "https://bimberlab.github.io/DISCVRSeq/");
+                    ToolParameterDescriptor.create("storeResults", "Store Results", "If checked, the results will be stored in the database", "checkbox", null, null),
+                    new PedigreeToolParameterDescriptor()
+            ), PageFlowUtil.set(PedigreeToolParameterDescriptor.getClientDependencyPath()), "https://bimberlab.github.io/DISCVRSeq/");
         }
 
         @Override

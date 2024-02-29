@@ -86,7 +86,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         }
 
         @Override
-        public PipelineStep create(PipelineContext context)
+        public GenerateMgapTracksStep create(PipelineContext context)
         {
             return new GenerateMgapTracksStep(this, context);
         }
