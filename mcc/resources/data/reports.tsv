@@ -1,6 +1,6 @@
 reportname	category	reporttype	reporttitle	visible	containerpath	schemaname	queryname	viewname	report	datefieldname	todayonly	queryhaslocation	sort_order	QCStateLabelFieldName	description
 birth	General	query	Birth Records	TRUE		study	birth			date	FALSE	FALSE		qcstate/publicdata	Birth records
-weight	General	js	Weights	TRUE		study	weightGraph			date	FALSE	FALSE		qcstate/publicdata	This report contains a summary of the animal\'s weight, including a graph
+weight	General	query	Weights	TRUE		study	weight			date	FALSE	FALSE		qcstate/publicdata	This report contains a summary of the animal\'s weight
 Flags	General	query	Flags	TRUE		study	flags			StartDate	FALSE	FALSE		qcstate/publicdata	Animal attribute flags
 demographics	General	query	Demographics	TRUE		study	demographics				FALSE	FALSE		qcstate/publicdata	This report displays the demographics data about each animal including species, sex and birth
 death	General	query	Death Records	TRUE		study	deaths			date	FALSE	FALSE		qcstate/publicdata	Death records
