@@ -3,8 +3,11 @@ package org.labkey.hivrc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
-import org.labkey.api.module.DefaultModule;
+import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.query.DefaultSchema;
+import org.labkey.api.query.QuerySchema;
 import org.labkey.api.util.HtmlString;
 import org.labkey.api.view.BaseWebPartFactory;
 import org.labkey.api.view.HtmlView;
@@ -20,7 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-public class HivrcModule extends DefaultModule
+public class HivrcModule extends ExtendedSimpleModule
 {
     public static final String NAME = "HIVRC";
 
@@ -33,7 +36,7 @@ public class HivrcModule extends DefaultModule
     @Override
     public @Nullable Double getSchemaVersion()
     {
-        return 23.000;
+        return 23.001;
     }
 
     @Override
@@ -83,12 +86,6 @@ public class HivrcModule extends DefaultModule
     protected void init()
     {
         addController(HivrcController.NAME, HivrcController.class);
-    }
-
-    @Override
-    public void doStartup(ModuleContext moduleContext)
-    {
-
     }
 
     @Override
