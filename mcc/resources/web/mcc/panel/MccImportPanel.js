@@ -490,7 +490,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                 else {
                     row.objectId = existingRecord.objectid;
 
-                    var fields = ['birth', 'dam', 'sire', 'source'];
+                    var fields = ['birth', 'dam', 'sire', 'source', 'alternateIds'];
                     for (var idx in fields) {
                         var fn = fields[idx];
 
