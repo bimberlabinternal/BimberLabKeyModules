@@ -48,30 +48,34 @@ public class MccUserSchema extends SimpleUserSchema
     @Override
     public TableInfo createTable(String name, ContainerFilter cf)
     {
-        if (TABLE_AGGREGATED_WEIGHT.equalsIgnoreCase(name))
+        if (supportsAggregatedTables())
         {
-            return getWeightQuery();
+            if (TABLE_AGGREGATED_WEIGHT.equalsIgnoreCase(name))
+            {
+                return getWeightQuery();
+            }
+            else if (TABLE_AGGREGATED_KINSHIP.equalsIgnoreCase(name))
+            {
+                return getKinshipQuery();
+            }
+            else if (TABLE_AGGREGATED_DEPARTURES.equalsIgnoreCase(name))
+            {
+                return getDepartureQuery();
+            }
+            else if (TABLE_AGGREGATED_GENOMICS.equalsIgnoreCase(name))
+            {
+                return getGenomicsQuery();
+            }
+            else if (TABLE_AGGREGATED_OBS.equalsIgnoreCase(name))
+            {
+                return getObsQuery();
+            }
+            else if (TABLE_AGGREGATED_CENSUS.equalsIgnoreCase(name))
+            {
+                return getCensusQuery();
+            }
         }
-        else if (TABLE_AGGREGATED_KINSHIP.equalsIgnoreCase(name))
-        {
-            return getKinshipQuery();
-        }
-        else if (TABLE_AGGREGATED_DEPARTURES.equalsIgnoreCase(name))
-        {
-            return getDepartureQuery();
-        }
-        else if (TABLE_AGGREGATED_GENOMICS.equalsIgnoreCase(name))
-        {
-            return getGenomicsQuery();
-        }
-        else if (TABLE_AGGREGATED_OBS.equalsIgnoreCase(name))
-        {
-            return getObsQuery();
-        }
-        else if (TABLE_AGGREGATED_CENSUS.equalsIgnoreCase(name))
-        {
-            return getCensusQuery();
-        }
+
         return super.createTable(name, cf);
     }
 
@@ -156,9 +160,14 @@ public class MccUserSchema extends SimpleUserSchema
         return Collections.unmodifiableSet(available);
     }
 
+    private boolean supportsAggregatedTables()
+    {
+        return getContainer().hasPermission(getUser(), MccDataAdminPermission.class) && MccManager.get().getMCCInternalDataContainer(getContainer()) != null;
+    }
+
     private void addAggregatedTableNames(Set<String> available)
     {
-        if (getContainer().hasPermission(getUser(), MccDataAdminPermission.class))
+        if (supportsAggregatedTables())
         {
             available.add(TABLE_AGGREGATED_KINSHIP);
             available.add(TABLE_AGGREGATED_WEIGHT);
@@ -278,6 +287,11 @@ public class MccUserSchema extends SimpleUserSchema
         StringBuilder sql = new StringBuilder();
 
         Container parent = MccManager.get().getMCCInternalDataContainer(getContainer());
+        if (parent == null)
+        {
+            return null;
+        }
+
         String unionClause = "";
         for (Container c : parent.getChildren())
         {
