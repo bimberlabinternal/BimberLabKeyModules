@@ -23,6 +23,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
+import org.labkey.api.ldk.buttons.ShowEditUIButton;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
@@ -123,6 +124,7 @@ public class MccModule extends ExtendedSimpleModule
         EHRService.get().registerTableCustomizer(this, MccEhrCustomizer.class);
         EHRService.get().registerMoreActionsButton(new MarkShippedButton(), "study", "demographics");
         EHRService.get().registerMoreActionsButton(new RenameIdButton(), "study", "demographics");
+        LDKService.get().registerQueryButton(new ShowEditUIButton(this, MccSchema.NAME, MccSchema.TABLE_CENSUS), MccSchema.NAME, MccSchema.TABLE_CENSUS);
     }
 
     @Override

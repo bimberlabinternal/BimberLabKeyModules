@@ -781,6 +781,7 @@
         <importUrl />
         <updateUrl />
         <deleteUrl />
+        <javaCustomizer class="org.labkey.ldk.query.DefaultTableCustomizer" />
         <tableTitle>MCC Census</tableTitle>
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
@@ -842,13 +843,6 @@
                 <nullable>true</nullable>
                 <scale>29</scale>
                 <isHidden>true</isHidden>
-            </column>
-            <column columnName="actions" wrappedColumnName="rowid">
-                <columnTitle>Actions</columnTitle>
-                <displayWidth>200</displayWidth>
-                <displayColumnFactory>
-                    <className>org.labkey.mcc.query.RequestScoreActionsDisplayColumnFactory</className>
-                </displayColumnFactory>
             </column>
         </columns>
         <buttonBarOptions includeStandardButtons="true">
