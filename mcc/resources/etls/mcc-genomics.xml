@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>MCC_Genomic</name>
+    <description>MCC Genomic Data</description>
+    <transforms>
+        <transform id="step1" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.PopulateGeneticDataStep">
+                <settings>
+                    <setting name="remoteSource" value="PRIMESEQ"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+    <schedule>
+        <!--11PM-->
+        <cron expression="0 30 23 * * ?"/>
+    </schedule>
+</etl>

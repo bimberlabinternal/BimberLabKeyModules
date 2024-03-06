@@ -10,13 +10,6 @@
                 </settings>
             </taskref>
         </transform>
-        <transform id="step1" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.mcc.etl.PopulateGeneticDataStep">
-                <settings>
-                    <setting name="remoteSource" value="PRIMESEQ"/>
-                </settings>
-            </taskref>
-        </transform>
         <transform type="SimpleQueryTransformStep" id="demographics">
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedDemographics" >
