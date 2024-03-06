@@ -10,7 +10,7 @@
                 </settings>
             </taskref>
         </transform>
-        <transform id="step0" type="TaskRefTransformStep">
+        <transform id="step1" type="TaskRefTransformStep">
             <taskref ref="org.labkey.mcc.etl.PopulateGeneticDataStep">
                 <settings>
                     <setting name="remoteSource" value="PRIMESEQ"/>

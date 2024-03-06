@@ -66,7 +66,7 @@ public class PopulateGeneticDataStep implements TaskRefTask
         try
         {
             //first select all rows from remote table
-            SelectRowsCommand sr = new SelectRowsCommand(_settings.get(MccSchema.NAME), _settings.get("genomicDatasetsSource"));
+            SelectRowsCommand sr = new SelectRowsCommand(MccSchema.NAME, "genomicDatasetsSource");
             sr.setColumns(Arrays.asList("Id", "date", "datatype", "sra_accession"));
 
             TableInfo aggregatedDemographics = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), MccSchema.NAME).getTable("aggregatedDemographics");
