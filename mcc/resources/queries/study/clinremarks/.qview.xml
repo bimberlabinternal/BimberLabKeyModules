@@ -6,8 +6,8 @@
         <column name="description" />
         <column name="performedby"/>
         <column name="category"/>
-        <column name="taskid" />
         <column name="qcstate" />
+        <column name="history" />
     </columns>
     <sorts>
            <sort column="date" descending="true"/>
