@@ -115,15 +115,15 @@ public class PopulateGeneticDataStep implements TaskRefTask
 
             for (Container child : c.getChildren())
             {
-                TableInfo ti = QueryService.get().getUserSchema(job.getUser(), child, MccSchema.NAME).getTable(MccSchema.TABLE_CENSUS);
+                TableInfo gd = QueryService.get().getUserSchema(job.getUser(), child, "study").getTable("genomicDatasets");
                 try
                 {
-                    ti.getUpdateService().truncateRows(job.getUser(), child, null, null);
+                    gd.getUpdateService().truncateRows(job.getUser(), child, null, null);
 
                     if (toInsert.containsKey(child))
                     {
                         BatchValidationException bve = new BatchValidationException();
-                        ti.getUpdateService().insertRows(job.getUser(), child, toInsert.get(child), bve, null, null);
+                        gd.getUpdateService().insertRows(job.getUser(), child, toInsert.get(child), bve, null, null);
                         if (bve.hasErrors())
                         {
                             throw bve;
