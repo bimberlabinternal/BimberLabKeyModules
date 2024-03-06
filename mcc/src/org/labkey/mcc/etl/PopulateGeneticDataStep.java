@@ -98,12 +98,13 @@ public class PopulateGeneticDataStep implements TaskRefTask
                     toInsert.put(target, new ArrayList<>());
                 }
 
-                toInsert.get(target).add(Map.of(
-                    "Id", row.get("originalId"),
-                    "date", x.get("date"),
-                    "datatype", x.get("datatype"),
-                    "sra_accession", x.get("sra_accession")
-                ));
+                Map<String, Object> newRow = new CaseInsensitiveHashMap<>();
+                newRow.put("Id", row.get("originalId"));
+                newRow.put("date", x.get("date"));
+                newRow.put("datatype", x.get("datatype"));
+                newRow.put("sra_accession", x.get("sra_accession"));
+
+                toInsert.get(target).add(newRow);
             });
 
             Container c = MccManager.get().getMCCInternalDataContainer(job.getContainer());
