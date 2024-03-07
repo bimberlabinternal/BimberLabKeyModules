@@ -16,7 +16,7 @@
                     </column>
                     <column columnName="sra_accession">
                         <columnTitle>SRA Accession</columnTitle>
-                        <url>https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=${sraAccession}</url>
+                        <url>https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=${sra_accession}</url>
                     </column>
                 </columns>
             </table>
