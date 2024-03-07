@@ -27,6 +27,7 @@ SELECT
   o.medical_history,
   null as usage_current,
   null as usage_future,
+  null as breeding_partner_id,
   o.date_of_observations,
   d.container
 
@@ -74,6 +75,7 @@ SELECT
   o.medical_history,
   null as usage_current,
   null as usage_future,
+  null as breeding_partner_id,
   o.date_of_observations,
   d.container
 
@@ -116,8 +118,9 @@ SELECT
     o.infant_history,
     o.fertility_status,
     o.medical_history,
-    null as usage_current,
-    null as usage_future,
+    o.usage_current,
+    o.usage_future,
+    o.breeding_partner_id,
     o.date_of_observations,
     d.container
 
@@ -130,6 +133,9 @@ FROM "/data/Colonies/UCSD/".study.demographics d
                         o."infant_history::observation" as infant_history,
                         o."fertility_status::observation" as fertility_status,
                         o."medical_history::observation" as medical_history,
+                        o."usage_current::observation" as usage_current,
+                        o."usage_current::observation" as usage_future,
+                        o."breeding_partner_id::observation" as breeding_partner_id
                     FROM "/data/Colonies/UCSD/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)
@@ -162,6 +168,7 @@ SELECT
     o.medical_history,
     o.usage_current,
     o.usage_future,
+    o.breeding_partner_id,
     o.date_of_observations,
     d.container
 
@@ -176,6 +183,7 @@ FROM "/data/Colonies/Other/".study.demographics d
                         o."medical_history::observation" as medical_history,
                         o."usage_current::observation" as usage_current,
                         o."usage_current::observation" as usage_future,
+                        o."breeding_partner_id::observation" as breeding_partner_id
                     FROM "/data/Colonies/Other/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
 WHERE (d.excludeFromCensus IS NULL or d.excludeFromCensus = false)
