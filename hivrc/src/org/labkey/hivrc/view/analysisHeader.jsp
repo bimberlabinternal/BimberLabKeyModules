@@ -33,7 +33,7 @@
 
 <div id=<%=q(wpId)%>></div>
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="<%=getScriptNonce()%>">
     Ext4.onReady(function(){
         var webpartId = <%=q(wpId)%>;
         var workbookId = <%=h(workbookId)%>;
@@ -53,7 +53,7 @@
             materials: <%=q(model.getMaterials())%>,
             methods: <%=q(model.getMethods())%>,
             results: <%=q(model.getResults())%>,
-            tags: <%=text(model.getTags() == null || model.getTags().length == 0 ? "null" : "['" + text(StringUtils.join(Arrays.asList(model.getTags()), "','")) + "']")%>
+            tags: <%=unsafe(model.getTags() == null || model.getTags().length == 0 ? "null" : "['" + unsafe(StringUtils.join(Arrays.asList(model.getTags()), "','")) + "']")%>
         }).render(webpartId);
 
         if (LABKEY.Security.currentUser.canInsert) {
