@@ -1,0 +1,22 @@
+<script type="text/javascript" nonce="<%=scriptNonce%>">
+
+    Ext4.onReady(function (){
+        var webpart = <%=webpartContext%>;
+
+        Ext4.get(webpart.wrapperDivId).update(
+                '<div>Below are the list of datasets registered with the HIVRC. These datasets can be referenced by ID, and queried using the HIVRC R Package.' +
+                '</div>' +
+                '<br>' +
+                '<br>' +
+                '<div id="qwp_'+webpart.wrapperDivId+'"></div>'
+        );
+
+        LDK.Utils.getReadOnlyQWP({
+            name: 'query',
+            schemaName: 'hivrc',
+            queryName: 'datasets'
+        }).render('qwp_' + webpart.wrapperDivId);
+    });
+
+</script>
+

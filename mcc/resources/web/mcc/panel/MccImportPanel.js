@@ -1,5 +1,6 @@
 Ext4.define('MCC.panel.MccImportPanel', {
     extend: 'Ext.panel.Panel',
+    alias: 'widget.mcc-mccimportpanel',
 
     COLUMNS: [{
         name: 'existingRecord',
@@ -14,6 +15,18 @@ Ext4.define('MCC.panel.MccImportPanel', {
         alwaysShow: true,
         allowBlank: false,
         transform: 'center'
+    },{
+        name: 'death',
+        labels: ['Death', 'dod', 'DOD (mm/dd/yyyy)'],
+        allowRowSpan: false,
+        alwaysShow: true,
+        allowBlank: true
+    },{
+        name: 'causeOfDeath',
+        labels: ['Cause of Death'],
+        allowRowSpan: false,
+        alwaysShow: true,
+        allowBlank: true
     },{
         name: 'Id',
         labels: ['Id', 'animal ID', 'AnimalId', 'MarmId', 'Marm Id'],
@@ -35,6 +48,12 @@ Ext4.define('MCC.panel.MccImportPanel', {
         allowBlank: true,
         alwaysShow: true
     },{
+        name: 'shippingDestination',
+        labels: ['Shipping Destination'],
+        allowRowSpan: false,
+        allowBlank: true,
+        alwaysShow: true
+    },{
         name: 'species',
         labels: ['Species'],
         allowRowSpan: false,
@@ -43,7 +62,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'species'
     },{
         name: 'birth',
-        labels: ['Birth', 'DOB'],
+        labels: ['Birth', 'DOB', 'DOB (mm/dd/yyyy)'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'genericDate'
@@ -58,7 +77,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Status'],
         allowRowSpan: false,
         allowBlank: true,
-        alwaysShow: true
+        alwaysShow: true,
+        transform: 'status'
     },{
         name: 'dam',
         labels: ['Dam', 'maternal ID'],
@@ -79,7 +99,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'weight'
     },{
         name: 'weightDate',
-        labels: ['Date of Weight', 'date of weight'],
+        labels: ['Date of Weight', 'date of weight', 'date of weight (mm/dd/yyyy)'],
         alwaysShow: true,
         allowRowSpan: false,
         transform: 'genericDate',
@@ -100,10 +120,15 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'u24'
     },{
         name: 'availability',
-        labels: ['Available to Transfer', 'availalble to transfer'],
+        labels: ['Available to Transfer', 'available to transfer'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'available'
+    },{
+        name: 'breedingPartnerId',
+        labels: ['Breeding Partner Id'],
+        allowRowSpan: false,
+        allowBlank: true
     },{
         name: 'housingStatus',
         labels: ['Current Housing Status'],
@@ -129,6 +154,23 @@ Ext4.define('MCC.panel.MccImportPanel', {
         allowBlank: true,
         transform: 'medicalHistory'
     },{
+        name: 'currentUsage',
+        labels: ['Usage (Current)', 'usage (current)'],
+        allowRowSpan: false,
+        allowBlank: true,
+        transform: 'usage'
+    },{
+        name: 'futureUsage',
+        labels: ['Usage (Future)', 'usage (future)'],
+        allowRowSpan: false,
+        allowBlank: true,
+        transform: 'usage'
+    },{
+        name: 'studyNames',
+        labels: ['Study Names'],
+        allowRowSpan: false,
+        allowBlank: true
+    },{
         name: 'errors',
         labels: ['Warnings/Errors'],
         allowRowSpan: false,
@@ -140,7 +182,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
     stripLeadingNumbers: function(val) {
         if (val) {
-            val = val.replace(/^[0-9]( )+-( )+/, '');
+            val = val.replace(/^[0-9]( )*[=-]( )*/, '');
         }
 
         return val;
@@ -163,6 +205,14 @@ Ext4.define('MCC.panel.MccImportPanel', {
     },
 
     transforms: {
+        animalId: function(val) {
+            if (val) {
+                val = val.replace(/^\s+|\s+$/gm,'');
+            }
+
+            return val;
+        },
+
         species: function(val, panel, row) {
             return val || 'CJ';
         },
@@ -201,7 +251,14 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         sex: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['male', 'female'], row);
+            val = panel.enforceAllowableValues(val, ['male', 'female', 'unknown'], row);
+
+            return(val);
+        },
+
+        status: function(val, panel, row) {
+            val = panel.stripLeadingNumbers(val);
+            val = panel.enforceAllowableValues(val, ['Alive', 'Dead', 'Shipped', 'Unknown'], row);
 
             return(val);
         },
@@ -215,7 +272,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         housingStatus: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['singly housed', 'natal family group', 'active breeding', 'social non breeding'], row);
+            if (val === 'social non breeding') {
+                val = 'social non-breeding';
+            }
+            val = panel.enforceAllowableValues(val, ['singly housed', 'natal family unit', 'active breeding', 'social non-breeding'], row);
 
             return(val);
         },
@@ -229,7 +289,17 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         medicalHistory: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
-            val = panel.enforceAllowableValues(val, ['naive animal', 'animal assigned to invasive study'], row);
+            if (val) {
+                val = val.replaceAll('naïve', 'naive', 'i');
+            }
+            val = panel.enforceAllowableValues(val, ['naive animal', 'assigned to invasive study'], row);
+
+            return(val);
+        },
+
+        usage: function(val, panel, row) {
+            val = panel.stripLeadingNumbers(val);
+            val = panel.enforceAllowableValues(val, ['breeding', 'experiment', 'TBD', 'other'], row);
 
             return(val);
         },
@@ -371,7 +441,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         LABKEY.Query.selectRows({
             schemaName: 'study',
             queryName: 'demographics',
-            columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,mccAlias/externalId',
+            columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,mccAlias/externalId,Id/death/date,Id/MostRecentDeparture/MostRecentDeparture',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
@@ -411,16 +481,16 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
     mergeWithDemographics: function(rows, demographicsRecords, errorMsgs) {
         Ext4.Array.forEach(rows, function(row){
-            row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id) > -1;
+            row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id.toLowerCase()) > -1;
             if (row.existingRecord) {
-                var existingRecord = demographicsRecords.rowMap[row.Id];
+                var existingRecord = demographicsRecords.rowMap[row.Id.toLowerCase()];
                 if (existingRecord.colony !== row.colony) {
                     row.errors.push('Colony does not match existing row: ' + existingRecord.colony);
                 }
                 else {
                     row.objectId = existingRecord.objectid;
 
-                    var fields = ['birth', 'dam', 'sire', 'source'];
+                    var fields = ['birth', 'dam', 'sire', 'source', 'alternateIds'];
                     for (var idx in fields) {
                         var fn = fields[idx];
 
@@ -434,6 +504,13 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     }
                 }
 
+                if (existingRecord['Id/death/date']) {
+                    row.existingDeathRecord = true;
+                }
+
+                if (existingRecord['Id/MostRecentDeparture/MostRecentDeparture']) {
+                    row.existingDepartureRecord = true;
+                }
             }
 
             //TODO: look for alternateIds?
@@ -459,8 +536,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
             ret.idsByCenter[center] = ret.idsByCenter[center] || [];
             ret.idsByCenter[center].push(row.Id);
 
-            ret.allIds.push(row.Id);
-            ret.rowMap[row.Id] = row;
+            ret.allIds.push(row.Id.toLowerCase());
+            ret.rowMap[row.Id.toLowerCase()] = row;
 
             if (row.alternateIds) {
                 var alterateIds = LDK.Utils.textToArray(row.alternateIds);
@@ -661,7 +738,11 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     panel: this
                 }
             }],
-            columns: columns
+            columns: columns,
+            initComplete: function(){
+                var width = jQuery(id).width();
+                Ext4.ComponentQuery.query('mcc-mccimportpanel')[0].setWidth(width + 100);
+            }
         });
 
         previewArea.doLayout();
@@ -976,6 +1057,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         var observationInserts = [];
         var weightInserts = [];
+        var deathInserts = [];
+        var departureInserts = []
 
         Ext4.Array.forEach(rawData, function(row){
             if (row.existingRecord) {
@@ -987,7 +1070,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     dam: row.dam,
                     sire: row.sire,
                     alternateIds: row.alternateIds,
-                    colony: row.colony,
+                    colony: row.shippingDestination || row.colony,
                     source: row.source,
                     gender: row.gender,
                     u24_status: row.u24_status,
@@ -1005,7 +1088,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     dam: row.dam,
                     sire: row.sire,
                     alternateIds: row.alternateIds,
-                    colony: row.colony,
+                    colony: row.shippingDestination || row.colony,
                     source: row.source,
                     gender: row.gender,
                     u24_status: row.u24_status,
@@ -1026,12 +1109,46 @@ Ext4.define('MCC.panel.MccImportPanel', {
                 });
             }
 
+            if (row.death) {
+                if (row.existingDeathRecord) {
+                    console.log('Death record already exists: ' + row.Id);
+                }
+                else {
+                    deathInserts.push({
+                        Id: row.Id,
+                        date: row.death,
+                        cause: row.causeOfDeath,
+                        objectId: LABKEY.Utils.generateUUID().toUpperCase(),
+                        QCStateLabel: 'Completed'
+                    });
+                }
+            }
+
+            if (row.shippingDestination) {
+                if (row.existingDepartureRecord) {
+                    console.log('Departure record already exists: ' + row.Id);
+                }
+                else {
+                    departureInserts.push({
+                        Id: row.Id,
+                        date: row.date,
+                        destination: row.shippingDestination,
+                        objectId: LABKEY.Utils.generateUUID().toUpperCase(),
+                        QCStateLabel: 'Completed'
+                    });
+                }
+            }
+
             var obsFieldMap = {
                 availability: 'Availability',
                 housingStatus: 'Current Housing Status',
                 fertilityStatus: 'Fertility Status',
                 infantHistory: 'Infant History',
-                medicalHistory: 'Medical History'
+                medicalHistory: 'Medical History',
+                currentUsage: 'Usage_Current',
+                futureUsage: 'Usage_Future',
+                breedingPartnerId: 'Breeding Partner Id',
+                studyNames: 'Study Names'
             }
 
             Ext4.Array.forEach(Ext4.Object.getKeys(obsFieldMap), function(fn){
@@ -1085,6 +1202,24 @@ Ext4.define('MCC.panel.MccImportPanel', {
             });
         }
 
+        if (deathInserts.length) {
+            commands.push({
+                command: 'insert',
+                schemaName: 'study',
+                queryName: 'deaths',
+                rows: deathInserts
+            });
+        }
+
+        if (departureInserts.length) {
+            commands.push({
+                command: 'insert',
+                schemaName: 'study',
+                queryName: 'departures',
+                rows: departureInserts
+            });
+        }
+
         LABKEY.Query.saveRows({
             commands: commands,
             scope: this,
@@ -1094,6 +1229,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         '<br>Demographic Records Created: ' + demographicsInserts.length +
                         '<br>Demographic Records Updated: ' + demographicsUpdates.length +
                         '<br>Weight Records Created: ' + weightInserts.length +
+                        '<br>Death Records Created: ' + deathInserts.length +
+                        '<br>Departure Records Created: ' + departureInserts.length +
                         '<br>Observation Records Created: ' + observationInserts.length, function(){
                     window.location = LABKEY.ActionURL.buildURL('project', 'begin.view');
                 }, this);

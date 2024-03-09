@@ -33,6 +33,8 @@
         <column name="infant_history"/>
         <column name="fertility_status"/>
         <column name="medical_history"/>
+        <column name="usage_current"/>
+        <column name="usage_future"/>
         <column name="date_of_observations"/>
     </columns>
     <sorts>

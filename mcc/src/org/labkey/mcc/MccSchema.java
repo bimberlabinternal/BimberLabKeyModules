@@ -31,6 +31,7 @@ public class MccSchema
     public static final String TABLE_ANIMAL_REQUESTS = "animalRequests";
     public static final String TABLE_REQUEST_REVIEWS = "requestReviews";
     public static final String TABLE_REQUEST_SCORE = "requestScores";
+    public static final String TABLE_CENSUS = "census";
 
     public static MccSchema getInstance()
     {

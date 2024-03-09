@@ -1,14 +1,18 @@
 package org.labkey.mcc;
 
 import org.apache.logging.log4j.Logger;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
+import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.security.User;
+import org.labkey.api.study.Dataset;
 import org.labkey.api.study.Study;
 import org.labkey.api.study.StudyService;
 import org.labkey.api.util.SystemMaintenance;
@@ -80,6 +84,16 @@ public class MccMaintenanceTask implements SystemMaintenance.MaintenanceTask
             if (new TableSelector(ti).exists())
             {
                 log.error("Duplicate MCC aliases found in the folder: " + s.getContainer().getPath() + ". Please load the query mcc/duplicateAliases for more detail");
+            }
+
+            for (Dataset ds : s.getDatasets())
+            {
+                TableInfo dsTableInfo = ds.getTableInfo(u);
+                long missingRecords = new TableSelector(dsTableInfo, new SimpleFilter(FieldKey.fromString("Id/Demographics/Id"), null, CompareType.ISBLANK), null).getRowCount();
+                if (missingRecords > 0)
+                {
+                    log.error("Found " + missingRecords + " dataset records with an ID not found in demographics for: " + ds.getLabel() + " / " + ds.getContainer().getPath());
+                }
             }
         }
     }
