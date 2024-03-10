@@ -3,7 +3,7 @@
         display: flex;
     }
 </style>
-<script type="text/javascript">
+<script type="text/javascript" nonce="<%=scriptNonce%>">
     (function($){
         $( document ).ready(function() {
             mGAP.Utils.renderReleaseGraph('mgap-graph-outer', 300);
@@ -15,7 +15,7 @@
     })(jQuery);
 </script>
 
-<script>
+<script type="text/javascript" nonce="<%=scriptNonce%>">
     $( function() {
         $( "i.mgap-video-icon" ).on("click", function(e){
             mGAP.Utils.showVideoDialog(e);
