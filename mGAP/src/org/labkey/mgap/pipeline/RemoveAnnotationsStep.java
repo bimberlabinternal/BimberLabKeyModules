@@ -60,7 +60,7 @@ public class RemoveAnnotationsStep extends AbstractCommandPipelineStep<RemoveAnn
         }
 
         @Override
-        public PipelineStep create(PipelineContext context)
+        public RemoveAnnotationsStep create(PipelineContext context)
         {
             return new RemoveAnnotationsStep(this, context);
         }

@@ -11,7 +11,7 @@
        <column name="type" />
        <column name="remark" />
        <column name="qcstate" />
-       <column name="taskid" />
+       <column name="history" />
    </columns>
    <sorts>
        <sort column="date" descending="true"/>

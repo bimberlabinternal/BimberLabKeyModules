@@ -32,6 +32,12 @@
                     <column columnName="medical_history">
                         <columnTitle>Medical History</columnTitle>
                     </column>
+                    <column columnName="usage_current">
+                        <columnTitle>Usage (Current)</columnTitle>
+                    </column>
+                    <column columnName="usage_future">
+                        <columnTitle>Usage (Future)</columnTitle>
+                    </column>
                     <column columnName="date_of_observations">
                         <columnTitle>Date of Observations</columnTitle>
                     </column>

@@ -61,5 +61,8 @@
         <dataset name="kinship" id="5007" showByDefault="true" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
+        <dataset name="genomicDatasets" id="5009" showByDefault="true" category="Colony Management" type="Standard">
+            <tags/>
+        </dataset>
     </datasets>
 </datasets>

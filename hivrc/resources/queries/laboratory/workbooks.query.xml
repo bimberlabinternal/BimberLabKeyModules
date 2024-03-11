@@ -1,0 +1,15 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="workbooks" tableDbType="TABLE" useColumnOrder="true">
+                <tableTitle>HIVRC Analyses</tableTitle>
+                <titleColumn>workbookId</titleColumn>
+                <columns>
+                    <column columnName="workbookId">
+                        <columnTitle>Analysis #</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

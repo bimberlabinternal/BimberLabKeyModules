@@ -1,0 +1,83 @@
+<folderType xmlns="http://labkey.org/data/xml/folderType">
+    <name>MCC Data</name>
+    <description>The default folder layout for the MCC data aggregation folder</description>
+    <preferredWebParts>
+        <webPart>
+            <name>MCC Menu</name>
+            <location>menu</location>
+        </webPart>
+    </preferredWebParts>
+    <folderTabs>
+        <folderTab>
+            <name>mcc</name>
+            <caption>Overview</caption>
+            <selectors>
+                <selector>
+                    <regex>overview</regex>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Dashboard Webpart</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>animalData</name>
+            <caption>All Animals</caption>
+            <selectors>
+                <selector>
+                    <view>animalData</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Demographics</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>animalHistory</name>
+            <caption>Animal Detail</caption>
+            <selectors>
+                <selector>
+                    <view>animalHistory</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Animal History</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>census</name>
+            <caption>Census</caption>
+            <selectors>
+                <selector>
+                    <view>census</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Census</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+    </folderTabs>
+    <modules>
+        <moduleName>MCC</moduleName>
+        <moduleName>Study</moduleName>
+        <moduleName>Query</moduleName>
+        <moduleName>Pipeline</moduleName>
+        <moduleName>Core</moduleName>
+    </modules>
+    <defaultModule>Core</defaultModule>
+</folderType>

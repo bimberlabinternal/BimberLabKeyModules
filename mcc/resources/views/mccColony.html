@@ -72,6 +72,9 @@ Ext4.onReady(function (){
                         name: 'Parent IDs Assigned to Multiple MCC IDs',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mcc', queryName: 'duplicatedAggregatedDemographicsParents'})
                     },{
+                        name: 'Aggregated Demographics (All Centers)',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mcc', queryName: 'aggregatedDemographics'})
+                    },{
                         name: 'Pedigree Export',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mcc', queryName: 'mccPedigree'})
                     }]

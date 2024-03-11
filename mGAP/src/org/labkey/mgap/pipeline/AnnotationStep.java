@@ -112,7 +112,7 @@ public class AnnotationStep extends AbstractCommandPipelineStep<CassandraRunner>
         }
 
         @Override
-        public PipelineStep create(PipelineContext context)
+        public AnnotationStep create(PipelineContext context)
         {
             return new AnnotationStep(this, context);
         }

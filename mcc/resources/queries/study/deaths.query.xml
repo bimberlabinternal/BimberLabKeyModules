@@ -15,11 +15,12 @@
                         <columnTitle>Time of Death</columnTitle>
                     </column>
                     <column columnName="cause">
-                        <columnTitle>Type of Death</columnTitle>
+                        <columnTitle>Cause of Death</columnTitle>
                         <fk>
                             <fkDbSchema>ehr_lookups</fkDbSchema>
                             <fkTable>death_cause</fkTable>
                             <fkColumnName>value</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                     </column>
                     <column columnName="manner">
@@ -28,6 +29,7 @@
                             <fkDbSchema>ehr_lookups</fkDbSchema>
                             <fkTable>death_manner</fkTable>
                             <fkColumnName>value</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                     </column>
                     <column columnName="necropsy">
