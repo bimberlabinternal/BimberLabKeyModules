@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class CellRangerVDJUtils
 {
@@ -296,6 +297,8 @@ public class CellRangerVDJUtils
             int fullLengthNoClonotype = 0;
             int multiChainConverted = 0;
             int discordantLoci = 0;
+            Map<String, Integer> chainMap = new TreeMap<>();
+
             Set<String> knownBarcodes = new HashSet<>();
 
             Map<HEADER_FIELD, Integer> headerToIdx = null;
@@ -398,6 +401,8 @@ public class CellRangerVDJUtils
                     discordantLoci++;
                 }
 
+                chainMap.put(locus, chainMap.getOrDefault(locus, 0) + 1);
+
                 // Aggregate by: cDNA_ID, cdr3, chain, raw_clonotype_id, coalescedContigName, vHit, dHit, jHit, cHit, cdr3_nt
                 String key = StringUtils.join(new String[]{cDNA.toString(), line[headerToIdx.get(HEADER_FIELD.CDR3)], locus, rawClonotypeId, coalescedContigName, removeNone(line[headerToIdx.get(HEADER_FIELD.V_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.D_GENE)]), removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]), cGene, removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)])}, "<>");
                 AssayModel am;
@@ -447,6 +452,10 @@ public class CellRangerVDJUtils
             _log.info("total rows lacking clonotype, but marked full-length: " + fullLengthNoClonotype);
             _log.info("total rows converted from Multi to TRA: " + multiChainConverted);
             _log.info("total rows with discordant chain/c-gene calls: " + discordantLoci);
+            for (String chain : chainMap.keySet())
+            {
+                _log.info("total rows for " + chain + ":" + chainMap.get(chain));
+            }
 
         }
         catch (IOException e)
