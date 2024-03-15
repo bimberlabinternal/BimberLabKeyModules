@@ -43,7 +43,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             return (taskId.getNamespaceClass() != null && (
                     (taskId.getNamespaceClass().getName().startsWith("org.labkey.sequenceanalysis.pipeline") ||
-                    taskId.getNamespaceClass().getName().startsWith("org.labkey.jbrowse.pipeline"))
+                    taskId.getNamespaceClass().getName().startsWith("org.labkey.jbrowse.pipeline") ||
+                    taskId.getNamespaceClass().getName().endsWith("GeneticCalculationsRTask"))
             )) ? 50 : null;
         }
     }
