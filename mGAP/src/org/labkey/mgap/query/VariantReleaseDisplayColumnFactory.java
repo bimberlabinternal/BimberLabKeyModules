@@ -10,11 +10,11 @@ import org.labkey.api.data.RenderContext;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.view.HttpView;
 import org.labkey.api.view.template.ClientDependency;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -45,13 +45,22 @@ public class VariantReleaseDisplayColumnFactory implements DisplayColumnFactory
                 return new FieldKey(getBoundColumn().getFieldKey().getParent(), colName);
             }
 
+            private boolean _clickHandlerRegistered = false;
+
             @Override
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
                 Integer rowId = ctx.get(getBoundKey("rowid"), Integer.class);
                 if (rowId != null)
                 {
-                    out.write("<a class=\"labkey-text-link\" href=\"javascript:void(0);\" onclick=\"mGAP.window.DownloadWindow.buttonHandler(" + PageFlowUtil.jsString(rowId.toString()) + ", this);\">Download</a>");
+                    out.write("<a class=\"labkey-text-link vrdc-row\" data-rowid=" + PageFlowUtil.jsString(rowId.toString()) + ">Download</a>");
+
+                    if (!_clickHandlerRegistered)
+                    {
+                        HttpView.currentPageConfig().addHandlerForQuerySelector("a.vrdc-row", "click", "mGAP.window.DownloadWindow.buttonHandler(this.attributes.getNamedItem('data-rowid').value); return false;");
+
+                        _clickHandlerRegistered = true;
+                    }
                 }
 
                 String jbrowseId = ctx.get(getBoundKey("jbrowseId"), String.class);

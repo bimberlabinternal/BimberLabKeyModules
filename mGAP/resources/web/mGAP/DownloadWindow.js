@@ -2,7 +2,7 @@ Ext4.define('mGAP.window.DownloadWindow', {
     extend: 'Ext.window.Window',
 
     statics: {
-        buttonHandler: function(releaseId, el){
+        buttonHandler: function(releaseId){
             Ext4.create('mGAP.window.DownloadWindow', {
                 releaseId: releaseId
             });
