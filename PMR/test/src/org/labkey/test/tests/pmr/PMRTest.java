@@ -41,6 +41,7 @@ import org.labkey.test.categories.LabModule;
 import org.labkey.test.tests.di.ETLHelper;
 import org.labkey.test.util.Ext4Helper;
 import org.labkey.test.util.PipelineStatusTable;
+import org.labkey.test.util.RReportHelper;
 import org.labkey.test.util.RemoteConnectionHelper;
 import org.labkey.test.util.SqlserverOnlyTest;
 import org.labkey.test.util.ehr.EHRClientAPIHelper;
@@ -95,6 +96,8 @@ public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
         RemoteConnectionHelper rconnHelper = new RemoteConnectionHelper(this);
         rconnHelper.goToManageRemoteConnections();
         rconnHelper.createConnection("EHR_ClinicalSource", WebTestHelper.getBaseURL(), getProjectName());
+
+        new RReportHelper(this).ensureRConfig();
 
         goToHome();
     }
