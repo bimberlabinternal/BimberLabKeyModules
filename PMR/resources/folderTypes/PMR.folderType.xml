@@ -64,6 +64,7 @@
     <modules>
         <moduleName>PMR</moduleName>
         <moduleName>EHR</moduleName>
+        <moduleName>GeneticsCore</moduleName>
     </modules>
     <defaultModule>PMR</defaultModule>
 </folderType>
