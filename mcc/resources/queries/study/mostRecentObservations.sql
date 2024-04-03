@@ -16,12 +16,12 @@ FROM study.clinical_observations co
     WHERE
         co.qcstate.publicdata = true and
         co.observation is not null AND
-        co.category IN ('Medical History', 'Fertility Status', 'Infant History', 'Current Housing Status', 'Availability') AND
+        co.category IN ('Medical History', 'Fertility Status', 'Infant History', 'Current Housing Status', 'Availability', 'Usage_Current', 'Usage_Future', 'Breeding Partner Id') AND
         co.date = (SELECT max(o.date) asMaxDate
                    FROM study.clinical_observations o
                    WHERE o.Id = co.Id AND
                          o.qcstate.publicdata = true AND
-                         o.category IN ('Medical History', 'Fertility Status', 'Infant History', 'Current Housing Status', 'Availability') AND
+                         o.category IN ('Medical History', 'Fertility Status', 'Infant History', 'Current Housing Status', 'Availability', 'Usage_Current', 'Usage_Future', 'Breeding Partner Id') AND
                          o.observation is not null
                    )
 GROUP BY co.id, co.category, co.date

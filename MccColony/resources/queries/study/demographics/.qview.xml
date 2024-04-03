@@ -27,6 +27,46 @@
         <column name="Id/MostRecentWeight/MostRecentWeightDate"/>
         <column name="alternateIds"/>
         <column name="excludeFromCensus"/>
+        <column name="Id/mostRecentObservations/availability::observation">
+            <properties>
+                <property name="columnTitle" value="Availability"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/current_housing_status::observation">
+            <properties>
+                <property name="columnTitle" value="Housing Status"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/infant_history::observation">
+            <properties>
+                <property name="columnTitle" value="Infant History"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/fertility_status::observation">
+            <properties>
+                <property name="columnTitle" value="Fertility Status"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/medical_history::observation">
+            <properties>
+                <property name="columnTitle" value="Medical History"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/usage_current::observation">
+            <properties>
+                <property name="columnTitle" value="Usage (Current)"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/usage_future::observation">
+            <properties>
+                <property name="columnTitle" value="Usage (Future)"/>
+            </properties>
+        </column>
+        <column name="Id/mostRecentObservations/date_of_observations">
+            <properties>
+                <property name="columnTitle" value="Date of Observations"/>
+            </properties>
+        </column>
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>

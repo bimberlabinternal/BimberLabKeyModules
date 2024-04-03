@@ -16,7 +16,7 @@ function beforeInsert(row, errors){
     validateName(row, errors);
 }
 
-function beforeUpdate(row, errors){
+function beforeUpdate(row, oldRow, errors){
     validateName(row, errors);
 }
 

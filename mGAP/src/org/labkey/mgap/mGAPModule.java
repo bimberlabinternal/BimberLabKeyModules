@@ -27,6 +27,7 @@ import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.data.UpgradeCode;
 import org.labkey.api.jbrowse.JBrowseService;
+import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.buttons.ShowBulkEditButton;
@@ -46,6 +47,7 @@ import org.labkey.mgap.jbrowse.mGAPGroupsProvider;
 import org.labkey.mgap.jbrowse.mGAPLuceneDetector;
 import org.labkey.mgap.pipeline.AnnotationStep;
 import org.labkey.mgap.pipeline.GenerateMgapTracksStep;
+import org.labkey.mgap.pipeline.GeographicOriginStep;
 import org.labkey.mgap.pipeline.GroupCompareStep;
 import org.labkey.mgap.pipeline.IndexVariantsForMgapStep;
 import org.labkey.mgap.pipeline.RemoveAnnotationsForMgapStep;
@@ -74,7 +76,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.71;
+        return 16.73;
     }
 
     @Override
@@ -100,6 +102,8 @@ public class mGAPModule extends ExtendedSimpleModule
         JBrowseService.get().registerFieldCustomizer(new mGAPFieldCustomizer());
         JBrowseService.get().registerGroupsProvider(new mGAPGroupsProvider());
         JBrowseService.get().registerLuceneIndexDetector(new mGAPLuceneDetector());
+
+        LaboratoryService.get().registerDemographicsProvider(new mGAPDemographicsProvider());
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
 
@@ -138,6 +142,7 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new GenerateMgapTracksStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new IndexVariantsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseAlleleFreqStep.Provider());
+                SequencePipelineService.get().registerPipelineStep(new GeographicOriginStep.Provider());
 
                 _hasRegistered = true;
             }

@@ -14,6 +14,7 @@ public class ReleaseButton extends SimpleButtonConfigFactory
                 ClientDependency.supplierFromPath("laboratory.context"),
                 ClientDependency.supplierFromPath("/SequenceAnalysis/window/OutputHandlerWindow.js"),
                 ClientDependency.supplierFromPath("/mGAP/window/ReleaseWindow.js"),
-                ClientDependency.supplierFromPath("sequenceanalysis/field/GenomeFileSelectorField.js")));
+                ClientDependency.supplierFromPath("sequenceanalysis/field/GenomeFileSelectorField.js"),
+                ClientDependency.supplierFromPath("sequenceanalysis/field/SequenceOutputFileSelectorField.js")));
     }
 }

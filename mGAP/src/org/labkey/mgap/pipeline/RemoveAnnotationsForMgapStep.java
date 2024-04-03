@@ -45,7 +45,7 @@ public class RemoveAnnotationsForMgapStep extends AbstractCommandPipelineStep<Re
         }
 
         @Override
-        public PipelineStep create(PipelineContext context)
+        public RemoveAnnotationsForMgapStep create(PipelineContext context)
         {
             return new RemoveAnnotationsForMgapStep(this, context);
         }

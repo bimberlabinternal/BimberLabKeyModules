@@ -5,6 +5,8 @@
         <column name="requestId/firstname"/>
         <column name="requestId/title"/>
         <column name="requestId/institutionname"/>
+        <column name="requestId/fundingsource"/>
+        <column name="requestId/grantnumber"/>
         <column name="requestId/status"/>
         <column name="preliminaryScore"/>
         <column name="resourceAvailabilityAssessment"/>

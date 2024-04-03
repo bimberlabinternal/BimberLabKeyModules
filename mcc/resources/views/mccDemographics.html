@@ -1,0 +1,13 @@
+<script type="text/javascript" nonce="<%=scriptNonce%>">
+
+Ext4.onReady(function (){
+    var webpart = <%=webpartContext%>;
+
+    LDK.Utils.getBasicQWP({
+        title: 'MCC Animals',
+        schemaName: 'study',
+        queryName: 'demographics'
+    }).render(webpart.wrapperDivId);
+});
+
+</script>

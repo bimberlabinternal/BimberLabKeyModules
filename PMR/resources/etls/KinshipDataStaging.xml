@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>KinshipDataStaging</name>
+    <description>Prepare PRIMe-seq Kinship Data for Import into PRIMe</description>
+    <transforms>
+        <transform id="kinship" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.pmr.etl.TriggerRemoteGeneticsImportStep">
+                <settings>
+                    <setting name="remoteSource" value="EHR_ClinicalSource"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+</etl>

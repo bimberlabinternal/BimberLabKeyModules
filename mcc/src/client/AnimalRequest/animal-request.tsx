@@ -704,7 +704,7 @@ export function AnimalRequest() {
                 <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
             </div>
 
-            <Title text={"8. " + commentsPlaceholder}/>
+            <Title text={"10. " + commentsPlaceholder}/>
             <div className="tw-w-full tw-px-3 tw-mb-6">
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-w-full tw-px-3 tw-mb-6">
