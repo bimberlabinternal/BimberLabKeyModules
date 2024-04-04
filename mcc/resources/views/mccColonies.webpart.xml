@@ -1,0 +1,6 @@
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="MCC Colonies">
+    <view name="mccColonies"/>
+    <locations>
+        <location name="body"/>
+    </locations>
+</webpart>

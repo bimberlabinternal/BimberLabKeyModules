@@ -1,0 +1,15 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Flags">
+    <columns>
+        <column name="Id"/>
+        <column name="Id2"/>
+        <column name="kinship"/>
+        <column name="relationship"/>
+        <column name="Id/mccAlias/externalAlias"/>
+        <column name="Id2MccAlias/externalAlias">
+            <properties>
+                <property name="columnTitle" value="Id2 MCC Alias"/>
+            </properties>
+        </column>
+    </columns>
+
+</customView>

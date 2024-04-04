@@ -1,0 +1,14 @@
+reportname	category	reporttype	reporttitle	visible	containerpath	schemaname	queryname	viewname	report	datefieldname	todayonly	queryhaslocation	sort_order	QCStateLabelFieldName	description
+birth	General	query	Birth Records	TRUE		study	birth			date	FALSE	FALSE		qcstate/publicdata	Birth records
+weight	General	query	Weights	TRUE		study	weight			date	FALSE	FALSE		qcstate/publicdata	This report contains a summary of the animal\'s weight
+Flags	General	query	Flags	TRUE		study	flags			StartDate	FALSE	FALSE		qcstate/publicdata	Animal attribute flags
+demographics	General	query	Demographics	TRUE		study	demographics				FALSE	FALSE		qcstate/publicdata	This report displays the demographics data about each animal including species, sex and birth
+death	General	query	Death Records	TRUE		study	deaths			date	FALSE	FALSE		qcstate/publicdata	Death records
+departure	General	query	Shipments	TRUE		study	departure			date	FALSE	FALSE		qcstate/publicdata	Displays departure dates
+obs	General	query	Observations	TRUE		study	clinical_observations			date	FALSE	FALSE		qcstate/publicdata	This report displays observations for the selected animal
+pedigreePlot	Genetics	report	Pedigree Plot	TRUE		study	pedigree		module:EHR/schemas/study/Pedigree/Pedigree.r		FALSE	FALSE		qcstate/publicdata	This report will generate a pedigree plot for the selected animal
+offspring	General	query	Offspring	TRUE		study	demographicsOffspring				FALSE	FALSE		qcstate/publicdata	This report displays pedigree data for animals, including parents, grandparents, siblings and offspring
+kinship	Genetics	query	Kinship	TRUE		study	kinship				FALSE	FALSE		qcstate/publicdata	This report shows the kinship coefficient between every animal in the colony. The kinship coefficient is a measure of relatedness between two individuals. It represents the probability that two genes, sampled at random from each individual are identical (e.g. the kinship coefficient between a parent and an offspring is 0.25).
+parentage	Genetics	query	Parentage	TRUE		study	demographicsParents				FALSE	FALSE		qcstate/publicdata	This report shows information about the parentage of each animal, drawing from genetic data and observations
+geneticData	Genetics	query	Genomic Datasets	TRUE		study	genomicDatasets				FALSE	FALSE		qcstate/publicdata	This report summarizes available genomic datasets
+mostRecentObservations	General	query	Most Recent Observations	TRUE		study	mostRecentObservations				FALSE	FALSE			This report summarizes the most recent observations per animal

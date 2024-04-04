@@ -43,7 +43,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             return (taskId.getNamespaceClass() != null && (
                     (taskId.getNamespaceClass().getName().startsWith("org.labkey.sequenceanalysis.pipeline") ||
-                    taskId.getNamespaceClass().getName().startsWith("org.labkey.jbrowse.pipeline"))
+                    taskId.getNamespaceClass().getName().startsWith("org.labkey.jbrowse.pipeline") ||
+                    taskId.getNamespaceClass().getName().endsWith("GeneticCalculationsRTask"))
             )) ? 50 : null;
         }
     }
@@ -51,6 +52,11 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     private boolean isSequenceNormalizationTask(PipelineJob job)
     {
         return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("SequenceNormalizationTask"));
+    }
+
+    private boolean isGeneticsTask(PipelineJob job)
+    {
+        return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("GeneticCalculationsRTask"));
     }
 
     private boolean isLuceneIndexJob(PipelineJob job)
@@ -95,6 +101,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             job.getLogger().debug("setting max CPUs to 8");
             return 8;
         }
+
         if (isLuceneIndexJob(job))
         {
             job.getLogger().debug("setting max CPUs to 24");
@@ -150,6 +157,12 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             job.getLogger().debug("setting memory to 48");
             return 48;
+        }
+
+        if (isGeneticsTask(job))
+        {
+            job.getLogger().debug("setting memory to 72");
+            return 72;
         }
 
         if (isCacheAlignerIndexesTask(job))

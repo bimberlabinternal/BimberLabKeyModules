@@ -13,6 +13,7 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.view.HttpView;
 import org.labkey.api.view.template.ClientDependency;
 import org.labkey.mcc.MccManager;
 import org.labkey.mcc.security.MccFinalReviewPermission;
@@ -32,6 +33,8 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
     {
         return new AbstractMccDisplayColumn(colInfo)
         {
+            private boolean _hasRegisteredApprovedHandler = false;
+
             @Override
             public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
             {
@@ -94,7 +97,14 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                         }
                         else if (st == MccManager.RequestStatus.Approved)
                         {
-                            out.write("<br><a class=\"labkey-text-link\" onclick=\"MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + "," + requestRowId + ", 'Fulfilled')\">Mark Fulfilled</a>");
+                            out.write("<br><a class=\"labkey-text-link rsadc-approved\" data-requestrowid=" + PageFlowUtil.jsString(String.valueOf(requestRowId)) + ">Mark Fulfilled</a>");
+
+                            if (!_hasRegisteredApprovedHandler)
+                            {
+                                HttpView.currentPageConfig().addHandlerForQuerySelector("a.rsadc-approved", "click", "MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + ", this.attributes.getNamedItem('data-requestrowid').value, 'Fulfilled'); return false;");
+
+                                _hasRegisteredApprovedHandler = true;
+                            }
                         }
                     }
                     catch (IllegalArgumentException e)
@@ -127,10 +137,5 @@ public class RequestScoreActionsDisplayColumnFactory implements DisplayColumnFac
                 return ret;
             }
         };
-    }
-
-    private String getWithdrawnLine(RenderContext ctx, int requestRowId)
-    {
-        return "<br><a class=\"labkey-text-link\" onclick=\"MCC.window.ChangeStatusWindow.buttonHandler(" + PageFlowUtil.jsString(ctx.getCurrentRegion().getName()) + "," + requestRowId + ", 'Withdrawn')\">Withdraw Request</a>";
     }
 }

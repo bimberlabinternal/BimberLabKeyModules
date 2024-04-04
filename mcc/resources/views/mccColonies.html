@@ -1,0 +1,52 @@
+<script type="text/javascript" nonce="<%=scriptNonce%>">
+
+Ext4.onReady(function (){
+    var webpart = <%=webpartContext%>;
+
+    var ctx = MCC.Utils.getMCCContext(webpart.wrapperDivId);
+    if(!ctx)
+        return;
+
+    Ext4.create('Ext.panel.Panel', {
+        renderTo: webpart.wrapperDivId,
+        border: false,
+        items: [{
+            xtype: 'panel',
+            border: false,
+            defaults: {
+                border: false
+            },
+            items: [{
+                html: 'This folder contains the links to view data aggregated across the MCC colonies.'
+            }]
+        },{
+            xtype: 'ldk-navpanel',
+            style: 'padding-top: 20px;',
+            border: false,
+            sections: [{
+                header: 'Data/Validation',
+                items: [{
+                    name: 'Aggregated Demographics (All Centers)',
+                    url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mcc', queryName: 'aggregatedDemographics'})
+                }, {
+                    name: 'Pedigree Export',
+                    url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
+                        schemaName: 'mcc',
+                        queryName: 'mccPedigree'
+                    })
+                },{
+                    name: 'Duplicated IDs Across Colonies',
+                    url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {
+                        schemaName: 'mcc',
+                        queryName: 'duplicatedAggregatedDemographics'
+                    })
+                },{
+                    name: 'Parent IDs Assigned to Multiple MCC IDs',
+                    url: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mcc', queryName: 'duplicatedAggregatedDemographicsParents'})
+                }]
+            }]
+        }]
+    });
+});
+
+</script>

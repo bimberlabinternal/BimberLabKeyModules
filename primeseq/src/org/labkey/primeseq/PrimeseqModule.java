@@ -39,7 +39,6 @@ import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
 import org.labkey.primeseq.pipeline.DeleteJobCheckpointButton;
 import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
-import org.labkey.primeseq.pipeline.GeographicOriginStep;
 import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
 import org.labkey.primeseq.pipeline.SequenceJobResourceAllocator;
 import org.labkey.primeseq.query.PerformMhcCleanupButton;
@@ -120,8 +119,6 @@ public class PrimeseqModule extends ExtendedSimpleModule
 
                 SequenceAnalysisService.get().registerFileHandler(new MethylationRateComparisonHandler());
                 SequenceAnalysisService.get().registerFileHandler(new CombineMethylationRatesHandler());
-
-                SequencePipelineService.get().registerPipelineStep(new GeographicOriginStep.Provider());
 
                 _hasRegistered = true;
             }

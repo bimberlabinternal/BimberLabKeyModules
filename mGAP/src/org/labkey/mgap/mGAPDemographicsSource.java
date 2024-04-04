@@ -24,7 +24,6 @@ import java.util.Set;
 
 public class mGAPDemographicsSource implements DemographicsSource
 {
-
     @Override
     public Map<String, Map<String, Object>> resolveSubjects(List<String> subjects, Container c, User u)
     {
