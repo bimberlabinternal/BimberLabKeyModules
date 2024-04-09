@@ -17,38 +17,30 @@
 package org.labkey.test.tests.pmr;
 
 import au.com.bytecode.opencsv.CSVReader;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.labkey.remoteapi.Command;
-import org.labkey.remoteapi.CommandResponse;
-import org.labkey.remoteapi.PostCommand;
 import org.labkey.remoteapi.query.SelectRowsCommand;
 import org.labkey.remoteapi.query.TruncateTableCommand;
 import org.labkey.serverapi.reader.Readers;
 import org.labkey.test.BaseWebDriverTest;
 import org.labkey.test.Locator;
-import org.labkey.test.Locators;
 import org.labkey.test.ModulePropertyValue;
 import org.labkey.test.TestFileUtils;
 import org.labkey.test.TestTimeoutException;
 import org.labkey.test.WebTestHelper;
 import org.labkey.test.categories.External;
 import org.labkey.test.categories.LabModule;
-import org.labkey.test.tests.di.ETLHelper;
 import org.labkey.test.util.Ext4Helper;
-import org.labkey.test.util.PipelineStatusTable;
 import org.labkey.test.util.RReportHelper;
 import org.labkey.test.util.RemoteConnectionHelper;
 import org.labkey.test.util.SqlserverOnlyTest;
+import org.labkey.test.util.di.DataIntegrationHelper;
 import org.labkey.test.util.ehr.EHRClientAPIHelper;
-import org.labkey.test.util.ehr.EHRTestHelper;
 
 import java.io.File;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -60,7 +52,7 @@ import java.util.Set;
 @Category({External.class, LabModule.class})
 public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
 {
-    private final ETLHelper _etlHelper = new ETLHelper(this, getProjectName());
+    private final DataIntegrationHelper _etlHelper = new DataIntegrationHelper(getProjectName());
 
     @Override
     protected void doCleanup(boolean afterTest) throws TestTimeoutException
@@ -158,7 +150,7 @@ public class PMRTest extends BaseWebDriverTest implements SqlserverOnlyTest
         Assert.assertEquals("Incorrect number of kinship rows", 0, select1.execute(getApiHelper().getConnection(), getProjectName()).getRowCount().intValue());
 
         // Kick off ETL to stage data. This should also kick off a separate pipeline job to import, using geneticscore-importGeneticsData.view
-        _etlHelper.runETL("{PMR}/KinshipDataStaging");
+        _etlHelper.runTransform("{PMR}/KinshipDataStaging");
         goToDataPipeline();
         waitForPipelineJobsToComplete(4, "ETL Job: Import PRIMe-seq Kinship Data", false);
 
