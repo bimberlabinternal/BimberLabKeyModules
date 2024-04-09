@@ -40,6 +40,7 @@ import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.filters.ContentSecurityPolicyFilter;
 import org.labkey.mgap.buttons.PopulateAnnotationsButton;
 import org.labkey.mgap.buttons.ReleaseButton;
 import org.labkey.mgap.jbrowse.mGAPFieldCustomizer;
@@ -106,6 +107,8 @@ public class mGAPModule extends ExtendedSimpleModule
         LaboratoryService.get().registerDemographicsProvider(new mGAPDemographicsProvider());
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
+
+        ContentSecurityPolicyFilter.registerAllowedConnectionSource(this.getClass().getName(), "https://kit.fontawesome.com");
 
         new PipelineStartup();
     }
