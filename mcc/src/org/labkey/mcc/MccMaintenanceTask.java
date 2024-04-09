@@ -92,7 +92,7 @@ public class MccMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 long missingRecords = new TableSelector(dsTableInfo, new SimpleFilter(FieldKey.fromString("Id/Demographics/Id"), null, CompareType.ISBLANK), null).getRowCount();
                 if (missingRecords > 0)
                 {
-                    log.error("Found " + missingRecords + " dataset records with an ID not found in demographics for: " + ds.getLabel() + " / " + ds.getContainer().getPath());
+                    log.warn("Found " + missingRecords + " dataset records with an ID not found in demographics for: " + ds.getLabel() + " / " + ds.getContainer().getPath());
                 }
             }
         }

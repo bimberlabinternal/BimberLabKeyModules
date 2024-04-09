@@ -311,7 +311,7 @@ public class PrimeseqController extends SpringActionController
             sql.append("UPDATE Exp.Data SET DataFileUrl = replace(DataFileUrl, ").appendValue("file://" + sourcePrefix).append(", ").appendValue("file://" + replacementPrefix).append(") ");
             sql.append("WHERE DataFileUrl like ").appendValue("file://" + sourcePrefix + "%").append("\n");
 
-            sql.append("UPDATE pipeline.StatusFiles SET FilePath = replace(FilePath, ").appendValue(sourcePrefix).append(", ").appendValue(replacementPrefix).append(" ");
+            sql.append("UPDATE pipeline.StatusFiles SET FilePath = replace(FilePath, ").appendValue(sourcePrefix).append(", ").appendValue(replacementPrefix).append(") ");
             sql.append("WHERE FilePath like ").appendValue(sourcePrefix + "%");
 
             return sql;

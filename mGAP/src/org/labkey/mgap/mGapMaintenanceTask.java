@@ -216,6 +216,12 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 {
                     expectedFiles.add(new File(f.getPath() + ".tbi"));
                 }
+
+                if ("sitesOnlyVcfId".equals(field))
+                {
+                    checkSymlink(log, f, releaseId, commandsToRun);
+                    checkSymlink(log, new File(f.getPath() + ".tbi"), releaseId, commandsToRun);
+                }
             }
         });
 
