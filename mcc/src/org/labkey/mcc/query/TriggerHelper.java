@@ -279,7 +279,7 @@ public class TriggerHelper
             if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
                 if (!ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
                 {
-                    _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + " does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));
+                    _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + "(" + ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))) + ") does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));
                 }
             }
         });

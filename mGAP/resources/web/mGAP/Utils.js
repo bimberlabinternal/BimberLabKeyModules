@@ -55,43 +55,25 @@ mGAP.Utils = (function($){
                         var metricNames = values.split(';');
                         var targets = [];
 
-                        //filter:
-                        if (metricNames.length > 1 && metricNames.indexOf('intron_variant') > -1) {
-                            metricNames.remove('downstream_gene_variant');
-                            metricNames.remove('upstream_gene_variant');
+                        // Then accept each of these categories in priority order:
+                        if ($(metricNames).filter(['missense_variant', 'synonymous_variant', 'stop_lost', 'stop_retained_variant', 'stop_gained', 'initiator_codon_variant', 'start_lost', 'non_canonical_start_codon', 'exon_loss_variant', 'frameshift_variant', 'conservative_inframe_insertion', 'disruptive_inframe_insertion', 'conservative_inframe_deletion', 'disruptive_inframe_deletion']).length) {
+                            targets.push('Exonic');
                         }
-
-                        if (metricNames.indexOf('downstream_gene_variant') > -1) {
+                        else if ($(metricNames).filter(['intron_variant', 'splice_acceptor_variant', 'splice_region_variant', 'splice_donor_variant']).length) {
+                            targets.push('Intronic/<br>Non-coding');
+                        }
+                        else if ($(metricNames).filter(['intragenic_variant', 'non_coding_transcript_variant', 'non_coding_transcript_exon_variant', '3_prime_UTR_variant', '5_prime_UTR_premature_start_codon_gain_variant', '5_prime_UTR_variant']).length) {
+                            targets.push('Intronic/<br>Non-coding');
+                        }
+                        else if (metricNames.indexOf('downstream_gene_variant') > -1) {
                             targets.push('Downstream<br>Gene');
                         }
-                        if (metricNames.indexOf('upstream_gene_variant') > -1) {
+                        else if (metricNames.indexOf('upstream_gene_variant') > -1) {
                             targets.push('Upstream<br>Gene');
                         }
-
-                        $.each(metricNames, function(idx, val) {
-                            if (['missense_variant', 'synonymous_variant', 'stop_lost', 'stop_retained_variant', 'stop_gained', 'initiator_codon_variant', 'start_lost', 'non_canonical_start_codon', 'exon_loss_variant', 'frameshift_variant', 'conservative_inframe_insertion', 'disruptive_inframe_insertion', 'conservative_inframe_deletion', 'disruptive_inframe_deletion'].indexOf(val) > -1) {
-                                targets.push('Exonic');
-                                return false;
-                            }
-                            else if (['downstream_gene_variant'].indexOf(val) > -1) {
-
-                            }
-                            else if (['upstream_gene_variant'].indexOf(val) > -1) {
-
-                            }
-                            else if (['intron_variant', 'splice_acceptor_variant', 'splice_region_variant', 'splice_donor_variant'].indexOf(val) > -1) {
-                                targets.push('Intronic/<br>Non-coding');
-                                return false;
-                            }
-                            else if (['intragenic_variant', 'non_coding_transcript_variant', 'non_coding_transcript_exon_variant', '3_prime_UTR_variant', '5_prime_UTR_premature_start_codon_gain_variant', '5_prime_UTR_variant'].indexOf(val) > -1) {
-                                targets.push('Intronic/<br>Non-coding');
-                                return false;
-                            }
-                            else if (['intergenic_region'].indexOf(val) > -1) {
-                                targets.push('Intergenic');
-                                return false;
-                            }
-                        }, this);
+                        else if (metricNames.indexOf('intergenic_region') > -1) {
+                            targets.push('Intergenic');
+                        }
 
                         if (!targets.length){
                             targets.push(values);

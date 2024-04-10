@@ -1,4 +1,4 @@
-<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Items">
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="All Items" canOverride="true">
     <columns>
         <column name="purchaseId"/>
         <column name="requestor"/>
