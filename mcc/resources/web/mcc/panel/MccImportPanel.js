@@ -251,6 +251,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         sex: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
+            if (val && val.toLowerCase() === 'tbd') {
+                val = 'unknown';
+            }
+
             val = panel.enforceAllowableValues(val, ['male', 'female', 'unknown'], row);
 
             return(val);
@@ -1215,7 +1219,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
             commands.push({
                 command: 'insert',
                 schemaName: 'study',
-                queryName: 'departures',
+                queryName: 'departure',
                 rows: departureInserts
             });
         }
