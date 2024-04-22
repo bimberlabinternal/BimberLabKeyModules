@@ -88,6 +88,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Dam', 'maternal ID'],
         allowRowSpan: false,
         allowBlank: true,
+        alwaysShow: true,
         transform: 'damOrSire',
         expectInImport: true
     },{
@@ -95,6 +96,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Sire', 'paternal ID'],
         allowRowSpan: false,
         allowBlank: true,
+        alwaysShow: true,
         transform: 'damOrSire',
         expectInImport: true
     },{
