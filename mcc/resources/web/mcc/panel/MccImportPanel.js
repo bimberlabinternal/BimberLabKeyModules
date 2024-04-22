@@ -93,7 +93,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         transform: 'damOrSire'
     },{
         name: 'weight',
-        labels: ['Weight (g)', 'Weight (grams)'],
+        labels: ['Weight (g)', 'Weight (grams)', 'current weight (g)', 'current weight (grams)'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'weight'
