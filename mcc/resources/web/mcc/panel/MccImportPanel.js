@@ -131,7 +131,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         expectInImport: true
     },{
         name: 'availability',
-        labels: ['Available to Transfer', 'available to transfer'],
+        // NOTE: availalble was a typo in one generation of the input templates:
+        labels: ['Available to Transfer', 'available to transfer', 'availalble to transfer'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'available',
@@ -349,6 +350,14 @@ Ext4.define('MCC.panel.MccImportPanel', {
             }
 
             return val;
+        },
+
+        alternateIds: function(val) {
+            if (val) {
+                val = val.split(/[ ]*[;,]+[ ]*/g).join(',')
+            }
+
+            return val;
         }
     },
 
@@ -520,7 +529,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                 else {
                     row.objectId = existingRecord.objectid;
 
-                    var fields = ['birth', 'dam', 'sire', 'source', 'alternateIds'];
+                    var fields = ['birth', 'dam', 'sire', 'source'];
                     for (var idx in fields) {
                         var fn = fields[idx];
 
@@ -528,9 +537,17 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         if (fn === 'birth' && existingRecord[fn]) {
                             existingRecord[fn] = Ext4.Date.format(LDK.ConvertUtils.parseDate(existingRecord[fn]), 'Y-m-d');
                         }
+
                         if (row[fn] && existingRecord[fn] && row[fn] !== existingRecord[fn]) {
                             row.errors.push('Does not match existing row for ' + fn + ': ' + existingRecord[fn]);
                         }
+                    }
+
+                    // The goal of this is to take the union of the existing/new aliases:
+                    if (row.alternateIds && existingRecord.alternateIds) {
+                        row.alternateIds = row.alternateIds.split(/[ ]*[;,]+[ ]*/g)
+                        existingRecord.alternateIds = existingRecord.alternateIds.split(/[ ]*[;,]+[ ]*/g)
+                        row.alternateIds = Ext4.unique(row.alternateIds.concat(existingRecord.alternateIds)).sort().join(',')
                     }
                 }
 
