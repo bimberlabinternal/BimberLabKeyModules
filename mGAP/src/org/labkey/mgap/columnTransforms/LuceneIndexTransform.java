@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
+import org.labkey.mgap.etl.EtlQueueManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,12 +27,7 @@ public class LuceneIndexTransform extends OutputFileTransform
         // NOTE: lucene is a special case since the DB tracks one file, but we need this whole folder:
         File sourceDir = f.getParentFile();
         File targetDir = new File(subdir, "LuceneIndex");
-
-        // NOTE: rsync should no-op if there are no source changes
-        getStatusLogger().info("Copying lucene index dir to: " + targetDir.getPath());
-        new SimpleScriptWrapper(getStatusLogger()).execute(Arrays.asList(
-                "rsync", "-r", "-a", "--delete", "--no-owner", "--no-group", "--chmod=D2770,F660", sourceDir.getPath(), targetDir.getPath()
-        ));
+        EtlQueueManager.get().queueRsyncCopy(getContainerUser().getContainer(), sourceDir, targetDir);
 
         return new File(targetDir, sourceDir.getName() + "/" + f.getName());
     }
