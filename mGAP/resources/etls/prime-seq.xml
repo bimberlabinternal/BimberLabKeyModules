@@ -198,7 +198,7 @@
             </destination>
         </transform>
 
-        <transform id="step0" type="TaskRefTransformStep">
+        <transform id="step7" type="TaskRefTransformStep">
             <taskref ref="org.labkey.mgap.etl.PerformQueuedEtlWorkTask">
                 <settings>
 
