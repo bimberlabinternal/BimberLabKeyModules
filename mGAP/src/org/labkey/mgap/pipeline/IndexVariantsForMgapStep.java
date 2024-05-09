@@ -118,17 +118,33 @@ public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<Select
 
         Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
         TableInfo ti = QueryService.get().getUserSchema(job.getUser(), target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
-        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowId", "container"), new SimpleFilter(FieldKey.fromString("version"), releaseVersion), null);
+        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowid", "container"), new SimpleFilter(FieldKey.fromString("version"), releaseVersion), null);
         if (ts.exists())
         {
+            if (ts.getRowCount() > 1)
+            {
+                throw new IllegalStateException("More than one row found matching: " + releaseVersion);
+            }
+
             job.getLogger().info("Updating release record");
-            Map<String, Object> row = ts.getValueMap();
+            Map<String, Object> row = ts.getMap();
+            if (!row.containsKey("rowid") || row.get("rowid") == null)
+            {
+                job.getLogger().error("Missing rowId, found: ");
+                for (String key : row.keySet())
+                {
+                    job.getLogger().debug(key + ": " + row.get(key));
+                }
+
+                throw new IllegalStateException("Missing rowId from release record");
+            }
+
             row.put("luceneIndex", of.get(0).getRowid());
 
             try
             {
                 BatchValidationException bve = new BatchValidationException();
-                Map<String, Object> oldKeys = Map.of("rowId", row.get("rowId"));
+                Map<String, Object> oldKeys = Map.of("rowId", row.get("rowid"));
                 ti.getUpdateService().updateRows(job.getUser(), target, Collections.singletonList(row), Collections.singletonList(oldKeys), bve, null, null);
             }
             catch (BatchValidationException | InvalidKeyException | QueryUpdateServiceException | SQLException e)
