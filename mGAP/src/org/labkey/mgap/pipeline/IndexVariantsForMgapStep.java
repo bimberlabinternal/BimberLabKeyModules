@@ -3,6 +3,7 @@ package org.labkey.mgap.pipeline;
 import htsjdk.samtools.util.Interval;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
@@ -127,7 +128,7 @@ public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<Select
             }
 
             job.getLogger().info("Updating release record");
-            Map<String, Object> row = ts.getMap();
+            Map<String, Object> row = new CaseInsensitiveHashMap<>(ts.getMap());
             if (!row.containsKey("rowid") || row.get("rowid") == null)
             {
                 job.getLogger().error("Missing rowId, found: ");
@@ -144,7 +145,7 @@ public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<Select
             try
             {
                 BatchValidationException bve = new BatchValidationException();
-                Map<String, Object> oldKeys = Map.of("rowId", row.get("rowid"));
+                Map<String, Object> oldKeys = new CaseInsensitiveHashMap<>(Map.of("rowid", row.get("rowid")));
                 ti.getUpdateService().updateRows(job.getUser(), target, Collections.singletonList(row), Collections.singletonList(oldKeys), bve, null, null);
             }
             catch (BatchValidationException | InvalidKeyException | QueryUpdateServiceException | SQLException e)
