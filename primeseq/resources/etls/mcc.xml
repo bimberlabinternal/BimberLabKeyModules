@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>MCC_Data</name>
+    <description>MCC Demographics and Pedigree Data</description>
+    <transforms>
+        <transform type="RemoteQueryTransformStep" id="aggregatedDemographics">
+            <description>Copy to target</description>
+            <source remoteSource="MCC" schemaName="mcc" queryName="aggregatedDemographics" sourceTimeout="0">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>dam</column>
+                    <column>sire</column>
+                    <column>gender</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="laboratory" queryName="subjects" targetOption="truncate" bulkLoad="true">
+                <constants>
+                    <column name="species" type="VARCHAR" value="Marmoset"/>
+                </constants>
+                <columnTransforms>
+                    <column source="Id" target="subjectname"/>
+                    <column source="dam" target="mother"/>
+                    <column source="sire" target="father"/>
+                </columnTransforms>
+            </destination>
+        </transform>
+    </transforms>
+
+    <schedule>
+        <cron expression="0 0 20 * * ?"/>
+    </schedule>
+</etl>

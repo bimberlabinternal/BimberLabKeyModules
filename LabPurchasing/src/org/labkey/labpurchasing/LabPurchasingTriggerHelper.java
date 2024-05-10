@@ -112,4 +112,16 @@ public class LabPurchasingTriggerHelper
             _log.error("Unable to send purchasing email", e);
         }
     }
+
+    public boolean isValidUserId(int userId)
+    {
+        return UserManager.getUser(userId) != null;
+    }
+
+    public Integer resolveUserId(String userNameOrEmail)
+    {
+        User u = UserManager.getUserByDisplayName(userNameOrEmail);
+
+        return u == null ? null : u.getUserId();
+    }
 }

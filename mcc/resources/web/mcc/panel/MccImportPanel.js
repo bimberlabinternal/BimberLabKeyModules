@@ -33,7 +33,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         allowRowSpan: false,
         alwaysShow: true,
         transform: 'animalId',
-        allowBlank: false
+        allowBlank: false,
+        expectInImport: true
     },{
         name: 'alternateIds',
         labels: ['Alternate Ids', 'previous Ids'],
@@ -46,7 +47,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Source Colony', 'Source'],
         allowRowSpan: false,
         allowBlank: true,
-        alwaysShow: true
+        alwaysShow: true,
+        expectInImport: true
     },{
         name: 'shippingDestination',
         labels: ['Shipping Destination'],
@@ -65,13 +67,15 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Birth', 'DOB', 'DOB (mm/dd/yyyy)'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'genericDate'
+        transform: 'genericDate',
+        expectInImport: true
     },{
         name: 'gender',
         labels: ['Sex'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'sex'
+        transform: 'sex',
+        expectInImport: true
     },{
         name: 'status',
         labels: ['Status'],
@@ -84,26 +88,32 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Dam', 'maternal ID'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'damOrSire'
+        alwaysShow: true,
+        transform: 'damOrSire',
+        expectInImport: true
     },{
         name: 'sire',
         labels: ['Sire', 'paternal ID'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'damOrSire'
+        alwaysShow: true,
+        transform: 'damOrSire',
+        expectInImport: true
     },{
         name: 'weight',
-        labels: ['Weight (g)', 'Weight (grams)'],
+        labels: ['Weight (g)', 'Weight (grams)', 'current weight (g)', 'current weight (grams)'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'weight'
+        transform: 'weight',
+        expectInImport: true
     },{
         name: 'weightDate',
         labels: ['Date of Weight', 'date of weight', 'date of weight (mm/dd/yyyy)'],
         alwaysShow: true,
         allowRowSpan: false,
         transform: 'genericDate',
-        allowBlank: true
+        allowBlank: true,
+        expectInImport: true
     },{
         name: 'date',
         labels: ['Observation Date', 'date'],
@@ -117,13 +127,16 @@ Ext4.define('MCC.panel.MccImportPanel', {
         alwaysShow: false,
         allowRowSpan: false,
         allowBlank: false,
-        transform: 'u24'
+        transform: 'u24',
+        expectInImport: true
     },{
         name: 'availability',
-        labels: ['Available to Transfer', 'available to transfer'],
+        // NOTE: availalble was a typo in one generation of the input templates:
+        labels: ['Available to Transfer', 'available to transfer', 'availalble to transfer'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'available'
+        transform: 'available',
+        expectInImport: true
     },{
         name: 'breedingPartnerId',
         labels: ['Breeding Partner Id'],
@@ -134,25 +147,29 @@ Ext4.define('MCC.panel.MccImportPanel', {
         labels: ['Current Housing Status'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'housingStatus'
+        transform: 'housingStatus',
+        expectInImport: true
     },{
         name: 'infantHistory',
         labels: ['Infant History'],
         allowRowSpan: false,
         alwaysShow: true,
-        transform: 'infantHistory'
+        transform: 'infantHistory',
+        expectInImport: true
     },{
         name: 'fertilityStatus',
         labels: ['Fertility Status'],
         allowRowSpan: false,
         alwaysShow: true,
-        transform: 'fertilityStatus'
+        transform: 'fertilityStatus',
+        expectInImport: true
     },{
         name: 'medicalHistory',
         labels: ['Medical History'],
         allowRowSpan: false,
         allowBlank: true,
-        transform: 'medicalHistory'
+        transform: 'medicalHistory',
+        expectInImport: true
     },{
         name: 'currentUsage',
         labels: ['Usage (Current)', 'usage (current)'],
@@ -251,6 +268,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         sex: function(val, panel, row) {
             val = panel.stripLeadingNumbers(val);
+            if (val && val.toLowerCase() === 'tbd') {
+                val = 'unknown';
+            }
+
             val = panel.enforceAllowableValues(val, ['male', 'female', 'unknown'], row);
 
             return(val);
@@ -326,6 +347,14 @@ Ext4.define('MCC.panel.MccImportPanel', {
             // enforce reasonable values and convert to kg
             if (val && val < 20) {
                 row.errors.push('Suspicious weight value');
+            }
+
+            return val;
+        },
+
+        alternateIds: function(val) {
+            if (val) {
+                val = val.split(/[ ]*[;,]+[ ]*/g).join(',')
             }
 
             return val;
@@ -433,6 +462,16 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         var rows = LDK.Utils.CSVToArray(text, '\t');
         var colArray = this.parseHeader(rows.shift());
+        var foundColsNames = colArray.map(x => x.name)
+        var missingExpectedCols = this.COLUMNS.filter(x => x.expectInImport).map(x => x.name).filter(x => foundColsNames.indexOf(x) === -1)
+        if (missingExpectedCols.length) {
+            // now convert from name to label:
+            var colNameToLabel = {}
+            this.COLUMNS.forEach(x => colNameToLabel[x.name] = x.labels[0])
+            Ext4.Msg.alert('Error', 'The following columns were expected but not found:<br>' + missingExpectedCols.map(x => colNameToLabel[x]).join('<br>'))
+            return null;
+        }
+
         var errorsMsgs = [];
         var parsedRows = this.parseRows(colArray, rows, errorsMsgs);
 
@@ -490,7 +529,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                 else {
                     row.objectId = existingRecord.objectid;
 
-                    var fields = ['birth', 'dam', 'sire', 'source', 'alternateIds'];
+                    var fields = ['birth', 'dam', 'sire', 'source'];
                     for (var idx in fields) {
                         var fn = fields[idx];
 
@@ -498,9 +537,17 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         if (fn === 'birth' && existingRecord[fn]) {
                             existingRecord[fn] = Ext4.Date.format(LDK.ConvertUtils.parseDate(existingRecord[fn]), 'Y-m-d');
                         }
+
                         if (row[fn] && existingRecord[fn] && row[fn] !== existingRecord[fn]) {
                             row.errors.push('Does not match existing row for ' + fn + ': ' + existingRecord[fn]);
                         }
+                    }
+
+                    // The goal of this is to take the union of the existing/new aliases:
+                    if (row.alternateIds && existingRecord.alternateIds) {
+                        row.alternateIds = row.alternateIds.split(/[ ]*[;,]+[ ]*/g)
+                        existingRecord.alternateIds = existingRecord.alternateIds.split(/[ ]*[;,]+[ ]*/g)
+                        row.alternateIds = Ext4.unique(row.alternateIds.concat(existingRecord.alternateIds)).sort().join(',')
                     }
                 }
 
@@ -1215,7 +1262,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
             commands.push({
                 command: 'insert',
                 schemaName: 'study',
-                queryName: 'departures',
+                queryName: 'departure',
                 rows: departureInserts
             });
         }

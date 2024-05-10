@@ -136,6 +136,10 @@
                     <column>weight</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="weight" operator="gt" value="0"/>
+                    <sourceFilter column="weight" operator="isnonblank" value=""/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="20000">
                 <columnTransforms>
