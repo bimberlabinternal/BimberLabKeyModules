@@ -1,6 +1,5 @@
 package org.labkey.mgap.columnTransforms;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Results;
@@ -21,13 +20,12 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
+import org.labkey.mgap.etl.EtlQueueManager;
 import org.labkey.mgap.mGAPManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -107,7 +105,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         {
             if (dataFileUrl == null)
             {
-                throw new IllegalArgumentException("DataFileUrl was null.");
+                throw new IllegalArgumentException("DataFileUrl was null");
             }
 
             URI uri = new URI(String.valueOf(dataFileUrl));
@@ -215,20 +213,8 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
         if (doCopy)
         {
-            getStatusLogger().info("copying file locally: " + localCopy.getPath());
-            if (localCopy.exists())
-            {
-                localCopy.delete();
-            }
-
-            try
-            {
-                FileUtils.copyFile(f, localCopy);
-            }
-            catch (IOException e)
-            {
-                throw new PipelineJobException(e);
-            }
+            getStatusLogger().info("queueing file copy: " + localCopy.getPath());
+            EtlQueueManager.get().queueFileCopy(getContainerUser().getContainer(), f, localCopy);
         }
 
         File index = new File(f.getPath() + ".tbi");
@@ -243,15 +229,8 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
             if (!indexLocal.exists())
             {
-                getStatusLogger().info("copying index locally: " + indexLocal.getPath());
-                try
-                {
-                    FileUtils.copyFile(index, indexLocal);
-                }
-                catch (IOException e)
-                {
-                    throw new PipelineJobException(e);
-                }
+                getStatusLogger().info("queueing copy of index: " + indexLocal.getPath());
+                EtlQueueManager.get().queueFileCopy(getContainerUser().getContainer(), index, indexLocal);
             }
         }
 
