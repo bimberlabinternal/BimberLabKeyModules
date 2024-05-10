@@ -101,7 +101,7 @@ public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<Select
             throw new PipelineJobException("Unable to find file: " + idx.getPath());
         }
 
-        output.addSequenceOutput(idx, "mGAP Lucene Index: " + releaseVersion, CATEGORY, null, null, genome.getGenomeId(), "Fields indexed: " + infoFieldsRaw);
+        output.addSequenceOutput(idx, "mGAP Lucene Index: " + releaseVersion, CATEGORY, null, null, genome.getGenomeId(), "Fields indexed: " + infoFields.size());
 
         return output;
     }
