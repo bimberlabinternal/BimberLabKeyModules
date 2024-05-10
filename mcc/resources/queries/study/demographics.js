@@ -110,6 +110,10 @@ function onUpsert(helper, scriptErrors, row, oldRow){
             idToMccAlias[row.sire] = row.sireMccAlias;
         }
     }
+
+    if (!row.date) {
+        row.date = new Date();
+    }
 }
 
 function onComplete(event, errors, helper){

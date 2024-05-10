@@ -3,6 +3,13 @@
     <name>PRIMe-Seq ETLs</name>
     <description>Syncs Anonymized Data PRIMe-Seq to mGAP</description>
     <transforms>
+        <transform id="step0" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mgap.etl.ClearEtlWorkQueueTask">
+                <settings>
+
+                </settings>
+            </taskref>
+        </transform>
         <transform id="step1" type="RemoteQueryTransformStep">
             <description>Copy to local table</description>
             <source schemaName="mGAP" queryName="subjectsSource" remoteSource="PRIMESEQ">
@@ -189,6 +196,14 @@
                 <columnTransforms>
                 </columnTransforms>
             </destination>
+        </transform>
+
+        <transform id="step7" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mgap.etl.PerformQueuedEtlWorkTask">
+                <settings>
+
+                </settings>
+            </taskref>
         </transform>
     </transforms>
     <schedule>
