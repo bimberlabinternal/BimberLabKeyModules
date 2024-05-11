@@ -68,7 +68,7 @@ public class MccTest extends BaseWebDriverTest
         testAnimalImportAndTransfer();
     }
 
-    private static final String ANIMAL_DATA_HEADER = "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight(grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailable to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n";
+    private static final String ANIMAL_DATA_HEADER = "animal ID\tprevious IDs\tsource\t\"DOB\n(MM/DD/YYYY)\"\tsex\tmaternal ID\tpaternal ID\t\"weight (grams)\"\t\"date of weight\n(MM/DD/YY)\"\tU24 status\tavailable to transfer\tcurrent housing status\tinfant history\tfertility status\tmedical history\n";
 
     private static final String ANIMAL_DATA1 = "12345\t\t\t7/10/2011\t0 - male\t23456\t23453\t382.8\t5/19/2021\t0 - not assigned to U24 breeding colony\t0 - not available for transfer\t1 - natal family unit\t3 - successful rearing of offspring\t2 - successful offspring produced\t0 - naive animal\n";
 

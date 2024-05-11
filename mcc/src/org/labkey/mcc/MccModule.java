@@ -31,7 +31,9 @@ import org.labkey.api.query.QuerySchema;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
+import org.labkey.api.view.template.ClientDependency;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mcc.ehr.NoOpClinicalHistorySource;
 import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
 import org.labkey.mcc.query.RenameIdButton;
@@ -125,6 +127,9 @@ public class MccModule extends ExtendedSimpleModule
         EHRService.get().registerMoreActionsButton(new MarkShippedButton(), "study", "demographics");
         EHRService.get().registerMoreActionsButton(new RenameIdButton(), "study", "demographics");
         LDKService.get().registerQueryButton(new ShowEditUIButton(this, MccSchema.NAME, MccSchema.TABLE_CENSUS), MccSchema.NAME, MccSchema.TABLE_CENSUS);
+
+        EHRService.get().registerHistoryDataSource(new NoOpClinicalHistorySource("Case Opened"));
+        EHRService.get().registerClientDependency(ClientDependency.supplierFromPath("mcc/panel/MccClinicalSnapshotPanel.js"), this);
     }
 
     @Override

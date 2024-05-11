@@ -4,14 +4,19 @@ import htsjdk.samtools.util.Interval;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
+import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
@@ -28,8 +33,11 @@ import org.labkey.api.util.PageFlowUtil;
 import org.labkey.mgap.mGAPSchema;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<SelectVariantsWrapper> implements VariantProcessingStep
 {
@@ -93,8 +101,61 @@ public class IndexVariantsForMgapStep extends AbstractCommandPipelineStep<Select
             throw new PipelineJobException("Unable to find file: " + idx.getPath());
         }
 
-        output.addSequenceOutput(idx, "mGAP Lucene Index: " + releaseVersion, CATEGORY, null, null, genome.getGenomeId(), "Fields indexed: " + infoFieldsRaw);
+        output.addSequenceOutput(idx, "mGAP Lucene Index: " + releaseVersion, CATEGORY, null, null, genome.getGenomeId(), "Fields indexed: " + infoFields.size());
 
         return output;
+    }
+
+    @Override
+    public void complete(PipelineJob job, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated, SequenceAnalysisJobSupport support) throws PipelineJobException
+    {
+        String releaseVersion = getProvider().getParameterByName("releaseVersion").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class);
+
+        List<SequenceOutputFile> of = outputsCreated.stream().filter(x -> CATEGORY.equals(x.getCategory())).toList();
+        if (of.size() != 1)
+        {
+            throw new PipelineJobException("Expected a single output, found: " + of.size());
+        }
+
+        Container target = job.getContainer().isWorkbook() ? job.getContainer().getParent() : job.getContainer();
+        TableInfo ti = QueryService.get().getUserSchema(job.getUser(), target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES);
+        TableSelector ts = new TableSelector(ti, PageFlowUtil.set("rowid", "container"), new SimpleFilter(FieldKey.fromString("version"), releaseVersion), null);
+        if (ts.exists())
+        {
+            if (ts.getRowCount() > 1)
+            {
+                throw new IllegalStateException("More than one row found matching: " + releaseVersion);
+            }
+
+            job.getLogger().info("Updating release record");
+            Map<String, Object> row = new CaseInsensitiveHashMap<>(ts.getMap());
+            if (!row.containsKey("rowid") || row.get("rowid") == null)
+            {
+                job.getLogger().error("Missing rowId, found: ");
+                for (String key : row.keySet())
+                {
+                    job.getLogger().debug(key + ": " + row.get(key));
+                }
+
+                throw new IllegalStateException("Missing rowId from release record");
+            }
+
+            row.put("luceneIndex", of.get(0).getRowid());
+
+            try
+            {
+                BatchValidationException bve = new BatchValidationException();
+                Map<String, Object> oldKeys = new CaseInsensitiveHashMap<>(Map.of("rowid", row.get("rowid")));
+                ti.getUpdateService().updateRows(job.getUser(), target, Collections.singletonList(row), Collections.singletonList(oldKeys), bve, null, null);
+            }
+            catch (BatchValidationException | InvalidKeyException | QueryUpdateServiceException | SQLException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
+        else
+        {
+            job.getLogger().info("No release record found, will not update");
+        }
     }
 }
