@@ -174,7 +174,7 @@ public class mGapSummarizer
     public static void filterCodingPotential(Set<String> codingPotential)
     {
         //due to overlapping transcripts, this is often added.  remove these less-specific terms in order
-        for (String type : Arrays.asList("intergenic_variant", "intragenic_variant"))
+        for (String type : Arrays.asList("custom", "intergenic_variant", "intragenic_variant"))
         {
             if (codingPotential.size() > 1)
             {
