@@ -19,6 +19,7 @@ SELECT
     WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/SNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
+  d.litterId,
   d.Id.mostRecentDeparture.mostRecentDeparture,
   o.availability,
   o.current_housing_status,
@@ -67,6 +68,7 @@ SELECT
     WHEN d.calculated_status = 'Alive' AND (SELECT COUNT(f.flag.value) as total FROM "/data/Colonies/WNPRC/".study.flags f WHERE f.Id = d.Id AND f.isActive = true) > 0 THEN true
     ELSE false
   END as u24_status,
+  d.litterId,
   d.Id.mostRecentDeparture.mostRecentDeparture,
   o.availability,
   o.current_housing_status,
@@ -112,6 +114,7 @@ SELECT
     d.objectid,
     d.calculated_status,
     d.u24_status,
+    d.litterId,
     d.Id.mostRecentDeparture.mostRecentDeparture,
     o.availability,
     o.current_housing_status,
@@ -160,6 +163,7 @@ SELECT
     d.objectid,
     d.calculated_status,
     d.u24_status,
+    d.litterId,
     d.Id.mostRecentDeparture.mostRecentDeparture,
     o.availability,
     o.current_housing_status,

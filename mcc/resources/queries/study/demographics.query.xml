@@ -9,7 +9,7 @@
                 <deleteUrl />
                 <columns>
                     <column columnName="Id">
-                        <url></url>
+                        <url />
                     </column>
                     <column columnName="date">
                         <isHidden>true</isHidden>
@@ -120,6 +120,13 @@
                     </column>
                     <column columnName="alternateIds">
                         <columnTitle>Alternate IDs</columnTitle>
+                    </column>
+                    <column columnName="litterId">
+                        <columnTitle>Litter ID</columnTitle>
+                        <url>/query/executeQuery.view?schemaName=study&amp;
+                            query.queryName=Demographics&amp;
+                            query.litterId~eq=${litterId}
+                        </url>
                     </column>
                     <column columnName="remark">
 
