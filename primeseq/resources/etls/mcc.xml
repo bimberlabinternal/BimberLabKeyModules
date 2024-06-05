@@ -12,6 +12,9 @@
                     <column>sire</column>
                     <column>gender</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="Id" value="" operator="isnonblank"/>
+                </sourceFilters>
             </source>
             <destination schemaName="laboratory" queryName="subjects" targetOption="truncate" bulkLoad="true">
                 <constants>

@@ -36,6 +36,7 @@
         <column name="usage_current"/>
         <column name="usage_future"/>
         <column name="date_of_observations"/>
+        <column name="litterId"/>
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>
