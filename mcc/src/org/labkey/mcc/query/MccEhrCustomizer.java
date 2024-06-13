@@ -96,6 +96,13 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             ti.addColumn(col);
         }
 
+        if (ti.getColumn("littermates") == null)
+        {
+            var col = getWrappedIdCol(ti.getUserSchema(), ti, "littermates", "demographicsLittermates");
+            col.setLabel("Littermates");
+            col.setDescription("The IDs of ");
+            ti.addColumn(col);
+        }
     }
 
     private BaseColumnInfo getWrappedIdCol(UserSchema us, AbstractTableInfo ds, String name, String queryName)
