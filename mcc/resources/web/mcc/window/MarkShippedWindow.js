@@ -173,15 +173,21 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             return;
         }
 
+        var hasError = false;
         Ext4.Array.forEach(this.rowIds, function(rowId) {
             var animalId = this.lsidToAnimalId(rowId);
             var useExisting = win.down('#usePreviousId-' + animalId).getValue();
             if (!useExisting && !win.down('#newId-' + animalId).getValue()) {
                 Ext4.Msg.hide();
                 Ext4.Msg.alert('Error', 'Must enter the new ID for: ' + animalId);
+                hasError = true;
                 return false;
             }
         }, this);
+
+        if (hasError) {
+            return;
+        }
 
         var targetFolderId = win.down('#targetFolder').store.findRecord('Path', targetFolder).get('EntityId');
         Ext4.Msg.wait('Saving...');
