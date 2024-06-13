@@ -40,6 +40,7 @@ import org.labkey.test.util.ApiPermissionsHelper;
 import org.labkey.test.util.DataRegionTable;
 import org.labkey.test.util.Ext4Helper;
 import org.labkey.test.util.PermissionsHelper;
+import org.labkey.test.util.ext4cmp.Ext4CmpRef;
 import org.labkey.test.util.ext4cmp.Ext4ComboRef;
 import org.labkey.test.util.ext4cmp.Ext4FieldRef;
 
@@ -128,7 +129,7 @@ public class MccTest extends BaseWebDriverTest
         new Window.WindowFinder(getDriver()).withTitle("Error").waitFor();
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
 
-        Ext4FieldRef.getForLabel(this, "Animal Will Use Previous Id").setChecked(true);
+        _ext4Helper.queryOne("#usePreviousId-Animal2", Ext4FieldRef.class).setChecked(true);
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
@@ -181,7 +182,7 @@ public class MccTest extends BaseWebDriverTest
         sleep(100);
 
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
-        Ext4FieldRef.getForLabel(this, "Animal Will Use Previous Id").setChecked(true);
+        _ext4Helper.queryOne("#usePreviousId-Animal2", Ext4FieldRef.class).setChecked(true);
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
@@ -238,7 +239,7 @@ public class MccTest extends BaseWebDriverTest
         sleep(100);
 
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
-        Ext4FieldRef.getForLabel(this, "New ID (blank if unchanged)").setValue("TheNewId");
+        _ext4Helper.queryOne("#usePreviousId-12345", Ext4FieldRef.class).setValue("TheNewId");
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
