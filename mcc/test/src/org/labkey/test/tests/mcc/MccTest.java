@@ -239,7 +239,8 @@ public class MccTest extends BaseWebDriverTest
         sleep(100);
 
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
-        _ext4Helper.queryOne("#usePreviousId-12345", Ext4FieldRef.class).setValue("TheNewId");
+        _ext4Helper.queryOne("#usePreviousId-12345", Ext4FieldRef.class).setChecked(true);
+        _ext4Helper.queryOne("#newId-12345", Ext4FieldRef.class).setValue("TheNewId");
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
         new Window.WindowFinder(getDriver()).withTitle("Success").waitFor();
