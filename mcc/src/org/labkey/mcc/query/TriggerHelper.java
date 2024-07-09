@@ -260,6 +260,22 @@ public class TriggerHelper
         }
     }
 
+    private TableInfo _mappingTable = null;
+
+    private TableInfo getMappingTable()
+    {
+        if (_mappingTable == null)
+        {
+            _mappingTable = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+        }
+
+        return _mappingTable;
+    }
+
+    public @Nullable String getMccAlias(String id) {
+        return new TableSelector(getMappingTable(), PageFlowUtil.set("externalAlias"), new SimpleFilter(FieldKey.fromString("subjectname"), id, CompareType.EQUAL), null).getObject(String.class);
+    }
+
     public int ensureMccAliasExists(Collection<String> rawIds, Map<Object, Object> existingAliases)
     {
         // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
@@ -273,7 +289,7 @@ public class TriggerHelper
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), idMap.values(), CompareType.IN);
 
         final Set<String> aliasesFound = new HashSet<>();
-        TableInfo ti = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+        TableInfo ti = getMappingTable();
         new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), filter, null).forEachResults(rs -> {
             aliasesFound.add(rs.getString(FieldKey.fromString("subjectname")));
             if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
