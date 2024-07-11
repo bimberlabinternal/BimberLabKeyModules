@@ -111,6 +111,13 @@ function onUpsert(helper, scriptErrors, row, oldRow){
         }
     }
 
+    if (oldRow && oldRow.Id) {
+        var existingId = triggerHelper.getMccAlias(oldRow.Id);
+        if (existingId) {
+            idToMccAlias[row.Id] = existingId;
+        }
+    }
+
     if (!row.date) {
         row.date = new Date();
     }
