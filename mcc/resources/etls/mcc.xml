@@ -38,7 +38,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true" batchSize="5000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -56,7 +56,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="kinship" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="kinship" targetOption="truncate" bulkLoad="true" batchSize="5000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -72,7 +72,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="weight" targetOption="truncate" bulkLoad="true" batchSize="5000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -89,7 +89,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="genomicDatasets" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="genomicDatasets" targetOption="truncate" bulkLoad="true" batchSize="5000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -106,7 +106,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="5000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -127,7 +127,7 @@
                     <column>marmosetsShipped</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="mcc" queryName="census" targetOption="truncate" bulkLoad="true">
+            <destination schemaName="mcc" queryName="census" targetOption="truncate" bulkLoad="true" batchSize="5000">
 
             </destination>
         </transform>
