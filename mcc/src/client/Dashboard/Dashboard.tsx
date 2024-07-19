@@ -1,11 +1,11 @@
-import './dashboard.css';
+import '../components/dashboard/dashboard.css';
 
 import React, { useState, useEffect } from 'react';
 import { Query } from '@labkey/api';
 import { getServerContext } from "@labkey/api";
 
-import PieChart from './PieChart';
-import BarChart from './BarChart';
+import PieChart from '../components/dashboard/PieChart';
+import BarChart from '../components/dashboard/BarChart';
 
 export function Dashboard() {
     const [demographics, setDemographics] = useState(null);
