@@ -685,6 +685,9 @@
             <column columnName="excludeFromCensus">
                 <datatype>boolean</datatype>
             </column>
+            <column columnName="litterId">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Demographics</tableTitle>
     </table>

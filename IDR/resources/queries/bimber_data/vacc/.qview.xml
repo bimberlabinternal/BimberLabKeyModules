@@ -1,0 +1,21 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
+    <columns>
+        <column name="rh/Cohort"/>
+        <column name="rh"/>
+        <column name="name"/>
+        <column name="vacc_date"/>
+        <column name="prick"/>
+        <column name="dose"/>
+        <column name="route"/>
+        <column name="admin_loc"/>
+        <column name="take"/>
+        <column name="backbone"/>
+        <column name="orf"/>
+        <column name="ag_source"/>
+        <column name="comment"/>
+    </columns>
+    <sorts>
+        <sort column="rh"/>
+        <sort column="vacc_date"/>
+    </sorts>
+</customView>

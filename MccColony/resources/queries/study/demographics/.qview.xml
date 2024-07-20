@@ -26,6 +26,7 @@
         <column name="Id/MostRecentWeight/MostRecentWeightGrams"/>
         <column name="Id/MostRecentWeight/MostRecentWeightDate"/>
         <column name="alternateIds"/>
+        <column name="litterId"/>
         <column name="excludeFromCensus"/>
         <column name="Id/mostRecentObservations/availability::observation">
             <properties>

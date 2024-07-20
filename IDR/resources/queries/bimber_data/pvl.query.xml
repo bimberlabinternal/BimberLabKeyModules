@@ -1,0 +1,35 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="pvl" tableDbType="TABLE">
+                <tableTitle>IDR PVL Data</tableTitle>
+                <columns>
+                    <column columnName="i_Rh">
+                        <columnTitle>Subject Id</columnTitle>
+                        <fk>
+                            <fkDbSchema>bimber_data</fkDbSchema>
+                            <fkTable>subjects</fkTable>
+                            <fkColumnName>Rh</fkColumnName>
+                            <fkDisplayColumnName>Rh</fkDisplayColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="d_PVLDate">
+                        <columnTitle>PVL Date</columnTitle>
+                    </column>
+                    <column columnName="c_PVL">
+                        <columnTitle>PVL</columnTitle>
+                    </column>
+                    <column columnName="Comment">
+                        <columnTitle>Comment</columnTitle>
+                    </column>
+                    <column columnName="user">
+                        <columnTitle>User</columnTitle>
+                    </column>
+                    <column columnName="DateCreated">
+                        <columnTitle>Date Created</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

@@ -140,10 +140,16 @@
         <!--</destination>-->
         <!--</transform>-->
 
+        <!--This will create MCC aliases as-needed-->
+        <transform id="step0" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.PopulateIdsStep">
+                <settings>
+                </settings>
+            </taskref>
+        </transform>
     </transforms>
 
     <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified">
-        <!--TODO: need to fix LK FilterStrategy.init() bug before this can be enabled-->
-        <!--<deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>-->
+        <deletedRowsSource schemaName="mcc" queryName="rowsToDelete" targetKeyColumnName="objectId" deletedSourceKeyColumnName="objectId" timestampColumnName="source_modified"/>
     </incrementalFilter>
 </etl>
