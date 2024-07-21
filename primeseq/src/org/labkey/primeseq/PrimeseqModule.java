@@ -32,8 +32,6 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.primeseq.analysis.CombineMethylationRatesHandler;
 import org.labkey.primeseq.analysis.MethylationRateComparisonHandler;
-import org.labkey.primeseq.pipeline.BisSnpGenotyperAnalysis;
-import org.labkey.primeseq.pipeline.BisSnpIndelRealignerStep;
 import org.labkey.primeseq.pipeline.BismarkWrapper;
 import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
@@ -113,9 +111,6 @@ public class PrimeseqModule extends ExtendedSimpleModule
             {
                 SequencePipelineService.get().registerPipelineStep(new BismarkWrapper.Provider());
                 SequencePipelineService.get().registerPipelineStep(new BismarkWrapper.MethylationExtractorProvider());
-
-                SequencePipelineService.get().registerPipelineStep(new BisSnpIndelRealignerStep.Provider());
-                SequencePipelineService.get().registerPipelineStep(new BisSnpGenotyperAnalysis.Provider());
 
                 SequenceAnalysisService.get().registerFileHandler(new MethylationRateComparisonHandler());
                 SequenceAnalysisService.get().registerFileHandler(new CombineMethylationRatesHandler());

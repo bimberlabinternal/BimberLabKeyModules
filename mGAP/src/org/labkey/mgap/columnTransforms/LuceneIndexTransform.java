@@ -1,14 +1,11 @@
 package org.labkey.mgap.columnTransforms;
 
-import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.pipeline.PipelineJobException;
-import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.mgap.etl.EtlQueueManager;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
 
 public class LuceneIndexTransform extends OutputFileTransform
 {
@@ -27,6 +24,7 @@ public class LuceneIndexTransform extends OutputFileTransform
         // NOTE: lucene is a special case since the DB tracks one file, but we need this whole folder:
         File sourceDir = f.getParentFile();
         File targetDir = new File(subdir, "LuceneIndex");
+        JBrowseService.get().clearLuceneCacheEntry(targetDir);
         EtlQueueManager.get().queueRsyncCopy(getContainerUser().getContainer(), sourceDir, targetDir);
 
         return new File(targetDir, sourceDir.getName() + "/" + f.getName());
