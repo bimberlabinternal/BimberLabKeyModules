@@ -4,7 +4,7 @@ import { App } from '@labkey/api';
 
 import { Dashboard } from '../Dashboard';
 
-const render = (target: string, sessionId: string) => {
+const render = (target: string) => {
     ReactDOM.render(<Dashboard />, document.getElementById(target));
 };
 

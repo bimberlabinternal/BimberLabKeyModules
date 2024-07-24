@@ -11,6 +11,8 @@ export function Dashboard() {
     const [living, setLiving] = useState(null);
     const [u24Assigned, setu24Assigned] = useState(null);
     const [availableForTransfer, setAvailableForTransfer] = useState(null);
+    const [requestRows, setRequestRows] = useState(null);
+    const [censusRows, setCensusRows] = useState(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;
@@ -18,6 +20,15 @@ export function Dashboard() {
         return (
             <div className="loading">
                 <div>Error: must set the MCCContainer module property</div>
+            </div>
+        );
+    }
+
+    const requestContainerPath = ctx.MCCRequestContainer || null;
+    if (!requestContainerPath) {
+        return (
+            <div className="loading">
+                <div>Error: must set the MCCRequestContainer module property</div>
             </div>
         );
     }
@@ -49,12 +60,49 @@ export function Dashboard() {
             scope: this
         });
 
+        Query.selectRows({
+            containerPath: requestContainerPath,
+            schemaName: 'mcc',
+            queryName: 'requestScores',
+            success: function(results) {
+                if (isApiSubscribed) {
+                    setRequestRows(results.rows);
+                }
+            },
+            failure: function(response) {
+                if (isApiSubscribed) {
+                    alert('There was an error loading data');
+                    console.error(response);
+                }
+            },
+            scope: this
+        });
+
+        Query.selectRows({
+            containerPath: containerPath,
+            schemaName: 'mcc',
+            queryName: 'census',
+            columns: 'yearNo,startdate,enddate,centerName,totalBreedingPairs,totalLivingOffspring,survivalRates,marmosetsShipped',
+            success: function(results) {
+                if (isApiSubscribed) {
+                    setCensusRows(results.rows);
+                }
+            },
+            failure: function(response) {
+                if (isApiSubscribed) {
+                    alert('There was an error loading data');
+                    console.error(response);
+                }
+            },
+            scope: this
+        });
+
         return function cleanup() {
             isApiSubscribed = false
         }
     }, []);
 
-    if (demographics === null) {
+    if (demographics === null || requestRows == null || censusRows == null) {
         return (
             <div className="loading">
                 <div>Loading...</div>
@@ -67,11 +115,11 @@ export function Dashboard() {
             <div className="row">
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Census</div>
+                        <div className="panel-heading">U24 Census</div>
                         <div className="row">
                             <div className="panel-body count-panel-body">
                                 <div className="count-panel-text-small">{u24Assigned.length}</div>
-                                <div className="small text-muted text-center">U24 Assigned</div>
+                                <div className="small text-muted text-center">Total U24 Animals</div>
                             </div>
                         </div>
                         <div className="row mcc-col-centered">
@@ -81,10 +129,6 @@ export function Dashboard() {
                                     <div className="small text-muted text-center">Available</div>
                                 </div>
                             </div>
-                            {/*<div className="col-md-3">*/}
-                            {/*    <div className="panel-body count-panel-body">*/}
-                            {/*    </div>*/}
-                            {/*</div>*/}
                         </div>
                     </div>
                 </div>
@@ -110,7 +154,8 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Sex (Living Animals)</div>
                         <div className="panel-body">
-                            <PieChart fieldName = "gender/meaning" demographics={living} />
+                            {/*<PieChart fieldName = "gender/meaning" demographics={living} />*/}
+                            PLACEHOLDER: Number of births over time, etc.
                         </div>
                     </div>
                 </div>
