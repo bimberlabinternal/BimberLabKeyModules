@@ -872,11 +872,14 @@ public class MccController extends SpringActionController
                     }
                     else if (mccIdForOldId != null)
                     {
-                        messages.add("Both IDs have existing MCC aliases, no changes were made: " + oldId + " / " + oldToNew.get(oldId));
+                        if (!mccIdForOldId.equalsIgnoreCase(mccIdForNewId))
+                        {
+                            messages.add("Both IDs have existing MCC aliases, but they are not equal: " + oldId + ":" + mccIdForOldId + " / " + oldToNew.get(oldId) + ": " + mccIdForNewId);
+                        }
                     }
                 }
 
-                transaction.commit();
+                transaction.commitAndKeepConnection();
 
                 // Update ID field of each dataset:
                 for (Dataset ds : s.getDatasets())
