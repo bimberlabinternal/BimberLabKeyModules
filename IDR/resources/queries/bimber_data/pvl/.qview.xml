@@ -1,0 +1,13 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
+    <columns>
+        <column name="i_Rh/Cohort"/>
+        <column name="i_Rh"/>
+        <column name="d_PVLDate"/>
+        <column name="c_PVL"/>
+        <column name="comment"/>
+    </columns>
+    <sorts>
+        <sort column="i_Rh"/>
+        <sort column="d_PVLDate"/>
+    </sorts>
+</customView>

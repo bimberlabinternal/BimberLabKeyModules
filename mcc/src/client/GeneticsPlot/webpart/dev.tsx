@@ -1,17 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AppContainer } from 'react-hot-loader';
 import { App } from '@labkey/api';
 
 import { GeneticsPlot } from '../GeneticsPlot';
 
-App.registerApp<any>('mccPcaWebpart', (target: string) => {
-    ReactDOM.render(
-        <AppContainer>
-            <GeneticsPlot />
-        </AppContainer>,
-        document.getElementById(target)
-    );
-}, true /* hot */);
+const render = (target: string) => {
+    ReactDOM.render(<GeneticsPlot />, document.getElementById(target));
+};
 
-declare const module: any;
+App.registerApp<any>('mccPcaWebpart', render, true /* hot */);

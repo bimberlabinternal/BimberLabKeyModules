@@ -1,0 +1,19 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
+    <columns>
+        <column name="Cohort"/>
+        <column name="Rh"/>
+        <column name="Comment"/>
+        <column name="rhCode"/>
+        <column name="Sex"/>
+        <column name="cohortStart"/>
+        <column name="cohortEnd"/>
+        <column name="D0"/>
+        <column name="DPC0"/>
+        <column name="PID0"/>
+        <column name="Nx_date"/>
+    </columns>
+    <sorts>
+        <sort column="Cohort"/>
+        <sort column="Rh"/>
+    </sorts>
+</customView>

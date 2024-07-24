@@ -1,0 +1,78 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="vacc" tableDbType="TABLE">
+                <tableTitle>IDR Vaccinations</tableTitle>
+                <columns>
+                    <column columnName="id">
+                        <columnTitle>ID</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="rh">
+                        <columnTitle>SubjectId</columnTitle>
+                        <fk>
+                            <fkDbSchema>bimber_data</fkDbSchema>
+                            <fkTable>subjects</fkTable>
+                            <fkColumnName>Rh</fkColumnName>
+                            <fkDisplayColumnName>Rh</fkDisplayColumnName>
+                        </fk>
+                    </column>
+                    <column columnName="vacc_date">
+                        <columnTitle>Vaccine Date</columnTitle>
+                    </column>
+                    <column columnName="prick">
+                        <columnTitle>Type</columnTitle>
+                    </column>
+                    <column columnName="dose">
+                        <columnTitle>Dose</columnTitle>
+                    </column>
+                    <column columnName="route">
+                        <columnTitle>Route</columnTitle>
+                    </column>
+                    <column columnName="admin_loc">
+                        <columnTitle>Administration Location</columnTitle>
+                    </column>
+                    <column columnName="stock_date">
+                        <columnTitle>Stock Date</columnTitle>
+                    </column>
+                    <column columnName="take">
+                        <columnTitle>Take?</columnTitle>
+                    </column>
+                    <column columnName="shed_status">
+                        <columnTitle>Shed Status</columnTitle>
+                    </column>
+                    <column columnName="vector_entry">
+                        <columnTitle>Vector Entry</columnTitle>
+                    </column>
+                    <column columnName="vc_vector_id">
+                        <columnTitle>Vector ID</columnTitle>
+                    </column>
+                    <column columnName="name">
+                        <columnTitle>Vaccine Name</columnTitle>
+                    </column>
+                    <column columnName="backbone">
+                        <columnTitle>Backbone</columnTitle>
+                    </column>
+                    <column columnName="virus_species">
+                        <columnTitle>Virus Species</columnTitle>
+                    </column>
+                    <column columnName="ag_source">
+                        <columnTitle>Antigen Source</columnTitle>
+                    </column>
+                    <column columnName="orf">
+                        <columnTitle>ORF</columnTitle>
+                    </column>
+                    <column columnName="comment">
+                        <columnTitle>Comment</columnTitle>
+                    </column>
+                    <column columnName="created">
+                        <columnTitle>Created</columnTitle>
+                    </column>
+                    <column columnName="edited">
+                        <columnTitle>edited</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

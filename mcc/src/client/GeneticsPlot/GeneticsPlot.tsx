@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
-import './../Dashboard/dashboard.css';
+import '../components/dashboard/dashboard.css';
 import ScatterChart from './ScatterChart';
 import { Box, Tab, Tabs } from '@mui/material';
 import KinshipTable from './KinshipTable';

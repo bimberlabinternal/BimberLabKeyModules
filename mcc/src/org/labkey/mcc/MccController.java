@@ -16,6 +16,8 @@
 
 package org.labkey.mcc;
 
+import jakarta.mail.Address;
+import jakarta.mail.Message;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,8 +89,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.mail.Address;
-import jakarta.mail.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -836,49 +836,8 @@ public class MccController extends SpringActionController
                 // NOTE: include this value so it will get added to the audit trail. This is a loose way to connect changes made in this transaction
                 final String batchId = "MCC.Rename." + new GUID();
                 Set<String> messages = new HashSet<>();
-                for (Dataset ds : s.getDatasets())
-                {
-                    TableInfo ti = ds.getTableInfo(getUser());
-                    TableSelector ts = new TableSelector(ti, PageFlowUtil.set("Id", "lsid"), new SimpleFilter(FieldKey.fromString("Id"), oldToNew.keySet(), CompareType.IN), null);
-                    if (!ts.exists())
-                    {
-                        continue;
-                    }
 
-                    List<Map<String, Object>> toUpdate = new ArrayList<>();
-                    List<Map<String, Object>> oldKeys = new ArrayList<>();
-                    ts.forEachResults(rs -> {
-                        if (ds.isDemographicData())
-                        {
-                            // test if a record exists with the new ID
-                            if (new TableSelector(ti, new SimpleFilter(FieldKey.fromString("Id"), oldToNew.get(rs.getString(FieldKey.fromString("Id")))), null).exists())
-                            {
-                                messages.add("Existing record for ID: " + oldToNew.get(rs.getString(FieldKey.fromString("Id"))) + " for dataset: " + ds.getLabel() + " in container: " + getContainer().getPath() + ", skipping rename");
-                                return;
-                            }
-                        }
-
-                        toUpdate.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid")), "Id", oldToNew.get(rs.getString(FieldKey.fromString("Id"))), "_batchId_", batchId));
-                        oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
-                        idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
-                        totalRecordsUpdated.getAndIncrement();
-                    });
-
-                    if (!toUpdate.isEmpty())
-                    {
-                        try
-                        {
-                            ti.getUpdateService().updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, null);
-                        }
-                        catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
-                        {
-                            _log.error("Error updating MCC dataset rows", e);
-                            errors.reject(ERROR_MSG, "Error updating MCC dataset rows: " + e.getMessage());
-                            return null;
-                        }
-                    }
-                }
-
+                // Perform MCC ID updates first, to ensure the dataset updates dont auto-create them:
                 for (String oldId : oldToNew.keySet())
                 {
                     // Find the MCC ID of the new ID:
@@ -914,6 +873,112 @@ public class MccController extends SpringActionController
                         messages.add("Both IDs have existing MCC aliases, no changes were made: " + oldId + " / " + oldToNew.get(oldId));
                     }
                 }
+
+                // Update ID field of each dataset:
+                for (Dataset ds : s.getDatasets())
+                {
+                    Set<String> fieldList = "demographics".equalsIgnoreCase(ds.getName()) ? PageFlowUtil.set("Id", "lsid", "alternateIds") : PageFlowUtil.set("Id", "lsid");
+                    TableInfo ti = ds.getTableInfo(getUser());
+                    TableSelector ts = new TableSelector(ti, fieldList, new SimpleFilter(FieldKey.fromString("Id"), oldToNew.keySet(), CompareType.IN), null);
+                    if (!ts.exists())
+                    {
+                        continue;
+                    }
+
+                    List<Map<String, Object>> toUpdate = new ArrayList<>();
+                    List<Map<String, Object>> oldKeys = new ArrayList<>();
+                    ts.forEachResults(rs -> {
+                        if (ds.isDemographicData())
+                        {
+                            // test if a record exists with the new ID
+                            if (new TableSelector(ti, new SimpleFilter(FieldKey.fromString("Id"), oldToNew.get(rs.getString(FieldKey.fromString("Id")))), null).exists())
+                            {
+                                messages.add("Existing record for ID: " + oldToNew.get(rs.getString(FieldKey.fromString("Id"))) + " for dataset: " + ds.getLabel() + " in container: " + getContainer().getPath() + ", skipping rename");
+                                return;
+                            }
+                        }
+
+                        Map<String, Object> rowMap = Map.of(
+                                "lsid", rs.getString(FieldKey.fromString("lsid")),
+                                "Id", oldToNew.get(rs.getString(FieldKey.fromString("Id"))),
+                                "_batchId_", batchId
+                        );
+
+                        if ("demographics".equalsIgnoreCase(ds.getName()))
+                        {
+                            String alternateIds = StringUtils.trimToNull(rs.getString(FieldKey.fromString("alternateIds")));
+                            alternateIds = alternateIds == null ? rs.getString(FieldKey.fromString("Id")) : alternateIds + "," + rs.getString(FieldKey.fromString("Id"));
+
+                            rowMap = new HashMap<>(rowMap);
+                            rowMap.put("alternateIds", alternateIds);
+                        }
+
+                        toUpdate.add(rowMap);
+                        oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
+                        idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
+                        totalRecordsUpdated.getAndIncrement();
+                    });
+
+                    if (!toUpdate.isEmpty())
+                    {
+                        try
+                        {
+                            ti.getUpdateService().updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, null);
+                        }
+                        catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+                        {
+                            _log.error("Error updating MCC dataset rows", e);
+                            errors.reject(ERROR_MSG, "Error updating MCC dataset rows: " + e.getMessage());
+                            return null;
+                        }
+                    }
+                }
+
+                // Now dam/sire:
+                TableInfo ti = s.getDatasetByName("demographics").getTableInfo(getUser());
+                TableSelector ts = new TableSelector(ti, PageFlowUtil.set("lsid", "Id", "dam", "sire"), new SimpleFilter(new SimpleFilter.OrClause(
+                        new SimpleFilter.InClause(FieldKey.fromString("dam"), oldToNew.keySet()),
+                        new SimpleFilter.InClause(FieldKey.fromString("sire"), oldToNew.keySet())
+                )), null);
+
+                if (!ts.exists())
+                {
+                    throw new IllegalStateException("Demographics table not found");
+                }
+
+                List<Map<String, Object>> toUpdate = new ArrayList<>();
+                List<Map<String, Object>> oldKeys = new ArrayList<>();
+                ts.forEachResults(rs -> {
+                    for (String oldId : oldToNew.keySet())
+                    {
+                        Map<String, Object> rowMap = new HashMap<>(Map.of(
+                                "lsid", rs.getString(FieldKey.fromString("lsid")),
+                                "Id", rs.getString(FieldKey.fromString("Id")),
+                                "_batchId_", batchId
+                        ));
+
+                        boolean hasChanges = false;
+                        if (oldId.equalsIgnoreCase(rs.getString(FieldKey.fromString("dam"))))
+                        {
+                            rowMap.put("dam", oldToNew.get(oldId));
+                            hasChanges = true;
+                        }
+
+                        if (oldId.equalsIgnoreCase(rs.getString(FieldKey.fromString("sire"))))
+                        {
+                            rowMap.put("sire", oldToNew.get(oldId));
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges)
+                        {
+                            toUpdate.add(rowMap);
+                            oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
+                            idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
+                            totalRecordsUpdated.getAndIncrement();
+                        }
+                    }
+                });
 
                 transaction.commit();
 
