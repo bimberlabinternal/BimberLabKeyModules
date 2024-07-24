@@ -1,5 +1,6 @@
 <view xmlns="http://labkey.org/data/xml/view" title="MCC Animals" frame="none">
     <dependencies>
         <dependency path="laboratory.context"/>
+        <dependency path="ehr.context"/>
     </dependencies>
 </view>
