@@ -1,0 +1,107 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="subjects" tableDbType="TABLE">
+                <tableTitle>IDR Subjects</tableTitle>
+                <columns>
+                    <column columnName="ID">
+                        <columnTitle>ID</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="species">
+                        <columnTitle>Species</columnTitle>
+                    </column>
+                    <column columnName="Rh">
+                        <columnTitle>SubjectId</columnTitle>
+                    </column>
+                    <column columnName="Cohort">
+                        <columnTitle>Cohort</columnTitle>
+                    </column>
+                    <column columnName="Hansen">
+                        <columnTitle>Hansen</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="PI">
+                        <columnTitle>PI</columnTitle>
+                    </column>
+                    <column columnName="cohort_ID">
+                        <columnTitle>Cohort ID</columnTitle>
+                    </column>
+                    <column columnName="comment">
+                        <columnTitle>Comment</columnTitle>
+                    </column>
+                    <column columnName="subcohort">
+                        <columnTitle>Subcohort</columnTitle>
+                    </column>
+                    <column columnName="grp">
+                        <columnTitle>Group</columnTitle>
+                    </column>
+                    <column columnName="grp_order">
+                        <columnTitle>Group Order</columnTitle>
+                    </column>
+                    <column columnName="grp_id">
+                        <columnTitle>Group ID</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="grp_note">
+                        <columnTitle>Group Note</columnTitle>
+                    </column>
+                    <column columnName="rhCode">
+                        <columnTitle>Rhesus Code</columnTitle>
+                    </column>
+                    <column columnName="grpnm">
+                        <columnTitle>Group Num</columnTitle>
+                    </column>
+                    <column columnName="Sex">
+                        <columnTitle>Sex</columnTitle>
+                    </column>
+                    <column columnName="cur_weight">
+                        <columnTitle>Current Weight</columnTitle>
+                    </column>
+                    <column columnName="cohortStart">
+                        <columnTitle>Cohort Start</columnTitle>
+                    </column>
+                    <column columnName="cohortEnd">
+                        <columnTitle>Cohort End</columnTitle>
+                    </column>
+                    <column columnName="D0">
+                        <columnTitle>D0</columnTitle>
+                    </column>
+                    <column columnName="DPC0">
+                        <columnTitle>DPC0</columnTitle>
+                    </column>
+                    <column columnName="contprog">
+                        <columnTitle>contprog</columnTitle>
+                    </column>
+                    <column columnName="PID0">
+                        <columnTitle>PID0</columnTitle>
+                    </column>
+                    <column columnName="DPT0">
+                        <columnTitle>DPT0</columnTitle>
+                    </column>
+                    <column columnName="Birth">
+                        <columnTitle>Birth</columnTitle>
+                    </column>
+                    <column columnName="Nx_date">
+                        <columnTitle>Nx Date</columnTitle>
+                    </column>
+                    <column columnName="stims">
+                        <columnTitle>Stims</columnTitle>
+                    </column>
+                    <column columnName="protocol">
+                        <columnTitle>Protocol</columnTitle>
+                    </column>
+                    <column columnName="project">
+                        <columnTitle>Project</columnTitle>
+                    </column>
+                    <column columnName="iacuc_pi">
+                        <columnTitle>IACUC PI</columnTitle>
+                    </column>
+                    <column columnName="active">
+                        <columnTitle>Active?</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

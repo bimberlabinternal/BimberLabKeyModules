@@ -4,6 +4,7 @@
         <column name="u24_status"/>
         <column name="Id"/>
         <column name="gender"/>
+        <column name="Id/age/yearAndDays"/>
         <column name="Id/ageClass/label">
             <properties>
                 <property name="columnTitle" value="Age Class"/>
