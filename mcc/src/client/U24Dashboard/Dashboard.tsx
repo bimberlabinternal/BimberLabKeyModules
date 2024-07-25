@@ -1,7 +1,7 @@
 import '../components/dashboard/dashboard.css';
 
 import React, { useEffect, useState } from 'react';
-import { Filter, getServerContext, Query } from '@labkey/api';
+import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 
 import PieChart from '../components/dashboard/PieChart';
 import BarChart from '../components/dashboard/BarChart';
@@ -121,20 +121,20 @@ export function Dashboard() {
                         <div className="panel-heading">U24 Census</div>
                         <div className="row">
                             <div className="panel-body count-panel-body">
-                                <div className="count-panel-text">{u24Assigned.length}</div>
+                                <div className="count-panel-text"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "animalData"})}>{u24Assigned.length}</a></div>
                                 <div className="small text-muted text-center">Total U24 Animals</div>
                             </div>
                         </div>
                         <div className="row mcc-col-centered">
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small">{availableForTransfer.length}</div>
+                                    <div className="count-panel-text-small"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "animalData", "u24.Availability~eq": "available for transfer"})}>{availableForTransfer.length}</a></div>
                                     <div className="small text-muted text-center">Available</div>
                                 </div>
                             </div>
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small">{requestRows.length}</div>
+                                    <div className="count-panel-text-small"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "requests"})}>{requestRows.length}</a></div>
                                     <div className="small text-muted text-center">Total Requests</div>
                                 </div>
                             </div>
@@ -161,7 +161,7 @@ export function Dashboard() {
                 </div>
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Sex (Living Animals)</div>
+                        <div className="panel-heading">Requests</div>
                         <div className="panel-body">
                             {/*<PieChart fieldName = "gender/meaning" demographics={living} />*/}
                             PLACEHOLDER: Number of births over time, etc.

@@ -19,6 +19,7 @@
         );
 
         LDK.Utils.getBasicQWP({
+            containerPath: ctx.MCCRequestContainer,
             title: 'Pending MCC Requests',
             frame: 'left-nav',
             schemaName: 'mcc',
@@ -29,6 +30,7 @@
         }).render(webpart.wrapperDivId + '-webpartPending');
 
         LDK.Utils.getBasicQWP({
+            containerPath: ctx.MCCRequestContainer,
             title: 'Decision Pending',
             frame: 'left-nav',
             schemaName: 'mcc',

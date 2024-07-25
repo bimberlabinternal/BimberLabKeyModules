@@ -7,11 +7,12 @@ Ext4.onReady(function (){
         return;
 
     LDK.Utils.getBasicQWP({
+        name: 'u24',
         containerPath: ctx.EHRStudyContainer,
         title: 'MCC Animals',
         schemaName: 'study',
         queryName: 'demographics',
-        viewName: 'U24 Assigned'
+        viewName: LABKEY.ActionURL.getParameter('viewName') ?? 'U24 Assigned'
     }).render(webpart.wrapperDivId);
 });
 
