@@ -857,7 +857,9 @@ public class MccController extends SpringActionController
                         {
                             // Create record for the new ID pointing to the MCC ID of the original
                             List<Map<String, Object>> toInsert = Arrays.asList(Map.of(
-                                    "subjectname", mccIdForOldId,
+                                    "subjectname", oldToNew.get(oldId),
+                                    "externalAlias", mccIdForOldId,
+                                    "otherNames", oldId,
                                     "_batchId_", batchId
                             ));
                             BatchValidationException bve = new BatchValidationException();
@@ -870,9 +872,14 @@ public class MccController extends SpringActionController
                     }
                     else if (mccIdForOldId != null)
                     {
-                        messages.add("Both IDs have existing MCC aliases, no changes were made: " + oldId + " / " + oldToNew.get(oldId));
+                        if (!mccIdForOldId.equalsIgnoreCase(mccIdForNewId))
+                        {
+                            messages.add("Both IDs have existing MCC aliases, but they are not equal: " + oldId + ":" + mccIdForOldId + " / " + oldToNew.get(oldId) + ": " + mccIdForNewId);
+                        }
                     }
                 }
+
+                transaction.commitAndKeepConnection();
 
                 // Update ID field of each dataset:
                 for (Dataset ds : s.getDatasets())
