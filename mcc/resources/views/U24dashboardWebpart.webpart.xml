@@ -1,0 +1,6 @@
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="MCC U24 Dashboard Webpart">
+    <view name="U24dashboardWebpart"/>
+    <locations>
+        <location name="body"/>
+    </locations>
+</webpart>

@@ -26,10 +26,21 @@ module.exports = {
     title: 'Marmoset Genetics',
     permission: 'read',
     path: './src/client/GeneticsPlot'
-  },{
+  }, {
     name: 'geneticsPlotWebpart',
     title: 'Marmoset Genetics',
     permission: 'read',
     path: './src/client/GeneticsPlot/webpart'
+  },{
+    name: 'u24Dashboard',
+    title: 'U24 Dashboard',
+    permissionClasses: ['org.labkey.api.security.permissions.ReadPermission'],
+    path: './src/client/U24Dashboard'
+  },{
+    name: 'u24DashboardWebpart',
+    title: 'U24 Dashboard',
+    permissionClasses: ['org.labkey.api.security.permissions.ReadPermission'],
+    path: './src/client/U24Dashboard/webpart',
+    generateLib: true
   }]
 };
