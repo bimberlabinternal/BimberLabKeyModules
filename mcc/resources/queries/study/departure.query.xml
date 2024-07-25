@@ -1,7 +1,7 @@
 <query xmlns="http://labkey.org/data/xml/query">
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
-            <table tableName="Departure" tableDbType="TABLE" useColumnOrder="false">
+            <table tableName="Departures/Shipments" tableDbType="TABLE" useColumnOrder="false">
                 <tableUrl />
                 <insertUrl />
                 <importUrl />
@@ -11,6 +11,15 @@
                     <column columnName="Id">
 
                     </column>
+                    <column columnName="source">
+                        <columnTitle>Source Colony</columnTitle>
+                        <fk>
+                            <fkDbSchema>ehr_lookups</fkDbSchema>
+                            <fkTable>source</fkTable>
+                            <fkColumnName>code</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
+                    </column>
                     <column columnName="destination">
                         <columnTitle>Destination</columnTitle>
                         <fk>
@@ -19,6 +28,10 @@
                             <fkColumnName>code</fkColumnName>
                             <fkDisplayColumnName useRawValue="true"/>
                         </fk>
+                    </column>
+                    <column columnName="mccTransfer">
+                        <columnTitle>MCC U24 Transfer?</columnTitle>
+                        <defaultValue>false</defaultValue>
                     </column>
                 </columns>
             </table>

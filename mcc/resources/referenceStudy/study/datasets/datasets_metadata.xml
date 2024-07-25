@@ -705,8 +705,15 @@
                 <propertyURI>http://cpas.labkey.com/Study#VisitDate</propertyURI>
                 <conceptURI>http://cpas.labkey.com/Study#VisitDate</conceptURI>
             </column>
+            <column columnName="source">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="destination">
                 <datatype>varchar</datatype>
+            </column>
+            <column columnName="mccTransfer">
+                <datatype>boolean</datatype>
+                <defaultValue>false</defaultValue>
             </column>
             <column columnName="objectid">
                 <datatype>entityid</datatype>

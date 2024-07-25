@@ -28,7 +28,7 @@
         </folderTab>
         <folderTab>
             <name>mcc</name>
-            <caption>Marmoset Dashboard</caption>
+            <caption>National Dashboard</caption>
             <selectors>
                 <selector>
                     <regex>overview</regex>
