@@ -49,6 +49,14 @@ Ext4.define('MCC.panel.SnapshotPanel', {
                         xtype: 'displayfield',
                         fieldLabel: 'Species',
                         name: 'species'
+                    },{
+                        xtype: 'displayfield',
+                        fieldLabel: 'Dam',
+                        name: 'dam'
+                    },{
+                        xtype: 'displayfield',
+                        fieldLabel: 'Sire',
+                        name: 'sire'
                     }]
                 },{
                     xtype: 'container',
@@ -63,6 +71,10 @@ Ext4.define('MCC.panel.SnapshotPanel', {
                         name: 'age'
                     }, {
                         xtype: 'displayfield',
+                        fieldLabel: 'Current Colony',
+                        name: 'colony'
+                    }, {
+                        xtype: 'displayfield',
                         fieldLabel: 'Source',
                         name: 'source'
                     },{
@@ -73,5 +85,14 @@ Ext4.define('MCC.panel.SnapshotPanel', {
                 }]
             }]
         }];
+    },
+
+    appendDemographicsResults: function(toSet, row, id){
+        this.callParent(arguments);
+
+        toSet['dam'] = row.getDam()
+        toSet['sire'] = row.getSire()
+        toSet['colony'] = row.getData().colony
+        toSet['source'] = row.getData().source
     }
 });

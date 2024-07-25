@@ -33,6 +33,7 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.view.template.ClientDependency;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mcc.demographics.MCCDemographicsProvider;
 import org.labkey.mcc.ehr.NoOpClinicalHistorySource;
 import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
@@ -130,6 +131,8 @@ public class MccModule extends ExtendedSimpleModule
 
         EHRService.get().registerHistoryDataSource(new NoOpClinicalHistorySource("Case Opened"));
         EHRService.get().registerClientDependency(ClientDependency.supplierFromPath("mcc/panel/MccClinicalSnapshotPanel.js"), this);
+
+        EHRService.get().registerDemographicsProvider(new MCCDemographicsProvider(this));
     }
 
     @Override
