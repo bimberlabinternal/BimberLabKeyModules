@@ -75,7 +75,7 @@ Ext4.define('MCC.panel.SnapshotPanel', {
                         name: 'colony'
                     }, {
                         xtype: 'displayfield',
-                        fieldLabel: 'Source',
+                        fieldLabel: 'Source Colony',
                         name: 'source'
                     },{
                         xtype: 'displayfield',
