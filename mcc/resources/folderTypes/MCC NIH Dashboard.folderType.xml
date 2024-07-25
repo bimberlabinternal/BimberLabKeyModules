@@ -21,7 +21,7 @@
             </requiredWebParts>
             <preferredWebParts>
                 <webPart>
-                    <name>MCC Dashboard Webpart</name>
+                    <name>MCC U24 Dashboard Webpart</name>
                     <location>body</location>
                 </webPart>
             </preferredWebParts>

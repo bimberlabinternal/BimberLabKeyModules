@@ -97,6 +97,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -915,6 +916,10 @@ public class MccController extends SpringActionController
                         {
                             String alternateIds = StringUtils.trimToNull(rs.getString(FieldKey.fromString("alternateIds")));
                             alternateIds = alternateIds == null ? rs.getString(FieldKey.fromString("Id")) : alternateIds + "," + rs.getString(FieldKey.fromString("Id"));
+                            if (alternateIds != null)
+                            {
+                                alternateIds = StringUtils.join(new TreeSet<>(new CaseInsensitiveHashSet(alternateIds.split(","))), ",");
+                            }
 
                             rowMap = new HashMap<>(rowMap);
                             rowMap.put("alternateIds", alternateIds);
@@ -942,50 +947,9 @@ public class MccController extends SpringActionController
                 }
 
                 // Now dam/sire:
-                TableInfo ti = s.getDatasetByName("demographics").getTableInfo(getUser());
-                TableSelector ts = new TableSelector(ti, PageFlowUtil.set("lsid", "Id", "dam", "sire"), new SimpleFilter(new SimpleFilter.OrClause(
-                        new SimpleFilter.InClause(FieldKey.fromString("dam"), oldToNew.keySet()),
-                        new SimpleFilter.InClause(FieldKey.fromString("sire"), oldToNew.keySet())
-                )), null);
-
-                if (!ts.exists())
-                {
-                    throw new IllegalStateException("Demographics table not found");
-                }
-
-                List<Map<String, Object>> toUpdate = new ArrayList<>();
-                List<Map<String, Object>> oldKeys = new ArrayList<>();
-                ts.forEachResults(rs -> {
-                    for (String oldId : oldToNew.keySet())
-                    {
-                        Map<String, Object> rowMap = new HashMap<>(Map.of(
-                                "lsid", rs.getString(FieldKey.fromString("lsid")),
-                                "Id", rs.getString(FieldKey.fromString("Id")),
-                                "_batchId_", batchId
-                        ));
-
-                        boolean hasChanges = false;
-                        if (oldId.equalsIgnoreCase(rs.getString(FieldKey.fromString("dam"))))
-                        {
-                            rowMap.put("dam", oldToNew.get(oldId));
-                            hasChanges = true;
-                        }
-
-                        if (oldId.equalsIgnoreCase(rs.getString(FieldKey.fromString("sire"))))
-                        {
-                            rowMap.put("sire", oldToNew.get(oldId));
-                            hasChanges = true;
-                        }
-
-                        if (hasChanges)
-                        {
-                            toUpdate.add(rowMap);
-                            oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
-                            idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
-                            totalRecordsUpdated.getAndIncrement();
-                        }
-                    }
-                });
+                renameAdditionalColumns(s, "demographics", Arrays.asList("dam", "sire"), oldToNew, batchId, idsUpdated, totalRecordsUpdated);
+                renameAdditionalColumns(s, "kinship", Arrays.asList("Id2"), oldToNew, batchId, idsUpdated, totalRecordsUpdated);
+                renameAdditionalColumns(s, "parentage", Arrays.asList("parent"), oldToNew, batchId, idsUpdated, totalRecordsUpdated);
 
                 transaction.commit();
 
@@ -1007,6 +971,68 @@ public class MccController extends SpringActionController
             }
 
 
+        }
+    }
+
+    private void renameAdditionalColumns(Study s, String datasetName, List<String> colsToUpdate, Map<String, String> oldToNew, String batchId, Set<String> idsUpdated, AtomicInteger totalRecordsUpdated)
+    {
+        TableInfo ti = s.getDatasetByName(datasetName).getTableInfo(getUser());
+        Set<String> colSelect = new HashSet<>(Arrays.asList("lsid", "Id"));
+        colSelect.addAll(colsToUpdate);
+
+        SimpleFilter.OrClause orClause = new SimpleFilter.OrClause();
+        colsToUpdate.forEach(cn -> {
+            orClause.addClause(new SimpleFilter.InClause(FieldKey.fromString(cn), oldToNew.keySet()));
+        });
+        TableSelector ts = new TableSelector(ti, colSelect, new SimpleFilter(orClause), null);
+
+        if (!ts.exists())
+        {
+            throw new IllegalStateException("Table not found: " + datasetName);
+        }
+
+        List<Map<String, Object>> toUpdate = new ArrayList<>();
+        List<Map<String, Object>> oldKeys = new ArrayList<>();
+        ts.forEachResults(rs -> {
+            for (String oldId : oldToNew.keySet())
+            {
+                Map<String, Object> rowMap = new HashMap<>(Map.of(
+                        "lsid", rs.getString(FieldKey.fromString("lsid")),
+                        "Id", rs.getString(FieldKey.fromString("Id")),
+                        "_batchId_", batchId
+                ));
+
+                boolean hasChanges = false;
+                for (String fieldName : colsToUpdate)
+                {
+                    if (oldId.equalsIgnoreCase(rs.getString(FieldKey.fromString(fieldName))))
+                    {
+                        rowMap.put(fieldName, oldToNew.get(oldId));
+                        hasChanges = true;
+                    }
+                }
+
+                if (hasChanges)
+                {
+                    toUpdate.add(rowMap);
+                    oldKeys.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
+                    idsUpdated.add(rs.getString(FieldKey.fromString("Id")));
+                    totalRecordsUpdated.getAndIncrement();
+                }
+            }
+        });
+
+        if (!toUpdate.isEmpty())
+        {
+            try
+            {
+                ti.getUpdateService().updateRows(getUser(), getContainer(), toUpdate, oldKeys, null, null);
+            }
+            catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
+            {
+                _log.error("Error updating MCC dataset rows", e);
+                throw new IllegalStateException("Error updating MCC dataset rows: " + e.getMessage());
+            }
         }
     }
 
