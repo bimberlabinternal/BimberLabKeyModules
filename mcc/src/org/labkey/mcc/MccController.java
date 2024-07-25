@@ -977,6 +977,11 @@ public class MccController extends SpringActionController
     private void renameAdditionalColumns(Study s, String datasetName, List<String> colsToUpdate, Map<String, String> oldToNew, String batchId, Set<String> idsUpdated, AtomicInteger totalRecordsUpdated)
     {
         TableInfo ti = s.getDatasetByName(datasetName).getTableInfo(getUser());
+        if (ti == null)
+        {
+            throw new IllegalStateException("Table not found: " + datasetName);
+        }
+
         Set<String> colSelect = new HashSet<>(Arrays.asList("lsid", "Id"));
         colSelect.addAll(colsToUpdate);
 
@@ -988,7 +993,7 @@ public class MccController extends SpringActionController
 
         if (!ts.exists())
         {
-            throw new IllegalStateException("Table not found: " + datasetName);
+            return;
         }
 
         List<Map<String, Object>> toUpdate = new ArrayList<>();

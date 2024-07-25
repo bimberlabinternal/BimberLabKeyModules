@@ -46,7 +46,7 @@
         </folderTab>
         <folderTab>
             <name>animalData</name>
-            <caption>All Animals</caption>
+            <caption>Animal List</caption>
             <selectors>
                 <selector>
                     <view>animalData</view>
@@ -54,29 +54,14 @@
             </selectors>
             <preferredWebParts>
                 <webPart>
-                    <name>MCC Demographics</name>
-                    <location>body</location>
-                </webPart>
-            </preferredWebParts>
-        </folderTab>
-        <folderTab>
-            <name>animalHistory</name>
-            <caption>Animal Detail</caption>
-            <selectors>
-                <selector>
-                    <view>animalHistory</view>
-                </selector>
-            </selectors>
-            <preferredWebParts>
-                <webPart>
-                    <name>MCC Animal History</name>
+                    <name>MCC U24 Demographics</name>
                     <location>body</location>
                 </webPart>
             </preferredWebParts>
         </folderTab>
         <folderTab>
             <name>census</name>
-            <caption>Census</caption>
+            <caption>Census Data</caption>
             <selectors>
                 <selector>
                     <view>census</view>
@@ -88,6 +73,24 @@
                     <location>body</location>
                 </webPart>
             </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>requests</name>
+            <caption>MCC Requests</caption>
+            <selectors>
+                <selector>
+                    <view>request</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Request Summary</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+<!--            <permissions>-->
+<!--                <permission name="org.labkey.mcc.security.MccViewRequestsPermission"/>-->
+<!--            </permissions>-->
         </folderTab>
     </folderTabs>
     <modules>

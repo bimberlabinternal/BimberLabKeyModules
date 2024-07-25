@@ -1,0 +1,18 @@
+<script type="text/javascript" nonce="<%=scriptNonce%>">
+
+Ext4.onReady(function (){
+    var webpart = <%=webpartContext%>;
+    var ctx = EHR.Utils.getEHRContext(webpart.wrapperDivId, ['DefaultAnimalHistoryReport', 'EHRStudyContainer']);
+    if (!ctx)
+        return;
+
+    LDK.Utils.getBasicQWP({
+        containerPath: ctx.EHRStudyContainer,
+        title: 'MCC Animals',
+        schemaName: 'study',
+        queryName: 'demographics',
+        viewName: 'U24 Assigned'
+    }).render(webpart.wrapperDivId);
+});
+
+</script>

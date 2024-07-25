@@ -15,10 +15,7 @@
                 <property name="columnTitle" value="Status"/>
             </properties>
         </column>
-        <column name="dam"/>
-        <column name="sire"/>
         <column name="birth"/>
-        <column name="death"/>
         <column name="MostRecentWeightGrams">
             <properties>
                 <property name="columnTitle" value="Current Weight (g)"/>
@@ -38,6 +35,7 @@
         <column name="usage_future"/>
         <column name="date_of_observations"/>
         <column name="litterId"/>
+        <column name="history" />
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>

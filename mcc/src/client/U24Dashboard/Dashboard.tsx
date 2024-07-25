@@ -110,6 +110,9 @@ export function Dashboard() {
         );
     }
 
+    console.log(censusRows)
+    console.log(requestRows)
+
     return (
         <>
             <div className="row">
@@ -118,7 +121,7 @@ export function Dashboard() {
                         <div className="panel-heading">U24 Census</div>
                         <div className="row">
                             <div className="panel-body count-panel-body">
-                                <div className="count-panel-text-small">{u24Assigned.length}</div>
+                                <div className="count-panel-text">{u24Assigned.length}</div>
                                 <div className="small text-muted text-center">Total U24 Animals</div>
                             </div>
                         </div>
@@ -127,6 +130,12 @@ export function Dashboard() {
                                 <div className="panel-body count-panel-body">
                                     <div className="count-panel-text-small">{availableForTransfer.length}</div>
                                     <div className="small text-muted text-center">Available</div>
+                                </div>
+                            </div>
+                            <div className="col-md-3">
+                                <div className="panel-body count-panel-body">
+                                    <div className="count-panel-text-small">{requestRows.length}</div>
+                                    <div className="small text-muted text-center">Total Requests</div>
                                 </div>
                             </div>
                         </div>
@@ -146,7 +155,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Age (Living Animals)</div>
                         <div className="panel-body">
-                            <BarChart fieldName = "Id/ageClass/label" demographics={living} />
+                            <BarChart demographics={living} fieldName="Id/ageClass/label" groupField="gender/meaning"  />
                         </div>
                     </div>
                 </div>
