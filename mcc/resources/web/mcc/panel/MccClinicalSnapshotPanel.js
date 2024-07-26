@@ -79,6 +79,10 @@ Ext4.define('MCC.panel.SnapshotPanel', {
                         name: 'source'
                     },{
                         xtype: 'displayfield',
+                        fieldLabel: 'Littermates',
+                        name: 'littermates'
+                    },{
+                        xtype: 'displayfield',
                         fieldLabel: 'Weights',
                         name: 'weights'
                     }]
@@ -94,5 +98,6 @@ Ext4.define('MCC.panel.SnapshotPanel', {
         toSet['sire'] = row.getSire()
         toSet['colony'] = row.getData().colony
         toSet['source'] = row.getData().source
+        toSet['littermates'] = row.getData().litterMates
     }
 });

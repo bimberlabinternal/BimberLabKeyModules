@@ -77,6 +77,7 @@
             </column>
             <column columnName="parent">
                 <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
             </column>
             <column columnName="relationship">
                 <datatype>varchar</datatype>
@@ -522,7 +523,7 @@
         </columns>
         <tableTitle>Lab Results</tableTitle>
     </table>
-    <table tableName="transfers" tableDbType="TABLE">
+    <table tableName="arrival" tableDbType="TABLE">
         <columns>
             <column columnName="Id">
                 <datatype>varchar</datatype>
@@ -1036,6 +1037,7 @@
             </column>
             <column columnName="Id2">
                 <datatype>varchar</datatype>
+                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
             </column>
             <column columnName="kinship">
                 <datatype>double</datatype>

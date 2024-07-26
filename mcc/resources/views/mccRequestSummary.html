@@ -15,7 +15,7 @@
             '<p></p>' +
             '<div id="' + webpart.wrapperDivId + '-webpartPending"></div>' +
             '<p></p>' +
-            '<div id="' + webpart.wrapperDivId + '-webpartDecisionPending"></div>'
+            '<div id="' + webpart.wrapperDivId + '-webpartAll"></div>'
         );
 
         LDK.Utils.getBasicQWP({
@@ -31,13 +31,13 @@
 
         LDK.Utils.getBasicQWP({
             containerPath: ctx.MCCRequestContainer,
-            title: 'Decision Pending',
+            title: 'All Requests',
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'requestScores',
-            viewName: 'Decision Pending',
             showRecordSelectors: true,
-            showDetailsColumn: true
-        }).render(webpart.wrapperDivId + '-webpartDecisionPending');
+            showDetailsColumn: true,
+            pageSize: 10
+        }).render(webpart.wrapperDivId + '-webpartAll');
     });
 </script>

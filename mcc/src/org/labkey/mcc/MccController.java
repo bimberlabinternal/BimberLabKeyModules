@@ -55,6 +55,7 @@ import org.labkey.api.security.IgnoresTermsOfUse;
 import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
 import org.labkey.api.security.RequiresPermission;
+import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.SecurityManager;
 import org.labkey.api.security.SecurityPolicyManager;
 import org.labkey.api.security.User;
@@ -725,6 +726,57 @@ public class MccController extends SpringActionController
         public URLHelper getSuccessURL(Object o)
         {
             return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
+
+    @RequiresSiteAdmin
+    public class ImportStudiesAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Import MCC Studies");
+
+            return new HtmlView(HtmlString.unsafe("This will import the default MCC study in all MCC folders. This requires the MCC module properties to be set. Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            Container aggregatedData = MccManager.get().getMCCContainer(getContainer());
+            if (aggregatedData == null)
+            {
+                errors.reject(ERROR_MSG, "Must set the MCCContainer module property");
+                return false;
+            }
+
+            Container internalParent = MccManager.get().getMCCInternalDataContainer(getContainer());
+            if (internalParent == null)
+            {
+                errors.reject(ERROR_MSG, "Must set the MCCInternalDataContainer module property");
+                return false;
+            }
+
+            StudiesService.get().importFolderDefinition(aggregatedData, getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
+            for (Container child : internalParent.getChildren())
+            {
+                StudiesService.get().importFolderDefinition(child, getUser(), ModuleLoader.getInstance().getModule(MccModule.NAME), new Path("referenceStudy"));
+            }
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer()).addParameter("StatusFiles.containerFilterName", "AllFolders");
         }
     }
 
