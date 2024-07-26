@@ -88,9 +88,9 @@
                     <location>body</location>
                 </webPart>
             </preferredWebParts>
-<!--            <permissions>-->
-<!--                <permission name="org.labkey.mcc.security.MccViewRequestsPermission"/>-->
-<!--            </permissions>-->
+            <permissions>
+                <permission name="org.labkey.mcc.security.MccViewRequestsPermission"/>
+            </permissions>
         </folderTab>
     </folderTabs>
     <modules>
