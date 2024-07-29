@@ -24,6 +24,7 @@ import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.buttons.ShowEditUIButton;
+import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
@@ -40,6 +41,7 @@ import org.labkey.mcc.ehr.GenomicDataSource;
 import org.labkey.mcc.ehr.MCCDepartureDataSource;
 import org.labkey.mcc.ehr.MccWeightDataSource;
 import org.labkey.mcc.ehr.NoOpClinicalHistorySource;
+import org.labkey.mcc.notification.MCCDataNotification;
 import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
 import org.labkey.mcc.query.RenameIdButton;
@@ -144,6 +146,8 @@ public class MccModule extends ExtendedSimpleModule
         EHRService.get().registerDemographicsProvider(new MCCDemographicsProvider(this));
         EHRService.get().registerDemographicsProvider(new LittermateDemographicsProvider(this));
         EHRService.get().registerDemographicsProvider(new MccWeightsDemographicsProvider(this));
+
+        NotificationService.get().registerNotification(new MCCDataNotification(this));
     }
 
     @Override
