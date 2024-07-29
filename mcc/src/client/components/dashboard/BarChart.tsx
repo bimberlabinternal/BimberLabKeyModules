@@ -1,13 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import {
-    Chart,
-    Legend,
-    BarController,
-    BarElement,
-    CategoryScale,
-    LinearScale,
-    Tooltip
-} from 'chart.js';
+import { BarController, BarElement, CategoryScale, Chart, Legend, LinearScale, Tooltip } from 'chart.js';
+import { ActiveElement, ChartEvent } from 'chart.js/dist/types/index';
 
 Chart.register(Legend, BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -19,10 +12,11 @@ const colors = [
     'rgb(194, 192, 210)'
 ];
 
-export default function BarChart(props: {demographics: [], fieldName: string, groupField?: string}) {
+export default function BarChart(props: {demographics: [], fieldName: string, groupField?: string, indexAxis?: 'x' | 'y', onClick?: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => void }) {
     const canvas = useRef(null);
 
-    const { demographics, fieldName, groupField } = props
+    const { demographics, fieldName, groupField, onClick} = props
+    const indexAxis: 'x' | 'y' = props.indexAxis || 'y'
 
     const collectedData = demographics.reduce((acc, curr: {}, idx) => {
         const value = curr[fieldName] === null ? 'Unknown' : curr[fieldName];
@@ -59,9 +53,10 @@ export default function BarChart(props: {demographics: [], fieldName: string, gr
                 datasets: dataArr
             },
             options: {
+                onClick: onClick,
                 responsive: true,
                 aspectRatio: 2,
-                indexAxis: 'y',
+                indexAxis: indexAxis,
                 scales: {
                     x: {
                         beginAtZero: true

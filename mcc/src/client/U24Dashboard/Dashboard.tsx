@@ -5,6 +5,7 @@ import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 
 import PieChart from '../components/dashboard/PieChart';
 import BarChart from '../components/dashboard/BarChart';
+import { ActiveElement, Chart, ChartEvent } from 'chart.js/dist/types/index';
 
 export function Dashboard() {
     const [demographics, setDemographics] = useState(null);
@@ -13,6 +14,8 @@ export function Dashboard() {
     const [availableForTransfer, setAvailableForTransfer] = useState(null);
     const [requestRows, setRequestRows] = useState(null);
     const [censusRows, setCensusRows] = useState(null);
+    const [birthData, setBirthData ] = useState(null);
+    const [breedingPairData, setBreedingPairData ] = useState(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;
@@ -64,6 +67,7 @@ export function Dashboard() {
             containerPath: requestContainerPath,
             schemaName: 'mcc',
             queryName: 'requestScores',
+            columns: 'requestId/status',
             success: function(results) {
                 if (isApiSubscribed) {
                     setRequestRows(results.rows);
@@ -86,6 +90,20 @@ export function Dashboard() {
             success: function(results) {
                 if (isApiSubscribed) {
                     setCensusRows(results.rows);
+
+                    setBreedingPairData(results.rows.flatMap(row => {
+                        return Array(row.totalBreedingPairs).fill({
+                            yearNo: row.yearNo,
+                            centerName: row.centerName
+                        })
+                    }))
+
+                    setBirthData(results.rows.flatMap(row => {
+                        return Array(row.totalLivingOffspring).fill({
+                            yearNo: row.yearNo,
+                            centerName: row.centerName
+                        })
+                    }))
                 }
             },
             failure: function(response) {
@@ -110,8 +128,11 @@ export function Dashboard() {
         );
     }
 
-    console.log(censusRows)
-    console.log(requestRows)
+    const clickHandler = function(event: ChartEvent, elements: ActiveElement[], chart: Chart){
+        console.log(event)
+        console.log(elements)
+        console.log(chart)
+    }
 
     return (
         <>
@@ -153,18 +174,35 @@ export function Dashboard() {
             <div className="row">
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Age (Living Animals)</div>
+                        <div className="panel-heading">Request Summary</div>
                         <div className="panel-body">
-                            <BarChart demographics={living} fieldName="Id/ageClass/label" groupField="gender/meaning"  />
+                            <PieChart fieldName = "requestId/status" demographics={requestRows} />
                         </div>
                     </div>
                 </div>
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Requests</div>
+                        <div className="panel-heading">Age (Living Animals)</div>
                         <div className="panel-body">
-                            {/*<PieChart fieldName = "gender/meaning" demographics={living} />*/}
-                            PLACEHOLDER: Number of births over time, etc.
+                            <BarChart demographics={living} fieldName="Id/ageClass/label" groupField="gender/meaning" onClick={clickHandler} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col-md-4">
+                    <div className="panel panel-default">
+                        <div className="panel-heading">U24 Births By Year</div>
+                        <div className="panel-body">
+                            <BarChart demographics={birthData} fieldName="centerName" groupField="yearNo" indexAxis="x"/>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-4">
+                    <div className="panel panel-default">
+                        <div className="panel-heading">U24 Breeding Pairs</div>
+                        <div className="panel-body">
+                            <BarChart demographics={breedingPairData} fieldName="centerName" groupField="yearNo" indexAxis="x" />
                         </div>
                     </div>
                 </div>
