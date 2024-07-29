@@ -27,6 +27,12 @@ public class MCCDataNotification extends AbstractEHRNotification
     }
 
     @Override
+    public String getCategory()
+    {
+        return "MCC";
+    }
+
+    @Override
     public String getName()
     {
         return "MCC Data Alerts";
@@ -123,7 +129,7 @@ public class MCCDataNotification extends AbstractEHRNotification
     {
         TableInfo demographics = getStudySchema(c, u).getTable("demographics");
 
-        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("dam/gender/origgender"), "f", CompareType.NEQ_OR_NULL);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("dam/Demographics/gender/origgender"), "f", CompareType.NEQ_OR_NULL);
         TableSelector ts = new TableSelector(demographics, filter, null);
         long count = ts.getRowCount();
         if (count > 0)
@@ -133,7 +139,7 @@ public class MCCDataNotification extends AbstractEHRNotification
             msg.append("<hr>\n\n");
         }
 
-        filter = new SimpleFilter(FieldKey.fromString("sire/gender/origgender"), "m", CompareType.NEQ_OR_NULL);
+        filter = new SimpleFilter(FieldKey.fromString("sire/Demographics/gender/origgender"), "m", CompareType.NEQ_OR_NULL);
         ts = new TableSelector(demographics, filter, null);
         count = ts.getRowCount();
         if (count > 0)
