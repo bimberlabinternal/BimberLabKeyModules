@@ -138,22 +138,22 @@ public class MCCDataNotification extends AbstractEHRNotification
     {
         TableInfo demographics = getStudySchema(c, u).getTable("demographics");
 
-        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("dam/Demographics/gender/origgender"), "f", CompareType.NEQ_OR_NULL);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("dam/Demographics/gender/origgender"), "female", CompareType.NEQ_OR_NULL);
         TableSelector ts = new TableSelector(demographics, filter, null);
         long count = ts.getRowCount();
         if (count > 0)
         {
-            msg.append("<b>WARNING: There are ").append(count).append(" dams with gender not equal to f</b><br>\n");
+            msg.append("<b>WARNING: There are ").append(count).append(" dams with gender not equal to female</b><br>\n");
             msg.append("<p><a href='").append(getExecuteQueryUrl(c, "study", "demographics", null)).append("&").append(filter.toQueryString("query")).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
 
-        filter = new SimpleFilter(FieldKey.fromString("sire/Demographics/gender/origgender"), "m", CompareType.NEQ_OR_NULL);
+        filter = new SimpleFilter(FieldKey.fromString("sire/Demographics/gender/origgender"), "male", CompareType.NEQ_OR_NULL);
         ts = new TableSelector(demographics, filter, null);
         count = ts.getRowCount();
         if (count > 0)
         {
-            msg.append("<b>WARNING: There are ").append(count).append(" sires with gender not equal to f</b><br>\n");
+            msg.append("<b>WARNING: There are ").append(count).append(" sires with gender not equal to male</b><br>\n");
             msg.append("<p><a href='").append(getExecuteQueryUrl(c, "study", "demographics", null)).append("&").append(filter.toQueryString("query")).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
