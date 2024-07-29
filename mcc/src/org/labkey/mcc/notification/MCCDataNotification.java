@@ -9,6 +9,9 @@ import org.labkey.api.ehr.notification.AbstractEHRNotification;
 import org.labkey.api.module.Module;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
+import org.labkey.api.security.permissions.ReadPermission;
+import org.labkey.api.view.UnauthorizedException;
+import org.labkey.mcc.MccManager;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -68,9 +71,15 @@ public class MCCDataNotification extends AbstractEHRNotification
         StringBuilder msg = new StringBuilder();
         Date now = new Date();
 
-        doParentSexCheck(c, u, msg);
-        doU24AssignedCheck(c, u , msg);
-        doMissingIdCheck(c, u, msg);
+        Container mccData = MccManager.get().getMCCContainer(c);
+        if (!mccData.hasPermission(u, ReadPermission.class))
+        {
+            throw new UnauthorizedException("User does not have read permission on folder: " + mccData.getPath());
+        }
+
+        doParentSexCheck(mccData, u, msg);
+        doU24AssignedCheck(mccData, u , msg);
+        doMissingIdCheck(mccData, u, msg);
 
         //since we dont want to trigger an email if there's no alerts, conditionally append the title
         if (msg.length() > 0)
@@ -83,7 +92,7 @@ public class MCCDataNotification extends AbstractEHRNotification
 
     protected void doMissingIdCheck(final Container c, User u, final StringBuilder msg)
     {
-        TableInfo ti = getStudySchema(c, u).getTable("aggregatedDemographics");
+        TableInfo ti = getUserSchemaByName(c, u, "mcc").getTable("aggregatedDemographics");
 
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("Id"), null, CompareType.ISBLANK);
         TableSelector ts = new TableSelector(ti, filter, null);
