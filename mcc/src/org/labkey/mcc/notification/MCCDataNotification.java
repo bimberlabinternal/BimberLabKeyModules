@@ -80,6 +80,7 @@ public class MCCDataNotification extends AbstractEHRNotification
         doParentSexCheck(mccData, u, msg);
         doU24AssignedCheck(mccData, u , msg);
         doMissingIdCheck(mccData, u, msg);
+        doZeroWeightCheck(mccData, u, msg);
 
         //since we dont want to trigger an email if there's no alerts, conditionally append the title
         if (msg.length() > 0)
@@ -100,7 +101,22 @@ public class MCCDataNotification extends AbstractEHRNotification
         if (count > 0)
         {
             msg.append("<b>WARNING: There are ").append(count).append(" animals missing MCC IDs\n");
-            msg.append("<p><a href='").append(getExecuteQueryUrl(c, "study", "demographics", null)).append("&").append(filter.toQueryString("query")).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, "mcc", "aggregatedDemographics", null)).append("&").append(filter.toQueryString("query")).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<hr>\n\n");
+        }
+    }
+
+    protected void doZeroWeightCheck(final Container c, User u, final StringBuilder msg)
+    {
+        TableInfo ti = getUserSchemaByName(c, u, "mcc").getTable("aggregatedDemographics");
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("mostRecentWeight"), 0, CompareType.EQUAL);
+        TableSelector ts = new TableSelector(ti, filter, null);
+        long count = ts.getRowCount();
+        if (count > 0)
+        {
+            msg.append("<b>WARNING: There are ").append(count).append(" animals listing weight as zero\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, "mcc", "aggregatedDemographics", null)).append("&").append(filter.toQueryString("query")).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
     }

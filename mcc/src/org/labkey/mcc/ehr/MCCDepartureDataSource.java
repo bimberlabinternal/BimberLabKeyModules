@@ -31,7 +31,7 @@ public class MCCDepartureDataSource extends AbstractDataSource
 {
     public MCCDepartureDataSource(Module module)
     {
-        super("study", "Departure", "Departure", "Transfers", module);
+        super("study", "Departure", "Transfers", "Transfers", module);
     }
 
     @Override
