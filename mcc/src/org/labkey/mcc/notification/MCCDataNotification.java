@@ -154,7 +154,7 @@ public class MCCDataNotification extends AbstractEHRNotification
     {
         TableInfo demographics = getStudySchema(c, u).getTable("demographics");
 
-        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("dam/Demographics/gender/origgender"), "f", CompareType.NEQ_OR_NULL);
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("dam/Demographics/gender/origgender"), "f", CompareType.NEQ);
         TableSelector ts = new TableSelector(demographics, filter, null);
         long count = ts.getRowCount();
         if (count > 0)
@@ -164,7 +164,7 @@ public class MCCDataNotification extends AbstractEHRNotification
             msg.append("<hr>\n\n");
         }
 
-        filter = new SimpleFilter(FieldKey.fromString("sire/Demographics/gender/origgender"), "m", CompareType.NEQ_OR_NULL);
+        filter = new SimpleFilter(FieldKey.fromString("sire/Demographics/gender/origgender"), "m", CompareType.NEQ);
         ts = new TableSelector(demographics, filter, null);
         count = ts.getRowCount();
         if (count > 0)
