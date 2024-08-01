@@ -24,6 +24,7 @@ import org.labkey.api.ehr.EHRService;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.buttons.ShowEditUIButton;
+import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
@@ -33,7 +34,14 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.view.template.ClientDependency;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.mcc.demographics.LittermateDemographicsProvider;
+import org.labkey.mcc.demographics.MCCDemographicsProvider;
+import org.labkey.mcc.demographics.MccWeightsDemographicsProvider;
+import org.labkey.mcc.ehr.GenomicDataSource;
+import org.labkey.mcc.ehr.MCCDepartureDataSource;
+import org.labkey.mcc.ehr.MccWeightDataSource;
 import org.labkey.mcc.ehr.NoOpClinicalHistorySource;
+import org.labkey.mcc.notification.MCCDataNotification;
 import org.labkey.mcc.query.MarkShippedButton;
 import org.labkey.mcc.query.MccEhrCustomizer;
 import org.labkey.mcc.query.RenameIdButton;
@@ -129,7 +137,17 @@ public class MccModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new ShowEditUIButton(this, MccSchema.NAME, MccSchema.TABLE_CENSUS), MccSchema.NAME, MccSchema.TABLE_CENSUS);
 
         EHRService.get().registerHistoryDataSource(new NoOpClinicalHistorySource("Case Opened"));
+        EHRService.get().registerHistoryDataSource(new MCCDepartureDataSource(this));
+        EHRService.get().registerHistoryDataSource(new GenomicDataSource(this));
+        EHRService.get().registerHistoryDataSource(new MccWeightDataSource(this));
+
         EHRService.get().registerClientDependency(ClientDependency.supplierFromPath("mcc/panel/MccClinicalSnapshotPanel.js"), this);
+
+        EHRService.get().registerDemographicsProvider(new MCCDemographicsProvider(this));
+        EHRService.get().registerDemographicsProvider(new LittermateDemographicsProvider(this));
+        EHRService.get().registerDemographicsProvider(new MccWeightsDemographicsProvider(this));
+
+        NotificationService.get().registerNotification(new MCCDataNotification(this));
     }
 
     @Override

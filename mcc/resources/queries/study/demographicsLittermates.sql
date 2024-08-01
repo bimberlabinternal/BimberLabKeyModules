@@ -3,7 +3,7 @@ SELECT
 d1.Id,
 d1.litterId,
 
-GROUP_CONCAT(d2.Id, ',') as litterMates,
+GROUP_CONCAT(distinct d2.Id, ',') as litterMates
 
 FROM study.Demographics d1
 

@@ -1,0 +1,8 @@
+<view xmlns="http://labkey.org/data/xml/view" title="MCC U24 Dashboard">
+    <permissions>
+        <permission name="read"/>
+    </permissions>
+    <dependencies>
+        <dependency path="gen/U24dashboardWebpart"/>
+    </dependencies>
+</view>

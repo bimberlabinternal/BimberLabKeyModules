@@ -100,7 +100,15 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
         {
             var col = getWrappedIdCol(ti.getUserSchema(), ti, "littermates", "demographicsLittermates");
             col.setLabel("Littermates");
-            col.setDescription("The IDs of ");
+            col.setDescription("The IDs of any littermates");
+            ti.addColumn(col);
+        }
+
+        if (ti.getColumn("genomicData") == null)
+        {
+            var col = getWrappedIdCol(ti.getUserSchema(), ti, "genomicData", "demographicsGenomicData");
+            col.setLabel("Genomic Data");
+            col.setDescription("Summary of genomic data");
             ti.addColumn(col);
         }
     }

@@ -1,8 +1,8 @@
 <query xmlns="http://labkey.org/data/xml/query">
-    <description>Littermates of Any Animal</description>
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="demographicsLittermates" tableDbType="NOT_IN_DB">
+                <tableTitle>Littermates</tableTitle>
                 <description>Littermates of Any Animal</description>
                 <columns>
                     <column columnName="Id">
@@ -14,9 +14,14 @@
                     </column>
                     <column columnName="litterMates">
                         <columnTitle>Littermate(s)</columnTitle>
+                        <url>/query/executeQuery.view?
+                            schemaName=study&amp;
+                            query.queryName=demographics&amp;
+                            query.litterId~eq=${litterId}
+                        </url>
                     </column>
                 </columns>
-                <titleColumn>Relationship</titleColumn>
+                <titleColumn>litterMates</titleColumn>
             </table>
         </tables>
     </metadata>

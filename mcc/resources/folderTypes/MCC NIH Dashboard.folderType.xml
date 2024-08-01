@@ -1,0 +1,104 @@
+<folderType xmlns="http://labkey.org/data/xml/folderType">
+    <name>MCC NIH Dashboard</name>
+    <description>The default folder layout for the MCC NIH/U24 Overview</description>
+    <preferredWebParts>
+        <webPart>
+            <name>MCC Menu</name>
+            <location>menu</location>
+        </webPart>
+    </preferredWebParts>
+    <folderTabs>
+        <folderTab>
+            <name>u24</name>
+            <caption>U24 Dashboard</caption>
+            <selectors>
+                <selector>
+                    <regex>u24</regex>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC U24 Dashboard Webpart</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>mcc</name>
+            <caption>National Dashboard</caption>
+            <selectors>
+                <selector>
+                    <regex>overview</regex>
+                </selector>
+            </selectors>
+            <requiredWebParts>
+
+            </requiredWebParts>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Dashboard Webpart</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>animalData</name>
+            <caption>Animal List</caption>
+            <selectors>
+                <selector>
+                    <view>animalData</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC U24 Demographics</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>census</name>
+            <caption>Census Data</caption>
+            <selectors>
+                <selector>
+                    <view>census</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Census</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
+            <name>requests</name>
+            <caption>MCC Requests</caption>
+            <selectors>
+                <selector>
+                    <view>request</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>MCC Request Summary</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+            <permissions>
+                <permission name="org.labkey.mcc.security.MccViewRequestsPermission"/>
+            </permissions>
+        </folderTab>
+    </folderTabs>
+    <modules>
+        <moduleName>MCC</moduleName>
+        <moduleName>Study</moduleName>
+        <moduleName>Query</moduleName>
+        <moduleName>Pipeline</moduleName>
+        <moduleName>Core</moduleName>
+    </modules>
+    <defaultModule>Core</defaultModule>
+</folderType>

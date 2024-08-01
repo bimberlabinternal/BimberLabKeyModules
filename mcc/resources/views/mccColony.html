@@ -45,18 +45,21 @@ Ext4.onReady(function (){
                         name: 'View All MCC Transfers',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {schemaName: 'mcc', queryName: 'aggregatedDemographics', 'query.viewName': 'Transfers'})
                     }]
-                }, {
+                },{
                     header: 'Configuration/Data Management',
                     items: [{
                         name: 'Import/Re-import MCC Study',
                         url: LABKEY.ActionURL.buildURL('mcc', 'importStudy.view')
-                    }, {
+                    },{
+                        name: 'Import/Re-import MCC Study In All Folders',
+                        url: LABKEY.ActionURL.buildURL('mcc', 'importStudies.view')
+                    },{
                         name: 'Ensure Study QC States Present',
                         url: LABKEY.ActionURL.buildURL('ehr', 'ensureQcStates.view')
-                    }, {
+                    },{
                         name: 'Populate Lookups',
                         url: LABKEY.ActionURL.buildURL('mcc', 'populateData.view')
-                    }, {
+                    },{
                         name: 'Manually Enter MCC ID',
                         url: LABKEY.ActionURL.buildURL('mcc', 'manualMccId.view')
                     }]

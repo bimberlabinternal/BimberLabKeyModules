@@ -13,17 +13,31 @@
             '<br>' +
             '<a class="labkey-text-link" href="<%=contextPath%>/mcc/img/mccRequest.png">Outline of Request Workflow</a>' +
             '<p></p>' +
-            '<div id="' + webpart.wrapperDivId + '-webpartAssignments"></div>'
+            '<div id="' + webpart.wrapperDivId + '-webpartPending"></div>' +
+            '<p></p>' +
+            '<div id="' + webpart.wrapperDivId + '-webpartAll"></div>'
         );
 
         LDK.Utils.getBasicQWP({
-            title: 'All Pending MCC Requests',
+            containerPath: ctx.MCCRequestContainer,
+            title: 'Pending MCC Requests',
             frame: 'left-nav',
             schemaName: 'mcc',
             queryName: 'requestScores',
-            viewName: 'Decision Pending',
+            viewName: 'Pending Requests',
             showRecordSelectors: true,
             showDetailsColumn: true
-        }).render(webpart.wrapperDivId + '-webpartAssignments');
+        }).render(webpart.wrapperDivId + '-webpartPending');
+
+        LDK.Utils.getBasicQWP({
+            containerPath: ctx.MCCRequestContainer,
+            title: 'All Requests',
+            frame: 'left-nav',
+            schemaName: 'mcc',
+            queryName: 'requestScores',
+            showRecordSelectors: true,
+            showDetailsColumn: true,
+            maxRows: 10
+        }).render(webpart.wrapperDivId + '-webpartAll');
     });
 </script>

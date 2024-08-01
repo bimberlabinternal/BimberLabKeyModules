@@ -1,6 +1,6 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView">
     <filters>
-        <filter column="u24_status" operator="eq" value="true"/>
+        <filter column="availability" operator="eq" value="available for transfer"/>
     </filters>
     <sorts>
         <sort column="Id" descending="false"/>

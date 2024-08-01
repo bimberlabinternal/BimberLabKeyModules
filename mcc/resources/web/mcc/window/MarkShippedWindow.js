@@ -83,6 +83,11 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         }
                     }
                 }
+            },{
+                xtype: 'checkbox',
+                itemId: 'isMccTransfer',
+                fieldLabel: 'Is MCC Transfer',
+                checked: true
             }, this.getAnimalIdFields()],
             buttons: [{
                 text: 'Submit',
@@ -168,6 +173,8 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         var effectiveDate = win.down('#effectiveDate').getValue();
         var centerName = win.down('#centerName').getValue();
         var targetFolder = win.down('#targetFolder').getValue();
+        var isMccTransfer = win.down('#isMccTransfer').getValue();
+
         if (!effectiveDate || !centerName || !targetFolder) {
             Ext4.Msg.alert('Error', 'Must provide date, center name, and target folder');
             return;
@@ -220,7 +227,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             rows: [{
                                 Id: row.Id,
                                 date: effectiveDate,
+                                source: row.colony,
                                 destination: centerName,
+                                mccTransfer: isMccTransfer,
                                 description: row.colony ? 'Original center: ' + row.colony : null,
                                 qcstate: null,
                                 objectId: null,
