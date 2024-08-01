@@ -499,7 +499,7 @@ public class CellRangerVDJUtils
                     }
                 }
 
-                _log.info("total FASTQ records: " + j);
+                _log.info("total FASTA records: " + j);
             }
             catch (IOException e)
             {
@@ -521,16 +521,16 @@ public class CellRangerVDJUtils
                     while (i.hasNext())
                     {
                         Map<String, Object> fastaRecord = i.next();
-                        String header = (String) fastaRecord.get("header");
+                        String header = "vdj_t_gd<>" + fastaRecord.get("header");
                         j++;
                         if (uniqueContigNames.contains(header))
                         {
-                            sequenceMap.put("vdj_t_gd<>" + header, (String) fastaRecord.get("sequence"));
+                            sequenceMap.put(header, (String) fastaRecord.get("sequence"));
                         }
                     }
                 }
 
-                _log.info("total FASTQ records: " + j);
+                _log.info("total FASTA records: " + j);
             }
             catch (IOException e)
             {
