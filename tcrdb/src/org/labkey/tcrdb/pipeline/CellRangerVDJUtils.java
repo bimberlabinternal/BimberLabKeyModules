@@ -490,11 +490,11 @@ public class CellRangerVDJUtils
                     while (i.hasNext())
                     {
                         Map<String, Object> fastaRecord = i.next();
-                        String header = (String) fastaRecord.get("header");
+                        String header = "vdj_t<>" + fastaRecord.get("header");
                         j++;
                         if (uniqueContigNames.contains(header))
                         {
-                            sequenceMap.put("vdj_t<>" + header, (String) fastaRecord.get("sequence"));
+                            sequenceMap.put(header, (String) fastaRecord.get("sequence"));
                         }
                     }
                 }
