@@ -369,7 +369,13 @@ public class CellRangerVDJUtils
                 }
                 knownBarcodes.add(barcode);
 
+                String chainType = extractField(line, headerToIdx.get(HEADER_FIELD.CHAIN_TYPE));
                 String rawClonotypeId = extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID));
+                if (rawClonotypeId != null)
+                {
+                    rawClonotypeId = chainType + "<>" + rawClonotypeId;
+                }
+
                 if (rawClonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     fullLengthNoClonotype++;
@@ -383,7 +389,6 @@ public class CellRangerVDJUtils
                 }
 
                 //Preferentially use raw_consensus_id, but fall back to contig_id
-                String chainType = extractField(line, headerToIdx.get(HEADER_FIELD.CHAIN_TYPE));
                 String coalescedContigName = extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)) == null ? extractField(line, headerToIdx.get(HEADER_FIELD.CONTIG_ID)) : extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID));
                 if (coalescedContigName != null)
                 {
@@ -479,18 +484,22 @@ public class CellRangerVDJUtils
             try (FastaDataLoader loader = new FastaDataLoader(f, false))
             {
                 loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
+                int j = 0;
                 try (CloseableIterator<Map<String, Object>> i = loader.iterator())
                 {
                     while (i.hasNext())
                     {
                         Map<String, Object> fastaRecord = i.next();
                         String header = (String) fastaRecord.get("header");
+                        j++;
                         if (uniqueContigNames.contains(header))
                         {
                             sequenceMap.put("vdj_t<>" + header, (String) fastaRecord.get("sequence"));
                         }
                     }
                 }
+
+                _log.info("total FASTQ records: " + j);
             }
             catch (IOException e)
             {
@@ -506,18 +515,22 @@ public class CellRangerVDJUtils
             try (FastaDataLoader loader = new FastaDataLoader(f, false))
             {
                 loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
+                int j = 0;
                 try (CloseableIterator<Map<String, Object>> i = loader.iterator())
                 {
                     while (i.hasNext())
                     {
                         Map<String, Object> fastaRecord = i.next();
                         String header = (String) fastaRecord.get("header");
+                        j++;
                         if (uniqueContigNames.contains(header))
                         {
                             sequenceMap.put("vdj_t_gd<>" + header, (String) fastaRecord.get("sequence"));
                         }
                     }
                 }
+
+                _log.info("total FASTQ records: " + j);
             }
             catch (IOException e)
             {
