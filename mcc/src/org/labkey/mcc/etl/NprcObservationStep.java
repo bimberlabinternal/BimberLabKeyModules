@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -133,7 +134,7 @@ public class NprcObservationStep implements TaskRefTask
                     String objectId = new TableSelector(clinicalObs, PageFlowUtil.set("objectid"), filter, null).getObject(String.class);
                     if (observation == null && objectId != null)
                     {
-                        toDelete.add(row);
+                        toDelete.add(new CaseInsensitiveHashMap<>(Map.of("objectid", objectId)));
                         continue;
                     }
 
