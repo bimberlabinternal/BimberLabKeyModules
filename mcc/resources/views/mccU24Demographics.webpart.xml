@@ -1,0 +1,6 @@
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="MCC U24 Demographics">
+    <view name="mccU24Demographics"/>
+    <locations>
+        <location name="body"/>
+    </locations>
+</webpart>

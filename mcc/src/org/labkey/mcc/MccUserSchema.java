@@ -235,11 +235,13 @@ public class MccUserSchema extends SimpleUserSchema
                 "    d.Id.mccAlias.externalAlias as Id,\n" +
                 "    d.Id as originalId,\n" +
                 "    d.date,\n" +
+                "    d.source,\n" +
                 "    d.destination,\n" +
+                "    d.mccTransfer,\n" +
                 "    d.objectid,\n" +
                 "    d.container\n" +
                 "\n" +
-                "FROM \"<CONTAINER_PATH>\".study.departure d WHERE d.qcstate.publicdata = true\n";
+                "FROM \"<CONTAINER_PATH>\".study.departure d WHERE d.qcstate.publicdata = true AND d.mccTransfer = true\n";
 
         return makeAggregatedQuery(TABLE_AGGREGATED_DEPARTURES, template);
     }

@@ -131,6 +131,24 @@
 
             </destination>
         </transform>
+        <transform type="SimpleQueryTransformStep" id="departure">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedDepartures" >
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>source</column>
+                    <column>destination</column>
+                    <column>mccTransfer</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="departure" targetOption="truncate" bulkLoad="true" batchSize="5000">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
     </transforms>
     <schedule>
         <!--11PM-->

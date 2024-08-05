@@ -235,7 +235,14 @@ Ext4.onReady(function(){
             schemaName: 'ehr_lookups',
             queryName: 'gender_codes',
             pk: 'rowid'
-        }, {
+        },{
+            label: 'Colonies',
+            populateFn: 'populateFromFile',
+            moduleName: 'mcc',
+            schemaName: 'ehr_lookups',
+            queryName: 'source',
+            pk: 'rowid'
+        },{
             label: 'Weight Ranges',
             populateFn: 'populateFromFile',
             moduleName: 'mcc',

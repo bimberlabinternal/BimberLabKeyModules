@@ -2,16 +2,17 @@
 
 Ext4.onReady(function (){
     var webpart = <%=webpartContext%>;
-
     var ctx = EHR.Utils.getEHRContext(webpart.wrapperDivId, ['DefaultAnimalHistoryReport', 'EHRStudyContainer']);
     if (!ctx)
         return;
 
     LDK.Utils.getBasicQWP({
+        name: 'u24',
         containerPath: ctx.EHRStudyContainer,
-        title: 'MCC Census',
-        schemaName: 'mcc',
-        queryName: 'census'
+        title: 'MCC Animals',
+        schemaName: 'study',
+        queryName: 'demographics',
+        viewName: LABKEY.ActionURL.getParameter('viewName') ?? 'U24 Assigned'
     }).render(webpart.wrapperDivId);
 });
 

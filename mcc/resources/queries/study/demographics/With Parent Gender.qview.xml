@@ -1,0 +1,32 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" hidden="true">
+    <columns>
+        <column name="colony"/>
+        <column name="Id"/>
+        <column name="gender"/>
+        <column name="Id/age/yearAndDays"/>
+        <column name="calculated_status">
+            <properties>
+                <property name="columnTitle" value="Status"/>
+            </properties>
+        </column>
+        <column name="u24_status"/>
+        <column name="birth"/>
+        <column name="dam"/>
+        <column name="dam/demographics/gender">
+            <properties>
+                <property name="columnTitle" value="Dam Sex"/>
+            </properties>
+        </column>
+        <column name="sire"/>
+        <column name="sire/demographics/gender">
+            <properties>
+                <property name="columnTitle" value="Sire Sex"/>
+            </properties>
+        </column>
+        <column name="litterId"/>
+        <column name="history" />
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+</customView>

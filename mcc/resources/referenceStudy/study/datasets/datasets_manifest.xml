@@ -34,7 +34,7 @@
         <dataset name="labworkResults" id="1074" showByDefault="false" category="ClinPath" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="transfers" id="1001" category="Colony Management" type="Standard">
+        <dataset name="arrival" id="1001" category="Colony Management" type="Standard">
             <tags/>
         </dataset>
         <dataset name="deaths" id="1048" showByDefault="true" category="Colony Management" demographicData="true" type="Standard">

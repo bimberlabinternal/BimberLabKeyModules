@@ -89,22 +89,28 @@ public class CellRangerVDJUtils
             return;
         }
 
-        File consensusCsv = new File(cellRangerOutDir, "consensus_annotations.csv");
-        if (!consensusCsv .exists())
+        File consensusFastaAB = new File(cellRangerOutDir, "consensus.fasta");
+        if (!consensusFastaAB.exists())
         {
-            throw new PipelineJobException("unable to find consensus contigs: " + consensusCsv .getPath());
+            throw new PipelineJobException("unable to find FASTA: " + consensusFastaAB.getPath());
         }
 
-        File consensusFasta = new File(cellRangerOutDir, "consensus.fasta");
-        if (!consensusFasta.exists())
+        File allFastaAB = new File(cellRangerOutDir, "all_contig.fasta");
+        if (!allFastaAB.exists())
         {
-            throw new PipelineJobException("unable to find FASTA: " + consensusFasta.getPath());
+            throw new PipelineJobException("unable to find FASTA: " + allFastaAB.getPath());
         }
 
-        File allFasta = new File(cellRangerOutDir, "all_contig.fasta");
-        if (!allFasta.exists())
+        File consensusFastaGD = new File(cellRangerOutDir, "../vdj_t_gd/consensus.fasta");
+        if (!consensusFastaGD.exists())
         {
-            throw new PipelineJobException("unable to find FASTA: " + allFasta.getPath());
+            throw new PipelineJobException("unable to find FASTA: " + consensusFastaGD.getPath());
+        }
+
+        File allFastaGD = new File(cellRangerOutDir, "../vdj_t_gd/all_contig.fasta");
+        if (!allFastaGD.exists())
+        {
+            throw new PipelineJobException("unable to find FASTA: " + allFastaGD.getPath());
         }
 
         _log.info("loading results into assay: " + assayId);
@@ -276,12 +282,9 @@ public class CellRangerVDJUtils
         _log.info("processing clonotype CSV: " + allCsv.getPath());
 
         // use unfiltered data so we can apply demultiplex and also apply alternate filtering logic.
-        // also, 10x no longer reports TRD/TRG data in their consensus file
-        //header for 3.x and lower:
-        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	cdr3	cdr3_nt	reads	umis	raw_clonotype_id	raw_consensus_id
-
-        //header for 6.x:
-        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	fwr1	fwr1_nt	cdr1	cdr1_nt	fwr2	fwr2_nt	cdr2	cdr2_nt	fwr3	fwr3_nt	cdr3	cdr3_nt	fwr4	fwr4_nt	reads	umis	raw_clonotype_id	raw_consensus_id	exact_subclonotype_id
+        //header for >=6.x:
+        // NOTE: chain_type is added by CellRangerVDJWrapper when merging a/b and g/d
+        // barcode	is_cell	contig_id	high_confidence	length	chain	v_gene	d_gene	j_gene	c_gene	full_length	productive	fwr1	fwr1_nt	cdr1	cdr1_nt	fwr2	fwr2_nt	cdr2	cdr2_nt	fwr3	fwr3_nt	cdr3	cdr3_nt	fwr4	fwr4_nt	reads	umis	raw_clonotype_id	raw_consensus_id	exact_subclonotype_id   chain_type
         try (CSVReader reader = new CSVReader(Readers.getReader(allCsv), ','))
         {
             String[] line;
@@ -366,7 +369,13 @@ public class CellRangerVDJUtils
                 }
                 knownBarcodes.add(barcode);
 
+                String chainType = extractField(line, headerToIdx.get(HEADER_FIELD.CHAIN_TYPE));
                 String rawClonotypeId = extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CLONOTYPE_ID));
+                if (rawClonotypeId != null)
+                {
+                    rawClonotypeId = chainType + "<>" + rawClonotypeId;
+                }
+
                 if (rawClonotypeId == null && "TRUE".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     fullLengthNoClonotype++;
@@ -381,6 +390,10 @@ public class CellRangerVDJUtils
 
                 //Preferentially use raw_consensus_id, but fall back to contig_id
                 String coalescedContigName = extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID)) == null ? extractField(line, headerToIdx.get(HEADER_FIELD.CONTIG_ID)) : extractField(line, headerToIdx.get(HEADER_FIELD.RAW_CONSENSUS_ID));
+                if (coalescedContigName != null)
+                {
+                    coalescedContigName = chainType + "<>" + coalescedContigName;
+                }
 
                 //NOTE: chimeras with a TRDV / TRAJ / TRAC are relatively common. categorize as TRA for reporting ease
                 String locus = line[headerToIdx.get(HEADER_FIELD.CHAIN)];
@@ -465,31 +478,66 @@ public class CellRangerVDJUtils
 
         //build map of distinct FL sequences:
         Map<String, String> sequenceMap = new HashMap<>();
-        for (File f : Arrays.asList(consensusFasta, allFasta))
+        for (File f : Arrays.asList(consensusFastaAB, allFastaAB))
         {
             _log.info("processing FASTA: " + f.getPath());
             try (FastaDataLoader loader = new FastaDataLoader(f, false))
             {
                 loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
+                int j = 0;
                 try (CloseableIterator<Map<String, Object>> i = loader.iterator())
                 {
                     while (i.hasNext())
                     {
                         Map<String, Object> fastaRecord = i.next();
-                        String header = (String) fastaRecord.get("header");
+                        String header = "vdj_t<>" + fastaRecord.get("header");
+                        j++;
                         if (uniqueContigNames.contains(header))
                         {
                             sequenceMap.put(header, (String) fastaRecord.get("sequence"));
                         }
                     }
                 }
+
+                _log.info("total FASTA records: " + j);
             }
             catch (IOException e)
             {
                 throw new PipelineJobException(e);
             }
 
-            _log.info("total sequences: " + sequenceMap.size());
+            _log.info("total A/B sequences: " + sequenceMap.size());
+        }
+
+        for (File f : Arrays.asList(consensusFastaGD, allFastaGD))
+        {
+            _log.info("processing G/D FASTA: " + f.getPath());
+            try (FastaDataLoader loader = new FastaDataLoader(f, false))
+            {
+                loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
+                int j = 0;
+                try (CloseableIterator<Map<String, Object>> i = loader.iterator())
+                {
+                    while (i.hasNext())
+                    {
+                        Map<String, Object> fastaRecord = i.next();
+                        String header = "vdj_t_gd<>" + fastaRecord.get("header");
+                        j++;
+                        if (uniqueContigNames.contains(header))
+                        {
+                            sequenceMap.put(header, (String) fastaRecord.get("sequence"));
+                        }
+                    }
+                }
+
+                _log.info("total FASTA records: " + j);
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
+
+            _log.info("total sequences after G/D: " + sequenceMap.size());
         }
 
         List<Map<String, Object>> assayRows = new ArrayList<>();
@@ -714,9 +762,9 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static File getPerCellCsv(File cellRangerOutDir)
+    public static File getPerCellCsv(File dirContainingABVLoupe)
     {
-        return new File(cellRangerOutDir, "all_contig_annotations.csv");
+        return new File(dirContainingABVLoupe, "all_contig_annotations_combined.csv");
     }
 
     private Map<HEADER_FIELD, Integer> inferFieldIdx(String[] line)
@@ -751,7 +799,8 @@ public class CellRangerVDJUtils
         CDR3("cdr3"),
         CDR3_NT("cdr3_nt"),
         RAW_CLONOTYPE_ID("raw_clonotype_id"),
-        RAW_CONSENSUS_ID("raw_consensus_id");
+        RAW_CONSENSUS_ID("raw_consensus_id"),
+        CHAIN_TYPE("chain_type");
 
         String headerStr;
 
