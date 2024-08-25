@@ -512,6 +512,12 @@ public class CellRangerVDJUtils
         for (File f : Arrays.asList(consensusFastaGD, allFastaGD))
         {
             _log.info("processing G/D FASTA: " + f.getPath());
+            if (!SequencePipelineService.get().hasMinLineCount(f, 2))
+            {
+                _log.info("too few lines, skipping FASTA:" + f.getPath());
+                continue;
+            }
+
             try (FastaDataLoader loader = new FastaDataLoader(f, false))
             {
                 loader.setCharacterFilter(new FastaLoader.UpperAndLowercaseCharacterFilter());
