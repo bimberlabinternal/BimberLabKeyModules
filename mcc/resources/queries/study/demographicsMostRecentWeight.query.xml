@@ -13,7 +13,7 @@
                             query.queryName=Weight&amp;
                             query.id~eq=${id}
                         </url>
-                        <formatString>0.##</formatString>
+                        <formatString>0.####</formatString>
                     </column>
                     <column columnName="MostRecentWeightGrams">
                         <columnTitle>Current Weight (g)</columnTitle>

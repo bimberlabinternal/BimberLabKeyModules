@@ -14,8 +14,6 @@ import org.labkey.api.view.UnauthorizedException;
 import org.labkey.mcc.MccManager;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * User: bimber
@@ -81,6 +79,7 @@ public class MCCDataNotification extends AbstractEHRNotification
         doU24AssignedCheck(mccData, u , msg);
         doMissingIdCheck(mccData, u, msg);
         doZeroWeightCheck(mccData, u, msg);
+        doDuplicationCheck(mccData, u, msg);
 
         //since we dont want to trigger an email if there's no alerts, conditionally append the title
         if (msg.length() > 0)
@@ -171,6 +170,39 @@ public class MCCDataNotification extends AbstractEHRNotification
         {
             msg.append("<b>WARNING: There are ").append(count).append(" sires with gender not equal to m</b><br>\n");
             msg.append("<p><a href='").append(getExecuteQueryUrl(c, "study", "demographics", null)).append("&query.viewName=With Parent Gender&").append(filter.toQueryString("query")).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<hr>\n\n");
+        }
+    }
+
+    protected void doDuplicationCheck(final Container c, User u, final StringBuilder msg)
+    {
+        TableInfo ti = getUserSchemaByName(c, u, "mcc").getTable("duplicateDemographics");
+        TableSelector ts = new TableSelector(ti);
+        long count = ts.getRowCount();
+        if (count > 0)
+        {
+            msg.append("<b>WARNING: There are ").append(count).append(" demographics records with duplicated MCC IDs\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, "mcc", "duplicateDemographics", null)).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<hr>\n\n");
+        }
+
+        ti = getUserSchemaByName(c, u, "mcc").getTable("duplicatedAggregatedDemographics");
+        ts = new TableSelector(ti);
+        count = ts.getRowCount();
+        if (count > 0)
+        {
+            msg.append("<b>WARNING: There are ").append(count).append(" aggregated demographics records with duplicated MCC IDs\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, "mcc", "duplicatedAggregatedDemographics", null)).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<hr>\n\n");
+        }
+
+        ti = getUserSchemaByName(c, u, "mcc").getTable("duplicatedAggregatedDemographicsParents");
+        ts = new TableSelector(ti);
+        count = ts.getRowCount();
+        if (count > 0)
+        {
+            msg.append("<b>WARNING: There are ").append(count).append(" aggregated demographics parent records with duplicated MCC IDs\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, "mcc", "duplicatedAggregatedDemographicsParents", null)).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
     }

@@ -7,4 +7,4 @@ SELECT
 
 FROM sequenceanalysis.sequence_readsets r
 
-WHERE r.subjectid LIKE 'MCC%' AND r.subjectid NOT LIKE 'MCC_%'
+WHERE r.subjectid LIKE 'MCC%' AND r.subjectid NOT LIKE 'MCC[_]%'
