@@ -98,8 +98,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceNormalizationTask(job))
         {
-            job.getLogger().debug("setting max CPUs to 8");
-            return 8;
+            job.getLogger().debug("setting max CPUs to 4");
+            return 4;
         }
 
         if (isLuceneIndexJob(job))
@@ -125,14 +125,14 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             }
             else if (totalFileSize < 20e9)
             {
-                job.getLogger().debug("file size less than 20gb, lowering CPUs to 16");
+                job.getLogger().debug("file size less than 20gb, lowering CPUs to 12");
 
-                return 16;
+                return 12;
             }
 
-            job.getLogger().debug("file size greater than 20gb, using 24 CPUs");
+            job.getLogger().debug("file size greater than 20gb, using 12 CPUs");
 
-            return 24;
+            return 12;
         }
 
         return null;
@@ -155,8 +155,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceNormalizationTask(job))
         {
-            job.getLogger().debug("setting memory to 48");
-            return 48;
+            job.getLogger().debug("setting memory to 18");
+            return 18;
         }
 
         if (isGeneticsTask(job))
@@ -167,8 +167,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isCacheAlignerIndexesTask(job))
         {
-            job.getLogger().debug("setting memory to 48");
-            return 48;
+            job.getLogger().debug("setting memory to 12");
+            return 12;
         }
 
         if (isLuceneIndexJob(job))
@@ -314,7 +314,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     }
 
     @Override
-    public Map<String, Object> getEnvironmentVars(PipelineJob job, RemoteExecutionEngine engine)
+    public @NotNull Map<String, Object> getEnvironmentVars(PipelineJob job, RemoteExecutionEngine engine)
     {
         Map<String, Object> ret = new HashMap<>();
 
