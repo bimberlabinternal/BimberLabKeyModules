@@ -272,6 +272,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             if (isDefaultTrack)
             {
                 boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"))) != null;
+                getStatusLogger().info("Creating track JSON for primary track, has lucene index: " + hasLuceneIndex);
                 row.put("trackJson", getTrackJson(hasLuceneIndex));
             }
             else
