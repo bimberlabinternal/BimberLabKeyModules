@@ -121,6 +121,8 @@
                     <column>startdate</column>
                     <column>enddate</column>
                     <column>centerName</column>
+                    <column>totalLiving</column>
+                    <column>totalLivingU24</column>
                     <column>totalBreedingPairs</column>
                     <column>totalBreedingPairsU24</column>
                     <column>totalOffspring</column>
