@@ -6,6 +6,7 @@ export class AnimalRequestModel {
     request: AnimalRequestProps = new AnimalRequestProps();
     coinvestigators: CoInvestigatorModel[] = [];
     cohorts: AnimalCohort[] = [];
+    shipments: ShipmentModel[] = [];
     dataLoaded: boolean = false;
 }
 
@@ -49,6 +50,13 @@ export class AnimalRequestProps {
     vetfirstname: string;
     objectid: string;
     comments: string;
+}
+
+export class ShipmentModel {
+    Id: string;
+    date: string;
+    source: string;
+    objectid: string;
 }
 
 export class CoInvestigatorModel {
@@ -189,6 +197,32 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 }
 
                 resolve(requestData.cohorts)
+            },
+            failure: handleFailure
+        })
+    }),
+    new Promise<any>((resolve, reject) => {
+        Query.selectRows({
+            schemaName: "study",
+            queryName: "departure",
+            columns: [
+                "Id",
+                "date",
+                "source",
+                "objectid"
+            ],
+            filterArray: [
+                Filter.create('mccRequestId/objectId', requestId)
+            ],
+            success: function (resp) {
+                // NOTE: abort so that we preserve the default value of one empty row
+                if (!resp.rows.length) {
+                    requestData.shipments = []
+                } else {
+                    requestData.shipments = resp.rows
+                }
+
+                resolve(requestData.shipments)
             },
             failure: handleFailure
         })
