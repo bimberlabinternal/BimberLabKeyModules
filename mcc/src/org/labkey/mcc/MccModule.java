@@ -29,6 +29,7 @@ import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.query.DefaultSchema;
 import org.labkey.api.query.QuerySchema;
+import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.roles.RoleManager;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
@@ -108,6 +109,9 @@ public class MccModule extends ExtendedSimpleModule
         ret.put("hasRequestAdminPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRequestAdminPermission.class));
         ret.put("hasRabPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRabReviewPermission.class));
         ret.put("hasFinalDecisionPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccFinalReviewPermission.class));
+
+        Container dataContainer = MccManager.get().getMCCContainer(context.getContainer());
+        ret.put("hasAnimalDataReadPermission", dataContainer != null && dataContainer.hasPermission(context.getUser(), ReadPermission.class));
 
         return ret;
     }

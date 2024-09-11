@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, Query } from '@labkey/api';
+import { Filter, getServerContext, Query } from '@labkey/api';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AnimalRequestModel {
@@ -76,6 +76,18 @@ export class AnimalCohort {
     sex: string;
     othercharacteristics: string;
     uuid: string = uuidv4().toUpperCase();
+}
+
+function hasAnimalDataReadPermission() {
+    const ctx = getServerContext().getModuleContext('mcc') || {};
+
+    return !!ctx.hasAnimalDataReadPermission
+}
+
+function getMccDataContainerPath() {
+    const ctx = getServerContext().getModuleContext('mcc') || {};
+
+    return ctx.hasAnimalDataReadPermission ? ctx.MCCContainer : null
 }
 
 export async function queryRequestInformation(requestId, handleFailure) {
@@ -200,38 +212,45 @@ export async function queryRequestInformation(requestId, handleFailure) {
             },
             failure: handleFailure
         })
-    }),
-    new Promise<any>((resolve, reject) => {
-        Query.selectRows({
-            schemaName: "study",
-            queryName: "departure",
-            columns: [
-                "Id",
-                "date",
-                "source",
-                "objectid"
-            ],
-            filterArray: [
-                Filter.create('mccRequestId/objectId', requestId)
-            ],
-            success: function (resp) {
-                // NOTE: abort so that we preserve the default value of one empty row
-                if (!resp.rows.length) {
-                    requestData.shipments = []
-                } else {
-                    requestData.shipments = resp.rows
-                }
-
-                resolve(requestData.shipments)
-            },
-            failure: handleFailure
-        })
     })]
+
+    if (hasAnimalDataReadPermission()) {
+      promises.push(new Promise<any>((resolve, reject) => {
+          Query.selectRows({
+              containerPath: getMccDataContainerPath(),
+              schemaName: "study",
+              queryName: "departure",
+              columns: [
+                  "Id",
+                  "date",
+                  "source",
+                  "objectid"
+              ],
+              filterArray: [
+                  Filter.create('mccRequestId/objectId', requestId)
+              ],
+              success: function (resp) {
+                  // NOTE: abort so that we preserve the default value of one empty row
+                  if (!resp.rows.length) {
+                      requestData.shipments = []
+                  } else {
+                      requestData.shipments = resp.rows
+                  }
+
+                  resolve(requestData.shipments)
+              },
+              failure: handleFailure
+          })
+      }))
+    }
 
     return await Promise.all(promises).then(values => {
         requestData.request = values[0]
         requestData.coinvestigators = values[1]
         requestData.cohorts = values[2]
+        if (promises.length > 3) {
+            requestData.shipments = values[3]
+        }
         requestData.dataLoaded = true
 
         return(requestData)

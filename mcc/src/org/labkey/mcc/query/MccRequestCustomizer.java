@@ -92,7 +92,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
 
                 ExprColumn newCol = new ExprColumn(ti, "transferIds", sql, JdbcType.VARCHAR, ti.getColumn("requestId"));
                 newCol.setLabel("Animal ID(s)");
-                newCol.setWidth("150");
+                newCol.setWidth("100");
                 ti.addColumn(newCol);
             }
         }
