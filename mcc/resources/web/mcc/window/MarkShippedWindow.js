@@ -83,11 +83,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                         }
                     }
                 }
-            },{
-                xtype: 'checkbox',
-                itemId: 'isMccTransfer',
-                fieldLabel: 'Is MCC Transfer',
-                checked: true
             }, this.getAnimalIdFields()],
             buttons: [{
                 text: 'Submit',
@@ -123,6 +118,11 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             fields = fields.concat([{
                 xtype: 'displayfield',
                 value: animalId,
+            },{
+                xtype: 'ldk-integerfield',
+                minValue: 1,
+                itemId: 'requestId-' + animalId,
+                allowBlank: true
             },{
                 xtype: 'checkbox',
                 itemId: 'usePreviousId-' + animalId,
@@ -173,7 +173,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         var effectiveDate = win.down('#effectiveDate').getValue();
         var centerName = win.down('#centerName').getValue();
         var targetFolder = win.down('#targetFolder').getValue();
-        var isMccTransfer = win.down('#isMccTransfer').getValue();
 
         if (!effectiveDate || !centerName || !targetFolder) {
             Ext4.Msg.alert('Error', 'Must provide date, center name, and target folder');
@@ -215,10 +214,14 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 var commands = [];
                 Ext4.Array.forEach(results.rows, function(row){
                     var effectiveId = win.down('#usePreviousId-' + row.Id).getValue() ? row.Id : win.down('#newId-' + row.Id).getValue();
+                    var requestId = win.down('#requestId-' + row.Id).getValue();
                     // This should be checked above, although perhaps case sensitivity could get involved:
                     LDK.Assert.assertNotEmpty('Missing effective ID after query', effectiveId);
 
-                    var shouldAddDeparture = !row['Id/MostRecentDeparture/MostRecentDeparture'] || row['Id/MostRecentDeparture/MostRecentDeparture'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') || row.Id !== effectiveId;
+                    var shouldAddDeparture = !row['Id/MostRecentDeparture/MostRecentDeparture'] ||
+                            row['Id/MostRecentDeparture/MostRecentDeparture'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
+                            row['Id/MostRecentDeparture/mccRequestId'] !== requestId ||
+                            row.Id !== effectiveId;
                     if (shouldAddDeparture) {
                         commands.push({
                             command: 'insert',
@@ -229,7 +232,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                                 date: effectiveDate,
                                 source: row.colony,
                                 destination: centerName,
-                                mccTransfer: isMccTransfer,
+                                mccRequestId: requestId,
                                 description: row.colony ? 'Original center: ' + row.colony : null,
                                 qcstate: null,
                                 objectId: null,

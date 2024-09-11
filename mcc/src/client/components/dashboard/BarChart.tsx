@@ -5,11 +5,15 @@ import { ActiveElement, ChartEvent } from 'chart.js/dist/types/index';
 Chart.register(Legend, BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
 const colors = [
-    'rgb(42, 49, 116)',
-    'rgb(75, 77, 135)',
-    'rgb(110, 107, 155)',
-    'rgb(147, 145, 181)',
-    'rgb(194, 192, 210)'
+    "#E41A1C",
+    "#377EB8",
+    "#4DAF4A",
+    "#984EA3",
+    "#FF7F00",
+    "#FFFF33",
+    "#A65628",
+    "#F781BF",
+    "#999999"
 ];
 
 export default function BarChart(props: {demographics: [], fieldName: string, groupField?: string, indexAxis?: 'x' | 'y', onClick?: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => void }) {
