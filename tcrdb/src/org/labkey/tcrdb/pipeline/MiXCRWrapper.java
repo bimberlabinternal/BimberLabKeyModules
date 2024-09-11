@@ -353,7 +353,7 @@ public class MiXCRWrapper extends AbstractCommandWrapper
 
     private File getJAR()
     {
-        File jar = new File(ModuleLoader.getInstance().getWebappDir(), "WEB-INF/lib");
+        File jar = new File(ModuleLoader.getInstance().getWebappDir().getPath().toFile(), "WEB-INF/lib");
         jar = new File(jar, "mixcr.jar");
         if (jar.exists())
         {
