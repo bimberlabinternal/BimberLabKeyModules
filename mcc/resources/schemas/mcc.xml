@@ -808,6 +808,12 @@
                 <columnTitle>Center Name</columnTitle>
                 <nullable>false</nullable>
             </column>
+            <column columnName="totalLiving">
+                <columnTitle># Living (Total)</columnTitle>
+            </column>
+            <column columnName="totalLivingU24">
+                <columnTitle># Living (U24)</columnTitle>
+            </column>
             <column columnName="totalBreedingPairs">
                 <columnTitle># In Active Breeding (Total)</columnTitle>
             </column>

@@ -216,6 +216,8 @@ public class MccUserSchema extends SimpleUserSchema
                 "    d.startdate,\n" +
                 "    d.enddate,\n" +
                 "    d.centerName,\n" +
+                "    d.totalLiving,\n" +
+                "    d.totalLivingU24,\n" +
                 "    d.totalBreedingPairs,\n" +
                 "    d.totalBreedingPairsU24,\n" +
                 "    d.totalOffspring,\n" +
