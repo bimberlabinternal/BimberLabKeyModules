@@ -85,10 +85,10 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
 
                 SQLFragment sql = new SQLFragment("(SELECT ").
                         append(ti.getSqlDialect().getGroupConcat(new SQLFragment("d." + dti.getColumn("participantid").getSelectName()), true, true, new SQLFragment("', '"))).
-                        append(" as expr FROM studydataset.").
-                        append(dti.getName()).
-                        append(" d JOIN mcc." + MccSchema.TABLE_ANIMAL_REQUESTS + " ar ON (d.requestId = ar.rowId)").
-                        append("WHERE d.mccRequestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+                        append(" as expr FROM ").
+                        append(" mcc." + MccSchema.TABLE_ANIMAL_REQUESTS + " ar JOIN studydataset.").append(dti.getName()).
+                        append(" d ON (d.mccRequestId = ar.rowId)").
+                        append(" WHERE ar.objectid = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
 
                 ExprColumn newCol = new ExprColumn(ti, "transferIds", sql, JdbcType.VARCHAR, ti.getColumn("requestId"));
                 newCol.setLabel("Animal ID(s)");
