@@ -116,9 +116,7 @@ public class MccUserSchema extends SimpleUserSchema
             ret.addPermissionMapping(UpdatePermission.class, MccViewRequestsPermission.class);
             ret.addPermissionMapping(DeletePermission.class, MccRequestAdminPermission.class);
 
-            ret = ret.init();
-
-            return addScoreColumns(ret);
+            return ret.init();
         }
         else if (MccSchema.TABLE_CENSUS.equalsIgnoreCase(name))
         {
@@ -238,11 +236,11 @@ public class MccUserSchema extends SimpleUserSchema
                 "    d.date,\n" +
                 "    d.source,\n" +
                 "    d.destination,\n" +
-                "    d.mccTransfer,\n" +
+                "    d.mccRequestId,\n" +
                 "    d.objectid,\n" +
                 "    d.container\n" +
                 "\n" +
-                "FROM \"<CONTAINER_PATH>\".study.departure d WHERE d.qcstate.publicdata = true AND d.mccTransfer = true\n";
+                "FROM \"<CONTAINER_PATH>\".study.departure d WHERE d.qcstate.publicdata = true AND d.mccRequestId IS NOT NULL\n";
 
         return makeAggregatedQuery(TABLE_AGGREGATED_DEPARTURES, template);
     }
@@ -314,43 +312,6 @@ public class MccUserSchema extends SimpleUserSchema
             {
                 _log.error(e.getMessage());
             }
-        }
-
-        return ti;
-    }
-
-    private CustomPermissionsTable<?> addScoreColumns(CustomPermissionsTable<?> ti)
-    {
-        if (ti.getColumn("rabReviewStatus") == null)
-        {
-            SQLFragment sql = new SQLFragment("(SELECT CONCAT(COALESCE(CAST(sum(CASE WHEN r.review IS NULL THEN 0 ELSE 1 END) as varchar), '0'), ' of ', cast(count(*) as varchar), ' completed') as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
-            ExprColumn newCol = new ExprColumn(ti, "rabReviewStatus", sql, JdbcType.VARCHAR, ti.getColumn("requestId"));
-            newCol.setSortFieldKeys(Collections.singletonList(FieldKey.fromString("pendingRabReviews")));
-
-            newCol.setLabel("RAB Review Status");
-            newCol.setDisplayColumnFactory(colInfo -> {
-                return new DataColumn(colInfo)
-                {
-                    @Override
-                    public boolean isFilterable()
-                    {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean isSortable()
-                    {
-                        return false;
-                    }
-                };
-            });
-
-            ti.addColumn(newCol);
-
-            SQLFragment sql2 = new SQLFragment("(SELECT COALESCE(sum(CASE WHEN r.review IS NULL THEN 1 ELSE 0 END), -1) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
-            ExprColumn newCol2 = new ExprColumn(ti, "pendingRabReviews", sql2, JdbcType.INTEGER, ti.getColumn("requestId"));
-            newCol2.setLabel("Pending RAB Reviews");
-            ti.addColumn(newCol2);
         }
 
         return ti;

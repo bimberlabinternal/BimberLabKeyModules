@@ -29,10 +29,6 @@
                             <fkDisplayColumnName useRawValue="true"/>
                         </fk>
                     </column>
-                    <column columnName="mccTransfer">
-                        <columnTitle>MCC U24 Transfer?</columnTitle>
-                        <defaultValue>false</defaultValue>
-                    </column>
                     <column columnName="mccRequestId">
                         <columnTitle>MCC Request ID</columnTitle>
                     </column>

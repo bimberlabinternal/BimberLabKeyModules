@@ -141,7 +141,7 @@
                     <column>date</column>
                     <column>source</column>
                     <column>destination</column>
-                    <column>mccTransfer</column>
+                    <column>mccRequestId</column>
                     <column>objectid</column>
                 </sourceColumns>
             </source>

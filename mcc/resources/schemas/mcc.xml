@@ -700,6 +700,7 @@
         <tableUrl>/mcc/requestReview.view?requestId=${requestId}&amp;mode=details</tableUrl>
         <deleteUrl />
         <tableTitle>Animal Request Reviews</tableTitle>
+        <javaCustomizer class="org.labkey.mcc.query.MccRequestCustomizer" />
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>
