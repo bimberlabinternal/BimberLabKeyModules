@@ -77,7 +77,6 @@
             </column>
             <column columnName="parent">
                 <datatype>varchar</datatype>
-                <propertyURI>http://cpas.labkey.com/Study#ParticipantId</propertyURI>
             </column>
             <column columnName="relationship">
                 <datatype>varchar</datatype>
@@ -715,6 +714,9 @@
             <column columnName="mccTransfer">
                 <datatype>boolean</datatype>
                 <defaultValue>false</defaultValue>
+            </column>
+            <column columnName="mccRequestId">
+                <datatype>integer</datatype>
             </column>
             <column columnName="objectid">
                 <datatype>entityid</datatype>

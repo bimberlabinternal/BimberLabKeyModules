@@ -122,7 +122,9 @@
                     <column>enddate</column>
                     <column>centerName</column>
                     <column>totalBreedingPairs</column>
-                    <column>totalLivingOffspring</column>
+                    <column>totalBreedingPairsU24</column>
+                    <column>totalOffspring</column>
+                    <column>totalOffspringU24</column>
                     <column>survivalRates</column>
                     <column>marmosetsShipped</column>
                 </sourceColumns>

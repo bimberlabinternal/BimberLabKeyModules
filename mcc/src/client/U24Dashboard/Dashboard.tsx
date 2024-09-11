@@ -86,7 +86,7 @@ export function Dashboard() {
             containerPath: containerPath,
             schemaName: 'mcc',
             queryName: 'census',
-            columns: 'yearNo,startdate,enddate,centerName,totalBreedingPairs,totalLivingOffspring,survivalRates,marmosetsShipped',
+            columns: 'yearNo,startdate,enddate,centerName,totalBreedingPairs,totalBreedingPairsU24,totalOffspring,totalOffspringU24,marmosetsShipped',
             success: function(results) {
                 if (isApiSubscribed) {
                     setCensusRows(results.rows);
@@ -99,7 +99,7 @@ export function Dashboard() {
                     }))
 
                     setBirthData(results.rows.flatMap(row => {
-                        return Array(row.totalLivingOffspring).fill({
+                        return Array(row.totalOffspring).fill({
                             yearNo: row.yearNo,
                             centerName: row.centerName
                         })

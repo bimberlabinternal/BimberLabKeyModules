@@ -33,6 +33,9 @@
                         <columnTitle>MCC U24 Transfer?</columnTitle>
                         <defaultValue>false</defaultValue>
                     </column>
+                    <column columnName="mccRequestId">
+                        <columnTitle>MCC Request ID</columnTitle>
+                    </column>
                 </columns>
             </table>
         </tables>

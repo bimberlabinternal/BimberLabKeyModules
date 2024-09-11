@@ -5,7 +5,7 @@
         <column name="date"/>
         <column name="source"/>
         <column name="destination"/>
-        <column name="mccTransfer"/>
+        <column name="mccRequestId"/>
         <column name="remark"/>
         <column name="qcstate" />
     </columns>
