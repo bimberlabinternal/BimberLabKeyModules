@@ -31,6 +31,8 @@ import org.labkey.api.query.DefaultSchema;
 import org.labkey.api.query.QuerySchema;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.roles.RoleManager;
+import org.labkey.api.study.Study;
+import org.labkey.api.study.StudyService;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.view.template.ClientDependency;
@@ -112,6 +114,14 @@ public class MccModule extends ExtendedSimpleModule
 
         Container dataContainer = MccManager.get().getMCCContainer(context.getContainer());
         ret.put("hasAnimalDataReadPermission", dataContainer != null && dataContainer.hasPermission(context.getUser(), ReadPermission.class));
+        if (dataContainer != null)
+        {
+            Study s = StudyService.get().getStudy(dataContainer);
+            if (s != null)
+            {
+                ret.put("hasMccStudyReadPermission", s.hasPermission(context.getUser(), ReadPermission.class));
+            }
+        }
 
         return ret;
     }

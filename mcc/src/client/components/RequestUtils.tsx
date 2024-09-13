@@ -78,10 +78,10 @@ export class AnimalCohort {
     uuid: string = uuidv4().toUpperCase();
 }
 
-function hasAnimalDataReadPermission() {
+function canReadMccStudy() {
     const ctx = getServerContext().getModuleContext('mcc') || {};
 
-    return !!ctx.hasAnimalDataReadPermission
+    return !!ctx.hasAnimalDataReadPermission  && !!ctx.hasMccStudyReadPermission
 }
 
 function getMccDataContainerPath() {
@@ -214,7 +214,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
         })
     })]
 
-    if (hasAnimalDataReadPermission()) {
+    if (canReadMccStudy()) {
       promises.push(new Promise<any>((resolve, reject) => {
           Query.selectRows({
               containerPath: getMccDataContainerPath(),
