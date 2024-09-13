@@ -38,7 +38,7 @@ export default function PieChart(props) {
 
         return acc;
     }, {});
-    const labels = Object.keys(collectedData).sort();
+    const labels = Object.keys(collectedData).sort(Intl.Collator().compare);
     const data = labels.map(label => collectedData[label]);
 
     useEffect(() => {
