@@ -121,8 +121,12 @@
                     <column>startdate</column>
                     <column>enddate</column>
                     <column>centerName</column>
+                    <column>totalLiving</column>
+                    <column>totalLivingU24</column>
                     <column>totalBreedingPairs</column>
-                    <column>totalLivingOffspring</column>
+                    <column>totalBreedingPairsU24</column>
+                    <column>totalOffspring</column>
+                    <column>totalOffspringU24</column>
                     <column>survivalRates</column>
                     <column>marmosetsShipped</column>
                 </sourceColumns>
@@ -139,7 +143,7 @@
                     <column>date</column>
                     <column>source</column>
                     <column>destination</column>
-                    <column>mccTransfer</column>
+                    <column>mccRequestId</column>
                     <column>objectid</column>
                 </sourceColumns>
             </source>

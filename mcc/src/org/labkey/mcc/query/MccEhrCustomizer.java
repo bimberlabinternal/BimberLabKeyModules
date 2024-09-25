@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.Container;
 import org.labkey.api.data.JdbcType;
 import org.labkey.api.data.MutableColumnInfo;
 import org.labkey.api.data.SQLFragment;
@@ -15,7 +16,9 @@ import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.LookupForeignKey;
 import org.labkey.api.query.QueryForeignKey;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
+import org.labkey.mcc.MccManager;
 import org.labkey.mcc.MccSchema;
 
 public class MccEhrCustomizer extends AbstractTableCustomizer
@@ -48,6 +51,10 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             {
                 customizeKinship((AbstractTableInfo)table);
             }
+            else if (matches(table, "study", "departure"))
+            {
+                customizeDeparture((AbstractTableInfo)table);
+            }
         }
     }
 
@@ -60,6 +67,29 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
     private void customizeKinship(AbstractTableInfo ti)
     {
         addMccAlias(ti, "Id2", "id2MccAlias", "Id 2 MCC Alias");
+    }
+
+    private void customizeDeparture(AbstractTableInfo ti)
+    {
+        MutableColumnInfo ci = ti.getMutableColumn("mccRequestId");
+        if (ci == null)
+        {
+            return;
+        }
+
+        Container requestContainer = MccManager.get().getMCCRequestContainer(ti.getUserSchema().getContainer());
+        if (requestContainer == null)
+        {
+            return;
+        }
+
+        final UserSchema us = getUserSchema(ti, MccSchema.NAME, requestContainer);
+
+        ci.setFk(QueryForeignKey.from(us, null)
+                .table(us.getTable(MccSchema.TABLE_ANIMAL_REQUESTS))
+                .container(us.getContainer())
+                .key("rowid")
+                .display("rowid"));
     }
 
     private void customizeWeight(AbstractTableInfo ti)

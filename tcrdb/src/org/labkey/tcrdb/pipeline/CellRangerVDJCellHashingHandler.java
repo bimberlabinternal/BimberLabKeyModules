@@ -120,38 +120,38 @@ public class CellRangerVDJCellHashingHandler extends AbstractParameterizedOutput
         }
 
         @Override
-        public void complete(PipelineJob job, List<SequenceOutputFile> inputFiles, List<SequenceOutputFile> outputsCreated, SequenceAnalysisJobSupport support) throws PipelineJobException
+        public void complete(JobContext ctx, List<SequenceOutputFile> inputFiles, List<SequenceOutputFile> outputsCreated) throws PipelineJobException
         {
             for (SequenceOutputFile so : outputsCreated)
             {
                 if (CATEGORY.equals(so.getCategory()))
                 {
-                    CellHashingService.get().processMetrics(so, job, true);
+                    CellHashingService.get().processMetrics(so, ctx.getJob(), true);
                 }
             }
 
-            if (StringUtils.trimToNull(job.getParameters().get(TARGET_ASSAY)) == null)
+            if (StringUtils.trimToNull(ctx.getJob().getParameters().get(TARGET_ASSAY)) == null)
             {
-                job.getLogger().info("No assay selected, will not import");
+                ctx.getJob().getLogger().info("No assay selected, will not import");
             }
             else
             {
-                Integer assayId = ConvertHelper.convert(job.getParameters().get(TARGET_ASSAY), Integer.class);
+                Integer assayId = ConvertHelper.convert(ctx.getJob().getParameters().get(TARGET_ASSAY), Integer.class);
                 if (assayId == null)
                 {
-                    throw new PipelineJobException("Invalid assay Id, cannot import: " + job.getParameters().get(TARGET_ASSAY));
+                    throw new PipelineJobException("Invalid assay Id, cannot import: " + ctx.getJob().getParameters().get(TARGET_ASSAY));
                 }
 
                 boolean deleteExistingData = false;
-                if (job.getParameters().get(DELETE_EXISTING_ASSAY_DATA) != null)
+                if (ctx.getJob().getParameters().get(DELETE_EXISTING_ASSAY_DATA) != null)
                 {
-                    deleteExistingData = ConvertHelper.convert(job.getParameters().get(DELETE_EXISTING_ASSAY_DATA), Boolean.class);
+                    deleteExistingData = ConvertHelper.convert(ctx.getJob().getParameters().get(DELETE_EXISTING_ASSAY_DATA), Boolean.class);
                 }
 
                 for (SequenceOutputFile so : inputFiles)
                 {
-                    AnalysisModel model = support.getCachedAnalysis(so.getAnalysis_id());
-                    new CellRangerVDJUtils(job.getLogger()).importAssayData(job, model, so.getFile(), job.getLogFile().getParentFile(), assayId, null, deleteExistingData);
+                    AnalysisModel model = ctx.getSequenceSupport().getCachedAnalysis(so.getAnalysis_id());
+                    new CellRangerVDJUtils(ctx.getJob().getLogger()).importAssayData(ctx.getJob(), model, so.getFile(), ctx.getJob().getLogFile().getParentFile(), assayId, null, deleteExistingData);
                 }
             }
         }

@@ -10,6 +10,9 @@
         <dataset name="birth" id="1007" category="Colony Management" demographicData="true" type="Standard">
             <tags/>
         </dataset>
+        <dataset name="cases" id="5012" category="Clinical" type="Standard">
+            <tags/>
+        </dataset>
         <dataset name="encounters" id="1067" showByDefault="false" category="Clinical" type="Standard">
             <tags/>
         </dataset>

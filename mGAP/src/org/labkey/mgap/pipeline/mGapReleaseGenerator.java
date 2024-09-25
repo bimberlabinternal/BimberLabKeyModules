@@ -353,8 +353,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
         }
 
         @Override
-        public void complete(PipelineJob job, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated, SequenceAnalysisJobSupport support) throws PipelineJobException
+        public void complete(JobContext ctx, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated) throws PipelineJobException
         {
+            PipelineJob job = ctx.getJob();
             if (outputsCreated.isEmpty())
             {
                 job.getLogger().error("no outputs found");
