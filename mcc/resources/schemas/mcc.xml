@@ -700,6 +700,7 @@
         <tableUrl>/mcc/requestReview.view?requestId=${requestId}&amp;mode=details</tableUrl>
         <deleteUrl />
         <tableTitle>Animal Request Reviews</tableTitle>
+        <javaCustomizer class="org.labkey.mcc.query.MccRequestCustomizer" />
         <auditLogging>DETAILED</auditLogging>
         <pkColumnName>rowid</pkColumnName>
         <columns>
@@ -776,7 +777,7 @@
             </item>
         </buttonBarOptions>
     </table>
-    <table tableName="census" tableDbType="TABLE">
+    <table tableName="census" tableDbType="TABLE" useColumnOrder="true">
         <insertUrl />
         <importUrl />
         <updateUrl />
@@ -807,14 +808,27 @@
                 <columnTitle>Center Name</columnTitle>
                 <nullable>false</nullable>
             </column>
-            <column columnName="totalBreedingPairs">
-                <columnTitle># Breeding Pairs</columnTitle>
+            <column columnName="totalLiving">
+                <columnTitle># Living (Total)</columnTitle>
             </column>
-            <column columnName="totalLivingOffspring">
-                <columnTitle># Living Offspring</columnTitle>
+            <column columnName="totalLivingU24">
+                <columnTitle># Living (U24)</columnTitle>
+            </column>
+            <column columnName="totalBreedingPairs">
+                <columnTitle># In Active Breeding (Total)</columnTitle>
+            </column>
+            <column columnName="totalBreedingPairsU24">
+                <columnTitle># In Active Breeding (U24)</columnTitle>
+            </column>
+            <column columnName="totalOffspring">
+                <columnTitle># Offspring (Total)</columnTitle>
+            </column>
+            <column columnName="totalOffspringU24">
+                <columnTitle># Offspring (U24)</columnTitle>
             </column>
             <column columnName="survivalRates">
                 <columnTitle>Survival Rates</columnTitle>
+                <isHidden>true</isHidden>
             </column>
             <column columnName="marmosetsShipped">
                 <columnTitle># Animals Shipped</columnTitle>

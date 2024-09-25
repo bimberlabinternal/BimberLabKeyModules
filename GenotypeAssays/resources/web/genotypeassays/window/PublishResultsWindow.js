@@ -100,7 +100,7 @@ Ext4.define('GenotypeAssays.window.PublishResultsWindow', {
             });
         }, this);
 
-        if (results.length == 1){
+        if (results.length === 1){
             field.setValue(results[0].id);
         }
         field.setDisabled(false);

@@ -133,9 +133,10 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
         if (!commandsToRun.isEmpty())
         {
-            log.error("There are missing symlinks. Please run makeSymlinks.sh");
+            File bashFile = new File(baseDir, "makeSymlinks.sh");
+            log.error("There are missing symlinks. Please run " + bashFile.getPath());
 
-            try (PrintWriter writer = PrintWriters.getPrintWriter(new File(baseDir, "makeSymlinks.sh")))
+            try (PrintWriter writer = PrintWriters.getPrintWriter(bashFile))
             {
                 writer.println("#!/bin/bash");
                 writer.println("set -e");

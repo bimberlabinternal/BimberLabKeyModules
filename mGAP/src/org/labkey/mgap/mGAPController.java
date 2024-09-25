@@ -996,7 +996,7 @@ public class mGAPController extends SpringActionController
                 }
                 else
                 {
-                    throw new IllegalArgumentException("Unable to find primary track for release: " + ctx.getString("mgapReleaseGUID"));
+                    throw new IllegalArgumentException("Unable to find primary track for release: " + ctx.getString("mgapReleaseGUID") + ", with JBrowse ID: " + jbrowseDatabaseId);
                 }
             }
 

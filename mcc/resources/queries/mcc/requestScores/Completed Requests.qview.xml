@@ -1,0 +1,22 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" label="Completed Requests" canOverride="false">
+    <columns>
+        <column name="requestId/rowid"/>
+        <column name="requestId/lastname"/>
+        <column name="requestId/firstname"/>
+        <column name="requestId/title"/>
+        <column name="requestId/institutionname"/>
+        <column name="requestId/fundingsource"/>
+        <column name="requestId/grantnumber"/>
+        <column name="requestId/status"/>
+        <column name="transferIds" />
+        <column name="created"/>
+
+<!--        <column name="actions"/>-->
+    </columns>
+    <filters>
+        <filter column="requestId/status" operator="in" value="Fulfilled;Withdrawn"/>
+    </filters>
+    <sorts>
+        <sort column="requestId/rowid" descending="true"/>
+    </sorts>
+</customView>

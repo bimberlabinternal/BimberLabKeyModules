@@ -272,6 +272,35 @@ export default function ReadOnlyRequest(props: {requestData: AnimalRequestModel}
                 <Grid item xs={10}>
                     {requestData.request.comments}
                 </Grid>
+                {requestData.shipments.length ? (
+                    <>
+                    <StyledGridFieldLabel item xs={2}>
+                        Shipments:
+                    </StyledGridFieldLabel>
+                    <Grid item xs={10}>
+
+                        <Table style={{display: "inline-block", padding: 5}}>
+                            <TableHead><TableRow key={"cohorts-header"}>
+                                <StyledTableHead>Source Colony</StyledTableHead>
+                                <StyledTableHead>Date</StyledTableHead>
+                                <StyledTableHead>MCC Id</StyledTableHead>
+                            </TableRow>
+                            </TableHead>
+                            <TableBody style={{border: 1, borderColor: 'black'}}>
+                                {requestData.shipments.map((shipment, idx) => {
+                                    return(
+                                        <TableRow key={shipment.objectid} style = { idx % 2 ? { background : "#fdffe0" }:{ background : "white" }}>
+                                            <StyledTableCell>{shipment.source}</StyledTableCell>
+                                            <StyledTableCell>{shipment.date ? new Intl.DateTimeFormat("en-US").format(new Date(shipment.date)) : ''}</StyledTableCell>
+                                            <StyledTableCell>{shipment.Id}</StyledTableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </Grid>
+                    </>
+                ) : null }
                 <StyledGridFieldLabel item xs={2}>
                     Status:
                 </StyledGridFieldLabel>
