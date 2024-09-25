@@ -903,6 +903,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                                             QCStateLabel: 'Completed',
                                             QCState: null,
                                             date: dateVal,
+                                            colony: f.sourceRecord.colony,
                                             destination: otherVal
                                         });
                                     } else {

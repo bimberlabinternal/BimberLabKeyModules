@@ -148,7 +148,8 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                 FieldKey.fromString("url"),
                 FieldKey.fromString("description"),
                 FieldKey.fromString("isprimarytrack"),
-                FieldKey.fromString("vcfId/dataid/DataFileUrl")
+                FieldKey.fromString("vcfId/dataid/DataFileUrl"),
+                FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl")
         );
 
         TableInfo tracksPerRelease = QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
@@ -270,7 +271,8 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("luceneIndex/dataid/DataFileUrl"))) != null;
+                boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"))) != null;
+                getStatusLogger().info("Creating track JSON for primary track, has lucene index: " + hasLuceneIndex);
                 row.put("trackJson", getTrackJson(hasLuceneIndex));
             }
             else

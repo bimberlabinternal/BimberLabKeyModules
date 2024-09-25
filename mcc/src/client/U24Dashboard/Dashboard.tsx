@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 
 import PieChart from '../components/dashboard/PieChart';
-import BarChart from '../components/dashboard/BarChart';
+import BarChart, { ColorType } from '../components/dashboard/BarChart';
 import { ActiveElement, Chart, ChartEvent } from 'chart.js/dist/types/index';
 
 export function Dashboard() {
@@ -86,7 +86,7 @@ export function Dashboard() {
             containerPath: containerPath,
             schemaName: 'mcc',
             queryName: 'census',
-            columns: 'yearNo,startdate,enddate,centerName,totalBreedingPairs,totalLivingOffspring,survivalRates,marmosetsShipped',
+            columns: 'yearNo,startdate,enddate,centerName,totalLiving,totalLivingU24,totalBreedingPairs,totalBreedingPairsU24,totalOffspring,totalOffspringU24,marmosetsShipped',
             success: function(results) {
                 if (isApiSubscribed) {
                     setCensusRows(results.rows);
@@ -99,7 +99,7 @@ export function Dashboard() {
                     }))
 
                     setBirthData(results.rows.flatMap(row => {
-                        return Array(row.totalLivingOffspring).fill({
+                        return Array(row.totalOffspring).fill({
                             yearNo: row.yearNo,
                             centerName: row.centerName
                         })
@@ -164,7 +164,7 @@ export function Dashboard() {
                 </div>
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Center (All Animals)</div>
+                        <div className="panel-heading">U24 Animals By Center</div>
                         <div className="panel-body">
                             <PieChart fieldName = "colony" demographics={demographics} cutout = "30%" />
                         </div>
@@ -184,7 +184,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Age (Living Animals)</div>
                         <div className="panel-body">
-                            <BarChart demographics={living} fieldName="Id/ageClass/label" groupField="gender/meaning" onClick={clickHandler} />
+                            <BarChart demographics={living} fieldName="Id/ageClass/label" groupField="gender/meaning" missingDataTerm="unknown" colorBy={ColorType.GROUP} showLegend={true} onClick={clickHandler} />
                         </div>
                     </div>
                 </div>
@@ -194,7 +194,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">U24 Births By Year</div>
                         <div className="panel-body">
-                            <BarChart demographics={birthData} fieldName="centerName" groupField="yearNo" indexAxis="x"/>
+                            <BarChart demographics={birthData} fieldName="yearNo" groupField="centerName" colorBy={ColorType.GROUP} showLegend={true} indexAxis="x"/>
                         </div>
                     </div>
                 </div>
@@ -202,7 +202,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">U24 Breeding Pairs</div>
                         <div className="panel-body">
-                            <BarChart demographics={breedingPairData} fieldName="centerName" groupField="yearNo" indexAxis="x" />
+                            <BarChart demographics={breedingPairData} fieldName="yearNo" groupField="centerName" colorBy={ColorType.GROUP} showLegend={true} indexAxis="x" />
                         </div>
                     </div>
                 </div>

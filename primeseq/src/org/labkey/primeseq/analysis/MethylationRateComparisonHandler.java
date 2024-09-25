@@ -143,13 +143,13 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
     public class Processor implements SequenceOutputProcessor
     {
         @Override
-        public void complete(PipelineJob job, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated, SequenceAnalysisJobSupport support) throws PipelineJobException
+        public void complete(JobContext ctx, List<SequenceOutputFile> inputs, List<SequenceOutputFile> outputsCreated) throws PipelineJobException
         {
             for (SequenceOutputFile so : outputsCreated)
             {
                 if (so.getFile().getName().endsWith(".bed") && METHYLATION_RATE_COMPARISON.equals(so.getCategory()))
                 {
-                    job.getLogger().debug("preparing JBrowse files: " + so.getFile().getName());
+                    ctx.getJob().getLogger().debug("preparing JBrowse files: " + so.getFile().getName());
 
                     JSONObject json = new JSONObject();
                     json.put("type", "JBrowse/View/Track/Wiggle/XYPlot");
@@ -157,7 +157,7 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
 
                     try
                     {
-                        JBrowseService.get().prepareOutputFile(job.getUser(), job.getLogger(), so.getRowid(), true, json);
+                        JBrowseService.get().prepareOutputFile(ctx.getJob().getUser(), ctx.getJob().getLogger(), so.getRowid(), true, json);
                     }
                     catch (IOException e)
                     {
