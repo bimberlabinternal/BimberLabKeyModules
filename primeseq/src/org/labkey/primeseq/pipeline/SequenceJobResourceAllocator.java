@@ -168,8 +168,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         // NOTE: STAR in particular needs more memory
         if (isCacheAlignerIndexesTask(job))
         {
-            job.getLogger().debug("setting memory to 24");
-            return 24;
+            job.getLogger().debug("setting memory to 36");
+            return 36;
         }
 
         if (isLuceneIndexJob(job))
