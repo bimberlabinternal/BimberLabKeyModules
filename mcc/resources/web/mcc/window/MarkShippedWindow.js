@@ -21,7 +21,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         var ctx = MCC.Utils.getMCCContext();
         Ext4.apply(this, {
             bodyStyle: 'padding: 5px;',
-            width: 500,
+            width: 650,
             modal: true,
             title: 'Mark ID Shipped',
             defaults: {
@@ -106,6 +106,10 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             width: 150
         },{
             xtype: 'displayfield',
+            value: 'Request ID',
+            width: 150
+        },{
+            xtype: 'displayfield',
             value: 'Keep Existing ID?',
             width: 150
         },{
@@ -146,7 +150,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         return {
             layout: {
                 type: 'table',
-                columns: 3
+                columns: 4
             },
             border: false,
             defaults: {
