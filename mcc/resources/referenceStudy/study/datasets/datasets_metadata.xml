@@ -558,6 +558,9 @@
             <column columnName="estimated">
                 <datatype>boolean</datatype>
             </column>
+            <column columnName="mccRequestId">
+                <datatype>integer</datatype>
+            </column>
         </columns>
         <tableTitle>Arrival</tableTitle>
     </table>

@@ -205,7 +205,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             schemaName: 'study',
             queryName: 'Demographics',
             filterArray: [LABKEY.Filter.create('lsid', lsids.join(';'), LABKEY.Filter.Types.IN)],
-            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/mccAlias/externalAlias,calculated_status,dam,sire,damMccAlias/externalAlias,sireMccAlias/externalAlias',
+            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/MostRecentArrival/MostRecentArrival,Id/mccAlias/externalAlias,calculated_status,dam,sire,damMccAlias/externalAlias,sireMccAlias/externalAlias',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
@@ -244,6 +244,26 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                             }]
                         });
                     }
+
+                    var shouldAddArrival = !row['Id/MostRecentArrival/MostRecentArrival'] ||
+                            row['Id/MostRecentArrival/MostRecentArrival'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
+                            row['Id/MostRecentArrival/mccRequestId'] !== requestId ||
+                            row.Id !== effectiveId;
+                    commands.push({
+                        command: 'insert',
+                        schemaName: 'study',
+                        containerPath: targetFolder,
+                        queryName: 'Arrival',
+                        rows: [{
+                            Id: row.Id,
+                            date: effectiveDate,
+                            source: row.colony,
+                            mccRequestId: requestId,
+                            qcstate: null,
+                            objectId: null,
+                            QCStateLabel: 'Completed'
+                        }]
+                    });
 
                     // If going to a new LK folder, we're creating a whole new record:
                     if (targetFolderId.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || effectiveId !== row.Id) {
