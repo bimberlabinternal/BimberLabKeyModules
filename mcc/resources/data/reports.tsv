@@ -5,6 +5,7 @@ Flags	General	query	Flags	TRUE		study	flags			StartDate	FALSE	FALSE		qcstate/pub
 demographics	General	query	Demographics	TRUE		study	demographics				FALSE	FALSE		qcstate/publicdata	This report displays the demographics data about each animal including species, sex and birth
 death	General	query	Death Records	TRUE		study	deaths			date	FALSE	FALSE		qcstate/publicdata	Death records
 departure	General	query	Shipments	TRUE		study	departure			date	FALSE	FALSE		qcstate/publicdata	Displays departure dates
+arrival	General	query	Arrivals	TRUE		study	arrival			date	FALSE	FALSE		qcstate/publicdata	Displays arrival dates
 obs	General	query	Observations	TRUE		study	clinical_observations			date	FALSE	FALSE		qcstate/publicdata	This report displays observations for the selected animal
 pedigreePlot	Genetics	report	Pedigree Plot	TRUE		study	pedigree		module:EHR/schemas/study/Pedigree/Pedigree.r		FALSE	FALSE		qcstate/publicdata	This report will generate a pedigree plot for the selected animal
 offspring	General	query	Offspring	TRUE		study	demographicsOffspring				FALSE	FALSE		qcstate/publicdata	This report displays pedigree data for animals, including parents, grandparents, siblings and offspring
