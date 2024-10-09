@@ -21,7 +21,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         var ctx = MCC.Utils.getMCCContext();
         Ext4.apply(this, {
             bodyStyle: 'padding: 5px;',
-            width: 500,
+            width: 650,
             modal: true,
             title: 'Mark ID Shipped',
             defaults: {
@@ -93,7 +93,14 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 handler: function(btn){
                     btn.up('window').close();
                 }
-            }]
+            }],
+            listeners: {
+                show: function(win){
+                    if (win.getHeight() > Ext4.getBody().getHeight()) {
+                        win.alignTo(Ext4.getBody(), 't-t?');
+                    }
+                }
+            }
         });
 
         this.callParent(arguments);
@@ -103,6 +110,10 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         var fields = [{
             xtype: 'displayfield',
             value: 'Animal ID',
+            width: 150
+        },{
+            xtype: 'displayfield',
+            value: 'Request ID',
             width: 150
         },{
             xtype: 'displayfield',
@@ -127,6 +138,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 xtype: 'checkbox',
                 itemId: 'usePreviousId-' + animalId,
                 checked: false,
+                style: 'margin-left: 5px;',
                 listeners: {
                     scope: this,
                     change: function (field, val) {
@@ -146,8 +158,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         return {
             layout: {
                 type: 'table',
-                columns: 3
+                columns: 4
             },
+            width: 600,
             border: false,
             defaults: {
                 style: 'padding:5px;',
@@ -201,7 +214,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             schemaName: 'study',
             queryName: 'Demographics',
             filterArray: [LABKEY.Filter.create('lsid', lsids.join(';'), LABKEY.Filter.Types.IN)],
-            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/mccAlias/externalAlias,calculated_status,dam,sire,damMccAlias/externalAlias,sireMccAlias/externalAlias',
+            columns: 'Id,gender,colony,species,birth,death,center,Id/MostRecentDeparture/MostRecentDeparture,Id/MostRecentArrival/MostRecentArrival,Id/mccAlias/externalAlias,calculated_status,dam,sire,damMccAlias/externalAlias,sireMccAlias/externalAlias',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
@@ -306,7 +319,13 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                                 objectId: null
                             }]
                         });
+                    }
 
+                    var shouldAddArrival = !row['Id/MostRecentArrival/MostRecentArrival'] ||
+                            row['Id/MostRecentArrival/MostRecentArrival'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
+                            row['Id/MostRecentArrival/mccRequestId'] !== requestId ||
+                            row.Id !== effectiveId;
+                    if (shouldAddArrival) {
                         // And also add an arrival record. NOTE: set the date after the departure to get status to update properly
                         var arrivalDate = new Date(effectiveDate).setMinutes(effectiveDate.getMinutes() + 1);
                         commands.push({
@@ -318,6 +337,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                                 Id: effectiveId,
                                 date: arrivalDate,
                                 source: centerName,
+                                mccRequestId: requestId,
                                 QCState: null,
                                 QCStateLabel: 'Completed',
                                 objectId: null
