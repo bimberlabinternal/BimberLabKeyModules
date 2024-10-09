@@ -131,6 +131,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 xtype: 'checkbox',
                 itemId: 'usePreviousId-' + animalId,
                 checked: false,
+                style: 'margin-left: 5px;',
                 listeners: {
                     scope: this,
                     change: function (field, val) {
@@ -152,6 +153,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 type: 'table',
                 columns: 4
             },
+            width: 600,
             border: false,
             defaults: {
                 style: 'padding:5px;',
