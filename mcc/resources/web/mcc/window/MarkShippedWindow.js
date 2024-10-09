@@ -93,7 +93,14 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 handler: function(btn){
                     btn.up('window').close();
                 }
-            }]
+            }],
+            listeners: {
+                show: function(win){
+                    if (win.getHeight() > Ext4.getBody().getHeight()) {
+                        win.alignTo(Ext4.getBody(), 't-t?');
+                    }
+                }
+            }
         });
 
         this.callParent(arguments);
