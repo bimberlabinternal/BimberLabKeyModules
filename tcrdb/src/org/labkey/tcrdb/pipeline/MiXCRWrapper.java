@@ -7,6 +7,8 @@ import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
+import org.labkey.api.util.Path;
+import org.labkey.vfs.FileLike;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -353,11 +355,10 @@ public class MiXCRWrapper extends AbstractCommandWrapper
 
     private File getJAR()
     {
-        File jar = new File(ModuleLoader.getInstance().getWebappDir(), "WEB-INF/lib");
-        jar = new File(jar, "mixcr.jar");
+        FileLike jar = ModuleLoader.getInstance().getWebappDir().resolveFile(new Path("WEB-INF","lib","mixcr.jar"));
         if (jar.exists())
         {
-            return jar;
+            return jar.toNioPathForRead().toFile();
         }
 
         return SequencePipelineService.get().getExeForPackage("mixcr", "mixcr.jar");
