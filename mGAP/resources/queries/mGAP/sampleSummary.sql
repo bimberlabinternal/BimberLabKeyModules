@@ -1,6 +1,6 @@
 SELECT
     t.subjectId,
-    t.mgapAlias,
+    am.externalAlias,
     t.readset,
     ss.gender,
     ss.species,
@@ -13,17 +13,17 @@ SELECT
 FROM (SELECT
         COALESCE(o.readset.subjectId, rt.subjectId) as subjectId,
          o.readset,
-         rt.mgapAlias,
 
          group_concat(rt.trackName, chr(10)) as tracks,
          count(distinct o.rowid) as total
 
       FROM sequenceanalysis.outputfiles o
-               FULL JOIN mgap.releaseTrackSubsets rt ON (o.readset.subjectId = rt.subjectId)
+      FULL JOIN mgap.releaseTrackSubsets rt ON (o.readset.subjectId = rt.subjectId)
       WHERE o.fileSets like '%mGAP%'
 
-      GROUP BY o.readset, rt.subjectId, o.readset.subjectId, rt.mgapAlias
+      GROUP BY o.readset, rt.subjectId, o.readset.subjectId
 
 ) t
 
 LEFT JOIN mgap.subjectsSource ss on (t.subjectId = ss.originalId)
+LEFT JOIN mgap.animalMapping am on (t.subjectId = am.subjectname)
