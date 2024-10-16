@@ -1,0 +1,23 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="" useColumnOrder="false" tableDbType="TABLE">
+                <tableTitle>Duplicated gVCFs</tableTitle>
+                <columns>
+                    <column columnName="readset">
+                        <columnTitle>Readset Id</columnTitle>
+                    </column>
+                    <column columnName="minRowId">
+                        <columnTitle>First Row Id</columnTitle>
+                    </column>
+                    <column columnName="minAnalysisId">
+                        <columnTitle>First Analysis Id</columnTitle>
+                    </column>
+                    <column columnName="totalOutputs">
+                        <columnTitle>Total gVCFs</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

@@ -1,0 +1,159 @@
+<script type="text/javascript" nonce="<%=scriptNonce%>">
+
+    Ext4.onReady(function (){
+        var webpart = <%=webpartContext%>;
+
+        Ext4.create('Ext.panel.Panel', {
+            renderTo: webpart.wrapperDivId,
+            border: false,
+            items: [{
+                xtype: 'panel',
+                border: false,
+                defaults: {
+                    border: false
+                },
+                items: [{
+                    html: 'This page contains links and reports designed to help manage mGAP data.'
+                }]
+            },{
+                xtype: 'ldk-navpanel',
+                style: 'padding-top: 20px;',
+                border: false,
+                sections: [{
+                    header: 'Upcoming Release',
+                    items: [{
+                        name: 'Release Instructions',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'wiki',
+                            queryName: 'page',
+                            name: 'mgapRelease'
+                        })
+                    },{
+                        name: 'gVCF/Track Summary',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'sampleSummary'
+                        })
+                    },{
+                        name: 'Tracks',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'releaseTracks'
+                        })
+                    },{
+                        name: 'Subjects Per Track',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'releaseTrackSubsets'
+                        })
+                    },{
+                        name: 'gVCFs',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'sequenceanalysis',
+                            queryName: 'outputfiles',
+                            'query.fileSets~contains': 'mgap'
+                        })
+                    },{
+                        name: 'mGAP Alias to True ID',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'animalMapping'
+                        })
+                    }]
+                },{
+                    header: 'Release QC',
+                    items: [{
+                        name: 'gVCFs Missing Demographics',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'sampleSummary',
+                            'query.missingDemographics~eq': '1'
+                        })
+                    },{
+                        name: 'gVCFs Missing mGAP Alias',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'sampleSummary',
+                            'query.mgapAlias~isblank': ''
+                        })
+                    }]
+                },{
+                    header: 'Prior Releases',
+                    items: [{
+                        name: 'Releases',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'variantCatalogReleases'
+                        })
+                    }, {
+                        name: 'Tracks In Each Release',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'tracksPerRelease'
+                        })
+                    }, {
+                        name: 'Subject Information Synced to mGAP',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'subjectDatasetsSource'
+                        })
+                    }]
+                },{
+                    header: 'Data and Processing',
+                    items: [{
+                        name: 'Readsets Without Alignments',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'sequenceanalysis',
+                            queryName: 'sequence_readsets',
+                            'query.totalAlignments~eq': 0,
+                            'query.totalForwardReads~isnonblank': null,
+                            'query.status~isblank': null,
+                            'query.isArchived~eq': 0,
+                            'query.sort': 'name',
+                            'query.maxRows': 250
+                        })
+                    },{
+                        name: 'Supplemental Pedigree (for non-ONPRC animals)',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'demographics'
+                        })
+                    }]
+                },{
+                    header: 'Data Archival',
+                    items: [{
+                        name: 'Readsets Not Archived to SRA',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                                    schemaName: 'sequenceanalysis',
+                                    queryName: 'sequence_readsets',
+                                    'query.totalForwardReads~isnonblank': null,
+                                    'query.isArchived~eq': 0
+                                }
+                        )
+                    },{
+                        name: 'BAM (not CRAM) Files',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                                    schemaName: 'sequenceanalysis',
+                                    queryName: 'outputfiles',
+                                    'query.dataid/DataFileUrl~contains': '.bam'
+                                }
+                        )
+                    },{
+                        name: 'Analyses Using Non-Passing Readsets',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'sequenceanalysis',
+                            queryName: 'sequence_analyses',
+                            'query.readset/status~isnonblank': null
+                        })
+                    },{
+                        name: 'Duplicate gVCFs',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'duplicategvcfs'
+                        })
+                    }]
+                }]
+            }]
+        });
+    });
+</script>

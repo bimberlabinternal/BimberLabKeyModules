@@ -7,12 +7,12 @@ SELECT
 
   CASE
     WHEN d.center IS NOT NULL THEN d.center
-    WHEN s.subjectname IS NOT NULL THEN 'ONPRC'
+    WHEN s.Id IS NOT NULL THEN 'ONPRC'
     ELSE NULL END as center,
   d.status as status,
   m.subjectname as originalId
 
 FROM mgap.animalMapping m
-LEFT JOIN laboratory.subjects s ON (m.subjectname = s.subjectname)
+LEFT JOIN "/Internal/PMR/".study.demographics s ON (m.subjectname = s.Id)
 LEFT JOIN mgap.demographics d ON (m.subjectname = d.subjectname)
-WHERE (s.subjectname IS NOT NULL OR d.subjectname IS NOT NULL)
+WHERE (s.Id IS NOT NULL OR d.subjectname IS NOT NULL)
