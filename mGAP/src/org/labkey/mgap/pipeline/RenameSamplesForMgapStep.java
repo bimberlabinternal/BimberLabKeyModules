@@ -33,6 +33,7 @@ import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
+import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.util.PageFlowUtil;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,7 +55,9 @@ import java.util.Set;
 
 public class RenameSamplesForMgapStep extends AbstractPipelineStep implements VariantProcessingStep
 {
-    public RenameSamplesForMgapStep(PipelineStepProvider provider, PipelineContext ctx)
+    public static String SAMPLE_EXCLUDE = "sampleNameToExclude";
+
+    public RenameSamplesForMgapStep(PipelineStepProvider<?> provider, PipelineContext ctx)
     {
         super(provider, ctx);
     }
@@ -62,7 +66,9 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
     {
         public Provider()
         {
-            super("RenameSamplesForMgap", "Rename Sample For mGAP", "RenameSamplesForMgapStep", "This will rename the samples in the VCF based on the mGAP animal mapping table.  If the VCF contains samples not found in this table it will throw an error.", List.of(), null, null);
+            super("RenameSamplesForMgap", "Rename Sample For mGAP", "RenameSamplesForMgapStep", "This will rename the samples in the VCF based on the mGAP animal mapping table.  If the VCF contains samples not found in this table it will throw an error.", List.of(
+                    ToolParameterDescriptor.create(SAMPLE_EXCLUDE, "Samples(s) To Exclude From Rename", "The following samples will be excluded from the analysis.", "sequenceanalysis-trimmingtextarea", null, null)
+            ), List.of("sequenceanalysis/field/TrimmingTextArea.js"), null);
         }
 
         @Override
@@ -144,8 +150,15 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             try (VCFFileReader reader = new VCFFileReader(currentVCF); VariantContextWriter writer = builder.build())
             {
                 VCFHeader header = reader.getFileHeader();
-                List<String> samples = header.getGenotypeSamples();
+                List<String> samples = new ArrayList<>(header.getSampleNamesInOrder());
                 getPipelineCtx().getLogger().debug("Original samples:" + StringUtils.join(samples, ","));
+
+                List<String> excludeFromRename = new ArrayList<>();
+                String toExcludeStr = StringUtils.trimToNull(getProvider().getParameterByName(SAMPLE_EXCLUDE).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+                if (toExcludeStr != null)
+                {
+                    excludeFromRename.addAll(Arrays.asList(toExcludeStr.split(";")));
+                }
 
                 List<String> remappedSamples = new ArrayList<>();
 
@@ -154,6 +167,10 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                     if (sampleMap.containsKey(sample))
                     {
                         remappedSamples.add(sampleMap.get(sample));
+                    }
+                    else if (excludeFromRename.contains(sample))
+                    {
+                        remappedSamples.add(sample);
                     }
                     else
                     {
@@ -248,6 +265,14 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
 
             Set<String> sampleNames = new HashSet<>(header.getSampleNamesInOrder());
             getPipelineCtx().getLogger().info("total samples in input VCF: " + sampleNames.size());
+
+            String toExcludeStr = StringUtils.trimToNull(getProvider().getParameterByName(SAMPLE_EXCLUDE).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), String.class, null));
+            if (toExcludeStr != null)
+            {
+                List<String> excludeFromRename = Arrays.asList(toExcludeStr.split(";"));
+                sampleNames.removeAll(excludeFromRename);
+                getPipelineCtx().getLogger().info("after exclusion: " + sampleNames.size());
+            }
 
             // Pass 1: match on proper ID:
             querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("subjectname"), sampleNames, CompareType.IN), sampleNames);
