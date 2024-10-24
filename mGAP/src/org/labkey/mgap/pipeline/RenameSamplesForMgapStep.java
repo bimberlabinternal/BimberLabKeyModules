@@ -30,7 +30,6 @@ import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractPipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.AbstractVariantProcessingStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
-import org.labkey.api.sequenceanalysis.pipeline.PipelineStep;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
@@ -44,7 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -242,8 +241,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         try (VCFFileReader reader = new VCFFileReader(input))
         {
             VCFHeader header = reader.getFileHeader();
-            List<String> subjects = header.getSampleNamesInOrder();
-            if (subjects.isEmpty())
+            if (header.getSampleNamesInOrder().isEmpty())
             {
                 return Collections.emptyMap();
             }
@@ -252,7 +250,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             getPipelineCtx().getLogger().info("total samples in input VCF: " + sampleNames.size());
 
             // Pass 1: match on proper ID:
-            querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("subjectname"), subjects, CompareType.IN), subjects);
+            querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("subjectname"), sampleNames, CompareType.IN), sampleNames);
 
             // Pass 2: add others using otherNames:
             List<String> missingSamples = new ArrayList<>(sampleNames);
@@ -260,7 +258,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             if (!missingSamples.isEmpty())
             {
                 getPipelineCtx().getLogger().debug("Querying " + missingSamples.size() + " samples using otherNames field for " + missingSamples.size() + " IDs");
-                querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("otherNames"), missingSamples, CompareType.CONTAINS_ONE_OF), subjects);
+                querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("otherNames"), missingSamples, CompareType.CONTAINS_ONE_OF), missingSamples);
             }
 
             getPipelineCtx().getLogger().info("total sample names to alias: " + sampleNameMap.size());
@@ -284,7 +282,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
         return sampleNameMap;
     }
 
-    private void querySampleBatch(Map<String, String> sampleNameMap, SimpleFilter filter, List<String> sampleNames)
+    private void querySampleBatch(Map<String, String> sampleNameMap, SimpleFilter filter, Collection<String> sampleNames)
     {
         final Map<String, String> subjectToOrigCase = new CaseInsensitiveHashMap<>();
         sampleNames.forEach(x -> {
