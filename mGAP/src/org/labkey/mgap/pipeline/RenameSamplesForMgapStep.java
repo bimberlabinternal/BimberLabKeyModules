@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class RenameSamplesForMgapStep extends AbstractPipelineStep implements VariantProcessingStep
@@ -295,7 +296,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             }
 
             //Now ensure we dont have duplicate mappings:
-            List<String> translated = new ArrayList<>(header.getSampleNamesInOrder().stream().map(sampleNameMap::get).toList());
+            List<String> translated = new ArrayList<>(header.getSampleNamesInOrder().stream().map(sampleNameMap::get).filter(Objects::nonNull).toList());
             Set<String> unique = new HashSet<>();
             List<String> duplicates = translated.stream().filter(o -> !unique.add(o)).toList();
             if (!duplicates.isEmpty())
