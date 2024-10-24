@@ -259,7 +259,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             missingSamples.removeAll(sampleNameMap.keySet());
             if (!missingSamples.isEmpty())
             {
-                getPipelineCtx().getLogger().debug("Querying " + missingSamples.size() + " samples using otherNames field");
+                getPipelineCtx().getLogger().debug("Querying " + missingSamples.size() + " samples using otherNames field for " + missingSamples.size() + " IDs");
                 querySampleBatch(sampleNameMap, new SimpleFilter(FieldKey.fromString("otherNames"), missingSamples, CompareType.CONTAINS_ONE_OF), subjects);
             }
 
@@ -301,6 +301,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
                 String subjectId = rs.getString(FieldKey.fromString("subjectname"));
                 if (subjectToOrigCase.containsKey(subjectId) && !subjectToOrigCase.get(subjectId).equals(subjectId))
                 {
+                    getPipelineCtx().getLogger().debug("Updating case for: " + subjectId + " to " + subjectToOrigCase.get(subjectId));
                     subjectId = subjectToOrigCase.get(subjectId);
                 }
 
@@ -327,6 +328,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
 
                             if (subjectToOrigCase.containsKey(name) && !subjectToOrigCase.get(name).equals(name))
                             {
+                                getPipelineCtx().getLogger().debug("Updating case for: " + name + " to " + subjectToOrigCase.get(name));
                                 name = subjectToOrigCase.get(name);
                             }
 
