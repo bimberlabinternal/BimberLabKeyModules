@@ -268,7 +268,7 @@ public class RenameSamplesForMgapStep extends AbstractPipelineStep implements Va
             sampleNames.removeAll(sampleNameMap.keySet());
             if (!sampleNames.isEmpty())
             {
-                throw new PipelineJobException("mGAP Aliases were not found for all IDs.  Missing: " + StringUtils.join(sampleNames, ", "));
+                throw new PipelineJobException("mGAP Aliases were not found for all IDs.  Missing: [" + StringUtils.join(sampleNames, ", ") + "]");
             }
 
             //Now ensure we dont have duplicate mappings:
