@@ -1,0 +1,37 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" hidden="true">
+    <columns>
+        <column name="Id"/>
+        <column name="gender"/>
+        <column name="species"/>
+        <column name="geographic_origin"/>
+        <column name="calculated_status"/>
+        <column name="birth"/>
+        <column name="Id/age/yearAndDays">
+            <properties>
+                <property name="columnTitle" value="Age"/>
+            </properties>
+        </column>
+        <column name="death"/>
+        <column name="Id/MostRecentWeight/MostRecentWeight">
+            <properties>
+                <property name="columnTitle" value="Current Weight (kg)"/>
+            </properties>
+        </column>
+        <column name="Id/parents/dam"/>
+        <column name="Id/parents/damType"/>
+        <column name="Id/parents/sire"/>
+        <column name="Id/parents/sireType"/>
+        <column name="Id/MostRecentWeight/MostRecentWeightDate">
+            <properties>
+                <property name="columnTitle" value="Weight Date"/>
+            </properties>
+        </column>
+        <column name="history"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+    <!--<filters>-->
+        <!--<filter column="qcstate/publicdata" operator="eq" value="true"/>-->
+    <!--</filters>-->
+</customView>
