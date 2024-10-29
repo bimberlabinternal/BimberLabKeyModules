@@ -1,18 +1,26 @@
 package org.labkey.mgap.query;
 
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.JdbcType;
+import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.gwt.client.FacetingBehaviorType;
 import org.labkey.api.ldk.table.ContainerScopedTable;
 import org.labkey.api.module.Module;
 import org.labkey.api.query.DefaultSchema;
+import org.labkey.api.query.DetailsURL;
+import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.QuerySchema;
 import org.labkey.api.query.SimpleUserSchema;
 import org.labkey.api.security.User;
+import org.labkey.api.util.logging.LogHelper;
 import org.labkey.mgap.mGAPSchema;
 
 /**
@@ -20,6 +28,8 @@ import org.labkey.mgap.mGAPSchema;
  */
 public class mGAPUserSchema extends SimpleUserSchema
 {
+    private static final Logger _log = LogHelper.getLogger(mGAPUserSchema.class, "mGAP User Schema");
+
     private mGAPUserSchema(User user, Container container, DbSchema schema)
     {
         super(mGAPSchema.NAME, null, user, container, schema);
@@ -56,6 +66,10 @@ public class mGAPUserSchema extends SimpleUserSchema
         {
             return createWrappedVariantTable(name, sourceTable, cf);
         }
+        else if (mGAPSchema.TABLE_RELEASE_TRACKS.equalsIgnoreCase(name))
+        {
+            return(customizeReleaseTracks(name, sourceTable, cf));
+        }
 
         return super.createWrappedTable(name, sourceTable, cf);
     }
@@ -63,5 +77,24 @@ public class mGAPUserSchema extends SimpleUserSchema
     private TableInfo createWrappedVariantTable(String name, TableInfo sourceTable, ContainerFilter cf)
     {
         return super.createWrappedTable(name, sourceTable, cf);
+    }
+
+    private TableInfo customizeReleaseTracks(String name, TableInfo sourceTable, ContainerFilter cf)
+    {
+        AbstractTableInfo ati = (AbstractTableInfo)super.createWrappedTable(name, sourceTable, cf);
+
+        String fieldName = "totalSamples";
+        if (ati.getColumn(fieldName) == null)
+        {
+            SQLFragment sql = new SQLFragment("(SELECT count(distinct t.subjectId) as total FROM " + mGAPSchema.NAME + "." + mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS + " t WHERE t.trackName = " + ExprColumn.STR_TABLE_ALIAS + ".trackName)");
+            ExprColumn col = new ExprColumn(ati, fieldName, sql, JdbcType.INTEGER, ati.getColumn("trackName"));
+            col.setLabel("# Samples");
+            col.setFacetingBehaviorType(FacetingBehaviorType.ALWAYS_OFF);
+            col.setDescription("This column shows the total number of registered subject IDs for this track");
+            col.setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=releaseTrackSubsets&query.trackName~eq=${trackName}", getContainer()));
+            ati.addColumn(col);
+        }
+
+        return ati;
     }
 }

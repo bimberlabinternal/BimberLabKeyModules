@@ -96,7 +96,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             }],
             listeners: {
                 show: function(win){
-                    if (win.getHeight() > Ext4.getBody().getHeight()) {
+                    if (win.getHeight() > window.visualViewport.height) {
                         win.alignTo(Ext4.getBody(), 't-t?');
                     }
                 }
