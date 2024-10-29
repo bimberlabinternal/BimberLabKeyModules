@@ -81,13 +81,13 @@ public class mGAPUserSchema extends SimpleUserSchema
 
     private TableInfo customizeReleaseTracks(String name, TableInfo sourceTable, ContainerFilter cf)
     {
-        AbstractTableInfo ati = (AbstractTableInfo)createWrappedTable(name, sourceTable, cf);
+        AbstractTableInfo ati = (AbstractTableInfo)super.createWrappedTable(name, sourceTable, cf);
 
         String fieldName = "totalSamples";
         if (ati.getColumn(fieldName) == null)
         {
             SQLFragment sql = new SQLFragment("(SELECT count(distinct t.subjectId) as total FROM " + mGAPSchema.NAME + "." + mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS + " t WHERE t.trackName = " + ExprColumn.STR_TABLE_ALIAS + ".trackName)");
-            ExprColumn col = new ExprColumn(ati, name, sql, JdbcType.INTEGER, ati.getColumn("trackName"));
+            ExprColumn col = new ExprColumn(ati, fieldName, sql, JdbcType.INTEGER, ati.getColumn("trackName"));
             col.setLabel("# Samples");
             col.setFacetingBehaviorType(FacetingBehaviorType.ALWAYS_OFF);
             col.setDescription("This column shows the total number of registered subject IDs for this track");
