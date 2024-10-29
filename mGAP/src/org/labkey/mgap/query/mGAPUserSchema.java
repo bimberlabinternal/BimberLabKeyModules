@@ -81,27 +81,20 @@ public class mGAPUserSchema extends SimpleUserSchema
 
     private TableInfo customizeReleaseTracks(String name, TableInfo sourceTable, ContainerFilter cf)
     {
-        if (sourceTable instanceof AbstractTableInfo ati)
-        {
-            String fieldName = "totalSamples";
-            if (ati.getColumn(fieldName) == null)
-            {
-                SQLFragment sql = new SQLFragment("(SELECT count(distinct t.subjectId) as total FROM " + mGAPSchema.NAME + "." + mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS + " t WHERE t.trackName = " + ExprColumn.STR_TABLE_ALIAS + ".trackName)");
-                ExprColumn col = new ExprColumn(ati, name, sql, JdbcType.INTEGER, ati.getColumn("trackName"));
-                col.setLabel("# Samples");
-                col.setFacetingBehaviorType(FacetingBehaviorType.ALWAYS_OFF);
-                col.setDescription("This column shows the total number of registered subject IDs for this track");
-                col.setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=releaseTrackSubsets&query.trackName~eq=${trackName}", getContainer()));
-                ati.addColumn(col);
-            }
+        AbstractTableInfo ati = (AbstractTableInfo)createWrappedTable(name, sourceTable, cf);
 
-            return createWrappedTable(name, ati, cf);
-        }
-        else
+        String fieldName = "totalSamples";
+        if (ati.getColumn(fieldName) == null)
         {
-            _log.error("mGapUserSchema.customizeReleaseTracks was passed a TableInfo that wasnt a AbstractTableInfo. Was: " + sourceTable.getClass().getName());
+            SQLFragment sql = new SQLFragment("(SELECT count(distinct t.subjectId) as total FROM " + mGAPSchema.NAME + "." + mGAPSchema.TABLE_RELEASE_TRACK_SUBSETS + " t WHERE t.trackName = " + ExprColumn.STR_TABLE_ALIAS + ".trackName)");
+            ExprColumn col = new ExprColumn(ati, name, sql, JdbcType.INTEGER, ati.getColumn("trackName"));
+            col.setLabel("# Samples");
+            col.setFacetingBehaviorType(FacetingBehaviorType.ALWAYS_OFF);
+            col.setDescription("This column shows the total number of registered subject IDs for this track");
+            col.setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=releaseTrackSubsets&query.trackName~eq=${trackName}", getContainer()));
+            ati.addColumn(col);
         }
 
-        return createWrappedTable(name, sourceTable, cf);
+        return ati;
     }
 }
