@@ -53,6 +53,7 @@
                     <column>releaseId</column>
                     <column>trackName</column>
                     <column>label</column>
+                    <column>species</column>
                     <column>totalSamples</column>
                     <column>category</column>
                     <column>url</column>
@@ -101,6 +102,7 @@
                     <column>releaseDate</column>
                     <column>vcfId/dataid/DataFileUrl</column>
                     <column>genomeId/name</column>
+                    <column>species</column>
                     <column>totalSubjects</column>
                     <column>totalVariants</column>
                     <column>dbSnpId</column>
