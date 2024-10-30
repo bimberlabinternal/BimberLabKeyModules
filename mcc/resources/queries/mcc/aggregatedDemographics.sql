@@ -26,9 +26,9 @@ SELECT
   o.infant_history,
   o.fertility_status,
   o.medical_history,
-  null as usage_current,
-  null as usage_future,
-  null as breeding_partner_id,
+  CAST(null AS VARCHAR) as usage_current,
+  CAST(null AS VARCHAR) as usage_future,
+  CAST(null AS VARCHAR) as breeding_partner_id,
   o.date_of_observations,
   d.container
 
@@ -75,9 +75,9 @@ SELECT
   o.infant_history,
   o.fertility_status,
   o.medical_history,
-  null as usage_current,
-  null as usage_future,
-  null as breeding_partner_id,
+  CAST(null AS VARCHAR) as usage_current,
+  CAST(null AS VARCHAR) as usage_future,
+  CAST(null AS VARCHAR) as breeding_partner_id,
   o.date_of_observations,
   d.container
 

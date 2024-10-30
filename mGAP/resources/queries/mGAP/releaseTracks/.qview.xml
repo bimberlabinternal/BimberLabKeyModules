@@ -5,6 +5,7 @@
         <column name="label"/>
         <column name="source"/>
         <column name="category"/>
+        <column name="totalSamples"/>
         <column name="url"/>
         <column name="vcfId"/>
         <column name="description"/>

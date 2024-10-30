@@ -1,0 +1,6 @@
+<webpart xmlns="http://labkey.org/data/xml/webpart" title="mGAP Data Dashboard">
+    <view name="mgapDataDashboard"/>
+    <locations>
+        <location name="body"/>
+    </locations>
+</webpart>
