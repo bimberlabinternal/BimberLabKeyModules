@@ -95,6 +95,15 @@
                 <isUserEditable>false</isUserEditable>
                 <columnTitle>Row Id</columnTitle>
             </column>
+            <column columnName="species">
+                <columnTitle>Species</columnTitle>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>species</fkTable>
+                    <fkColumnName>common_name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
             <column columnName="version">
                 <columnTitle>Version</columnTitle>
                 <nullable>false</nullable>
@@ -644,6 +653,15 @@
                 <columnTitle>Label</columnTitle>
                 <nullable>false</nullable>
             </column>
+            <column columnName="species">
+                <columnTitle>Species</columnTitle>
+                <fk>
+                    <fkDbSchema>laboratory</fkDbSchema>
+                    <fkTable>species</fkTable>
+                    <fkColumnName>common_name</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
+                </fk>
+            </column>
             <column columnName="source">
                 <columnTitle>Source</columnTitle>
                 <url>${url}</url>
@@ -669,11 +687,7 @@
                 <inputType>textarea</inputType>
             </column>
             <column columnName="isprimarytrack">
-                <columnTitle>Is Primary Track?</columnTitle>
-            </column>
-            <column columnName="mergepriority">
-                <columnTitle>Merge Priority Order</columnTitle>
-                <description>This order will be used for genotype priority order when merging to create the primary release VCF.  Lower numbers have higher priority.  Set to -1 to exclude this track when merging.</description>
+                <columnTitle>Is Primary Track For Species?</columnTitle>
             </column>
             <column columnName="skipvalidation">
                 <columnTitle>Skip Validation?</columnTitle>
@@ -831,7 +845,7 @@
                 <inputType>textarea</inputType>
             </column>
             <column columnName="isprimarytrack">
-                <columnTitle>Is Primary Track?</columnTitle>
+                <columnTitle>Is Primary Track For Species?</columnTitle>
                 <defaultValue>false</defaultValue>
             </column>
             <column columnName="container">
