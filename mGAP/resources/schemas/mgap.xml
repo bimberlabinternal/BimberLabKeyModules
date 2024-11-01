@@ -690,7 +690,7 @@
                 <columnTitle>Is Primary Track For Species?</columnTitle>
             </column>
             <column columnName="skipvalidation">
-                <columnTitle>Skip Validation?</columnTitle>
+                <columnTitle>Skip Annotation Checks?</columnTitle>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
