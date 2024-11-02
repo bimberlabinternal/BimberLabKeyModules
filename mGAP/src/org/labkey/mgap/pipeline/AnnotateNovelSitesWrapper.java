@@ -1,6 +1,7 @@
 package org.labkey.mgap.pipeline;
 
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.sequenceanalysis.run.AbstractDiscvrSeqWrapper;
 
@@ -15,7 +16,7 @@ public class AnnotateNovelSitesWrapper extends AbstractDiscvrSeqWrapper
         super(log);
     }
 
-    public File execute(File vcf, File referenceVcf, File fasta, String versionString, File vcfOutput, List<String> extraArgs) throws PipelineJobException
+    public File execute(File vcf, @Nullable File referenceVcf, File fasta, String versionString, File vcfOutput, List<String> extraArgs) throws PipelineJobException
     {
         List<String> args = new ArrayList<>(getBaseArgs());
         args.add("AnnotateNovelSites");
@@ -24,8 +25,16 @@ public class AnnotateNovelSitesWrapper extends AbstractDiscvrSeqWrapper
 
         args.add("-V");
         args.add(vcf.getPath());
-        args.add("-rv");
-        args.add(referenceVcf.getPath());
+
+        if (referenceVcf == null)
+        {
+            args.add("-rv");
+            args.add(referenceVcf.getPath());
+        }
+        else
+        {
+            args.add("--allow-missing-ref");
+        }
 
         args.add("-an");
         args.add("mGAPV");
