@@ -81,7 +81,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         public Provider()
         {
             super("GenerateMgapTracksStep", "Generate mGAP Tracks", "GenerateMgapTracksStep", "This will use the set of sample IDs from the table mgap.releaseTrackSubsets to subset the input VCF and produce one VCF per track. It will perform basic validation and also update mgap.releaseTracks.", Arrays.asList(
-                    ToolParameterDescriptor.create("species", "Version", "The species, which is used to filter tracks", "ldk-simplelabkeycombo", new JSONObject(){{
+                    ToolParameterDescriptor.create("species", "Species", "The species, which is used to filter tracks", "ldk-simplelabkeycombo", new JSONObject(){{
                         put("allowBlank", false);
                         put("doNotIncludeInTemplates", true);
                         put("width", 400);
@@ -205,33 +205,41 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
 
         // Prepare to annotate novel sites:
         Integer versionRowId = getProvider().getParameterByName(VERSION_ROWID).extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-        String version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("version"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(String.class);
-        if (version == null)
+        String version = null;
+        if (versionRowId != null)
         {
-            throw new PipelineJobException("Unable to find release for release: " + versionRowId);
+            version = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("version"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(String.class);
+            if (version == null)
+            {
+                throw new PipelineJobException("Unable to find release for release: " + versionRowId);
+            }
+
+            Integer referenceVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("sitesOnlyVcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
+            if (referenceVcfOutputId == null)
+            {
+                getPipelineCtx().getLogger().debug("Sites-only VCF not found, using primary VCF");
+                referenceVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("vcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
+            }
+
+            if (referenceVcfOutputId == null)
+            {
+                throw new PipelineJobException("Unable to find sites-only VCF for release: " + versionRowId);
+            }
+
+            SequenceOutputFile sitesOnly = SequenceOutputFile.getForId(referenceVcfOutputId);
+            if (sitesOnly == null)
+            {
+                throw new PipelineJobException("Unable to find sites-only VCF output file for fileId: " + referenceVcfOutputId);
+            }
+
+            support.cacheExpData(sitesOnly.getExpData());
+            support.cacheObject(SITES_ONLY_DATA, sitesOnly.getDataId());
+        }
+        else
+        {
+            support.cacheObject(SITES_ONLY_DATA, null);
         }
 
-        Integer referenceVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("sitesOnlyVcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
-        if (referenceVcfOutputId == null)
-        {
-            getPipelineCtx().getLogger().debug("Sites-only VCF not found, using primary VCF");
-            referenceVcfOutputId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("vcfId"), new SimpleFilter(FieldKey.fromString("rowId"), versionRowId), null).getObject(Integer.class);
-        }
-
-        if (referenceVcfOutputId == null)
-        {
-            throw new PipelineJobException("Unable to find sites-only VCF for release: " + versionRowId);
-        }
-
-        SequenceOutputFile sitesOnly = SequenceOutputFile.getForId(referenceVcfOutputId);
-        if (sitesOnly == null)
-        {
-            throw new PipelineJobException("Unable to find sites-only VCF output file for fileId: " + referenceVcfOutputId);
-        }
-
-        support.cacheExpData(sitesOnly.getExpData());
-
-        support.cacheObject(SITES_ONLY_DATA, sitesOnly.getDataId());
         support.cacheObject(PRIOR_RELEASE_LABEL, version);
     }
 
@@ -278,8 +286,11 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             extraArgs.add("--ignore-variants-starting-outside-interval");
         }
 
-        extraArgs.add("-dv");
-        extraArgs.add(priorReleaseLabel);
+        if (priorReleaseLabel != null)
+        {
+            extraArgs.add("-dv");
+            extraArgs.add(priorReleaseLabel);
+        }
 
         if (sitesOnlyVcf != null)
         {
