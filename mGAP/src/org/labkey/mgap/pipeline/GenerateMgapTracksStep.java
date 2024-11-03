@@ -247,7 +247,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
     {
         File refVcf = null;
         Integer sitesOnlyExpDataId = getPipelineCtx().getSequenceSupport().getCachedObject(SITES_ONLY_DATA, Integer.class);
-        if (sitesOnlyExpDataId == null)
+        if (sitesOnlyExpDataId != null)
         {
             refVcf = getPipelineCtx().getSequenceSupport().getCachedData(sitesOnlyExpDataId);
             if (!refVcf.exists())
