@@ -26,7 +26,7 @@ public class AnnotateNovelSitesWrapper extends AbstractDiscvrSeqWrapper
         args.add("-V");
         args.add(vcf.getPath());
 
-        if (referenceVcf == null)
+        if (referenceVcf != null)
         {
             args.add("-rv");
             args.add(referenceVcf.getPath());
