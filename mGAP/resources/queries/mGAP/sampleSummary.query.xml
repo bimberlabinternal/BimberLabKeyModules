@@ -2,8 +2,15 @@
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="" tableDbType="TABLE">
+                <javaCustomizer class="org.labkey.mgap.query.SampleSummaryCustomizer"/>
                 <pkColumnName>subjectName</pkColumnName>
                 <tableTitle>mGAP Subject/gVCF Summary</tableTitle>
+                <columns>
+                    <column columnName="aliasSubjectName">
+                        <columnTitle>SubjectId Listed In Alias Table</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                </columns>
             </table>
         </tables>
     </metadata>

@@ -8,7 +8,8 @@ SELECT
     ss.center,
     t.tracks,
     t.total,
-    CASE WHEN ss.originalId IS NULL OR ss.gender IS NULL or ss.species IS NULL or ss.center IS NULL THEN true ELSE false END as missingDemographics
+    CASE WHEN ss.originalId IS NULL OR ss.gender IS NULL or ss.species IS NULL or ss.center IS NULL THEN true ELSE false END as missingDemographics,
+    am.subjectname as aliasSubjectName
 
 FROM (SELECT
         COALESCE(o.readset.subjectId, rt.subjectId) as subjectId,
