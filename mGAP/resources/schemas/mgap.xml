@@ -668,7 +668,7 @@
             </column>
             <column columnName="category">
                 <columnTitle>Category</columnTitle>
-                <nullable>false</nullable>
+                <nullable>true</nullable>
             </column>
             <column columnName="url">
                 <columnTitle>URL</columnTitle>
