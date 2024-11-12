@@ -76,7 +76,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.74;
+        return 16.75;
     }
 
     @Override

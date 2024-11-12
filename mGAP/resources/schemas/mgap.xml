@@ -692,6 +692,17 @@
             <column columnName="skipvalidation">
                 <columnTitle>Skip Annotation Checks?</columnTitle>
             </column>
+            <column columnName="shouldindex">
+                <columnTitle>Should Include Lucene Index?</columnTitle>
+            </column>
+            <column columnName="vcfIndexId">
+                <columnTitle>Lucene Index Id</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>
@@ -847,6 +858,17 @@
             <column columnName="isprimarytrack">
                 <columnTitle>Is Primary Track For Species?</columnTitle>
                 <defaultValue>false</defaultValue>
+            </column>
+            <column columnName="shouldindex">
+                <columnTitle>Should Include Lucene Index?</columnTitle>
+            </column>
+            <column columnName="vcfIndexId">
+                <columnTitle>Lucene Index Id</columnTitle>
+                <fk>
+                    <fkDbSchema>sequenceanalysis</fkDbSchema>
+                    <fkTable>outputfiles</fkTable>
+                    <fkColumnName>rowid</fkColumnName>
+                </fk>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
