@@ -852,7 +852,7 @@ public class PrimeseqController extends SpringActionController
                 ExpData d = so.getExpData();
                 d.setDataFileURI(children[0].toURI());
 
-                //d.save(getUser());
+                d.save(getUser());
             });
 
             return true;
