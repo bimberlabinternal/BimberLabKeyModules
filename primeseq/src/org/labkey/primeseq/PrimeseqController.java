@@ -33,7 +33,10 @@ import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.ContainerType;
 import org.labkey.api.data.DbScope;
 import org.labkey.api.data.SQLFragment;
+import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.SqlExecutor;
+import org.labkey.api.data.TableSelector;
+import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipeRoot;
@@ -42,10 +45,13 @@ import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.pipeline.PipelineStatusFile;
 import org.labkey.api.pipeline.PipelineUrls;
+import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryService;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
+import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.HasJobParams;
 import org.labkey.api.sequenceanalysis.pipeline.JobResourceSettings;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
@@ -793,6 +799,76 @@ public class PrimeseqController extends SpringActionController
         public void setRestartJobs(boolean restartJobs)
         {
             _restartJobs = restartJobs;
+        }
+    }
+
+    @RequiresSiteAdmin
+    public static class FixSbtAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Fix SBT Errors");
+
+            return new HtmlView(HtmlString.of("This will update filepaths on SBT outputs.  Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            new TableSelector(QueryService.get().getUserSchema(getUser(), getContainer(), "sequenceanalysis").getTable("outputfiles"), PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("category"), "SBT Results"), null).forEachResults(rs -> {
+                SequenceOutputFile so = SequenceOutputFile.getForId(rs.getInt(FieldKey.fromString("rowid")));
+
+                File f = so.getFile();
+                if (f.exists())
+                {
+                    return;
+                }
+
+                File root = f.getParentFile().getParentFile();
+                File [] dirs = root.listFiles(fn -> {
+                    return fn.isDirectory() & !fn.getName().equalsIgnoreCase("Shared");
+                });
+
+                if (dirs == null || dirs.length == 0)
+                {
+                    _log.error("Unable to file directory for: " + f.getPath());
+                    return;
+                }
+
+                File parent = new File(dirs[0], "Alignment");
+                File [] children = parent.listFiles(fn -> {
+                    return fn.getName().endsWith(".sbt_hits.txt.gz");
+                });
+
+                if (children == null || children.length != 1)
+                {
+                    _log.error("Unable to file child under: " + parent.getPath());
+                    return;
+                }
+
+                _log.info("Found: " + children[0].getPath());
+
+                ExpData d = so.getExpData();
+                d.setDataFileURI(children[0].toURI());
+
+                //d.save(getUser());
+            });
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @NotNull
+        @Override
+        public URLHelper getSuccessURL(Object o)
+        {
+            return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
         }
     }
 }
