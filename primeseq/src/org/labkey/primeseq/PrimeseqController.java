@@ -37,6 +37,8 @@ import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.SqlExecutor;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
+import org.labkey.api.exp.api.ExpRun;
+import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.module.Module;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipeRoot;
@@ -825,7 +827,10 @@ public class PrimeseqController extends SpringActionController
                     return;
                 }
 
-                File root = f.getParentFile().getParentFile();
+                ExpRun run = ExperimentService.get().getExpRun(so.getRunId());
+                PipelineStatusFile sf = PipelineService.get().getStatusFile(run.getJobId());
+                File logFile = new File(sf.getFilePath());
+                File root = logFile.getParentFile();
                 File [] dirs = root.listFiles(fn -> {
                     return fn.isDirectory() & !fn.getName().equalsIgnoreCase("Shared");
                 });
