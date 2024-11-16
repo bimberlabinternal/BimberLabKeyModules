@@ -60,6 +60,9 @@
                     <column>source</column>
                     <column>description</column>
                     <column>isprimarytrack</column>
+                    <column>shouldindex</column>
+                    <column>vcfIndexId/dataid/DataFileUrl</column>
+                    <column>vcfIndexId/library_id/name</column>
                     <column>vcfId/dataid/DataFileUrl</column>
                     <column>vcfId/library_id/name</column>
                 </sourceColumns>
@@ -67,6 +70,7 @@
             <destination schemaName="mGAP" queryName="tracksPerRelease" bulkLoad="true" targetOption="truncate">
                 <columnTransforms>
                     <column source="vcfId/dataid/DataFileUrl" target="vcfId" transformClass="org.labkey.mgap.columnTransforms.TrackOutputFileTransform" />
+                    <column source="vcfIndexId/dataid/DataFileUrl" target="vcfIndexId" transformClass="org.labkey.mgap.columnTransforms.TrackOutputFileTransform" />
                 </columnTransforms>
             </destination>
         </transform>
