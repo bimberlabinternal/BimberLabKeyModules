@@ -12,22 +12,28 @@ Ext4.define('mGAP.window.ReleaseWindow', {
                 schemaName: 'mgap',
                 queryName: 'releaseTracks',
                 scope: this,
-                columns: 'vcfId,trackName,vcfId/library_id,isprimarytrack',
+                columns: 'vcfId,species,trackName,vcfId/library_id,isprimarytrack',
                 failure: LDK.Utils.getErrorCallback(),
                 success: function (results) {
                     Ext4.Msg.hide();
                     var outputFiles = [];
-                    var distinctGenomes = [];
+                    var distinctGenomesBySpecies = {};
                     Ext4.Array.forEach(results.rows, function(r){
-                        if (r.vcfId) {
-                            outputFiles.push(r.vcfId);
-
-                            if (r['vcfId/library_id']) {
-                                distinctGenomes.push(r['vcfId/library_id']);
-                            }
+                        if (!r.vcfId) {
+                            Ext4.Msg.alert('Error', 'Track lacks VCF ID: ' + r.trackName);
+                            return false;
                         }
-                        else if (!r['isprimarytrack']) {
-                            console.error('Track lacks VCF ID: ' + r.trackName);
+
+                        if (!r.species) {
+                            Ext4.Msg.alert('Error', 'Track lacks species: ' + r.trackName);
+                            return false;
+                        }
+
+                        outputFiles.push(r.vcfId);
+
+                        distinctGenomesBySpecies[r.species] = distinctGenomesBySpecies[r.species] || [];
+                        if (r['vcfId/library_id']) {
+                            distinctGenomesBySpecies[r.species].push(r['vcfId/library_id']);
                         }
                     }, this);
 
@@ -36,9 +42,12 @@ Ext4.define('mGAP.window.ReleaseWindow', {
                         return;
                     }
 
-                    distinctGenomes = Ext4.Array.unique(distinctGenomes);
-                    if (distinctGenomes.length !== 1){
-                        Ext4.Msg.alert('Error', 'All files must use the same genome.  Genomes found: ' + distinctGenomes.length);
+                    for (sn in Ext4.Object.getKeys(distinctGenomesBySpecies)) {
+                        var genomes = Ext4.Array.unique(distinctGenomesBySpecies[sn]);
+                        if (genomes.length !== 1){
+                            Ext4.Msg.alert('Error', 'All files must use the same genome.  Genomes found for species ' + sn + ': ' + genomes.length);
+                            return;
+                        }
                     }
 
                     LABKEY.Ajax.request({
@@ -68,7 +77,7 @@ Ext4.define('mGAP.window.ReleaseWindow', {
                                             title: results.name,
                                             handlerConfig: results,
                                             toolParameters: results.toolParameters,
-                                            libraryId: distinctGenomes.length == 1 ? distinctGenomes[0] : null
+                                            libraryId: distinctGenomes.length === 1 ? distinctGenomes[0] : null
                                         }).show();
                                     }
                                 }

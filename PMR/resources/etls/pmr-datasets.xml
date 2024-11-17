@@ -141,6 +141,8 @@
                     <column>relationship</column>
                     <column>method</column>
                     <column>objectid</column>
+                    <column>created</column>
+                    <column>modified</column>
                 </sourceColumns>
                 <sourceFilters>
                     <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
@@ -171,6 +173,8 @@
                     <column>conception</column>
                     <column>conceptualDay</column>
                     <column>objectid</column>
+                    <column>created</column>
+                    <column>modified</column>
                 </sourceColumns>
                 <sourceFilters>
                     <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>

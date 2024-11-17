@@ -76,7 +76,20 @@ public class mGAPUserSchema extends SimpleUserSchema
 
     private TableInfo createWrappedVariantTable(String name, TableInfo sourceTable, ContainerFilter cf)
     {
-        return super.createWrappedTable(name, sourceTable, cf);
+        AbstractTableInfo ati = (AbstractTableInfo)super.createWrappedTable(name, sourceTable, cf);
+
+        String fieldName = "versionAndSpecies";
+        if (ati.getColumn(fieldName) == null)
+        {
+            SQLFragment sql = new SQLFragment("(" + ati.getSqlDialect().concatenate(ExprColumn.STR_TABLE_ALIAS + ".species", "': '", ExprColumn.STR_TABLE_ALIAS + ".version") + ")");
+            ExprColumn col = new ExprColumn(ati, fieldName, sql, JdbcType.VARCHAR, ati.getColumn("version"), ati.getColumn("species"));
+            col.setLabel("Version and Species");
+            col.setFacetingBehaviorType(FacetingBehaviorType.ALWAYS_OFF);
+            col.setDescription("This column shows the version and species");
+            ati.addColumn(col);
+        }
+
+        return ati;
     }
 
     private TableInfo customizeReleaseTracks(String name, TableInfo sourceTable, ContainerFilter cf)

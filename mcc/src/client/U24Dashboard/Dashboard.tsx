@@ -63,24 +63,29 @@ export function Dashboard() {
             scope: this
         });
 
-        Query.selectRows({
-            containerPath: requestContainerPath,
-            schemaName: 'mcc',
-            queryName: 'requestScores',
-            columns: 'requestId/status',
-            success: function(results) {
-                if (isApiSubscribed) {
-                    setRequestRows(results.rows);
-                }
-            },
-            failure: function(response) {
-                if (isApiSubscribed) {
-                    alert('There was an error loading data');
-                    console.error(response);
-                }
-            },
-            scope: this
-        });
+        if (ctx.hasRequestReadPermission) {
+            Query.selectRows({
+                containerPath: requestContainerPath,
+                schemaName: 'mcc',
+                queryName: 'requestScores',
+                columns: 'requestId/status',
+                success: function (results) {
+                    if (isApiSubscribed) {
+                        setRequestRows(results.rows);
+                    }
+                },
+                failure: function (response) {
+                    if (isApiSubscribed) {
+                        alert('There was an error loading data');
+                        console.error(response);
+                    }
+                },
+                scope: this
+            });
+        }
+        else {
+            setRequestRows([])
+        }
 
         Query.selectRows({
             containerPath: containerPath,

@@ -3,12 +3,17 @@ package org.labkey.primeseq.pipeline;
 import org.json.JSONObject;
 import org.labkey.api.data.Container;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.pipeline.PipeRoot;
+import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.JobResourceSettings;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.primeseq.PrimeseqModule;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by bimber on 9/30/2016.
@@ -42,5 +47,38 @@ public class ExacloudResourceSettings implements JobResourceSettings
     public boolean isAvailable(Container c)
     {
         return c.getActiveModules().contains(ModuleLoader.getInstance().getModule(PrimeseqModule.class));
+    }
+
+    @Override
+    public Collection<String> getDockerVolumes(Container c)
+    {
+        Set<String> volumes = new HashSet<>();
+        volumes.add("/home/groups/prime-seq");
+        volumes.add("/home/exacloud/gscratch");
+
+        PipeRoot pr = PipelineService.get().findPipelineRoot(c);
+        if (pr != null && pr.getRootPath().exists())
+        {
+            if (pr.getRootPath().getPath().startsWith("/home/groups/"))
+            {
+                String folderName = pr.getRootPath().getPath().replaceAll("^/home/groups/", "").split("/")[0];
+                volumes.add("/home/groups/" + folderName);
+            }
+        }
+
+        if (c.isWorkbook())
+        {
+            PipeRoot pr2 = PipelineService.get().findPipelineRoot(c.getParent());
+            if (pr2 != null && pr2.getRootPath().exists())
+            {
+                if (pr2.getRootPath().getPath().startsWith("/home/groups/"))
+                {
+                    String folderName = pr2.getRootPath().getPath().replaceAll("^/home/groups/", "").split("/")[0];
+                    volumes.add("/home/groups/" + folderName);
+                }
+            }
+        }
+
+        return volumes;
     }
 }
