@@ -58,6 +58,7 @@ import org.labkey.api.query.QueryService;
 import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
+import org.labkey.api.resource.Resource;
 import org.labkey.api.security.AuthenticationManager;
 import org.labkey.api.security.Group;
 import org.labkey.api.security.GroupManager;
@@ -224,7 +225,7 @@ public class mGAPController extends SpringActionController
                         }
 
                         DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=userRequests&query.viewName=Pending Requests", c);
-                        mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString()+ "\">Click here to view/approve this request</a>");
+                        mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString() + "\">Click here to view/approve this request</a>");
                         mail.setFrom(getReplyEmail(getContainer()));
                         mail.setSubject("mGap Account Request");
                         mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
@@ -412,13 +413,13 @@ public class mGAPController extends SpringActionController
                     User u;
                     if (map.get("userId") != null)
                     {
-                        Integer userId = (Integer)map.get("userId");
+                        Integer userId = (Integer) map.get("userId");
                         u = UserManager.getUser(userId);
                         existingUsersGivenAccess.add(u);
                     }
                     else
                     {
-                        ValidEmail ve = new ValidEmail((String)map.get("email"));
+                        ValidEmail ve = new ValidEmail((String) map.get("email"));
                         u = UserManager.getUser(ve);
                         if (u != null)
                         {
@@ -428,8 +429,8 @@ public class mGAPController extends SpringActionController
                         {
                             SecurityManager.NewUserStatus st = SecurityManager.addUser(ve, getUser());
                             u = st.getUser();
-                            u.setFirstName((String)map.get("firstName"));
-                            u.setLastName((String)map.get("lastName"));
+                            u.setFirstName((String) map.get("firstName"));
+                            u.setLastName((String) map.get("lastName"));
                             UserManager.updateUser(getUser(), u);
 
                             if (st.isLdapOrSsoEmail())
@@ -539,7 +540,7 @@ public class mGAPController extends SpringActionController
             return null;
         }
 
-        Container rowContainer = ContainerManager.getForId((String)row.get("container"));
+        Container rowContainer = ContainerManager.getForId((String) row.get("container"));
         if (rowContainer == null)
         {
             errors.reject(ERROR_MSG, "Unknown row container: " + form.getReleaseId());
@@ -555,7 +556,7 @@ public class mGAPController extends SpringActionController
 
     private static SequenceOutputFile getOutputFile(Map<String, Object> row, ReleaseForm form, Errors errors)
     {
-        SequenceOutputFile so = SequenceOutputFile.getForId((Integer)row.get("vcfId"));
+        SequenceOutputFile so = SequenceOutputFile.getForId((Integer) row.get("vcfId"));
         if (so == null)
         {
             errors.reject(ERROR_MSG, "Unknown VCF file ID: " + form.getReleaseId());
@@ -590,7 +591,7 @@ public class mGAPController extends SpringActionController
             }
 
             Set<File> toZip = new HashSet<>();
-            String zipName = "mGap_VariantCatalog_v" + FileUtil.makeLegalName((String)row.get("version"));
+            String zipName = "mGap_VariantCatalog_v" + FileUtil.makeLegalName((String) row.get("version"));
             zipName = zipName.replaceAll(" ", "_");
 
             toZip.add(so.getFile());
@@ -598,7 +599,7 @@ public class mGAPController extends SpringActionController
 
             if (form.getIncludeGenome())
             {
-                ReferenceGenome genome = SequenceAnalysisService.get().getReferenceGenome((Integer)row.get("genomeId"), getUser());
+                ReferenceGenome genome = SequenceAnalysisService.get().getReferenceGenome((Integer) row.get("genomeId"), getUser());
                 if (genome == null)
                 {
                     errors.reject(ERROR_MSG, "Unknown genome: " + row.get("genomeId"));
@@ -969,7 +970,7 @@ public class mGAPController extends SpringActionController
             String species = StringUtils.trimToNull(form.getSpecies());
             if (jbrowseDatabaseId == null)
             {
-                jbrowseDatabaseId = ctx.getString("human".equals(species) ? "mgapJBrowseHuman": "mgapJBrowse");
+                jbrowseDatabaseId = ctx.getString("human".equals(species) ? "mgapJBrowseHuman" : "mgapJBrowse");
             }
 
             if (jbrowseDatabaseId == null)
@@ -1281,6 +1282,73 @@ public class mGAPController extends SpringActionController
         public URLHelper getSuccessURL(Object o)
         {
             return PageFlowUtil.urlProvider(PipelineUrls.class).urlBegin(getContainer());
+        }
+    }
+
+    @RequiresPermission(AdminPermission.class)
+    public static class ImportDataAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            setTitle("Import mGAP Reference Data");
+
+            return HtmlView.of("This will import default values for reference tables. Do you want to continue?");
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @Override
+        public @NotNull URLHelper getSuccessURL(Object o)
+        {
+            return getContainer().getStartURL(getUser());
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            Resource r = ModuleLoader.getInstance().getModule(mGAPModule.class).getModuleResource(Path.parse("data/species.tsv"));
+            if (!r.exists())
+            {
+                throw new IllegalStateException("Unable to find species.tsv");
+            }
+
+            List<Map<String, Object>> toAdd = new ArrayList<>();
+            try (CSVReader reader = new CSVReader(Readers.getReader(r.getInputStream()), '\t'))
+            {
+                String[] line;
+                while ((line = reader.readNext()) != null)
+                {
+                    if (line[0].equals("common_name"))
+                    {
+                        continue;
+                    }
+
+                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                    row.put("common_name", line[0]);
+                    row.put("scientific_name", line[1]);
+                    row.put("mhc_prefix", line[2]);
+
+                    toAdd.add(row);
+                }
+            }
+
+            UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), "laboratory");
+            TableInfo ti = us.getTable("species");
+            ti.getUpdateService().truncateRows(getUser(), getContainer(), null, null);
+
+            BatchValidationException bve = new BatchValidationException();
+            ti.getUpdateService().insertRows(getUser(), getContainer(), toAdd, bve, null, null);
+            if (bve.hasErrors())
+            {
+                throw bve;
+            }
+
+            return true;
         }
     }
 }

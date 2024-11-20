@@ -57,7 +57,6 @@ import org.labkey.mgap.pipeline.RenameSamplesForMgapStep;
 import org.labkey.mgap.pipeline.SampleSpecificGenotypeFiltrationStep;
 import org.labkey.mgap.pipeline.VcfComparisonStep;
 import org.labkey.mgap.pipeline.mGapReleaseAlleleFreqStep;
-import org.labkey.mgap.pipeline.mGapReleaseAnnotateNovelSitesStep;
 import org.labkey.mgap.pipeline.mGapReleaseComparisonStep;
 import org.labkey.mgap.pipeline.mGapReleaseGenerator;
 import org.labkey.mgap.query.mGAPUserSchema;
@@ -77,7 +76,7 @@ public class mGAPModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 16.73;
+        return 16.75;
     }
 
     @Override
@@ -141,7 +140,6 @@ public class mGAPModule extends ExtendedSimpleModule
                 SequencePipelineService.get().registerPipelineStep(new VcfComparisonStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseComparisonStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new SampleSpecificGenotypeFiltrationStep.Provider());
-                SequencePipelineService.get().registerPipelineStep(new mGapReleaseAnnotateNovelSitesStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new GenerateMgapTracksStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new IndexVariantsForMgapStep.Provider());
                 SequencePipelineService.get().registerPipelineStep(new mGapReleaseAlleleFreqStep.Provider());
