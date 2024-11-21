@@ -3,6 +3,7 @@
         <column name="rowid"/>
         <column name="trackName"/>
         <column name="label"/>
+        <column name="species"/>
         <column name="source"/>
         <column name="category"/>
         <column name="totalSamples"/>
@@ -10,7 +11,6 @@
         <column name="vcfId"/>
         <column name="description"/>
         <column name="isprimarytrack"/>
-        <column name="mergepriority"/>
         <column name="skipvalidation"/>
         <column name="vcfId/container/Name">
             <properties>

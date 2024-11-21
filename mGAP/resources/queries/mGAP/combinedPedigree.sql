@@ -1,12 +1,12 @@
 SELECT
-  s.subjectname,
+  s.Id as subjectname,
   s.gender,
-  s.mother as dam,
-  s.father as sire,
+  s.Id.parents.dam as dam,
+  s.Id.parents.sire as sire,
   s.species,
-  s.geographic_origin,
+  s.geographic_origin
 
-FROM laboratory.subjects s
+FROM "/Internal/PMR/".study.demographics s
 
 UNION ALL
 
@@ -19,4 +19,4 @@ SELECT
     null as geographic_origin
 
 FROM mgap.demographics d
-WHERE d.subjectname NOT IN (SELECT DISTINCT s.subjectname FROM laboratory.subjects s)
+WHERE d.subjectname NOT IN (SELECT DISTINCT s.Id FROM "/Internal/PMR/".study.demographics s)

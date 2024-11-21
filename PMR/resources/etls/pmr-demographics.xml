@@ -17,6 +17,8 @@
                     <column>calculated_status</column>
                     <column>QCState/Label</column>
                     <column>objectid</column>
+                    <column>created</column>
+                    <column>modified</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="demographics" targetOption="truncate" bulkLoad="true" batchSize="2500">

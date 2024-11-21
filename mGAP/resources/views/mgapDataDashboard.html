@@ -76,6 +76,13 @@
                             queryName: 'sampleSummary',
                             'query.externalAlias~isblank': ''
                         })
+                    },{
+                        name: 'gVCFs With SubjectId / Case-sensitive Difference',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'subjectCaseMismatch',
+                            'query.externalAlias~isnonblank': ''
+                        })
                     }]
                 },{
                     header: 'Prior Releases',

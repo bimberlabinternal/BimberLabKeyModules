@@ -56,6 +56,7 @@ import org.labkey.mcc.security.MccRabReviewPermission;
 import org.labkey.mcc.security.MccRabReviewerRole;
 import org.labkey.mcc.security.MccRequestAdminPermission;
 import org.labkey.mcc.security.MccRequesterRole;
+import org.labkey.mcc.security.MccViewRequestsPermission;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -109,6 +110,7 @@ public class MccModule extends ExtendedSimpleModule
 
         Container requestContainer = MccManager.get().getMCCRequestContainer(context.getContainer());
         ret.put("hasRequestAdminPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRequestAdminPermission.class));
+        ret.put("hasRequestReadPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccViewRequestsPermission.class));
         ret.put("hasRabPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccRabReviewPermission.class));
         ret.put("hasFinalDecisionPermission", requestContainer != null && requestContainer.hasPermission(context.getUser(), MccFinalReviewPermission.class));
 
