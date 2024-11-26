@@ -18,4 +18,4 @@ DOCKER=/opt/acc/sbin/exadocker
 #docker build -q -t combp $1
 #docker pull bbimber/combpdocker
 
-sudo $DOCKER run --rm=true -v "${DATA_DIR}:/data" -v "${OUT_DIR}:/outDir" bbimber/combpdocker comb-p pipeline -c 5 --dist $DIST --step $STEP --seed $SEED -p /outDir/${OUT_PREFIX} /data/${INPUT_FILE}
+$DOCKER run --rm=true -v "${DATA_DIR}:/data" -v "${OUT_DIR}:/outDir" bbimber/combpdocker comb-p pipeline -c 5 --dist $DIST --step $STEP --seed $SEED -p /outDir/${OUT_PREFIX} /data/${INPUT_FILE}
