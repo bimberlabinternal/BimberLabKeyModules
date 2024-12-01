@@ -55,6 +55,7 @@ public class ExacloudResourceSettings implements JobResourceSettings
         Set<String> volumes = new HashSet<>();
         volumes.add("/home/groups/prime-seq");
         volumes.add("/home/exacloud/gscratch");
+        volumes.add("/mnt/scratch");
 
         PipeRoot pr = PipelineService.get().findPipelineRoot(c);
         if (pr != null && pr.getRootPath().exists())
