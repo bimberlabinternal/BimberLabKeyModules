@@ -83,7 +83,7 @@ public class ExacloudResourceSettings implements JobResourceSettings
         if (input.getPath().startsWith("/home/groups/"))
         {
             String folderName = input.getPath().replaceAll("^/home/groups/", "").split("/")[0];
-            return new File("/home/groups/" + folderName);
+            return new File("/home/groups/", folderName);
         }
 
         return input;
@@ -92,6 +92,7 @@ public class ExacloudResourceSettings implements JobResourceSettings
     @Override
     public @Nullable File inferDockerVolume(File input)
     {
+        input = input.isDirectory() ? input : input.getParentFile();
         if (input.getPath().startsWith("/home/exacloud/gscratch"))
         {
             return new File("/home/exacloud/gscratch");
