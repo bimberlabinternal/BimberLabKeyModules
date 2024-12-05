@@ -29,18 +29,19 @@ import org.labkey.api.resource.Resource;
 import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
+import org.labkey.api.sequenceanalysis.pipeline.PipelineOutputTracker;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandWrapper;
 import org.labkey.api.sequenceanalysis.run.CommandWrapper;
+import org.labkey.api.sequenceanalysis.run.DockerWrapper;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.Pair;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.primeseq.PrimeseqModule;
-import org.labkey.primeseq.pipeline.CombpRunner;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -487,8 +488,7 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
                         Double seed = ctx.getParams().optDouble("seed", 0.05);
                         Integer step = ctx.getParams().optInt("step", 100);
 
-                        CombpRunner combp = new CombpRunner(ctx.getLogger());
-                        File outBed = combp.runCompP(finalOut, ctx.getOutputDir(), dist, seed, step);
+                        File outBed = runCompP(finalOut, ctx.getOutputDir(), dist, seed, step, ctx, ctx.getFileManager());
                         SequenceOutputFile so2 = new SequenceOutputFile();
                         so2.setName("Comb-p: " + ctx.getJob().getDescription());
                         so2.setDescription("Comb-p: " + jobDescription);
@@ -725,5 +725,37 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
                 }
             }
         }
+    }
+
+    private File runCompP(File inputBed, File outputDir, int dist, double seed, int stepSize, PipelineContext ctx, PipelineOutputTracker tracker) throws PipelineJobException
+    {
+        // See: https://github.com/bbimber/combpdocker
+        DockerWrapper wrapper = new DockerWrapper("bbimber/combpdocker", ctx.getLogger(), ctx);
+        File outputPrefix = new File(outputDir, FileUtil.getBaseName(inputBed) + ".combp");
+
+        List<String> args = new ArrayList<>();
+        args.add("comb-p");
+        args.add("pipeline");
+        args.add("-c");
+        args.add("5");
+        args.add("--dist");
+        args.add(String.valueOf(dist));
+        args.add("--step");
+        args.add(String.valueOf(stepSize));
+        args.add("--seed");
+        args.add(String.valueOf(seed));
+        args.add("--p");
+        args.add(outputPrefix.getPath());
+        args.add(inputBed.getPath());
+
+        wrapper.executeWithDocker(args, ctx.getWorkingDirectory(), tracker, Arrays.asList(inputBed));
+
+        File outputBed = new File(outputPrefix.getPath() + ".regions.bed");
+        if (!outputBed.exists())
+        {
+            throw new PipelineJobException("Unable to find expected output: " + outputBed.getPath());
+        }
+
+        return outputBed;
     }
 }
