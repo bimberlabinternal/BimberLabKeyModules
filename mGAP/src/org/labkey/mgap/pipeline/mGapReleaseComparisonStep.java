@@ -109,7 +109,7 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
     }
 
     @Override
-    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
+    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
     {
         job.getLogger().info("Merging missing sites VCFs");
         List<File> toConcat = orderedScatterOutputs.stream().map(f -> {
@@ -142,6 +142,6 @@ public class mGapReleaseComparisonStep extends AbstractCommandPipelineStep<VcfCo
         so.setFile(combined);
         so.setCategory("Missing Sites VCF");
         so.setLibrary_id(genome.getGenomeId());
-        manager.addSequenceOutput(so);
+        ctx.getFileManager().addSequenceOutput(so);
     }
 }
