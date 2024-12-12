@@ -126,8 +126,8 @@ export function GeneticsPlot() {
                 that can describe the genetic relatedness between two individuals. We estimated genetic relatedness for
                 all pairs of individuals for which we have whole-genome data, and made these available under the
                 **Kinship** tab. There you will find the inferred relationships between pairs of individuals as well as
-                the calculated kinship coefficient, which is a quantitative measure of genetic relatedness (see
-                <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship#Kinship_coefficient">here</a> for more details).
+                the calculated kinship coefficient, which is a quantitative measure of genetic relatedness
+                (see <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship#Kinship_coefficient">here</a> for more details).
                 <p/>
                 It is possible to explore the full MCC database of variants with a graphical interface by accessing the
                 **Genome Browser** tab. There you can, for example, visualize all the variants present in your gene of

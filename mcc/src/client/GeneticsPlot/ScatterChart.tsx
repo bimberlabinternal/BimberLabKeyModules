@@ -31,12 +31,12 @@ export default function ScatterChart(props: {data: any}) {
 
     const dataByColony = []
     const uniqueColonies = [...new Set(collectedData.map(x => String(x.colony)))]
-    const colors = palette(['Set1', 'sequential'], uniqueColonies.length);
+    const colors = palette(['Set1', 'qualitative'], uniqueColonies.length);
 
     uniqueColonies.forEach((colonyName : string, idx) => {
         dataByColony.push({
             label: colonyName,
-            backgroundColor: colors[idx],
+            backgroundColor: '#' + colors[idx],
             data: collectedData.filter(x => x.colony == colonyName)
         })
     })
