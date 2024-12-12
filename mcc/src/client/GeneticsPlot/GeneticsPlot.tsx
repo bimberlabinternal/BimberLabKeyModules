@@ -108,10 +108,34 @@ export function GeneticsPlot() {
         <>
         <ErrorBoundary>
             <div style={{paddingBottom: 20, maxWidth: 1000}}>
-                Population structure analysis using PCA is a helpful way to summarize the genetic relationships among animals in the MCC. The PCA results can be thought of as a simple type of genetic clustering - animals with more similar principal component loadings are more genetically similar. A more precise description of the relationship between two animals is provided by kinship coefficients – these are quantitative measures of relatedness that can be calculated by comparing two genomes, and interpreted using genealogical language, such as ‘parent-child’, ‘uncle-nephew’, ‘first cousins’, etc.
-            </div>
-            <div style={{paddingBottom: 20, maxWidth: 1000}}>
-                Whole genome sequencing was performed on each animal and genotypes were called with GATK haplotype caller. Principal components analysis was performed with GCTA (https://yanglab.westlake.edu.cn/software/gcta/#PCA) and kinship coefficients were calculated with KING (https://www.kingrelatedness.com/). Analyses were performed by Ric del Rosario (Broad Institute).
+                Over the past few years, the MCC team has been working on extracting, sequencing and analyzing DNA from
+                marmosets across the participating breeding centers. While we have deposited the raw sequence data for
+                578 marmosets on NCBI's Sequence Read Archive (SRA), we are excited to report that the MCC portal now
+                houses a call set with single nucleotide variants and short indels for over 800 individuals.
+                <p/>
+                The MCC genomic database is extensive, with each individual being genotype at millions of variants
+                across the genome. One way to summarize a large dataset can be done using Principal Component Analysis
+                (PCA). PCA is a technique used across disciplines (from astronomy to genomics) that reduces the
+                information in a multi-dimensional dataset to (fewer) principal components (PC) that retain overall
+                trends and patterns in the original data. Biologically, this could mean merging together two variants
+                that are always inherited together into just one PC, making the data easier to analyze while maintaining
+                its most important patterns. See the **Visualization with PCA** tab below.
+                <p/>
+                Although PCA is useful for broad-scale comparisons, it is not very useful when trying to distinguish
+                whether two individuals are siblings or first-cousins, for instance. For that, we have better statistics
+                that can describe the genetic relatedness between two individuals. We estimated genetic relatedness for
+                all pairs of individuals for which we have whole-genome data, and made these available under the
+                **Kinship** tab. There you will find the inferred relationships between pairs of individuals as well as
+                the calculated kinship coefficient, which is a quantitative measure of genetic relatedness (see
+                <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship#Kinship_coefficient">here</a> for more details).
+                <p/>
+                It is possible to explore the full MCC database of variants with a graphical interface by accessing the
+                **Genome Browser** tab. There you can, for example, visualize all the variants present in your gene of
+                interest by typing it's name in the search bar.
+                <p/>
+                The genetic analyses described here were performed by Karina Ray (ONPRC), Murillo Rodrigues (ONPRC), and
+                Ric del Rosario (Broad Institute). Please contact us at <a href="mailto:mcc@ohsu.edu">mcc@ohsu.edu</a> with any
+                questions.
             </div>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
