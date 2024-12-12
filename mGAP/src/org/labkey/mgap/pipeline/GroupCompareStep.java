@@ -84,7 +84,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
     }
 
     @Override
-    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
+    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
     {
         job.getLogger().info("Merging variant tables");
         List<File> toConcat = orderedScatterOutputs.stream().map(f -> {
@@ -138,7 +138,7 @@ public class GroupCompareStep extends AbstractCommandPipelineStep<GroupCompareSt
         so.setFile(combined);
         so.setCategory("Variant List");
         so.setLibrary_id(genome.getGenomeId());
-        manager.addSequenceOutput(so);
+        ctx.getFileManager().addSequenceOutput(so);
     }
 
     @Override

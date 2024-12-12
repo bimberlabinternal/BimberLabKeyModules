@@ -1,5 +1,6 @@
 package org.labkey.primeseq.pipeline;
 
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.labkey.api.data.Container;
 import org.labkey.api.module.ModuleLoader;
@@ -9,6 +10,7 @@ import org.labkey.api.sequenceanalysis.pipeline.JobResourceSettings;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.primeseq.PrimeseqModule;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -55,15 +57,12 @@ public class ExacloudResourceSettings implements JobResourceSettings
         Set<String> volumes = new HashSet<>();
         volumes.add("/home/groups/prime-seq");
         volumes.add("/home/exacloud/gscratch");
+        volumes.add("/mnt/scratch");
 
         PipeRoot pr = PipelineService.get().findPipelineRoot(c);
         if (pr != null && pr.getRootPath().exists())
         {
-            if (pr.getRootPath().getPath().startsWith("/home/groups/"))
-            {
-                String folderName = pr.getRootPath().getPath().replaceAll("^/home/groups/", "").split("/")[0];
-                volumes.add("/home/groups/" + folderName);
-            }
+            volumes.add(convertHomeGroups(pr.getRootPath()).getPath());
         }
 
         if (c.isWorkbook())
@@ -71,14 +70,34 @@ public class ExacloudResourceSettings implements JobResourceSettings
             PipeRoot pr2 = PipelineService.get().findPipelineRoot(c.getParent());
             if (pr2 != null && pr2.getRootPath().exists())
             {
-                if (pr2.getRootPath().getPath().startsWith("/home/groups/"))
-                {
-                    String folderName = pr2.getRootPath().getPath().replaceAll("^/home/groups/", "").split("/")[0];
-                    volumes.add("/home/groups/" + folderName);
-                }
+                volumes.add(convertHomeGroups(pr2.getRootPath()).getPath());
             }
         }
 
         return volumes;
+    }
+
+    private File convertHomeGroups(File input)
+    {
+        input = input.isDirectory() ? input : input.getParentFile();
+        if (input.getPath().startsWith("/home/groups/"))
+        {
+            String folderName = input.getPath().replaceAll("^/home/groups/", "").split("/")[0];
+            return new File("/home/groups/", folderName);
+        }
+
+        return input;
+    }
+
+    @Override
+    public @Nullable File inferDockerVolume(File input)
+    {
+        input = input.isDirectory() ? input : input.getParentFile();
+        if (input.getPath().startsWith("/home/exacloud/gscratch"))
+        {
+            return new File("/home/exacloud/gscratch");
+        }
+
+        return convertHomeGroups(input);
     }
 }

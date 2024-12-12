@@ -72,8 +72,6 @@ public class PrimeseqModule extends ExtendedSimpleModule
     @Override
     protected void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
-        SequencePipelineService.get().registerResourceSettings(new ExacloudResourceSettings());
-
         SystemMaintenance.addTask(new ClusterMaintenanceTask());
 
         ClusterService.get().registerResourceAllocator(new BlastPipelineJobResourceAllocator.Factory());
@@ -109,6 +107,8 @@ public class PrimeseqModule extends ExtendedSimpleModule
             }
             else
             {
+                SequencePipelineService.get().registerResourceSettings(new ExacloudResourceSettings());
+
                 SequencePipelineService.get().registerPipelineStep(new BismarkWrapper.Provider());
                 SequencePipelineService.get().registerPipelineStep(new BismarkWrapper.MethylationExtractorProvider());
 
