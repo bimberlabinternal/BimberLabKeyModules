@@ -595,7 +595,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
     private String getPartition(PipelineJob job)
     {
-        return needsGPUs(job) ? "gpu" : "exacloud";
+        return needsGPUs(job) ? "gpu" : "batch";
     }
 
     private Long getFileSize(PipelineJob job)

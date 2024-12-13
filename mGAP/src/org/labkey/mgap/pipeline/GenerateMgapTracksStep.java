@@ -565,7 +565,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
     }
 
     @Override
-    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, TaskFileManager manager, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
+    public void performAdditionalMergeTasks(SequenceOutputHandler.JobContext ctx, PipelineJob job, ReferenceGenome genome, List<File> orderedScatterOutputs, List<String> orderedJobDirs) throws PipelineJobException
     {
         job.getLogger().info("Merging additional track VCFs");
         Map<String, List<String>> trackToSamples = parseSampleMap(getSampleNameFile(getPipelineCtx().getSourceDirectory(true)));
@@ -609,7 +609,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             so.setCategory(TRACK_CATEGORY);
             so.setLibrary_id(genome.getGenomeId());
             so.setDescription("mGAP track: " + trackName + ", total samples: " + trackToSamples.get(trackName).size());
-            manager.addSequenceOutput(so);
+            ctx.getFileManager().addSequenceOutput(so);
         }
 
         if (getAnnotationReferenceVcf() != null)
@@ -653,7 +653,7 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
             so.setCategory(TRACK_CATEGORY);
             so.setLibrary_id(genome.getGenomeId());
             so.setDescription("These are novel sites in mGAP v" + releaseVersion + " for " + species);
-            manager.addSequenceOutput(so);
+            ctx.getFileManager().addSequenceOutput(so);
         }
     }
 
