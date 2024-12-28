@@ -108,14 +108,26 @@
                 },{
                     header: 'Data and Processing',
                     items: [{
-                        name: 'Readsets Without Alignments',
+                        name: 'WGS/WXS Readsets Without BAM/CRAM',
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
                             schemaName: 'sequenceanalysis',
                             queryName: 'sequence_readsets',
-                            'query.totalAlignments~eq': 0,
+                            'query.outputFileTypes~doesnotcontain': 'Alignment',
                             'query.totalForwardReads~isnonblank': null,
+                            'query.application~in' :'Whole Exome;Whole Genome: Deep Coverage',
                             'query.status~isblank': null,
-                            'query.isArchived~eq': 0,
+                            'query.sort': 'name',
+                            'query.maxRows': 250
+                        })
+                    },{
+                        name: 'WGS/WXS Readsets Without A gVCF File',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'sequenceanalysis',
+                            queryName: 'sequence_readsets',
+                            'query.outputFileTypes~doesnotcontain': 'gVCF File',
+                            'query.totalForwardReads~isnonblank': null,
+                            'query.application~in' :'Whole Exome;Whole Genome: Deep Coverage',
+                            'query.status~isblank': null,
                             'query.sort': 'name',
                             'query.maxRows': 250
                         })
