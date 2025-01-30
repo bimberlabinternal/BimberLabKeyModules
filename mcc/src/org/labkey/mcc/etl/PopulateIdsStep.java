@@ -43,7 +43,32 @@ public class PopulateIdsStep implements TaskRefTask
         populateForDemographics(job);
         populateForKinship(job);
 
+        // Check for duplicate IDs and proactively error:
+        performDuplicateCheck(job);
+
         return new RecordedActionSet();
+    }
+
+    private void performDuplicateCheck(PipelineJob job) throws PipelineJobException
+    {
+        // Query aggregated demographics:
+        UserSchema sourceSchema = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), MccSchema.NAME);
+        if (sourceSchema == null)
+        {
+            throw new PipelineJobException("Unable to find source schema: " + MccSchema.NAME);
+        }
+
+        TableInfo sourceTi = sourceSchema.getTable("duplicatedAggregatedDemographics");
+        if (sourceTi == null)
+        {
+            throw new PipelineJobException("Unable to find table: duplicatedAggregatedDemographics");
+        }
+
+        TableSelector ts = new TableSelector(sourceTi);
+        if (ts.exists())
+        {
+            throw new PipelineJobException("There were duplicated IDs in aggregatedDemographics");
+        }
     }
 
     private void populateForDemographics(PipelineJob job) throws PipelineJobException
