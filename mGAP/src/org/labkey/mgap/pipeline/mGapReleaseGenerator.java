@@ -1048,7 +1048,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     if (!nonCompliant.isEmpty())
                     {
-                        throw new PipelineJobException("Names do not conform to format: " + StringUtils.join(nonCompliant, ","));
+                        throw new PipelineJobException("Names do not conform to format: " + StringUtils.join(nonCompliant, ",") + ", in file: " + vcfInput.getName());
                     }
                 }
 
