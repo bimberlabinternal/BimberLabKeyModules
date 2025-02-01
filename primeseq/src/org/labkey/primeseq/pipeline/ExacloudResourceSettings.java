@@ -39,8 +39,6 @@ public class ExacloudResourceSettings implements JobResourceSettings
                     put("minValue", 512);
                 }}, 1028),
                 ToolParameterDescriptor.create("localSSD", "Request Nodes With SSD Scratch", "If selected, -C ssdscratch will be added to the submit script, which limits to node with faster SSD scratch space.  This might be important for I/O intense jobs.", "checkbox", null, null),
-                ToolParameterDescriptor.create("useLustre", "Use Old Lustre Working Space", "If selected, this job will use the older Lustre working space.", "checkbox", null, null),
-                ToolParameterDescriptor.create("requireInfiniband", "Require InfiniBand", "If selected, this job will be flagged as -C IB to force the node to have InfiniBand.", "checkbox", null, null),
                 ToolParameterDescriptor.create("gpus", "GPUs", "The number of GPUs requested for this job. If non-zero, the gpu partition will be used.", "ldk-integerfield", null, null)
         );
     }

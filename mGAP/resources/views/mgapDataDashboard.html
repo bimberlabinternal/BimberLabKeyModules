@@ -23,9 +23,7 @@
                     header: 'Upcoming Release',
                     items: [{
                         name: 'Release Instructions',
-                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
-                            schemaName: 'wiki',
-                            queryName: 'page',
+                        url: LABKEY.ActionURL.buildURL('wiki', 'page.view', null, {
                             name: 'mgapRelease'
                         })
                     },{
