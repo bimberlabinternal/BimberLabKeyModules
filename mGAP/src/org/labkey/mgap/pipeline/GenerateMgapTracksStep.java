@@ -456,6 +456,11 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
         List<String> options = new ArrayList<>();
         options.add("--remove-unused-alternates");
 
+        options.add("--recalculate-ac");
+        options.add("--keep-original-ac");
+        options.add("--original-ac-suffix");
+        options.add(".mGAP");
+
         options.add("--sample-mapping-file");
         options.add(sampleFile.getPath());
 
