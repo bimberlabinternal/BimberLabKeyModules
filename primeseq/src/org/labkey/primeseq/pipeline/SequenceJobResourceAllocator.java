@@ -310,7 +310,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddSSD(job, engine, lines);
             possiblyAddGpus(job, engine, lines);
             possiblyAddExclusive(job, engine, lines);
-            possiblyAddInfiniband(job, engine, lines);
         }
     }
 
@@ -319,11 +318,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     {
         Map<String, Object> ret = new HashMap<>();
 
-        if (job instanceof HasJobParams && getUseLustreValue((HasJobParams)job))
-        {
-            job.getLogger().info("Requiring using original lustre as working space");
-            ret.put("USE_LUSTRE", "1");
-        }
 
         return ret;
     }
@@ -480,39 +474,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 lines.add(line);
             }
         }
-    }
-
-    private void possiblyAddInfiniband(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
-    {
-        Map<String, String> params = ((HasJobParams)job).getJobParams();
-        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.requireInfiniband"));
-        if (val == null)
-        {
-            return;
-        }
-
-        boolean parsed = Boolean.parseBoolean(val);
-        if (parsed)
-        {
-            job.getLogger().info("Requiring node with infiniband");
-            String line = "#SBATCH -C IB";
-            if (!lines.contains(line))
-            {
-                lines.add(line);
-            }
-        }
-    }
-
-    private boolean getUseLustreValue(HasJobParams job)
-    {
-        Map<String, String> params = (job).getJobParams();
-        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useLustre"));
-        if (val == null)
-        {
-            return false;
-        }
-
-        return Boolean.parseBoolean(val);
     }
 
     private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
