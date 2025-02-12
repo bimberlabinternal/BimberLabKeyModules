@@ -38,13 +38,13 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
     @Override
     public String getDescription()
     {
-        return "Deletes unused mGAP VCFs and ETL artifacts";
+        return "mGAP Artifact Cleanup";
     }
 
     @Override
     public String getName()
     {
-        return "mGAP Maintenance Task";
+        return "mGAPMaintenanceTask";
     }
 
     @Override
