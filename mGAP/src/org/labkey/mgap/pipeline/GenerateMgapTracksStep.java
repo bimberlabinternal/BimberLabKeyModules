@@ -100,8 +100,10 @@ public class GenerateMgapTracksStep extends AbstractPipelineStep implements Vari
                         put("width", 400);
                         put("schemaName", "mgap");
                         put("queryName", "variantCatalogReleases");
+                        put("columns", "rowid,versionAndSpecies");
                         put("containerPath", "js:Laboratory.Utils.getQueryContainerPath()");
                         put("displayField", "versionAndSpecies");
+                        put("sort", "-rowid");
                         put("valueField", "rowid");
                         put("doNotIncludeInTemplates", true);
                     }}, null)
