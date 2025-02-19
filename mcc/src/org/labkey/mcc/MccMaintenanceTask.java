@@ -24,13 +24,13 @@ public class MccMaintenanceTask implements SystemMaintenance.MaintenanceTask
     @Override
     public String getDescription()
     {
-        return "Perform maintenance and checks related to the MCC";
+        return "MCC Artifact Maintenance";
     }
 
     @Override
     public String getName()
     {
-        return "MCC Maintenance";
+        return "MCCMaintenance";
     }
 
     @Override

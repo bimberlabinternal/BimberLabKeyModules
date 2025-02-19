@@ -37,6 +37,7 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.api.view.template.ClientDependency;
 import org.labkey.api.writer.ContainerUser;
+import org.labkey.filters.ContentSecurityPolicyFilter;
 import org.labkey.mcc.demographics.LittermateDemographicsProvider;
 import org.labkey.mcc.demographics.MCCDemographicsProvider;
 import org.labkey.mcc.demographics.MccWeightsDemographicsProvider;
@@ -135,6 +136,8 @@ public class MccModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new ReviewerNotifyButton(), MccSchema.NAME, MccSchema.TABLE_REQUEST_REVIEWS);
 
         SystemMaintenance.addTask(new MccMaintenanceTask());
+
+        ContentSecurityPolicyFilter.registerAllowedConnectionSource(this.getClass().getName(), "https://cdn.datatables.net");
     }
 
     @Override

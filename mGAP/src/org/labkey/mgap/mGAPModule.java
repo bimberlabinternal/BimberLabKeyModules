@@ -107,7 +107,7 @@ public class mGAPModule extends ExtendedSimpleModule
 
         SystemMaintenance.addTask(new mGapMaintenanceTask());
 
-        ContentSecurityPolicyFilter.registerAllowedConnectionSource(this.getClass().getName(), "https://*.fontawesome.com");
+        ContentSecurityPolicyFilter.registerAllowedConnectionSource(this.getClass().getName(), "https://*.fontawesome.com", "https://code.jquery.com", "https://www.gstatic.com");
 
         new PipelineStartup();
     }
