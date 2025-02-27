@@ -723,7 +723,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             {
                 if (cadd.contains("|"))
                 {
-                    return Arrays.stream(cadd.split("\\|")).map(Double::parseDouble).max(Double::compare).get();
+                    return Arrays.stream(cadd.split("\\|")).filter(x -> !".".equals(x)).map(Double::parseDouble).max(Double::compare).orElse(null);
+                }
+                else if (".".equals(cadd))
+                {
+                    return null;
                 }
 
                 return Double.parseDouble(cadd);
@@ -1388,12 +1392,12 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 try
                                 {
                                     String as = StringUtils.trimToNull(polyphenScores.get(alleleIdx));
-                                    if (as == null)
+                                    if (as == null || ".".equals(as))
                                     {
                                         continue;
                                     }
 
-                                    Double maxScore = Arrays.stream(as.split("\\|")).filter(x -> !x.isEmpty()).map(Double::parseDouble).max(Double::compare).orElse(-1.0);
+                                    double maxScore = Arrays.stream(as.split("\\|")).filter(x -> !x.isEmpty()).filter(x -> !".".equals(x)).map(Double::parseDouble).max(Double::compare).orElse(-1.0);
                                     if (maxScore == 0.0)
                                     {
                                         ctx.getLogger().error("Suspicious values for Polyphen2_HVAR_S: " + maxScore + ", at position: " + vc.toStringWithoutGenotypes());
@@ -1581,7 +1585,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                 cadd = Arrays.stream(String.valueOf(cadd).split("\\|")).map(x -> {
                                     try
                                     {
-                                        double y = Double.parseDouble(x);
+                                        Double.parseDouble(x);
                                     }
                                     catch (Exception e)
                                     {
