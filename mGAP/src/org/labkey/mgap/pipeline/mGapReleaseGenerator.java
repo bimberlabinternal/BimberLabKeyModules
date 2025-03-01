@@ -31,7 +31,6 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
 import org.labkey.api.exp.api.ExperimentService;
-import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
@@ -56,6 +55,7 @@ import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceOutputHandler;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
+import org.labkey.api.sequenceanalysis.run.LiftoverBcfToolsWrapper;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
@@ -77,7 +77,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1024,7 +1023,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             File sitesOnlyVcf = getSitesOnlyVcf(ctx, primaryTrackVcf, genome);
 
-            File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, grch37Genome);
+            File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, genome, grch37Genome);
             SequenceOutputFile output3 = new SequenceOutputFile();
             output3.setFile(lifted);
             output3.setName("mGAP Release: " + species + " " + releaseVersion + " Lifted to Human");
@@ -1095,7 +1094,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             return noGenotypes;
         }
 
-        private File liftToHuman(JobContext ctx, File primaryTrackVcf, File noGenotypes, ReferenceGenome grch37Genome) throws PipelineJobException
+        private File liftToHuman(JobContext ctx, File primaryTrackVcf, File noGenotypes, ReferenceGenome sourceGenome, ReferenceGenome grch37Genome) throws PipelineJobException
         {
             //lift to target genome
             Integer chainFileId = ctx.getSequenceSupport().getCachedObject(AnnotationStep.CHAIN_FILE, Integer.class);
@@ -1108,8 +1107,8 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             File liftoverRejects = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".liftoverRejectGRCh37.vcf.gz");
             if (!indexExists(liftoverRejects))
             {
-                LiftoverVcfRunner liftoverVcfRunner = new LiftoverVcfRunner(ctx.getLogger());
-                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37, 0.95);
+                LiftoverBcfToolsWrapper liftoverVcfRunner = new LiftoverBcfToolsWrapper(ctx.getLogger());
+                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, sourceGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37);
             }
             else
             {
