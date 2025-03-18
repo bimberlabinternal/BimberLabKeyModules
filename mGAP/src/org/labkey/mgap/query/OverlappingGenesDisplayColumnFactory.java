@@ -7,9 +7,10 @@ import org.labkey.api.data.DisplayColumn;
 import org.labkey.api.data.DisplayColumnFactory;
 import org.labkey.api.data.RenderContext;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.util.HtmlString;
+import org.labkey.api.util.PageFlowUtil;
+import org.labkey.api.writer.HtmlWriter;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +35,7 @@ public class OverlappingGenesDisplayColumnFactory implements DisplayColumnFactor
             }
 
             @Override
-            public void renderGridCellContents(RenderContext ctx, Writer out) throws IOException
+            public void renderGridCellContents(RenderContext ctx, HtmlWriter out)
             {
                 String rawValue = StringUtils.trimToNull(ctx.get(getBoundKey("overlappingGenes"), String.class));
                 if (rawValue == null)
@@ -45,7 +46,7 @@ public class OverlappingGenesDisplayColumnFactory implements DisplayColumnFactor
                 List<String> tokens = Arrays.asList(rawValue.split(";"));
                 Collections.sort(tokens);
 
-                String delim = "";
+                HtmlString delim = HtmlString.EMPTY_STRING;
                 for (String geneName : tokens)
                 {
                     String url = null;
@@ -64,8 +65,9 @@ public class OverlappingGenesDisplayColumnFactory implements DisplayColumnFactor
                         url = "http://ensembl.org/Macaca_mulatta/Gene/Summary?db=core;g=" + geneName;
                     }
 
-                    out.write(delim + "<a target=\"_blank\" href=\"" + url + "\">" + geneName + "</a>");
-                    delim = "<br>";
+                    out.write(delim);
+                    out.write(PageFlowUtil.link(geneName).href(url).target("_blank").clearClasses());
+                    delim = HtmlString.BR;
                 }
             }
         };
