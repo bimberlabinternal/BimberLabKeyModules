@@ -26,6 +26,7 @@ import org.labkey.api.pipeline.PipelineValidationException;
 import org.labkey.api.pipeline.RemoteExecutionEngine;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.UserManager;
+import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.Job;
@@ -84,7 +85,7 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
         jobGuids.addAll(ts2.getArrayList(String.class));
 
         JobRunner jr = JobRunner.getDefault();
-        for (RemoteExecutionEngine engine : PipelineJobService.get().getRemoteExecutionEngines())
+        for (RemoteExecutionEngine<?> engine : PipelineJobService.get().getRemoteExecutionEngines())
         {
             log.info("Starting maintenance task for: " + engine.getType());
 
@@ -158,6 +159,8 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
             //hacky, but this is only planned to be used by us
             inspectFolder(log, new File("/home/exacloud/gscratch/prime-seq/workDir/"));
             inspectFolder(log, new File("/home/exacloud/gscratch/prime-seq/cachedData/"));
+
+            runDockerPrune(log);
         }
 
         private void deleteDirectory(File child, Logger log)
@@ -228,6 +231,23 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
             }
         }
 
+    }
+
+    private static void runDockerPrune(Logger log)
+    {
+        try
+        {
+            new SimpleScriptWrapper(log).execute(Arrays.asList(
+                    SequencePipelineService.get().getDockerCommand(),
+                    "system",
+                    "prune",
+                    "-f"
+            ));
+        }
+        catch (PipelineJobException e)
+        {
+            _log.error("Error running docker prune", e);
+        }
     }
 
     public static class TestCase extends Assert

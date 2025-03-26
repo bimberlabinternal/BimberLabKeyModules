@@ -31,6 +31,7 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
 import org.labkey.api.sequenceanalysis.run.AbstractCommandPipelineStep;
+import org.labkey.api.sequenceanalysis.run.LiftoverBcfToolsWrapper;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.PrintWriters;
@@ -327,8 +328,8 @@ public class AnnotationStep extends AbstractCommandPipelineStep<MultiSourceAnnot
         File liftoverRejects = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(currentVcf.getName()) + ".liftoverReject" + grch37Genome.getGenomeId() + ".vcf.gz");
         if (!indexExists(liftoverRejects) || !indexExists(liftedToGRCh37))
         {
-            LiftoverVcfRunner liftoverVcfRunner = new LiftoverVcfRunner(getPipelineCtx().getLogger());
-            liftoverVcfRunner.doLiftover(currentVcf, chainFile, grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37, 0.95);
+            LiftoverBcfToolsWrapper liftoverVcfRunner = new LiftoverBcfToolsWrapper(getPipelineCtx().getLogger());
+            liftoverVcfRunner.doLiftover(currentVcf, chainFile, genome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37);
         }
         else
         {
