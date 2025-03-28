@@ -172,7 +172,7 @@ public class MethylationRateComparison implements SequenceOutputHandler<Sequence
                 Map<String, SequenceOutputFile> fileMap = new HashMap<>();
                 for (SequenceOutputFile f : inputFiles)
                 {
-                    action.addInputIfNotPresent(f.getFile(), "Methlylation Rates");
+                    action.addInputIfNotPresent(f.getFile(), "Methylation Rates");
                     fileMap.put(f.getRowid().toString(), f);
                 }
 
