@@ -1,10 +1,9 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
-import { Dashboard } from './Dashboard';
+import { Dashboard } from './Dashboard'
+import { createRoot } from 'react-dom/client';
 
-const render = () => {
-    ReactDOM.render(<Dashboard />, document.getElementById('app'));
-};
-
-render();
+// Need to wait for container element to be available in labkey wrapper before render
+window.addEventListener('DOMContentLoaded', (event) => {
+    createRoot(document.getElementById('app')).render(<Dashboard/>);
+}, true);
