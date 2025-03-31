@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid'
 
 export default function ErrorMessageHandler(props) {
   const ref = React.useRef(null)
-  const [errors, setErrors] = React.useState(new Set())
+  const [errors, setErrors] = React.useState(new Set<String>())
 
   React.useEffect(() => {
     if (ref && ref.current && props.isSubmitting) {
@@ -13,7 +13,7 @@ export default function ErrorMessageHandler(props) {
       }
 
       const handleValidationMessages = () => {
-        const tmp = new Set()
+        const tmp = new Set<String>()
         el.querySelectorAll<HTMLSelectElement>('input, select, textarea').forEach(function(e){
           if (!e.checkValidity()) {
             const name = e.getAttribute("aria-label").split("#")[0]
