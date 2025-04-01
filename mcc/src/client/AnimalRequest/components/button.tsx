@@ -1,12 +1,13 @@
 import React from 'react';
 
-export default function Button(props) {
+export default function Button(props: {onClick: (event: MouseEvent) => void, display?: boolean, text: string, form?: string }) {
     function onClick(e) {
         if(props.onClick) {
             props.onClick(e)
         }
     }
-    if(props.display === false) {
+
+    if (props.display === false) {
         return (
             <>
             </>
