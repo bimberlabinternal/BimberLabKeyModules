@@ -154,7 +154,9 @@ export function AnimalRequest() {
     }
 
     function handleSubmitButton(e, isSubmittingVal: boolean) {
+        console.log('handleSubmitButton: ' + isSubmittingVal)
         setIsSubmitting(isSubmittingVal);
+        console.log('done with setIsSubmitting:' + isSubmitting)
 
         if (!isSubmitting) {
             // Use this to reset each field's error state
@@ -718,13 +720,13 @@ export function AnimalRequest() {
             </div>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <button className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
+                <Button baseColor="red" marginLeft="auto" text="Cancel" onClick={(e) => {
                     e.preventDefault()
 
                     if (confirm("You are about to leave this page.")) {
-                        window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
                     }
-                }}>Cancel</button>
+                }} />
 
                 <Button onClick={(e) => {
                     handleSubmitButton(e, false);
