@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { Dashboard } from './Dashboard'
-import { createRoot } from 'react-dom/client';
+import { Dashboard } from './Dashboard';
+import ReactDOM from 'react-dom';
+import { App } from '@labkey/api';
 
-// Need to wait for container element to be available in labkey wrapper before render
-window.addEventListener('DOMContentLoaded', (event) => {
-    createRoot(document.getElementById('app')).render(<Dashboard/>);
+App.registerApp<any>('mccDashboard', (target: string) => {
+    ReactDOM.render(<Dashboard/>, document.getElementById('app'));
 }, true);

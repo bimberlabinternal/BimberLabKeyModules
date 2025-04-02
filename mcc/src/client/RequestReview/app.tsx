@@ -1,10 +1,10 @@
 import React from 'react';
 import '../tailwind.css';
 
-import { RequestView } from './request-review'
-import { createRoot } from 'react-dom/client';
+import { RequestView } from './request-review';
+import ReactDOM from 'react-dom';
+import { App } from '@labkey/api';
 
-// Need to wait for container element to be available in labkey wrapper before render
-window.addEventListener('DOMContentLoaded', (event) => {
-    createRoot(document.getElementById('app')).render(<RequestView/>);
+App.registerApp<any>('mccRequestReview', target => {
+    ReactDOM.render(<RequestView />, document.getElementById(target));
 });

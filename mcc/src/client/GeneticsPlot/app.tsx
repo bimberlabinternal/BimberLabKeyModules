@@ -1,9 +1,9 @@
 import React from 'react';
 
 import { GeneticsPlot } from './GeneticsPlot'
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom';
+import { App } from '@labkey/api';
 
-// Need to wait for container element to be available in labkey wrapper before render
-window.addEventListener('DOMContentLoaded', (event) => {
-    createRoot(document.getElementById('app')).render(<GeneticsPlot/>);
+App.registerApp<any>('geneticsPlot', target => {
+    ReactDOM.render(<GeneticsPlot />, document.getElementById(target));
 });
