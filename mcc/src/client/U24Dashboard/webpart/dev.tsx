@@ -4,8 +4,6 @@ import { App } from '@labkey/api';
 
 import { Dashboard } from '../Dashboard';
 
-const render = (target: string) => {
+App.registerApp<any>('u24DashboardWebpart', target => {
     ReactDOM.render(<Dashboard />, document.getElementById(target));
-};
-
-App.registerApp<any>('u24DashboardWebpart', render, true /* hot */);
+}, true);
