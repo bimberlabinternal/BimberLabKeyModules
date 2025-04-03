@@ -1,10 +1,8 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 import { GeneticsPlot } from './GeneticsPlot';
+import ReactDOM from 'react-dom';
 
-const render = () => {
+window.addEventListener('DOMContentLoaded', (event) => {
     ReactDOM.render(<GeneticsPlot />, document.getElementById('app'));
-};
-
-render();
+}, true);
