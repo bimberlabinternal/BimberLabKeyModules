@@ -51,10 +51,10 @@ import AnimalCensus from './components/census';
 export function AnimalRequest() {
     const requestId = (new URLSearchParams(window.location.search)).get("requestId")
 
-    const [showWithdrawDialog, setShowWithdrawDialog] = useState(false)
+    const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false)
     const [withdrawReasonText, setWithdrawReasonText] = useState<string>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [displayOverlay, setDisplayOverlay] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+    const [displayOverlay, setDisplayOverlay] = useState<boolean>(false)
     const [requestData, setRequestData] = useState<AnimalRequestModel>(null)
     const [stateRollbackOnFailure, setStateRollbackOnFailure] = useState(requestData?.request?.status)
 
@@ -153,13 +153,15 @@ export function AnimalRequest() {
         return !!ctx.hasRequestAdminPermission
     }
 
-    function handleSubmitButton(e, isSubmitting) {
-        setIsSubmitting(isSubmitting);
+    function handleSubmitButton(e, isSubmittingVal: boolean) {
+        console.log('handleSubmitButton: ' + isSubmittingVal)
+        setIsSubmitting(isSubmittingVal);
+        console.log('done with setIsSubmitting:' + isSubmitting)
 
         if (!isSubmitting) {
             // Use this to reset each field's error state
-            e.target.form.querySelectorAll('input, select, textarea').forEach(function(e){
-                e.checkValidity()
+            e.target.form.querySelectorAll('input, select, textarea').forEach(function(el){
+                el.checkValidity()
             })
         }
     }
@@ -718,13 +720,13 @@ export function AnimalRequest() {
             </div>
 
             <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <button className="tw-ml-auto tw-bg-red-500 hover:tw-bg-red-400 tw-text-white tw-font-bold tw-py-4 tw-mt-2 tw-px-6 tw-border-none tw-rounded" onClick={(e) => {
+                <Button baseColor="red" marginLeft="auto" text="Cancel" onClick={(e) => {
                     e.preventDefault()
 
                     if (confirm("You are about to leave this page.")) {
-                        window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
                     }
-                }}>Cancel</button>
+                }} />
 
                 <Button onClick={(e) => {
                     handleSubmitButton(e, false);
@@ -778,7 +780,7 @@ export function AnimalRequest() {
                             setShowWithdrawDialog(false)
                             setIsSubmitting(true)
                         }
-                    }} form={"animalRequestForm"} disabled={false} text={"Submit"}/>
+                    }} form={"animalRequestForm"} text={"Submit"}/>
                     <Button onClick={(e) => setShowWithdrawDialog(false)} text={"Close"}/>
                 </Box>
             </DialogActions>
