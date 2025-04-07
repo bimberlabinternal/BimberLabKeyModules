@@ -71,6 +71,7 @@ Ext4.define('Primeseq.window.DeleteJobCheckpointWindow', {
                 Ext4.Msg.alert('Success', 'Jobs updated: ' + jsonResp.jobsUpdated + '<br>Jobs restarted: ' + jsonResp.jobsRestarted, function(){
                     var dataRegion = LABKEY.DataRegions[dataRegionName];
                     if (dataRegion){
+                        dataRegion.clearSelected();
                         dataRegion.refresh();
                     }
                 }, this);
