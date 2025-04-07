@@ -86,6 +86,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1148,35 +1149,32 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             String releaseVersion = ctx.getParams().optString("releaseVersion");
 
-            long sitesInspected = 0L;
-            long totalVariants = 0L;
-            long totalPrivateVariants = 0L;
-            long newInThisRelease = 0L;
+            AtomicLong sitesInspected = new AtomicLong();
+            AtomicLong totalVariants = new AtomicLong();
+            AtomicLong totalPrivateVariants = new AtomicLong();
+            AtomicLong newInThisRelease = new AtomicLong();
             Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
 
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
             try (VCFFileReader reader = new VCFFileReader(vcfInput); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "Identifier", "CADD_Score"});
-                while (it.hasNext())
-                {
+                it.stream().parallel().forEachOrdered(vc -> {
                     Set<List<String>> queuedLines = new LinkedHashSet<>();
 
-                    sitesInspected++;
-
-                    if (sitesInspected % 1000000 == 0)
+                    sitesInspected.getAndIncrement();
+                    if (sitesInspected.get() % 1000000 == 0)
                     {
                         ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Inspected " + sitesInspected + " variants");
                         ctx.getLogger().info("inspected " + sitesInspected + " variants");
                     }
 
-                    VariantContext vc = it.next();
                     if (vc.isFiltered())
                     {
-                        continue;
+                        return;
                     }
 
-                    totalVariants++;
+                    totalVariants.getAndIncrement();
 
                     //track total by variant type
                     Long typeCount = typeCounts.get(vc.getType());
@@ -1205,7 +1203,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                         if (sampleCount == 1)
                         {
-                            totalPrivateVariants++;
+                            totalPrivateVariants.getAndIncrement();
                         }
                     }
 
@@ -1342,7 +1340,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     try
                                     {
                                         maybeWriteVariantLine(queuedLines, vc, a.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
-
                                     }
                                     catch (IndexOutOfBoundsException e)
                                     {
@@ -1422,14 +1419,14 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     if (vc.getAttribute("mGAPV") != null && releaseVersion.equals(vc.getAttributeAsString("mGAPV", null)))
                     {
-                        newInThisRelease++;
+                        newInThisRelease.getAndIncrement();
                     }
 
                     for (List<String> line : queuedLines)
                     {
                         writer.writeNext(line.toArray(new String[0]));
                     }
-                }
+                });
             }
             catch (IOException e)
             {
@@ -1444,7 +1441,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, newInThisRelease, totalSubjects, typeCounts);
+                generateSummaries(ctx, vcfInput, genome, totalVariants.get(), totalPrivateVariants.get(), newInThisRelease.get(), totalSubjects, typeCounts);
             }
 
             try
