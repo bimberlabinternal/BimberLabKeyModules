@@ -57,6 +57,7 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
 import org.labkey.api.sequenceanalysis.run.LiftoverBcfToolsWrapper;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
+import org.labkey.api.util.Compress;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.GUID;
@@ -1105,18 +1106,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Running Liftover");
 
             File liftedToGRCh37 = getLiftedVcfName(ctx.getOutputDir(), primaryTrackVcf);
-            File liftoverRejects = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".liftoverRejectGRCh37.vcf.gz");
-            if (!indexExists(liftoverRejects))
+            if (!indexExists(liftedToGRCh37))
             {
                 LiftoverBcfToolsWrapper liftoverVcfRunner = new LiftoverBcfToolsWrapper(ctx.getLogger());
-                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, sourceGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37);
+                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, sourceGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), null, liftedToGRCh37);
             }
             else
             {
                 ctx.getLogger().info("resuming with existing file: " + liftedToGRCh37.getPath());
             }
-            ctx.getFileManager().addIntermediateFile(liftoverRejects);
-            ctx.getFileManager().addIntermediateFile(new File(liftoverRejects.getPath() + ".tbi"));
 
             return liftedToGRCh37;
         }
@@ -1484,14 +1482,22 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
             ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Running VariantsToTable");
-            File variantsToTable = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".variantsToTable.txt");
+
+            File variantsToTableNoGz = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".variantsToTable.txt");
+            File variantsToTable = new File(variantsToTableNoGz.getPath() + ".gz");
             File tableCheck = new File(variantsToTable.getPath() + ".done");
             if (!tableCheck.exists())
             {
                 VariantsToTableRunner vtt = new VariantsToTableRunner(ctx.getLogger());
                 List<String> fields = new ArrayList<>(Arrays.asList("POS", "REF", "ALT", "FILTER"));
                 fields.addAll(mGapSummarizer.SUMMARY_FIELDS);
-                vtt.execute(vcf, variantsToTable, genome.getWorkingFastaFile(), fields);
+                vtt.execute(vcf, variantsToTableNoGz, genome.getWorkingFastaFile(), fields);
+
+                if (variantsToTable.exists())
+                {
+                    variantsToTable.delete();
+                }
+                Compress.compressGzip(variantsToTableNoGz);
 
                 try
                 {
