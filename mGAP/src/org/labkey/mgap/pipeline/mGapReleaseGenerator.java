@@ -938,7 +938,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             String species = ctx.getParams().getString("species");
             String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
-            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap." + species + ".v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
+            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap." + species.replaceAll(" ", "_") + ".v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
 
             try
             {
