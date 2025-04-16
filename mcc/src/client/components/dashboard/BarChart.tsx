@@ -31,7 +31,7 @@ export default function BarChart(props: {demographics: [], fieldName: string, gr
 
     const indexAxis: 'x' | 'y' = props.indexAxis || 'y'
 
-    const collectedData = demographics.reduce((acc, curr: {}, idx) => {
+    const collectedData = (demographics ?? []).reduce((acc, curr: {}, idx) => {
         const value = curr[fieldName] === null ? 'Unknown' : curr[fieldName];
         const group = groupField == null ? 'counts' : curr[groupField] || missingDataTerm
 
@@ -46,7 +46,7 @@ export default function BarChart(props: {demographics: [], fieldName: string, gr
         }
 
         return acc;
-    }, {});
+    }, {})
 
     const labels = [...new Set(Object.keys(collectedData).flatMap(groupName => Object.keys(collectedData[groupName])))].sort(Intl.Collator().compare)
     const groupNames = Object.keys(collectedData).sort(Intl.Collator().compare)
