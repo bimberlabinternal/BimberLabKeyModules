@@ -103,6 +103,7 @@ public class MgapTest extends BaseWebDriverTest
         sleep(200); // The session can refresh after filter applied
 
         Actions actions = new Actions(getDriver());
+        JBrowseTestHelper.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T");
         Assert.assertEquals("Incorrect number of variants", 1, JBrowseTestHelper.getTotalVariantFeatures(this));
 
         WebElement toClick = getDriver().findElements(JBrowseTestHelper.getVariantWithinTrack(this, "mgap_hg38", "SNV A -> T")).stream().filter(WebElement::isDisplayed).collect(JBrowseTestHelper.toSingleton());

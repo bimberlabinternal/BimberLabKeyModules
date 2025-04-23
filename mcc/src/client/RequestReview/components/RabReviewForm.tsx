@@ -1,6 +1,17 @@
 import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 import React, { useEffect, useState } from 'react';
-import { Box, Button, MenuItem, Select, Table, TableBody, TableCell, TableRow, TextField } from '@mui/material';
+import {
+    Box,
+    Button,
+    FormControl, InputLabel,
+    MenuItem,
+    Select,
+    Table,
+    TableBody,
+    TableCell,
+    TableRow,
+    TextField
+} from '@mui/material';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
 
 export default function RabReviewForm(props: {requestId: string}) {
@@ -112,13 +123,16 @@ export default function RabReviewForm(props: {requestId: string}) {
             <TableBody>
             <TableRow>
                 <TableCell>
-                    <Select id={"review"} variant={"outlined"} name={"review"} aria-label="Review" label={"Review"} error={hasSubmitted && !recordData[0].review} onChange={handleChange} required={true} value={recordData[0].review ?? ''} fullWidth={true} displayEmpty={true} placeholder={"Enter review..."}>
-                        <MenuItem value={""}>Not Decided</MenuItem>
-                        <MenuItem value={"I recommend this proposal"}>I recommend this proposal</MenuItem>
-                        <MenuItem value={"I recommend this proposal with conditions"}>I recommend this proposal with conditions</MenuItem>
-                        <MenuItem value={"I do not recommend this proposal"}>I do not recommend this proposal</MenuItem>
-                        <MenuItem value={"I abstain from voting"}>I abstain from voting</MenuItem>
-                    </Select>
+                    <FormControl>
+                        <InputLabel id={"review-input-label"}>Enter review...</InputLabel>
+                        <Select id={"review"} variant={"outlined"} name={"review"} aria-label="Review" label={"Review"} error={hasSubmitted && !recordData[0].review} onChange={handleChange} required={true} value={recordData[0].review ?? ''} fullWidth={true} displayEmpty={true}>
+                            <MenuItem value={""}>Not Decided</MenuItem>
+                            <MenuItem value={"I recommend this proposal"}>I recommend this proposal</MenuItem>
+                            <MenuItem value={"I recommend this proposal with conditions"}>I recommend this proposal with conditions</MenuItem>
+                            <MenuItem value={"I do not recommend this proposal"}>I do not recommend this proposal</MenuItem>
+                            <MenuItem value={"I abstain from voting"}>I abstain from voting</MenuItem>
+                        </Select>
+                    </FormControl>
                 </TableCell>
             </TableRow>
             <TableRow>
