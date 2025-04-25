@@ -131,8 +131,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     put("filterArray", "js:[LABKEY.Filter.create('datedisabled', null, LABKEY.Filter.Types.ISBLANK)]");
                     put("displayField", "name");
                     put("valueField", "rowid");
-                    put("allowBlank", false);
+                    put("allowBlank", true);
                 }}, null),
+                ToolParameterDescriptor.create("doLiftover", "Do Liftover?", "If true, the data will be lifted to GRCh37", "checkbox", null, false),
                 ToolParameterDescriptor.create("luceneIndex", "Lucene Index", "A pre-made lucene index created from this VCF.", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject()
                 {{
                     put("allowBlank", false);
@@ -452,7 +453,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
 
                 SequenceOutputFile liftedVcf = liftedVcfMap.get(release);
-                if (liftedVcf == null)
+                if (ctx.getParams().optBoolean("doLiftover", false) && liftedVcf == null)
                 {
                     throw new PipelineJobException("Unable to find lifted VCF for release: " + release);
                 }
@@ -545,7 +546,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 row.put("releaseDate", new Date());
                 row.put("species", species);
                 row.put("vcfId", so.getRowid());
-                row.put("liftedVcfId", liftedVcf.getRowid());
+                if (liftedVcf != null)
+                {
+                    row.put("liftedVcfId", liftedVcf.getRowid());
+                }
                 row.put("sitesOnlyVcfId", sitesOnlyVcf.getRowid());
                 row.put("novelSitesVcfId", novelSitesVcf.getRowid());
                 row.put("luceneIndex", luceneIndex.getRowid());
@@ -1025,13 +1029,17 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             File sitesOnlyVcf = getSitesOnlyVcf(ctx, primaryTrackVcf, genome);
 
-            File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, genome, grch37Genome);
-            SequenceOutputFile output3 = new SequenceOutputFile();
-            output3.setFile(lifted);
-            output3.setName("mGAP Release: " + species + " " + releaseVersion + " Lifted to Human");
-            output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
-            output3.setLibrary_id(grch37Genome.getGenomeId());
-            ctx.getFileManager().addSequenceOutput(output3);
+            boolean doLiftover = ctx.getParams().optBoolean("doLiftover", false);
+            if (doLiftover)
+            {
+                File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, genome, grch37Genome);
+                SequenceOutputFile output3 = new SequenceOutputFile();
+                output3.setFile(lifted);
+                output3.setName("mGAP Release: " + species + " " + releaseVersion + " Lifted to Human");
+                output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
+                output3.setLibrary_id(grch37Genome.getGenomeId());
+                ctx.getFileManager().addSequenceOutput(output3);
+            }
         }
 
         private void checkVcfAnnotationsAndSamples(File vcfInput, boolean skipAnnotationChecks) throws PipelineJobException
