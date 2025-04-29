@@ -25,7 +25,7 @@
     <clientDependencies>
         <dependency path="mGAP/mgap.css"/>
         <dependency path="internal/jQuery"/>
-        <dependency path="https://cdn.plot.ly/plotly-latest.min.js"/>
+        <dependency path="https://cdn.plot.ly/plotly-3.0.1.min.js"/>
         <dependency path="mGAP/Utils.js"/>
     </clientDependencies>
 </module>
