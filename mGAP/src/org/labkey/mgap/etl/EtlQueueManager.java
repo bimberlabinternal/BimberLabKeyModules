@@ -76,6 +76,21 @@ public class EtlQueueManager
         _pendingFileCopy.get(c).add(Pair.of(source, destination));
     }
 
+    public boolean isFileInQueue(Container c, final File destination)
+    {
+        if (_pendingFileCopy.containsKey(c) && _pendingFileCopy.get(c).stream().anyMatch(p -> destination.equals(p.getRight())))
+        {
+            return true;
+        }
+
+        if (_pendingRsyncCopy.containsKey(c) && _pendingRsyncCopy.get(c).stream().anyMatch(p -> destination.equals(p.getRight())))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public void queueRsyncCopy(Container c, File source, File destination)
     {
         if (!_pendingRsyncCopy.containsKey(c))

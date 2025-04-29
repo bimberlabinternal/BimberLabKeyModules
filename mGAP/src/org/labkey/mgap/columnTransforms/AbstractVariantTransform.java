@@ -112,50 +112,55 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File f = new File(uri);
             if (!f.exists())
             {
-                getStatusLogger().error("File not found: " + uri);
-                return null;
-            }
-            else
-            {
-                File subDir = getLocalSubdir(folderName);
-                File localCopy = doFileCopy(f, subDir, name);
-
-                //first create the ExpData
-                ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
-                if (d == null)
+                if (!EtlQueueManager.get().isFileInQueue(getContainerUser().getContainer(), f))
                 {
-                    d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
-                    d.setDataFileURI(localCopy.toURI());
-                    d.setName(localCopy.getName());
-                    d.save(getContainerUser().getUser());
-                }
-
-                //then the outputfile
-                TableSelector ts = new TableSelector(getOutputFilesTableInfo(), PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("dataId"), d.getRowId()), null);
-                if (ts.exists())
-                {
-                    getStatusLogger().info("existing record found for outputfile: " + d.getDataFileUrl());
-                    return ts.getObject(Integer.class);
+                    getStatusLogger().error("File not found: " + uri);
+                    return null;
                 }
                 else
                 {
-                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
-                    row.put("category", getOutputFileCategory());
-                    row.put("dataid", d.getRowId());
-                    row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
-                    row.put("description", getDescription());
-                    row.put("library_id", getLibraryId());
-                    row.put("container", getContainerUser().getContainer().getId());
-                    row.put("created", new Date());
-                    row.put("createdby", getContainerUser().getUser().getUserId());
-                    row.put("modified", new Date());
-                    row.put("modifiedby", getContainerUser().getUser().getUserId());
-
-                    List<Map<String, Object>> rows = getOutputFilesTableInfo().getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(row), new BatchValidationException(), null, new HashMap<>());
-                    getStatusLogger().info("created outputfile: " + rows.get(0).get("rowid"));
-
-                    return (Integer)rows.get(0).get("rowid");
+                    getStatusLogger().debug("File is in ETL queue: " + f.getPath());
                 }
+            }
+
+            File subDir = getLocalSubdir(folderName);
+            File localCopy = doFileCopy(f, subDir, name);
+
+            //first create the ExpData
+            ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
+            if (d == null)
+            {
+                d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
+                d.setDataFileURI(localCopy.toURI());
+                d.setName(localCopy.getName());
+                d.save(getContainerUser().getUser());
+            }
+
+            //then the outputfile
+            TableSelector ts = new TableSelector(getOutputFilesTableInfo(), PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("dataId"), d.getRowId()), null);
+            if (ts.exists())
+            {
+                getStatusLogger().info("existing record found for outputfile: " + d.getDataFileUrl());
+                return ts.getObject(Integer.class);
+            }
+            else
+            {
+                Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                row.put("category", getOutputFileCategory());
+                row.put("dataid", d.getRowId());
+                row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
+                row.put("description", getDescription());
+                row.put("library_id", getLibraryId());
+                row.put("container", getContainerUser().getContainer().getId());
+                row.put("created", new Date());
+                row.put("createdby", getContainerUser().getUser().getUserId());
+                row.put("modified", new Date());
+                row.put("modifiedby", getContainerUser().getUser().getUserId());
+
+                List<Map<String, Object>> rows = getOutputFilesTableInfo().getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(row), new BatchValidationException(), null, new HashMap<>());
+                getStatusLogger().info("created outputfile: " + rows.get(0).get("rowid"));
+
+                return (Integer)rows.get(0).get("rowid");
             }
         }
         catch (Exception e)

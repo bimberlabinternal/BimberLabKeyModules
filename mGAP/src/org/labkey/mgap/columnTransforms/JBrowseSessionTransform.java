@@ -244,12 +244,14 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     private String getOrCreateJsonFile(Results rs, String fieldKey) throws SQLException
     {
-        Integer outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString(fieldKey)), getInputValue("objectId"), rs.getString("label"));
-        if (outputFileId == null)
+        String value = rs.getString(FieldKey.fromString(fieldKey));
+        if (value == null)
         {
-            getStatusLogger().info("outputFileId is null, skipping in getOrCreateJsonFile()");
+            getStatusLogger().info(fieldKey + " is null, skipping in getOrCreateJsonFile()");
             return null;
         }
+
+        Integer outputFileId = getOrCreateOutputFile(value, getInputValue("objectId"), rs.getString("label"));
 
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
