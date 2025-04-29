@@ -492,11 +492,17 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                // NOTE: this can be rather slow. Consider caching remotely or using VCF index?
                 String totalVariants = null;
                 try
                 {
                     File releaseStats = new File(so.getFile().getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(so.getFile().getName()) + ".summaryByField.txt");
+
+                    // NOTE: this is a one-off fix when there is mis-alignment between remote workdir and local dir. Should not normally be needed:
+                    if (! releaseStats.exists())
+                    {
+                        releaseStats = new File(ctx.getOutputDir(), releaseStats.getName());
+                    }
+
                     if (releaseStats.exists())
                     {
                         try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(releaseStats), '\t'))
@@ -528,7 +534,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
                     else
                     {
-                        job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
+                        throw new PipelineJobException("Unable to find release stats file: " + releaseStats.getPath() + ", for VCF: " + so.getRowid() + ", " + so.getFile().getPath());
                     }
                 }
                 catch (IOException e)
