@@ -380,7 +380,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             }
 
 
-            String releaseVersion = job.getParameters().get("releaseVersion");
+            String releaseVersionString = getVersionString(job.getParameters().get("species"), job.getParameters().get("releaseVersion"));
 
             Map<String, SequenceOutputFile> outputVCFMap = new HashMap<>();
             Map<String, SequenceOutputFile> outputTableMap = new HashMap<>();
@@ -389,8 +389,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             Map<String, SequenceOutputFile> novelSitesVcfMap = new HashMap<>();
             Map<String, SequenceOutputFile> trackVCFMap = new HashMap<>();
 
+            ctx.getLogger().debug("Total outputs created: " + outputsCreated.size());
             for (SequenceOutputFile so : outputsCreated)
             {
+                ctx.getLogger().debug("Inspecting: " + so.getName() + " / " + so.getCategory());
                 if (so.getRowid() == null || so.getRowid() == 0)
                 {
                     throw new PipelineJobException("No rowId found for sequence output");
@@ -408,11 +410,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
                 else if (so.getCategory().contains("mGAP Release: Sites Only"))
                 {
-                    sitesOnlyVcfMap.put("mGAP Release: " + releaseVersion, so);
+                    sitesOnlyVcfMap.put("mGAP Release: " + releaseVersionString, so);
                 }
                 else if (so.getCategory().contains("Release Track") && so.getName().contains("Novel Sites"))
                 {
-                    novelSitesVcfMap.put("mGAP Release: " + releaseVersion, so);
+                    novelSitesVcfMap.put("mGAP Release: " + releaseVersionString, so);
                     trackVCFMap.put(so.getName(), so);
                 }
                 else if (so.getCategory().endsWith("Release"))
@@ -445,6 +447,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             String releaseId = new GUID().toString();
             for (String release : outputVCFMap.keySet())
             {
+                ctx.getLogger().debug("Preparing release: " + release);
                 SequenceOutputFile so = outputVCFMap.get(release);
                 SequenceOutputFile so2 = outputTableMap.get(release);
                 if (so2 == null)
@@ -461,7 +464,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 SequenceOutputFile sitesOnlyVcf = sitesOnlyVcfMap.get(release);
                 if (sitesOnlyVcf == null)
                 {
-                    throw new PipelineJobException("Unable to find sites-only VCF for release: " + release);
+                    throw new PipelineJobException("Unable to find sites-only VCF for release: " + release + ". Total map size: " + sitesOnlyVcfMap.size());
                 }
 
                 SequenceOutputFile novelSitesVcf = novelSitesVcfMap.get(release);
@@ -1035,11 +1038,16 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, genome, grch37Genome);
                 SequenceOutputFile output3 = new SequenceOutputFile();
                 output3.setFile(lifted);
-                output3.setName("mGAP Release: " + species + " " + releaseVersion + " Lifted to Human");
+                output3.setName("mGAP Release: " + getVersionString(species, releaseVersion) + " Lifted to Human");
                 output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
                 output3.setLibrary_id(grch37Genome.getGenomeId());
                 ctx.getFileManager().addSequenceOutput(output3);
             }
+        }
+
+        private static String getVersionString(String species, String releaseVersion)
+        {
+            return species + " " + releaseVersion;
         }
 
         private void checkVcfAnnotationsAndSamples(File vcfInput, boolean skipAnnotationChecks) throws PipelineJobException
