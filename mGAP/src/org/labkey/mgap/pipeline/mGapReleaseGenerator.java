@@ -587,6 +587,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     continue; //header
                                 }
 
+                                if (lineNo % 5000 == 0)
+                                {
+                                    job.getLogger().info("Inspected {} sites", lineNo);
+                                }
+
                                 Map<String, Object> map = new CaseInsensitiveHashMap<>();
                                 map.put("releaseId", releaseId);
                                 map.put("contig", line[0]);
@@ -611,7 +616,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
                     else
                     {
-                        job.getLogger().error("unable to find release stats file: " + variantTable.getPath());
+                        throw new PipelineJobException("Unable to find variant table for output: " + so2.getRowid() + ", " + variantTable.getPath());
                     }
 
                     //also tracks:
