@@ -12,7 +12,7 @@ public class TrackOutputFileTransform extends AbstractVariantTransform
     {
         if (null == inputValue)
         {
-            getStatusLogger().warn("value was null for track outputfile");
+            getStatusLogger().debug("inputValue was null for TrackOutputFileTransform");
             return null;
         }
 

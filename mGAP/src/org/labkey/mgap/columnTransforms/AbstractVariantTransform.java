@@ -201,7 +201,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
         //Copy file locally, plus index if exists:
         File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v") ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
-        if (f.getAbsolutePath().equals(localCopy))
+        if (f.equals(localCopy))
         {
             getStatusLogger().error("Attempting to copy file that is already a child of the target: " + f.getPath(), new Exception());
             return localCopy;
@@ -221,6 +221,10 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 localCopy.delete();
             }
         }
+        else
+        {
+            getStatusLogger().info("existing file not found: " + localCopy.getPath());
+        }
 
         if (doCopy)
         {
@@ -234,7 +238,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File indexLocal = new File(localCopy.getPath() + ".tbi");
             if (doCopy && indexLocal.exists())
             {
-                getStatusLogger().info("deleting local copy of index since file was re-copied");
+                getStatusLogger().info("deleting local copy of index since file will be re-copied");
                 indexLocal.delete();
             }
 
