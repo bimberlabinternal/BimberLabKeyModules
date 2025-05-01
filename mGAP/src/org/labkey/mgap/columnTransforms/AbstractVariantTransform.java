@@ -201,6 +201,12 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
         //Copy file locally, plus index if exists:
         File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v") ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
+        if (f.getAbsolutePath().equals(localCopy))
+        {
+            getStatusLogger().error("Attempting to copy file that is already a child of the target: " + f.getPath(), new Exception());
+            return localCopy;
+        }
+
         boolean doCopy = true;
         if (localCopy.exists())
         {
