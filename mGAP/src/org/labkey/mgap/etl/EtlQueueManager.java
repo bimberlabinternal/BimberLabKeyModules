@@ -121,6 +121,7 @@ public class EtlQueueManager
     {
         if (destination.exists())
         {
+            log.info("Deleting destination file: " + source.getPath());
             destination.delete();
         }
 
