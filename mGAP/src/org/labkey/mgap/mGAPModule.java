@@ -158,10 +158,12 @@ public class mGAPModule extends ExtendedSimpleModule
     public JSONObject getPageContextJson(ContainerUser context)
     {
         JSONObject ret = super.getPageContextJson(context);
+        ret.put("defaultSpecies", mGAPManager.get().getDefaultSpecies());
 
         SimpleFilter filter = new SimpleFilter();
         filter.addClause(ContainerFilter.current(context.getContainer()).createFilterClause(mGAPSchema.getInstance().getSchema(), FieldKey.fromString("container")));
-        filter.addCondition(FieldKey.fromString("species"), "Rhesus macaque");
+        filter.addCondition(FieldKey.fromString("species"), mGAPManager.get().getDefaultSpecies());
+
         TableSelector ts = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("rowid", "objectid", "species", "version", "jbrowseId", "humanJbrowseId", "luceneIndex"), filter, new Sort("-releaseDate"));
         ts.setMaxRows(1);
         ts.forEachResults(rs -> {
