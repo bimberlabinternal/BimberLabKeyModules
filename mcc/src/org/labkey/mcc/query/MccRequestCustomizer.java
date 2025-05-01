@@ -84,7 +84,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
                 TableInfo dti = StorageProvisioner.createTableInfo(d.getDomain());
 
                 SQLFragment sql = new SQLFragment("(SELECT ").
-                        append(ti.getSqlDialect().getGroupConcat(new SQLFragment("d." + dti.getColumn("participantid").getSelectName()), true, true, new SQLFragment("', '"))).
+                        append(ti.getSqlDialect().getGroupConcat(new SQLFragment("d.").appendIdentifier(dti.getColumn("participantid").getSelectIdentifier()), true, true, new SQLFragment("', '"))).
                         append(" as expr FROM ").
                         append(" mcc." + MccSchema.TABLE_ANIMAL_REQUESTS + " ar JOIN studydataset.").append(dti.getName()).
                         append(" d ON (d.mccRequestId = ar.rowId)").
