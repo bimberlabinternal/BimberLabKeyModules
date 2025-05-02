@@ -149,7 +149,10 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                 FieldKey.fromString("description"),
                 FieldKey.fromString("isprimarytrack"),
                 FieldKey.fromString("vcfId/dataid/DataFileUrl"),
-                FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl")
+                FieldKey.fromString("releaseId/luceneIndex"),
+                FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"),
+                FieldKey.fromString("vcfIndexId"),
+                FieldKey.fromString("vcfIndexId/dataid/DataFileUrl")
         );
 
         TableInfo tracksPerRelease = QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
@@ -278,9 +281,18 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"))) != null;
-                getStatusLogger().info("Creating track JSON for primary track, has lucene index: " + hasLuceneIndex);
-                row.put("trackJson", getTrackJson(hasLuceneIndex));
+                boolean expectIndex = rs.getObject(FieldKey.fromString("releaseId/luceneIndex")) != null || rs.getObject(FieldKey.fromString("vcfIndexId")) != null;
+
+                boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"))) != null ||
+                        StringUtils.trimToNull(rs.getString(FieldKey.fromString("vcfIndexId/dataid/DataFileUrl"))) != null;
+
+                if (expectIndex && !hasLuceneIndex)
+                {
+                    getStatusLogger().warn("Expected VCF index but did not find one for outputId: " + outputFileId);
+                }
+
+                getStatusLogger().info("Creating track JSON for primary track, has lucene index: " + expectIndex + " / " + hasLuceneIndex);
+                row.put("trackJson", getTrackJson(expectIndex));
             }
             else
             {
