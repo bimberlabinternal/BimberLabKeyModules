@@ -266,7 +266,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     throw new PipelineJobException("File should have been deleted: " + localCopy.getPath());
                 }
 
-                Files.createSymbolicLink(f.toPath(), localCopy.toPath());
+                Files.createSymbolicLink(localCopy.toPath(), f.toPath());
             }
             catch (IOException e)
             {
@@ -289,7 +289,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 getStatusLogger().info("Creating symlink copy of VCF index: " + index.getPath() + " / " + indexLocal.getPath());
                 try
                 {
-                    Files.createSymbolicLink(index.toPath(), indexLocal.toPath());
+                    Files.createSymbolicLink(indexLocal.toPath(), index.toPath());
                 }
                 catch (IOException e)
                 {
