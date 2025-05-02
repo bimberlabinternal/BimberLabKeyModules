@@ -1,6 +1,9 @@
 package org.labkey.mgap.columnTransforms;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
+import org.junit.Test;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.Selector;
@@ -24,7 +27,10 @@ import org.labkey.mgap.etl.EtlQueueManager;
 import org.labkey.mgap.mGAPManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
@@ -195,7 +201,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         return subdir;
     }
 
-    protected File doFileCopy(File f, File subdir, String name) throws PipelineJobException
+    protected File doFileCopy(File f, File subdir, @Nullable String name) throws PipelineJobException
     {
         getStatusLogger().info("preparing to copy file: " + f.getPath());
 
@@ -217,8 +223,15 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             }
             else
             {
-                getStatusLogger().info("source file has been modified, deleting copy and re-syncing");
-                localCopy.delete();
+                getStatusLogger().info("source file has been modified, deleting copy and re-syncing: " + localCopy.getPath());
+                try
+                {
+                    Files.delete(localCopy.toPath());
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException("Unable to delete file: " + localCopy.getPath(), e);
+                }
             }
         }
         else
@@ -229,7 +242,20 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         if (doCopy)
         {
             getStatusLogger().info("queueing file copy: " + localCopy.getPath());
-            EtlQueueManager.get().queueFileCopy(getContainerUser().getContainer(), f, localCopy);
+            try
+            {
+                if (!Files.isReadable(f.toPath()))
+                {
+                    throw new PipelineJobException("Unable to read file: " + f.getPath());
+                }
+
+                Files.createSymbolicLink(f.toPath(), localCopy.toPath());
+            }
+            catch (IOException e)
+            {
+                getStatusLogger().error("Failed to create symlink: " + localCopy.getPath(), e);
+                return null;
+            }
         }
 
         File index = new File(f.getPath() + ".tbi");
@@ -238,14 +264,21 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File indexLocal = new File(localCopy.getPath() + ".tbi");
             if (doCopy && indexLocal.exists())
             {
-                getStatusLogger().info("deleting local copy of index since file will be re-copied");
+                getStatusLogger().info("deleting local copy of index since file will be re-copied: " + indexLocal.getPath());
                 indexLocal.delete();
             }
 
             if (!indexLocal.exists())
             {
                 getStatusLogger().info("queueing copy of index: " + indexLocal.getPath());
-                EtlQueueManager.get().queueFileCopy(getContainerUser().getContainer(), index, indexLocal);
+                try
+                {
+                    Files.createSymbolicLink(f.toPath(), localCopy.toPath());
+                }
+                catch (IOException e)
+                {
+                    getStatusLogger().error("Failed to create symlink: " + localCopy.getPath(), e);
+                }
             }
         }
 
