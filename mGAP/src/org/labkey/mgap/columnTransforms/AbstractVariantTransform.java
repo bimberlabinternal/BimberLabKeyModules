@@ -131,6 +131,10 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
             File subDir = getLocalSubdir(folderName);
             File localCopy = doFileCopy(f, subDir, name);
+            if (localCopy == null)
+            {
+                // TODO
+            }
 
             //first create the ExpData
             ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
@@ -203,7 +207,11 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
     protected File doFileCopy(File f, File subdir, @Nullable String name) throws PipelineJobException
     {
-        getStatusLogger().info("preparing to copy file: " + f.getPath());
+        getStatusLogger().info("preparing to copy file: " + f.getPath() + ", with name: " + name);
+        if (f.getName().equals("write.lock"))
+        {
+            return LuceneIndexTransform.doLuceneCopy(f, subdir, name, getStatusLogger(), getContainerUser().getContainer());
+        }
 
         //Copy file locally, plus index if exists:
         File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v") ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
@@ -227,6 +235,10 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                 try
                 {
                     Files.delete(localCopy.toPath());
+                    if (localCopy.exists())
+                    {
+                        throw new PipelineJobException("Unable to delete file: " + localCopy.getPath());
+                    }
                 }
                 catch (IOException e)
                 {
@@ -241,7 +253,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
         if (doCopy)
         {
-            getStatusLogger().info("queueing file copy: " + localCopy.getPath());
+            getStatusLogger().info("Creating symlink: " + f.getPath() + " / " + localCopy.getPath());
             try
             {
                 if (!Files.isReadable(f.toPath()))
@@ -249,12 +261,16 @@ abstract public class AbstractVariantTransform extends ColumnTransform
                     throw new PipelineJobException("Unable to read file: " + f.getPath());
                 }
 
+                if (localCopy.exists())
+                {
+                    throw new PipelineJobException("File should have been deleted: " + localCopy.getPath());
+                }
+
                 Files.createSymbolicLink(f.toPath(), localCopy.toPath());
             }
             catch (IOException e)
             {
-                getStatusLogger().error("Failed to create symlink: " + localCopy.getPath(), e);
-                return null;
+                throw new PipelineJobException("Failed to create symlink: " + localCopy.getPath(), e);
             }
         }
 
@@ -270,15 +286,19 @@ abstract public class AbstractVariantTransform extends ColumnTransform
 
             if (!indexLocal.exists())
             {
-                getStatusLogger().info("queueing copy of index: " + indexLocal.getPath());
+                getStatusLogger().info("Creating symlink copy of VCF index: " + index.getPath() + " / " + indexLocal.getPath());
                 try
                 {
-                    Files.createSymbolicLink(f.toPath(), localCopy.toPath());
+                    Files.createSymbolicLink(index.toPath(), indexLocal.toPath());
                 }
                 catch (IOException e)
                 {
-                    getStatusLogger().error("Failed to create symlink: " + localCopy.getPath(), e);
+                    getStatusLogger().error("Failed to create symlink: " + indexLocal.getPath(), e);
                 }
+            }
+            else
+            {
+                getStatusLogger().info("Local index already exists: " + indexLocal.getPath());
             }
         }
 
