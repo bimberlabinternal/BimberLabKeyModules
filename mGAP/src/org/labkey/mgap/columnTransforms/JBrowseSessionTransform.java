@@ -17,7 +17,9 @@ import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.pipeline.PipelineValidationException;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.PageFlowUtil;
@@ -178,6 +180,39 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         });
     }
 
+    private void ensureLuceneData(String objectId)
+    {
+        //determine if there is already a JSONfile for this outputfile
+        TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("isprimarytrack", "container"), new SimpleFilter(FieldKey.fromString("objectid"), objectId), null);
+        if (!ts1.exists())
+        {
+            getStatusLogger().error("expected jsonfile to exist: " + objectId);
+            return;
+        }
+
+        try (Results rs = ts1.getResults())
+        {
+            boolean isDefaultTrack = rs.getBoolean(FieldKey.fromString("isprimarytrack"));
+            if (!isDefaultTrack)
+            {
+                return;
+            }
+
+            String containerId = rs.getString(FieldKey.fromString("container"));
+
+            Map<String, Object> row = new CaseInsensitiveHashMap<>();
+            row.put("objectid", objectId);
+            row.put("container", containerId);
+            row.put("trackJson", getTrackJson(true));
+
+            getJsonFiles().getUpdateService().updateRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), Arrays.asList(new CaseInsensitiveHashMap<>(Map.of("objectid", objectId))), new BatchValidationException(), null, null);
+        }
+        catch (SQLException | QueryUpdateServiceException | BatchValidationException | InvalidKeyException e)
+        {
+            getStatusLogger().error("Unable to update lucene config", e);
+        }
+    }
+
     protected void getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
     {
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("database"), databaseId);
@@ -261,7 +296,10 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         if (ts1.exists())
         {
             getStatusLogger().info("jsonfile already exists for output: " + outputFileId);
-            return ts1.getArrayList(String.class).get(0);
+            String objectId = ts1.getArrayList(String.class).get(0);
+            ensureLuceneData(objectId);
+
+            return objectId;
         }
 
         try
