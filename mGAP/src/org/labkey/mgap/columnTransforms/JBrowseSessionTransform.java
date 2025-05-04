@@ -190,9 +190,9 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             return;
         }
 
-        try (Results rs = ts1.getResults())
+        try
         {
-            String containerId = rs.getString(FieldKey.fromString("container"));
+            String containerId = ts1.getObject(String.class);
 
             Map<String, Object> row = new CaseInsensitiveHashMap<>();
             row.put("objectid", objectId);
