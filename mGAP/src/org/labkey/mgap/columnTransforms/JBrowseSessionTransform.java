@@ -199,7 +199,8 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             row.put("container", containerId);
             row.put("trackJson", getTrackJson(true));
 
-            getJsonFiles().getUpdateService().updateRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), Arrays.asList(new CaseInsensitiveHashMap<>(Map.of("objectid", objectId))), new BatchValidationException(), null, null);
+            TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
+            jsonFiles.getUpdateService().updateRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), Arrays.asList(new CaseInsensitiveHashMap<>(Map.of("objectid", objectId))), new BatchValidationException(), null, null);
         }
         catch (SQLException | QueryUpdateServiceException | BatchValidationException | InvalidKeyException e)
         {
