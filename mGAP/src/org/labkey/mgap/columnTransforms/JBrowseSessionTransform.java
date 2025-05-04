@@ -183,7 +183,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
     private void ensureLuceneData(String objectId)
     {
         //determine if there is already a JSONfile for this outputfile
-        TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("isprimarytrack", "container"), new SimpleFilter(FieldKey.fromString("objectid"), objectId), null);
+        TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("container"), new SimpleFilter(FieldKey.fromString("objectid"), objectId), null);
         if (!ts1.exists())
         {
             getStatusLogger().error("expected jsonfile to exist: " + objectId);
@@ -192,12 +192,6 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
         try (Results rs = ts1.getResults())
         {
-            boolean isDefaultTrack = rs.getBoolean(FieldKey.fromString("isprimarytrack"));
-            if (!isDefaultTrack)
-            {
-                return;
-            }
-
             String containerId = rs.getString(FieldKey.fromString("container"));
 
             Map<String, Object> row = new CaseInsensitiveHashMap<>();
@@ -291,21 +285,24 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
         Integer outputFileId = getOrCreateOutputFile(value, getInputValue("objectId"), rs.getString("label"));
 
+        boolean isDefaultTrack = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
+
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
         if (ts1.exists())
         {
             getStatusLogger().info("jsonfile already exists for output: " + outputFileId);
             String objectId = ts1.getArrayList(String.class).get(0);
-            ensureLuceneData(objectId);
+            if (isDefaultTrack)
+            {
+                ensureLuceneData(objectId);
+            }
 
             return objectId;
         }
 
         try
         {
-            boolean isDefaultTrack = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
-
             TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
             CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
             row.put("objectid", new GUID().toString());
