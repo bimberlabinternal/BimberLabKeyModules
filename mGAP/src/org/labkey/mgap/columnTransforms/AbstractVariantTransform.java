@@ -1,6 +1,9 @@
 package org.labkey.mgap.columnTransforms;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
+import org.junit.Test;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.Selector;
@@ -24,7 +27,10 @@ import org.labkey.mgap.etl.EtlQueueManager;
 import org.labkey.mgap.mGAPManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,50 +118,59 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File f = new File(uri);
             if (!f.exists())
             {
-                getStatusLogger().error("File not found: " + uri);
-                return null;
-            }
-            else
-            {
-                File subDir = getLocalSubdir(folderName);
-                File localCopy = doFileCopy(f, subDir, name);
-
-                //first create the ExpData
-                ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
-                if (d == null)
+                if (!EtlQueueManager.get().isFileInQueue(getContainerUser().getContainer(), f))
                 {
-                    d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
-                    d.setDataFileURI(localCopy.toURI());
-                    d.setName(localCopy.getName());
-                    d.save(getContainerUser().getUser());
-                }
-
-                //then the outputfile
-                TableSelector ts = new TableSelector(getOutputFilesTableInfo(), PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("dataId"), d.getRowId()), null);
-                if (ts.exists())
-                {
-                    getStatusLogger().info("existing record found for outputfile: " + d.getDataFileUrl());
-                    return ts.getObject(Integer.class);
+                    getStatusLogger().error("File not found: " + uri);
+                    return null;
                 }
                 else
                 {
-                    Map<String, Object> row = new CaseInsensitiveHashMap<>();
-                    row.put("category", getOutputFileCategory());
-                    row.put("dataid", d.getRowId());
-                    row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
-                    row.put("description", getDescription());
-                    row.put("library_id", getLibraryId());
-                    row.put("container", getContainerUser().getContainer().getId());
-                    row.put("created", new Date());
-                    row.put("createdby", getContainerUser().getUser().getUserId());
-                    row.put("modified", new Date());
-                    row.put("modifiedby", getContainerUser().getUser().getUserId());
-
-                    List<Map<String, Object>> rows = getOutputFilesTableInfo().getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(row), new BatchValidationException(), null, new HashMap<>());
-                    getStatusLogger().info("created outputfile: " + rows.get(0).get("rowid"));
-
-                    return (Integer)rows.get(0).get("rowid");
+                    getStatusLogger().debug("File is in ETL queue: " + f.getPath());
                 }
+            }
+
+            File subDir = getLocalSubdir(folderName);
+            File localCopy = doFileCopy(f, subDir, name);
+            if (localCopy == null)
+            {
+                // TODO
+            }
+
+            //first create the ExpData
+            ExpData d = ExperimentService.get().getExpDataByURL(localCopy, getContainerUser().getContainer());
+            if (d == null)
+            {
+                d = ExperimentService.get().createData(getContainerUser().getContainer(), new DataType("Variant Catalog"));
+                d.setDataFileURI(localCopy.toURI());
+                d.setName(localCopy.getName());
+                d.save(getContainerUser().getUser());
+            }
+
+            //then the outputfile
+            TableSelector ts = new TableSelector(getOutputFilesTableInfo(), PageFlowUtil.set("rowid"), new SimpleFilter(FieldKey.fromString("dataId"), d.getRowId()), null);
+            if (ts.exists())
+            {
+                getStatusLogger().info("existing record found for outputfile: " + d.getDataFileUrl());
+                return ts.getObject(Integer.class);
+            }
+            else
+            {
+                Map<String, Object> row = new CaseInsensitiveHashMap<>();
+                row.put("category", getOutputFileCategory());
+                row.put("dataid", d.getRowId());
+                row.put("name", name == null ? "mGAP Variants, Version: " + getInputValue("version") : name);
+                row.put("description", getDescription());
+                row.put("library_id", getLibraryId());
+                row.put("container", getContainerUser().getContainer().getId());
+                row.put("created", new Date());
+                row.put("createdby", getContainerUser().getUser().getUserId());
+                row.put("modified", new Date());
+                row.put("modifiedby", getContainerUser().getUser().getUserId());
+
+                List<Map<String, Object>> rows = getOutputFilesTableInfo().getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(row), new BatchValidationException(), null, new HashMap<>());
+                getStatusLogger().info("created outputfile: " + rows.get(0).get("rowid"));
+
+                return (Integer)rows.get(0).get("rowid");
             }
         }
         catch (Exception e)
@@ -190,12 +205,22 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         return subdir;
     }
 
-    protected File doFileCopy(File f, File subdir, String name) throws PipelineJobException
+    protected File doFileCopy(File f, File subdir, @Nullable String name) throws PipelineJobException
     {
-        getStatusLogger().info("preparing to copy file: " + f.getPath());
+        getStatusLogger().info("preparing to copy file: " + f.getPath() + ", with name: " + name);
+        if (f.getName().equals("write.lock"))
+        {
+            return LuceneIndexTransform.doLuceneCopy(f, subdir, name, getStatusLogger(), getContainerUser().getContainer());
+        }
 
         //Copy file locally, plus index if exists:
         File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v") ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
+        if (f.equals(localCopy))
+        {
+            getStatusLogger().debug("Attempting to copy file that is already a child of the target: " + f.getPath(), new Exception());
+            return localCopy;
+        }
+
         boolean doCopy = true;
         if (localCopy.exists())
         {
@@ -206,15 +231,47 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             }
             else
             {
-                getStatusLogger().info("source file has been modified, deleting copy and re-syncing");
-                localCopy.delete();
+                getStatusLogger().info("source file has been modified, deleting copy and re-syncing: " + localCopy.getPath());
+                try
+                {
+                    Files.delete(localCopy.toPath());
+                    if (localCopy.exists())
+                    {
+                        throw new PipelineJobException("Unable to delete file: " + localCopy.getPath());
+                    }
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException("Unable to delete file: " + localCopy.getPath(), e);
+                }
             }
+        }
+        else
+        {
+            getStatusLogger().info("existing file not found: " + localCopy.getPath());
         }
 
         if (doCopy)
         {
-            getStatusLogger().info("queueing file copy: " + localCopy.getPath());
-            EtlQueueManager.get().queueFileCopy(getContainerUser().getContainer(), f, localCopy);
+            getStatusLogger().info("Creating symlink: " + f.getPath() + " / " + localCopy.getPath());
+            try
+            {
+                if (!Files.isReadable(f.toPath()))
+                {
+                    throw new PipelineJobException("Unable to read file: " + f.getPath());
+                }
+
+                if (localCopy.exists())
+                {
+                    throw new PipelineJobException("File should have been deleted: " + localCopy.getPath());
+                }
+
+                Files.createSymbolicLink(localCopy.toPath(), f.toPath());
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException("Failed to create symlink: " + localCopy.getPath(), e);
+            }
         }
 
         File index = new File(f.getPath() + ".tbi");
@@ -223,14 +280,25 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File indexLocal = new File(localCopy.getPath() + ".tbi");
             if (doCopy && indexLocal.exists())
             {
-                getStatusLogger().info("deleting local copy of index since file was re-copied");
+                getStatusLogger().info("deleting local copy of index since file will be re-copied: " + indexLocal.getPath());
                 indexLocal.delete();
             }
 
             if (!indexLocal.exists())
             {
-                getStatusLogger().info("queueing copy of index: " + indexLocal.getPath());
-                EtlQueueManager.get().queueFileCopy(getContainerUser().getContainer(), index, indexLocal);
+                getStatusLogger().info("Creating symlink copy of VCF index: " + index.getPath() + " / " + indexLocal.getPath());
+                try
+                {
+                    Files.createSymbolicLink(indexLocal.toPath(), index.toPath());
+                }
+                catch (IOException e)
+                {
+                    getStatusLogger().error("Failed to create symlink: " + indexLocal.getPath(), e);
+                }
+            }
+            else
+            {
+                getStatusLogger().info("Local index already exists: " + indexLocal.getPath());
             }
         }
 

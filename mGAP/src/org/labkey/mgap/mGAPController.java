@@ -898,7 +898,8 @@ public class mGAPController extends SpringActionController
     public static class GenomeBrowserForm
     {
         private String _databaseId;
-        private String _species;
+        private String _nhpSpecies;
+        private String _browserSpecies;
         private String _trackName;
         private String _target = "browser";
 
@@ -912,14 +913,24 @@ public class mGAPController extends SpringActionController
             _databaseId = databaseId;
         }
 
-        public String getSpecies()
+        public String getNhpSpecies()
         {
-            return _species;
+            return _nhpSpecies;
         }
 
-        public void setSpecies(String species)
+        public void setNhpSpecies(String nhpSpecies)
         {
-            _species = species;
+            _nhpSpecies = nhpSpecies;
+        }
+
+        public String getBrowserSpecies()
+        {
+            return _browserSpecies;
+        }
+
+        public void setBrowserSpecies(String browserSpecies)
+        {
+            _browserSpecies = browserSpecies;
         }
 
         public String getTrackName()
@@ -967,10 +978,16 @@ public class mGAPController extends SpringActionController
             }
 
             String jbrowseDatabaseId = StringUtils.trimToNull(form.getDatabaseId());
-            String species = StringUtils.trimToNull(form.getSpecies());
+            String browserSpecies = StringUtils.trimToNull(form.getBrowserSpecies());
+            String nhpSpecies = StringUtils.trimToNull(form.getNhpSpecies());
+            if (nhpSpecies == null)
+            {
+                nhpSpecies = mGAPManager.get().getDefaultSpecies();
+            }
+
             if (jbrowseDatabaseId == null)
             {
-                jbrowseDatabaseId = ctx.getString("human".equals(species) ? "mgapJBrowseHuman" : "mgapJBrowse");
+                jbrowseDatabaseId = ctx.getString("human".equals(browserSpecies) ? "mgapJBrowseHuman" : "mgapJBrowse");
             }
 
             if (jbrowseDatabaseId == null)
@@ -990,7 +1007,7 @@ public class mGAPController extends SpringActionController
             // This requires trackId
             if ("variantSearch".equals(actionName))
             {
-                String trackGUID = getPrimaryTrackUUID(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"));
+                String trackGUID = getPrimaryTrackUUID(target, jbrowseDatabaseId, ctx.getString("mgapReleaseGUID"), nhpSpecies);
                 if (trackGUID != null)
                 {
                     params.put("trackId", new String[]{trackGUID});
@@ -1036,25 +1053,26 @@ public class mGAPController extends SpringActionController
             return ret;
         }
 
-        public String getPrimaryTrackUUID(Container target, String jbrowseSession, String releaseId)
+        public String getPrimaryTrackUUID(Container target, String jbrowseSession, String releaseId, String species)
         {
-            final String trackName = "mGAP Release";
-
             UserSchema mgap = QueryService.get().getUserSchema(getUser(), target, mGAPSchema.NAME);
             UserSchema jbrowse = QueryService.get().getUserSchema(getUser(), target, "jbrowse");
 
             //find the selected track:
             SimpleFilter trackFilter = new SimpleFilter(FieldKey.fromString("releaseId"), releaseId);
-            trackFilter.addCondition(FieldKey.fromString("trackName"), trackName, CompareType.EQUAL);
+            trackFilter.addCondition(FieldKey.fromString("trackName"), species, CompareType.STARTS_WITH);
+            trackFilter.addCondition(FieldKey.fromString("isprimarytrack"), true, CompareType.EQUAL);
+            trackFilter.addCondition(FieldKey.fromString("category"), "Species Dataset", CompareType.EQUAL);
+
             List<Integer> outputFileIds = new TableSelector(mgap.getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE), PageFlowUtil.set("vcfId"), trackFilter, null).getArrayList(Integer.class);
             if (outputFileIds.isEmpty())
             {
-                _log.error("Unable to find track: " + jbrowseSession + " / " + releaseId + " / " + trackName);
+                _log.error("Unable to find track for species: " + jbrowseSession + " / " + releaseId + " / " + species);
                 return null;
             }
             else if (outputFileIds.size() > 1)
             {
-                _log.error("More than one matching outputfile found, using first: " + jbrowseSession + " / " + releaseId + " / " + trackName);
+                _log.error("More than one matching outputfile found for species, using first: " + jbrowseSession + " / " + releaseId + " / " + species);
             }
 
             //now database members from these outputFileIds:
@@ -1064,12 +1082,12 @@ public class mGAPController extends SpringActionController
             List<String> guids = new TableSelector(databaseMembers, PageFlowUtil.set("jsonfile"), dbFilter, null).getArrayList(String.class);
             if (guids.isEmpty())
             {
-                _log.error("No database_members found for track: " + jbrowseSession + " / " + releaseId + " / " + trackName + " / " + outputFileIds.get(0));
+                _log.error("No database_members found for track: " + jbrowseSession + " / " + releaseId + " / " + species + " / " + outputFileIds.get(0));
                 return null;
             }
             else if (guids.size() > 1)
             {
-                _log.error("More than one matching database_member record found, using first: " + jbrowseSession + " / " + releaseId + " / " + trackName + " / " + outputFileIds.get(0));
+                _log.error("More than one matching database_member record found, using first: " + jbrowseSession + " / " + releaseId + " / " + species + " / " + outputFileIds.get(0));
             }
 
             return guids.get(0);

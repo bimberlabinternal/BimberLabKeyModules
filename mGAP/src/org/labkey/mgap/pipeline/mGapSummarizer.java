@@ -193,7 +193,7 @@ public class mGapSummarizer
     {
         ctx.getLogger().info("reading variant table");
         FieldTracker tracker = new FieldTracker(130);
-        try (BufferedReader reader = Readers.getReader(variantsToTable))
+        try (BufferedReader reader = IOUtil.openFileForBufferedUtf8Reading(variantsToTable))
         {
             String lineStr;
             List<String> header = new ArrayList<>();

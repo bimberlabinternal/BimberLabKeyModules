@@ -177,6 +177,10 @@ public class ELISPOT_AssayTest extends AbstractLabModuleAssayTest
         String originalID = TEMPLATE_DATA[1][1];
         TEMPLATE_DATA[1][1] = "";
 
+        // Debug client date parsing
+        String clientFormattedString = (String)executeScript("return Ext4.Date.format(LDK.ConvertUtils.parseDate('2012-02-09'), 'Y-m-d');");
+        assertEquals("Incorrect date parsing", clientFormattedString, "2012-02-09");
+
         _helper.addRecordsToAssayTemplate(TEMPLATE_DATA, expectedCols);
 
         waitForElement(_helper.getAssayWell("A1", LabModuleHelper.UNKNOWN_COLOR), WAIT_FOR_PAGE);
