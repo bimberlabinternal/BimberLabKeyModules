@@ -110,4 +110,9 @@ public class mGAPManager
 
         return ret;
     }
+
+    public String getDefaultSpecies()
+    {
+        return "Rhesus macaque";
+    }
 }

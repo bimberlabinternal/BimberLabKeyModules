@@ -34,6 +34,14 @@ public class mGAPLuceneDetector implements JBrowseService.LuceneIndexDetector
             return SequenceOutputFile.getForId(ts.getObject(Integer.class));
         }
 
+        SimpleFilter filter2 = new SimpleFilter(FieldKey.fromString("vcfId"), vcfFile.getRowid(), CompareType.EQUAL);
+        filter2.addCondition(FieldKey.fromString("vcfIndexId"), null, CompareType.NONBLANK);
+        TableSelector ts2 = new TableSelector(QueryService.get().getUserSchema(u, target, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE), PageFlowUtil.set("vcfIndexId"), filter2, null);
+        if (ts2.exists())
+        {
+            return SequenceOutputFile.getForId(ts2.getObject(Integer.class));
+        }
+
         return null;
     }
 

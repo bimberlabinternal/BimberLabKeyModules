@@ -57,6 +57,7 @@ import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.run.GeneToNameTranslator;
 import org.labkey.api.sequenceanalysis.run.LiftoverBcfToolsWrapper;
 import org.labkey.api.sequenceanalysis.run.SelectVariantsWrapper;
+import org.labkey.api.util.Compress;
 import org.labkey.api.util.FileType;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.GUID;
@@ -86,6 +87,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -129,8 +131,9 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     put("filterArray", "js:[LABKEY.Filter.create('datedisabled', null, LABKEY.Filter.Types.ISBLANK)]");
                     put("displayField", "name");
                     put("valueField", "rowid");
-                    put("allowBlank", false);
+                    put("allowBlank", true);
                 }}, null),
+                ToolParameterDescriptor.create("doLiftover", "Do Liftover?", "If true, the data will be lifted to GRCh37", "checkbox", null, false),
                 ToolParameterDescriptor.create("luceneIndex", "Lucene Index", "A pre-made lucene index created from this VCF.", "sequenceanalysis-sequenceoutputfileselectorfield", new JSONObject()
                 {{
                     put("allowBlank", false);
@@ -377,7 +380,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             }
 
 
-            String releaseVersion = job.getParameters().get("releaseVersion");
+            String releaseVersionString = getVersionString(job.getParameters().get("species"), job.getParameters().get("releaseVersion"));
 
             Map<String, SequenceOutputFile> outputVCFMap = new HashMap<>();
             Map<String, SequenceOutputFile> outputTableMap = new HashMap<>();
@@ -386,8 +389,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             Map<String, SequenceOutputFile> novelSitesVcfMap = new HashMap<>();
             Map<String, SequenceOutputFile> trackVCFMap = new HashMap<>();
 
+            ctx.getLogger().debug("Total outputs created: " + outputsCreated.size());
             for (SequenceOutputFile so : outputsCreated)
             {
+                ctx.getLogger().debug("Inspecting: " + so.getName() + " / " + so.getCategory());
                 if (so.getRowid() == null || so.getRowid() == 0)
                 {
                     throw new PipelineJobException("No rowId found for sequence output");
@@ -405,11 +410,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
                 else if (so.getCategory().contains("mGAP Release: Sites Only"))
                 {
-                    sitesOnlyVcfMap.put("mGAP Release: " + releaseVersion, so);
+                    sitesOnlyVcfMap.put("mGAP Release: " + releaseVersionString, so);
                 }
                 else if (so.getCategory().contains("Release Track") && so.getName().contains("Novel Sites"))
                 {
-                    novelSitesVcfMap.put("mGAP Release: " + releaseVersion, so);
+                    novelSitesVcfMap.put("mGAP Release: " + releaseVersionString, so);
                     trackVCFMap.put(so.getName(), so);
                 }
                 else if (so.getCategory().endsWith("Release"))
@@ -442,6 +447,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             String releaseId = new GUID().toString();
             for (String release : outputVCFMap.keySet())
             {
+                ctx.getLogger().debug("Preparing release: " + release);
                 SequenceOutputFile so = outputVCFMap.get(release);
                 SequenceOutputFile so2 = outputTableMap.get(release);
                 if (so2 == null)
@@ -450,7 +456,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 }
 
                 SequenceOutputFile liftedVcf = liftedVcfMap.get(release);
-                if (liftedVcf == null)
+                if (ctx.getParams().optBoolean("doLiftover", false) && liftedVcf == null)
                 {
                     throw new PipelineJobException("Unable to find lifted VCF for release: " + release);
                 }
@@ -458,7 +464,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 SequenceOutputFile sitesOnlyVcf = sitesOnlyVcfMap.get(release);
                 if (sitesOnlyVcf == null)
                 {
-                    throw new PipelineJobException("Unable to find sites-only VCF for release: " + release);
+                    throw new PipelineJobException("Unable to find sites-only VCF for release: " + release + ". Total map size: " + sitesOnlyVcfMap.size());
                 }
 
                 SequenceOutputFile novelSitesVcf = novelSitesVcfMap.get(release);
@@ -486,11 +492,17 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                // NOTE: this can be rather slow. Consider caching remotely or using VCF index?
                 String totalVariants = null;
                 try
                 {
                     File releaseStats = new File(so.getFile().getParentFile(), SequenceAnalysisService.get().getUnzippedBaseName(so.getFile().getName()) + ".summaryByField.txt");
+
+                    // NOTE: this is a one-off fix when there is mis-alignment between remote workdir and local dir. Should not normally be needed:
+                    if (! releaseStats.exists())
+                    {
+                        releaseStats = new File(ctx.getOutputDir(), releaseStats.getName());
+                    }
+
                     if (releaseStats.exists())
                     {
                         try (CSVReader reader = new CSVReader(IOUtil.openFileForBufferedReading(releaseStats), '\t'))
@@ -522,7 +534,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
                     else
                     {
-                        job.getLogger().error("unable to find release stats file: " + releaseStats.getPath());
+                        throw new PipelineJobException("Unable to find release stats file: " + releaseStats.getPath() + ", for VCF: " + so.getRowid() + ", " + so.getFile().getPath());
                     }
                 }
                 catch (IOException e)
@@ -543,7 +555,10 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                 row.put("releaseDate", new Date());
                 row.put("species", species);
                 row.put("vcfId", so.getRowid());
-                row.put("liftedVcfId", liftedVcf.getRowid());
+                if (liftedVcf != null)
+                {
+                    row.put("liftedVcfId", liftedVcf.getRowid());
+                }
                 row.put("sitesOnlyVcfId", sitesOnlyVcf.getRowid());
                 row.put("novelSitesVcfId", novelSitesVcf.getRowid());
                 row.put("luceneIndex", luceneIndex.getRowid());
@@ -572,6 +587,11 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     continue; //header
                                 }
 
+                                if (lineNo % 5000 == 0)
+                                {
+                                    job.getLogger().info("Inspected {} sites", lineNo);
+                                }
+
                                 Map<String, Object> map = new CaseInsensitiveHashMap<>();
                                 map.put("releaseId", releaseId);
                                 map.put("contig", line[0]);
@@ -596,7 +616,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     }
                     else
                     {
-                        job.getLogger().error("unable to find release stats file: " + variantTable.getPath());
+                        throw new PipelineJobException("Unable to find variant table for output: " + so2.getRowid() + ", " + variantTable.getPath());
                     }
 
                     //also tracks:
@@ -936,7 +956,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             String species = ctx.getParams().getString("species");
             String releaseVersion = ctx.getParams().optString("releaseVersion", "0.0");
-            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap." + species + ".v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
+            File primaryTrackVcf = new File(ctx.getOutputDir(), "mGap." + species.replaceAll(" ", "_") + ".v" + FileUtil.makeLegalName(releaseVersion).replaceAll(" ", "_") + ".vcf.gz");
 
             try
             {
@@ -1023,13 +1043,22 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             File sitesOnlyVcf = getSitesOnlyVcf(ctx, primaryTrackVcf, genome);
 
-            File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, genome, grch37Genome);
-            SequenceOutputFile output3 = new SequenceOutputFile();
-            output3.setFile(lifted);
-            output3.setName("mGAP Release: " + species + " " + releaseVersion + " Lifted to Human");
-            output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
-            output3.setLibrary_id(grch37Genome.getGenomeId());
-            ctx.getFileManager().addSequenceOutput(output3);
+            boolean doLiftover = ctx.getParams().optBoolean("doLiftover", false);
+            if (doLiftover)
+            {
+                File lifted = liftToHuman(ctx, primaryTrackVcf, sitesOnlyVcf, genome, grch37Genome);
+                SequenceOutputFile output3 = new SequenceOutputFile();
+                output3.setFile(lifted);
+                output3.setName("mGAP Release: " + getVersionString(species, releaseVersion) + " Lifted to Human");
+                output3.setCategory((testOnly ? "Test " : "") + "mGAP Release Lifted to Human");
+                output3.setLibrary_id(grch37Genome.getGenomeId());
+                ctx.getFileManager().addSequenceOutput(output3);
+            }
+        }
+
+        private static String getVersionString(String species, String releaseVersion)
+        {
+            return species + " " + releaseVersion;
         }
 
         private void checkVcfAnnotationsAndSamples(File vcfInput, boolean skipAnnotationChecks) throws PipelineJobException
@@ -1104,18 +1133,15 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Running Liftover");
 
             File liftedToGRCh37 = getLiftedVcfName(ctx.getOutputDir(), primaryTrackVcf);
-            File liftoverRejects = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(primaryTrackVcf.getName()) + ".liftoverRejectGRCh37.vcf.gz");
-            if (!indexExists(liftoverRejects))
+            if (!indexExists(liftedToGRCh37))
             {
                 LiftoverBcfToolsWrapper liftoverVcfRunner = new LiftoverBcfToolsWrapper(ctx.getLogger());
-                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, sourceGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37);
+                liftoverVcfRunner.doLiftover(noGenotypes, chainFile, sourceGenome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), null, liftedToGRCh37);
             }
             else
             {
                 ctx.getLogger().info("resuming with existing file: " + liftedToGRCh37.getPath());
             }
-            ctx.getFileManager().addIntermediateFile(liftoverRejects);
-            ctx.getFileManager().addIntermediateFile(new File(liftoverRejects.getPath() + ".tbi"));
 
             return liftedToGRCh37;
         }
@@ -1148,35 +1174,32 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
             String releaseVersion = ctx.getParams().optString("releaseVersion");
 
-            long sitesInspected = 0L;
-            long totalVariants = 0L;
-            long totalPrivateVariants = 0L;
-            long newInThisRelease = 0L;
+            AtomicLong sitesInspected = new AtomicLong();
+            AtomicLong totalVariants = new AtomicLong();
+            AtomicLong totalPrivateVariants = new AtomicLong();
+            AtomicLong newInThisRelease = new AtomicLong();
             Map<VariantContext.Type, Long> typeCounts = new HashMap<>();
 
             File interestingVariantTable = getVariantTableName(ctx, vcfInput);
             try (VCFFileReader reader = new VCFFileReader(vcfInput); CloseableIterator<VariantContext> it = reader.iterator(); CSVWriter writer = new CSVWriter(PrintWriters.getPrintWriter(interestingVariantTable), '\t', CSVWriter.NO_QUOTE_CHARACTER))
             {
                 writer.writeNext(new String[]{"Chromosome", "Position", "Reference", "Allele", "Source", "Reason", "Description", "Overlapping Gene(s)", "OMIM Entries", "OMIM Phenotypes", "AF", "Identifier", "CADD_Score"});
-                while (it.hasNext())
-                {
+                it.stream().parallel().forEachOrdered(vc -> {
                     Set<List<String>> queuedLines = new LinkedHashSet<>();
 
-                    sitesInspected++;
-
-                    if (sitesInspected % 1000000 == 0)
+                    sitesInspected.getAndIncrement();
+                    if (sitesInspected.get() % 1000000 == 0)
                     {
                         ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Inspected " + sitesInspected + " variants");
                         ctx.getLogger().info("inspected " + sitesInspected + " variants");
                     }
 
-                    VariantContext vc = it.next();
                     if (vc.isFiltered())
                     {
-                        continue;
+                        return;
                     }
 
-                    totalVariants++;
+                    totalVariants.getAndIncrement();
 
                     //track total by variant type
                     Long typeCount = typeCounts.get(vc.getType());
@@ -1205,7 +1228,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                         if (sampleCount == 1)
                         {
-                            totalPrivateVariants++;
+                            totalPrivateVariants.getAndIncrement();
                         }
                     }
 
@@ -1342,7 +1365,6 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                                     try
                                     {
                                         maybeWriteVariantLine(queuedLines, vc, a.getBaseString(), "ClinVar", diseaseSplit.get(j), description, overlappingGenes, omimIds, omimPhenotypes, ctx.getLogger(), "ClinVar:" + clnAlleleIds.get(i));
-
                                     }
                                     catch (IndexOutOfBoundsException e)
                                     {
@@ -1422,14 +1444,14 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
 
                     if (vc.getAttribute("mGAPV") != null && releaseVersion.equals(vc.getAttributeAsString("mGAPV", null)))
                     {
-                        newInThisRelease++;
+                        newInThisRelease.getAndIncrement();
                     }
 
                     for (List<String> line : queuedLines)
                     {
                         writer.writeNext(line.toArray(new String[0]));
                     }
-                }
+                });
             }
             catch (IOException e)
             {
@@ -1444,7 +1466,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
                     totalSubjects = reader.getFileHeader().getSampleNamesInOrder().size();
                 }
 
-                generateSummaries(ctx, vcfInput, genome, totalVariants, totalPrivateVariants, newInThisRelease, totalSubjects, typeCounts);
+                generateSummaries(ctx, vcfInput, genome, totalVariants.get(), totalPrivateVariants.get(), newInThisRelease.get(), totalSubjects, typeCounts);
             }
 
             try
@@ -1487,14 +1509,22 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             //variants to table
             ctx.getLogger().info("Running VariantsToTable");
             ctx.getJob().setStatus(PipelineJob.TaskStatus.running, "Running VariantsToTable");
-            File variantsToTable = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".variantsToTable.txt");
+
+            File variantsToTableNoGz = new File(ctx.getOutputDir(), SequenceAnalysisService.get().getUnzippedBaseName(vcf.getName()) + ".variantsToTable.txt");
+            File variantsToTable = new File(variantsToTableNoGz.getPath() + ".gz");
             File tableCheck = new File(variantsToTable.getPath() + ".done");
             if (!tableCheck.exists())
             {
                 VariantsToTableRunner vtt = new VariantsToTableRunner(ctx.getLogger());
                 List<String> fields = new ArrayList<>(Arrays.asList("POS", "REF", "ALT", "FILTER"));
                 fields.addAll(mGapSummarizer.SUMMARY_FIELDS);
-                vtt.execute(vcf, variantsToTable, genome.getWorkingFastaFile(), fields);
+                vtt.execute(vcf, variantsToTableNoGz, genome.getWorkingFastaFile(), fields);
+
+                if (variantsToTable.exists())
+                {
+                    variantsToTable.delete();
+                }
+                Compress.compressGzip(variantsToTableNoGz);
 
                 try
                 {

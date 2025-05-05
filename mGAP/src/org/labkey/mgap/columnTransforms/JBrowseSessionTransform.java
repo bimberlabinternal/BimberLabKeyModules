@@ -17,7 +17,9 @@ import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.pipeline.PipelineValidationException;
 import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.PageFlowUtil;
@@ -149,7 +151,10 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                 FieldKey.fromString("description"),
                 FieldKey.fromString("isprimarytrack"),
                 FieldKey.fromString("vcfId/dataid/DataFileUrl"),
-                FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl")
+                FieldKey.fromString("releaseId/luceneIndex"),
+                FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"),
+                FieldKey.fromString("vcfIndexId"),
+                FieldKey.fromString("vcfIndexId/dataid/DataFileUrl")
         );
 
         TableInfo tracksPerRelease = QueryService.get().getUserSchema(getContainerUser().getUser(), getContainerUser().getContainer(), mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE);
@@ -173,6 +178,34 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                 getStatusLogger().error(e.getMessage(), e);
             }
         });
+    }
+
+    private void ensureLuceneData(String objectId)
+    {
+        //determine if there is already a JSONfile for this outputfile
+        TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("container"), new SimpleFilter(FieldKey.fromString("objectid"), objectId), null);
+        if (!ts1.exists())
+        {
+            getStatusLogger().error("expected jsonfile to exist: " + objectId);
+            return;
+        }
+
+        try
+        {
+            String containerId = ts1.getObject(String.class);
+
+            Map<String, Object> row = new CaseInsensitiveHashMap<>();
+            row.put("objectid", objectId);
+            row.put("container", containerId);
+            row.put("trackJson", getTrackJson(true));
+
+            TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
+            jsonFiles.getUpdateService().updateRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), Arrays.asList(new CaseInsensitiveHashMap<>(Map.of("objectid", objectId))), new BatchValidationException(), null, null);
+        }
+        catch (SQLException | QueryUpdateServiceException | BatchValidationException | InvalidKeyException e)
+        {
+            getStatusLogger().error("Unable to update lucene config", e);
+        }
     }
 
     protected void getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
@@ -244,20 +277,33 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
     private String getOrCreateJsonFile(Results rs, String fieldKey) throws SQLException
     {
-        int outputFileId = getOrCreateOutputFile(rs.getString(FieldKey.fromString(fieldKey)), getInputValue("objectId"), rs.getString("label"));
+        String value = rs.getString(FieldKey.fromString(fieldKey));
+        if (value == null)
+        {
+            getStatusLogger().info(fieldKey + " is null, skipping in getOrCreateJsonFile()");
+            return null;
+        }
+
+        Integer outputFileId = getOrCreateOutputFile(value, getInputValue("objectId"), rs.getString("label"));
+
+        boolean isDefaultTrack = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
 
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("outputfile"), outputFileId), null);
         if (ts1.exists())
         {
             getStatusLogger().info("jsonfile already exists for output: " + outputFileId);
-            return ts1.getArrayList(String.class).get(0);
+            String objectId = ts1.getArrayList(String.class).get(0);
+            if (isDefaultTrack)
+            {
+                ensureLuceneData(objectId);
+            }
+
+            return objectId;
         }
 
         try
         {
-            boolean isDefaultTrack = rs.getObject(FieldKey.fromString("isprimarytrack")) != null && rs.getBoolean(FieldKey.fromString("isprimarytrack"));
-
             TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
             CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
             row.put("objectid", new GUID().toString());
@@ -271,9 +317,18 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
             if (isDefaultTrack)
             {
-                boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"))) != null;
-                getStatusLogger().info("Creating track JSON for primary track, has lucene index: " + hasLuceneIndex);
-                row.put("trackJson", getTrackJson(hasLuceneIndex));
+                boolean expectIndex = rs.getObject(FieldKey.fromString("releaseId/luceneIndex")) != null || rs.getObject(FieldKey.fromString("vcfIndexId")) != null;
+
+                boolean hasLuceneIndex = StringUtils.trimToNull(rs.getString(FieldKey.fromString("releaseId/luceneIndex/dataid/DataFileUrl"))) != null ||
+                        StringUtils.trimToNull(rs.getString(FieldKey.fromString("vcfIndexId/dataid/DataFileUrl"))) != null;
+
+                if (expectIndex && !hasLuceneIndex)
+                {
+                    getStatusLogger().warn("Expected VCF index but did not find one for outputId: " + outputFileId);
+                }
+
+                getStatusLogger().info("Creating track JSON for primary track, has lucene index: " + expectIndex + " / " + hasLuceneIndex);
+                row.put("trackJson", getTrackJson(expectIndex));
             }
             else
             {

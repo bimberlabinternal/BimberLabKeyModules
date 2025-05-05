@@ -20,6 +20,10 @@
                 href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'sequenceanalysis', queryName: 'reference_libraries'})
             },{
                 xtype: 'ldk-linkbutton',
+                text: 'Manage Sequence Outputs',
+                href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'sequenceanalysis', queryName: 'outputfiles'})
+            },{
+                xtype: 'ldk-linkbutton',
                 text: 'Manage JBrowse Tracks',
                 href: LABKEY.ActionURL.buildURL('query', 'executeQuery', null, {schemaName: 'mgap', queryName: 'releaseTracks'})
             },{
