@@ -4,13 +4,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.ColumnInfo;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbScope;
 import org.labkey.api.data.Results;
-import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SimpleFilter;
-import org.labkey.api.data.SqlSelector;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.jbrowse.JBrowseService;
@@ -30,8 +29,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by bimber on 5/15/2017.
@@ -66,14 +68,20 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         Integer outputFileId = getOrCreateOutputFile(input, getInputValue("objectId"), null);
         if (outputFileId != null)
         {
-            //find database ID, if exists:
-            //determine if there is already a JSONfile for this outputfile
+            //find database ID, if exists, based on name:
             UserSchema us = getJbrowseUserSchema();
-            SQLFragment sql = new SQLFragment("SELECT m." + us.getDbSchema().getScope().getSqlDialect().makeLegalIdentifier("database") + " FROM jbrowse.jsonfiles j JOIN jbrowse.database_members m ON (j.objectId = m.jsonfile) WHERE j.outputfile = ?", outputFileId);
-            String databaseId = new SqlSelector(us.getDbSchema().getScope(), sql).getObject(String.class);
+            TableSelector ts = new TableSelector(us.getTable("databases"), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("name"), getDatabaseName()), null);
+            String databaseId = ts.getObject(String.class);
             if (databaseId != null)
             {
-                getStatusLogger().info("jbrowse database exists using the output file: " + outputFileId);
+                getStatusLogger().info("jbrowse database exists using name: " + getDatabaseName());
+
+                boolean hadChanges = addTracks(databaseId, releaseId);
+                if (hadChanges)
+                {
+                    recreateSession(databaseId);
+                }
+
                 return databaseId;
             }
             else
@@ -81,7 +89,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
                 try
                 {
                     databaseId = new GUID().toString();
-                    getStatusLogger().info("creating jbrowse database: " + databaseId);
+                    getStatusLogger().info("creating jbrowse database: " + databaseId + ", for output file: " + outputFileId);
 
                     //create database
                     TableInfo databases = getJbrowseUserSchema().getTable("databases");
@@ -140,7 +148,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         }, DbScope.CommitTaskOption.POSTCOMMIT);
     }
 
-    protected void addTracks(final String databaseId, String releaseId)
+    protected boolean addTracks(final String databaseId, String releaseId)
     {
         //then JSONfiles/database members
         List<FieldKey> fks = Arrays.asList(
@@ -166,18 +174,48 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             getStatusLogger().error("no track records found for release: " + releaseId);
         }
 
+        final AtomicBoolean hadChanges = new AtomicBoolean(false);
+        final Set<String> jsonFiles = new HashSet<>();
         ts.forEachResults(rs -> {
             try
             {
                 getStatusLogger().info("possibly creating track for: " + rs.getString(FieldKey.fromString("trackName")));
                 String jsonFile = getOrCreateJsonFile(rs, "vcfId/dataid/DataFileUrl");
-                getOrCreateDatabaseMember(databaseId, jsonFile);
+                jsonFiles.add(jsonFile);
+                boolean added = getOrCreateDatabaseMember(databaseId, jsonFile);
+                if (added)
+                {
+                    hadChanges.set(true);
+                }
             }
             catch (Exception e)
             {
                 getStatusLogger().error(e.getMessage(), e);
             }
         });
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("database"), databaseId);
+        filter.addCondition(FieldKey.fromString("jsonfile"), jsonFiles, CompareType.NOT_IN);
+        TableSelector ts2 = new TableSelector(getDatabaseMembers(), PageFlowUtil.set("rowid"), filter, null);
+        if (ts2.exists())
+        {
+            List<Integer> rowIds = ts2.getArrayList(Integer.class);
+
+            getStatusLogger().info("Deleting " + rowIds.size() + " database_member rows for: " + databaseId);
+            List<Map<String, Object>> toDelete = new ArrayList<>();
+            rowIds.forEach(rowId -> toDelete.add(new CaseInsensitiveHashMap<>(Map.of("rowid", rowId))));
+            try
+            {
+                getJbrowseUserSchema().getTable("database_members").getUpdateService().deleteRows(getContainerUser().getUser(), getContainerUser().getContainer(), toDelete, null, null);
+                hadChanges.set(true);
+            }
+            catch (InvalidKeyException | BatchValidationException | SQLException |QueryUpdateServiceException e)
+            {
+                getStatusLogger().error(e);
+            }
+        }
+
+        return hadChanges.get();
     }
 
     private void ensureLuceneData(String objectId)
@@ -208,7 +246,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         }
     }
 
-    protected void getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
+    protected boolean getOrCreateDatabaseMember(String databaseId, String jsonFileId) throws Exception
     {
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("database"), databaseId);
         filter.addCondition(FieldKey.fromString("jsonfile"), jsonFileId);
@@ -216,7 +254,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         if (new TableSelector(getDatabaseMembers(), filter, null).exists())
         {
             getStatusLogger().info("database member exists for: " + jsonFileId);
-            return;
+            return false;
         }
 
         TableInfo databaseMembers = getJbrowseUserSchema().getTable("database_members");
@@ -232,6 +270,8 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
         getStatusLogger().info("creating database member for: " + jsonFileId);
         databaseMembers.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(row), new BatchValidationException(), null, new HashMap<>());
+
+        return true;
     }
 
     protected TableInfo getJsonFiles()

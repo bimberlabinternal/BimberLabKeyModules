@@ -133,7 +133,7 @@ abstract public class AbstractVariantTransform extends ColumnTransform
             File localCopy = doFileCopy(f, subDir, name);
             if (localCopy == null)
             {
-                // TODO
+                getStatusLogger().warn("localCopy was null", new Exception());
             }
 
             //first create the ExpData
@@ -217,7 +217,6 @@ abstract public class AbstractVariantTransform extends ColumnTransform
         File localCopy = new File(subdir, name == null || f.getName().startsWith("mGap.v") ? f.getName() : FileUtil.makeLegalName(name).replaceAll(" ", "_") + ".vcf.gz");
         if (f.equals(localCopy))
         {
-            getStatusLogger().debug("Attempting to copy file that is already a child of the target: " + f.getPath(), new Exception());
             return localCopy;
         }
 
