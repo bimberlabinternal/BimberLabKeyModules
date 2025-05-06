@@ -54,17 +54,18 @@ public class JBrowseHumanSessionTransform extends JBrowseSessionTransform
     }
 
     @Override
-    protected void addTracks(final String databaseId, String releaseId)
+    protected boolean addTracks(final String databaseId, String releaseId)
     {
         try
         {
             getStatusLogger().info("possibly creating track for: " + getDatabaseName());
             String jsonFile = getOrCreateJsonFile();
-            getOrCreateDatabaseMember(databaseId, jsonFile);
+            return getOrCreateDatabaseMember(databaseId, jsonFile);
         }
         catch(Exception e)
         {
             getStatusLogger().error(e.getMessage(), e);
+            return false;
         }
     }
 
