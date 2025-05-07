@@ -10,6 +10,7 @@ import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.DbScope;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.SimpleFilter;
+import org.labkey.api.data.Sort;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.jbrowse.JBrowseService;
@@ -70,10 +71,10 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         {
             //find database ID, if exists, based on name:
             UserSchema us = getJbrowseUserSchema();
-            TableSelector ts = new TableSelector(us.getTable("databases"), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("name"), getDatabaseName()), null);
-            String databaseId = ts.getObject(String.class);
-            if (databaseId != null)
+            TableSelector ts = new TableSelector(us.getTable("databases"), PageFlowUtil.set("objectid"), new SimpleFilter(FieldKey.fromString("name"), getDatabaseName()), new Sort("-rowid"));
+            if (ts.exists())
             {
+                String databaseId = ts.getArrayList(String.class).stream().toList().get(0);
                 getStatusLogger().info("jbrowse database exists using name: " + getDatabaseName());
 
                 boolean hadChanges = addTracks(databaseId, releaseId);
@@ -84,34 +85,32 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
 
                 return databaseId;
             }
-            else
+
+            String databaseId = new GUID().toString();
+            try
             {
-                try
-                {
-                    databaseId = new GUID().toString();
-                    getStatusLogger().info("creating jbrowse database: " + databaseId + ", for output file: " + outputFileId);
+                getStatusLogger().info("creating jbrowse database: " + databaseId + ", for output file: " + outputFileId);
 
-                    //create database
-                    TableInfo databases = getJbrowseUserSchema().getTable("databases");
-                    CaseInsensitiveHashMap<Object> dbRow = new CaseInsensitiveHashMap<>();
-                    dbRow.put("objectid", databaseId);
-                    dbRow.put("name", getDatabaseName());
-                    dbRow.put("description", null);
-                    dbRow.put("libraryId", getLibraryId());
-                    dbRow.put("temporary", false);
-                    dbRow.put("container", getContainerUser().getContainer().getId());
-                    dbRow.put("created", new Date());
-                    dbRow.put("createdby", getContainerUser().getUser().getUserId());
-                    dbRow.put("modified", new Date());
-                    dbRow.put("modifiedby", getContainerUser().getUser().getUserId());
-                    dbRow.put("jsonConfig", getSessionJson());
+                //create database
+                TableInfo databases = getJbrowseUserSchema().getTable("databases");
+                CaseInsensitiveHashMap<Object> dbRow = new CaseInsensitiveHashMap<>();
+                dbRow.put("objectid", databaseId);
+                dbRow.put("name", getDatabaseName());
+                dbRow.put("description", null);
+                dbRow.put("libraryId", getLibraryId());
+                dbRow.put("temporary", false);
+                dbRow.put("container", getContainerUser().getContainer().getId());
+                dbRow.put("created", new Date());
+                dbRow.put("createdby", getContainerUser().getUser().getUserId());
+                dbRow.put("modified", new Date());
+                dbRow.put("modifiedby", getContainerUser().getUser().getUserId());
+                dbRow.put("jsonConfig", getSessionJson());
 
-                    databases.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(dbRow), new BatchValidationException(), null, new HashMap<>());
-                }
-                catch (Exception e)
-                {
-                    getStatusLogger().error("Error creating database: " + inputValue, e);
-                }
+                databases.getUpdateService().insertRows(getContainerUser().getUser(), getContainerUser().getContainer(), List.of(dbRow), new BatchValidationException(), null, new HashMap<>());
+            }
+            catch (Exception e)
+            {
+                getStatusLogger().error("Error creating database: " + inputValue, e);
             }
 
             addTracks(databaseId, releaseId);
