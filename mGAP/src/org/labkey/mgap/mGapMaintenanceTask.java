@@ -25,6 +25,7 @@ import org.labkey.api.writer.PrintWriters;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -265,7 +266,23 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         if (!expectedSymlink.exists())
         {
             log.error("Missing symlink:  " + expectedSymlink.getPath());
-            commandsToRun.add("ln -s " + f.getPath() + " " + expectedSymlink.getPath());
+            log.error("to path:  " + f.getPath());
+
+            File target = f;
+            if (Files.isSymbolicLink(target.toPath()))
+            {
+                try
+                {
+                    target = Files.readSymbolicLink(target.toPath()).toFile();
+                    log.error("which resolves to: " + target.getPath());
+                }
+                catch (IOException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            commandsToRun.add("ln -s " + target.getPath() + " " + expectedSymlink.getPath());
         }
     }
 
@@ -279,6 +296,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             if (c == null)
             {
                 log.error("Unable to find container: " + containerId);
+                return;
             }
 
             if (!c.getActiveModules().contains(ModuleLoader.getInstance().getModule(mGAPModule.class)))
