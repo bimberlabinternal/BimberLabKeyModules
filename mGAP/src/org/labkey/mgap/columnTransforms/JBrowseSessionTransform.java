@@ -217,7 +217,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
         return hadChanges.get();
     }
 
-    private void ensureLuceneData(String objectId)
+    private void ensureLuceneData(String objectId, boolean hasIndex)
     {
         //determine if there is already a JSONfile for this outputfile
         TableSelector ts1 = new TableSelector(getJsonFiles(), PageFlowUtil.set("container"), new SimpleFilter(FieldKey.fromString("objectid"), objectId), null);
@@ -234,7 +234,7 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             Map<String, Object> row = new CaseInsensitiveHashMap<>();
             row.put("objectid", objectId);
             row.put("container", containerId);
-            row.put("trackJson", getTrackJson(true));
+            row.put("trackJson", getTrackJson(hasIndex));
 
             TableInfo jsonFiles = getJbrowseUserSchema().getTable("jsonfiles");
             jsonFiles.getUpdateService().updateRows(getContainerUser().getUser(), getContainerUser().getContainer(), Arrays.asList(row), Arrays.asList(new CaseInsensitiveHashMap<>(Map.of("objectid", objectId))), new BatchValidationException(), null, null);
@@ -335,7 +335,8 @@ public class JBrowseSessionTransform extends AbstractVariantTransform
             String objectId = ts1.getArrayList(String.class).get(0);
             if (isDefaultTrack)
             {
-                ensureLuceneData(objectId);
+                boolean expectIndex = rs.getObject(FieldKey.fromString("releaseId/luceneIndex")) != null || rs.getObject(FieldKey.fromString("vcfIndexId")) != null;
+                ensureLuceneData(objectId, expectIndex);
             }
 
             return objectId;
