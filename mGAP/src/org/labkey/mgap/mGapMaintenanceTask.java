@@ -1,5 +1,6 @@
 package org.labkey.mgap;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
@@ -29,9 +30,12 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
@@ -90,6 +94,34 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             return;
         }
 
+        Map<String, Map<Double, String>> versionMap = new HashMap<>();
+        new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("species", "version", "objectid")).forEachResults(rs -> {
+            String species = rs.getString(FieldKey.fromString("species"));
+            if (!versionMap.containsKey(species))
+            {
+                versionMap.put(species, new TreeMap<>());
+            }
+
+            String objectId = rs.getString(FieldKey.fromString("objectid"));
+            String versionString = rs.getString(FieldKey.fromString("version"));
+            if (NumberUtils.isCreatable(versionString))
+            {
+                Double version = Double.parseDouble(versionString);
+                versionMap.get(species).put(version, objectId);
+            }
+            else
+            {
+                log.error("Non-numeric version: " + versionString);
+            }
+        });
+
+        Map<String, String> latestReleaseBySpecies = new HashMap<>();
+        for (String species : versionMap.keySet())
+        {
+            Double maxVersion = versionMap.get(species).keySet().stream().sorted().max(Double::compareTo).get();
+            latestReleaseBySpecies.put(species, versionMap.get(species).get(maxVersion));
+        }
+
         // Find expected folder names:
         List<String> releaseIds = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("objectid")).getArrayList(String.class);
 
@@ -113,7 +145,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         }
 
         List<String> commandsToRun = new ArrayList<>();
-        releaseIds.forEach(f -> inspectReleaseFolder(f, baseDir, c, u, log, toDelete, commandsToRun));
+        releaseIds.forEach(f -> inspectReleaseFolder(f, baseDir, c, u, log, toDelete, commandsToRun, latestReleaseBySpecies));
 
         // Also verify genomes:
         Set<Integer> genomesIds = new HashSet<>(new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("genomeId")).getArrayList(Integer.class));
@@ -151,7 +183,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         }
     }
 
-    private void inspectReleaseFolder(String releaseId, File baseDir, Container c, User u, final Logger log, final Set<File> toDelete, List<String> commandsToRun)
+    private void inspectReleaseFolder(String releaseId, File baseDir, Container c, User u, final Logger log, final Set<File> toDelete, List<String> commandsToRun, Map<String, String> speciesToLatestTrack)
     {
         File releaseDir = new File(baseDir, releaseId);
         if (!releaseDir.exists())
@@ -159,6 +191,9 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             log.error("Missing folder: " + releaseDir.getPath());
             return;
         }
+
+        String species = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), PageFlowUtil.set("species"), new SimpleFilter(FieldKey.fromString("objectid"), releaseId), null).getObject(String.class);
+        boolean isLatestReleaseForSpecies = releaseId.equals(speciesToLatestTrack.get(species));
 
         final Set<File> expectedFiles = new HashSet<>();
         List<Integer> tracksFromRelease = new TableSelector(QueryService.get().getUserSchema(u, c, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_TRACKS_PER_RELEASE), PageFlowUtil.set("vcfId"), new SimpleFilter(FieldKey.fromString("releaseId"), releaseId), null).getArrayList(Integer.class);
@@ -181,6 +216,11 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             checkSymlink(log, f, releaseId, commandsToRun);
             expectedFiles.add(new File(f.getPath() + ".tbi"));
             checkSymlink(log, new File(f.getPath() + ".tbi"), releaseId, commandsToRun);
+
+            if (isLatestReleaseForSpecies)
+            {
+                checkSymlink(log, f, releaseId, commandsToRun);
+            }
         });
 
         final Set<String> fields = PageFlowUtil.set("vcfId", "variantTable", "liftedVcfId", "sitesOnlyVcfId", "novelSitesVcfId", "luceneIndex");
@@ -223,6 +263,14 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
                 {
                     checkSymlink(log, f, releaseId, commandsToRun);
                     checkSymlink(log, new File(f.getPath() + ".tbi"), releaseId, commandsToRun);
+
+                    if (isLatestReleaseForSpecies & "sitesOnlyVcfId".equals(field))
+                    {
+                        File symlinkTarget = new File("/var/www/html/latest/" + ".mGAP." + species.replaceAll(" ", "_") + ".vcf.gz");
+                        checkSymlink(log, f, symlinkTarget, commandsToRun);
+
+                        checkSymlink(log, new File(f.getPath() + ".tbi"), new File(symlinkTarget.getPath() + ".tbi"), commandsToRun);
+                    }
                 }
             }
         });
@@ -263,27 +311,61 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
             }
         }
 
+        checkSymlink(log, f, expectedSymlink, commandsToRun);
+    }
+
+    private void checkSymlink(Logger log, File f, File expectedSymlink, List<String> commandsToRun)
+    {
+        if (!expectedSymlink.getParentFile().exists())
+        {
+            commandsToRun.add("mkdir -p " + expectedSymlink.getParentFile());
+        }
+
         if (!expectedSymlink.exists())
         {
             log.error("Missing symlink:  " + expectedSymlink.getPath());
             log.error("to path:  " + f.getPath());
 
-            File target = f;
-            if (Files.isSymbolicLink(target.toPath()))
-            {
-                try
-                {
-                    target = Files.readSymbolicLink(target.toPath()).toFile();
-                    log.error("which resolves to: " + target.getPath());
-                }
-                catch (IOException e)
-                {
-                    throw new RuntimeException(e);
-                }
-            }
-
+            File target = resolveSymlink(f);
             commandsToRun.add("ln -s " + target.getPath() + " " + expectedSymlink.getPath());
         }
+        else
+        {
+            if (!Files.isSymbolicLink(expectedSymlink.toPath()))
+            {
+                log.error("File is not a symlink: "+ expectedSymlink.getPath());
+            }
+            else
+            {
+                File expectedTarget = resolveSymlink(f);
+                File actualTarget = resolveSymlink(expectedSymlink);
+                if (!expectedTarget.equals(actualTarget))
+                {
+                    log.error("Symlink does not point to the correct location: " + expectedSymlink.getPath());
+                    commandsToRun.add("rm " + expectedSymlink.getPath());
+
+                    commandsToRun.add("ln -s " + expectedTarget.getPath() + " " + expectedSymlink.getPath());
+                }
+            }
+        }
+    }
+
+    private File resolveSymlink(File sourceFile)
+    {
+        File target = sourceFile;
+        if (Files.isSymbolicLink(target.toPath()))
+        {
+            try
+            {
+                target = Files.readSymbolicLink(target.toPath()).toFile();
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return target;
     }
 
     private void checkForDuplicateAliases(Logger log, User u)
