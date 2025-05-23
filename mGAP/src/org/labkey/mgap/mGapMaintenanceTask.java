@@ -266,7 +266,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
                     if (isLatestReleaseForSpecies & "sitesOnlyVcfId".equals(field))
                     {
-                        File symlinkTarget = new File("/var/www/html/latest/" + ".mGAP." + species.replaceAll(" ", "_") + ".vcf.gz");
+                        File symlinkTarget = new File("/var/www/html/latest/" + "mGAP." + species.replaceAll(" ", "_") + ".vcf.gz");
                         checkSymlink(log, f, symlinkTarget, commandsToRun);
 
                         checkSymlink(log, new File(f.getPath() + ".tbi"), new File(symlinkTarget.getPath() + ".tbi"), commandsToRun);
