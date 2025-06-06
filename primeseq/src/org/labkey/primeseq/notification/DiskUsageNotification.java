@@ -100,7 +100,7 @@ public class DiskUsageNotification implements Notification
 
         getDiskUsageStats(c, u, msg);
 
-        if (alerts.length() > 0)
+        if (!alerts.isEmpty())
         {
             alerts.insert(0, "<b>The following alerts were generated:</b><p>");
             alerts.append("<hr>");
@@ -126,15 +126,20 @@ public class DiskUsageNotification implements Notification
             String results = wrapper.executeWithOutput(Arrays.asList("df", "-h", "/home/groups/BimberLab/", "/home/groups/OnprcColonyData/", "/home/groups/prime-seq/", "/home/exacloud/gscratch/prime-seq/"));
 
             msg.append("<b>Disk Usage Stats:</b><p>");
-            msg.append("<table>");
+            msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Filesystem</td><td>Size</td><td>Used</td><td>Available</td><td>Percent</td></tr>");
             Arrays.stream(results.split("\n")).forEach(x -> {
-                msg.append("<tr>");
-                Arrays.stream(x.split("[ ]+")).forEach(cell -> {
-                    msg.append("<td>");
-                    msg.append(cell);
-                    msg.append("</td>");
-                });
+                String[] els = x.split("[ ]+");
+                if ("Filesystem".equalsIgnoreCase(els[0]))
+                {
+                    return;
+                }
 
+                msg.append("<tr>");
+                msg.append("<td>").append(els[0]).append("</td>");
+                msg.append("<td>").append(els[1]).append("</td>");
+                msg.append("<td>").append(els[2]).append("</td>");
+                msg.append("<td>").append(els[3]).append("</td>");
+                msg.append("<td>").append(els[4]).append("</td>");
                 msg.append("</tr>");
             });
             msg.append("</table>");
