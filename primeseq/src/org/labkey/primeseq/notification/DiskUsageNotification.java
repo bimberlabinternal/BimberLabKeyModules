@@ -1,5 +1,6 @@
 package org.labkey.primeseq.notification;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
@@ -112,7 +113,7 @@ public class DiskUsageNotification implements Notification
         try
         {
             SimpleScriptWrapper wrapper = new SimpleScriptWrapper(_log);
-            String results = wrapper.executeWithOutput(Arrays.asList("ssh", "labkey_submit@arc", "sshare", "-U", "-u", "labkey_submit"));
+            String results = wrapper.executeWithOutput(Arrays.asList("ssh", "-q", "labkey_submit@arc", "sshare", "-U", "-u", "labkey_submit"));
 
             msg.append("<b>Cluster Usage:</b><p>");
             msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>RawShares</td><td>NormShares</td><td>RawUsage</td><td>EffectiveUsage</td><td>FairShare</td></tr>");
@@ -131,6 +132,12 @@ public class DiskUsageNotification implements Notification
 
                 String[] els = x.split("[ ]+");
 
+                if (els.length != 7)
+                {
+                    _log.error("Unexpected line: " + StringUtils.join(els, "<>"));
+                    return;
+                }
+
                 msg.append("<tr>");
                 msg.append("<td>").append(els[0]).append("</td>");
                 msg.append("<td>").append(els[3]).append("</td>");
@@ -143,7 +150,7 @@ public class DiskUsageNotification implements Notification
         }
         catch (PipelineJobException e)
         {
-            _log.error("Error running df", e);
+            _log.error("Error fetching slurm summary", e);
         }
 
         msg.append("<p>\n");
