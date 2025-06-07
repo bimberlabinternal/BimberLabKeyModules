@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: bbimber
@@ -92,24 +93,61 @@ public class DiskUsageNotification implements Notification
         _pctFormat = NumberFormat.getPercentInstance();
         _pctFormat.setMaximumFractionDigits(1);
 
-        Map<String, String> saved = getSavedValues(c);
-        Map<String, String> newValues = new HashMap<>();
-
         StringBuilder msg = new StringBuilder();
-        StringBuilder alerts = new StringBuilder();
-
         getDiskUsageStats(c, u, msg);
+        getClusterUsage(c, u, msg);
 
-        if (!alerts.isEmpty())
-        {
-            alerts.insert(0, "<b>The following alerts were generated:</b><p>");
-            alerts.append("<hr>");
-            msg.insert(0, alerts);
-        }
-
-        msg.insert(0, "This email contains a series of alerts designed for site admins.  It was run on: " + getDateTimeFormat(c).format(new Date()) + ".  Runtime: " + DurationFormatUtils.formatDurationWords((new Date()).getTime() - start.getTime(), true, true) + "<p>");
+        msg.insert(0, "This email summarizes disk and cluster usage.  It was run on: " + getDateTimeFormat(c).format(new Date()) + ".  Runtime: " + DurationFormatUtils.formatDurationWords((new Date()).getTime() - start.getTime(), true, true) + "<p>");
 
         return msg.toString();
+    }
+
+    private void getClusterUsage(Container c, User u, final StringBuilder msg)
+    {
+        if (!SystemUtils.IS_OS_LINUX)
+        {
+            return;
+        }
+
+        try
+        {
+            SimpleScriptWrapper wrapper = new SimpleScriptWrapper(_log);
+            String results = wrapper.executeWithOutput(Arrays.asList("ssh", "labkey_submit@arc", "sshare", "-U", "-u", "labkey_submit"));
+
+            msg.append("<b>Cluster Usage:</b><p>");
+            msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>RawShares</td><td>NormShares</td><td>RawUsage</td><td>EffectiveUsage</td><td>FairShare</td></tr>");
+
+            AtomicBoolean foundHeader = new AtomicBoolean(false);
+            Arrays.stream(results.split("\n")).forEach(x -> {
+                if (x.startsWith("------------"))
+                {
+                    foundHeader.set(true);
+                    return;
+                }
+                else if (!foundHeader.get())
+                {
+                    return;
+                }
+
+                String[] els = x.split("[ ]+");
+
+                msg.append("<tr>");
+                msg.append("<td>").append(els[0]).append("</td>");
+                msg.append("<td>").append(els[3]).append("</td>");
+                msg.append("<td>").append(els[4]).append("</td>");
+                msg.append("<td>").append(els[5]).append("</td>");
+                msg.append("<td>").append(els[6]).append("</td>");
+                msg.append("</tr>");
+            });
+            msg.append("</table>");
+        }
+        catch (PipelineJobException e)
+        {
+            _log.error("Error running df", e);
+        }
+
+        msg.append("<p>\n");
+
     }
 
     private void getDiskUsageStats(Container c, User u, final StringBuilder msg)
@@ -122,7 +160,6 @@ public class DiskUsageNotification implements Notification
         try
         {
             SimpleScriptWrapper wrapper = new SimpleScriptWrapper(_log);
-
             String results = wrapper.executeWithOutput(Arrays.asList("df", "-h", "/home/groups/BimberLab/", "/home/groups/OnprcColonyData/", "/home/groups/prime-seq/", "/home/exacloud/gscratch/prime-seq/"));
 
             msg.append("<b>Disk Usage Stats:</b><p>");
