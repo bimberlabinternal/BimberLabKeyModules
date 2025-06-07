@@ -116,7 +116,7 @@ public class DiskUsageNotification implements Notification
             String results = wrapper.executeWithOutput(Arrays.asList("ssh", "-q", "labkey_submit@arc", "sshare", "-U", "-u", "labkey_submit"));
 
             msg.append("<b>Cluster Usage:</b><p>");
-            msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>RawShares</td><td>NormShares</td><td>RawUsage</td><td>EffectiveUsage</td><td>FairShare</td></tr>");
+            msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>NormShares</td><td>RawUsage</td><td>EffectiveUsage</td><td>FairShare</td></tr>");
 
             AtomicBoolean foundHeader = new AtomicBoolean(false);
             Arrays.stream(results.split("\n")).forEach(x -> {
@@ -141,7 +141,8 @@ public class DiskUsageNotification implements Notification
                 msg.append("<tr>");
                 msg.append("<td>").append(els[0]).append("</td>");
                 msg.append("<td>").append(els[3]).append("</td>");
-                msg.append("<td>").append(els[4]).append("</td>");
+                long shares = StringUtils.isEmpty(els[4]) ? 0 : Long.parseLong(els[4]);
+                msg.append("<td>").append(String.format("%,d", shares)).append("</td>");
                 msg.append("<td>").append(els[5]).append("</td>");
                 msg.append("<td>").append(els[6]).append("</td>");
                 msg.append("</tr>");
