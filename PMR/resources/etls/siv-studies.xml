@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>SIV_PRIMe</name>
+    <description>SIV Studies / PRIMe Data</description>
+    <transforms>
+        <transform id="weight" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="weight"/>
+                    <setting name="dataSourceColumns" value="Id,date,weight,objectid"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="weight"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="mhc" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Internal/MHC_Typing"/>
+                    <setting name="dataSourceSchema" value="geneticscore"/>
+                    <setting name="dataSourceQuery" value="mhc_data"/>
+                    <setting name="dataSourceColumns" value="subjectid,assaytype,marker,result,score"/>
+                    <setting name="dataSourceColumnMapping" value="subjectId=Id"/>
+                    <setting name="dataSourceColumnDefaults" value="category=MHC Typing"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="genetics"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="cbc" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="hematologyResults"/>
+                    <setting name="dataSourceColumns" value="Id,date,testid,result,units,qualresult,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="testid=test"/>
+                    <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true"/>
+                    <setting name="dataSourceColumnDefaults" value="category=CBC"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="labwork"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="category~eq=CBC"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="cbc" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="chemistryResults"/>
+                    <setting name="dataSourceColumns" value="Id,date,testid,result,units,qualresult,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="testid=test"/>
+                    <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true"/>
+                    <setting name="dataSourceColumnDefaults" value="category=Chemistry"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="labwork"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="category~eq=Chemistry"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="procedures" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="clinicalEncounters"/>
+                    <setting name="dataSourceColumns" value="Id,date,type,procedureid/name,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="procedureid/name=procedure,type=category"/>
+                    <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true;procedureid/name~isnonblank="/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="procedures"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+    <schedule>
+        <cron expression="0 30 2 * * ?"/>
+    </schedule>
+</etl>

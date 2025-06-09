@@ -56,18 +56,19 @@ public class SubjectScopedSelect implements TaskRefTask
     private enum Settings
     {
         subjectRemoteSource(false),
-        subjectSourceContainerPath(true),
+        subjectSourceContainerPath(false),
         subjectSourceSchema(true),
         subjectSourceQuery(true),
         subjectSourceColumn(true),
 
         dataRemoteSource(false),
-        dataSourceContainerPath(true),
+        dataSourceContainerPath(false),
         dataSourceSchema(true),
         dataSourceQuery(true),
         dataSourceColumns(true),
         dataSourceColumnMapping(false),
         dataSourceAdditionalFilters(false),
+        dataSourceColumnDefaults(false),
 
         targetSchema(true),
         targetQuery(true),
@@ -175,6 +176,7 @@ public class SubjectScopedSelect implements TaskRefTask
 
     private Map<String, String> parseSourceToDestColumnMap(String rawVal)
     {
+        rawVal = StringUtils.trimToNull(rawVal);
         if (rawVal == null)
         {
             return Collections.emptyMap();
@@ -202,6 +204,36 @@ public class SubjectScopedSelect implements TaskRefTask
         return colMap;
     }
 
+    private Map<String, String> parseColumnDefaultMap(String rawVal)
+    {
+        rawVal = StringUtils.trimToNull(rawVal);
+        if (rawVal == null)
+        {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> colMap = new HashMap<>();
+
+        String[] tokens = rawVal.split(";");
+        for (String token : tokens)
+        {
+            if (!token.contains("="))
+            {
+                throw new IllegalStateException("Invalid column defaultValue: " + token);
+            }
+
+            String[] els = token.split("=");
+            if (els.length != 2)
+            {
+                throw new IllegalStateException("Invalid column defaultValue: " + token);
+            }
+
+            colMap.put(els[0], els[1]);
+        }
+
+        return colMap;
+    }
+
     private List<Map<String, Object>> getRowsToImport(Logger log)
     {
         if (_settings.get(Settings.dataSourceColumns.name()) == null)
@@ -211,6 +243,7 @@ public class SubjectScopedSelect implements TaskRefTask
         List<String> sourceColumns = Arrays.asList(_settings.get(Settings.dataSourceColumns.name()).split(","));
 
         Map<String, String> sourceToDestColumMap = parseSourceToDestColumnMap(_settings.get(Settings.dataSourceColumnMapping.name()));
+        Map<String, String> columnToDefaultMap = parseColumnDefaultMap(_settings.get(Settings.dataSourceColumnDefaults.name()));
 
         if (_settings.get(Settings.dataRemoteSource.name()) != null)
         {
@@ -244,7 +277,7 @@ public class SubjectScopedSelect implements TaskRefTask
             {
                 SelectRowsResponse srr = sr.execute(rc.connection, rc.remoteContainer);
 
-                return doNameMapping(srr.getRows(), sourceToDestColumMap);
+                return doNameMapping(srr.getRows(), sourceToDestColumMap, columnToDefaultMap);
             }
             catch (CommandException | IOException e)
             {
@@ -253,6 +286,10 @@ public class SubjectScopedSelect implements TaskRefTask
         }
         else
         {
+            if (_settings.get(Settings.dataSourceContainerPath.name()) == null)
+            {
+                throw new IllegalStateException("Must provide dataSourceContainerPath for local sources");
+            }
             Container source = ContainerManager.getForPath(_settings.get(Settings.dataSourceContainerPath.name()));
             if (source == null)
             {
@@ -299,11 +336,11 @@ public class SubjectScopedSelect implements TaskRefTask
 
             TableSelector ts = new TableSelector(sourceTable, PageFlowUtil.set(_settings.get(Settings.subjectSourceColumn.name())), filter, null);
 
-            return doNameMapping(new ArrayList<>(ts.getMapCollection()), sourceToDestColumMap);
+            return doNameMapping(new ArrayList<>(ts.getMapCollection()), sourceToDestColumMap, columnToDefaultMap);
         }
     }
 
-    private List<Map<String, Object>> doNameMapping(List<Map<String, Object>> rows, Map<String, String> colMap)
+    private List<Map<String, Object>> doNameMapping(List<Map<String, Object>> rows, Map<String, String> colMap, Map<String, String> columnToDefaultMap)
     {
         return rows.stream().map(row -> {
             if (colMap.isEmpty())
@@ -319,6 +356,16 @@ public class SubjectScopedSelect implements TaskRefTask
 
                 row.remove(sourceCol);
             });
+
+            return row;
+        }).map(row -> {
+            for (String colName : columnToDefaultMap.keySet())
+            {
+                if (!row.containsKey(colName))
+                {
+                    row.put(colName, columnToDefaultMap.get(colName));
+                }
+            }
 
             return row;
         }).toList();
@@ -409,7 +456,7 @@ public class SubjectScopedSelect implements TaskRefTask
             Container source = ContainerManager.getForPath(_settings.get(Settings.subjectSourceContainerPath.name()));
             if (source == null)
             {
-                throw new IllegalStateException("Unknown container: " + _settings.get(Settings.subjectSourceContainerPath.name()));
+                source = _containerUser.getContainer();
             }
 
             if (!source.hasPermission(_containerUser.getUser(), ReadPermission.class))
