@@ -4,7 +4,7 @@
     <description>SIV Studies / PRIMe Data</description>
     <transforms>
         <transform id="weight" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
                     <setting name="subjectSourceSchema" value="study"/>
                     <setting name="subjectSourceQuery" value="demographics"/>
@@ -23,7 +23,7 @@
         </transform>
 
         <transform id="mhc" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
                     <setting name="subjectSourceSchema" value="study"/>
                     <setting name="subjectSourceQuery" value="demographics"/>
@@ -44,7 +44,7 @@
         </transform>
 
         <transform id="cbc" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
                     <setting name="subjectSourceSchema" value="study"/>
                     <setting name="subjectSourceQuery" value="demographics"/>
@@ -67,7 +67,7 @@
         </transform>
 
         <transform id="chem" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
                     <setting name="subjectSourceSchema" value="study"/>
                     <setting name="subjectSourceQuery" value="demographics"/>
@@ -90,7 +90,7 @@
         </transform>
 
         <transform id="procedures" type="TaskRefTransformStep">
-            <taskref ref="org.labkey.pmr.etl.SubjectScopedSelect">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
                     <setting name="subjectSourceSchema" value="study"/>
                     <setting name="subjectSourceQuery" value="demographics"/>
