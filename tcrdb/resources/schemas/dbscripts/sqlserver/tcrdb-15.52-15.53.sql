@@ -16,8 +16,8 @@ ALTER TABLE tcrdb.clone_responses DROP COLUMN costim;
 ALTER TABLE tcrdb.clone_responses DROP COLUMN antigen;
 ALTER TABLE tcrdb.clone_responses DROP COLUMN stim;
 
-ALTER TABLE tcrdb.clone_responses ADD COLUMN cdna_id int;
-ALTER TABLE tcrdb.clone_responses ADD COLUMN nostimid int;
-ALTER TABLE tcrdb.clone_responses ADD COLUMN chain varchar(100);
-ALTER TABLE tcrdb.clone_responses ADD COLUMN clonotype varchar(1000);
+ALTER TABLE tcrdb.clone_responses ADD cdna_id int;
+ALTER TABLE tcrdb.clone_responses ADD nostimid int;
+ALTER TABLE tcrdb.clone_responses ADD chain varchar(100);
+ALTER TABLE tcrdb.clone_responses ADD clonotype varchar(1000);
 
