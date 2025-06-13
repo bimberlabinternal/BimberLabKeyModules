@@ -34,8 +34,8 @@
                     <setting name="dataSourceSchema" value="geneticscore"/>
                     <setting name="dataSourceQuery" value="mhc_data"/>
                     <setting name="dataSourceSubjectColumn" value="subjectid"/>
-                    <setting name="dataSourceColumns" value="subjectid,date,assaytype,marker,result,score"/>
-                    <setting name="dataSourceColumnMapping" value="subjectId=Id"/>
+                    <setting name="dataSourceColumns" value="subjectid,created,assaytype,marker,result,score"/>
+                    <setting name="dataSourceColumnMapping" value="subjectId=Id,created=date"/>
                     <setting name="dataSourceColumnDefaults" value="category=MHC Typing"/>
 
                     <setting name="targetSchema" value="study"/>

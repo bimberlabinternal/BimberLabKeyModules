@@ -388,6 +388,10 @@ public class SubjectScopedSelect implements TaskRefTask
                 {
                     row.put(colName, columnToDefaultMap.get(colName));
                 }
+                else if (row.get(colName) == null)
+                {
+                    row.put(colName, columnToDefaultMap.get(colName));
+                }
             }
 
             return row;
