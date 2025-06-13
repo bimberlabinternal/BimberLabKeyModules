@@ -1,4 +1,4 @@
-package org.labkey.pmr.etl;
+package org.labkey.sivstudies.etl;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
