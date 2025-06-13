@@ -1,5 +1,5 @@
 <ft:folderType xmlns:ft="http://labkey.org/data/xml/folderType">
-    <ft:name>Studies Overview</ft:name>
+    <ft:name>SIV Studies Overview</ft:name>
     <ft:description>The default folder layout for Studies</ft:description>
     <ft:folderTabs>
 <!--        <ft:folderTab>-->
@@ -61,7 +61,7 @@
             </ft:requiredWebParts>
             <ft:preferredWebParts>
                 <ft:webPart>
-                    <ft:name>Studies Admin</ft:name>
+                    <ft:name>SIV Studies Admin</ft:name>
                     <ft:location>body</ft:location>
                 </ft:webPart>
             </ft:preferredWebParts>

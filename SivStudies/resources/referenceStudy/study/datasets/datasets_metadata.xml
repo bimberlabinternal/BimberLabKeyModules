@@ -201,7 +201,9 @@
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
-
+            <column columnName="category">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="test">
                 <datatype>varchar</datatype>
             </column>

@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +66,7 @@ public class SubjectScopedSelect implements TaskRefTask
         dataSourceContainerPath(false),
         dataSourceSchema(true),
         dataSourceQuery(true),
+        dataSourceSubjectColumn(true),
         dataSourceColumns(true),
         dataSourceColumnMapping(false),
         dataSourceAdditionalFilters(false),
@@ -120,6 +122,11 @@ public class SubjectScopedSelect implements TaskRefTask
                 additionalFilters.forEach(subjectFilter::addCondition);
             }
 
+            if (destinationTable.getColumn(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name()))) == null)
+            {
+                throw new IllegalStateException("Unknown column on table " + destinationTable.getName() + ": " + _settings.get(Settings.targetSubjectColumn.name()));
+            }
+
             Collection<Map<String, Object>> existingRows = new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection();
             if (!existingRows.isEmpty())
             {
@@ -132,11 +139,16 @@ public class SubjectScopedSelect implements TaskRefTask
             }
 
             // Query data and import
-            List<Map<String, Object>> toImport = getRowsToImport(log);
+            List<Map<String, Object>> toImport = getRowsToImport(subjects, log);
             if (!toImport.isEmpty())
             {
                 log.info("inserting " + toImport.size() + " rows");
-                qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), toImport, new BatchValidationException(), null, null);
+                BatchValidationException bve = new BatchValidationException();
+                qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), toImport, bve, null, null);
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
             }
             else
             {
@@ -158,7 +170,7 @@ public class SubjectScopedSelect implements TaskRefTask
         }
 
         SimpleFilter filter = new SimpleFilter();
-        String[] filters = rawVal.split(",");
+        String[] filters = rawVal.split(";");
         for (String queryParam : filters)
         {
             filter.addUrlFilters(new ActionURL().setRawQuery(queryParam), null);
@@ -234,7 +246,7 @@ public class SubjectScopedSelect implements TaskRefTask
         return colMap;
     }
 
-    private List<Map<String, Object>> getRowsToImport(Logger log)
+    private List<Map<String, Object>> getRowsToImport(List<String> subjects, Logger log)
     {
         if (_settings.get(Settings.dataSourceColumns.name()) == null)
         {
@@ -250,6 +262,7 @@ public class SubjectScopedSelect implements TaskRefTask
             DataIntegrationService.RemoteConnection rc = getRemoteDataSource(_settings.get(Settings.dataRemoteSource.name()), log);
             SelectRowsCommand sr = new SelectRowsCommand(_settings.get(Settings.dataSourceSchema.name()), _settings.get(Settings.dataSourceQuery.name()));
             sr.setColumns(sourceColumns);
+            sr.addFilter(_settings.get(Settings.dataSourceSubjectColumn.name()), StringUtils.join(subjects, ";"), Filter.Operator.IN);
             if (_settings.get(Settings.dataSourceAdditionalFilters.name()) != null)
             {
                 List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));
@@ -269,7 +282,13 @@ public class SubjectScopedSelect implements TaskRefTask
                         value = StringUtils.join(f.getParamVals(), ";");
                     }
 
-                    sr.addFilter(new Filter(f.getFieldKey().toString(), value, Filter.Operator.valueOf(f.getCompareType().getFilterValueText())));
+                    Filter.Operator o = Filter.Operator.getOperatorFromUrlKey(f.getCompareType().getPreferredUrlKey());
+                    if (o == null)
+                    {
+                        throw new IllegalStateException("Unknown operator: " + f.getCompareType().getPreferredUrlKey() + ", raw filter: " + f.getCompareType().name());
+                    }
+
+                    sr.addFilter(new Filter(f.getFieldKey().toString(), value, o));
                 }
             }
 
@@ -326,15 +345,19 @@ public class SubjectScopedSelect implements TaskRefTask
                 }
             }
 
+            if (sourceTable.getColumn(_settings.get(Settings.dataSourceSubjectColumn.name())) == null)
+            {
+                throw new IllegalStateException("Table is missing column: " + _settings.get(Settings.dataSourceSubjectColumn.name()));
+            }
 
-            final SimpleFilter filter = new SimpleFilter();
+            final SimpleFilter filter = new SimpleFilter(_settings.get(Settings.dataSourceSubjectColumn.name()), subjects, CompareType.IN);
             if (_settings.get(Settings.dataSourceAdditionalFilters.name()) != null)
             {
                 List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));
                 additionalFilters.forEach(filter::addCondition);
             }
 
-            TableSelector ts = new TableSelector(sourceTable, PageFlowUtil.set(_settings.get(Settings.subjectSourceColumn.name())), filter, null);
+            TableSelector ts = new TableSelector(sourceTable, new HashSet<>(sourceColumns), filter, null);
 
             return doNameMapping(new ArrayList<>(ts.getMapCollection()), sourceToDestColumMap, columnToDefaultMap);
         }
@@ -400,7 +423,7 @@ public class SubjectScopedSelect implements TaskRefTask
         List<ValidationError> errors = new ArrayList<>();
         for (String setting : getRequiredSettings())
         {
-            if (_settings.get(setting) == null)
+            if (_settings.get(setting) == null || StringUtils.isEmpty(_settings.get(setting)))
             {
                 errors.add(new SimpleValidationError("Missing required setting: " + setting));
             }

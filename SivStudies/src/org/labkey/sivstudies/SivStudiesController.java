@@ -66,7 +66,7 @@ public class SivStudiesController extends SpringActionController
             StudiesService.get().importFolderDefinition(getContainer(), getUser(), ModuleLoader.getInstance().getModule(SivStudiesModule.NAME), new Path("referenceStudy"));
 
             Module m = ModuleLoader.getInstance().getModule(SivStudiesModule.NAME);
-            StudiesService.get().loadTsv(m.getModuleResource("data/lookup_sets.tsv"), SivStudiesSchema.NAME, getUser(), getContainer());
+            StudiesService.get().loadTsv(m.getModuleResource("data/lookup_sets.tsv"), "studies", getUser(), getContainer());
 
             Resource r = m.getModuleResource("data");
             r.list().forEach(tsv -> {
@@ -79,7 +79,7 @@ public class SivStudiesController extends SpringActionController
                 {
                     case "reports.tsv" -> "laboratory";
                     case "species.tsv" -> "laboratory";
-                    default -> SivStudiesSchema.NAME;
+                    default -> "studies";
                 };
 
                 StudiesService.get().loadTsv(tsv, schemaName, getUser(), getContainer());
