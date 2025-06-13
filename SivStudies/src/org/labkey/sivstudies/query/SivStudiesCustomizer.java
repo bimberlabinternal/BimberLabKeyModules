@@ -4,8 +4,10 @@ import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
+import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.security.User;
 import org.labkey.api.study.Dataset;
@@ -41,7 +43,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         }
     }
 
-    private @Nullable String getStudyDemographicsSchemaTableName(Container c, User u)
+    private @Nullable String getStudyDemographicsSchemaTableName(Container c)
     {
         Study s = StudyService.get().getStudy(c);
         if (s == null)
@@ -66,15 +68,14 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             return;
         }
 
-        final String demographicsTableName = getStudyDemographicsSchemaTableName(ti.getUserSchema().getContainer(), ti.getUserSchema().getUser());
-        final FieldKey birthFieldKey = FieldKey.fromString("Id/demographics/birth");
+        final String demographicsTableName = getStudyDemographicsSchemaTableName(ti.getUserSchema().getContainer());
 
-        //new SQLFragment("(SELECT .birth FROM studydatasets." + getStudyDemographicsSchemaTableName())
+        SQLFragment sql = new SQLFragment("(SELECT t.birth FROM studydatasets." + demographicsTableName + " t WHERE t.Id = " + ExprColumn.STR_TABLE_ALIAS + ".Id)");
 
         // TODO
     }
 
-    private void appendMhcColumns(AbstractTableInfo ti, String dateColName)
+    private void appendMhcColumns(AbstractTableInfo ti)
     {
 
     }
