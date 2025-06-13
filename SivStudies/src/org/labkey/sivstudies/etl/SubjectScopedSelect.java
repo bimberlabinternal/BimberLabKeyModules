@@ -453,10 +453,10 @@ public class SubjectScopedSelect implements TaskRefTask
         }
         else
         {
-            Container source = ContainerManager.getForPath(_settings.get(Settings.subjectSourceContainerPath.name()));
+            Container source = _settings.get(Settings.subjectSourceContainerPath.name()) == null ? _containerUser.getContainer() : ContainerManager.getForPath(_settings.get(Settings.subjectSourceContainerPath.name()));
             if (source == null)
             {
-                source = _containerUser.getContainer();
+                throw new IllegalStateException("Unknown subjectSourceContainerPath: " + _settings.get(Settings.subjectSourceContainerPath.name()));
             }
 
             if (!source.hasPermission(_containerUser.getUser(), ReadPermission.class))
