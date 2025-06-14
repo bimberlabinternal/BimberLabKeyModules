@@ -3,6 +3,28 @@
     <name>SIV_PRIMe</name>
     <description>SIV Studies / PRIMe Data</description>
     <transforms>
+        <transform id="demographics" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="mode" value="UPDATE_ONLY"/>
+
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="demographics"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,gender,geographic_origin,species,Id/parents/dam,Id/parents/sire,birth,death,calculated_status,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="gender=sex,Id/Parents/dam=mother,Id/Parents/sire=father"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="demographics"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
         <transform id="weight" type="TaskRefTransformStep">
             <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
@@ -116,6 +138,6 @@
         </transform>
     </transforms>
     <schedule>
-        <cron expression="0 30 2 * * ?"/>
+        <cron expression="0 30 20 * * ?"/>
     </schedule>
 </etl>

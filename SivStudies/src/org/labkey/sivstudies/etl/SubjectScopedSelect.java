@@ -54,6 +54,12 @@ public class SubjectScopedSelect implements TaskRefTask
     protected final Map<String, String> _settings = new CaseInsensitiveHashMap<>();
     protected ContainerUser _containerUser;
 
+    private enum MODE
+    {
+        UPDATE_ONLY,
+        TRUNCATE;
+    }
+
     private enum Settings
     {
         subjectRemoteSource(false),
@@ -90,7 +96,18 @@ public class SubjectScopedSelect implements TaskRefTask
         }
     }
 
-    final int BATCH_SIZE = 500;
+    final int BATCH_SIZE = 100;
+
+    private MODE getMode()
+    {
+        String rawVal = StringUtils.trimToNull(_settings.get("mode"));
+        if (rawVal == null)
+        {
+            return MODE.TRUNCATE;
+        }
+
+        return MODE.valueOf(rawVal);
+    }
 
     @Override
     public RecordedActionSet run(@NotNull PipelineJob job) throws PipelineJobException
@@ -113,51 +130,90 @@ public class SubjectScopedSelect implements TaskRefTask
 
         try
         {
-            // Find / Delete existing values:
-            Set<ColumnInfo> keyFields = destinationTable.getColumns().stream().filter(ColumnInfo::isKeyField).collect(Collectors.toSet());
-            final SimpleFilter subjectFilter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name())), subjects, CompareType.IN);
-            if (_settings.get(Settings.targetAdditionalFilters.name()) != null)
+            if (getMode() == MODE.TRUNCATE)
             {
-                List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.targetAdditionalFilters.name()));
-                additionalFilters.forEach(subjectFilter::addCondition);
-            }
-
-            if (destinationTable.getColumn(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name()))) == null)
-            {
-                throw new IllegalStateException("Unknown column on table " + destinationTable.getName() + ": " + _settings.get(Settings.targetSubjectColumn.name()));
-            }
-
-            Collection<Map<String, Object>> existingRows = new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection();
-            if (!existingRows.isEmpty())
-            {
-                log.info("deleting " + existingRows.size() + " rows");
-                qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), new ArrayList<>(existingRows), null, null);
-            }
-            else
-            {
-                log.info("No rows to delete for this subject batch");
-            }
-
-            // Query data and import
-            List<Map<String, Object>> toImport = getRowsToImport(subjects, log);
-            if (!toImport.isEmpty())
-            {
-                log.info("inserting " + toImport.size() + " rows");
-                BatchValidationException bve = new BatchValidationException();
-                qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), toImport, bve, null, null);
-                if (bve.hasErrors())
+                // Find / Delete existing values:
+                Set<ColumnInfo> keyFields = destinationTable.getColumns().stream().filter(ColumnInfo::isKeyField).collect(Collectors.toSet());
+                final SimpleFilter subjectFilter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name())), subjects, CompareType.IN);
+                if (_settings.get(Settings.targetAdditionalFilters.name()) != null)
                 {
-                    throw bve;
+                    List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.targetAdditionalFilters.name()));
+                    additionalFilters.forEach(subjectFilter::addCondition);
+                }
+
+                if (destinationTable.getColumn(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name()))) == null)
+                {
+                    throw new IllegalStateException("Unknown column on table " + destinationTable.getName() + ": " + _settings.get(Settings.targetSubjectColumn.name()));
+                }
+
+                Collection<Map<String, Object>> existingRows = new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection();
+                if (!existingRows.isEmpty())
+                {
+                    log.info("deleting " + existingRows.size() + " rows");
+                    qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), new ArrayList<>(existingRows), null, null);
+                }
+                else
+                {
+                    log.info("No rows to delete for this subject batch");
                 }
             }
             else
             {
-                log.info("No rows to import for this subject batch");
+                log.info("Using " + getMode().name() + " mode, source records will not be deleted");
+            }
+
+            // Query data and import
+            List<Map<String, Object>> toImportOrUpdate = getRowsToImport(subjects, log);
+            if (!toImportOrUpdate.isEmpty())
+            {
+                if (getMode() == MODE.TRUNCATE)
+                {
+                    log.info("inserting " + toImportOrUpdate.size() + " rows");
+                    BatchValidationException bve = new BatchValidationException();
+                    qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), toImportOrUpdate, bve, null, null);
+                    if (bve.hasErrors())
+                    {
+                        throw bve;
+                    }
+                }
+                else if (getMode() == MODE.UPDATE_ONLY)
+                {
+                    log.info("updating " + toImportOrUpdate.size() + " rows");
+                    BatchValidationException bve = new BatchValidationException();
+
+                    Collection<String> keyFields = destinationTable.getPkColumnNames();
+                    List<Map<String, Object>> keys = toImportOrUpdate.stream().map(x -> {
+                        Map<String, Object> map = new HashMap<>();
+                        for (String keyField : keyFields)
+                        {
+                            if (x.get(keyField) != null)
+                            {
+                                map.put(keyField, x.get(keyField));
+                            }
+                        }
+
+                        return map;
+                    }).toList();
+
+                    qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), toImportOrUpdate, keys, bve, null, null);
+                    if (bve.hasErrors())
+                    {
+                        throw bve;
+                    }
+                }
+                else
+                {
+                    throw new IllegalStateException("Unknown mode: " + getMode());
+                }
+            }
+            else
+            {
+                log.info("No rows to import/update for this subject batch");
             }
         }
         catch (SQLException | InvalidKeyException | BatchValidationException | QueryUpdateServiceException | DuplicateKeyException e)
         {
-            throw new IllegalStateException("Error Importing Rows", e);
+            throw new IllegalStateException("Error Importing/Updating Rows", e);
         }
     }
 
@@ -350,7 +406,7 @@ public class SubjectScopedSelect implements TaskRefTask
                 throw new IllegalStateException("Table is missing column: " + _settings.get(Settings.dataSourceSubjectColumn.name()));
             }
 
-            final SimpleFilter filter = new SimpleFilter(_settings.get(Settings.dataSourceSubjectColumn.name()), subjects, CompareType.IN);
+            final SimpleFilter filter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.dataSourceSubjectColumn.name())), subjects, CompareType.IN);
             if (_settings.get(Settings.dataSourceAdditionalFilters.name()) != null)
             {
                 List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));

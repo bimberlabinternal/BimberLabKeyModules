@@ -1,0 +1,18 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
+    <columns>
+        <column name="Id"/>
+        <column name="sex"/>
+        <column name="species"/>
+        <column name="geographic_origin"/>
+        <column name="calculated_status"/>
+        <column name="birth"/>
+        <column name="death"/>
+        <column name="mhcGenotypes/A01"/>
+        <column name="mhcGenotypes/A02"/>
+        <column name="mhcGenotypes/B08"/>
+        <column name="mhcGenotypes/B17"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+</customView>
