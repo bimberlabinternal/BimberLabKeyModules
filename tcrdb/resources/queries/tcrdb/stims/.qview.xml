@@ -1,0 +1,19 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+    <columns>
+        <column name="cDNA_ID" />
+        <column name="cDNA/sortId/sampleId/subjectId" />
+        <column name="cDNA/sortId/sampleId/sampledate" />
+        <column name="cDNA/sortId/sampleId/stim" />
+        <column name="cDNA/sortId/population" />
+        <column name="controlStimId" />
+        <column name="quantification" />
+        <column name="quantificationMethod" />
+        <column name="flowQuantification" />
+        <column name="flowQuantificationMethod" />
+        <column name="comment" />
+        <column name="workbook" />
+    </columns>
+    <sorts>
+        <sort column="cDNA_ID" descending="true" />
+    </sorts>
+</customView>
