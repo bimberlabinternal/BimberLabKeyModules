@@ -70,6 +70,7 @@ public class TCRdbProvider extends AbstractSequenceDataProvider
 
         items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES, "TCR Clones", LaboratoryService.NavItemCategory.data, NAME, cache));
         items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONE_RESPONSES, "TCR Clonotype Responses", LaboratoryService.NavItemCategory.data, NAME, cache));
+        items.add(new QueryImportNavItem(this, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIM_EXPERIMENTS, "TCR Clonotype Responses", LaboratoryService.NavItemCategory.data, NAME, cache));
 
         return Collections.unmodifiableList(items);
     }
