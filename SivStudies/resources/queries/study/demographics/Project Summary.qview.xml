@@ -7,11 +7,10 @@
         <column name="calculated_status"/>
         <column name="birth"/>
         <column name="death"/>
-        <column name="mhcGenotypes/A01"/>
-        <column name="mhcGenotypes/A02"/>
-        <column name="mhcGenotypes/B08"/>
-        <column name="mhcGenotypes/B17"/>
-        <column name="mhcGenotypes/allAlleles"/>
+        <column name="projects/allStudies"/>
+        <column name="projects/categories"/>
+        <column name="projects/rhCmvVaccines"/>
+        <column name="projects/sivArt"/>
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>
