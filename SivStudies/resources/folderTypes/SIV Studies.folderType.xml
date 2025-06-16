@@ -33,23 +33,23 @@
                 </ft:webPart>
             </ft:preferredWebParts>
         </ft:folderTab>
-<!--        <ft:folderTab>-->
-<!--            <ft:name>analyses</ft:name>-->
-<!--            <ft:caption>Analyses</ft:caption>-->
-<!--            <ft:selectors>-->
-<!--                <ft:selector>-->
-<!--                    <ft:view>analyses</ft:view>-->
-<!--                </ft:selector>-->
-<!--            </ft:selectors>-->
-<!--            <ft:requiredWebParts>-->
-<!--            </ft:requiredWebParts>-->
-<!--            <ft:preferredWebParts>-->
-<!--                <ft:webPart>-->
-<!--                    <ft:name>Analyses</ft:name>-->
-<!--                    <ft:location>body</ft:location>-->
-<!--                </ft:webPart>-->
-<!--            </ft:preferredWebParts>-->
-<!--        </ft:folderTab>-->
+        <ft:folderTab>
+            <ft:name>dataBrowser</ft:name>
+            <ft:caption>Data Browser</ft:caption>
+            <ft:selectors>
+                <ft:selector>
+                    <ft:view>dataBrowser</ft:view>
+                </ft:selector>
+            </ft:selectors>
+            <ft:requiredWebParts>
+            </ft:requiredWebParts>
+            <ft:preferredWebParts>
+                <ft:webPart>
+                    <ft:name>Laboratory Data Browser</ft:name>
+                    <ft:location>body</ft:location>
+                </ft:webPart>
+            </ft:preferredWebParts>
+        </ft:folderTab>
         <ft:folderTab>
             <ft:name>admin</ft:name>
             <ft:caption>Admin</ft:caption>

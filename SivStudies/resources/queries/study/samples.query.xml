@@ -5,7 +5,7 @@
                 <columns>
                     <column columnName="Id"/>
                     <column columnName="date">
-                        <columnTitle>Date Added</columnTitle>
+                        <columnTitle>Date</columnTitle>
                         <formatString>Date</formatString>
                     </column>
                     <column columnName="sampleid">
