@@ -189,6 +189,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             colInfo.setLabel("MHC Genotypes");
             demographicsTable.addColumn(colInfo);
         }
+
+        if (demographicsTable.getColumn("projects") == null)
+        {
+            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsProjects", demographicsTable, "projects");
+            colInfo.setLabel("Project Summary");
+            demographicsTable.addColumn(colInfo);
+        }
     }
 
     private void appendPvlColumns(AbstractTableInfo ti, ColumnInfo subjectCol, ColumnInfo dateCol)
