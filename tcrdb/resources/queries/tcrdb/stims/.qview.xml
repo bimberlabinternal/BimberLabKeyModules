@@ -1,10 +1,11 @@
 <customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
     <columns>
         <column name="cDNA_ID" />
-        <column name="cDNA/sortId/sampleId/subjectId" />
-        <column name="cDNA/sortId/sampleId/sampledate" />
-        <column name="cDNA/sortId/sampleId/stim" />
-        <column name="cDNA/sortId/population" />
+        <column name="cDNA_ID/sortId/sampleId/subjectId" />
+        <column name="cDNA_ID/sortId/sampleId/sampledate" />
+        <column name="cDNA_ID/sortId/sampleId/stim" />
+        <column name="cDNA_ID/sortId/population" />
+        <column name="cDNA_ID/prototypeId/rowId"/>
         <column name="controlStimId" />
         <column name="quantification" />
         <column name="quantificationMethod" />
