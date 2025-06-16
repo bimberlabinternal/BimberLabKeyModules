@@ -95,23 +95,6 @@
                 </alternateKeys>
             </destination>
         </transform>
-        <transform type="SimpleQueryTransformStep" id="clinicalObservations">
-            <description>Copy to target</description>
-            <source schemaName="mcc" queryName="aggregatedObservations" >
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>category</column>
-                    <column>observation</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="5000">
-                <alternateKeys>
-                    <column name="objectid"/>
-                </alternateKeys>
-            </destination>
-        </transform>
         <transform type="SimpleQueryTransformStep" id="census">
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedCensus" >
@@ -148,6 +131,23 @@
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="departure" targetOption="truncate" bulkLoad="true" batchSize="5000">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+        <transform type="SimpleQueryTransformStep" id="clinicalObservations">
+            <description>Copy to target</description>
+            <source schemaName="mcc" queryName="aggregatedObservations">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>category</column>
+                    <column>observation</column>
+                    <column>objectid</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="1000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>

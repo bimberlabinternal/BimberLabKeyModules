@@ -189,8 +189,7 @@
     </transforms>
 
 <!--    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >-->
-<!--        &lt;!&ndash; TODO: enable once PRIMe deploys 23.7 &ndash;&gt;-->
-<!--        &lt;!&ndash;<deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid"/>&ndash;&gt;-->
+<!--        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid"/>-->
 <!--    </incrementalFilter>-->
     <schedule>
         <!--11PM-->

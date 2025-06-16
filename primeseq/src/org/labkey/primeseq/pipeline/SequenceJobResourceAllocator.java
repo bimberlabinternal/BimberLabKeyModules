@@ -82,6 +82,24 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     private Long _totalFileSize = null;
     private static final Long UNABLE_TO_DETERMINE = -1L;
 
+    private int getAlignerIndexMem(PipelineJob job)
+    {
+        if (job instanceof HasJobParams)
+        {
+            Map<String, String> params = ((HasJobParams)job).getJobParams();
+            if (params.get("alignment") != null)
+            {
+                String aligner = params.get("alignment");
+                if (Arrays.asList("BWA-Mem", "BWA-Mem2", "STAR").contains(aligner))
+                {
+                    return 72;
+                }
+            }
+        }
+
+        return 36;
+    }
+
     @Override
     public Integer getMaxRequestCpus(PipelineJob job)
     {
@@ -165,11 +183,11 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return 72;
         }
 
-        // NOTE: STAR in particular needs more memory
         if (isCacheAlignerIndexesTask(job))
         {
-            job.getLogger().debug("setting memory to 36");
-            return 36;
+            int mem = getAlignerIndexMem(job);
+            job.getLogger().debug("setting memory to: " + mem);
+            return mem;
         }
 
         if (isLuceneIndexJob(job))

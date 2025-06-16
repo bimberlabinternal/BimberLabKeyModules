@@ -168,6 +168,14 @@
                             schemaName: 'mgap',
                             queryName: 'duplicategvcfs'
                         })
+                    },{
+                        name: 'CRAMs Not Using Archival Mode',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'sequenceanalysis',
+                            queryName: 'outputfiles',
+                            'query.dataid/DataFileUrl~contains': '.cram',
+                            'query.description~doesnotcontain': 'Archival'
+                        })
                     }]
                 }]
             }]

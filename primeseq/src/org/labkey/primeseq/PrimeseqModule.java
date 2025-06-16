@@ -23,6 +23,7 @@ import org.labkey.api.cluster.ClusterService;
 import org.labkey.api.data.Container;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.ldk.LDKService;
+import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
@@ -32,6 +33,7 @@ import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.view.WebPartFactory;
 import org.labkey.primeseq.analysis.CombineMethylationRatesHandler;
 import org.labkey.primeseq.analysis.MethylationRateComparisonHandler;
+import org.labkey.primeseq.notification.DiskUsageNotification;
 import org.labkey.primeseq.pipeline.BismarkWrapper;
 import org.labkey.primeseq.pipeline.BlastPipelineJobResourceAllocator;
 import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
@@ -85,6 +87,8 @@ public class PrimeseqModule extends ExtendedSimpleModule
         LDKService.get().registerQueryButton(new UpdateResourcesButton(), "pipeline", "job");
         LDKService.get().registerQueryButton(new PerformMhcCleanupButton(), "sequenceanalysis", "sequence_analyses");
         LDKService.get().registerQueryButton(new DeleteJobCheckpointButton(), "pipeline", "job");
+
+        NotificationService.get().registerNotification(new DiskUsageNotification());
     }
 
     @Override
