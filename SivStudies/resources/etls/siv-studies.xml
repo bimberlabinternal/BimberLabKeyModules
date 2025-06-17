@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>SIV_PRIMe</name>
+    <description>SIV Studies / PRIMe Data</description>
+    <transforms>
+        <transform id="demographics" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="mode" value="UPDATE_ONLY"/>
+
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="demographics"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,gender,geographic_origin,species,Id/parents/dam,Id/parents/sire,birth,death,calculated_status,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="gender=sex,Id/Parents/dam=mother,Id/Parents/sire=father"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="demographics"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="weight" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="weight"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,weight,objectid"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="weight"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="mhc" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Internal/MHC_Typing"/>
+                    <setting name="dataSourceSchema" value="geneticscore"/>
+                    <setting name="dataSourceQuery" value="mhc_data"/>
+                    <setting name="dataSourceSubjectColumn" value="subjectid"/>
+                    <setting name="dataSourceColumns" value="subjectid,created,assaytype,marker,result,score"/>
+                    <setting name="dataSourceColumnMapping" value="subjectId=Id,created=date"/>
+                    <setting name="dataSourceColumnDefaults" value="category=MHC Typing"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="genetics"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="cbc" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="hematologyResults"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,testid,result,units,qualresult,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="testid=test"/>
+                    <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true"/>
+                    <setting name="dataSourceColumnDefaults" value="category=CBC"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="labwork"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="category~eq=CBC"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="chem" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="chemistryResults"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,testid,result,units,qualresult,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="testid=test"/>
+                    <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true"/>
+                    <setting name="dataSourceColumnDefaults" value="category=Chemistry"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="labwork"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="category~eq=Chemistry"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="procedures" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataRemoteSource" value="PRIMe"/>
+                    <setting name="dataSourceSchema" value="study"/>
+                    <setting name="dataSourceQuery" value="encounters"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,type,procedureid/name,objectid"/>
+                    <setting name="dataSourceColumnMapping" value="procedureid/name=procedure,type=category"/>
+                    <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true;procedureid/name~isnonblank="/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="procedures"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+    <schedule>
+        <cron expression="0 30 20 * * ?"/>
+    </schedule>
+</etl>

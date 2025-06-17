@@ -27,6 +27,8 @@ public class TCRdbSchema
 
     public static final String TABLE_MIXCR_LIBRARIES = "mixcr_libraries";
     public static final String TABLE_CLONES = "clones";
+    public static final String TABLE_CLONE_RESPONSES = "clone_responses";
+    public static final String TABLE_STIM_EXPERIMENTS = "stims";
 
     public static final String SEQUENCE_ANALYSIS = "sequenceanalysis";
     public static final String SINGLE_CELL = "singlecell";

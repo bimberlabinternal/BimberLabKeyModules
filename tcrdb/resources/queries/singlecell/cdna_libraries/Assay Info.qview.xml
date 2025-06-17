@@ -18,7 +18,6 @@
         <column name="citeseqReadsetId" />
         <column name="comment" />
         <column name="status" />
-        <!--<column name="numTcrRunsTCREnriched" />-->
         <column name="numTcrTrbResultsTCREnriched" />
         <column name="numCellsTrbTCREnriched" />
         <column name="numTcrRunsFullTranscript" />
@@ -27,6 +26,5 @@
     </columns>
     <sorts>
         <sort column="plateId" descending="false"/>
-        <sort column="well/addressByColumn"/>
     </sorts>
 </customView>
