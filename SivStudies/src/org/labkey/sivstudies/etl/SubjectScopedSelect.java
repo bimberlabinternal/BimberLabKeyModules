@@ -14,6 +14,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.di.DataIntegrationService;
 import org.labkey.api.di.TaskRefTask;
+import org.labkey.api.pipeline.CancelledException;
 import org.labkey.api.pipeline.PipelineJob;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.RecordedActionSet;
@@ -115,12 +116,20 @@ public class SubjectScopedSelect implements TaskRefTask
         List<String> subjects = getSubjects(job.getLogger());
         List<List<String>> batches = Lists.partition(subjects, BATCH_SIZE);
         job.getLogger().info("Total batches: " + batches.size());
-        batches.forEach(x -> processBatch(x, job.getLogger()));
+        batches.forEach(x -> processBatch(x, job.getLogger(), job));
 
         return new RecordedActionSet();
     }
 
-    private void processBatch(List<String> subjects, Logger log)
+    private void checkCancelled(PipelineJob job)
+    {
+        if (job.isCancelled())
+        {
+            throw new CancelledException();
+        }
+    }
+
+    private void processBatch(List<String> subjects, Logger log, PipelineJob job)
     {
         log.info("processing batch with " + subjects.size() + " subjects");
         TableInfo destinationTable = getDataDestinationTable();
@@ -146,11 +155,20 @@ public class SubjectScopedSelect implements TaskRefTask
                     throw new IllegalStateException("Unknown column on table " + destinationTable.getName() + ": " + _settings.get(Settings.targetSubjectColumn.name()));
                 }
 
-                Collection<Map<String, Object>> existingRows = new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection();
+                List<Map<String, Object>> existingRows = new ArrayList<>(new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection());
                 if (!existingRows.isEmpty())
                 {
-                    log.info("deleting " + existingRows.size() + " rows");
-                    qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), new ArrayList<>(existingRows), null, null);
+                    List<List<Map<String, Object>>> batches = Lists.partition(existingRows, 5000);
+                    log.info("deleting " + existingRows.size() + " rows in " + batches.size() + " batches");
+                    int i = 0;
+                    for (List<Map<String, Object>> batch : batches)
+                    {
+                        i++;
+                        log.info("batch " + i);
+                        checkCancelled(job);
+
+                        qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), batch, null, null);
+                    }
                 }
                 else
                 {
@@ -168,37 +186,58 @@ public class SubjectScopedSelect implements TaskRefTask
             {
                 if (getMode() == MODE.TRUNCATE)
                 {
-                    log.info("inserting " + toImportOrUpdate.size() + " rows");
-                    BatchValidationException bve = new BatchValidationException();
-                    qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), toImportOrUpdate, bve, null, null);
-                    if (bve.hasErrors())
+                    List<List<Map<String, Object>>> batches = Lists.partition(toImportOrUpdate, 5000);
+                    log.info("inserting " + toImportOrUpdate.size() + " rows in " + batches.size() + " batches");
+
+                    int i = 0;
+                    for (List<Map<String, Object>> batch : batches)
                     {
-                        throw bve;
+                        i++;
+                        log.info("batch " + i);
+                        checkCancelled(job);
+
+                        BatchValidationException bve = new BatchValidationException();
+                        qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), batch, bve, null, null);
+                        if (bve.hasErrors())
+                        {
+                            throw bve;
+                        }
                     }
                 }
                 else if (getMode() == MODE.UPDATE_ONLY)
                 {
-                    log.info("updating " + toImportOrUpdate.size() + " rows");
-                    BatchValidationException bve = new BatchValidationException();
+                    List<List<Map<String, Object>>> batches = Lists.partition(toImportOrUpdate, 5000);
+                    log.info("updating " + toImportOrUpdate.size() + " rows in " + batches.size() + " batches");
 
-                    Collection<String> keyFields = destinationTable.getPkColumnNames();
-                    List<Map<String, Object>> keys = toImportOrUpdate.stream().map(x -> {
-                        Map<String, Object> map = new HashMap<>();
-                        for (String keyField : keyFields)
-                        {
-                            if (x.get(keyField) != null)
-                            {
-                                map.put(keyField, x.get(keyField));
-                            }
-                        }
-
-                        return map;
-                    }).toList();
-
-                    qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), toImportOrUpdate, keys, bve, null, null);
-                    if (bve.hasErrors())
+                    int i = 0;
+                    for (List<Map<String, Object>> batch : batches)
                     {
-                        throw bve;
+
+                        i++;
+                        log.info("batch " + i);
+                        checkCancelled(job);
+
+                        BatchValidationException bve = new BatchValidationException();
+
+                        Collection<String> keyFields = destinationTable.getPkColumnNames();
+                        List<Map<String, Object>> keys = batch.stream().map(x -> {
+                            Map<String, Object> map = new HashMap<>();
+                            for (String keyField : keyFields)
+                            {
+                                if (x.get(keyField) != null)
+                                {
+                                    map.put(keyField, x.get(keyField));
+                                }
+                            }
+
+                            return map;
+                        }).toList();
+
+                        qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), batch, keys, bve, null, null);
+                        if (bve.hasErrors())
+                        {
+                            throw bve;
+                        }
                     }
                 }
                 else

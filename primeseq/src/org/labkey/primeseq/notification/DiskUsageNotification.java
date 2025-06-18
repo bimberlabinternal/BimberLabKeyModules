@@ -167,17 +167,18 @@ public class DiskUsageNotification implements Notification
         byMonth.sort(Comparator.comparing(o -> String.valueOf(o.get("Account"))));
 
         msg.append("<b>Cluster Usage By Month:</b><p>");
-        msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>CPU</td><td>GPU</td><td>Compute Units</td></tr>");
+        msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>Month</td><td>CPU</td><td>GPU</td><td>Compute Units</td></tr>");
         byMonth.forEach(map -> {
             long cpu = (Long)map.get("CPU");
             long gpu = (Long)map.get("GPU");
-            long units = (cpu/6000) + (gpu/600);
+            double units = (double)(cpu/6000) + (gpu/600);
+            Date start = (Date)map.get("Start");
 
-            msg.append("<tr><td>").append(map.get("Account")).append("</td><td>").append(String.format("%,d", cpu)).append("</td><td>").append(String.format("%,d", gpu)).append("</td><td>").append(String.format("%,d", units)).append("</td></tr>");
+            msg.append("<tr><td>").append(map.get("Account")).append("</td><td>").append(getDateTimeFormat(c).format(start)).append("</td><td>").append(String.format("%,d", cpu)).append("</td><td>").append(String.format("%,d", gpu)).append("</td><td>").append(String.format("%,d", units)).append("</td></tr>");
         });
 
         msg.append("</table>");
-        msg.append("<p>\n");
+        msg.append("<br><br>\n");
     }
 
     private void getDiskUsageStats(Container c, User u, final StringBuilder msg)
@@ -216,7 +217,7 @@ public class DiskUsageNotification implements Notification
             _log.error("Error running df", e);
         }
 
-        msg.append("<p>\n");
+        msg.append("<br><br>\n");
     }
 
     private List<Map<String, Object>> getClusterUsageByMonth(List<String> accounts, int numMonths)
@@ -234,10 +235,17 @@ public class DiskUsageNotification implements Notification
             cal.set(Calendar.YEAR, currentYear);
             cal.set(Calendar.MONTH, currentMonth - offset);
             cal.set(Calendar.DAY_OF_MONTH, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
             Date start = cal.getTime();
 
             Calendar endCal = Calendar.getInstance();
             endCal.setTime(start);
+            endCal.set(Calendar.DAY_OF_MONTH, endCal.getActualMaximum(Calendar.DAY_OF_MONTH));
+
+            // Set to last second of the day:
             endCal.add(Calendar.DATE, 1);
             endCal.add(Calendar.MILLISECOND, -1);
             Date end = endCal.getTime();
@@ -300,8 +308,8 @@ public class DiskUsageNotification implements Notification
             }).filter(Objects::nonNull).toList();
 
             ret.forEach(map -> {
-                map.put("start", start);
-                map.put("end", end);
+                map.put("Start", start);
+                map.put("End", end);
             });
 
             return ret;
