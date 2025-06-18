@@ -136,6 +136,28 @@
                 </settings>
             </taskref>
         </transform>
+
+        <transform id="scrnaseq" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="singlecell"/>
+                    <setting name="dataSourceQuery" value="sivDataSource"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,description"/>
+                    <setting name="dataSourceColumnDefaults" value="category=scRNA-seq"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="additionalDatatypes"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="category~eq=scRNA-seq"/>
+                </settings>
+            </taskref>
+        </transform>
     </transforms>
     <schedule>
         <cron expression="0 30 20 * * ?"/>

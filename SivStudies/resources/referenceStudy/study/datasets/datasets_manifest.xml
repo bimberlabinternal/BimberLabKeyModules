@@ -37,5 +37,8 @@
         <dataset name="procedures" showByDefault="true" category="Research" type="Standard" id="12">
             <tags/>
         </dataset>
+        <dataset name="additionalDatatypes" showByDefault="true" category="Research" type="Standard" id="13">
+            <tags/>
+        </dataset>
     </datasets>
 </datasets>

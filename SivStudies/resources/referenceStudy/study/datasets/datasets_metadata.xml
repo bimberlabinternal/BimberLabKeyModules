@@ -391,4 +391,27 @@
         </columns>
         <tableTitle>Procedures</tableTitle>
     </table>
+    <table tableName="additionalDatatypes" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+            </column>
+            <column columnName="objectid">
+                <datatype>entityid</datatype>
+                <isKeyField>true</isKeyField>
+            </column>
+            <column columnName="category">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="description">
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Additional Datatypes</tableTitle>
+    </table>
 </tables>

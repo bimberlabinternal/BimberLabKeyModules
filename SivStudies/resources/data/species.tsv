@@ -1,4 +1,4 @@
-common	scientific_name	id_prefix	mhc_prefix	blood_per_kg	max_draw_pct	blood_draw_interval	cites_code	dateDisabled
+common_name	scientific_name	id_prefix	mhc_prefix	blood_per_kg	max_draw_pct	blood_draw_interval	cites_code	dateDisabled
 Baboon				60	0.2	30
 Cotton-top Tamarin	Saguinus oedipus	so	Saoe	60	0.2	30
 Cynomolgus	Macaca fascicularis	cy	Mafa	60	0.2	30
