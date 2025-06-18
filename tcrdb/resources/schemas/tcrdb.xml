@@ -134,6 +134,27 @@
             <column columnName="backgroundFrequency">
                 <columnTitle>Background Freq</columnTitle>
             </column>
+            <column columnName="vGene">
+                <columnTitle>V-Gene</columnTitle>
+            </column>
+            <column columnName="totalCells">
+                <columnTitle>Total Cells</columnTitle>
+            </column>
+            <column columnName="totalCloneSize">
+                <columnTitle>Total Clone Size</columnTitle>
+            </column>
+            <column columnName="fractionCloneActivated">
+                <columnTitle>Fraction of Clone Activated</columnTitle>
+            </column>
+            <column columnName="totalCellsForSample">
+                <columnTitle>Total Cells For Sample</columnTitle>
+            </column>
+            <column columnName="oddsRatio">
+                <columnTitle>Enrichment (Odds Ratio)</columnTitle>
+            </column>
+            <column columnName="enrichmentFDR">
+                <columnTitle>Enrichment (FDR)</columnTitle>
+            </column>
             <column columnName="comments">
 
             </column>
