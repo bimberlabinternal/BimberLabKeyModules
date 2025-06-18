@@ -15,7 +15,6 @@ import org.labkey.api.sequenceanalysis.run.SimpleScriptWrapper;
 import org.labkey.api.settings.LookAndFeelProperties;
 
 import java.text.DateFormat;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,8 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DiskUsageNotification implements Notification
 {
     protected final static Logger _log = LogManager.getLogger(DiskUsageNotification.class);
-    private static final String lastSave = "lastSave";
-    private NumberFormat _pctFormat = null;
 
     private static final String PROP_CATEGORY = "primeseq.DiskUsageNotification";
 
@@ -79,7 +76,7 @@ public class DiskUsageNotification implements Notification
     @Override
     public String getCronString()
     {
-        return "0 8 * * 1 ?";
+        return "0 0 8 * * 1";
     }
 
     @Override
@@ -97,9 +94,6 @@ public class DiskUsageNotification implements Notification
     public String getMessageBodyHTML(Container c, User u)
     {
         Date start = new Date();
-
-        _pctFormat = NumberFormat.getPercentInstance();
-        _pctFormat.setMaximumFractionDigits(1);
 
         StringBuilder msg = new StringBuilder();
         getDiskUsageStats(c, u, msg);
