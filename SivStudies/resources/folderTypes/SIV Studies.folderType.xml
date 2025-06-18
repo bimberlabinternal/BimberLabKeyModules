@@ -64,6 +64,10 @@
                     <ft:name>SIV Studies Admin</ft:name>
                     <ft:location>body</ft:location>
                 </ft:webPart>
+                <ft:webPart>
+                    <ft:name>Lab Tools</ft:name>
+                    <ft:location>right</ft:location>
+                </ft:webPart>
             </ft:preferredWebParts>
             <ft:permissions>
                 <ft:permission name="org.labkey.api.security.permissions.AdminPermission"/>

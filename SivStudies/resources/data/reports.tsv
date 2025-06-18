@@ -1,10 +1,10 @@
 reporttype	category	schemaname	queryname	viewname	reporttitle	containerpath
 query	General	study	additionalDatatypes		Additional Data
-query	General	study	weights		Weights
+query	General	study	weight		Weights
 query	General	study	treatments		Treatments/Medications
-query	General	study	labResults		CBC/Chem
+query	General	study	labwork		CBC/Chem
 query	General	study	assignment		Project/Study Assignment
-query	General	study	geneticData		Genetic Data / MHC
+query	General	study	genetics		Genetic Data / MHC
 query	General	study	procedures		Procedures
 query	General	study	viralLoads		Viral Loads
 query	General	study	samples		Samples
