@@ -165,10 +165,10 @@ public class DiskUsageNotification implements Notification
         byMonth.forEach(map -> {
             long cpu = (Long)map.get("CPU");
             long gpu = (Long)map.get("GPU");
-            double units = (double)(cpu/6000) + (gpu/600);
+            double units = ((double)cpu/6000) + ((double)gpu/600);
             Date start = (Date)map.get("Start");
 
-            msg.append("<tr><td>").append(map.get("Account")).append("</td><td>").append(getDateTimeFormat(c).format(start)).append("</td><td>").append(String.format("%,d", cpu)).append("</td><td>").append(String.format("%,d", gpu)).append("</td><td>").append(String.format("%,d", units)).append("</td></tr>");
+            msg.append("<tr><td>").append(map.get("Account")).append("</td><td>").append(getDateTimeFormat(c).format(start)).append("</td><td>").append(String.format("%,d", cpu)).append("</td><td>").append(String.format("%,d", gpu)).append("</td><td>").append(String.format("%,.2f", units)).append("</td></tr>");
         });
 
         msg.append("</table>");
