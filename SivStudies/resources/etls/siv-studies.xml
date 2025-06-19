@@ -144,7 +144,7 @@
                     <setting name="subjectSourceQuery" value="demographics"/>
                     <setting name="subjectSourceColumn" value="Id"/>
 
-                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber/Collaborations/SIV_Studies"/>
                     <setting name="dataSourceSchema" value="singlecell"/>
                     <setting name="dataSourceQuery" value="sivDataSource"/>
                     <setting name="dataSourceSubjectColumn" value="Id"/>
