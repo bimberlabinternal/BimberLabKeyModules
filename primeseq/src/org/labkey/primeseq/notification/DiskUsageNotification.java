@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.data.Container;
-import org.labkey.api.data.PropertyManager;
 import org.labkey.api.ldk.notification.Notification;
 import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.security.User;
@@ -35,8 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DiskUsageNotification implements Notification
 {
     protected final static Logger _log = LogManager.getLogger(DiskUsageNotification.class);
-
-    private static final String PROP_CATEGORY = "primeseq.DiskUsageNotification";
 
     @Override
     public String getName()
@@ -85,11 +82,6 @@ public class DiskUsageNotification implements Notification
         return "Every Monday at 8AM";
     }
 
-    private Map<String, String> getSavedValues(Container c)
-    {
-        return PropertyManager.getProperties(c, PROP_CATEGORY);
-    }
-
     @Override
     public String getMessageBodyHTML(Container c, User u)
     {
@@ -111,12 +103,29 @@ public class DiskUsageNotification implements Notification
             return;
         }
 
+        List<Map<String, Object>> byMonth = getClusterUsageByMonth(Arrays.asList("bimberlab", "onprcgenetics"), 12);
+        byMonth.sort(Comparator.comparing(o -> String.valueOf(o.get("Account"))));
+
+        msg.append("<b>Cluster Usage By Month:</b><p>");
+        msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>Month</td><td>CPU</td><td>GPU</td><td>Compute Units</td></tr>");
+        byMonth.forEach(map -> {
+            long cpu = (Long)map.get("CPU");
+            long gpu = (Long)map.get("GPU");
+            double units = ((double)cpu/6000) + ((double)gpu/600);
+            Date start = (Date)map.get("Start");
+
+            msg.append("<tr><td>").append(map.get("Account")).append("</td><td>").append(getDateTimeFormat(c).format(start)).append("</td><td>").append(String.format("%,d", cpu)).append("</td><td>").append(String.format("%,d", gpu)).append("</td><td>").append(String.format("%,.2f", units)).append("</td></tr>");
+        });
+
+        msg.append("</table>");
+        msg.append("<br><br>\n");
+
         try
         {
             SimpleScriptWrapper wrapper = new SimpleScriptWrapper(_log);
             String results = wrapper.executeWithOutput(Arrays.asList("ssh", "-q", "labkey_submit@arc", "sshare", "-U", "-u", "labkey_submit"));
 
-            msg.append("<b>Year-to-Date Cluster Usage:</b><p>");
+            msg.append("<b>Cluster Priority By Account:</b><p>");
             msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>NormShares</td><td>RawUsage</td><td>EffectiveUsage</td><td>FairShare</td></tr>");
 
             AtomicBoolean foundHeader = new AtomicBoolean(false);
@@ -149,30 +158,12 @@ public class DiskUsageNotification implements Notification
                 msg.append("</tr>");
             });
             msg.append("</table>");
+            msg.append("<br><br>\n");
         }
         catch (PipelineJobException e)
         {
             _log.error("Error fetching slurm summary", e);
         }
-
-        msg.append("<p>\n");
-
-        List<Map<String, Object>> byMonth = getClusterUsageByMonth(Arrays.asList("bimberlab", "onprcgenetics"), 12);
-        byMonth.sort(Comparator.comparing(o -> String.valueOf(o.get("Account"))));
-
-        msg.append("<b>Cluster Usage By Month:</b><p>");
-        msg.append("<table border=1 style='border-collapse: collapse;'><tr style='font-weight: bold;'><td>Account</td><td>Month</td><td>CPU</td><td>GPU</td><td>Compute Units</td></tr>");
-        byMonth.forEach(map -> {
-            long cpu = (Long)map.get("CPU");
-            long gpu = (Long)map.get("GPU");
-            double units = ((double)cpu/6000) + ((double)gpu/600);
-            Date start = (Date)map.get("Start");
-
-            msg.append("<tr><td>").append(map.get("Account")).append("</td><td>").append(getDateTimeFormat(c).format(start)).append("</td><td>").append(String.format("%,d", cpu)).append("</td><td>").append(String.format("%,d", gpu)).append("</td><td>").append(String.format("%,.2f", units)).append("</td></tr>");
-        });
-
-        msg.append("</table>");
-        msg.append("<br><br>\n");
     }
 
     private void getDiskUsageStats(Container c, User u, final StringBuilder msg)
