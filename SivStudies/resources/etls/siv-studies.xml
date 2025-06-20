@@ -159,7 +159,7 @@
             </taskref>
         </transform>
 
-        <transform id="scrnaseq" type="TaskRefTransformStep">
+        <transform id="genomics" type="TaskRefTransformStep">
             <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
                 <settings>
                     <setting name="subjectSourceSchema" value="study"/>
