@@ -21,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
 import org.labkey.api.ldk.ExtendedSimpleModule;
 import org.labkey.api.module.ModuleContext;
+import org.labkey.api.studies.StudiesService;
+import org.labkey.sivstudies.study.ArtInitiationEventProvider;
+import org.labkey.sivstudies.study.SivInfectionEventProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +54,8 @@ public class SivStudiesModule extends ExtendedSimpleModule
     @Override
     public void doStartupAfterSpringConfig(ModuleContext moduleContext)
     {
-
+        StudiesService.get().registerEventProvider(new SivInfectionEventProvider());
+        StudiesService.get().registerEventProvider(new ArtInitiationEventProvider());
     }
 
     @Override
