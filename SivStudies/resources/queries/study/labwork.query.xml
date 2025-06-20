@@ -13,6 +13,12 @@
                     </column>
                     <column columnName="test">
                         <columnTitle>Test</columnTitle>
+                        <fk>
+                            <fkDbSchema>studies</fkDbSchema>
+                            <fkTable>labwork_types</fkTable>
+                            <fkColumnName>value</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
                     </column>
                     <column columnName="result">
                         <columnTitle>Result</columnTitle>

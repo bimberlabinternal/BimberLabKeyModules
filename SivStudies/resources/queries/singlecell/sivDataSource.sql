@@ -10,9 +10,9 @@ s1.date,
 FROM (SELECT
     s.subjectId,
     s.sampleDate as date,
-    GROUP_CONCAT(DISTINCT s.tissue) as tissue,
-    GROUP_CONCAT(DISTINCT s.assayType) as assayType,
-    GROUP_CONCAT(DISTINCT s.stim) as stims
+    GROUP_CONCAT(DISTINCT s.tissue, ', ') as tissue,
+    GROUP_CONCAT(DISTINCT s.assayType, ', ') as assayType,
+    GROUP_CONCAT(DISTINCT s.stim, ', ') as stims
 
     FROM "/Labs/Bimber".singlecell.samples s
     GROUP BY s.subjectId, s.sampleDate

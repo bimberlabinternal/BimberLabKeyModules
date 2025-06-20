@@ -137,6 +137,9 @@
             <column columnName="vGene">
                 <columnTitle>V-Gene</columnTitle>
             </column>
+            <column columnName="jGene">
+                <columnTitle>J-Gene</columnTitle>
+            </column>
             <column columnName="totalCells">
                 <columnTitle>Total Cells</columnTitle>
             </column>

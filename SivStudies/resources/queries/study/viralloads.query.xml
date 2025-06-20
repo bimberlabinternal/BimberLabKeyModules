@@ -15,7 +15,7 @@
                         <columnTitle>Assay Type</columnTitle>
                     </column>
                     <column columnName="target">
-                        <columnTitle>target</columnTitle>
+                        <columnTitle>Target</columnTitle>
                     </column>
                     <column columnName="lod">
                         <columnTitle>LOD</columnTitle>

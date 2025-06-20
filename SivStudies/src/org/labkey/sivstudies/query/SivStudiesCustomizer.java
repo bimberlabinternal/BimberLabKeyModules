@@ -5,9 +5,12 @@ import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.JdbcType;
+import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.WrappedColumn;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
+import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.LookupForeignKey;
 import org.labkey.api.query.QueryDefinition;
 import org.labkey.api.query.QueryException;
@@ -15,6 +18,7 @@ import org.labkey.api.query.QueryForeignKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
+import org.labkey.api.study.Dataset;
 import org.labkey.api.study.DatasetTable;
 import org.labkey.api.util.logging.LogHelper;
 
@@ -23,8 +27,10 @@ import java.util.List;
 
 public class SivStudiesCustomizer extends AbstractTableCustomizer
 {
-    public static final String ID_COL = "Id";
     private static final Logger _log = LogHelper.getLogger(SivStudiesCustomizer.class, "Table customization for the SIV Studies module");
+
+    public static final String ID_COL = "Id";
+    public static final String DATE_COL = "Date";
 
     @Override
     public void customize(TableInfo tableInfo)
@@ -43,7 +49,8 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
             if (!ds.getDataset().isDemographicData())
             {
-                appendAgeAtTimeCol(ds.getUserSchema(), ati, "date");
+                appendAgeAtTimeCol(ds.getUserSchema(), ati, DATE_COL);
+                appendPvlColumns(ds, ID_COL, DATE_COL);
             }
 
             if ("demographics".equalsIgnoreCase(ds.getName()))
@@ -196,24 +203,45 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             colInfo.setLabel("Project Summary");
             demographicsTable.addColumn(colInfo);
         }
+
+        if (demographicsTable.getColumn("immunizations") == null)
+        {
+            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsImmunizations", demographicsTable, "immunizations");
+            colInfo.setLabel("Immunization Summary");
+            demographicsTable.addColumn(colInfo);
+        }
+
+        if (demographicsTable.getColumn("challenges") == null)
+        {
+            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsChallenges", demographicsTable, "challenges");
+            colInfo.setLabel("Challenge Summary");
+            demographicsTable.addColumn(colInfo);
+        }
     }
 
-    private void appendPvlColumns(AbstractTableInfo ti, ColumnInfo subjectCol, ColumnInfo dateCol)
+    private void appendPvlColumns(DatasetTable ds, String subjectCol, String dateCol)
     {
-        Container target = ti.getUserSchema().getContainer().isWorkbookOrTab() ? ti.getUserSchema().getContainer().getParent() : ti.getUserSchema().getContainer();
+        final String name = "viralLoad";
+        if (ds.getColumn(name) != null)
+        {
+            return;
+        }
 
-//            TableInfo data = schema.createDataTable(null);
-//            String tableName = data.getDomain().getStorageTableName();
-//
-//            String name = "viralLoad";
-//            if (ti.getColumn(name) == null)
-//            {
-//                SQLFragment sql = new SQLFragment("(SELECT avg(viralLoad) as expr FROM assayresult." + tableName + " t WHERE t.subjectId = " + ExprColumn.STR_TABLE_ALIAS + "." + subjectCol.getName() + " AND CAST(t.date AS DATE) = CAST(" + ExprColumn.STR_TABLE_ALIAS + "." + dateCol.getName() + " AS DATE))");
-//                ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, subjectCol, dateCol);
-//                newCol.setDescription("Displays the viral load from this timepoint, if present");
-//                newCol.setLabel("Viral Load (copies/mL)");
-//                ti.addColumn(newCol);
-//            }
+        Dataset vl = ds.getDataset().getStudy().getDatasetByName("viralloads");
+        if (vl == null)
+        {
+            return;
+        }
+
+        if (ds instanceof AbstractTableInfo ti)
+        {
+            final String tableName = vl.getDomain().getStorageTableName();
+            SQLFragment sql = new SQLFragment("(SELECT CASE WHEN count(t.*) == 1 THEN max(t.viralLoad) ELSE null END as expr FROM studydataset." + tableName + " t WHERE t." + subjectCol + " = " + ExprColumn.STR_TABLE_ALIAS + "." + subjectCol + " AND CAST(t.date AS DATE) = CAST(" + ExprColumn.STR_TABLE_ALIAS + "." + dateCol + " AS DATE) AND t.category = 'Plasma' AND t.target = 'SIV')");
+            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, ti.getColumn(subjectCol), ti.getColumn(dateCol));
+            newCol.setDescription("Displays the viral load from this timepoint, if present");
+            newCol.setLabel("SIV PVL (copies/mL)");
+            ti.addColumn(newCol);
+        }
     }
 
     private BaseColumnInfo getWrappedIdCol(UserSchema targetQueryUserSchema, String targetQueryName, AbstractTableInfo demographicsTable, String colName)
