@@ -6,6 +6,7 @@
 
                 <columns>
                     <column columnName="Id">
+                        <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
                         <fk>
                             <fkDbSchema>study</fkDbSchema>
                             <fkTable>animal</fkTable>

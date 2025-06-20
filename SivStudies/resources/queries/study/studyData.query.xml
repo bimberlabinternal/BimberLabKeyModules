@@ -5,7 +5,7 @@
                 <javaCustomizer class="org.labkey.sivstudies.query.SivStudiesCustomizer"/>
                 <columns>
                     <column columnName="Id">
-
+                        <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
                     </column>
                     <column columnName="date">
                         <columnTitle>Date</columnTitle>
