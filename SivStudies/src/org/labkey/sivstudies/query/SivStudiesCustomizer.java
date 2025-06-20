@@ -219,7 +219,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         }
     }
 
-    private void appendPvlColumns(DatasetTable ds, String subjectCol, String dateCol)
+    private void appendPvlColumns(DatasetTable ds, String subjectColName, String dateColName)
     {
         final String name = "viralLoad";
         if (ds.getColumn(name) != null)
@@ -235,9 +235,12 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
         if (ds instanceof AbstractTableInfo ti)
         {
+            ColumnInfo subjectCol = ti.getColumn(subjectColName);
+            ColumnInfo dateCol = ti.getColumn(dateColName);
+
             final String tableName = vl.getDomain().getStorageTableName();
-            SQLFragment sql = new SQLFragment("(SELECT CASE WHEN count(t.*) == 1 THEN max(t.viralLoad) ELSE null END as expr FROM studydataset." + tableName + " t WHERE t." + subjectCol + " = " + ExprColumn.STR_TABLE_ALIAS + "." + subjectCol + " AND CAST(t.date AS DATE) = CAST(" + ExprColumn.STR_TABLE_ALIAS + "." + dateCol + " AS DATE) AND t.category = 'Plasma' AND t.target = 'SIV')");
-            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, ti.getColumn(subjectCol), ti.getColumn(dateCol));
+            SQLFragment sql = new SQLFragment("(SELECT CASE WHEN count(t.result) = 1 THEN max(t.result) ELSE null END as expr FROM studydataset." + tableName + " t WHERE t.participantid = " + ExprColumn.STR_TABLE_ALIAS + ".participantid AND CAST(t.date AS DATE) = CAST(" + ExprColumn.STR_TABLE_ALIAS + ".date AS DATE) AND t.sampletype = 'Plasma' AND t.target = 'SIV')");
+            ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, subjectCol, dateCol);
             newCol.setDescription("Displays the viral load from this timepoint, if present");
             newCol.setLabel("SIV PVL (copies/mL)");
             ti.addColumn(newCol);

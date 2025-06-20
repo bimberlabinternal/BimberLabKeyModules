@@ -10,6 +10,12 @@
                     </column>
                     <column columnName="sampleType">
                         <columnTitle>Sample Type</columnTitle>
+                        <fk>
+                            <fkDbSchema>studies</fkDbSchema>
+                            <fkTable>vl_sample_types</fkTable>
+                            <fkColumnName>value</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
                     </column>
                     <column columnName="assayType">
                         <columnTitle>Assay Type</columnTitle>
