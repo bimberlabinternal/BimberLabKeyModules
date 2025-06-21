@@ -19,6 +19,20 @@
                         <shownInDetailsView>false</shownInDetailsView>
                     </column>
                 </columns>
+                <buttonBarOptions includeStandardButtons="true">
+                    <item hidden="true">
+                        <originalText>Filter</originalText>
+                    </item>
+                    <item hidden="true">
+                        <originalText>Groups</originalText>
+                    </item>
+                    <item hidden="true">
+                        <originalText>Charts</originalText>
+                    </item>
+                    <item hidden="true">
+                        <originalText>Manage</originalText>
+                    </item>
+                </buttonBarOptions>
             </table>
         </tables>
     </metadata>

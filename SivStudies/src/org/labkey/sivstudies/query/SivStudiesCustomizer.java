@@ -9,6 +9,7 @@ import org.labkey.api.data.JdbcType;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.WrappedColumn;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.LookupForeignKey;
@@ -18,6 +19,7 @@ import org.labkey.api.query.QueryForeignKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
+import org.labkey.api.studies.StudiesService;
 import org.labkey.api.study.Dataset;
 import org.labkey.api.study.DatasetTable;
 import org.labkey.api.util.logging.LogHelper;
@@ -35,6 +37,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
     @Override
     public void customize(TableInfo tableInfo)
     {
+        StudiesService.get().getStudiesTableCustomizer().customize(tableInfo);
         if (tableInfo instanceof DatasetTable ds)
         {
             performDatasetCustomization(ds);
