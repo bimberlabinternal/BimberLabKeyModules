@@ -2,33 +2,17 @@
     <ft:name>SIV Studies Overview</ft:name>
     <ft:description>The default folder layout for Studies</ft:description>
     <ft:folderTabs>
-<!--        <ft:folderTab>-->
-<!--            <ft:name>overview</ft:name>-->
-<!--            <ft:caption>Overview</ft:caption>-->
-<!--            <ft:selectors>-->
-<!--            </ft:selectors>-->
-<!--            <ft:requiredWebParts>-->
-<!--            </ft:requiredWebParts>-->
-<!--            <ft:preferredWebParts>-->
-<!--                <ft:webPart>-->
-<!--                    <ft:name>Data and Analyses</ft:name>-->
-<!--                    <ft:location>body</ft:location>-->
-<!--                </ft:webPart>-->
-<!--            </ft:preferredWebParts>-->
-<!--        </ft:folderTab>-->
         <ft:folderTab>
-            <ft:name>datasets</ft:name>
-            <ft:caption>Datasets</ft:caption>
+            <ft:name>overview</ft:name>
+            <ft:caption>Overview</ft:caption>
             <ft:selectors>
-                <ft:selector>
-                    <ft:view>datasets</ft:view>
-                </ft:selector>
+
             </ft:selectors>
             <ft:requiredWebParts>
             </ft:requiredWebParts>
             <ft:preferredWebParts>
                 <ft:webPart>
-                    <ft:name>Datasets</ft:name>
+                    <ft:name>Studies Overview</ft:name>
                     <ft:location>body</ft:location>
                 </ft:webPart>
             </ft:preferredWebParts>
