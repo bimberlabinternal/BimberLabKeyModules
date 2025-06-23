@@ -6,7 +6,6 @@
                 <columns>
                     <column columnName="Id">
                         <url />
-                        <isKeyField>true</isKeyField>
                     </column>
                     <column columnName="date">
                         <isHidden>true</isHidden>
@@ -33,7 +32,6 @@
                     <column columnName="objectId">
                         <isHidden>true</isHidden>
                         <shownInDetailsView>false</shownInDetailsView>
-                        <isKeyField>true</isKeyField>
                     </column>
                     <column columnName="sex">
                         <columnTitle>Sex</columnTitle>
