@@ -449,4 +449,30 @@
         </columns>
         <tableTitle>Flow Cytometry</tableTitle>
     </table>
+    <table tableName="outcomes" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+            </column>
+            <column columnName="objectid">
+                <datatype>entityid</datatype>
+                <isKeyField>true</isKeyField>
+            </column>
+            <column columnName="outcome">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="suboutcome">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Outcomes/Phenotypes</tableTitle>
+    </table>
 </tables>

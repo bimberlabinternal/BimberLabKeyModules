@@ -43,5 +43,8 @@
         <dataset name="flow" showByDefault="true" category="Research" type="Standard" id="14">
             <tags/>
         </dataset>
+        <dataset name="outcomes" showByDefault="true" category="Research" type="Standard" id="15">
+            <tags/>
+        </dataset>
     </datasets>
 </datasets>
