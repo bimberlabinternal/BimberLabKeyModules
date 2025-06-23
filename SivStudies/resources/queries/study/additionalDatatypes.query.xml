@@ -13,7 +13,7 @@
                         <columnTitle>Category</columnTitle>
                     </column>
                     <column columnName="description">
-                        <columnTitle>Procedure</columnTitle>
+                        <columnTitle>Description</columnTitle>
                     </column>
                 </columns>
             </table>
