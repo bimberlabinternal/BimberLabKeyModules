@@ -133,6 +133,27 @@
                 </settings>
             </taskref>
         </transform>
+        <transform id="anchorDates" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="idrAnchorDataSource"/>
+                    <setting name="dataSourceSubjectColumn" value="subjectId"/>
+                    <setting name="dataSourceColumns" value="subjectId,date,eventLabel"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+
+                    <setting name="targetSchema" value="studies"/>
+                    <setting name="targetQuery" value="subjectAnchorDates"/>
+                    <setting name="targetSubjectColumn" value="subjectId"/>
+                    <setting name="targetAdditionalFilters" value="eventLabel~in=SIV Infection;Vaccination Start"/>
+                </settings>
+            </taskref>
+        </transform>
     </transforms>
     <schedule>
         <cron expression="0 30 20 * * ?"/>
