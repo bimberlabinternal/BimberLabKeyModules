@@ -110,6 +110,29 @@
                 </settings>
             </taskref>
         </transform>
+        <transform id="challenge" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="subjects"/>
+                    <setting name="dataSourceSubjectColumn" value="Rh"/>
+                    <setting name="dataSourceColumns" value="Rh,PID0"/>
+                    <setting name="dataSourceColumnMapping" value="Rh=Id,PID0=date"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR;category=SIV Infection;treatment=SIV - Unknown"/>
+                    <setting name="dataSourceAdditionalFilters" value="PID0~isnonblank="/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="treatments"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR;category~eq=SIV Infection"/>
+                </settings>
+            </taskref>
+        </transform>
     </transforms>
     <schedule>
         <cron expression="0 30 20 * * ?"/>
