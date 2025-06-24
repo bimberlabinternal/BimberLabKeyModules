@@ -23,6 +23,9 @@
                     <column columnName="score">
                         <columnTitle>Score</columnTitle>
                     </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source </columnTitle>
+                    </column>
                 </columns>
             </table>
         </tables>

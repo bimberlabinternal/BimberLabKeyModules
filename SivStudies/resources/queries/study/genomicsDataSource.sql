@@ -3,7 +3,8 @@ SELECT
 s1.subjectId as Id,
 s1.date,
 
-('Assay(s): ' || application) as description
+('Assay(s): ' || application) as description,
+'ONPRC Genetics Core' as dataSource
 
 FROM (SELECT
     s.subjectId,

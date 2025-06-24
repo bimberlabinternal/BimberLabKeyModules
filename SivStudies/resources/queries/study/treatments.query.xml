@@ -65,6 +65,9 @@
                         <isHidden>true</isHidden>
                         <shownInDetailsView>false</shownInDetailsView>
                     </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source </columnTitle>
+                    </column>
                 </columns>
             </table>
         </tables>

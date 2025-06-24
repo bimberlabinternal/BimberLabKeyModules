@@ -60,6 +60,10 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             {
                 appendDemographicsColumns(ati);
             }
+            else if ("viralLoads".equalsIgnoreCase(ds.getName()))
+            {
+                customizeViralLoads(ati);
+            }
         }
         else
         {
@@ -259,5 +263,10 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         col.setFk(new QueryForeignKey(demographicsTable.getUserSchema(), null, targetQueryUserSchema, null, targetQueryName, ID_COL, ID_COL));
 
         return col;
+    }
+
+    private void customizeViralLoads(AbstractTableInfo ati)
+    {
+        ati.addTriggerFactory(new ViralLoadsTriggerFactory());
     }
 }

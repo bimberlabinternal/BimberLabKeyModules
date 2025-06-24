@@ -37,6 +37,7 @@
                     <setting name="dataSourceQuery" value="weight"/>
                     <setting name="dataSourceSubjectColumn" value="Id"/>
                     <setting name="dataSourceColumns" value="Id,date,weight,objectid"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=PRIMe"/>
 
                     <setting name="targetSchema" value="study"/>
                     <setting name="targetQuery" value="weight"/>
@@ -58,7 +59,7 @@
                     <setting name="dataSourceSubjectColumn" value="subjectid"/>
                     <setting name="dataSourceColumns" value="subjectid,created,assaytype,marker,result,score"/>
                     <setting name="dataSourceColumnMapping" value="subjectId=Id,created=date"/>
-                    <setting name="dataSourceColumnDefaults" value="category=MHC Typing"/>
+                    <setting name="dataSourceColumnDefaults" value="category=MHC Typing;dataSource=ONPRC Genetics Core"/>
 
                     <setting name="targetSchema" value="study"/>
                     <setting name="targetQuery" value="genetics"/>
@@ -81,7 +82,7 @@
                     <setting name="dataSourceColumns" value="Id,date,testid,result,units,qualresult,objectid"/>
                     <setting name="dataSourceColumnMapping" value="testid=test"/>
                     <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true"/>
-                    <setting name="dataSourceColumnDefaults" value="category=CBC"/>
+                    <setting name="dataSourceColumnDefaults" value="category=CBC;dataSource=PRIMe"/>
 
                     <setting name="targetSchema" value="study"/>
                     <setting name="targetQuery" value="labwork"/>
@@ -105,7 +106,7 @@
                     <setting name="dataSourceColumns" value="Id,date,testid,result,units,qualresult,objectid"/>
                     <setting name="dataSourceColumnMapping" value="testid=test"/>
                     <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true"/>
-                    <setting name="dataSourceColumnDefaults" value="category=Chemistry"/>
+                    <setting name="dataSourceColumnDefaults" value="category=Chemistry;dataSource=PRIMe"/>
 
                     <setting name="targetSchema" value="study"/>
                     <setting name="targetQuery" value="labwork"/>
@@ -129,10 +130,12 @@
                     <setting name="dataSourceColumns" value="Id,date,type,procedureid/name,objectid"/>
                     <setting name="dataSourceColumnMapping" value="procedureid/name=procedure,type=category"/>
                     <setting name="dataSourceAdditionalFilters" value="qcstate/publicdata~eq=true;procedureid/name~isnonblank="/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=PRIMe"/>
 
                     <setting name="targetSchema" value="study"/>
                     <setting name="targetQuery" value="procedures"/>
                     <setting name="targetSubjectColumn" value="Id"/>
+<!--                    <setting name="targetAdditionalFilters" value="dataSource~eq=PRIMe"/>-->
                 </settings>
             </taskref>
         </transform>
@@ -148,7 +151,7 @@
                     <setting name="dataSourceSchema" value="study"/>
                     <setting name="dataSourceQuery" value="scRNAseqDataSource"/>
                     <setting name="dataSourceSubjectColumn" value="Id"/>
-                    <setting name="dataSourceColumns" value="Id,date,description"/>
+                    <setting name="dataSourceColumns" value="Id,date,description,dataSource"/>
                     <setting name="dataSourceColumnDefaults" value="category=scRNA-seq"/>
 
                     <setting name="targetSchema" value="study"/>
@@ -170,7 +173,7 @@
                     <setting name="dataSourceSchema" value="study"/>
                     <setting name="dataSourceQuery" value="genomicsDataSource"/>
                     <setting name="dataSourceSubjectColumn" value="Id"/>
-                    <setting name="dataSourceColumns" value="Id,date,description"/>
+                    <setting name="dataSourceColumns" value="Id,date,description,dataSource"/>
                     <setting name="dataSourceColumnDefaults" value="category=Genomics"/>
 
                     <setting name="targetSchema" value="study"/>

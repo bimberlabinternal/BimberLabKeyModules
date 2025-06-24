@@ -354,7 +354,21 @@ public class SubjectScopedSelect implements TaskRefTask
 
         if (_settings.get(Settings.dataRemoteSource.name()) != null)
         {
-            DataIntegrationService.RemoteConnection rc = getRemoteDataSource(_settings.get(Settings.dataRemoteSource.name()), log);
+            Container target;
+            if (_settings.get(Settings.dataSourceContainerPath.name()) != null)
+            {
+                target = ContainerManager.getForPath(_settings.get(Settings.dataSourceContainerPath.name()));
+                if (target == null)
+                {
+                    throw new IllegalStateException("Unknown container: " + _settings.get(Settings.dataSourceContainerPath.name()));
+                }
+            }
+            else
+            {
+                target =_containerUser.getContainer();
+            }
+
+            DataIntegrationService.RemoteConnection rc = getRemoteDataSource(_settings.get(Settings.dataRemoteSource.name()), target, log);
             SelectRowsCommand sr = new SelectRowsCommand(_settings.get(Settings.dataSourceSchema.name()), _settings.get(Settings.dataSourceQuery.name()));
             sr.setColumns(sourceColumns);
             sr.addFilter(_settings.get(Settings.dataSourceSubjectColumn.name()), StringUtils.join(subjects, ";"), Filter.Operator.IN);
@@ -400,11 +414,16 @@ public class SubjectScopedSelect implements TaskRefTask
         }
         else
         {
+            Container source;
             if (_settings.get(Settings.dataSourceContainerPath.name()) == null)
             {
-                throw new IllegalStateException("Must provide dataSourceContainerPath for local sources");
+                source = _containerUser.getContainer();
             }
-            Container source = ContainerManager.getForPath(_settings.get(Settings.dataSourceContainerPath.name()));
+            else
+            {
+                source = ContainerManager.getForPath(_settings.get(Settings.dataSourceContainerPath.name()));
+            }
+
             if (source == null)
             {
                 throw new IllegalStateException("Unknown container: " + _settings.get(Settings.dataSourceContainerPath.name()));
@@ -543,9 +562,9 @@ public class SubjectScopedSelect implements TaskRefTask
         _settings.putAll(settings);
     }
 
-    private DataIntegrationService.RemoteConnection getRemoteDataSource(String name, Logger log) throws IllegalStateException
+    private DataIntegrationService.RemoteConnection getRemoteDataSource(String name, Container c, Logger log) throws IllegalStateException
     {
-        DataIntegrationService.RemoteConnection rc = DataIntegrationService.get().getRemoteConnection(name, _containerUser.getContainer(), log);
+        DataIntegrationService.RemoteConnection rc = DataIntegrationService.get().getRemoteConnection(name, c, log);
         if (rc == null)
         {
             throw new IllegalStateException("Unable to find remote connection: " + name);
@@ -558,7 +577,21 @@ public class SubjectScopedSelect implements TaskRefTask
     {
         if (_settings.get(Settings.subjectRemoteSource.name()) != null)
         {
-            DataIntegrationService.RemoteConnection rc = getRemoteDataSource(_settings.get(Settings.subjectRemoteSource.name()), log);
+            Container target;
+            if (_settings.get(Settings.subjectSourceContainerPath.name()) != null)
+            {
+                target = ContainerManager.getForPath(_settings.get(Settings.subjectSourceContainerPath.name()));
+                if (target == null)
+                {
+                    throw new IllegalStateException("Unknown container: " + _settings.get(Settings.subjectSourceContainerPath.name()));
+                }
+            }
+            else
+            {
+                target =_containerUser.getContainer();
+            }
+
+            DataIntegrationService.RemoteConnection rc = getRemoteDataSource(_settings.get(Settings.subjectRemoteSource.name()), target, log);
             SelectRowsCommand sr = new SelectRowsCommand(_settings.get(Settings.subjectSourceSchema.name()), _settings.get(Settings.subjectSourceQuery.name()));
             sr.setColumns(Arrays.asList(_settings.get(Settings.subjectSourceColumn.name())));
 

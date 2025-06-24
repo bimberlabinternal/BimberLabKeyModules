@@ -6,6 +6,7 @@
                 <columns>
                     <column columnName="Id">
                         <url />
+                        <isKeyField>true</isKeyField>
                     </column>
                     <column columnName="date">
                         <isHidden>true</isHidden>
@@ -31,6 +32,7 @@
                     </column>
                     <column columnName="objectId">
                         <isHidden>true</isHidden>
+                        <isKeyField>true</isKeyField>
                         <shownInDetailsView>false</shownInDetailsView>
                     </column>
                     <column columnName="sex">
@@ -56,6 +58,9 @@
                     </column>
                     <column columnName="calculated_status">
                         <columnTitle>Status</columnTitle>
+                    </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source </columnTitle>
                     </column>
                 </columns>
             </table>

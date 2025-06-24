@@ -5,7 +5,8 @@ s1.date,
 
 ('Assay(s): ' || assayType || char(10) ||
 'Tissue(s): ' || tissue || char(10) ||
-'Stims(s): ' || stims || char(10)) as description
+'Stims(s): ' || stims || char(10)) as description,
+'Bimber Lab' as dataSource
 
 FROM (SELECT
     s.subjectId,

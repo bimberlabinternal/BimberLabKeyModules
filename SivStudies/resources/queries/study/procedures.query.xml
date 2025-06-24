@@ -15,6 +15,9 @@
                     <column columnName="procedure">
                         <columnTitle>Procedure</columnTitle>
                     </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source </columnTitle>
+                    </column>
                 </columns>
             </table>
         </tables>
