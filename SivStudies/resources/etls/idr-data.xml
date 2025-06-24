@@ -17,6 +17,7 @@
                     <setting name="dataSourceColumns" value="Rh,cohortStart,cohortEnd,cohort,RhCode"/>
                     <setting name="dataSourceColumnMapping" value="Rh=Id,cohortStart=date,cohortEnd=enddate,RhCode=cohortId,cohort=study"/>
                     <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+                    <setting name="dataSourceAdditionalFilters" value="cohortStart~neq=0000-00-00"/>
 
                     <setting name="targetSchema" value="study"/>
                     <setting name="targetQuery" value="assignment"/>
