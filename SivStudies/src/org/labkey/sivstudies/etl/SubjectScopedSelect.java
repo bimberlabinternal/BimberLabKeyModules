@@ -12,6 +12,7 @@ import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
+import org.labkey.api.dataiterator.DetailedAuditLogDataIterator;
 import org.labkey.api.di.DataIntegrationService;
 import org.labkey.api.di.TaskRefTask;
 import org.labkey.api.pipeline.CancelledException;
@@ -49,6 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.labkey.api.gwt.client.AuditBehaviorType.NONE;
 
 public class SubjectScopedSelect implements TaskRefTask
 {
@@ -167,7 +170,7 @@ public class SubjectScopedSelect implements TaskRefTask
                         log.info("batch " + i);
                         checkCancelled(job);
 
-                        qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), batch, null, null);
+                        qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), batch, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
                     }
                 }
                 else
@@ -197,7 +200,7 @@ public class SubjectScopedSelect implements TaskRefTask
                         checkCancelled(job);
 
                         BatchValidationException bve = new BatchValidationException();
-                        qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), batch, bve, null, null);
+                        qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), batch, bve, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
                         if (bve.hasErrors())
                         {
                             throw bve;
@@ -233,7 +236,7 @@ public class SubjectScopedSelect implements TaskRefTask
                             return map;
                         }).toList();
 
-                        qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), batch, keys, bve, null, null);
+                        qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), batch, keys, bve, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
                         if (bve.hasErrors())
                         {
                             throw bve;
