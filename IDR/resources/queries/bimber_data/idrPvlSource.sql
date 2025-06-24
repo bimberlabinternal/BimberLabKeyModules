@@ -5,7 +5,8 @@ c_PVL as result,
 
 'Copies/mL' as units,
 'Plasma' as sampleType,
-'SIVmac239' as target,
+'SIVmac239' as assayType,
+'SIV' as target,
 'Hansen/IDR' as dataSource
 
 FROM bimber_data.pvl
