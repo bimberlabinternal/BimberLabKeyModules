@@ -16,4 +16,6 @@ query	General	study	flags		Flags/Misc Information
 query	General	study	demographics		Demographics	
 query	General	study	demographics	Project Summary	Project Summary	
 query	General	study	demographics	MHC Type	MHC Typing	
+query	General	study	demographics	Expanded	Expanded Information
 query	Study Design	studies	timepointToDate		Timepoints	subjectId
+query	Study Design	studies	subjectAnchorDates		Anchor Dates	subjectId

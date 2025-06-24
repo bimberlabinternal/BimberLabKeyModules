@@ -218,10 +218,10 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             demographicsTable.addColumn(colInfo);
         }
 
-        if (demographicsTable.getColumn("challenges") == null)
+        if (demographicsTable.getColumn("outcomes") == null)
         {
-            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsChallenges", demographicsTable, "challenges");
-            colInfo.setLabel("Challenge Summary");
+            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsOutcomes", demographicsTable, "outcomes");
+            colInfo.setLabel("Outcomes");
             demographicsTable.addColumn(colInfo);
         }
     }

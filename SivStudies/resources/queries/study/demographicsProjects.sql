@@ -1,6 +1,6 @@
 SELECT
   s.Id,
-  count(s.Id) as totalTests,
+  count(s.Id) as totalProjects,
   group_concat(DISTINCT s.study, char(10)) as allStudies,
   group_concat(DISTINCT s.category, char(10)) as categories,
 
