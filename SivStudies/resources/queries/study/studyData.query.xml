@@ -13,7 +13,7 @@
                     <column columnName="enddate">
                         <columnTitle>End Date</columnTitle>
                     </column>
-                    <column columnName="objectid">
+                    <column columnName="objectId">
                         <columnTitle>Key</columnTitle>
                         <isHidden>true</isHidden>
                         <isKeyField>true</isKeyField>

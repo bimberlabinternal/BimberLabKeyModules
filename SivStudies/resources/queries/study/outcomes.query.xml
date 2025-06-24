@@ -20,10 +20,6 @@
                     <column columnName="dataSource">
                         <columnTitle>Data Source </columnTitle>
                     </column>
-                    <column columnName="objectid">
-                        <columnTitle>Key</columnTitle>
-                        <isHidden>true</isHidden>
-                    </column>
                 </columns>
             </table>
         </tables>

@@ -13,7 +13,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -40,7 +40,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -103,7 +103,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -142,7 +142,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -166,7 +166,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -215,7 +215,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -256,7 +256,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>false</isKeyField>
             </column>
@@ -301,7 +301,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -340,7 +340,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -376,7 +376,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -411,7 +411,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -437,7 +437,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -463,7 +463,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -501,7 +501,7 @@
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="objectid">
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
