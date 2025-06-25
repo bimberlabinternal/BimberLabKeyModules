@@ -10,3 +10,4 @@ c_PVL as result,
 'Hansen/IDR' as dataSource
 
 FROM bimber_data.pvl
+WHERE c_PVL != 'missing from box'
