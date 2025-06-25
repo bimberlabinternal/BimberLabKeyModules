@@ -150,7 +150,7 @@ public class SubjectScopedSelect implements TaskRefTask
                 final SimpleFilter subjectFilter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name())), subjects, CompareType.IN);
                 if (_settings.get(Settings.targetAdditionalFilters.name()) != null)
                 {
-                    List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.targetAdditionalFilters.name()));
+                    List<CompareType.AbstractCompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.targetAdditionalFilters.name()));
                     additionalFilters.forEach(subjectFilter::addCondition);
                 }
 
@@ -260,7 +260,7 @@ public class SubjectScopedSelect implements TaskRefTask
         }
     }
 
-    private List<CompareType.CompareClause> parseAdditionalFilters(String rawVal)
+    private List<CompareType.AbstractCompareClause> parseAdditionalFilters(String rawVal)
     {
         rawVal = StringUtils.trimToNull(rawVal);
         if (rawVal == null)
@@ -276,12 +276,12 @@ public class SubjectScopedSelect implements TaskRefTask
         }
 
         return filter.getClauses().stream().map(fc -> {
-            if (fc instanceof CompareType.CompareClause cc)
+            if (fc instanceof CompareType.AbstractCompareClause cc)
             {
                 return cc;
             }
 
-            throw new IllegalStateException("Expected all filters to be instance CompareType.CompareClause, found: " + fc.getClass());
+            throw new IllegalStateException("Expected all filters to be instance CompareType.AbstractCompareClause, found: " + fc.getClass());
         }).toList();
     }
 
@@ -378,8 +378,8 @@ public class SubjectScopedSelect implements TaskRefTask
             sr.addFilter(_settings.get(Settings.dataSourceSubjectColumn.name()), StringUtils.join(subjects, ";"), Filter.Operator.IN);
             if (_settings.get(Settings.dataSourceAdditionalFilters.name()) != null)
             {
-                List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));
-                for (CompareType.CompareClause f : additionalFilters)
+                List<CompareType.AbstractCompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));
+                for (CompareType.AbstractCompareClause f : additionalFilters)
                 {
                     Object value;
                     if (f.getParamVals() == null)
@@ -471,7 +471,7 @@ public class SubjectScopedSelect implements TaskRefTask
             final SimpleFilter filter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.dataSourceSubjectColumn.name())), subjects, CompareType.IN);
             if (_settings.get(Settings.dataSourceAdditionalFilters.name()) != null)
             {
-                List<CompareType.CompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));
+                List<CompareType.AbstractCompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.dataSourceAdditionalFilters.name()));
                 additionalFilters.forEach(filter::addCondition);
             }
 
