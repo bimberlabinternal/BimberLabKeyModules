@@ -1,6 +1,7 @@
 package org.labkey.sivstudies.query;
 
 import org.apache.logging.log4j.Logger;
+import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.BaseColumnInfo;
 import org.labkey.api.data.ColumnInfo;
@@ -9,7 +10,6 @@ import org.labkey.api.data.JdbcType;
 import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.WrappedColumn;
-import org.labkey.api.ldk.LDKService;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.LookupForeignKey;
@@ -26,6 +26,7 @@ import org.labkey.api.util.logging.LogHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class SivStudiesCustomizer extends AbstractTableCustomizer
 {
@@ -56,11 +57,9 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                 appendPvlColumns(ds, ID_COL, DATE_COL);
             }
 
-            if ("demographics".equalsIgnoreCase(ds.getName()))
-            {
-                appendDemographicsColumns(ati);
-            }
-            else if ("viralLoads".equalsIgnoreCase(ds.getName()))
+            appendDemographicsColumns(ati);
+
+            if ("viralLoads".equalsIgnoreCase(ds.getName()))
             {
                 customizeViralLoads(ati);
             }
@@ -73,8 +72,29 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
     private ColumnInfo getPkCol(TableInfo ti)
     {
-        List<ColumnInfo> pks = ti.getPkColumns();
-        return (pks.size() != 1) ? null : pks.get(0);
+        Set<String> pks = new CaseInsensitiveHashSet(ti.getPkColumnNames());
+        if (pks.size() == 1)
+        {
+            return ti.getColumn(pks.iterator().next());
+        }
+        else if (pks.contains("lsid"))
+        {
+            return ti.getColumn("lsid");
+        }
+        else if (pks.contains("objectId"))
+        {
+            return ti.getColumn("objectId");
+        }
+        else if (pks.contains("Id"))
+        {
+            return ti.getColumn("Id");
+        }
+        else if (pks.contains("subjectId"))
+        {
+            return ti.getColumn("subjectId");
+        }
+
+        return null;
     }
 
     private void appendAgeAtTimeCol(UserSchema demographicsSchema, AbstractTableInfo ds, final String dateColName)
@@ -102,7 +122,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         final String demographicsPath = demographicsSchema.getContainer().getPath();
 
         WrappedColumn col = new WrappedColumn(pkCol, name);
-        col.setLabel("Age At The Time");
+        col.setLabel("Age At Time");
         col.setReadOnly(true);
         col.setIsUnselectable(true);
         col.setUserEditable(false);
@@ -127,16 +147,6 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                         "END AS float) as AgeAtTime,\n" +
                         "\n" +
 
-                        "CAST(\n" +
-                        "CASE\n" +
-                        "WHEN d.birth is null or c." + dateColName + " is null\n" +
-                        "  THEN null\n" +
-                        "WHEN (d.death IS NOT NULL AND d.death < c." + dateColName + ") THEN\n" +
-                        " ROUND(CONVERT(timestampdiff('SQL_TSI_DAY', d.birth, d.death), DOUBLE) / 365.25, 2)\n" +
-                        "ELSE\n" +
-                        "  ROUND(CONVERT(timestampdiff('SQL_TSI_DAY', d.birth, CAST(c." + dateColName + " as DATE)), DOUBLE) / 365.25, 2)\n" +
-                        "END AS float) as AgeAtTimeYears,\n" +
-                        "\n" +
                         "CAST(\n" +
                         "CASE\n" +
                         "WHEN d.birth is null or c." + dateColName + " is null\n" +
@@ -186,6 +196,11 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                 {
                     ((BaseColumnInfo)ti.getColumn(pkCol.getName())).setHidden(true);
                     ((BaseColumnInfo)ti.getColumn(pkCol.getName())).setKeyField(true);
+
+                    ((BaseColumnInfo)ti.getColumn("AgeAtTime")).setLabel("Age At Time (Years)");
+                    ((BaseColumnInfo)ti.getColumn("AgeAtTimeDays")).setLabel("Age At Time (Days)");
+                    ((BaseColumnInfo)ti.getColumn("AgeAtTimeMonths")).setLabel("Age At Time (Months)");
+                    ((BaseColumnInfo)ti.getColumn("AgeAtTimeYearsRounded")).setLabel("Age At Time (Years, Rounded)");
                 }
 
                 return ti;
@@ -195,34 +210,34 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         ds.addColumn(col);
     }
 
-    private void appendDemographicsColumns(AbstractTableInfo demographicsTable)
+    private void appendDemographicsColumns(AbstractTableInfo parentTable)
     {
-        if (demographicsTable.getColumn("mhcGenotypes") == null)
+        if (parentTable.getColumn("mhcGenotypes") == null)
         {
-            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsMHC", demographicsTable, "mhcGenotypes");
+            BaseColumnInfo colInfo = getWrappedIdCol(parentTable.getUserSchema(), "demographicsMHC", parentTable, "mhcGenotypes");
             colInfo.setLabel("MHC Genotypes");
-            demographicsTable.addColumn(colInfo);
+            parentTable.addColumn(colInfo);
         }
 
-        if (demographicsTable.getColumn("projects") == null)
+        if (parentTable.getColumn("projects") == null)
         {
-            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsProjects", demographicsTable, "projects");
+            BaseColumnInfo colInfo = getWrappedIdCol(parentTable.getUserSchema(), "demographicsProjects", parentTable, "projects");
             colInfo.setLabel("Project Summary");
-            demographicsTable.addColumn(colInfo);
+            parentTable.addColumn(colInfo);
         }
 
-        if (demographicsTable.getColumn("immunizations") == null)
+        if (parentTable.getColumn("immunizations") == null)
         {
-            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsImmunizations", demographicsTable, "immunizations");
+            BaseColumnInfo colInfo = getWrappedIdCol(parentTable.getUserSchema(), "demographicsImmunizations", parentTable, "immunizations");
             colInfo.setLabel("Immunization Summary");
-            demographicsTable.addColumn(colInfo);
+            parentTable.addColumn(colInfo);
         }
 
-        if (demographicsTable.getColumn("outcomes") == null)
+        if (parentTable.getColumn("outcomes") == null)
         {
-            BaseColumnInfo colInfo = getWrappedIdCol(demographicsTable.getUserSchema(), "demographicsOutcomes", demographicsTable, "outcomes");
+            BaseColumnInfo colInfo = getWrappedIdCol(parentTable.getUserSchema(), "demographicsOutcomes", parentTable, "outcomes");
             colInfo.setLabel("Outcomes");
-            demographicsTable.addColumn(colInfo);
+            parentTable.addColumn(colInfo);
         }
     }
 

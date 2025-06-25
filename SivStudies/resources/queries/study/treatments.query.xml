@@ -66,7 +66,7 @@
                         <shownInDetailsView>false</shownInDetailsView>
                     </column>
                     <column columnName="dataSource">
-                        <columnTitle>Data Source </columnTitle>
+                        <columnTitle>Data Source</columnTitle>
                     </column>
                 </columns>
             </table>

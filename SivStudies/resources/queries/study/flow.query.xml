@@ -24,8 +24,11 @@
                     <column columnName="units">
                         <columnTitle>Units</columnTitle>
                     </column>
-                    <column columnName="comments">
+                    <column columnName="comment">
                         <columnTitle>Comments</columnTitle>
+                    </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
                     </column>
                 </columns>
             </table>

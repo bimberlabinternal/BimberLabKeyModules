@@ -1,0 +1,18 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" hidden="false" canOverride="false">
+    <columns>
+        <column name="Id"/>
+        <column name="date"/>
+        <column name="category"/>
+        <column name="test"/>
+        <column name="result"/>
+        <column name="units"/>
+        <column name="method"/>
+        <column name="dataSource"/>
+        <column name="viralLoad"/>
+        <column name="ageAtTime/AgeAtTime"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+        <sort column="date" descending="true"/>
+    </sorts>
+</customView>
