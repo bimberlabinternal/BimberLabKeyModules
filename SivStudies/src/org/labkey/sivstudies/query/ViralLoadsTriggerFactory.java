@@ -1,5 +1,6 @@
 package org.labkey.sivstudies.query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import org.labkey.api.security.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class ViralLoadsTriggerFactory implements TriggerFactory
 {
@@ -69,9 +71,9 @@ public class ViralLoadsTriggerFactory implements TriggerFactory
             {
                 row.put("result", val);
             }
-            else if (val.startsWith("Below"))
+            else if (val.toLowerCase().startsWith("below"))
             {
-                val = val.replace("Below ", "");
+                StringUtils.replaceIgnoreCase(val, "below ", "");
                 if (NumberUtils.isCreatable(val))
                 {
                     row.put("result", val);

@@ -126,6 +126,7 @@ public class SubjectScopedSelect implements TaskRefTask
 
     private void checkCancelled(PipelineJob job)
     {
+        job.updateStatusForTask();
         if (job.isCancelled())
         {
             throw new CancelledException();
