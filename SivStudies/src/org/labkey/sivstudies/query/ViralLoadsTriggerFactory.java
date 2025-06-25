@@ -60,6 +60,23 @@ public class ViralLoadsTriggerFactory implements TriggerFactory
                 return;
             }
 
+            if ("Plasma".equalsIgnoreCase(String.valueOf(row.get("sampleType"))) & row.get("units") == null)
+            {
+                row.put("units", "Copies/mL");
+            }
+
+            // Enforce consistent case:
+            if ("Copies/mL".equalsIgnoreCase(String.valueOf(row.get("units"))))
+            {
+                row.put("units", "Copies/mL");
+            }
+
+            inspectResultValue(row, errors);
+
+        }
+
+        private void inspectResultValue(@NotNull Map<String, Object> row, ValidationException errors)
+        {
             if (row.get("result") == null || NumberUtils.isCreatable(row.get("result").toString()))
             {
                 return;
@@ -73,7 +90,7 @@ public class ViralLoadsTriggerFactory implements TriggerFactory
             }
             else if (val.toLowerCase().startsWith("below"))
             {
-                StringUtils.replaceIgnoreCase(val, "below ", "");
+                val = StringUtils.replaceIgnoreCase(val, "below ", "");
                 if (NumberUtils.isCreatable(val))
                 {
                     row.put("result", val);

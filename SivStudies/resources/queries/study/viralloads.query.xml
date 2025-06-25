@@ -10,6 +10,7 @@
                     </column>
                     <column columnName="sampleType">
                         <columnTitle>Sample Type</columnTitle>
+                        <nullable>false</nullable>
                         <fk>
                             <fkDbSchema>studies</fkDbSchema>
                             <fkTable>vl_sample_types</fkTable>
@@ -28,6 +29,7 @@
                     </column>
                     <column columnName="result">
                         <columnTitle>Result</columnTitle>
+                        <nullable>false</nullable>
                     </column>
                     <column columnName="units">
                         <columnTitle>Units</columnTitle>
