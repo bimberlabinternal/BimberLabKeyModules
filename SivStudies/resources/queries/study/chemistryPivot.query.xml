@@ -3,7 +3,7 @@
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="chemistryPivot" tableDbType="TABLE">
                 <tableTitle>Chemistry Results</tableTitle>
-
+                <javaCustomizer class="org.labkey.sivstudies.query.SivStudiesCustomizer"/>
                 <columns>
                     <column columnName="Id">
                         <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>

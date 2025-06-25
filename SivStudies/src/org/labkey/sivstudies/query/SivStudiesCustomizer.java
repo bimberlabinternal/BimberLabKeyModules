@@ -43,6 +43,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         {
             performDatasetCustomization(ds);
         }
+        else if ("chemistryPivot".equalsIgnoreCase(tableInfo.getName()) | "hematologyPivot".equalsIgnoreCase(tableInfo.getName()))
+        {
+            if (tableInfo instanceof AbstractTableInfo ati)
+            {
+                appendDemographicsColumns(ati);
+            }
+        }
     }
 
     public void performDatasetCustomization(DatasetTable ds)
