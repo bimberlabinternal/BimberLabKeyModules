@@ -11,6 +11,7 @@
         <column name="quantificationMethod" />
         <column name="flowQuantification" />
         <column name="flowQuantificationMethod" />
+        <column name="nClones" />
         <column name="comment" />
         <column name="cDNA_ID/sortId/sampleId/allProjects/projects" />
         <column name="workbook" />

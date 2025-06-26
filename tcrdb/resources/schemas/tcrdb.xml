@@ -320,6 +320,9 @@
             <column columnName="flowQuantification">
                 <columnTitle>Flow Quantification</columnTitle>
             </column>
+            <column columnName="nClones">
+                <columnTitle># Clones</columnTitle>
+            </column>
             <column columnName="comment">
 
             </column>
