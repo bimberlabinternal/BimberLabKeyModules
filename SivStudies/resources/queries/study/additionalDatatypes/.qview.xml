@@ -2,6 +2,7 @@
     <columns>
         <column name="Id"/>
         <column name="date"/>
+        <column name="timePostSivChallenge/daysPostInfection"/>
         <column name="category"/>
         <column name="description"/>
         <column name="dataSource"/>

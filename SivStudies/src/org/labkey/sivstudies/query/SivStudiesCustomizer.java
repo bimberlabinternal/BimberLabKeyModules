@@ -20,6 +20,7 @@ import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
 import org.labkey.api.studies.StudiesService;
+import org.labkey.api.studies.query.ResultsOORDisplayColumn;
 import org.labkey.api.study.Dataset;
 import org.labkey.api.study.DatasetTable;
 import org.labkey.api.util.logging.LogHelper;
@@ -60,8 +61,9 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
             if (!ds.getDataset().isDemographicData())
             {
-                appendAgeAtTimeCol(ds.getUserSchema(), ati, DATE_COL);
+                appendAgeAtTimeCol(ds.getUserSchema(), ati, ID_COL, DATE_COL);
                 appendPvlColumns(ds, ID_COL, DATE_COL);
+                appendSivChallengeColumns(ati, ID_COL, DATE_COL);
             }
 
             appendDemographicsColumns(ati);
@@ -104,7 +106,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         return null;
     }
 
-    private void appendAgeAtTimeCol(UserSchema demographicsSchema, AbstractTableInfo ds, final String dateColName)
+    private void appendAgeAtTimeCol(UserSchema demographicsSchema, AbstractTableInfo ds, final String subjectColName, final String dateColName)
     {
         String name = "ageAtTime";
         if (ds.getColumn(name, false) != null)
@@ -114,7 +116,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         if (pkCol == null)
             return;
 
-        final ColumnInfo idCol = ds.getColumn(ID_COL);
+        final ColumnInfo idCol = ds.getColumn(subjectColName);
         if (idCol == null)
             return;
 
@@ -272,9 +274,99 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             ExprColumn newCol = new ExprColumn(ti, name, sql, JdbcType.DOUBLE, subjectCol, dateCol);
             newCol.setDescription("Displays the viral load from this timepoint, if present");
             newCol.setLabel("SIV PVL (copies/mL)");
+            newCol.setDisplayColumnFactory(ResultsOORDisplayColumn::new);
             ti.addColumn(newCol);
+
+            String nameOOR = name + "OORIndicator";
+            SQLFragment sqlOOR = new SQLFragment("(SELECT CASE WHEN count(t.result) = 1 THEN max(t.resultOORIndicator) ELSE null END as expr FROM studydataset." + tableName + " t WHERE t.participantid = " + ExprColumn.STR_TABLE_ALIAS + ".participantid AND CAST(t.date AS DATE) = CAST(" + ExprColumn.STR_TABLE_ALIAS + ".date AS DATE) AND t.sampletype = 'Plasma' AND t.target = 'SIV')");
+            ExprColumn newColOOR = new ExprColumn(ti, nameOOR, sqlOOR, JdbcType.VARCHAR, subjectCol, dateCol);
+            newColOOR.setDescription("For the corresponding PVL, this indicates if the value is out-of-range");
+            newColOOR.setLabel("SIV PVL OOR Indicator");
+            newColOOR.setHidden(true);
+
+            ti.addColumn(newColOOR);
         }
     }
+
+    private void appendSivChallengeColumns(AbstractTableInfo targetTable, String subjectColName, String dateColName)
+    {
+        String name = "timePostSivChallenge";
+        if (targetTable.getColumn(name, false) != null)
+            return;
+
+        final ColumnInfo pkCol = getPkCol(targetTable);
+        if (pkCol == null)
+            return;
+
+        final ColumnInfo idCol = targetTable.getColumn(subjectColName);
+        if (idCol == null)
+            return;
+
+        final ColumnInfo dateCol = targetTable.getColumn(dateColName);
+        if (dateCol == null)
+            return;
+
+        final String targetSchemaName = targetTable.getUserSchema().getName();
+        final Container targetSchemaContainer = targetTable.getUserSchema().getContainer();
+        final User u = targetTable.getUserSchema().getUser();
+        final String schemaName = targetTable.getPublicSchemaName();
+        final String queryName = targetTable.getName();
+
+        WrappedColumn col = new WrappedColumn(pkCol, name);
+        col.setLabel("SIV Challenge");
+        col.setReadOnly(true);
+        col.setIsUnselectable(true);
+        col.setUserEditable(false);
+        col.setFk(new LookupForeignKey(){
+            @Override
+            public TableInfo getLookupTableInfo()
+            {
+                String name = queryName + "_sivChallenge";
+                UserSchema targetSchema = targetTable.getUserSchema().getDefaultSchema().getUserSchema(targetSchemaName);
+                QueryDefinition qd = QueryService.get().createQueryDef(u, targetSchemaContainer, targetSchema, name);
+                qd.setSql("SELECT\n" +
+                        "max(ad.date) as infectionDate,\n" +
+                        // NOTE: CAST() is used to ensure whole numbers
+                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(ad.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostInfection,\n" +
+                        "CONVERT(age_in_months(CAST(max(ad.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostInfection,\n" +
+                        pkCol.getFieldKey().toString() + "\n" +
+                        "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
+                        "JOIN studies.subjectAnchorDates ad ON (ad.subjectId = c." + idCol.getFieldKey().toSQLString() + " AND ad.date = c." + dateCol.getFieldKey().toString() + ")\n" +
+                        "WHERE ad.eventLabel = 'SIV Infection'\n" +
+                        "GROUP BY c.date, c." + pkCol.getFieldKey().toString() + "\n" +
+                        "HAVING count(*) = 1"
+                );
+                qd.setIsTemporary(true);
+
+                List<QueryException> errors = new ArrayList<>();
+                TableInfo ti = qd.getTable(errors, true);
+                if (!errors.isEmpty())
+                {
+                    _log.warn("Error creating sivChallenge lookup table for: " + schemaName + "." + queryName + " in container: " + targetSchema.getContainer().getPath());
+                    for (QueryException e : errors)
+                    {
+                        _log.warn(e.getMessage(), e);
+                    }
+                }
+
+                if (ti != null)
+                {
+                    ((BaseColumnInfo)ti.getColumn(pkCol.getName())).setHidden(true);
+                    ((BaseColumnInfo)ti.getColumn(pkCol.getName())).setKeyField(true);
+
+                    ((BaseColumnInfo)ti.getColumn("infectionDate")).setLabel("Infection Date");
+                    ((BaseColumnInfo)ti.getColumn("daysPostInfection")).setLabel("Days Post-Infection");
+                    ((BaseColumnInfo)ti.getColumn("monthsPostInfection")).setLabel("Months Post-Infection");
+                }
+
+                return ti;
+            }
+        });
+
+        targetTable.addColumn(col);
+    }
+
+    // TODO: was on ART or not??
 
     private BaseColumnInfo getWrappedIdCol(UserSchema targetQueryUserSchema, String targetQueryName, AbstractTableInfo demographicsTable, String colName)
     {

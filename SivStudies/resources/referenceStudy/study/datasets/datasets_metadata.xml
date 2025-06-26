@@ -190,7 +190,7 @@
                 <datatype>varchar</datatype>
                 <isHidden>true</isHidden>
                 <displayColumnFactory>
-                    <className>org.labkey.studies.query.ResultsOOODisplayColumn</className>
+                    <className>org.labkey.api.studies.query.ResultsOORDisplayColumn</className>
                 </displayColumnFactory>
             </column>
             <column columnName="units">
