@@ -64,6 +64,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                 appendAgeAtTimeCol(ds.getUserSchema(), ati, ID_COL, DATE_COL);
                 appendPvlColumns(ds, ID_COL, DATE_COL);
                 appendSivChallengeColumns(ati, ID_COL, DATE_COL);
+                appendArtColumns(ds, ID_COL, DATE_COL);
             }
 
             appendDemographicsColumns(ati);
@@ -329,9 +330,9 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                         // NOTE: CAST() is used to ensure whole numbers
                         "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(ad.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostInfection,\n" +
                         "CONVERT(age_in_months(CAST(max(ad.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostInfection,\n" +
-                        pkCol.getFieldKey().toString() + "\n" +
+                        "c." + pkCol.getFieldKey().toString() + "\n" +
                         "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
-                        "JOIN studies.subjectAnchorDates ad ON (ad.subjectId = c." + idCol.getFieldKey().toSQLString() + " AND ad.date = c." + dateCol.getFieldKey().toString() + ")\n" +
+                        "JOIN studies.subjectAnchorDates ad ON (ad.subjectId = c." + idCol.getFieldKey().toSQLString() + ")\n" +
                         "WHERE ad.eventLabel = 'SIV Infection'\n" +
                         "GROUP BY c.date, c." + pkCol.getFieldKey().toString() + "\n" +
                         "HAVING count(*) = 1"
@@ -365,6 +366,105 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
         targetTable.addColumn(col);
     }
+
+    private void appendArtColumns(DatasetTable ds, String subjectColName, String dateColName)
+    {
+        String name = "artInformation";
+        if (ds.getColumn(name) != null)
+            return;
+
+        final ColumnInfo pkCol = getPkCol(ds);
+        if (pkCol == null)
+            return;
+
+        final ColumnInfo idCol = ds.getColumn(subjectColName);
+        if (idCol == null)
+            return;
+
+        final ColumnInfo dateCol = ds.getColumn(dateColName);
+        if (dateCol == null)
+            return;
+
+        Dataset treatments = ds.getDataset().getStudy().getDatasetByName("treatments");
+        if (treatments == null)
+        {
+            return;
+        }
+
+        final String targetSchemaName = ds.getUserSchema().getName();
+        final Container targetSchemaContainer = ds.getUserSchema().getContainer();
+        final User u = ds.getUserSchema().getUser();
+        final String schemaName = ds.getPublicSchemaName();
+        final String queryName = ds.getName();
+
+        WrappedColumn col = new WrappedColumn(pkCol, name);
+        col.setLabel("ART Information");
+        col.setReadOnly(true);
+        col.setIsUnselectable(true);
+        col.setUserEditable(false);
+        col.setFk(new LookupForeignKey(){
+            @Override
+            public TableInfo getLookupTableInfo()
+            {
+                String name = queryName + "_artData";
+                UserSchema targetSchema = ds.getUserSchema().getDefaultSchema().getUserSchema(targetSchemaName);
+                QueryDefinition qd = QueryService.get().createQueryDef(u, targetSchemaContainer, targetSchema, name);
+                qd.setSql("SELECT\n" +
+                        "max(tr.date) as artInitiation,\n" +
+                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
+                        "CONVERT(age_in_months(CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
+                        "max(tr.enddate) as artRelease,\n" +
+                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtRelease,\n" +
+                        "CONVERT(age_in_months(CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtRelease,\n" +
+                        "CAST(CASE WHEN max(tr.date) IS NULL THEN NULL ELSE 'Y' END as VARCHAR) as onArt,\n" +
+                        "GROUP_CONCAT(DISTINCT tr.treatment) AS artTreatment,\n" +
+                        "c." + pkCol.getFieldKey().toString() + "\n" +
+                        "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
+                        "JOIN study.treatments tr ON (tr.category = 'ART' AND CAST(tr.date AS DATE) <= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) AND COALESCE(tr.enddate, now()) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) AND tr.Id = c." + idCol.getFieldKey().toSQLString() + ")\n" +
+                        "GROUP BY c.date, c." + pkCol.getFieldKey().toString() + "\n" +
+                        "HAVING COUNT(*) = 1"
+                );
+                qd.setIsTemporary(true);
+
+                List<QueryException> errors = new ArrayList<>();
+                TableInfo ti = qd.getTable(errors, true);
+                if (!errors.isEmpty())
+                {
+                    _log.warn("Error creating artData lookup table for: " + schemaName + "." + queryName + " in container: " + targetSchema.getContainer().getPath());
+                    for (QueryException e : errors)
+                    {
+                        _log.warn(e.getMessage(), e);
+                    }
+                }
+
+                if (ti != null)
+                {
+                    ((BaseColumnInfo)ti.getColumn(pkCol.getName())).setHidden(true);
+                    ((BaseColumnInfo)ti.getColumn(pkCol.getName())).setKeyField(true);
+
+                    ((BaseColumnInfo)ti.getColumn("artInitiation")).setLabel("ART Initiation");
+                    ((BaseColumnInfo)ti.getColumn("artRelease")).setLabel("ART Release");
+
+                    ((BaseColumnInfo)ti.getColumn("daysPostArtInitiation")).setLabel("Days Post-ART Initiation");
+                    ((BaseColumnInfo)ti.getColumn("monthsPostArtInitiation")).setLabel("Months Post-ART Initiation");
+
+                    ((BaseColumnInfo)ti.getColumn("daysPostArtRelease")).setLabel("Days Post-ART Release");
+                    ((BaseColumnInfo)ti.getColumn("monthsPostArtRelease")).setLabel("Months Post-ART Release");
+
+                    ((BaseColumnInfo)ti.getColumn("artTreatment")).setLabel("ART Treatment(s)");
+                    ((BaseColumnInfo)ti.getColumn("onArt")).setLabel("Overlaps ART?");
+                }
+
+                return ti;
+            }
+        });
+
+        if (ds instanceof AbstractTableInfo ati)
+        {
+            ati.addColumn(col);
+        }
+    }
+
 
     // TODO: was on ART or not??
 
