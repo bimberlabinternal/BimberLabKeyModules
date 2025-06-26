@@ -87,10 +87,14 @@ public class ViralLoadsTriggerFactory implements TriggerFactory
             if (NumberUtils.isCreatable(val))
             {
                 row.put("result", val);
+                return;
             }
-            else if (val.toLowerCase().contains("below"))
+
+            val = val.toLowerCase();
+            if (val.contains("below"))
             {
                 val = StringUtils.trimToNull(val);
+                val = StringUtils.replaceIgnoreCase(val, "below lod of", "");
                 val = StringUtils.replaceIgnoreCase(val, "below", "");
                 val = StringUtils.trimToNull(val);
                 if (NumberUtils.isCreatable(val))
@@ -103,7 +107,7 @@ public class ViralLoadsTriggerFactory implements TriggerFactory
 
             if (!NumberUtils.isCreatable(val))
             {
-                errors.addError(new SimpleValidationError("Non-numeric VL: ["+ row.get("result") + "]", "result", ValidationException.SEVERITY.ERROR));
+                errors.addError(new SimpleValidationError("Non-numeric VL: [" + row.get("result") + "]", "result", ValidationException.SEVERITY.ERROR));
             }
         }
     }
