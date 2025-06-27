@@ -322,6 +322,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             @Override
             public TableInfo getLookupTableInfo()
             {
+                // TODO: mock?
                 String name = queryName + "_sivChallenge";
                 UserSchema targetSchema = targetTable.getUserSchema().getDefaultSchema().getUserSchema(targetSchemaName);
                 QueryDefinition qd = QueryService.get().createQueryDef(u, targetSchemaContainer, targetSchema, name);
@@ -414,14 +415,14 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                         "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
                         "CONVERT(age_in_months(CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
                         "max(tr.enddate) as artRelease,\n" +
-                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtRelease,\n" +
-                        "CONVERT(age_in_months(CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtRelease,\n" +
-                        "CAST(CASE WHEN max(tr.date) IS NULL THEN NULL ELSE 'Y' END as VARCHAR) as onArt,\n" +
+                        "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, INTEGER) as daysPostArtRelease,\n" +
+                        "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE age_in_months(CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, FLOAT) as monthsPostArtRelease,\n" +
+                        "CAST(CASE WHEN CAST(max(tr.date) AS DATE) < CAST(c." + dateCol.getFieldKey().toString()  + " AS DATE) AND CAST(max(coalesce(tr.enddate, now())) AS DATE) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) THEN 'Y' ELSE null END as VARCHAR) as onArt,\n" +
                         "GROUP_CONCAT(DISTINCT tr.treatment) AS artTreatment,\n" +
                         "c." + pkCol.getFieldKey().toString() + "\n" +
                         "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
-                        "JOIN study.treatments tr ON (tr.category = 'ART' AND CAST(tr.date AS DATE) <= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) AND COALESCE(tr.enddate, now()) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) AND tr.Id = c." + idCol.getFieldKey().toSQLString() + ")\n" +
-                        "GROUP BY c.date, c." + pkCol.getFieldKey().toString() + "\n" +
+                        "JOIN study.treatments tr ON (tr.category = 'ART' AND CAST(tr.date AS DATE) <= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) AND tr.Id = c." + idCol.getFieldKey().toSQLString() + ")\n" +
+                        "GROUP BY c." + dateCol.getFieldKey().toString()  + ", c." + pkCol.getFieldKey().toString() + "\n" +
                         "HAVING COUNT(*) = 1"
                 );
                 qd.setIsTemporary(true);
