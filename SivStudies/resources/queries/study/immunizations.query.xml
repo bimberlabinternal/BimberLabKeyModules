@@ -2,6 +2,7 @@
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="immunizations" tableDbType="TABLE" useColumnOrder="true">
+                <tableTitle>Immunizations/Vaccinations</tableTitle>
                 <columns>
                     <column columnName="Id"/>
                     <column columnName="date">
