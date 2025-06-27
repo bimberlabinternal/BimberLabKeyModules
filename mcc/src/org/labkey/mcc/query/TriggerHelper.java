@@ -212,7 +212,17 @@ public class TriggerHelper
         }
     }
 
-    public boolean hasPermission(String status)
+    public boolean hasUpdatePermission(String status)
+    {
+        return hasPermission(status, false);
+    }
+
+    public boolean hasInsertPermission(String status)
+    {
+        return hasPermission(status, true);
+    }
+
+    private boolean hasPermission(String status, boolean forInsert)
     {
         try
         {
