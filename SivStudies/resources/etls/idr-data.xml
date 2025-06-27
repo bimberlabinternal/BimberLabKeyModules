@@ -151,7 +151,7 @@
                     <setting name="targetSchema" value="studies"/>
                     <setting name="targetQuery" value="subjectAnchorDates"/>
                     <setting name="targetSubjectColumn" value="subjectId"/>
-                    <setting name="targetAdditionalFilters" value="eventLabel~in=SIV Infection;Vaccination Start"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR;eventLabel~in=SIV Infection;Vaccination Start"/>
                 </settings>
             </taskref>
         </transform>
