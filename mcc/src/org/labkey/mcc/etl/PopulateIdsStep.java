@@ -18,6 +18,7 @@ import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.util.PageFlowUtil;
@@ -146,7 +147,9 @@ public class PopulateIdsStep implements TaskRefTask
                 job.getLogger().info("Total IDs to alias for field " + fieldName + " in container: " + c.getPath() + ": " + toAdd.get(c).size());
                 TableInfo ti = QueryService.get().getUserSchema(_containerUser.getUser(), c, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
                 BatchValidationException bve = new BatchValidationException();
-                ti.getUpdateService().insertRows(_containerUser.getUser(), c, toAdd.get(c), bve, null, null);
+                QueryUpdateService qus = ti.getUpdateService();
+                qus.setBulkLoad(true);
+                qus.insertRows(_containerUser.getUser(), c, toAdd.get(c), bve, null, null);
                 if (bve.hasErrors())
                 {
                     throw bve;
