@@ -37,8 +37,7 @@ function beforeUpsert(row, oldRow, errors) {
     row.status = row.status || 'Draft'
 
     // This logic here is that the user needs update permissions on the original status, and insert permissions to the new one:
-    if (oldRow)
-    {
+    if (oldRow) {
         if (oldRow.status && !triggerHelper.hasUpdatePermission(oldRow.status)) {
             errors._form = 'Insufficient permissions to update request with status: ' + row.status;
         }
