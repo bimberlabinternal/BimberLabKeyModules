@@ -216,7 +216,16 @@ public class TriggerHelper
     {
         try
         {
-            return MccManager.RequestStatus.resolveStatus(status).canEdit(_user, _container);
+            MccManager.RequestStatus s = MccManager.RequestStatus.resolveStatus(status);
+            if (forInsert)
+            {
+                return MccManager.RequestStatus.resolveStatus(status).canInsert(_user, _container);
+            }
+            else
+            {
+                return MccManager.RequestStatus.resolveStatus(status).canUpdate(_user, _container);
+            }
+
         }
         catch (IllegalArgumentException e)
         {
