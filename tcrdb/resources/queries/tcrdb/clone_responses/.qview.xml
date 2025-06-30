@@ -1,0 +1,23 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="true">
+    <columns>
+        <column name="cDNA_ID" />
+        <column name="cDNA_ID/sortId/sampleId/subjectId" />
+        <column name="cDNA_ID/sortId/sampleId/sampleDate" />
+        <column name="cDNA_ID/sortId/sampleId/stim" />
+        <column name="chain" />
+        <column name="vGene" />
+        <column name="jGene" />
+        <column name="clonotype" />
+        <column name="activationFrequency" />
+        <column name="totalCells" />
+        <column name="totalCloneSize" />
+        <column name="fractionCloneActivated" />
+        <column name="totalCellsForSample" />
+        <column name="oddsRatio" />
+        <column name="enrichmentFDR" />
+        <column name="comments"/>
+    </columns>
+    <sorts>
+        <sort column="cDNA_ID" descending="false" />
+    </sorts>
+</customView>

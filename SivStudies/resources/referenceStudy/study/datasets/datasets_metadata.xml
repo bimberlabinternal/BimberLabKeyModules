@@ -10,7 +10,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -34,7 +37,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -94,7 +100,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -130,7 +139,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -151,7 +163,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -175,7 +190,7 @@
                 <datatype>varchar</datatype>
                 <isHidden>true</isHidden>
                 <displayColumnFactory>
-                    <className>org.labkey.studies.query.ResultsOOODisplayColumn</className>
+                    <className>org.labkey.api.studies.query.ResultsOORDisplayColumn</className>
                 </displayColumnFactory>
             </column>
             <column columnName="units">
@@ -197,7 +212,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -235,7 +253,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>false</isKeyField>
             </column>
@@ -277,7 +298,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -313,7 +337,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -346,7 +373,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -378,7 +408,10 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
-            <column columnName="objectid">
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
@@ -390,5 +423,98 @@
             </column>
         </columns>
         <tableTitle>Procedures</tableTitle>
+    </table>
+    <table tableName="additionalDatatypes" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+            </column>
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
+                <datatype>entityid</datatype>
+                <isKeyField>true</isKeyField>
+            </column>
+            <column columnName="category">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="description">
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Additional Datatypes</tableTitle>
+    </table>
+    <table tableName="flow" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+            </column>
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
+                <datatype>entityid</datatype>
+                <isKeyField>true</isKeyField>
+            </column>
+            <column columnName="assayType">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="sampleType">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="population">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="result">
+                <datatype>double</datatype>
+            </column>
+            <column columnName="units">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comment">
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Flow Cytometry</tableTitle>
+    </table>
+    <table tableName="outcomes" tableDbType="TABLE">
+        <columns>
+            <column columnName="Id">
+                <datatype>varchar</datatype>
+                <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+            </column>
+            <column columnName="date">
+                <datatype>timestamp</datatype>
+                <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
+            </column>
+            <column columnName="dataSource">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="objectId">
+                <datatype>entityid</datatype>
+                <isKeyField>true</isKeyField>
+            </column>
+            <column columnName="outcome">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="suboutcome">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
+        </columns>
+        <tableTitle>Outcomes/Phenotypes</tableTitle>
     </table>
 </tables>

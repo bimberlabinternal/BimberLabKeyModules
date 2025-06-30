@@ -1,0 +1,18 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" canOverride="false">
+    <columns>
+        <column name="Id"/>
+        <column name="sex"/>
+        <column name="species"/>
+        <column name="geographic_origin"/>
+        <column name="calculated_status"/>
+        <column name="birth"/>
+        <column name="death"/>
+        <column name="projects/allStudies"/>
+        <column name="projects/categories"/>
+        <column name="projects/rhCmvVaccines"/>
+        <column name="projects/sivArt"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+</customView>

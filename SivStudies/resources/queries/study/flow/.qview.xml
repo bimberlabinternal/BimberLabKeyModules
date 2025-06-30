@@ -1,0 +1,16 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" hidden="false" canOverride="false">
+    <columns>
+        <column name="Id"/>
+        <column name="date"/>
+        <column name="sampleType"/>
+        <column name="assayType"/>
+        <column name="population"/>
+        <column name="result"/>
+        <column name="units"/>
+        <column name="dataSource"/>
+        <column name="viralLoad"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+</customView>

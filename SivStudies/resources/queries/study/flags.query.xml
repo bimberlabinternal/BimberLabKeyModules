@@ -5,7 +5,7 @@
                 <columns>
                     <column columnName="Id"/>
                     <column columnName="date">
-                        <columnTitle>Date Added</columnTitle>
+                        <columnTitle>Start Date</columnTitle>
                         <formatString>Date</formatString>
                     </column>
                     <column columnName="enddate">
@@ -14,6 +14,9 @@
                     </column>
                     <column columnName="flag">
                         <columnTitle>Flag</columnTitle>
+                    </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
                     </column>
                 </columns>
             </table>

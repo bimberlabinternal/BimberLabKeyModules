@@ -5,7 +5,7 @@
                 <columns>
                     <column columnName="Id"/>
                     <column columnName="date">
-                        <columnTitle>Date Added</columnTitle>
+                        <columnTitle>Start Date</columnTitle>
                         <formatString>Date</formatString>
                     </column>
                     <column columnName="enddate">
@@ -21,8 +21,15 @@
                     <column columnName="cohortId">
                         <columnTitle>Cohort ID</columnTitle>
                     </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
+                    </column>
                     <column columnName="category">
                         <columnTitle>Category</columnTitle>
+                    </column>
+                    <column columnName="description">
+                        <columnTitle>Description</columnTitle>
+                        <isHidden>true</isHidden>
                     </column>
                 </columns>
             </table>

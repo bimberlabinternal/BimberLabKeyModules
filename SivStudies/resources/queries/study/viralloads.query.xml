@@ -10,18 +10,26 @@
                     </column>
                     <column columnName="sampleType">
                         <columnTitle>Sample Type</columnTitle>
+                        <nullable>false</nullable>
+                        <fk>
+                            <fkDbSchema>studies</fkDbSchema>
+                            <fkTable>vl_sample_types</fkTable>
+                            <fkColumnName>value</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
                     </column>
                     <column columnName="assayType">
                         <columnTitle>Assay Type</columnTitle>
                     </column>
                     <column columnName="target">
-                        <columnTitle>target</columnTitle>
+                        <columnTitle>Target</columnTitle>
                     </column>
                     <column columnName="lod">
                         <columnTitle>LOD</columnTitle>
                     </column>
                     <column columnName="result">
                         <columnTitle>Result</columnTitle>
+                        <nullable>false</nullable>
                     </column>
                     <column columnName="units">
                         <columnTitle>Units</columnTitle>
@@ -31,9 +39,19 @@
                         <isHidden>true</isHidden>
                         <shownInDetailsView>false</shownInDetailsView>
                     </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
+                    </column>
                     <column columnName="resultOORIndicator">
+                        <columnTitle>Result OOR Indicator</columnTitle>
                         <isHidden>true</isHidden>
-                        <shownInDetailsView>false</shownInDetailsView>
+                    </column>
+                    <column columnName="resultNumber">
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="resultInRange">
+                        <columnTitle>Result In Range?</columnTitle>
+                        <isHidden>true</isHidden>
                     </column>
                 </columns>
             </table>

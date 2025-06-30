@@ -32,8 +32,8 @@
                     </column>
                     <column columnName="objectId">
                         <isHidden>true</isHidden>
-                        <shownInDetailsView>false</shownInDetailsView>
                         <isKeyField>true</isKeyField>
+                        <shownInDetailsView>false</shownInDetailsView>
                     </column>
                     <column columnName="sex">
                         <columnTitle>Sex</columnTitle>
@@ -51,13 +51,16 @@
                         <columnTitle>Species</columnTitle>
                     </column>
                     <column columnName="mother">
-                        <columnTitle>Mother</columnTitle>
+                        <columnTitle>Mother/Dam</columnTitle>
                     </column>
                     <column columnName="father">
-                        <columnTitle>Father</columnTitle>
+                        <columnTitle>Father/Sire</columnTitle>
                     </column>
                     <column columnName="calculated_status">
                         <columnTitle>Status</columnTitle>
+                    </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
                     </column>
                 </columns>
             </table>
