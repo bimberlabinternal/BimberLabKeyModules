@@ -12,6 +12,10 @@
 <!--            </properties>-->
 <!--        </column>-->
         <column name="death"/>
+        <column name="projects/allStudies"/>
+        <column name="projects/categories"/>
+        <column name="immunizations/immunizations"/>
+        <column name="outcomes/outcomes"/>
     </columns>
     <sorts>
         <sort column="Id" descending="false"/>

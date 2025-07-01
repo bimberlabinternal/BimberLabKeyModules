@@ -16,6 +16,7 @@ import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.util.PageFlowUtil;
@@ -129,7 +130,9 @@ public class UpdatePedigreeStep implements TaskRefTask
 
             try
             {
-                subjectsTable.getUpdateService().updateRows(job.getUser(), job.getContainer(), toUpdate, oldKeys, null, new HashMap<>());
+                QueryUpdateService qus = subjectsTable.getUpdateService();
+                qus.setBulkLoad(true);
+                qus.updateRows(job.getUser(), job.getContainer(), toUpdate, oldKeys, null, new HashMap<>());
             }
             catch (QueryException | BatchValidationException | SQLException | InvalidKeyException | QueryUpdateServiceException e)
             {

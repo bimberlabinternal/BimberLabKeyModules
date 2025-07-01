@@ -13,6 +13,12 @@
                     </column>
                     <column columnName="test">
                         <columnTitle>Test</columnTitle>
+                        <fk>
+                            <fkDbSchema>studies</fkDbSchema>
+                            <fkTable>labwork_types</fkTable>
+                            <fkColumnName>value</fkColumnName>
+                            <fkDisplayColumnName useRawValue="true"/>
+                        </fk>
                     </column>
                     <column columnName="result">
                         <columnTitle>Result</columnTitle>
@@ -27,6 +33,20 @@
                     </column>
                     <column columnName="method">
                         <columnTitle>Method</columnTitle>
+                    </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
+                    </column>
+                    <column columnName="resultOORIndicator">
+                        <columnTitle>Result OOR Indicator</columnTitle>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="resultNumber">
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="resultInRange">
+                        <columnTitle>Result In Range?</columnTitle>
+                        <isHidden>true</isHidden>
                     </column>
                 </columns>
             </table>

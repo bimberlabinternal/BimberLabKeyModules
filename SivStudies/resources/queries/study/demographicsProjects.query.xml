@@ -1,0 +1,28 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="demographicsProjects" tableDbType="NOT_IN_DB">
+                <tableTitle>Project Summary</tableTitle>
+                <columns>
+                    <column columnName="Id">
+                        <isKeyField>true</isKeyField>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="categories">
+                        <columnTitle>Study Categories</columnTitle>
+                    </column>
+                    <column columnName="allStudies">
+                        <columnTitle>All Studies</columnTitle>
+                    </column>
+                    <column columnName="rhCmvVaccines">
+                        <columnTitle>RhCMV Vaccines?</columnTitle>
+                    </column>
+                    <column columnName="sivArt">
+                        <columnTitle>SIV/ART Projects?</columnTitle>
+                    </column>
+                </columns>
+                <titleColumn>categories</titleColumn>
+            </table>
+        </tables>
+    </metadata>
+</query>

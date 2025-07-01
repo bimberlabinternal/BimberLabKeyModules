@@ -1,0 +1,14 @@
+SELECT
+
+Rh as Id,
+cohortStart as date,
+
+CASE
+    WHEN contprog = 'C' THEN 'Controller'
+    WHEN contprog = 'P' THEN 'Progressor'
+END as outcome,
+
+'Hansen/IDR' as dataSource
+
+FROM bimber_data.subjects
+WHERE contprog IS NOT NULL AND contprog != ''

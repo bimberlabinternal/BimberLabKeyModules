@@ -5,7 +5,7 @@
                 <javaCustomizer class="org.labkey.sivstudies.query.SivStudiesCustomizer"/>
                 <columns>
                     <column columnName="Id">
-
+                        <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
                     </column>
                     <column columnName="date">
                         <columnTitle>Date</columnTitle>
@@ -13,12 +13,30 @@
                     <column columnName="enddate">
                         <columnTitle>End Date</columnTitle>
                     </column>
-                    <column columnName="objectid">
+                    <column columnName="objectId">
                         <columnTitle>Key</columnTitle>
                         <isHidden>true</isHidden>
+                        <isKeyField>true</isKeyField>
                         <shownInDetailsView>false</shownInDetailsView>
                     </column>
+                    <column columnName="container">
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="AnimalVisit">
+                        <isHidden>true</isHidden>
+                    </column>
                 </columns>
+                <buttonBarOptions includeStandardButtons="true">
+                    <item hidden="true">
+                        <originalText>Filter</originalText>
+                    </item>
+                    <item hidden="true">
+                        <originalText>Groups</originalText>
+                    </item>
+                    <item hidden="true">
+                        <originalText>Manage</originalText>
+                    </item>
+                </buttonBarOptions>
             </table>
         </tables>
     </metadata>

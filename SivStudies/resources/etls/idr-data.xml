@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>Hansen/IDR</name>
+    <description>SIV Studies / Hansen/IDR Data</description>
+    <transforms>
+        <transform id="assignment" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="subjects"/>
+                    <setting name="dataSourceSubjectColumn" value="Rh"/>
+                    <setting name="dataSourceColumns" value="Rh,cohortStart,cohortEnd,cohort,RhCode"/>
+                    <setting name="dataSourceColumnMapping" value="Rh=Id,cohortStart=date,cohortEnd=enddate,RhCode=cohortId,cohort=study"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+                    <setting name="dataSourceAdditionalFilters" value="cohortStart~neq=0000-00-00"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="assignment"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="samples" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="idrSampleSource"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,sampleId,sampleType,quantity"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="samples"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="pvl" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="idrPvlSource"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,target,sampleType,units,result"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="viralLoads"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="outcome" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="idrOutcomeSource"/>
+                    <setting name="dataSourceSubjectColumn" value="Id"/>
+                    <setting name="dataSourceColumns" value="Id,date,outcome"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="outcomes"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="immunizations" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="vacc"/>
+                    <setting name="dataSourceSubjectColumn" value="Rh"/>
+                    <setting name="dataSourceColumns" value="Rh,vacc_date,name,route,dose,ag_source"/>
+                    <setting name="dataSourceColumnMapping" value="Rh=Id,vacc_date=date,name=treatment,dose=quantity,ag_source=category"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="immunizations"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="challenge" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="subjects"/>
+                    <setting name="dataSourceSubjectColumn" value="Rh"/>
+                    <setting name="dataSourceColumns" value="Rh,PID0"/>
+                    <setting name="dataSourceColumnMapping" value="Rh=Id,PID0=date"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR;category=SIV Infection;treatment=SIV - Unknown"/>
+                    <setting name="dataSourceAdditionalFilters" value="PID0~isnonblank="/>
+
+                    <setting name="targetSchema" value="study"/>
+                    <setting name="targetQuery" value="treatments"/>
+                    <setting name="targetSubjectColumn" value="Id"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR;category~eq=SIV Infection"/>
+                </settings>
+            </taskref>
+        </transform>
+        <transform id="anchorDates" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.SubjectScopedSelect">
+                <settings>
+                    <setting name="subjectSourceSchema" value="study"/>
+                    <setting name="subjectSourceQuery" value="demographics"/>
+                    <setting name="subjectSourceColumn" value="Id"/>
+
+                    <setting name="dataSourceContainerPath" value="Labs/Bimber"/>
+                    <setting name="dataSourceSchema" value="bimber_data"/>
+                    <setting name="dataSourceQuery" value="idrAnchorDateSource"/>
+                    <setting name="dataSourceSubjectColumn" value="subjectId"/>
+                    <setting name="dataSourceColumns" value="subjectId,date,eventLabel"/>
+                    <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
+
+                    <setting name="targetSchema" value="studies"/>
+                    <setting name="targetQuery" value="subjectAnchorDates"/>
+                    <setting name="targetSubjectColumn" value="subjectId"/>
+                    <setting name="targetAdditionalFilters" value="dataSource~eq=Hansen/IDR;eventLabel~in=SIV Infection;Vaccination Start"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+    <schedule>
+        <cron expression="0 30 20 * * ?"/>
+    </schedule>
+</etl>

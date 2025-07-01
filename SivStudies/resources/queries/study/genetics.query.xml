@@ -5,7 +5,7 @@
                 <columns>
                     <column columnName="Id"/>
                     <column columnName="date">
-                        <columnTitle>Date Added</columnTitle>
+                        <columnTitle>Date</columnTitle>
                         <formatString>Date</formatString>
                     </column>
                     <column columnName="category">
@@ -22,6 +22,9 @@
                     </column>
                     <column columnName="score">
                         <columnTitle>Score</columnTitle>
+                    </column>
+                    <column columnName="dataSource">
+                        <columnTitle>Data Source</columnTitle>
                     </column>
                 </columns>
             </table>

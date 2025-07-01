@@ -17,6 +17,7 @@ import org.labkey.api.query.BatchValidationException;
 import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.writer.ContainerUser;
@@ -118,12 +119,15 @@ public class PopulateGeneticDataStep implements TaskRefTask
                 TableInfo gd = QueryService.get().getUserSchema(job.getUser(), child, "study").getTable("genomicDatasets");
                 try
                 {
-                    gd.getUpdateService().truncateRows(job.getUser(), child, null, null);
+                    QueryUpdateService qus = gd.getUpdateService();
+                    qus.setBulkLoad(true);
+
+                    qus.truncateRows(job.getUser(), child, null, null);
 
                     if (toInsert.containsKey(child))
                     {
                         BatchValidationException bve = new BatchValidationException();
-                        gd.getUpdateService().insertRows(job.getUser(), child, toInsert.get(child), bve, null, null);
+                        qus.insertRows(job.getUser(), child, toInsert.get(child), bve, null, null);
                         if (bve.hasErrors())
                         {
                             throw bve;

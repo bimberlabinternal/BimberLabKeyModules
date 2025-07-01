@@ -40,7 +40,7 @@ public class BlastPipelineJobResourceAllocator implements ClusterResourceAllocat
     }
 
     @Override
-    public void addExtraSubmitScriptLines(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    public void addExtraSubmitScriptLines(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         //force BLAST jobs to top of queue, since we assume these run quickly
         if ("HTCondorEngine".equals(engine.getType()))

@@ -116,8 +116,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceNormalizationTask(job))
         {
-            job.getLogger().debug("setting max CPUs to 4");
-            return 4;
+            job.getLogger().debug("setting max CPUs to 2");
+            return 2;
         }
 
         if (isLuceneIndexJob(job))
@@ -137,15 +137,15 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             //10gb
             if (totalFileSize < 10e9)
             {
-                job.getLogger().debug("file size less than 10gb, lowering CPUs to 8");
+                job.getLogger().debug("file size less than 10gb, lowering CPUs to 4");
 
-                return 8;
+                return 4;
             }
             else if (totalFileSize < 20e9)
             {
-                job.getLogger().debug("file size less than 20gb, lowering CPUs to 12");
+                job.getLogger().debug("file size less than 20gb, lowering CPUs to 8");
 
-                return 12;
+                return 8;
             }
 
             job.getLogger().debug("file size greater than 20gb, using 12 CPUs");
@@ -318,7 +318,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     }
 
     @Override
-    public void addExtraSubmitScriptLines(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    public void addExtraSubmitScriptLines(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         if (job instanceof HasJobParams)
         {
@@ -332,7 +332,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     }
 
     @Override
-    public @NotNull Map<String, Object> getEnvironmentVars(PipelineJob job, RemoteExecutionEngine engine)
+    public @NotNull Map<String, Object> getEnvironmentVars(PipelineJob job, RemoteExecutionEngine<?> engine)
     {
         Map<String, Object> ret = new HashMap<>();
 
@@ -358,7 +358,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return null;
     }
 
-    private void possiblyAddHighIO(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddHighIO(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         Map<String, String> params = ((HasJobParams)job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.highIO"));
@@ -522,7 +522,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 job.getLogger().debug("qos as supplied by job: " + qos);
 
                 //Exempt specific task types:
-                TaskFactory factory = job.getActiveTaskFactory();
+                TaskFactory<?> factory = job.getActiveTaskFactory();
                 String activeTask = factory == null ? null : factory.getId().getNamespaceClass().getSimpleName();
                 job.getLogger().debug("Active task simplename: " + activeTask);
                 if (Arrays.asList("PrepareAlignerIndexesTask", "CacheAlignerIndexesTask", "AlignmentInitTask", "VariantProcessingScatterRemotePrepareTask").contains(activeTask))
@@ -610,7 +610,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     }
 
     @Override
-    public void processJavaOpts(PipelineJob job, RemoteExecutionEngine engine, @NotNull List<String> existingJavaOpts)
+    public void processJavaOpts(PipelineJob job, RemoteExecutionEngine<?> engine, @NotNull List<String> existingJavaOpts)
     {
         if (job instanceof HasJobParams)
         {
