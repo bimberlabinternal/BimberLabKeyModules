@@ -212,11 +212,30 @@ public class TriggerHelper
         }
     }
 
-    public boolean hasPermission(String status)
+    public boolean hasUpdatePermission(String status)
+    {
+        return hasPermission(status, false);
+    }
+
+    public boolean hasInsertPermission(String status)
+    {
+        return hasPermission(status, true);
+    }
+
+    private boolean hasPermission(String status, boolean forInsert)
     {
         try
         {
-            return MccManager.RequestStatus.resolveStatus(status).canEdit(_user, _container);
+            MccManager.RequestStatus s = MccManager.RequestStatus.resolveStatus(status);
+            if (forInsert)
+            {
+                return MccManager.RequestStatus.resolveStatus(status).canInsert(_user, _container);
+            }
+            else
+            {
+                return MccManager.RequestStatus.resolveStatus(status).canUpdate(_user, _container);
+            }
+
         }
         catch (IllegalArgumentException e)
         {
