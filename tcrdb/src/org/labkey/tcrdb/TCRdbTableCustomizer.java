@@ -12,6 +12,7 @@ import org.labkey.api.data.SQLFragment;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.data.WrappedColumn;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.ldk.LDKService;
@@ -19,6 +20,7 @@ import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryForeignKey;
 import org.labkey.api.query.QueryService;
 
 import java.util.Arrays;
@@ -47,6 +49,14 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
             else if (matches(ti, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES))
             {
                 customizeClones(ti);
+            }
+            else if (matches(ti, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONE_RESPONSES))
+            {
+                customizeCloneResponses(ti);
+            }
+            else if (matches(ti, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIM_EXPERIMENTS))
+            {
+                customizeStims(ti);
             }
             else if (ti instanceof AssayResultTable)
             {
@@ -221,6 +231,34 @@ public class TCRdbTableCustomizer extends AbstractTableCustomizer
         newCol.setDescription("Showing CDR3 clonotypes for " + locus + " with fraction >=0.05");
         newCol.setURL(detailsURL);
         ti.addColumn(newCol);
+    }
+
+    private void customizeCloneResponses(AbstractTableInfo ti)
+    {
+        if (ti.getColumn("stimId") == null)
+        {
+            WrappedColumn col = new WrappedColumn(ti.getColumn("cDNA_ID"), "stimId");
+            col.setReadOnly(true);
+            col.setUserEditable(false);
+            col.setLabel("Stim Experiment");
+            col.setFk(new QueryForeignKey(ti.getUserSchema(), null, ti.getUserSchema(), null, TCRdbSchema.TABLE_STIM_EXPERIMENTS, "cdna_id", "cdna_id"));
+
+            ti.addColumn(col);
+        }
+    }
+
+    private void customizeStims(AbstractTableInfo ti)
+    {
+        if (ti.getColumn("controlStim") == null)
+        {
+            WrappedColumn col = new WrappedColumn(ti.getColumn("controlStimId"), "controlStim");
+            col.setReadOnly(true);
+            col.setUserEditable(false);
+            col.setLabel("Control Stim Info");
+            col.setFk(new QueryForeignKey(ti.getUserSchema(), null, ti.getUserSchema(), null, TCRdbSchema.TABLE_STIM_EXPERIMENTS, "cdna_id", "cdna_id"));
+
+            ti.addColumn(col);
+        }
     }
 
     private void customizeClones(AbstractTableInfo ti)
