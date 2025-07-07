@@ -5,7 +5,6 @@
                 <javaCustomizer class="org.labkey.sivstudies.query.SivStudiesCustomizer"/>
                 <columns>
                     <column columnName="Id">
-                        <url />
                         <isKeyField>true</isKeyField>
                     </column>
                     <column columnName="date">

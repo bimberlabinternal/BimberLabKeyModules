@@ -4,7 +4,7 @@
             <table tableName="additionalDatatypes" tableDbType="TABLE">
                 <columns>
                     <column columnName="Id">
-                        <url />
+
                     </column>
                     <column columnName="date">
 
