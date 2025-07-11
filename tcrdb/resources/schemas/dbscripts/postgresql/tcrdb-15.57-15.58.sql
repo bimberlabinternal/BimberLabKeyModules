@@ -1,5 +1,5 @@
 CREATE TABLE tcrdb.repertoire_stats (
-  rowid int SERIAL,
+  rowid SERIAL,
   cdna_id int,
   metricName varchar(1000),
   value double precision,
