@@ -9,6 +9,8 @@
         <column name="projects/allStudies"/>
         <column name="projects/categories"/>
         <column name="immunizations/immunizations"/>
+        <column name="sivART/allInfections"/>
+        <column name="sivART/allART"/>
         <column name="outcomes/outcomes"/>
     </columns>
     <sorts>

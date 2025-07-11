@@ -6,6 +6,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerFilter;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.TableInfo;
+import org.labkey.api.ldk.table.ContainerScopedTable;
 import org.labkey.api.ldk.table.SharedDataTable;
 import org.labkey.api.module.Module;
 import org.labkey.api.query.DefaultSchema;
@@ -43,8 +44,11 @@ public class TCRdbUserSchema extends SimpleUserSchema
     {
         if (TCRdbSchema.TABLE_MIXCR_LIBRARIES.equalsIgnoreCase(name))
         {
-            // TODO: assert cf is null or not default?
             return new SharedDataTable<>(this, sourceTable).init();
+        }
+        else if (TCRdbSchema.TABLE_STIM_EXPERIMENTS.equalsIgnoreCase(name))
+        {
+            return new ContainerScopedTable<>(this, sourceTable, null, "cdna_id").init();
         }
 
         return super.createWrappedTable(name, sourceTable, cf);

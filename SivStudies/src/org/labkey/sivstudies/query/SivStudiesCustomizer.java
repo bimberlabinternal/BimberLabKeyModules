@@ -249,6 +249,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             colInfo.setLabel("Outcomes");
             parentTable.addColumn(colInfo);
         }
+
+        if (parentTable.getColumn("sivART") == null)
+        {
+            BaseColumnInfo colInfo = getWrappedIdCol(parentTable.getUserSchema(), "demographicsChallengeAndArt", parentTable, "sivART");
+            colInfo.setLabel("SIV/ART Dates");
+            parentTable.addColumn(colInfo);
+        }
     }
 
     private void appendPvlColumns(DatasetTable ds, String subjectColName, String dateColName)
