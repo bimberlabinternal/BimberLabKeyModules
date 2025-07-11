@@ -21,6 +21,7 @@ import org.labkey.api.query.DuplicateKeyException;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.InvalidKeyException;
 import org.labkey.api.query.QueryService;
+import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.QueryUpdateServiceException;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
@@ -74,6 +75,8 @@ public class NprcObservationStep implements TaskRefTask
         {
             throw new PipelineJobException("Unable to find table: clinical observations");
         }
+        QueryUpdateService qus = clinicalObs.getUpdateService();
+        qus.setBulkLoad(true);
 
         final List<Map<String, Object>> toInsert = new ArrayList<>();
         final List<Map<String, Object>> toUpdate = new ArrayList<>();
@@ -156,7 +159,7 @@ public class NprcObservationStep implements TaskRefTask
                 job.getLogger().info("Deleting " + toDelete.size() + " rows");
                 try
                 {
-                    clinicalObs.getUpdateService().deleteRows(_containerUser.getUser(), _containerUser.getContainer(), toDelete, null, null);
+                    qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), toDelete, null, null);
                 }
                 catch (InvalidKeyException | BatchValidationException | QueryUpdateServiceException | SQLException e)
                 {
@@ -170,7 +173,7 @@ public class NprcObservationStep implements TaskRefTask
                 try
                 {
                     BatchValidationException bve = new BatchValidationException();
-                    clinicalObs.getUpdateService().insertRows(_containerUser.getUser(), _containerUser.getContainer(), toInsert, bve, null, null);
+                    qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), toInsert, bve, null, null);
                     if (bve.hasErrors())
                     {
                         throw bve;
@@ -192,7 +195,7 @@ public class NprcObservationStep implements TaskRefTask
                 try
                 {
                     List<Map<String, Object>> oldKeys = toUpdate.stream().map(x -> Map.of("objectid", x.get("objectid"))).collect(Collectors.toList());
-                    clinicalObs.getUpdateService().updateRows(_containerUser.getUser(), _containerUser.getContainer(), toUpdate, oldKeys, null, null);
+                    qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), toUpdate, oldKeys, null, null);
                 }
                 catch (QueryUpdateServiceException | SQLException | BatchValidationException | InvalidKeyException e)
                 {
