@@ -1,0 +1,22 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="" tableDbType="NOT_IN_DB">
+                <tableTitle>SIV/ART Summary</tableTitle>
+                <columns>
+                    <column columnName="Id">
+                        <isKeyField>true</isKeyField>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="allInfections">
+                        <columnTitle>SIV Infection</columnTitle>
+                    </column>
+                    <column columnName="allART">
+                        <columnTitle>ART</columnTitle>
+                    </column>
+                </columns>
+                <titleColumn>allInfections</titleColumn>
+            </table>
+        </tables>
+    </metadata>
+</query>

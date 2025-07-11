@@ -73,7 +73,7 @@ public class DiskUsageNotification implements Notification
     @Override
     public String getCronString()
     {
-        return "0 8 * * 1 ?";
+        return "0 0 8 ? * MON";
     }
 
     @Override

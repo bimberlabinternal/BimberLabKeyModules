@@ -9,6 +9,7 @@ import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
+import org.labkey.api.data.DbScope;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
@@ -100,7 +101,7 @@ public class SubjectScopedSelect implements TaskRefTask
         }
     }
 
-    final int BATCH_SIZE = 100;
+    final int BATCH_SIZE = 250;
 
     private MODE getMode()
     {
@@ -136,127 +137,136 @@ public class SubjectScopedSelect implements TaskRefTask
     private void processBatch(List<String> subjects, Logger log, PipelineJob job)
     {
         log.info("processing batch with " + subjects.size() + " subjects");
-        TableInfo destinationTable = getDataDestinationTable();
-
-        QueryUpdateService qus = destinationTable.getUpdateService();
-        qus.setBulkLoad(true);
-
-        try
+        try (DbScope.Transaction t = DbScope.getLabKeyScope().ensureTransaction())
         {
-            if (getMode() == MODE.TRUNCATE)
-            {
-                // Find / Delete existing values:
-                Set<ColumnInfo> keyFields = destinationTable.getColumns().stream().filter(ColumnInfo::isKeyField).collect(Collectors.toSet());
-                final SimpleFilter subjectFilter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name())), subjects, CompareType.IN);
-                if (_settings.get(Settings.targetAdditionalFilters.name()) != null)
-                {
-                    List<CompareType.AbstractCompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.targetAdditionalFilters.name()));
-                    additionalFilters.forEach(subjectFilter::addCondition);
-                }
+            TableInfo destinationTable = getDataDestinationTable();
 
-                if (destinationTable.getColumn(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name()))) == null)
-                {
-                    throw new IllegalStateException("Unknown column on table " + destinationTable.getName() + ": " + _settings.get(Settings.targetSubjectColumn.name()));
-                }
+            QueryUpdateService qus = destinationTable.getUpdateService();
+            qus.setBulkLoad(true);
 
-                List<Map<String, Object>> existingRows = new ArrayList<>(new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection());
-                if (!existingRows.isEmpty())
-                {
-                    List<List<Map<String, Object>>> batches = Lists.partition(existingRows, 5000);
-                    log.info("deleting " + existingRows.size() + " rows in " + batches.size() + " batches");
-                    int i = 0;
-                    for (List<Map<String, Object>> batch : batches)
-                    {
-                        i++;
-                        log.info("batch " + i);
-                        checkCancelled(job);
-
-                        qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), batch, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
-                    }
-                }
-                else
-                {
-                    log.info("No rows to delete for this subject batch");
-                }
-            }
-            else
-            {
-                log.info("Using " + getMode().name() + " mode, source records will not be deleted");
-            }
-
-            // Query data and import
-            List<Map<String, Object>> toImportOrUpdate = getRowsToImport(subjects, log);
-            if (!toImportOrUpdate.isEmpty())
+            try
             {
                 if (getMode() == MODE.TRUNCATE)
                 {
-                    List<List<Map<String, Object>>> batches = Lists.partition(toImportOrUpdate, 5000);
-                    log.info("inserting " + toImportOrUpdate.size() + " rows in " + batches.size() + " batches");
-
-                    int i = 0;
-                    for (List<Map<String, Object>> batch : batches)
+                    // Find / Delete existing values:
+                    Set<ColumnInfo> keyFields = destinationTable.getColumns().stream().filter(ColumnInfo::isKeyField).collect(Collectors.toSet());
+                    final SimpleFilter subjectFilter = new SimpleFilter(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name())), subjects, CompareType.IN);
+                    if (_settings.get(Settings.targetAdditionalFilters.name()) != null)
                     {
-                        i++;
-                        log.info("batch " + i);
-                        checkCancelled(job);
+                        List<CompareType.AbstractCompareClause> additionalFilters = parseAdditionalFilters(_settings.get(Settings.targetAdditionalFilters.name()));
+                        additionalFilters.forEach(subjectFilter::addCondition);
+                    }
 
-                        BatchValidationException bve = new BatchValidationException();
-                        qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), batch, bve, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
-                        if (bve.hasErrors())
+                    if (destinationTable.getColumn(FieldKey.fromString(_settings.get(Settings.targetSubjectColumn.name()))) == null)
+                    {
+                        throw new IllegalStateException("Unknown column on table " + destinationTable.getName() + ": " + _settings.get(Settings.targetSubjectColumn.name()));
+                    }
+
+                    List<Map<String, Object>> existingRows = new ArrayList<>(new TableSelector(destinationTable, keyFields, subjectFilter, null).getMapCollection());
+                    if (!existingRows.isEmpty())
+                    {
+                        List<List<Map<String, Object>>> batches = Lists.partition(existingRows, 5000);
+                        log.info("deleting " + existingRows.size() + " rows in " + batches.size() + " batches");
+                        int i = 0;
+                        for (List<Map<String, Object>> batch : batches)
                         {
-                            throw bve;
+                            i++;
+                            log.info("batch " + i);
+                            checkCancelled(job);
+
+                            qus.deleteRows(_containerUser.getUser(), _containerUser.getContainer(), batch, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
+                            t.commitAndKeepConnection();
                         }
                     }
-                }
-                else if (getMode() == MODE.UPDATE_ONLY)
-                {
-                    List<List<Map<String, Object>>> batches = Lists.partition(toImportOrUpdate, 5000);
-                    log.info("updating " + toImportOrUpdate.size() + " rows in " + batches.size() + " batches");
-
-                    int i = 0;
-                    for (List<Map<String, Object>> batch : batches)
+                    else
                     {
-
-                        i++;
-                        log.info("batch " + i);
-                        checkCancelled(job);
-
-                        BatchValidationException bve = new BatchValidationException();
-
-                        Collection<String> keyFields = destinationTable.getPkColumnNames();
-                        List<Map<String, Object>> keys = batch.stream().map(x -> {
-                            Map<String, Object> map = new HashMap<>();
-                            for (String keyField : keyFields)
-                            {
-                                if (x.get(keyField) != null)
-                                {
-                                    map.put(keyField, x.get(keyField));
-                                }
-                            }
-
-                            return map;
-                        }).toList();
-
-                        qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), batch, keys, bve, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
-                        if (bve.hasErrors())
-                        {
-                            throw bve;
-                        }
+                        log.info("No rows to delete for this subject batch");
                     }
                 }
                 else
                 {
-                    throw new IllegalStateException("Unknown mode: " + getMode());
+                    log.info("Using " + getMode().name() + " mode, source records will not be deleted");
+                }
+
+                // Query data and import
+                List<Map<String, Object>> toImportOrUpdate = getRowsToImport(subjects, log);
+                if (!toImportOrUpdate.isEmpty())
+                {
+                    if (getMode() == MODE.TRUNCATE)
+                    {
+                        List<List<Map<String, Object>>> batches = Lists.partition(toImportOrUpdate, 5000);
+                        log.info("inserting " + toImportOrUpdate.size() + " rows in " + batches.size() + " batches");
+
+                        int i = 0;
+                        for (List<Map<String, Object>> batch : batches)
+                        {
+                            i++;
+                            log.info("batch " + i);
+                            checkCancelled(job);
+
+                            BatchValidationException bve = new BatchValidationException();
+                            qus.insertRows(_containerUser.getUser(), _containerUser.getContainer(), batch, bve, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
+                            if (bve.hasErrors())
+                            {
+                                throw bve;
+                            }
+                            t.commitAndKeepConnection();
+                        }
+                    }
+                    else if (getMode() == MODE.UPDATE_ONLY)
+                    {
+                        List<List<Map<String, Object>>> batches = Lists.partition(toImportOrUpdate, 5000);
+                        log.info("updating " + toImportOrUpdate.size() + " rows in " + batches.size() + " batches");
+
+                        int i = 0;
+                        for (List<Map<String, Object>> batch : batches)
+                        {
+
+                            i++;
+                            log.info("batch " + i);
+                            checkCancelled(job);
+
+                            BatchValidationException bve = new BatchValidationException();
+
+                            Collection<String> keyFields = destinationTable.getPkColumnNames();
+                            List<Map<String, Object>> keys = batch.stream().map(x -> {
+                                Map<String, Object> map = new HashMap<>();
+                                for (String keyField : keyFields)
+                                {
+                                    if (x.get(keyField) != null)
+                                    {
+                                        map.put(keyField, x.get(keyField));
+                                    }
+                                }
+
+                                return map;
+                            }).toList();
+
+                            qus.updateRows(_containerUser.getUser(), _containerUser.getContainer(), batch, keys, bve, new HashMap<>(Map.of(DetailedAuditLogDataIterator.AuditConfigs.AuditBehavior, NONE, QueryUpdateService.ConfigParameters.BulkLoad, true)), null);
+                            if (bve.hasErrors())
+                            {
+                                throw bve;
+                            }
+                            t.commitAndKeepConnection();
+                        }
+                    }
+                    else
+                    {
+                        throw new IllegalStateException("Unknown mode: " + getMode());
+                    }
+                }
+                else
+                {
+                    log.info("No rows to import/update for this subject batch");
                 }
             }
-            else
+            catch (SQLException | InvalidKeyException | BatchValidationException | QueryUpdateServiceException |
+                   DuplicateKeyException e)
             {
-                log.info("No rows to import/update for this subject batch");
+                throw new IllegalStateException("Error Importing/Updating Rows", e);
             }
-        }
-        catch (SQLException | InvalidKeyException | BatchValidationException | QueryUpdateServiceException | DuplicateKeyException e)
-        {
-            throw new IllegalStateException("Error Importing/Updating Rows", e);
+
+            t.commit();
         }
     }
 
