@@ -2,6 +2,7 @@
     <metadata>
         <tables xmlns="http://labkey.org/data/xml">
             <table tableName="" tableDbType="TABLE">
+                <tableTitle>mGAP Subject/Demographics Source Data</tableTitle>
                 <pkColumnName>subjectName</pkColumnName>
             </table>
         </tables>
