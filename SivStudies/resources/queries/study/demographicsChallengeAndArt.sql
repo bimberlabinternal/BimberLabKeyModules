@@ -11,7 +11,7 @@ SELECT
   min(CASE
       WHEN t.category = 'SIV Infection' THEN t.date
       ELSE NULL
-  END, char(10)) as infectionDate,
+  END) as infectionDate,
 
 FROM study.treatments t
 GROUP BY t.Id
