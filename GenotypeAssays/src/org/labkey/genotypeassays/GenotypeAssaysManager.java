@@ -88,11 +88,11 @@ public class GenotypeAssaysManager
     }
 
 
-    public Pair<List<Integer>, List<Integer>> cacheAnalyses(final ViewContext ctx, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
+    public Pair<List<Long>, List<Long>> cacheAnalyses(final ViewContext ctx, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
     {
         final User u = ctx.getUser();
-        final List<Integer> runsCreated = new ArrayList<>();
-        final List<Integer> runsDeleted = new ArrayList<>();
+        final List<Long> runsCreated = new ArrayList<>();
+        final List<Long> runsDeleted = new ArrayList<>();
 
         try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
         {
@@ -178,11 +178,11 @@ public class GenotypeAssaysManager
         }
     }
 
-    public Pair<List<Integer>, List<Integer>> cacheHaplotypes(final ViewContext ctx, final ExpProtocol protocol, JSONArray data) throws IllegalArgumentException
+    public Pair<List<Long>, List<Long>> cacheHaplotypes(final ViewContext ctx, final ExpProtocol protocol, JSONArray data) throws IllegalArgumentException
     {
         final User u = ctx.getUser();
-        final List<Integer> runsCreated = new ArrayList<>();
-        final List<Integer> runsDeleted = new ArrayList<>();
+        final List<Long> runsCreated = new ArrayList<>();
+        final List<Long> runsDeleted = new ArrayList<>();
 
         //next identify a build up the results
         TableInfo tableAnalyses = QueryService.get().getUserSchema(u, ctx.getContainer(), SEQUENCEANALYSIS_SCHEMA).getTable("sequence_analyses");
@@ -288,7 +288,7 @@ public class GenotypeAssaysManager
         return Pair.of(runsCreated, runsDeleted);
     }
 
-    private void processSet(String assayType, Map<Integer, List<Map<String, Object>>> rowHash, TableInfo assayDataTable, User u, ViewContext ctx, Map<Integer, Set<Integer>> toDeleteByAnalysis, AssayProvider ap, ExpProtocol protocol, List<Integer> runsCreated)
+    private void processSet(String assayType, Map<Integer, List<Map<String, Object>>> rowHash, TableInfo assayDataTable, User u, ViewContext ctx, Map<Integer, Set<Integer>> toDeleteByAnalysis, AssayProvider ap, ExpProtocol protocol, List<Long> runsCreated)
     {
         for (Integer analysisId : rowHash.keySet())
         {

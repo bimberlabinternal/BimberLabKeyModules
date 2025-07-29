@@ -648,9 +648,9 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private final Map<Integer, Integer> libraryMap = new HashMap<>();
         private final Map<Integer, Integer> outputFileMap = new HashMap<>();
         private final Map<Integer, Integer> sequenceMap = new HashMap<>();
-        private final Map<Integer, Integer> runIdMap = new HashMap<>(5000);
+        private final Map<Long, Long> runIdMap = new HashMap<>(5000);
         private final Map<Integer, Integer> jobIdMap = new HashMap<>(5000);
-        private final Map<URI, Integer> expDataMap = new HashMap<>(10000);
+        private final Map<URI, Long> expDataMap = new HashMap<>(10000);
 
         private void createLibraryMembers(Set<String> preExisting)
         {
@@ -970,7 +970,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             //Create run:
                             if (rd.getValue("runid") != null && rd.getValue("runid/JobId") != null)
                             {
-                                int runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
+                                long runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
                                 toCreate.put("runid", runId);
                             }
                             else
@@ -1126,7 +1126,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             //Create run:
                             if (rd.getValue("runid") != null && rd.getValue("runid/JobId") != null)
                             {
-                                int runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
+                                long runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
                                 toCreate.put("runid", runId);
                             }
                             else
@@ -1293,7 +1293,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                                 //Create run:
                                 if (rd.getValue("runid") != null && jobId != null)
                                 {
-                                    int runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
+                                    long runId = createExpRun(Integer.parseInt(String.valueOf(rd.getValue("runid"))), targetWorkbook, String.valueOf(rd.getValue("runid/Name")), jobId);
                                     toCreate.put("runid", runId);
                                 }
                                 else
@@ -1359,7 +1359,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
         private int createdExpData = 0;
         private int expDataCacheHits = 0;
 
-        private int getOrCreateExpData(URI uri, Container workbook, String fileName)
+        private long getOrCreateExpData(URI uri, Container workbook, String fileName)
         {
             if (uri.toString().contains("/C:/"))
             {
@@ -1473,7 +1473,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
                             {
                                 int remoteJobId = Integer.parseInt(String.valueOf(rs.getValue("runid/JobId")));
                                 int jobId = getOrCreateJob(remoteJobId, targetWorkbook);
-                                int runid = createExpRun(Integer.parseInt(String.valueOf(rs.getValue("runid"))), targetWorkbook, String.valueOf(rs.getValue("runid/Name")), jobId);
+                                long runid = createExpRun(Integer.parseInt(String.valueOf(rs.getValue("runid"))), targetWorkbook, String.valueOf(rs.getValue("runid/Name")), jobId);
                                 toCreate.put("runid", runid);
                             }
                             else if (rs.getValue("totalForwardReads") != null)
@@ -1670,7 +1670,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             }
         }
 
-        private int createExpRun(int remoteId, Container c, String name, int localJobId) throws Exception
+        private long createExpRun(long remoteId, Container c, String name, long localJobId) throws Exception
         {
             if (runIdMap.containsKey(remoteId))
             {
@@ -1681,7 +1681,7 @@ public class MhcMigrationPipelineJob extends PipelineJob
             TableSelector ts = new TableSelector(ExperimentService.get().getTinfoExperimentRun(), PageFlowUtil.set("RowId"), new SimpleFilter(FieldKey.fromString("JobId"), localJobId), null);
             if (ts.exists())
             {
-                List<Integer> rowIds = ts.getArrayList(Integer.class);
+                List<Long> rowIds = ts.getArrayList(Long.class);
                 Collections.sort(rowIds, Comparator.reverseOrder());
                 runIdMap.put(remoteId, rowIds.get(0));
 

@@ -66,7 +66,7 @@ public class CellRangerVDJUtils
         _log = log;
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Long runId, boolean deleteExisting) throws PipelineJobException
     {
         File cellRangerOutDir = vLoupeFile.getParentFile();
 
@@ -617,7 +617,7 @@ public class CellRangerVDJUtils
         private String coalescedContigName;
     }
 
-    private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA_Library> cDNAMap, Integer runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
+    private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA_Library> cDNAMap, Long runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
     {
         CDNA_Library cDNARecord = cDNAMap.get(assayModel.cdna);
         if (cDNARecord == null)
@@ -665,7 +665,7 @@ public class CellRangerVDJUtils
         return "None".equals(input) ? null : StringUtils.trimToNull(input);
     }
 
-    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId, boolean deleteExisting) throws PipelineJobException
+    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Long runId, boolean deleteExisting) throws PipelineJobException
     {
         ViewBackgroundInfo info = job.getInfo();
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);

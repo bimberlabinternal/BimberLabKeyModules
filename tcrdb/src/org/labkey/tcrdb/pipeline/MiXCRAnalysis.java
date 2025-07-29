@@ -1221,7 +1221,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     private void parseCloneOutput(Map<String, RunData> runMap, File table, AnalysisModel model, File inputBam) throws PipelineJobException
     {
-        Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+        Long runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
         ExpRun run = ExperimentService.get().getExpRun(runId);
 
         List<? extends ExpData> cloneDatas = run.getInputDatas(CLONES_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
@@ -1328,7 +1328,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
     }
 
-    private Map<String, Object> getBaseRow(AnalysisModel model, Integer runId, TableInfo cDNATable) throws PipelineJobException
+    private Map<String, Object> getBaseRow(AnalysisModel model, Long runId, TableInfo cDNATable) throws PipelineJobException
     {
         Map<String, Object> row = new CaseInsensitiveHashMap<>();
         if (model.getReadset() != null)
@@ -1563,7 +1563,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         runProps.put("Name", "Analysis: " + model.getAnalysisId());
         runProps.put("analysisId", model.getAnalysisId());
 
-        Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+        Long runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
         runProps.put("pipelineRunId", runId);
 
         runProps.put("totalAlignments", rd.totalAlignments);

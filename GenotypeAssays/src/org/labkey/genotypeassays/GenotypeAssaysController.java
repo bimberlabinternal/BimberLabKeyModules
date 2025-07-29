@@ -130,7 +130,7 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    Pair<List<Integer>, List<Integer>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), protocol, form.getAlleleNames());
+                    Pair<List<Long>, List<Long>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), protocol, form.getAlleleNames());
                     resultProperties.put("runsCreated", ret.first);
                     resultProperties.put("runsDeleted", ret.second);
                 }
@@ -209,7 +209,7 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    Pair<List<Integer>, List<Integer>> ret = GenotypeAssaysManager.get().cacheHaplotypes(getViewContext(), protocol, new JSONArray(form.getJson()));
+                    Pair<List<Long>, List<Long>> ret = GenotypeAssaysManager.get().cacheHaplotypes(getViewContext(), protocol, new JSONArray(form.getJson()));
                     resultProperties.put("runsCreated", ret.first);
                     resultProperties.put("runsDeleted", ret.second);
                 }
