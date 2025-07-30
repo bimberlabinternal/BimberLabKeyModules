@@ -36,9 +36,18 @@ function beforeUpsert(row, oldRow, errors) {
 
     row.status = row.status || 'Draft'
 
-    if (!triggerHelper.hasPermission(row.status)) {
-        errors._form = 'Insufficient permissions to update request with status: ' + row.status;
+    // This logic here is that the user needs update permissions on the original status, and insert permissions to the new one:
+    if (oldRow) {
+        if (oldRow.status && !triggerHelper.hasUpdatePermission(oldRow.status)) {
+            errors._form = 'Insufficient permissions to update request with status: ' + row.status;
+        }
+        else if (!oldRow.status) {
+            console.error('MCC request being submitted without a value for oldRow.status!')
+        }
+    }
 
+    if (!triggerHelper.hasInsertPermission(row.status)) {
+        errors._form = 'Insufficient permissions to create request with status: ' + row.status;
     }
 }
 
@@ -72,6 +81,7 @@ function beforeDelete(row, errors){
         return;
     }
 
+    //
     if (!triggerHelper.hasPermission(row.status)) {
         errors._form = 'Insufficient permissions to delete this request';
         return;
