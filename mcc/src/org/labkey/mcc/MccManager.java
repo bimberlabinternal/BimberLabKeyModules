@@ -50,26 +50,38 @@ public class MccManager
         Submitted(2, "Submitted", MccRequestorPermission.class),
         RabReview(3, "RAB Review", MccRequestAdminPermission.class),
         PendingDecision(4, "Decision Pending", MccFinalReviewPermission.class),
-        Approved(5, "Approved", MccRequestAdminPermission.class),
-        Rejected(6, "Rejected", MccRequestAdminPermission.class),
+        Approved(5, "Approved", MccRequestAdminPermission.class, MccFinalReviewPermission.class),
+        Rejected(6, "Rejected", MccRequestAdminPermission.class, MccFinalReviewPermission.class),
         Processing(7, "Processing", MccRequestAdminPermission.class),
         Fulfilled(8, "Fulfilled", MccRequestAdminPermission.class),
         Withdrawn(9, "Withdrawn", MccRequestorPermission.class);
 
         int sortOrder;
         String label;
-        Class<? extends Permission> editPermission;
+        Class<? extends Permission> updatePermission;
+        Class<? extends Permission> insertPermission;
 
         RequestStatus(int sortOrder, String label, Class<? extends Permission> editPermission)
         {
-            this.sortOrder = sortOrder;
-            this.label = label;
-            this.editPermission = editPermission;
+            this(sortOrder, label, editPermission, editPermission);
         }
 
-        public boolean canEdit(User u, Container c)
+        RequestStatus(int sortOrder, String label, Class<? extends Permission> updatePermission, Class<? extends Permission> insertPermission)
         {
-            return c.hasPermission(u, this.editPermission);
+            this.sortOrder = sortOrder;
+            this.label = label;
+            this.updatePermission = updatePermission;
+            this.insertPermission= insertPermission;
+        }
+
+        public boolean canUpdate(User u, Container c)
+        {
+            return c.hasPermission(u, this.updatePermission);
+        }
+
+        public boolean canInsert(User u, Container c)
+        {
+            return c.hasPermission(u, this.insertPermission);
         }
 
         public String getLabel()

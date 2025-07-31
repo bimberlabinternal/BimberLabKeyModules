@@ -6,6 +6,7 @@
                 <columns>
                     <column columnName="Id">
                         <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
+                        <url>laboratory/dataBrowser.view?subjectId=${Id}</url>
                     </column>
                     <column columnName="date">
                         <columnTitle>Date</columnTitle>
@@ -23,6 +24,9 @@
                         <isHidden>true</isHidden>
                     </column>
                     <column columnName="AnimalVisit">
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="DataSets">
                         <isHidden>true</isHidden>
                     </column>
                 </columns>

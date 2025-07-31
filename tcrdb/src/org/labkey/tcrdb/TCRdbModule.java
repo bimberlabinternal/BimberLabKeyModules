@@ -46,7 +46,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 15.57;
+        return 15.58;
     }
 
     @Override
@@ -72,6 +72,8 @@ public class TCRdbModule extends ExtendedSimpleModule
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.SEQUENCE_ANALYSIS, "sequence_readsets");
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.SEQUENCE_ANALYSIS, "sequence_analyses");
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONES);
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_CLONE_RESPONSES);
+        LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.NAME, TCRdbSchema.TABLE_STIM_EXPERIMENTS);
         LaboratoryService.get().registerTableCustomizer(this, TCRdbTableCustomizer.class, TCRdbSchema.SINGLE_CELL, TCRdbSchema.TABLE_CDNAS);
 
         LDKService.get().registerQueryButton(new ChangeStatusButton(), TCRdbSchema.SINGLE_CELL, "samples");

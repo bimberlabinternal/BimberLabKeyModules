@@ -4,7 +4,7 @@
             <table tableName="weight" tableDbType="TABLE">
                 <columns>
                     <column columnName="Id">
-                        <url />
+
                     </column>
                     <column columnName="date">
                         <isHidden>true</isHidden>
