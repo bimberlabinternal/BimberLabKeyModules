@@ -732,7 +732,7 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, int readsetId) throws PipelineJobException
+    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, long readsetId) throws PipelineJobException
     {
         log.info("Preparing to delete any existing runs from this container for the same readset: " + readsetId);
 
