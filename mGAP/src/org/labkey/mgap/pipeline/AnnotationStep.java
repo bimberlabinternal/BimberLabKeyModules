@@ -1,6 +1,7 @@
 package org.labkey.mgap.pipeline;
 
 import htsjdk.samtools.util.Interval;
+import htsjdk.samtools.util.SequenceUtil;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -332,11 +333,11 @@ public class AnnotationStep extends AbstractCommandPipelineStep<MultiSourceAnnot
             LiftoverBcfToolsWrapper liftoverVcfRunner = new LiftoverBcfToolsWrapper(getPipelineCtx().getLogger());
             liftoverVcfRunner.doLiftover(currentVcf, chainFile, genome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37);
 
-            // NOTE: the resulting VCF is not necessarily in chromosome sort order:
-            SequencePipelineService.get().sortVcf(liftedToGRCh37, null, genome.getSequenceDictionary(), getPipelineCtx().getLogger());
-
             try
             {
+                // NOTE: the resulting VCF is not necessarily in chromosome sort order:
+                SequencePipelineService.get().sortROD(liftedToGRCh37, getPipelineCtx().getLogger(), 2);
+
                 SequenceAnalysisService.get().ensureVcfIndex(liftedToGRCh37, getPipelineCtx().getLogger());
             }
             catch (IOException e)
