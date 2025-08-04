@@ -15,6 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.labkey.api.collections.IntHashMap;
+import org.labkey.api.collections.StringHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.jbrowse.JBrowseService;
 import org.labkey.api.module.Module;
@@ -49,7 +51,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -188,7 +189,7 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
                 ctx.getLogger().info(groupNames.getString(i));
             }
 
-            Map<Integer, Integer> fileToGroupMap = new HashMap<>();
+            Map<Integer, Integer> fileToGroupMap = new IntHashMap<>();
             JSONObject map = ctx.getParams().getJSONObject("fileToGroupMap");
             for (String id : map.keySet())
             {
@@ -201,7 +202,7 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
             String statisticalMethod = ctx.getParams().optString("statisticalMethod");
 
             //build map of site rates
-            Map<String, Map<Integer, Map<Integer, List<Double>>>> rateMap = new HashMap<>();
+            Map<String, Map<Integer, Map<Integer, List<Double>>>> rateMap = new StringHashMap<>();
 
             int i = 0;
             for (SequenceOutputFile o : inputFiles)
@@ -268,12 +269,12 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
 
                         if (!rateMap.containsKey(chr))
                         {
-                            rateMap.put(chr, new HashMap<>());
+                            rateMap.put(chr, new IntHashMap<>());
                         }
 
                         if (!rateMap.get(chr).containsKey(pos))
                         {
-                            rateMap.get(chr).put(pos, new HashMap<>());
+                            rateMap.get(chr).put(pos, new IntHashMap<>());
                         }
 
                         if (!rateMap.get(chr).get(pos).containsKey(groupNum))

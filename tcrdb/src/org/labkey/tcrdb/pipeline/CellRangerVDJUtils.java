@@ -9,6 +9,8 @@ import org.labkey.api.assay.AssayProtocolSchema;
 import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.IntHashMap;
+import org.labkey.api.collections.StringHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
@@ -125,8 +127,8 @@ public class CellRangerVDJUtils
         }
 
         File cDNAFile = CellHashingService.get().getCDNAInfoFile(outDir);
-        Map<String, CDNA_Library> htoNameToCDNAMap = new HashMap<>();
-        Map<Integer, CDNA_Library> cDNAMap = new HashMap<>();
+        Map<String, CDNA_Library> htoNameToCDNAMap = new StringHashMap<>();
+        Map<Integer, CDNA_Library> cDNAMap = new IntHashMap<>();
         if (cDNAFile.exists())
         {
             try (CSVReader reader = new CSVReader(Readers.getReader(cDNAFile), '\t'))
@@ -277,7 +279,7 @@ public class CellRangerVDJUtils
         }
 
         Map<String, AssayModel> rows = new HashMap<>();
-        Map<Integer, Set<String>> totalCellsBySample = new HashMap<>();
+        Map<Integer, Set<String>> totalCellsBySample = new IntHashMap<>();
         Set<String> uniqueContigNames = new HashSet<>();
         _log.info("processing clonotype CSV: " + allCsv.getPath());
 

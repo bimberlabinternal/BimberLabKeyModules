@@ -26,6 +26,9 @@ import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.ExportAction;
 import org.labkey.api.action.SimpleViewAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.collections.IntHashMap;
+import org.labkey.api.collections.IntHashSet;
+import org.labkey.api.collections.StringHashMap;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -528,7 +531,7 @@ public class TCRdbController extends SpringActionController
             }
 
             StringBuilder fasta = new StringBuilder();
-            Map<Integer, Set<String>> segmentsByLibrary = new HashMap<>();
+            Map<Integer, Set<String>> segmentsByLibrary = new IntHashMap<>();
 
             //find assay records
             SimpleFilter assayFilter = new SimpleFilter(FieldKey.fromString("rowId"), rowIds, CompareType.IN);
@@ -689,12 +692,12 @@ public class TCRdbController extends SpringActionController
 
             TableSelector ts = new TableSelector(assayData, cols.values(), assayFilter, null);
             Set<String> segmentsByName = new HashSet<>();
-            Map<Integer, Set<String>> segmentsByLibrary = new HashMap<>();
+            Map<Integer, Set<String>> segmentsByLibrary = new IntHashMap<>();
 
-            Map<Integer, Set<String>> clnaToCloneMap = new HashMap<>();
-            Map<String, String> clnaToCDR3Map = new HashMap<>();
+            Map<Integer, Set<String>> clnaToCloneMap = new IntHashMap<>();
+            Map<String, String> clnaToCDR3Map = new StringHashMap<>();
             StringBuilder imputedSequences = new StringBuilder();
-            Set<Integer> analyses = new HashSet<>();
+            Set<Integer> analyses = new IntHashSet();
             final String[] segmentFields = new String[]{"vHit", "jHit", "cHit"};
             ts.forEachResults(rs -> {
                 Integer libraryId = rs.getObject(FieldKey.fromString("libraryId/libraryId")) == null ? null : rs.getInt(FieldKey.fromString("libraryId/libraryId"));

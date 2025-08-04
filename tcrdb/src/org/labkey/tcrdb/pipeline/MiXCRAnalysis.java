@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.IntHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
@@ -290,11 +291,11 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         String version = new MiXCRWrapper(getPipelineCtx().getLogger()).getVersionString();
 
         //iterate selected species/loci:
-        Map<Integer, Map<String, Map<String, List<File>>>> tables = new HashMap<>();
+        Map<Integer, Map<String, Map<String, List<File>>>> tables = new IntHashMap<>();
         JSONArray libraries = getTcrDbs();
 
-        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedAlignments = new HashMap<>();
-        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedClones = new HashMap<>();
+        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedAlignments = new IntHashMap<>();
+        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedClones = new IntHashMap<>();
 
         for (JSONObject library : JsonUtil.toJSONObjectList(libraries))
         {

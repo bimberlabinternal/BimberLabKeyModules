@@ -5,6 +5,8 @@ import org.json.JSONObject;
 import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.IntHashMap;
+import org.labkey.api.collections.LongHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
@@ -397,10 +399,11 @@ public class MhcMigrationPipelineJob extends PipelineJob
                         continue;
                     }
 
-                    final Map<Integer, Integer> alignmentSummaryMap = new HashMap<>(srr.getRowCount().intValue());
+                    final Map<Integer, Integer> alignmentSummaryMap = new IntHashMap<>(srr.getRowCount().intValue());
                     srr.getRowset().forEach(rs -> {
                         CaseInsensitiveHashMap<Object> map = new CaseInsensitiveHashMap<>();
-                        Integer localId = analysisMap.get(rs.getValue("analysis_id"));
+                        Number analysisId = (Number)rs.getValue("analysis_id");
+                        Integer localId = analysisMap.get(analysisId.intValue());
                         if (localId == null)
                         {
                             throw new RuntimeException("Unable to find analysis: " + rs.getValue("analysis_id"));
@@ -640,16 +643,16 @@ public class MhcMigrationPipelineJob extends PipelineJob
 
         //All of these map remote Id to local Id
         private final Map<Integer, Container> workbookMap = new TreeMap<>();
-        private final Map<Integer, Integer> readsetMap = new HashMap<>();
-        private final Map<Integer, Integer> readdataMap = new HashMap<>();
-        private final Map<Integer, Integer> analysisMap = new HashMap<>();
-        private final Map<Integer, Integer> analysisToFileMap = new HashMap<>(); //local analysis_id -> alignment file
-        private final Map<Integer, String> analysisToJobPath = new HashMap<>();
-        private final Map<Integer, Integer> libraryMap = new HashMap<>();
-        private final Map<Integer, Integer> outputFileMap = new HashMap<>();
-        private final Map<Integer, Integer> sequenceMap = new HashMap<>();
-        private final Map<Long, Long> runIdMap = new HashMap<>(5000);
-        private final Map<Integer, Integer> jobIdMap = new HashMap<>(5000);
+        private final Map<Integer, Integer> readsetMap = new IntHashMap<>();
+        private final Map<Integer, Integer> readdataMap = new IntHashMap<>();
+        private final Map<Integer, Integer> analysisMap = new IntHashMap<>();
+        private final Map<Integer, Integer> analysisToFileMap = new IntHashMap<>(); //local analysis_id -> alignment file
+        private final Map<Integer, String> analysisToJobPath = new IntHashMap<>();
+        private final Map<Integer, Integer> libraryMap = new IntHashMap<>();
+        private final Map<Integer, Integer> outputFileMap = new IntHashMap<>();
+        private final Map<Integer, Integer> sequenceMap = new IntHashMap<>();
+        private final Map<Long, Long> runIdMap = new LongHashMap<>(5000);
+        private final Map<Integer, Integer> jobIdMap = new IntHashMap<>(5000);
         private final Map<URI, Long> expDataMap = new HashMap<>(10000);
 
         private void createLibraryMembers(Set<String> preExisting)
