@@ -27,6 +27,7 @@ import org.labkey.api.sequenceanalysis.pipeline.PipelineContext;
 import org.labkey.api.sequenceanalysis.pipeline.PipelineStepProvider;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.sequenceanalysis.pipeline.SequenceAnalysisJobSupport;
+import org.labkey.api.sequenceanalysis.pipeline.SequencePipelineService;
 import org.labkey.api.sequenceanalysis.pipeline.ToolParameterDescriptor;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStep;
 import org.labkey.api.sequenceanalysis.pipeline.VariantProcessingStepOutputImpl;
@@ -330,6 +331,18 @@ public class AnnotationStep extends AbstractCommandPipelineStep<MultiSourceAnnot
         {
             LiftoverBcfToolsWrapper liftoverVcfRunner = new LiftoverBcfToolsWrapper(getPipelineCtx().getLogger());
             liftoverVcfRunner.doLiftover(currentVcf, chainFile, genome.getWorkingFastaFile(), grch37Genome.getWorkingFastaFile(), liftoverRejects, liftedToGRCh37);
+
+            // NOTE: the resulting VCF is not necessarily in chromosome sort order:
+            SequencePipelineService.get().sortVcf(liftedToGRCh37, null, genome.getSequenceDictionary(), getPipelineCtx().getLogger());
+
+            try
+            {
+                SequenceAnalysisService.get().ensureVcfIndex(liftedToGRCh37, getPipelineCtx().getLogger());
+            }
+            catch (IOException e)
+            {
+                throw new PipelineJobException(e);
+            }
         }
         else
         {
