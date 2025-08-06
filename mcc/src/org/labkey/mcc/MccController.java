@@ -104,6 +104,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.labkey.api.exp.api.ExperimentService.asInteger;
+
 public class MccController extends SpringActionController
 {
     private static final DefaultActionResolver _actionResolver = new DefaultActionResolver(MccController.class);
@@ -356,7 +358,7 @@ public class MccController extends SpringActionController
                     User u;
                     if (map.get("userId") != null)
                     {
-                        Integer userId = (Integer)map.get("userId");
+                        Integer userId = asInteger(map.get("userId"));
                         u = UserManager.getUser(userId);
                         existingUsersGivenAccess.add(u);
                     }

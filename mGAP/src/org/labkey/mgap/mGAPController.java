@@ -122,6 +122,8 @@ import java.util.TreeSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.labkey.api.exp.api.ExperimentService.asInteger;
+
 
 public class mGAPController extends SpringActionController
 {
@@ -413,7 +415,7 @@ public class mGAPController extends SpringActionController
                     User u;
                     if (map.get("userId") != null)
                     {
-                        Integer userId = (Integer) map.get("userId");
+                        Integer userId = asInteger(map.get("userId"));
                         u = UserManager.getUser(userId);
                         existingUsersGivenAccess.add(u);
                     }
@@ -556,7 +558,7 @@ public class mGAPController extends SpringActionController
 
     private static SequenceOutputFile getOutputFile(Map<String, Object> row, ReleaseForm form, Errors errors)
     {
-        SequenceOutputFile so = SequenceOutputFile.getForId((Integer) row.get("vcfId"));
+        SequenceOutputFile so = SequenceOutputFile.getForId(asInteger(row.get("vcfId")));
         if (so == null)
         {
             errors.reject(ERROR_MSG, "Unknown VCF file ID: " + form.getReleaseId());
