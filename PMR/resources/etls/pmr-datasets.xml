@@ -148,7 +148,7 @@
                     <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
                 </sourceFilters>
             </source>
-            <destination schemaName="study" queryName="parentage" targetOption="truncate" bulkLoad="true" batchSize="2500">
+            <destination schemaName="study" queryName="parentage" targetOption="merge" bulkLoad="true" batchSize="2500">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -180,7 +180,7 @@
                     <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
                 </sourceFilters>
             </source>
-            <destination schemaName="study" queryName="birth" targetOption="truncate" bulkLoad="true" batchSize="2500">
+            <destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true" batchSize="2500">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -188,9 +188,9 @@
         </transform>
     </transforms>
 
-<!--    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >-->
-<!--        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid"/>-->
-<!--    </incrementalFilter>-->
+    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >
+        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid"/>
+    </incrementalFilter>
     <schedule>
         <!--11PM-->
         <cron expression="0 0 23 * * ?"/>
