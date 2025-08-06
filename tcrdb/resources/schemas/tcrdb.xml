@@ -368,6 +368,9 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="celltype">
+                <columnTitle>Cell Type</columnTitle>
+            </column>
             <column columnName="metricName">
                 <columnTitle>Metric Name</columnTitle>
             </column>
