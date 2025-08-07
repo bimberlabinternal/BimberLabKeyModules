@@ -383,6 +383,9 @@
             <column columnName="comment">
 
             </column>
+            <column columnName="sampleSize">
+                <columnTitle>Sample Size</columnTitle>
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>
