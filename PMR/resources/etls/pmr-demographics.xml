@@ -30,12 +30,22 @@
                 </alternateKeys>
             </destination>
         </transform>
+        <transform id="dataset9_rc" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.primeseq.etl.VerifyRowCount">
+                <settings>
+                    <setting name="sourceRemoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="sourceSchema" value="study"/>
+                    <setting name="sourceQuery" value="demographics"/>
+                    <setting name="sourceColumn" value="objectId"/>
+
+                    <setting name="destSchema" value="study"/>
+                    <setting name="destQuery" value="demographics"/>
+                    <setting name="destColumn" value="objectId"/>
+                </settings>
+            </taskref>
+        </transform>
     </transforms>
 
-<!--    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" >-->
-<!--        &lt;!&ndash; TODO: enable once PRIMe deploys 23.7 &ndash;&gt;-->
-<!--        &lt;!&ndash;<deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid"/>&ndash;&gt;-->
-<!--    </incrementalFilter>-->
     <schedule>
         <!--11PM-->
         <cron expression="0 0 23 * * ?"/>

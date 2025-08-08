@@ -154,6 +154,20 @@
                 </alternateKeys>
             </destination>
         </transform>
+        <transform id="dataset9_rc" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.primeseq.etl.VerifyRowCount">
+                <settings>
+                    <setting name="sourceRemoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="sourceSchema" value="study"/>
+                    <setting name="sourceQuery" value="parentage"/>
+                    <setting name="sourceColumn" value="objectId"/>
+
+                    <setting name="destSchema" value="study"/>
+                    <setting name="destQuery" value="parentage"/>
+                    <setting name="destColumn" value="objectId"/>
+                </settings>
+            </taskref>
+        </transform>
         <transform id="dataset10" type="RemoteQueryTransformStep">
             <source schemaName="study" queryName="birth" remoteSource="EHR_ClinicalSource" timestampColumnName="modified" sourceTimeout="0">
                 <sourceColumns>
@@ -185,6 +199,20 @@
                     <column name="objectid"/>
                 </alternateKeys>
             </destination>
+        </transform>
+        <transform id="dataset10_rc" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.primeseq.etl.VerifyRowCount">
+                <settings>
+                    <setting name="sourceRemoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="sourceSchema" value="study"/>
+                    <setting name="sourceQuery" value="birth"/>
+                    <setting name="sourceColumn" value="objectId"/>
+
+                    <setting name="destSchema" value="study"/>
+                    <setting name="destQuery" value="birth"/>
+                    <setting name="destColumn" value="objectId"/>
+                </settings>
+            </taskref>
         </transform>
     </transforms>
 
