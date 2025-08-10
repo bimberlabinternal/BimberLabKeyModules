@@ -153,6 +153,7 @@ public class VerifyRowCount implements TaskRefTask
             DataIntegrationService.RemoteConnection rc = getRemoteDataSource(_settings.get(Settings.sourceRemoteSource.name()), _containerUser.getContainer(), job.getLogger());
             SelectRowsCommand sr = new SelectRowsCommand(_settings.get(Settings.sourceSchema.name()), _settings.get(Settings.sourceQuery.name()));
             sr.setColumns(Collections.singletonList(_settings.get(Settings.sourceColumn.name())));
+            sr.setMaxRows(1); // Ensures we get rowCount
 
             if (_settings.get(Settings.sourceAdditionalFilters.name()) != null)
             {
