@@ -148,7 +148,7 @@
                     <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
                 </sourceFilters>
             </source>
-            <destination schemaName="study" queryName="parentage" targetOption="merge" bulkLoad="true" batchSize="2500">
+            <destination schemaName="study" queryName="parentage" targetOption="merge" bulkLoad="true" batchSize="1000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -194,7 +194,7 @@
                     <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
                 </sourceFilters>
             </source>
-            <destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true" batchSize="2500">
+            <destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true" batchSize="1000">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>

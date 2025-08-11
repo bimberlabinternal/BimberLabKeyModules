@@ -255,11 +255,11 @@ public class VerifyRowCount implements TaskRefTask
         job.getLogger().info("Source (" + _settings.get(Settings.sourceSchema.name()) + "." + _settings.get(Settings.sourceQuery.name()) + ") row count: " + source);
 
         long  dest = getDestinationTableCount();
-        job.getLogger().info("Destination (" + _settings.get(Settings.destSchema.name()) + "." + _settings.get(Settings.destQuery.name()) + ") row count: " + source);
+        job.getLogger().info("Destination (" + _settings.get(Settings.destSchema.name()) + "." + _settings.get(Settings.destQuery.name()) + ") row count: " + dest);
 
         if (source != dest)
         {
-            job.getLogger().error("Row counts do not match!");
+            job.getLogger().error("Row counts do not match (source: {}, dest: {})!", source, dest);
         }
     }
 }
