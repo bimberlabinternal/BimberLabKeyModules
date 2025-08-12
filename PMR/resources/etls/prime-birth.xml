@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml" standalone="true">
+    <name>PRIME_Birth_Data</name>
+    <description>PRIMe Birth Data</description>
+    <transforms>
+        <transform id="select" type="RemoteQueryTransformStep">
+            <source schemaName="study" queryName="birth" remoteSource="EHR_ClinicalSource" timestampColumnName="modified" sourceTimeout="0">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>date_type</column>
+                    <column>birth_condition</column>
+                    <column>dam</column>
+                    <column>gender</column>
+                    <column>weight</column>
+                    <column>wdate</column>
+                    <column>type</column>
+                    <column>species</column>
+                    <column>geographic_origin</column>
+                    <column>sire</column>
+                    <column>estimated</column>
+                    <column>conception</column>
+                    <column>conceptualDay</column>
+                    <column>objectid</column>
+                    <column>created</column>
+                    <column>QCState/Label</column>
+                </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
+                </sourceFilters>
+            </source>
+            <destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true" batchSize="1000">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+
+        <transform id="rc" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.primeseq.etl.VerifyRowCount">
+                <settings>
+                    <setting name="sourceRemoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="sourceSchema" value="study"/>
+                    <setting name="sourceQuery" value="birth"/>
+                    <setting name="sourceColumn" value="objectId"/>
+                    <setting name="sourceAdditionalFilters" value="qcstate/label~eq=Completed"/>
+
+                    <setting name="destSchema" value="study"/>
+                    <setting name="destQuery" value="birth"/>
+                    <setting name="destColumn" value="objectId"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+    <incrementalFilter timestampColumnName="modified" pkColumnName="objectid" className="ModifiedSinceFilterStrategy" >
+        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" timestampColumnName="Created" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid">
+            <sourceFilters>
+                <sourceFilter column="datasetid/Name" operator="eq" value="birth" />
+                <sourceFilter column="Comment" operator="contains" value="Delete"/>
+            </sourceFilters>
+            <sourceColumns>
+                <column>primaryKey</column>
+            </sourceColumns>
+        </deletedRowsSource>
+    </incrementalFilter>
+</etl>
