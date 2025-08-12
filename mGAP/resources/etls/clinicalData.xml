@@ -3,23 +3,6 @@
     <name>ClinicalData</name>
     <description>EHR Clinical Data</description>
     <transforms>
-        <transform id="dataset1" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="chemistryResults" remoteSource="EHR_ClinicalSource" timestampColumnName="modified">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>testId</column>
-                    <column>result</column>
-                    <column>units</column>
-                    <column>runid</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="chemistryResults" targetOption="merge" bulkLoad="true" batchSize="2500">
-
-            </destination>
-        </transform>
         <transform id="dataset2" type="RemoteQueryTransformStep">
             <source schemaName="lists" queryName="demographics" remoteSource="EHR_ClinicalSource" timestampColumnName="modified">
                 <sourceColumns>
@@ -33,111 +16,40 @@
                     <column>avgKinship</column>
                     <column>objectid</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="QCState/Label" operator="eq" value="Completed"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="demographics" targetOption="merge" bulkLoad="true" batchSize="2500">
 
             </destination>
         </transform>
-        <transform id="dataset3" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="microbiology" remoteSource="EHR_ClinicalSource" timestampColumnName="modified">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>tissue</column>
-                    <column>organism</column>
-                    <column>quantity</column>
-                    <column>runid</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="microbiology" targetOption="merge" bulkLoad="true" batchSize="2500">
+        <transform id="rc_2" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.primeseq.etl.VerifyRowCount">
+                <settings>
+                    <setting name="sourceRemoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="sourceSchema" value="lists"/>
+                    <setting name="sourceQuery" value="demographics"/>
+                    <setting name="sourceColumn" value="objectId"/>
+                    <setting name="sourceAdditionalFilters" value="qcstate/label~eq=Completed"/>
 
-            </destination>
-        </transform>
-        <transform id="dataset4" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="weight" remoteSource="EHR_ClinicalSource" timestampColumnName="modified">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>weight</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="weight" targetOption="merge" bulkLoad="true" batchSize="2500">
-
-            </destination>
-        </transform>
-        <transform id="dataset5" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="clinpathRuns" remoteSource="EHR_ClinicalSource" timestampColumnName="modified">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>type</column>
-                    <column>tissue</column>
-                    <column>units</column>
-                    <column>servicerequested</column>
-                    <column>collectionMethod</column>
-                    <column>method</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="clinpathRuns" bulkLoad="true" targetOption="merge">
-
-            </destination>
-        </transform>
-        <transform id="dataset6" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="hematologyResults" remoteSource="EHR_ClinicalSource" timestampColumnName="modified">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>testid</column>
-                    <column>result</column>
-                    <column>units</column>
-                    <column>runid</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="hematologyResults" targetOption="merge" bulkLoad="true" batchSize="2500">
-
-            </destination>
-        </transform>
-        <transform id="dataset7" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="pathologyDiagnoses" remoteSource="EHR_ClinicalSource" timestampColumnName="modified" sourceTimeout="0">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>sort_order</column>
-                    <column>codes</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="pathologyDiagnoses" targetOption="merge" bulkLoad="true" batchSize="2500">
-
-            </destination>
-        </transform>
-        <transform id="dataset8" type="RemoteQueryTransformStep">
-            <source schemaName="lists" queryName="histology" remoteSource="EHR_ClinicalSource" timestampColumnName="modified" sourceTimeout="0">
-                <sourceColumns>
-                    <column>Id</column>
-                    <column>date</column>
-                    <column>ageAtTime</column>
-                    <column>sort_order</column>
-                    <column>tissue</column>
-                    <column>codes</column>
-                    <column>objectid</column>
-                </sourceColumns>
-            </source>
-            <destination schemaName="study" queryName="histology" targetOption="merge" bulkLoad="true" batchSize="2500">
-
-            </destination>
+                    <setting name="destSchema" value="study"/>
+                    <setting name="destQuery" value="demographics"/>
+                    <setting name="destColumn" value="objectId"/>
+                </settings>
+            </taskref>
         </transform>
     </transforms>
-    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" pkColumnName="objectid"/>
+    <incrementalFilter className="ModifiedSinceFilterStrategy" timestampColumnName="modified" pkColumnName="objectid">
+        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" timestampColumnName="Created" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid">
+            <sourceFilters>
+                <sourceFilter column="Comment" operator="contains" value="Delete"/>
+            </sourceFilters>
+            <sourceColumns>
+                <column>primaryKey</column>
+            </sourceColumns>
+        </deletedRowsSource>
+    </incrementalFilter>
     <schedule>
         <cron expression="0 30 1 * * ?"/>
     </schedule>
