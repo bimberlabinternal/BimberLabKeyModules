@@ -81,6 +81,13 @@
                             queryName: 'subjectCaseMismatch',
                             'query.externalAlias~isnonblank': ''
                         })
+                    }, {
+                        name: 'Sequence Datasets Missing Demographics',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'sequenceDatasetsSource',
+                            'query.missingDemographics~eq': 'true'
+                        })
                     }]
                 },{
                     header: 'Prior Releases',
@@ -101,6 +108,12 @@
                         url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
                             schemaName: 'mgap',
                             queryName: 'subjectsSource'
+                        })
+                    }, {
+                        name: 'Sequence Datasets Synced to mGAP',
+                        url: LABKEY.ActionURL.buildURL('query', 'executeQuery.view', null, {
+                            schemaName: 'mgap',
+                            queryName: 'sequenceDatasetsSource'
                         })
                     }]
                 },{
