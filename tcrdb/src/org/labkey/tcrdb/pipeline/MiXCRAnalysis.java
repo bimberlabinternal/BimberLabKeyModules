@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.IntHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
@@ -290,11 +291,11 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         String version = new MiXCRWrapper(getPipelineCtx().getLogger()).getVersionString();
 
         //iterate selected species/loci:
-        Map<Integer, Map<String, Map<String, List<File>>>> tables = new HashMap<>();
+        Map<Integer, Map<String, Map<String, List<File>>>> tables = new IntHashMap<>();
         JSONArray libraries = getTcrDbs();
 
-        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedAlignments = new HashMap<>();
-        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedClones = new HashMap<>();
+        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedAlignments = new IntHashMap<>();
+        Map<Integer, Map<String, Map<String, Integer>>> totalReadsInExportedClones = new IntHashMap<>();
 
         for (JSONObject library : JsonUtil.toJSONObjectList(libraries))
         {
@@ -1221,7 +1222,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
 
     private void parseCloneOutput(Map<String, RunData> runMap, File table, AnalysisModel model, File inputBam) throws PipelineJobException
     {
-        Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+        Long runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
         ExpRun run = ExperimentService.get().getExpRun(runId);
 
         List<? extends ExpData> cloneDatas = run.getInputDatas(CLONES_FILE, ExpProtocol.ApplicationType.ExperimentRunOutput);
@@ -1328,7 +1329,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         }
     }
 
-    private Map<String, Object> getBaseRow(AnalysisModel model, Integer runId, TableInfo cDNATable) throws PipelineJobException
+    private Map<String, Object> getBaseRow(AnalysisModel model, Long runId, TableInfo cDNATable) throws PipelineJobException
     {
         Map<String, Object> row = new CaseInsensitiveHashMap<>();
         if (model.getReadset() != null)
@@ -1563,7 +1564,7 @@ public class MiXCRAnalysis extends AbstractPipelineStep implements AnalysisStep
         runProps.put("Name", "Analysis: " + model.getAnalysisId());
         runProps.put("analysisId", model.getAnalysisId());
 
-        Integer runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
+        Long runId = SequencePipelineService.get().getExpRunIdForJob(getPipelineCtx().getJob());
         runProps.put("pipelineRunId", runId);
 
         runProps.put("totalAlignments", rd.totalAlignments);

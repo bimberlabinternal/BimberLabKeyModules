@@ -24,6 +24,8 @@ import org.labkey.api.assay.AssayProtocolSchema;
 import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.IntHashMap;
+import org.labkey.api.collections.IntHashSet;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -88,11 +90,11 @@ public class GenotypeAssaysManager
     }
 
 
-    public Pair<List<Integer>, List<Integer>> cacheAnalyses(final ViewContext ctx, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
+    public Pair<List<Long>, List<Long>> cacheAnalyses(final ViewContext ctx, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
     {
         final User u = ctx.getUser();
-        final List<Integer> runsCreated = new ArrayList<>();
-        final List<Integer> runsDeleted = new ArrayList<>();
+        final List<Long> runsCreated = new ArrayList<>();
+        final List<Long> runsDeleted = new ArrayList<>();
 
         try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
         {
@@ -118,8 +120,8 @@ public class GenotypeAssaysManager
             AssayProtocolSchema schema = ap.createProtocolSchema(u, ctx.getContainer(), protocol, null);
             final TableInfo assayDataTable = schema.getTable(AssayProtocolSchema.DATA_TABLE_NAME);
 
-            final Map<Integer, List<Map<String, Object>>> rowHash = new HashMap<>();
-            final Map<Integer, Set<Integer>> toDeleteByAnalysis = new HashMap<>();
+            final Map<Integer, List<Map<String, Object>>> rowHash = new IntHashMap<>();
+            final Map<Integer, Set<Integer>> toDeleteByAnalysis = new IntHashMap<>();
 
             TableSelector tsAlignments = new TableSelector(tableAlignments, cols.values(), new SimpleFilter(FieldKey.fromString("key"), Arrays.asList(pks), CompareType.IN), null);
             tsAlignments.forEach(new Selector.ForEachBlock<ResultSet>()
@@ -139,7 +141,7 @@ public class GenotypeAssaysManager
                     filter.addCondition(FieldKey.fromString("Run/assayType"), SBT_LINEAGE_ASSAY_TYPE);
 
                     TableSelector ts = new TableSelector(assayDataTable, PageFlowUtil.set("RowId"), filter, null);
-                    Set<Integer> existing = new HashSet<>(ts.getArrayList(Integer.class));
+                    Set<Integer> existing = new IntHashSet(ts.getArrayList(Integer.class));
                     if (!existing.isEmpty())
                     {
                         Set<Integer> toDelete = toDeleteByAnalysis.containsKey(analysisId) ? toDeleteByAnalysis.get(analysisId) : new HashSet<Integer>();
@@ -178,11 +180,11 @@ public class GenotypeAssaysManager
         }
     }
 
-    public Pair<List<Integer>, List<Integer>> cacheHaplotypes(final ViewContext ctx, final ExpProtocol protocol, JSONArray data) throws IllegalArgumentException
+    public Pair<List<Long>, List<Long>> cacheHaplotypes(final ViewContext ctx, final ExpProtocol protocol, JSONArray data) throws IllegalArgumentException
     {
         final User u = ctx.getUser();
-        final List<Integer> runsCreated = new ArrayList<>();
-        final List<Integer> runsDeleted = new ArrayList<>();
+        final List<Long> runsCreated = new ArrayList<>();
+        final List<Long> runsDeleted = new ArrayList<>();
 
         //next identify a build up the results
         TableInfo tableAnalyses = QueryService.get().getUserSchema(u, ctx.getContainer(), SEQUENCEANALYSIS_SCHEMA).getTable("sequence_analyses");
@@ -196,8 +198,8 @@ public class GenotypeAssaysManager
         fieldKeys.add(FieldKey.fromString("readset/subjectid"));
         fieldKeys.add(FieldKey.fromString("readset/sampledate"));
 
-        Set<Integer> analysisIds = new HashSet<>();
-        final Map<Integer, List<JSONObject>> haploMap = new HashMap<>();
+        Set<Integer> analysisIds = new IntHashSet();
+        final Map<Integer, List<JSONObject>> haploMap = new IntHashMap<>();
         for (JSONObject row : JsonUtil.toJSONObjectList(data))
         {
             Integer analysisId = row.getInt("analysisId");
@@ -217,8 +219,8 @@ public class GenotypeAssaysManager
         AssayProtocolSchema schema = ap.createProtocolSchema(u, ctx.getContainer(), protocol, null);
         final TableInfo assayDataTable = schema.getTable(AssayProtocolSchema.DATA_TABLE_NAME);
 
-        final Map<Integer, List<Map<String, Object>>> rowHash = new HashMap<>();
-        final Map<Integer, Set<Integer>> toDeleteByAnalysis = new HashMap<>();
+        final Map<Integer, List<Map<String, Object>>> rowHash = new IntHashMap<>();
+        final Map<Integer, Set<Integer>> toDeleteByAnalysis = new IntHashMap<>();
 
         TableSelector tsAlignments = new TableSelector(tableAnalyses, cols.values(), new SimpleFilter(FieldKey.fromString("rowid"), analysisIds, CompareType.IN), null);
         tsAlignments.forEach(new Selector.ForEachBlock<ResultSet>()
@@ -244,10 +246,10 @@ public class GenotypeAssaysManager
                     filter.addCondition(FieldKey.fromString("Run/assayType"), HAPLOTYPE_ASSAY_TYPE);
 
                     TableSelector ts = new TableSelector(assayDataTable, PageFlowUtil.set("RowId"), filter, null);
-                    Set<Integer> existing = new HashSet<>(ts.getArrayList(Integer.class));
+                    Set<Integer> existing = new IntHashSet(ts.getArrayList(Integer.class));
                     if (!existing.isEmpty())
                     {
-                        Set<Integer> toDelete = toDeleteByAnalysis.containsKey(analysisId) ? toDeleteByAnalysis.get(analysisId) : new HashSet<>();
+                        Set<Integer> toDelete = toDeleteByAnalysis.containsKey(analysisId) ? toDeleteByAnalysis.get(analysisId) : new IntHashSet();
                         toDelete.addAll(existing);
                         toDeleteByAnalysis.put(analysisId, toDelete);
                     }
@@ -288,7 +290,7 @@ public class GenotypeAssaysManager
         return Pair.of(runsCreated, runsDeleted);
     }
 
-    private void processSet(String assayType, Map<Integer, List<Map<String, Object>>> rowHash, TableInfo assayDataTable, User u, ViewContext ctx, Map<Integer, Set<Integer>> toDeleteByAnalysis, AssayProvider ap, ExpProtocol protocol, List<Integer> runsCreated)
+    private void processSet(String assayType, Map<Integer, List<Map<String, Object>>> rowHash, TableInfo assayDataTable, User u, ViewContext ctx, Map<Integer, Set<Integer>> toDeleteByAnalysis, AssayProvider ap, ExpProtocol protocol, List<Long> runsCreated)
     {
         for (Integer analysisId : rowHash.keySet())
         {

@@ -49,6 +49,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static org.labkey.api.exp.api.ExperimentService.asInteger;
+
 /**
  * Created by bimber
  */
@@ -135,7 +137,7 @@ public class TriggerHelper
                 }
 
                 Map<String, Object> row = records.get(0);
-                if (score != (Integer)row.get("preliminaryScore"))
+                if (score != asInteger(row.get("preliminaryScore")))
                 {
                     row.put("preliminaryScore", score);
                     row.put("modified", new Date());

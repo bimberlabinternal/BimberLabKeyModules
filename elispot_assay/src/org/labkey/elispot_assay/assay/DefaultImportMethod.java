@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.labkey.api.exp.api.ExperimentService.asInteger;
+
 /**
  * Created with IntelliJ IDEA.
  * User: bimber
@@ -134,7 +136,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
 
             if (TYPE.NEG.getText().equals(row.get(CATEGORY_FIELD)))
             {
-                Integer spots = (Integer)row.get(SPOTS_FIELD);
+                Integer spots = asInteger(row.get(SPOTS_FIELD));
                 List<Double> negCtls = negWellMap.get(negCtlKey);
                 if (negCtls == null)
                     negCtls = new ArrayList<Double>();
@@ -188,8 +190,8 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
             int rowIdx = 0;
             for (Map<String, Object> row : rowSet)
             {
-                totalSpots += (Integer)row.get(SPOTS_FIELD);
-                allSpots[rowIdx] = (Integer)row.get(SPOTS_FIELD);
+                totalSpots += asInteger(row.get(SPOTS_FIELD));
+                allSpots[rowIdx] = asInteger(row.get(SPOTS_FIELD));
                 rowIdx++;
             }
             Double avgSpots = totalSpots / rowSet.size();
@@ -262,7 +264,7 @@ public class DefaultImportMethod extends DefaultAssayImportMethod
                     row.put(QCFLAG_FIELD, StringUtils.join(qcflags, "\n"));
 
                 //subtract background
-                Integer spots = (Integer)row.get(SPOTS_FIELD);
+                Integer spots = asInteger(row.get(SPOTS_FIELD));
                 Double adj = spots - negCtlSummary.getMean();
                 List<String> comments = new ArrayList<String>();
                 if (row.get("comment") != null)

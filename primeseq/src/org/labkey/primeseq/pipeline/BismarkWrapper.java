@@ -511,7 +511,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
         @Override
         public Output performAnalysisPerSampleLocal(AnalysisModel model, File inputBam, File referenceFasta, File outDir) throws PipelineJobException
         {
-            Integer runId = SequenceAnalysisService.get().getExpRunIdForJob(getPipelineCtx().getJob(), true);
+            Long runId = SequenceAnalysisService.get().getExpRunIdForJob(getPipelineCtx().getJob(), true);
 
             Set<SequenceOutputFile> toCreate = new HashSet<>();
             SequenceOutputTracker sot = ((SequenceOutputTracker)getPipelineCtx().getJob());

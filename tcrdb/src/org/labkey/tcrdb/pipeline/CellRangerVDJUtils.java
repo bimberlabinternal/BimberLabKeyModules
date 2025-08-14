@@ -9,6 +9,8 @@ import org.labkey.api.assay.AssayProtocolSchema;
 import org.labkey.api.assay.AssayProvider;
 import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
+import org.labkey.api.collections.IntHashMap;
+import org.labkey.api.collections.StringHashMap;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
@@ -66,7 +68,7 @@ public class CellRangerVDJUtils
         _log = log;
     }
 
-    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Integer runId, boolean deleteExisting) throws PipelineJobException
+    public void importAssayData(PipelineJob job, AnalysisModel model, File vLoupeFile, File outDir, Integer assayId, @Nullable Long runId, boolean deleteExisting) throws PipelineJobException
     {
         File cellRangerOutDir = vLoupeFile.getParentFile();
 
@@ -125,8 +127,8 @@ public class CellRangerVDJUtils
         }
 
         File cDNAFile = CellHashingService.get().getCDNAInfoFile(outDir);
-        Map<String, CDNA_Library> htoNameToCDNAMap = new HashMap<>();
-        Map<Integer, CDNA_Library> cDNAMap = new HashMap<>();
+        Map<String, CDNA_Library> htoNameToCDNAMap = new StringHashMap<>();
+        Map<Integer, CDNA_Library> cDNAMap = new IntHashMap<>();
         if (cDNAFile.exists())
         {
             try (CSVReader reader = new CSVReader(Readers.getReader(cDNAFile), '\t'))
@@ -277,7 +279,7 @@ public class CellRangerVDJUtils
         }
 
         Map<String, AssayModel> rows = new HashMap<>();
-        Map<Integer, Set<String>> totalCellsBySample = new HashMap<>();
+        Map<Integer, Set<String>> totalCellsBySample = new IntHashMap<>();
         Set<String> uniqueContigNames = new HashSet<>();
         _log.info("processing clonotype CSV: " + allCsv.getPath());
 
@@ -617,7 +619,7 @@ public class CellRangerVDJUtils
         private String coalescedContigName;
     }
 
-    private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA_Library> cDNAMap, Integer runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
+    private Map<String, Object> processRow(AssayModel assayModel, AnalysisModel model, Map<Integer, CDNA_Library> cDNAMap, Long runId, Map<Integer, Set<String>> totalCellsBySample, Map<String, String> sequenceMap) throws PipelineJobException
     {
         CDNA_Library cDNARecord = cDNAMap.get(assayModel.cdna);
         if (cDNARecord == null)
@@ -665,7 +667,7 @@ public class CellRangerVDJUtils
         return "None".equals(input) ? null : StringUtils.trimToNull(input);
     }
 
-    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Integer runId, boolean deleteExisting) throws PipelineJobException
+    private void saveRun(PipelineJob job, ExpProtocol protocol, AnalysisModel model, List<Map<String, Object>> rows, File outDir, Long runId, boolean deleteExisting) throws PipelineJobException
     {
         ViewBackgroundInfo info = job.getInfo();
         ViewContext vc = ViewContext.getMockViewContext(info.getUser(), info.getContainer(), info.getURL(), false);
@@ -732,7 +734,7 @@ public class CellRangerVDJUtils
         }
     }
 
-    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, int readsetId) throws PipelineJobException
+    public static void deleteExistingData(AssayProvider ap, ExpProtocol protocol, Container c, User u, Logger log, long readsetId) throws PipelineJobException
     {
         log.info("Preparing to delete any existing runs from this container for the same readset: " + readsetId);
 
