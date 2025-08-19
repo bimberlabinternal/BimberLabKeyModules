@@ -63,6 +63,14 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
             ti.addColumn(newCol2);
         }
 
+        if (ti.getColumn("numAnimalsRequested") == null)
+        {
+            SQLFragment sql = new SQLFragment("(SELECT SUM(rc.numberofanimals) as expr FROM " + MccSchema.TABLE_REQUEST_COHORTS + " rc WHERE rc.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            ExprColumn newCol = new ExprColumn(ti, "numAnimalsRequested", sql, JdbcType.INTEGER, ti.getColumn("requestId"));
+            newCol.setLabel("# Animals Requested");
+            ti.addColumn(newCol);
+        }
+
         if (ti.getColumn("transferIds") == null)
         {
             Container dataContainer = MccManager.get().getMCCContainer(ti.getContainer());
