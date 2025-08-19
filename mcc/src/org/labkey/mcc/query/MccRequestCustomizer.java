@@ -65,7 +65,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
 
         if (ti.getColumn("numAnimalsRequested") == null)
         {
-            SQLFragment sql = new SQLFragment("(SELECT SUM(rc.numberofanimals) as expr FROM " + MccSchema.TABLE_REQUEST_COHORTS + " rc WHERE rc.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            SQLFragment sql = new SQLFragment("(SELECT SUM(rc.numberofanimals) as expr FROM mcc." + MccSchema.TABLE_REQUEST_COHORTS + " rc WHERE rc.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
             ExprColumn newCol = new ExprColumn(ti, "numAnimalsRequested", sql, JdbcType.INTEGER, ti.getColumn("requestId"));
             newCol.setLabel("# Animals Requested");
             ti.addColumn(newCol);
