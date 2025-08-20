@@ -37,28 +37,6 @@
             </destination>
         </transform>
 
-        <!--<transform type="RemoteQueryTransformStep" id="birth">-->
-        <!--<description>Copy to target</description>-->
-        <!--<source remoteSource="WNPRC" schemaName="study" queryName="birth">-->
-        <!--<sourceColumns>-->
-        <!--<column>Id</column>-->
-        <!--<column>date</column>-->
-        <!--<column>gender</column>-->
-        <!--<column>species</column>-->
-        <!--<column>geographic_origin</column>-->
-        <!--<column>dam</column>-->
-        <!--<column>sire</column>-->
-        <!--<column>objectid</column>-->
-        <!--</sourceColumns>-->
-        <!--</source>-->
-        <!--<destination schemaName="study" queryName="birth" targetOption="merge" bulkLoad="true">-->
-        <!--<alternateKeys>-->
-        <!--<column name="objectid"/>-->
-        <!--</alternateKeys>-->
-        <!--</destination>-->
-
-        <!--</transform>-->
-
         <transform type="RemoteQueryTransformStep" id="weight">
             <description>Copy to target</description>
             <source remoteSource="WNPRC" schemaName="study" queryName="weight">
@@ -84,7 +62,7 @@
                     <column>date</column>
                     <column>enddate</column>
                     <column>title</column>
-                    <column>objectid</column>
+                    <column>lsid</column>
                 </sourceColumns>
             </source>
             <destination schemaName="study" queryName="flags" targetOption="merge" bulkLoad="true">
@@ -92,7 +70,7 @@
                     <column source="title" target="flag" transformClass="org.labkey.mcc.etl.ProjectAssignmentTransform"/>
                 </columnTransforms>
                 <alternateKeys>
-                    <column name="objectid"/>
+                    <column name="lsid"/>
                 </alternateKeys>
             </destination>
         </transform>
@@ -122,23 +100,6 @@
                 </settings>
             </taskref>
         </transform>
-
-        <!--<transform type="RemoteQueryTransformStep" id="deaths">-->
-        <!--<description>Copy to target</description>-->
-        <!--<source remoteSource="WNPRC" schemaName="study" queryName="deaths">-->
-        <!--<sourceColumns>-->
-        <!--<column>Id</column>-->
-        <!--<column>date</column>-->
-        <!--<column>cause</column>-->
-        <!--<column>objectid</column>-->
-        <!--</sourceColumns>-->
-        <!--</source>-->
-        <!--<destination schemaName="study" queryName="deaths" targetOption="merge" bulkLoad="true">-->
-        <!--<alternateKeys>-->
-        <!--<column name="objectid"/>-->
-        <!--</alternateKeys>-->
-        <!--</destination>-->
-        <!--</transform>-->
 
         <!--This will create MCC aliases as-needed-->
         <transform id="step0" type="TaskRefTransformStep">

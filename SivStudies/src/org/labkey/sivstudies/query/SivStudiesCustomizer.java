@@ -293,6 +293,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             newColOOR.setHidden(true);
 
             ti.addColumn(newColOOR);
+
+            String nameHasPvl = name + "HasPvl";
+            SQLFragment sqlHasPvl = new SQLFragment("(SELECT CASE WHEN count(*) > 0 THEN " + ti.getSqlDialect().getBooleanTRUE() + " ELSE " + ti.getSqlDialect().getBooleanFALSE() + " END as expr FROM studydataset." + tableName + " t WHERE t.participantid = " + ExprColumn.STR_TABLE_ALIAS + ".participantid AND t.sampletype = 'Plasma' AND t.target = 'SIV')");
+            ExprColumn newColHasPvl = new ExprColumn(ti, nameHasPvl, sqlHasPvl, JdbcType.DOUBLE, subjectCol, dateCol);
+            newColHasPvl.setDescription("Displays whether this animal has any positive SIV PVLs");
+            newColHasPvl.setLabel("Has Positive SIV PVL?");
+            ti.addColumn(newColHasPvl);
         }
     }
 

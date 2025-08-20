@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.repertoire_stats ADD celltype varchar(1000);

@@ -28,10 +28,25 @@
         <dataset name="weight" id="1045" showByDefault="true" category="Clinical" type="Standard">
             <tags/>
         </dataset>
-        <dataset name="labwork" id="1073" showByDefault="false" category="ClinPath" type="Standard">
+        <dataset name="clinpathRuns" id="1011" category="Clinical" type="Standard" showByDefault="true">
             <tags/>
         </dataset>
-        <dataset name="labworkResults" id="1074" showByDefault="false" category="ClinPath" type="Standard">
+        <dataset name="blood" id="1008" category="Clinical" type="Standard">
+            <tags/>
+        </dataset>
+        <dataset name="microbiology" id="1015" category="Clinical" type="Standard" showByDefault="true">
+            <tags/>
+        </dataset>
+        <dataset name="hematologyResults" id="1004" category="Clinical" type="Standard" showByDefault="true">
+            <tags/>
+        </dataset>
+        <dataset name="chemistryResults" id="1005" category="Clinical" type="Standard"  showByDefault="true">
+            <tags/>
+        </dataset>
+        <dataset name="pathologyDiagnoses" id="1006" category="Clinical" type="Standard" showByDefault="false">
+            <tags/>
+        </dataset>
+        <dataset name="histology" id="1017" category="Clinical" type="Standard" showByDefault="false">
             <tags/>
         </dataset>
         <dataset name="transfers" id="1001" category="Colony Management" type="Standard">
@@ -65,6 +80,12 @@
             <tags/>
         </dataset>
         <dataset name="viralLoads" id="1032" showByDefault="true" category="Research" type="Standard">
+            <tags/>
+        </dataset>
+        <dataset name="parasitologyResults" id="1052" category="ClinPath" type="Standard">
+            <tags/>
+        </dataset>
+        <dataset name="urinalysisResults" id="1081" category="ClinPath" type="Standard">
             <tags/>
         </dataset>
     </datasets>
