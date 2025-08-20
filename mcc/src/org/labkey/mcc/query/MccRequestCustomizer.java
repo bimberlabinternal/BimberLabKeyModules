@@ -8,6 +8,7 @@ import org.labkey.api.data.TableInfo;
 import org.labkey.api.exp.api.StorageProvisioner;
 import org.labkey.api.ldk.table.AbstractTableCustomizer;
 import org.labkey.api.ldk.table.CustomPermissionsTable;
+import org.labkey.api.query.DetailsURL;
 import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.study.Dataset;
@@ -68,6 +69,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
             SQLFragment sql = new SQLFragment("(SELECT SUM(rc.numberofanimals) as expr FROM mcc." + MccSchema.TABLE_REQUEST_COHORTS + " rc WHERE rc.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
             ExprColumn newCol = new ExprColumn(ti, "numAnimalsRequested", sql, JdbcType.INTEGER, ti.getColumn("requestId"));
             newCol.setLabel("# Animals Requested");
+            newCol.setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=mcc&query.queryName=" + MccSchema.TABLE_REQUEST_COHORTS + "&query.requestId~eq=${requestId}"));
             ti.addColumn(newCol);
         }
 
