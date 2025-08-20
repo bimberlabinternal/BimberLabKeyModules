@@ -291,6 +291,7 @@
                     <fkDbSchema>laboratory</fkDbSchema>
                     <fkTable>subjects</fkTable>
                     <fkColumnName>subjectname</fkColumnName>
+                    <fkDisplayColumnName useRawValue="true"/>
                 </fk>
             </column>
             <column columnName="sequenceType">

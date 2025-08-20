@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml" standalone="true">
+    <name>PRIME_Microbiology_Data</name>
+    <description>PRIMe Microbiology Data</description>
+    <transforms>
+        <transform id="select" type="RemoteQueryTransformStep">
+            <source schemaName="study" queryName="microbiology" remoteSource="EHR_ClinicalSource" timestampColumnName="modified" sourceTimeout="0">
+                <sourceColumns>
+                    <column>Id</column>
+                    <column>date</column>
+                    <column>ageAtTime</column>
+                    <column>tissue</column>
+                    <column>organism</column>
+                    <column>quantity</column>
+                    <column>runid</column>
+                    <column>objectid</column>
+                    <column>created</column>
+                    <column>modified</column>
+                    <column>QCState/Label</column>
+                </sourceColumns>
+            </source>
+            <destination schemaName="study" queryName="microbiology" targetOption="merge" bulkLoad="true" batchSize="1000">
+                <alternateKeys>
+                    <column name="objectid"/>
+                </alternateKeys>
+            </destination>
+        </transform>
+        <transform id="rc" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.primeseq.etl.VerifyRowCount">
+                <settings>
+                    <setting name="sourceRemoteSource" value="EHR_ClinicalSource"/>
+                    <setting name="sourceSchema" value="study"/>
+                    <setting name="sourceQuery" value="microbiology"/>
+                    <setting name="sourceColumn" value="objectId"/>
+                    <setting name="sourceAdditionalFilters" value="qcstate/label~eq=Completed"/>
+
+                    <setting name="destSchema" value="study"/>
+                    <setting name="destQuery" value="microbiology"/>
+                    <setting name="destColumn" value="objectId"/>
+                </settings>
+            </taskref>
+        </transform>
+    </transforms>
+    <incrementalFilter timestampColumnName="modified" pkColumnName="objectid" className="ModifiedSinceFilterStrategy" >
+        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" timestampColumnName="Created" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid">
+            <sourceFilters>
+                <sourceFilter column="datasetid/Name" operator="eq" value="microbiology" />
+                <sourceFilter column="Comment" operator="contains" value="Delete"/>
+            </sourceFilters>
+            <sourceColumns>
+                <column>primaryKey</column>
+            </sourceColumns>
+        </deletedRowsSource>
+    </incrementalFilter>
+</etl>
