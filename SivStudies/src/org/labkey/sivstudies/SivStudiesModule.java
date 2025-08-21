@@ -20,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.labkey.api.data.Container;
 import org.labkey.api.ldk.ExtendedSimpleModule;
+import org.labkey.api.ldk.notification.NotificationService;
 import org.labkey.api.module.ModuleContext;
 import org.labkey.api.studies.StudiesService;
+import org.labkey.sivstudies.notification.SivStudiesDataValidationNotification;
 import org.labkey.sivstudies.study.ArtInitiationEventProvider;
 import org.labkey.sivstudies.study.SivInfectionEventProvider;
 
@@ -56,6 +58,7 @@ public class SivStudiesModule extends ExtendedSimpleModule
     {
         StudiesService.get().registerEventProvider(new SivInfectionEventProvider());
         StudiesService.get().registerEventProvider(new ArtInitiationEventProvider());
+        NotificationService.get().registerNotification(new SivStudiesDataValidationNotification());
     }
 
     @Override

@@ -1,0 +1,17 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="infectionAnchorDateDiscordance" tableDbType="NOT_IN_DB">
+                <tableTitle>Discordant Infection Dates</tableTitle>
+                <columns>
+                    <column columnName="treatmentTableDate">
+                        <columnTitle>Date (Treatments Table)</columnTitle>
+                    </column>
+                    <column columnName="subjectAnchorDatesTableDate">
+                        <columnTitle>Date (Anchor Dates Table)</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

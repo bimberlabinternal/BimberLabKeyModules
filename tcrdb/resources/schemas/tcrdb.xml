@@ -368,6 +368,9 @@
                     <fkColumnName>rowid</fkColumnName>
                 </fk>
             </column>
+            <column columnName="celltype">
+                <columnTitle>Cell Type</columnTitle>
+            </column>
             <column columnName="metricName">
                 <columnTitle>Metric Name</columnTitle>
             </column>
@@ -379,6 +382,9 @@
             </column>
             <column columnName="comment">
 
+            </column>
+            <column columnName="sampleSize">
+                <columnTitle>Sample Size</columnTitle>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
