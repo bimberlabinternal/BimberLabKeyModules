@@ -52,9 +52,9 @@ public class PMRController extends SpringActionController
         @Override
         public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
         {
-            setTitle("Import mGAP Study");
+            setTitle("Import PMR Study");
 
-            return new HtmlView(HtmlString.unsafe("This will import the default mGAP study in this folder and set the EHRStudyContainer property to point to this container. Do you want to continue?"));
+            return new HtmlView(HtmlString.unsafe("This will import the default PMR study in this folder and set the EHRStudyContainer property to point to this container. Do you want to continue?"));
         }
 
         @Override

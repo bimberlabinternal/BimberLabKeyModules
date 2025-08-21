@@ -13,7 +13,7 @@
 <!--        </column>-->
         <column name="death"/>
         <column name="projects/allStudies"/>
-        <column name="projects/categories"/>
+        <column name="projects/subgroups"/>
         <column name="immunizations/immunizations"/>
         <column name="outcomes/outcomes"/>
     </columns>

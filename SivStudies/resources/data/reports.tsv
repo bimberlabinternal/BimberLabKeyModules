@@ -7,7 +7,8 @@ query	Clinical	study	hematologyPivot		CBC/Hematology
 query	Study Design	study	assignment		Project/Study Assignment	
 query	Research	study	flow		Flow Cytometry	
 query	Research	study	outcomes		Study Outcomes/Phenotypes	
-query	Research	study	genetics		Genetic Data / MHC	
+query	Research	study	pvl_outcomes		Study PVL-Based Outcomes
+query	Research	study	genetics		Genetic Data / MHC
 query	Clinical	study	procedures		Procedures	
 query	Research	study	viralLoads		Viral Loads	
 query	General	study	samples		Samples	

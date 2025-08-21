@@ -6,18 +6,91 @@
         <transform id="demographics" type="TaskrefTransformStep">
             <taskref ref="org.labkey.di.steps.QueueJobTask">
                 <settings>
-                    <setting name="transformId" value="{PMR}/pmr-demographics"/>
+                    <setting name="transformId" value="{PMR}/prime-demographics"/>
                 </settings>
             </taskref>
         </transform>
 
-        <transform id="datasets" type="TaskrefTransformStep">
+        <transform id="birth" type="TaskrefTransformStep">
             <taskref ref="org.labkey.di.steps.QueueJobTask">
                 <settings>
-                    <setting name="transformId" value="{PMR}/pmr-datasets"/>
+                    <setting name="transformId" value="{PMR}/prime-birth"/>
                 </settings>
             </taskref>
         </transform>
+
+        <transform id="blooddraws" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-blooddraws"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="chemistryResults" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-chemistryResults"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="clinpathRuns" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-clinpathRuns"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="hematologyResults" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-hematologyResults"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="histology" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-histology"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="microbiology" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-microbiology"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="parentage" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-parentage"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="pathologyDiagnoses" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-pathologyDiagnoses"/>
+                </settings>
+            </taskref>
+        </transform>
+
+        <transform id="weight" type="TaskrefTransformStep">
+            <taskref ref="org.labkey.di.steps.QueueJobTask">
+                <settings>
+                    <setting name="transformId" value="{PMR}/prime-weight"/>
+                </settings>
+            </taskref>
+        </transform>
+
     </transforms>
     <schedule>
         <cron expression="0 30 1 * * ?"/>

@@ -182,6 +182,7 @@ public class GenotypeAssaysTest extends AbstractLabModuleAssayTest
 
         Ext4FieldRef.getForLabel(this, "Run Description").setValue("Description");
 
+        waitForElement(Ext4Helper.Locators.ext4Button("Download Example Data"));
         File exampleData = clickAndWaitForDownload(Ext4Helper.Locators.ext4Button("Download Example Data"));
 
         waitAndClick(Ext4Helper.Locators.radiobutton(this, "File Upload"));

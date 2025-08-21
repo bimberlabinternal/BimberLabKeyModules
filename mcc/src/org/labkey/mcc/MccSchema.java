@@ -32,6 +32,7 @@ public class MccSchema
     public static final String TABLE_REQUEST_REVIEWS = "requestReviews";
     public static final String TABLE_REQUEST_SCORE = "requestScores";
     public static final String TABLE_CENSUS = "census";
+    public static final String TABLE_REQUEST_COHORTS = "requestcohorts";
 
     public static MccSchema getInstance()
     {

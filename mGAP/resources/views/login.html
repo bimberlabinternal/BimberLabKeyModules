@@ -1,13 +1,29 @@
 <script type="text/javascript" nonce="<%=scriptNonce%>">
     (function($, LABKEY) {
         $(function(){
-            if (!LABKEY.Security.currentUser.isAdmin) {
-                var ctx = LABKEY.getModuleContext('mgap') || {};
-                var folder = ctx['MGAPContainer'];
-                if (folder) {
-                    var el = $('#returnUrl');
-                    el.attr('value', LABKEY.ActionURL.buildURL('project', 'start', folder));
+            // The intent of this block is to test whether the returnUrl is pointing to the same folder as the main mGAP project
+            // If true, always respect that.
+            // If the user is an admin, allow returnUrls to a different folder
+            // Otherwise, always point the user to the home page of the mGAP folder
+            var ctx = LABKEY.getModuleContext('mgap') || {};
+            var mgapFolder = ctx['MGAPContainer'];
+            if (mgapFolder) {
+                var returnUrl = LABKEY.ActionURL.getParameter('returnUrl')
+                if (returnUrl) {
+                    returnUrl = decodeURIComponent(returnUrl)
+
+                    var containerPath = LABKEY.ActionURL.getContainerName(returnUrl).toLowerCase()
+                    mgapFolder = mgapFolder.replaceAll('/', '').toLowerCase()
+                    if (LABKEY.Security.currentUser.isAdmin || containerPath === mgapFolder) {
+                        $('#returnUrl').attr('value', returnUrl);
+                    } else {
+                        $('#returnUrl').attr('value', LABKEY.ActionURL.buildURL('project', 'start', mgapFolder));
+                    }
                 }
+            }
+            else {
+                // Ignore the returnUrl in this case, since we cant tell whether it's from the expected project:
+                $('#returnUrl').attr('value', LABKEY.ActionURL.buildURL('project', 'start', 'home'));
             }
         });
     }(jQuery, LABKEY));

@@ -4,7 +4,8 @@ SELECT
   r.totalForwardReads as totalReads,
   r.sraRuns as sraAccession,
   r.subjectId as originalId,
-  (SELECT s.center FROM mgap.subjectssource s WHERE s.subjectName = am.externalAlias) as center
+  (SELECT s.center FROM mgap.subjectssource s WHERE s.subjectName = am.externalAlias) as center,
+  CASE WHEN (SELECT s.subjectName FROM mgap.subjectssource s WHERE s.subjectName = am.externalAlias) IS NULL THEN true ELSE false END as missingDemographics
 
 FROM sequenceanalysis.sequence_readsets r
 JOIN mgap.animalMapping am ON (r.subjectId = am.subjectname)
