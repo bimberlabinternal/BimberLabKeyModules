@@ -297,6 +297,9 @@ public class BismarkWrapper extends AbstractCommandWrapper
                         put("minValue", 0);
                         put("maxValue", 1);
                     }}, 1),
+                    ToolParameterDescriptor.createCommandLineParam(CommandLineParam.create("--score_min"), "score_min", "Score Min", "Sets a function governing the minimum alignment score needed for an alignment to be considered \"valid\" (i.e. good enough to report). This is a function of read length. For instance, specifying L,0,-0.2 sets the minimum-score function f to f(x) = 0 + -0.2 * x, where x is the read length", "textfield", new JSONObject(){{
+
+                    }}, null),
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--local"), "local", "Local Alignment", "In this mode, it is not required that the entire read aligns from one end to the other. Rather, some characters may be omitted (“soft-clipped”) from the ends in order to achieve the greatest possible alignment score. For Bowtie 2, the match bonus --ma (default: 2) is used in this mode, and the best possible alignment score is equal to the match bonus (--ma) times the length of the read. This is mutually exclusive with end-to-end alignments.", "checkbox", new JSONObject(){{
 
                     }}, false),
