@@ -43,6 +43,7 @@ import org.labkey.api.pipeline.PipelineJobException;
 import org.labkey.api.pipeline.PipelineService;
 import org.labkey.api.pipeline.PipelineStatusFile;
 import org.labkey.api.pipeline.PipelineUrls;
+import org.labkey.api.query.DetailsURL;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.RequiresSiteAdmin;
 import org.labkey.api.security.permissions.ReadPermission;
@@ -58,6 +59,7 @@ import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
+import org.labkey.primeseq.pipeline.RemoteEtlDebugPipelineJob;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -72,6 +74,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class PrimeseqController extends SpringActionController
@@ -318,6 +321,7 @@ public class PrimeseqController extends SpringActionController
 
             return sql;
         }
+
         @Override
         public boolean handlePost(UpdateFilePathsForm form, BindException errors) throws Exception
         {
@@ -646,7 +650,8 @@ public class PrimeseqController extends SpringActionController
         {
             PipeRoot pipelineRoot = PipelineService.get().findPipelineRoot(getContainer());
             MhcCleanupPipelineJob job = new MhcCleanupPipelineJob(getContainer(), getUser(), getViewContext().getActionURL(), pipelineRoot, o.isPerformDeletes(), o.getMinAnalysisId());
-            if (o.isDeleteMultiLineage()) {
+            if (o.isDeleteMultiLineage())
+            {
                 job.setDropMultiLineageMHC(o.isDeleteMultiLineage());
             }
 
@@ -796,6 +801,37 @@ public class PrimeseqController extends SpringActionController
         public void setRestartJobs(boolean restartJobs)
         {
             _restartJobs = restartJobs;
+        }
+    }
+
+    @UtilityAction(label = "Initiate Remote ETL Debug", description = "This starts a pipeline job designed to debug remote ETL queries")
+    @RequiresSiteAdmin
+    public static class DoRemoteEtlDebugAction extends ConfirmAction<Object>
+    {
+        @Override
+        public ModelAndView getConfirmView(Object o, BindException errors) throws Exception
+        {
+            return new HtmlView(HtmlString.of("This starts a pipeline job designed to simulate remote ETL queries, pausing periodically to simulate a commit. Do you want to continue?"));
+        }
+
+        @Override
+        public boolean handlePost(Object o, BindException errors) throws Exception
+        {
+            PipelineService.get().queueJob(RemoteEtlDebugPipelineJob.create(getContainer(), getUser()));
+
+            return true;
+        }
+
+        @Override
+        public void validateCommand(Object o, Errors errors)
+        {
+
+        }
+
+        @Override
+        public @NotNull URLHelper getSuccessURL(Object o)
+        {
+            return Objects.requireNonNull(DetailsURL.fromString("/pipeline-status/showList.view", getContainer()).getActionURL());
         }
     }
 }

@@ -40,6 +40,7 @@ import org.labkey.primeseq.pipeline.ClusterMaintenanceTask;
 import org.labkey.primeseq.pipeline.DeleteJobCheckpointButton;
 import org.labkey.primeseq.pipeline.ExacloudResourceSettings;
 import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
+import org.labkey.primeseq.pipeline.RemoteEtlDebugPipelineJob;
 import org.labkey.primeseq.pipeline.SequenceJobResourceAllocator;
 import org.labkey.primeseq.query.PerformMhcCleanupButton;
 import org.labkey.primeseq.query.UpdateResourcesButton;
@@ -80,6 +81,7 @@ public class PrimeseqModule extends ExtendedSimpleModule
         ClusterService.get().registerResourceAllocator(new SequenceJobResourceAllocator.Factory());
 
         PipelineService.get().registerPipelineProvider(new MhcCleanupPipelineJob.Provider(this));
+        PipelineService.get().registerPipelineProvider(new RemoteEtlDebugPipelineJob.Provider(this));
 
         //register resources
         new PipelineStartup();
