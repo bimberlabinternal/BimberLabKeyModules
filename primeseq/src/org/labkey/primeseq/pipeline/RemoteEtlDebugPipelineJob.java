@@ -33,6 +33,7 @@ import org.labkey.remoteapi.query.SelectRowsCommand;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RemoteEtlDebugPipelineJob extends PipelineJob
@@ -104,7 +105,7 @@ public class RemoteEtlDebugPipelineJob extends PipelineJob
             sr.setColumns(Arrays.asList("Id", "date", "objectid", "QCState/Label"));
 
             final int BATCH_SIZE = 1000;
-            final int PAUSE_LENGTH = 20;
+            final int PAUSE_LENGTH = 10;
             AtomicInteger al = new AtomicInteger();
             DataIterator di = sr.getWrapperDataIterator(rc.connection, rc.remoteContainer, getContainer(), getLogger());
 
@@ -126,6 +127,7 @@ public class RemoteEtlDebugPipelineJob extends PipelineJob
 
             try (DbScope.Transaction transaction = DbScope.getLabKeyScope().ensureTransaction())
             {
+                final Date lastValue = new Date();
                 di.stream().forEach(row -> {
                     try
                     {
@@ -134,10 +136,14 @@ public class RemoteEtlDebugPipelineJob extends PipelineJob
 
                         if (al.get() % BATCH_SIZE == 0)
                         {
-                            getLogger().info("Imported " + al.get() + " rows. Sleeping for " + PAUSE_LENGTH + " seconds");
+                            Date now = new Date();
+                            long duration = now.getTime() - lastValue.getTime();
+                            lastValue.setTime(now.getTime());
+                            getLogger().info("Imported " + al.get() + " rows. Duration (including sleep): " + (duration/1000));
 
                             try
                             {
+                                getLogger().info("Sleeping for " + PAUSE_LENGTH + " seconds.");
                                 Thread.sleep(PAUSE_LENGTH * 1000);
                                 getLogger().info("Done sleeping");
                             }
