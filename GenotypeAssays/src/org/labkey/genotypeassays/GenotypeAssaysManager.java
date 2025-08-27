@@ -60,6 +60,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GenotypeAssaysManager
 {
@@ -121,6 +122,7 @@ public class GenotypeAssaysManager
             final Map<Integer, List<Map<String, Object>>> rowHash = new HashMap<>();
             final Map<Integer, Set<Integer>> toDeleteByAnalysis = new HashMap<>();
 
+            AtomicInteger records = new AtomicInteger();
             TableSelector tsAlignments = new TableSelector(tableAlignments, cols.values(), new SimpleFilter(FieldKey.fromString("key"), Arrays.asList(pks), CompareType.IN), null);
             tsAlignments.forEach(new Selector.ForEachBlock<ResultSet>()
             {
@@ -128,6 +130,7 @@ public class GenotypeAssaysManager
                 public void exec(ResultSet object) throws SQLException
                 {
                     Results rs = new ResultsImpl(object, cols);
+                    records.getAndIncrement();
 
                     int analysisId = rs.getInt(FieldKey.fromString("analysis_id"));
                     String lineages = rs.getString(FieldKey.fromString("lineages"));
@@ -166,6 +169,11 @@ public class GenotypeAssaysManager
                     rowHash.put(analysisId, rows);
                 }
             });
+
+            if (records.get() != pks.length)
+            {
+                throw new IllegalStateException("The number of records found did not match the number supplied. This indicates a problem with the import.");
+            }
 
             if (!rowHash.isEmpty())
             {
