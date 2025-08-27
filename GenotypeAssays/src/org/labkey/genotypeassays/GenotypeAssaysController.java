@@ -30,6 +30,7 @@ import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
+import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.Pair;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
@@ -37,6 +38,7 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +132,8 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    Pair<List<Integer>, List<Integer>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), protocol, form.getAlleleNames());
+                    String[] alleleNames = Arrays.stream(form.getAlleleNames()).map(PageFlowUtil::decode).toArray(String[]::new);
+                    Pair<List<Integer>, List<Integer>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), protocol, alleleNames);
                     resultProperties.put("runsCreated", ret.first);
                     resultProperties.put("runsDeleted", ret.second);
                 }
