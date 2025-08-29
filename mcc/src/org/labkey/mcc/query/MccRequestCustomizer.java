@@ -98,7 +98,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
                         append(" as expr FROM ").
                         append(" mcc." + MccSchema.TABLE_ANIMAL_REQUESTS + " ar JOIN studydataset.").append(dti.getName()).
                         append(" d ON (d.mccRequestId = ar.rowId)").
-                        append(" WHERE ar.objectid = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+                        append(" WHERE CAST(ar.objectid AS VARCHAR) = CAST(" + ExprColumn.STR_TABLE_ALIAS + ".requestId AS VARCHAR))");
 
                 ExprColumn newCol = new ExprColumn(ti, "transferIds", sql, JdbcType.VARCHAR, ti.getColumn("requestId"));
                 newCol.setLabel("Animal ID(s)");
