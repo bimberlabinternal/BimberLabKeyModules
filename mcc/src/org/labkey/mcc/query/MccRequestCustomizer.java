@@ -58,7 +58,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
 
             ti.addColumn(newCol);
 
-            SQLFragment sql2 = new SQLFragment("(SELECT COALESCE(sum(CASE WHEN r.review IS NULL THEN 1 ELSE 0 END), -1) as expr FROM mcc.requestReviews r WHERE r.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            SQLFragment sql2 = new SQLFragment("(SELECT COALESCE(sum(CASE WHEN r.review IS NULL THEN 1 ELSE 0 END), -1) as expr FROM mcc.requestReviews r WHERE CAST(r.requestId AS VARCHAR(36)) = CAST(" + ExprColumn.STR_TABLE_ALIAS + ".requestId AS VARCHAR(36)))");
             ExprColumn newCol2 = new ExprColumn(ti, "pendingRabReviews", sql2, JdbcType.INTEGER, ti.getColumn("requestId"));
             newCol2.setLabel("Pending RAB Reviews");
             ti.addColumn(newCol2);
@@ -66,7 +66,7 @@ public class MccRequestCustomizer extends AbstractTableCustomizer
 
         if (ti.getColumn("numAnimalsRequested") == null)
         {
-            SQLFragment sql = new SQLFragment("(SELECT SUM(rc.numberofanimals) as expr FROM mcc." + MccSchema.TABLE_REQUEST_COHORTS + " rc WHERE rc.requestId = " + ExprColumn.STR_TABLE_ALIAS + ".requestId)");
+            SQLFragment sql = new SQLFragment("(SELECT SUM(rc.numberofanimals) as expr FROM mcc." + MccSchema.TABLE_REQUEST_COHORTS + " rc WHERE CAST(rc.requestId AS VARCHAR(36)) = CAST(" + ExprColumn.STR_TABLE_ALIAS + ".requestId AS VARCHAR(36)))");
             ExprColumn newCol = new ExprColumn(ti, "numAnimalsRequested", sql, JdbcType.INTEGER, ti.getColumn("requestId"));
             newCol.setLabel("# Animals Requested");
             newCol.setURL(DetailsURL.fromString("/query/executeQuery.view?schemaName=mcc&query.queryName=" + MccSchema.TABLE_REQUEST_COHORTS + "&query.requestId~eq=${requestId}"));
