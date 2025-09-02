@@ -56,10 +56,10 @@ public class MccManager
         Fulfilled(8, "Fulfilled", MccRequestAdminPermission.class),
         Withdrawn(9, "Withdrawn", MccRequestorPermission.class);
 
-        int sortOrder;
-        String label;
-        Class<? extends Permission> updatePermission;
-        Class<? extends Permission> insertPermission;
+        final int sortOrder;
+        final String label;
+        final Class<? extends Permission> updatePermission;
+        final Class<? extends Permission> insertPermission;
 
         RequestStatus(int sortOrder, String label, Class<? extends Permission> editPermission)
         {
