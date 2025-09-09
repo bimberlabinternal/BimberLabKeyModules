@@ -463,6 +463,7 @@ public class MccTest extends BaseWebDriverTest
             new FormElement("existing-nhp-facilities", "existingnhpfacilities", "Existing NHP facilities").select("existing"),
             new FormElement("animal-welfare", "animalwelfare", "welfare").inputType("textarea"),
             new FormElement("certify", "certify", true).checkBox(),
+            new FormElement("shippingAcknowledgement", "shippingAcknowledgement", true).checkBox(),
             new FormElement("vet-last-name", "vetlastname", "vet last name"),
             new FormElement("vet-first-name", "vetfirstname", "vet first name"),
             new FormElement("vet-email", "vetemail", "vet@email.com"),

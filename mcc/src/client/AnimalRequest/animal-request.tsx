@@ -44,7 +44,8 @@ import {
     institutionTypeOptions,
     methodsProposedPlaceholder,
     signingOfficialTooltip,
-    terminalProceduresLabel
+    terminalProceduresLabel,
+    shippingAcknowledgementStatement
 } from './components/values';
 import AnimalCensus from './components/census';
 
@@ -330,6 +331,7 @@ export function AnimalRequest() {
                         "grantnumber" : data.get("funding-grant-number"),
                         "applicationduedate": data.get("funding-application-due-date"),
                         "comments": data.get("comments"),
+                        "shippingAcknowledgement": !!data.get("shippingAcknowledgement"),
                         "status": requestData.request.status,
                     }]
                 },
@@ -461,308 +463,395 @@ export function AnimalRequest() {
 
     return (
         <>
-        <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off" id={"animalRequestForm"} ref={formRef}>
-            <h3>Overview</h3>
+            <form className="tw-w-full tw-max-w-4xl" onSubmit={handleSubmit} autoComplete="off" id={'animalRequestForm'}
+                  ref={formRef}>
+                <h3>Overview</h3>
 
-            <Title text="1. Project Title*"/>
-            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <Input id="project-title" ariaLabel="Title" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="Project Title" defaultValue={requestData.request.title}/>
-                </ErrorMessageHandler>
-            </div>
-
-            <Title text="2. Project Narrative*"/>
-            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <TextArea id="project-narrative" ariaLabel="Project Narrative" isSubmitting={isSubmitting} placeholder="Project Narrative" required={doEnforceRequiredFields()} defaultValue={requestData.request.narrative}/>
-                </ErrorMessageHandler>
-            </div>
-
-            <Title text="3. Research/Disease Focus*"/>
-            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <Input id="diseasefocus" ariaLabel="Research/Disease Focus" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="What is the research area or disease focus of this project" defaultValue={requestData.request.diseasefocus}/>
-                </ErrorMessageHandler>
-            </div>
-
-            <Title text="4. How does the research relate to neuroscience?*"/>
-            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <TextArea id="neuroscience" ariaLabel="Connection to neuroscience" isSubmitting={isSubmitting} placeholder="How does the research relate to neuroscience" required={doEnforceRequiredFields()} defaultValue={requestData.request.neuroscience}/>
-                </ErrorMessageHandler>
-            </div>
-
-            <h3>General Information</h3>
-            <ErrorMessageHandler isSubmitting={isSubmitting}>
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                <Title text="1. Principal Investigator*"/>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="Last Name" defaultValue={requestData.request.lastname}/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} placeholder="First Name" defaultValue={requestData.request.firstname}/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={false} placeholder="Middle Initial" defaultValue={requestData.request.middleinitial} maxLength="8"/>
-                </div>
-            </div>
-            </ErrorMessageHandler>
-
-            <ErrorMessageHandler isSubmitting={isSubmitting}>
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                    <Title text="2. Are you an early-stage investigator?&nbsp;"/>
-                    <Tooltip id="early-stage-investigator-helper"
-                       text={earlyInvestigatorTooltip}
-                    />
-                </div>
-
-                <div className="tw-w-full tw-px-3 tw-mt-6">
-                    <YesNoRadio id="is-early-stage-investigator" ariaLabel="Early Stage Investigator" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request.earlystageinvestigator}/>
-                </div>
-            </div>
-            </ErrorMessageHandler>
-
-            <ErrorMessageHandler isSubmitting={isSubmitting}>
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                <Title text="3. Affiliated research institution*"/>
-
+                <Title text="1. Project Title*"/>
                 <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-name" ariaLabel="Institution Name" isSubmitting={isSubmitting} placeholder="Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutionname}/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-city" ariaLabel="Institution City" isSubmitting={isSubmitting} placeholder="City" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutioncity}/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-state" ariaLabel="Institution State" isSubmitting={isSubmitting} placeholder="State" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutionstate}/>
-                </div>
-
-                <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Input id="institution-country" ariaLabel="Institution Country" isSubmitting={isSubmitting} placeholder="Country" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutioncountry}/>
-                </div>
-
-                <Title text="4. Affiliated Research Institution Type*"/>
-
-                <div className="tw-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
-                    <Select id="institution-type" ariaLabel="Institution Type" isSubmitting={isSubmitting} placeholder="Type" required={doEnforceRequiredFields()} defaultValue={requestData.request.institutiontype} options={institutionTypeOptions}/>
-                </div>
-            </div>
-            </ErrorMessageHandler>
-
-            <ErrorMessageHandler isSubmitting={isSubmitting}>
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                    <Title text="5. Institution Signing Official*&nbsp;"/>
-                    <Tooltip id="signing-official-helper"
-                         text={signingOfficialTooltip}
-                    />
-                </div>
-
-
-                <div className="tw-flex tw-flex-wrap tw-mt-6">
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.officiallastname}/>
-                    </div>
-
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} placeholder="First Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.officialfirstname}/>
-                    </div>
-
-                    <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="official-email" ariaLabel="Email Address" isSubmitting={isSubmitting} placeholder="Email Address" required={doEnforceRequiredFields()} defaultValue={requestData.request.officialemail}/>
-                    </div>
-                </div>
-            </div>
-            </ErrorMessageHandler>
-
-            <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
-                <Title text="6. Co-Investigators"/>
-
-                <CoInvestigators isSubmitting={isSubmitting} required={doEnforceRequiredFields()} coinvestigators={requestData.coinvestigators} onAddRecord={onAddInvestigator} onRemoveRecord={onRemoveCoInvestigator} />
-            </div>
-
-            <Title text="7. Existing or proposed funding source (select all that apply)"/>
-            {/* TODO: Make into checkbox group*/}
-            <Funding id="funding" isSubmitting={isSubmitting} defaultValue={requestData.request} required={doEnforceRequiredFields()}/>
-
-            <h3>Institutional Animal Facilities and Capabilities</h3>
-            <div className="tw-w-full tw-px-3">
-                <Title text="1. Does your institution have existing NHP facilities?"/>
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                        <Select id="existing-nhp-facilities" ariaLabel="Existing NHP Facilities" isSubmitting={isSubmitting} options={existingNHPFacilityOptions} defaultValue={requestData.request.existingnhpfacilities} required={doEnforceRequiredFields()}/>
-                    </div>
-                </ErrorMessageHandler>
-
-                <Title text="2. Does your institution have an existing marmoset colony?"/>
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                        <Select id="existing-marmoset-colony" ariaLabel="Existing Marmoset Colony" isSubmitting={isSubmitting} options={existingMarmosetColonyOptions} defaultValue={requestData.request.existingmarmosetcolony} required={doEnforceRequiredFields()}/>
-                    </div>
-                </ErrorMessageHandler>
-
-                <Title text="3. Do you plan to breed marmosets?"/>
-                <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} request={requestData.request} required={doEnforceRequiredFields()}/>
-                </div>
-            </div>
-
-            <h3>Research Details</h3>
-
-            <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <div className="tw-w-full tw-px-3 tw-mb-4">
-                    <Title text={"1. " + experimentalRationalePlaceholder}/>
-                    <Tooltip id="research-use-statement-helper"
-                       text={experimentalRationalePlaceholder}
-                    />
-
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <TextArea id="experiment-rationale" ariaLabel="Experimental rationale" isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.experimentalrationale}/>
+                        <Input id="project-title" ariaLabel="Title" isSubmitting={isSubmitting}
+                               required={doEnforceRequiredFields()} placeholder="Project Title"
+                               defaultValue={requestData.request.title}/>
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text="2. Animal Cohorts"/>
-                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
-                    <AnimalCohorts isSubmitting={isSubmitting} cohorts={requestData.cohorts} required={doEnforceRequiredFields()} onAddCohort={onAddCohort} onRemoveCohort={onRemoveCohort}/>
-                </div>
-
-                <Title text={"3. " + methodsProposedPlaceholder}/>
-                <div className="tw-w-full tw-px-3 tw-mb-6">
+                <Title text="2. Project Narrative*"/>
+                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
                     <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="methods-proposed" ariaLabel="Methods Proposed" isSubmitting={isSubmitting} placeholder={methodsProposedPlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.methodsproposed}/>
-                    </div>
+                        <TextArea id="project-narrative" ariaLabel="Project Narrative" isSubmitting={isSubmitting}
+                                  placeholder="Project Narrative" required={doEnforceRequiredFields()}
+                                  defaultValue={requestData.request.narrative}/>
                     </ErrorMessageHandler>
                 </div>
+
+                <Title text="3. Research/Disease Focus*"/>
+                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <Input id="diseasefocus" ariaLabel="Research/Disease Focus" isSubmitting={isSubmitting}
+                               required={doEnforceRequiredFields()}
+                               placeholder="What is the research area or disease focus of this project"
+                               defaultValue={requestData.request.diseasefocus}/>
+                    </ErrorMessageHandler>
+                </div>
+
+                <Title text="4. How does the research relate to neuroscience?*"/>
+                <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <TextArea id="neuroscience" ariaLabel="Connection to neuroscience" isSubmitting={isSubmitting}
+                                  placeholder="How does the research relate to neuroscience"
+                                  required={doEnforceRequiredFields()} defaultValue={requestData.request.neuroscience}/>
+                    </ErrorMessageHandler>
+                </div>
+
+                <h3>General Information</h3>
+                <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                        <Title text="1. Principal Investigator*"/>
+
+                        <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="investigator-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting}
+                                   required={doEnforceRequiredFields()} placeholder="Last Name"
+                                   defaultValue={requestData.request.lastname}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="investigator-first-name" ariaLabel="First Name" isSubmitting={isSubmitting}
+                                   required={doEnforceRequiredFields()} placeholder="First Name"
+                                   defaultValue={requestData.request.firstname}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="investigator-middle-initial" isSubmitting={isSubmitting} required={false}
+                                   placeholder="Middle Initial" defaultValue={requestData.request.middleinitial}
+                                   maxLength="8"/>
+                        </div>
+                    </div>
+                </ErrorMessageHandler>
 
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
                     <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
                         <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                            <Title text={"4. " + terminalProceduresLabel}/>
+                            <Title text="2. Are you an early-stage investigator?&nbsp;"/>
+                            <Tooltip id="early-stage-investigator-helper"
+                                     text={earlyInvestigatorTooltip}
+                            />
                         </div>
 
                         <div className="tw-w-full tw-px-3 tw-mt-6">
-                            <YesNoRadio id="is-terminalprocedures" ariaLabel="Terminal procedures" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} defaultValue={requestData.request.terminalprocedures}/>
+                            <YesNoRadio id="is-early-stage-investigator" ariaLabel="Early Stage Investigator"
+                                        isSubmitting={isSubmitting} required={doEnforceRequiredFields()}
+                                        defaultValue={requestData.request.earlystageinvestigator}/>
                         </div>
                     </div>
                 </ErrorMessageHandler>
 
-                <Title text={"5. " + collaborationsPlaceholder}/>
-                <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="collaborations" ariaLabel="Collaborations" isSubmitting={isSubmitting} placeholder={collaborationsPlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.collaborations}/>
+                <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                        <Title text="3. Affiliated research institution*"/>
+
+                        <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="institution-name" ariaLabel="Institution Name" isSubmitting={isSubmitting}
+                                   placeholder="Name" required={doEnforceRequiredFields()}
+                                   defaultValue={requestData.request.institutionname}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="institution-city" ariaLabel="Institution City" isSubmitting={isSubmitting}
+                                   placeholder="City" required={doEnforceRequiredFields()}
+                                   defaultValue={requestData.request.institutioncity}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="institution-state" ariaLabel="Institution State" isSubmitting={isSubmitting}
+                                   placeholder="State" required={doEnforceRequiredFields()}
+                                   defaultValue={requestData.request.institutionstate}/>
+                        </div>
+
+                        <div className="tw-w-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Input id="institution-country" ariaLabel="Institution Country" isSubmitting={isSubmitting}
+                                   placeholder="Country" required={doEnforceRequiredFields()}
+                                   defaultValue={requestData.request.institutioncountry}/>
+                        </div>
+
+                        <Title text="4. Affiliated Research Institution Type*"/>
+
+                        <div className="tw-full md:tw-w-1/3 tw-px-3 tw-mb-6 md:tw-mb-0">
+                            <Select id="institution-type" ariaLabel="Institution Type" isSubmitting={isSubmitting}
+                                    placeholder="Type" required={doEnforceRequiredFields()}
+                                    defaultValue={requestData.request.institutiontype}
+                                    options={institutionTypeOptions}/>
+                        </div>
                     </div>
+                </ErrorMessageHandler>
+
+                <ErrorMessageHandler isSubmitting={isSubmitting}>
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                        <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                            <Title text="5. Institution Signing Official*&nbsp;"/>
+                            <Tooltip id="signing-official-helper"
+                                     text={signingOfficialTooltip}
+                            />
+                        </div>
+
+
+                        <div className="tw-flex tw-flex-wrap tw-mt-6">
+                            <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                                <Input id="official-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting}
+                                       placeholder="Last Name" required={doEnforceRequiredFields()}
+                                       defaultValue={requestData.request.officiallastname}/>
+                            </div>
+
+                            <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                                <Input id="official-first-name" ariaLabel="First Name" isSubmitting={isSubmitting}
+                                       placeholder="First Name" required={doEnforceRequiredFields()}
+                                       defaultValue={requestData.request.officialfirstname}/>
+                            </div>
+
+                            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                                <Input id="official-email" ariaLabel="Email Address" isSubmitting={isSubmitting}
+                                       placeholder="Email Address" required={doEnforceRequiredFields()}
+                                       defaultValue={requestData.request.officialemail}/>
+                            </div>
+                        </div>
+                    </div>
+                </ErrorMessageHandler>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-10">
+                    <Title text="6. Co-Investigators"/>
+
+                    <CoInvestigators isSubmitting={isSubmitting} required={doEnforceRequiredFields()}
+                                     coinvestigators={requestData.coinvestigators} onAddRecord={onAddInvestigator}
+                                     onRemoveRecord={onRemoveCoInvestigator}/>
+                </div>
+
+                <Title text="7. Existing or proposed funding source (select all that apply)"/>
+                {/* TODO: Make into checkbox group*/}
+                <Funding id="funding" isSubmitting={isSubmitting} defaultValue={requestData.request}
+                         required={doEnforceRequiredFields()}/>
+
+                <h3>Institutional Animal Facilities and Capabilities</h3>
+                <div className="tw-w-full tw-px-3">
+                    <Title text="1. Does your institution have existing NHP facilities?"/>
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                            <Select id="existing-nhp-facilities" ariaLabel="Existing NHP Facilities"
+                                    isSubmitting={isSubmitting} options={existingNHPFacilityOptions}
+                                    defaultValue={requestData.request.existingnhpfacilities}
+                                    required={doEnforceRequiredFields()}/>
+                        </div>
+                    </ErrorMessageHandler>
+
+                    <Title text="2. Does your institution have an existing marmoset colony?"/>
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                            <Select id="existing-marmoset-colony" ariaLabel="Existing Marmoset Colony"
+                                    isSubmitting={isSubmitting} options={existingMarmosetColonyOptions}
+                                    defaultValue={requestData.request.existingmarmosetcolony}
+                                    required={doEnforceRequiredFields()}/>
+                        </div>
+                    </ErrorMessageHandler>
+
+                    <Title text="3. Do you plan to breed marmosets?"/>
+                    <div className="tw-w-full tw-px-3 tw-mb-4">
+                        <AnimalBreeding id="animal-breeding" isSubmitting={isSubmitting} request={requestData.request}
+                                        required={doEnforceRequiredFields()}/>
+                    </div>
+                </div>
+
+                <h3>Research Details</h3>
+
+                <div className="tw-flex tw-flex-wrap tw-mx-2">
+                    <div className="tw-w-full tw-px-3 tw-mb-4">
+                        <Title text={'1. ' + experimentalRationalePlaceholder}/>
+                        <Tooltip id="research-use-statement-helper"
+                                 text={experimentalRationalePlaceholder}
+                        />
+
+                        <ErrorMessageHandler isSubmitting={isSubmitting}>
+                            <TextArea id="experiment-rationale" ariaLabel="Experimental rationale"
+                                      isSubmitting={isSubmitting} placeholder={experimentalRationalePlaceholder}
+                                      required={doEnforceRequiredFields()}
+                                      defaultValue={requestData.request.experimentalrationale}/>
+                        </ErrorMessageHandler>
+                    </div>
+
+                    <Title text="2. Animal Cohorts"/>
+                    <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-6">
+                        <AnimalCohorts isSubmitting={isSubmitting} cohorts={requestData.cohorts}
+                                       required={doEnforceRequiredFields()} onAddCohort={onAddCohort}
+                                       onRemoveCohort={onRemoveCohort}/>
+                    </div>
+
+                    <Title text={'3. ' + methodsProposedPlaceholder}/>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <ErrorMessageHandler isSubmitting={isSubmitting}>
+                            <div className="tw-w-full tw-px-3 tw-mb-6">
+                                <TextArea id="methods-proposed" ariaLabel="Methods Proposed" isSubmitting={isSubmitting}
+                                          placeholder={methodsProposedPlaceholder} required={doEnforceRequiredFields()}
+                                          defaultValue={requestData.request.methodsproposed}/>
+                            </div>
+                        </ErrorMessageHandler>
+                    </div>
+
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                            <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                                <Title text={'4. ' + terminalProceduresLabel}/>
+                            </div>
+
+                            <div className="tw-w-full tw-px-3 tw-mt-6">
+                                <YesNoRadio id="is-terminalprocedures" ariaLabel="Terminal procedures"
+                                            isSubmitting={isSubmitting} required={doEnforceRequiredFields()}
+                                            defaultValue={requestData.request.terminalprocedures}/>
+                            </div>
+                        </div>
+                    </ErrorMessageHandler>
+
+                    <Title text={'5. ' + collaborationsPlaceholder}/>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <ErrorMessageHandler isSubmitting={isSubmitting}>
+                            <div className="tw-w-full tw-px-3 tw-mb-6">
+                                <TextArea id="collaborations" ariaLabel="Collaborations" isSubmitting={isSubmitting}
+                                          placeholder={collaborationsPlaceholder} required={doEnforceRequiredFields()}
+                                          defaultValue={requestData.request.collaborations}/>
+                            </div>
+                        </ErrorMessageHandler>
+                    </div>
+
+                    <Title text={'6. ' + animalWellfarePlaceholder}/>
+                    <div className="tw-w-full tw-px-3 tw-mb-6">
+                        <ErrorMessageHandler isSubmitting={isSubmitting}>
+                            <div className="tw-w-full tw-px-3 tw-mb-6">
+                                <TextArea id="animal-welfare" ariaLabel="Animal Welfare" isSubmitting={isSubmitting}
+                                          placeholder={animalWellfarePlaceholder} required={doEnforceRequiredFields()}
+                                          defaultValue={requestData.request.animalwelfare}/>
+                            </div>
+                        </ErrorMessageHandler>
+
+                        <ErrorMessageHandler isSubmitting={isSubmitting}>
+                            <div className="tw-w-full tw-px-3 tw-mb-6">
+                                <input type="checkbox" name="certify" id="certify" aria-label="Certify"
+                                       className={(isSubmitting ? 'custom-invalid' : '')}
+                                       required={doEnforceRequiredFields()}
+                                       defaultChecked={requestData.request.certify}/>
+                                <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
+                            </div>
+                        </ErrorMessageHandler>
+                    </div>
+
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
+                            <Title text="7. Attending veterinarian"/>
+
+                            <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                                <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting}
+                                       placeholder="Last Name" required={doEnforceRequiredFields()}
+                                       defaultValue={requestData.request.vetlastname}/>
+                            </div>
+
+                            <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
+                                <Input id="vet-first-name" ariaLabel="First Name" isSubmitting={isSubmitting}
+                                       placeholder="First Name" required={doEnforceRequiredFields()}
+                                       defaultValue={requestData.request.vetfirstname}/>
+                            </div>
+
+                            <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
+                                <Input id="vet-email" ariaLabel="Email" isSubmitting={isSubmitting}
+                                       placeholder="Email Address" required={doEnforceRequiredFields()}
+                                       defaultValue={requestData.request.vetemail}/>
+                            </div>
+                        </div>
                     </ErrorMessageHandler>
                 </div>
 
-                <Title text={"6. " + animalWellfarePlaceholder}/>
-                <div className="tw-w-full tw-px-3 tw-mb-6">
-                    <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="animal-welfare" ariaLabel="Animal Welfare" isSubmitting={isSubmitting} placeholder={animalWellfarePlaceholder} required={doEnforceRequiredFields()} defaultValue={requestData.request.animalwelfare}/>
-                    </div>
-                    </ErrorMessageHandler>
+                <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()}
+                               request={requestData.request}/>
 
-                    <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <input type="checkbox" name="certify" id="certify" aria-label="Certify" className={(isSubmitting ? "custom-invalid" : "")} required={doEnforceRequiredFields()} defaultChecked={requestData.request.certify}/>
-                        <label className="tw-text-gray-700 ml-1">{certificationLabel}</label>
-                    </div>
-                    </ErrorMessageHandler>
+                <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
+                    <Title text="9. Will participate in the MCC Census?&nbsp;"/>
+                    <Tooltip id="census-helper" text={censusToolTip}/>
+                </div>
+                <div className="tw-w-full tw-px-3 tw-mt-3">
+                    <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()}
+                                  request={requestData.request}/>
+                </div>
+
+                <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-4">
+                    <Title text="10. Shipment Acknowledgement&nbsp;"/>
                 </div>
 
                 <ErrorMessageHandler isSubmitting={isSubmitting}>
-                <div className="tw-flex tw-flex-wrap tw-mx-2 tw-mb-4">
-                    <Title text="7. Attending veterinarian"/>
-
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-last-name" ariaLabel="Last Name" isSubmitting={isSubmitting} placeholder="Last Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetlastname}/>
+                    <div className="tw-w-full tw-px-6 tw-mb-6">
+                        {shippingAcknowledgementStatement}
+                        <p />
+                        <input type="checkbox" name="shippingAcknowledgement" id="shippingAcknowledgement" aria-label="Shipping Acknowledgement"
+                               className={(isSubmitting ? 'custom-invalid' : '')}
+                               required={doEnforceRequiredFields()}
+                               defaultChecked={requestData.request.shippingAcknowledgement}/>
+                        <label className="tw-text-gray-700 ml-1">I acknowledge this statement</label>
                     </div>
+                </ErrorMessageHandler>
 
-                    <div className="tw-w-full md:tw-w-1/2 tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-first-name" ariaLabel="First Name" isSubmitting={isSubmitting} placeholder="First Name" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetfirstname}/>
-                    </div>
-
-                    <div className="tw-w-full tw-px-3 tw-mb-6 md:tw-mb-0">
-                        <Input id="vet-email" ariaLabel="Email" isSubmitting={isSubmitting} placeholder="Email Address" required={doEnforceRequiredFields()} defaultValue={requestData.request.vetemail}/>
-                    </div>
+                <Title text={'11. ' + commentsPlaceholder}/>
+                <div className="tw-w-full tw-px-3 tw-mb-6">
+                    <ErrorMessageHandler isSubmitting={isSubmitting}>
+                        <div className="tw-w-full tw-px-3 tw-mb-6">
+                            <TextArea id="comments" ariaLabel="Comments" isSubmitting={isSubmitting}
+                                      placeholder={commentsPlaceholder} required={false}
+                                      defaultValue={requestData.request.comments}/>
+                        </div>
+                    </ErrorMessageHandler>
                 </div>
-                </ErrorMessageHandler>
-            </div>
 
-            <IACUCProtocol id="iacuc" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
+                <div className="tw-flex tw-flex-wrap tw-mx-2">
+                    <Title text="Request Status: "/>{requestData.request.status}
+                </div>
 
-            <div className="tw-relative tw-w-full tw-mb-6 md:tw-mb-0">
-                <Title text="9. Will participate in the MCC Census?&nbsp;"/>
-                <Tooltip id="census-helper" text={censusToolTip}/>
-            </div>
-            <div className="tw-w-full tw-px-3 tw-mt-3">
-                <AnimalCensus id="census" isSubmitting={isSubmitting} required={doEnforceRequiredFields()} request={requestData.request}/>
-            </div>
+                <div className="tw-flex tw-flex-wrap tw-mx-2">
+                    <Button baseColor="red" marginLeft="auto" text="Cancel" onClick={(e) => {
+                        e.preventDefault();
 
-            <Title text={"10. " + commentsPlaceholder}/>
-            <div className="tw-w-full tw-px-3 tw-mb-6">
-                <ErrorMessageHandler isSubmitting={isSubmitting}>
-                    <div className="tw-w-full tw-px-3 tw-mb-6">
-                        <TextArea id="comments" ariaLabel="Comments" isSubmitting={isSubmitting} placeholder={commentsPlaceholder} required={false} defaultValue={requestData.request.comments}/>
-                    </div>
-                </ErrorMessageHandler>
-            </div>
+                        if (confirm('You are about to leave this page.')) {
+                            window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view');
+                        }
+                    }}/>
 
-            <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <Title text="Request Status: "/>{requestData.request.status}
-            </div>
-
-            <div className="tw-flex tw-flex-wrap tw-mx-2">
-                <Button baseColor="red" marginLeft="auto" text="Cancel" onClick={(e) => {
-                    e.preventDefault()
-
-                    if (confirm("You are about to leave this page.")) {
-                        window.location.href = ActionURL.buildURL('mcc', 'mccRequests.view')
-                    }
-                }} />
-
-                <Button onClick={(e) => {
-                    handleSubmitButton(e, false);
-                 }} text={getSaveButtonText()} display={hasEditPermission()}/>
-
-                <Button onClick={(e) => {
-                    handleSubmitButton(e, true);
-                 }} text={getSubmitButtonText()} display={hasEditPermission()}/>
-
-                <Button onClick={(e) => {
-                    e.preventDefault()
-                    setShowWithdrawDialog(true)
-                }} text={"Withdraw"} display={shouldShowWithdraw()}/>
-            </div>
-        </form>
-
-        <SavingOverlay display={displayOverlay} />
-
-        <Dialog open={showWithdrawDialog}>
-            <DialogTitle>Withdraw Request</DialogTitle>
-            <DialogContent>
-                <DialogContentText>Please enter a reason for withdrawing this request</DialogContentText>
-                <TextareaAutosize
-                    minRows={4}
-                    id="withdrawReason"
-                    required={true}
-                    autoFocus={true}
-                    defaultValue={withdrawReasonText}
-                    form={"animalRequestForm"}
-                    onChange={(e) => setWithdrawReasonText(e.target.value)}
-                />
-            </DialogContent>
-            <DialogActions>
-                <Box mr="5px">
                     <Button onClick={(e) => {
-                        if (!withdrawReasonText) {
+                        handleSubmitButton(e, false);
+                    }} text={getSaveButtonText()} display={hasEditPermission()}/>
+
+                    <Button onClick={(e) => {
+                        handleSubmitButton(e, true);
+                    }} text={getSubmitButtonText()} display={hasEditPermission()}/>
+
+                    <Button onClick={(e) => {
+                        e.preventDefault();
+                        setShowWithdrawDialog(true);
+                    }} text={'Withdraw'} display={shouldShowWithdraw()}/>
+                </div>
+            </form>
+
+            <SavingOverlay display={displayOverlay}/>
+
+            <Dialog open={showWithdrawDialog}>
+                <DialogTitle>Withdraw Request</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>Please enter a reason for withdrawing this request</DialogContentText>
+                    <TextareaAutosize
+                        minRows={4}
+                        id="withdrawReason"
+                        required={true}
+                        autoFocus={true}
+                        defaultValue={withdrawReasonText}
+                        form={'animalRequestForm'}
+                        onChange={(e) => setWithdrawReasonText(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Box mr="5px">
+                        <Button onClick={(e) => {
+                            if (!withdrawReasonText) {
                             alert("Must enter the reason")
                             return
                         }
