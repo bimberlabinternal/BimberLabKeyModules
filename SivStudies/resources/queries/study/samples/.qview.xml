@@ -2,6 +2,7 @@
     <columns>
         <column name="Id"/>
         <column name="date"/>
+        <column name="timePostSivChallenge/daysPostInfection"/>
         <column name="sampleType"/>
         <column name="quantity"/>
         <column name="quantity_units"/>
