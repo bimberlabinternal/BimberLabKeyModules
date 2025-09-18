@@ -87,6 +87,9 @@
             <column columnName="reason">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Medications/Treatments</tableTitle>
     </table>
@@ -124,6 +127,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="reason">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -199,6 +205,9 @@
             <column columnName="qualresult">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Viral Loads</tableTitle>
     </table>
@@ -238,6 +247,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="method">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -360,6 +372,9 @@
             <column columnName="quantity_units">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Samples</tableTitle>
     </table>
@@ -395,6 +410,9 @@
             <column columnName="score">
                 <datatype>double</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Genetic Data</tableTitle>
     </table>
@@ -421,6 +439,9 @@
             <column columnName="procedure">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Procedures</tableTitle>
     </table>
@@ -445,6 +466,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="description">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -482,7 +506,7 @@
             <column columnName="units">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="comment">
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>

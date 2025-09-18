@@ -7,6 +7,7 @@
         <column name="result"/>
         <column name="units"/>
         <column name="method"/>
+        <column name="comments"/>
         <column name="dataSource"/>
         <column name="viralLoad"/>
         <column name="ageAtTime/AgeAtTime"/>

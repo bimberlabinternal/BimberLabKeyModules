@@ -24,7 +24,7 @@
                     <column columnName="units">
                         <columnTitle>Units</columnTitle>
                     </column>
-                    <column columnName="comment">
+                    <column columnName="comments">
                         <columnTitle>Comments</columnTitle>
                     </column>
                     <column columnName="dataSource">
