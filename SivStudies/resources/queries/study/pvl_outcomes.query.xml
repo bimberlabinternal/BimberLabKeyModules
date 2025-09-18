@@ -5,7 +5,11 @@
                 <columns>
                     <column columnName="Id"/>
                     <column columnName="date">
-                        <columnTitle>Date</columnTitle>
+                        <columnTitle>Window Start</columnTitle>
+                        <formatString>Date</formatString>
+                    </column>
+                    <column columnName="enddate">
+                        <columnTitle>Window End</columnTitle>
                         <formatString>Date</formatString>
                     </column>
                     <column columnName="outcome">

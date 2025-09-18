@@ -563,6 +563,9 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
+            <column columnName="enddate">
+                <datatype>timestamp</datatype>
+            </column>
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
