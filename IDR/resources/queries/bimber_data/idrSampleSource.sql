@@ -5,7 +5,10 @@ ID as sampleid,
 SampleDate as date,
 Tissue as sampleType,
 CellCnt as quantity,
-
+freezer,
+rack,
+box,
+"position",
 'Hansen/IDR' as dataSource
 
 FROM bimber_data.ln_loc
@@ -20,12 +23,15 @@ ID as sampleid,
 SampleDate as date,
 CASE
     WHEN (Tissue IS NOT NULL AND Tissue != '') AND (SampleType IS NOT NULL AND SampleType != '') THEN (SampleType || ' / ' || Tissue)
-    WHEN (Tissue IS NOT NULL AND Tissue = '') THEN Tissue
-    WHEN (SampleType IS NOT NULL AND Tissue = '') THEN SampleType
+    WHEN (Tissue IS NOT NULL AND Tissue != '') THEN Tissue
+    WHEN (SampleType IS NOT NULL AND SampleType != '') THEN SampleType
     ELSE NULL
 END AS sampleType,
 null as quantity,
-
+freezer,
+rack,
+box,
+"position",
 'Hansen/IDR' as dataSource
 
 FROM bimber_data.ult_loc

@@ -37,7 +37,7 @@
                     <setting name="dataSourceSchema" value="bimber_data"/>
                     <setting name="dataSourceQuery" value="idrSampleSource"/>
                     <setting name="dataSourceSubjectColumn" value="Id"/>
-                    <setting name="dataSourceColumns" value="Id,date,sampleId,sampleType,quantity"/>
+                    <setting name="dataSourceColumns" value="Id,date,sampleId,sampleType,quantity,freezer,rack,box,position"/>
                     <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
 
                     <setting name="targetSchema" value="study"/>

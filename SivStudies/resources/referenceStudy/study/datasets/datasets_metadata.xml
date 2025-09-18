@@ -372,6 +372,18 @@
             <column columnName="quantity_units">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="freezer">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="rack">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="box">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="position">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>

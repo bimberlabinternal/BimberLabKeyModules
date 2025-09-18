@@ -7,6 +7,10 @@
         <column name="quantity"/>
         <column name="quantity_units"/>
         <column name="sampleId"/>
+        <column name="freezer"/>
+        <column name="rack"/>
+        <column name="box"/>
+        <column name="position"/>
         <column name="comments"/>
         <column name="dataSource"/>
         <column name="viralLoad"/>

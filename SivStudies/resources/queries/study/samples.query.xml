@@ -23,6 +23,18 @@
                     <column columnName="quantity_units">
                         <columnTitle>Quantity Units</columnTitle>
                     </column>
+                    <column columnName="freezer">
+                        <columnTitle>Freezer</columnTitle>
+                    </column>
+                    <column columnName="rack">
+                        <columnTitle>Rack</columnTitle>
+                    </column>
+                    <column columnName="box">
+                        <columnTitle>Box</columnTitle>
+                    </column>
+                    <column columnName="position">
+                        <columnTitle>Position</columnTitle>
+                    </column>
                     <column columnName="comments">
                         <columnTitle>Comments</columnTitle>
                         <inputType>textarea</inputType>
