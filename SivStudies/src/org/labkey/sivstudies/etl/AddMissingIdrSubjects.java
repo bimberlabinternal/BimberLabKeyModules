@@ -52,7 +52,7 @@ public class AddMissingIdrSubjects implements TaskRefTask
         allIds.removeAll(existingIds);
         if (allIds.isEmpty())
         {
-            return null;
+            return new RecordedActionSet();
         }
 
         allIds = new ArrayList<>(new CaseInsensitiveHashSet(allIds));
@@ -77,7 +77,7 @@ public class AddMissingIdrSubjects implements TaskRefTask
             throw new PipelineJobException(e);
         }
 
-        return null;
+        return new RecordedActionSet();
     }
 
     @Override
