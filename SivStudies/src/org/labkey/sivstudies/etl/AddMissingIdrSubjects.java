@@ -2,6 +2,7 @@ package org.labkey.sivstudies.etl;
 
 import org.apache.xmlbeans.XmlException;
 import org.jetbrains.annotations.NotNull;
+import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.TableSelector;
@@ -49,11 +50,12 @@ public class AddMissingIdrSubjects implements TaskRefTask
         List<String> allIds = new ArrayList<>(new TableSelector(us2.getTable("subjects"), PageFlowUtil.set("Rh"), null, null).getArrayList(String.class));
 
         allIds.removeAll(existingIds);
-
         if (allIds.isEmpty())
         {
             return null;
         }
+
+        allIds = new ArrayList<>(new CaseInsensitiveHashSet(allIds));
 
         pipelineJob.getLogger().info("Creating {} subjects", allIds.size());
         List<Map<String, Object>> toInsert = new ArrayList<>();
