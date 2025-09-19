@@ -75,6 +75,11 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             {
                 customizeViralLoads(ati);
             }
+
+            if ("assignment".equalsIgnoreCase(ds.getName()))
+            {
+                ati.addTriggerFactory(StudiesService.get().getStudiesTriggerFactory());
+            }
         }
         else
         {

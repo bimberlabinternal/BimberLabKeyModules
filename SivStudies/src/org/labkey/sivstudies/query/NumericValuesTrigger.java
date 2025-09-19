@@ -101,7 +101,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
                 val = String.valueOf(row.get(propName));
             }
 
-            if (NumberUtils.isCreatable(val))
+            if (val == null || NumberUtils.isCreatable(val))
             {
                 row.put(propName, val);
                 return;
