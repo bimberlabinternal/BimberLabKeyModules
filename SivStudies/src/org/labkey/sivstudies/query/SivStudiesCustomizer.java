@@ -427,13 +427,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                 UserSchema targetSchema = ds.getUserSchema().getDefaultSchema().getUserSchema(targetSchemaName);
                 QueryDefinition qd = QueryService.get().createQueryDef(u, targetSchemaContainer, targetSchema, name);
                 qd.setSql("SELECT\n" +
-                        "max(tr.date) as artInitiation,\n" +
-                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
-                        "CONVERT(age_in_months(CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
+                        "min(tr.date) as artInitiation,\n" +
+                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
+                        "CONVERT(age_in_months(CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
                         "max(tr.enddate) as artRelease,\n" +
                         "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, INTEGER) as daysPostArtRelease,\n" +
                         "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE age_in_months(CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, FLOAT) as monthsPostArtRelease,\n" +
-                        "CAST(CASE WHEN CAST(max(tr.date) AS DATE) < CAST(c." + dateCol.getFieldKey().toString()  + " AS DATE) AND CAST(max(coalesce(tr.enddate, now())) AS DATE) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) THEN 'Y' ELSE null END as VARCHAR) as onArt,\n" +
+                        "CAST(CASE WHEN CAST(min(tr.date) AS DATE) <= CAST(c." + dateCol.getFieldKey().toString()  + " AS DATE) AND CAST(max(coalesce(tr.enddate, now())) AS DATE) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) THEN 'Y' ELSE null END as VARCHAR) as onArt,\n" +
                         "GROUP_CONCAT(DISTINCT tr.treatment) AS artTreatment,\n" +
                         "c." + pkCol.getFieldKey().toString() + "\n" +
                         "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
