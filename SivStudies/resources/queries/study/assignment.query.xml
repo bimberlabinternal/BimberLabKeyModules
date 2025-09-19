@@ -33,7 +33,7 @@
                             <fkDbSchema>studies</fkDbSchema>
                             <fkTable>studyCohorts</fkTable>
                             <fkColumnName>rowId</fkColumnName>
-                            <fkDisplayColumnName>label</fkDisplayColumnName>
+                            <fkDisplayColumnName>labelOrName</fkDisplayColumnName>
                         </fk>
                     </column>
                     <column columnName="description">
