@@ -63,6 +63,8 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         Date now = new Date();
 
         duplicateInfectionCheck(c, u, msg);
+        infectionAnchorDateDiscordance(c, u, msg);
+        pvlWithoutInfectionDate(c, u, msg);
 
         if (!msg.isEmpty())
         {
@@ -91,35 +93,30 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
 
     private void duplicateInfectionCheck(Container c, User u, StringBuilder msg)
     {
-        String schemaName = "study";
-        String queryName = "duplicateInfectionDates";
+        genericQueryCheck(c, u, msg, "study", "duplicateInfectionDates", "duplicate infection date records");
+    }
 
+    private void infectionAnchorDateDiscordance(Container c, User u, StringBuilder msg)
+    {
+        genericQueryCheck(c, u, msg, "study", "infectionAnchorDateDiscordance", "records with discordant treatment and anchor date SIV infection records");
+    }
+
+    private void genericQueryCheck(Container c, User u, StringBuilder msg, String schemaName, String queryName, String message)
+    {
         TableInfo ti = getTableInfo(u, c, schemaName, queryName);
 
         TableSelector ts = new TableSelector(ti);
         long count = ts.getRowCount();
         if (count > 0)
         {
-            msg.append("<b>WARNING: There are ").append(count).append(" duplicate infection date records</b><br>\n");
+            msg.append("<b>WARNING: There are ").append(count).append(" " + message + "</b><br>\n");
             msg.append("<p><a href='").append(getExecuteQueryUrl(c, schemaName, queryName, null)).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
     }
 
-    private void infectionAnchorDateDiscordance(Container c, User u, StringBuilder msg)
+    private void pvlWithoutInfectionDate(Container c, User u, StringBuilder msg)
     {
-        String schemaName = "study";
-        String queryName = "infectionAnchorDateDiscordance";
-
-        TableInfo ti = getTableInfo(u, c, schemaName, queryName);
-
-        TableSelector ts = new TableSelector(ti);
-        long count = ts.getRowCount();
-        if (count > 0)
-        {
-            msg.append("<b>WARNING: There are ").append(count).append(" records with discordant treatment and anchor date SIV infection records</b><br>\n");
-            msg.append("<p><a href='").append(getExecuteQueryUrl(c, schemaName, queryName, null)).append("'>Click here to view them</a><br>\n\n");
-            msg.append("<hr>\n\n");
-        }
+        genericQueryCheck(c, u, msg, "study", "pvlWithoutInfectionDate", "animals with PVL data but no record of SIV infection");
     }
 }
