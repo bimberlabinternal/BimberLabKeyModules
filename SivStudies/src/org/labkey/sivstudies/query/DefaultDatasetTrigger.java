@@ -77,7 +77,7 @@ public class DefaultDatasetTrigger implements Trigger
         {
             for (String propName : oldRow.keySet())
             {
-                if (!newRow.containsKey(propName))
+                if (!newRow.containsKey(propName) & oldRow.get(propName) != null)
                 {
                     newRow.put(propName, oldRow.get(propName));
                 }
