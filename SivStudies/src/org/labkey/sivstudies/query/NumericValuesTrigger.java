@@ -74,7 +74,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
                 continue;
             }
 
-            String val = String.valueOf(row.get(propName));
+            String val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
             if (NumberUtils.isCreatable(val))
             {
                 return;
@@ -89,7 +89,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             }
 
             // The Rlabkey API sending NAs as strings is another common problem:
-            if ("NA".equalsIgnoreCase(val))
+            if ("NA".equalsIgnoreCase(val) || "null".equalsIgnoreCase(val))
             {
                 row.put(propName, null);
                 return;
@@ -98,7 +98,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             for (StringTransformer stringTransformer : _stringTransformers)
             {
                 stringTransformer.inspectValue(table, row, val, propName, errors);
-                val = String.valueOf(row.get(propName));
+                val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
             }
 
             if (val == null || NumberUtils.isCreatable(val))

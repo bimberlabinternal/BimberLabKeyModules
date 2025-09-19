@@ -507,7 +507,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         if ("immunizations".equalsIgnoreCase(ati.getName()))
         {
             stringTransformers.add((ti, row, stringValue, propName, errors) -> {
-                if ("quantity".equalsIgnoreCase(propName) & "Supernatant".equalsIgnoreCase(stringValue))
+                if ("quantity".equalsIgnoreCase(propName) & ("Supernatant".equalsIgnoreCase(stringValue) | "Supernatent".equalsIgnoreCase(stringValue)))
                 {
                     row.put("quantity", null);
                     String comments = row.get("comments") == null ? null : StringUtils.trimToNull(String.valueOf(row.get("comments")));
