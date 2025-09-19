@@ -15,7 +15,7 @@
                     <setting name="dataSourceQuery" value="subjects"/>
                     <setting name="dataSourceSubjectColumn" value="Rh"/>
                     <setting name="dataSourceColumns" value="Rh,cohortStart,cohortEnd,cohort,RhCode"/>
-                    <setting name="dataSourceColumnMapping" value="Rh=Id,cohortStart=date,cohortEnd=enddate,RhCode=cohortId,cohort=study"/>
+                    <setting name="dataSourceColumnMapping" value="Rh=Id,cohortStart=date,cohortEnd=enddate,RhCode=cohortAlias,cohort=study"/>
                     <setting name="dataSourceColumnDefaults" value="dataSource=Hansen/IDR"/>
                     <setting name="dataSourceAdditionalFilters" value="cohortStart~neq=0000-00-00"/>
 

@@ -5,8 +5,9 @@
         <column name="enddate"/>
         <column name="study"/>
         <column name="subgroup"/>
-        <column name="cohortId"/>
+        <column name="cohortAlias"/>
         <column name="category"/>
+        <column name="cohortId"/>
         <column name="dataSource"/>
     </columns>
     <sorts>

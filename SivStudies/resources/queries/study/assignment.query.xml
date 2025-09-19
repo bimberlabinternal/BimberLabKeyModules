@@ -18,14 +18,23 @@
                     <column columnName="subgroup">
                         <columnTitle>Sub-Group</columnTitle>
                     </column>
-                    <column columnName="cohortId">
-                        <columnTitle>Cohort ID</columnTitle>
+                    <column columnName="cohortAlias">
+                        <columnTitle>Cohort Alias</columnTitle>
                     </column>
                     <column columnName="dataSource">
                         <columnTitle>Data Source</columnTitle>
                     </column>
                     <column columnName="category">
                         <columnTitle>Category</columnTitle>
+                    </column>
+                    <column columnName="cohortId">
+                        <columnTitle>Cohort ID</columnTitle>
+                        <fk>
+                            <fkDbSchema>studies</fkDbSchema>
+                            <fkTable>studyCohorts</fkTable>
+                            <fkColumnName>rowId</fkColumnName>
+                            <fkDisplayColumnName>label</fkDisplayColumnName>
+                        </fk>
                     </column>
                     <column columnName="description">
                         <columnTitle>Description</columnTitle>

@@ -330,8 +330,11 @@
             <column columnName="subgroup">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="cohortId">
+            <column columnName="cohortAlias">
                 <datatype>varchar</datatype>
+            </column>
+            <column columnName="cohortId">
+                <datatype>integer</datatype>
             </column>
             <column columnName="description">
                 <datatype>varchar</datatype>

@@ -1,5 +1,6 @@
 package org.labkey.sivstudies.query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.AbstractTableInfo;
@@ -69,6 +70,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
             appendDemographicsColumns(ati);
 
+            addNumericValuesTrigger(ati);
             if ("viralLoads".equalsIgnoreCase(ds.getName()))
             {
                 customizeViralLoads(ati);
@@ -492,6 +494,25 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         col.setFk(new QueryForeignKey(demographicsTable.getUserSchema(), null, targetQueryUserSchema, null, targetQueryName, ID_COL, ID_COL));
 
         return col;
+    }
+
+    private void addNumericValuesTrigger(AbstractTableInfo ati)
+    {
+        List<NumericValuesTrigger.StringTransformer> stringTransformers = new ArrayList<>();
+        if ("immunizations".equalsIgnoreCase(ati.getName()))
+        {
+            stringTransformers.add((ti, row, stringValue, propName, errors) -> {
+                if ("quantity".equalsIgnoreCase(propName) & "Supernatant".equalsIgnoreCase(stringValue))
+                {
+                    row.put("quantity", null);
+                    String comments = row.get("comments") == null ? null : StringUtils.trimToNull(String.valueOf(row.get("comments")));
+                    comments = (comments == null ? "" : comments + ", ") + "Quantity: Supernatant";
+                    row.put("comments", comments);
+                }
+            });
+        }
+
+        ati.addTriggerFactory(new NumericValuesTrigger.Factory(stringTransformers));
     }
 
     private void customizeViralLoads(AbstractTableInfo ati)
