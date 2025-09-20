@@ -503,6 +503,12 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
     private void addNumericValuesTrigger(AbstractTableInfo ati)
     {
+        // This behavior conflicts with ViralLoadsTriggerFactory
+        if ("viralLoads".equalsIgnoreCase(ati.getName()))
+        {
+            return;
+        }
+
         List<NumericValuesTrigger.StringTransformer> stringTransformers = new ArrayList<>();
         if ("immunizations".equalsIgnoreCase(ati.getName()))
         {
