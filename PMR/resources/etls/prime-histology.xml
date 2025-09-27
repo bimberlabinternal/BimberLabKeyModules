@@ -17,6 +17,9 @@
                     <column>modified</column>
                     <column>QCState/Label</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="qcstate/label" operator="eq" value="Completed"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="histology" targetOption="merge" bulkLoad="true" batchSize="1000">
                 <alternateKeys>
