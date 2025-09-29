@@ -21,6 +21,10 @@
                     <column columnName="string_value">
                         <columnTitle>String Value</columnTitle>
                     </column>
+                    <column columnName="numDatapoints">
+                        <columnTitle># Datapoints</columnTitle>
+                        <description>The number of PVL datapoints used for this calculation</description>
+                    </column>
                     <column columnName="comments">
                         <columnTitle>Comments</columnTitle>
                     </column>

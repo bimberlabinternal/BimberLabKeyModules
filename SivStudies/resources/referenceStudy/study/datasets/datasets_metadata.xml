@@ -585,6 +585,9 @@
             <column columnName="string_value">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="numDatapoints">
+                <datatype>integer</datatype>
+            </column>
             <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
