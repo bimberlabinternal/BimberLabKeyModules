@@ -101,7 +101,7 @@ public class SubjectScopedSelect implements TaskRefTask
         }
     }
 
-    final int BATCH_SIZE = 250;
+    final int BATCH_SIZE = 500;
 
     private MODE getMode()
     {
