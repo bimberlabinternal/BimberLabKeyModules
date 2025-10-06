@@ -8,7 +8,6 @@
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
-                    <column>ageAtTime</column>
                     <column>testId</column>
                     <column>result</column>
                     <column>units</column>
