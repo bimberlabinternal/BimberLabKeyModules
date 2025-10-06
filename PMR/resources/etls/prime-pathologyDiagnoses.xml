@@ -38,6 +38,8 @@
                     <setting name="destSchema" value="study"/>
                     <setting name="destQuery" value="pathologyDiagnoses"/>
                     <setting name="destColumn" value="objectId"/>
+
+                    <setting name="reportOnly" value="true"/>
                 </settings>
             </taskref>
         </transform>

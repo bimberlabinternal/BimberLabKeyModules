@@ -1,6 +1,7 @@
 package org.labkey.primeseq.etl;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
@@ -50,7 +51,8 @@ public class VerifyRowCount implements TaskRefTask
         destSchema(true),
         destQuery(true),
         destColumn(true),
-        destAdditionalFilters(false);
+        destAdditionalFilters(false),
+        reportOnly(false);
 
         private final boolean _isRequired;
 
@@ -104,6 +106,11 @@ public class VerifyRowCount implements TaskRefTask
     public void setSettings(Map<String, String> settings)
     {
         _settings.putAll(settings);
+    }
+
+    private boolean isReportOnly()
+    {
+        return _settings.containsKey(Settings.reportOnly.name()) && Boolean.parseBoolean(_settings.get(Settings.reportOnly.name()));
     }
 
     private DataIntegrationService.RemoteConnection getRemoteDataSource(String name, Container c, Logger log) throws IllegalStateException
@@ -259,7 +266,13 @@ public class VerifyRowCount implements TaskRefTask
 
         if (source != dest)
         {
-            job.getLogger().error("Row counts do not match (source: {}, dest: {})!", source, dest);
+            if (isReportOnly()) {
+                job.getLogger().info("Row counts do not match (source: {}, dest: {})!", source, dest);
+            }
+            else
+            {
+                job.getLogger().error("Row counts do not match (source: {}, dest: {})!", source, dest);
+            }
         }
     }
 }
