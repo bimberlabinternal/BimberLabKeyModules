@@ -40,7 +40,7 @@
                     <setting name="destQuery" value="hematologyResults"/>
                     <setting name="destColumn" value="objectId"/>
 
-                    <setting name="reportOnly" value="true"/>
+                    <setting name="reportOnly" value="false"/>
                 </settings>
             </taskref>
         </transform>

@@ -38,7 +38,7 @@
                     <setting name="destQuery" value="weight"/>
                     <setting name="destColumn" value="objectId"/>
 
-                    <setting name="reportOnly" value="true"/>
+                    <setting name="reportOnly" value="false"/>
                 </settings>
             </taskref>
         </transform>

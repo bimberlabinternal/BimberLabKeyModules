@@ -8,12 +8,9 @@
                 <sourceColumns>
                     <column>Id</column>
                     <column>date</column>
-                    <column>ageAtTime</column>
                     <column>sort_order</column>
                     <column>codes</column>
                     <column>objectid</column>
-                    <column>created</column>
-                    <column>modified</column>
                     <column>QCState/Label</column>
                 </sourceColumns>
                 <sourceFilters>
@@ -39,7 +36,7 @@
                     <setting name="destQuery" value="pathologyDiagnoses"/>
                     <setting name="destColumn" value="objectId"/>
 
-                    <setting name="reportOnly" value="true"/>
+                    <setting name="reportOnly" value="false"/>
                 </settings>
             </taskref>
         </transform>
