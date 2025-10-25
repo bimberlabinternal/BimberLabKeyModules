@@ -184,8 +184,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isGeneticsTask(job))
         {
-            job.getLogger().debug("setting memory to 72");
-            return 72;
+            job.getLogger().debug("setting memory to 96");
+            return 96;
         }
 
         if (isCacheAlignerIndexesTask(job))
