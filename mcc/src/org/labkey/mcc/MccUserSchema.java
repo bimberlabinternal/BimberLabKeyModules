@@ -271,6 +271,7 @@ public class MccUserSchema extends SimpleUserSchema
                 "    d.date,\n" +
                 "    d.datatype,\n" +
                 "    d.sra_accession,\n" +
+                "    d.total_reads,\n" +
                 "    d.objectid,\n" +
                 "    d.container\n" +
                 "\n" +

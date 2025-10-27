@@ -13,6 +13,16 @@ export default function KinshipTable(props: {data: any}) {
     ]
 
     return (
+        <>
+        <div style={{paddingBottom: 20, maxWidth: 1000}}>
+            Although PCA is useful for broad-scale comparisons, it is not very useful when trying to distinguish
+            whether two individuals are siblings or first-cousins, for instance. For that, we have better statistics
+            that can describe the genetic relatedness between two individuals. We estimated genetic relatedness for
+            all pairs of individuals for which we have whole-genome data, shown in the table below. There you will
+            find the inferred relationships between pairs of individuals as well as the calculated kinship coefficient,
+            which is a quantitative measure of genetic relatedness
+            (see <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship#Kinship_coefficient">here</a> for more details).
+        </div>
         <DataGrid
             autoHeight={true}
             columns={columns}
@@ -24,5 +34,6 @@ export default function KinshipTable(props: {data: any}) {
             paginationModel={pageModel}
             onPaginationModelChange={(model) => setPageModel(model)}
         />
+        </>
     );
 }

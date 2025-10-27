@@ -86,6 +86,7 @@
                     <column>date</column>
                     <column>datatype</column>
                     <column>sra_accession</column>
+                    <column>total_reads</column>
                     <column>objectid</column>
                 </sourceColumns>
             </source>

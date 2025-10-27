@@ -1073,6 +1073,9 @@
             <column columnName="sra_accession">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="total_reads">
+                <datatype>integer</datatype>
+            </column>
             <column columnName="objectid">
                 <datatype>entityid</datatype>
                 <propertyURI>urn:ehr.labkey.org/#ObjectId</propertyURI>
