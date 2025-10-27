@@ -12,8 +12,8 @@ export default function SequenceDataTable(props: {data: any}) {
                 return (
                     <a
                         target="_blank"
-                        href={params.value}
-                    >{params.value ? "https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=" + params.value : ""}</a>
+                        href={params.value ? "https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=" + params.value : ""}
+                    >{params.value}</a>
                 );
             }},
         { field: 'total_reads', headerName: 'Total Reads', width: 125, type: "number", headerAlign: 'left', flex: 1 }
