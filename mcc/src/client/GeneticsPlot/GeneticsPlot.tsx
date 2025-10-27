@@ -126,14 +126,22 @@ export function GeneticsPlot() {
                 Over the past few years, the MCC team has been working on extracting, sequencing and analyzing DNA from
                 marmosets across the participating breeding centers. While we have deposited the raw sequence data for
                 578 marmosets on NCBI's Sequence Read Archive (SRA), we are excited to report that the MCC portal now
-                houses a call set with single nucleotide variants and short indels for over 800 individuals.
-                <p/>
-                In addition to the information in the tabs below, you can use the MCC genome browser to view know variants and search by gene.
-                <a href={ActionURL.buildURL('jbrowse', 'jbrowse', null, {session: jbrowseId})}>Click here to view Marmoset SNP data in the genome browser</a>
-                <p/>
-                The genetic analyses described here were performed by Karina Ray (ONPRC), Murillo Rodrigues (ONPRC), and
+                houses a call set with single nucleotide variants and short indels for over 800 individuals. The genetic analyses
+                described here were performed by Karina Ray (ONPRC), Murillo Rodrigues (ONPRC), and
                 Ric del Rosario (Broad Institute). Please contact us at <a href="mailto:mcc@ohsu.edu">mcc@ohsu.edu</a> with any
                 questions.
+                <p/>
+                { jbrowseId ? (
+                    <>
+                        In addition to the information in the tabs below, you can use the MCC genome browser to view variants and/or search by gene:
+                        <p/>
+                        <ul>
+                            <li>
+                                <a style={{fontWeight: 'bold'}} href={ActionURL.buildURL('jbrowse', 'jbrowse', null, {session: jbrowseId})}>Click here to open the genome browser</a>
+                            </li>
+                        </ul>
+                    </>
+                ) : null }
             </div>
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
