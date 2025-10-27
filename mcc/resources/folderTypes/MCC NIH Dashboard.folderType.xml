@@ -84,7 +84,7 @@
             </selectors>
             <preferredWebParts>
                 <webPart>
-                    <name>geneticsPlotWebpart</name>
+                    <name>Marmoset Genetics</name>
                     <location>body</location>
                 </webPart>
             </preferredWebParts>

@@ -18,6 +18,10 @@
                         <columnTitle>SRA Accession</columnTitle>
                         <url>https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=${sra_accession}</url>
                     </column>
+                    <column columnName="total_reads">
+                        <columnTitle>Total Reads</columnTitle>
+                        <formatString>#,##0.##</formatString>
+                    </column>
                 </columns>
             </table>
         </tables>
