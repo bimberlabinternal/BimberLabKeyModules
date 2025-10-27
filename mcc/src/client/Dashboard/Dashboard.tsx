@@ -66,20 +66,20 @@ export function Dashboard() {
                         <div className="panel-heading">Census</div>
                         <div className="row">
                             <div className="panel-body count-panel-body">
-                                <div className="count-panel-text">{demographics.length}</div>
+                                <div className="count-panel-text">{new Intl.NumberFormat("en-IN").format(demographics.length)}</div>
                                 <div className="small text-muted">Marmosets tracked by MCC</div>
                             </div>
                         </div>
                         <div className="row mcc-col-centered">
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small">{living.length}</div>
+                                    <div className="count-panel-text-small">{new Intl.NumberFormat("en-IN").format(living.length)}</div>
                                     <div className="small text-muted text-center">Living</div>
                                 </div>
                             </div>
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small">{u24Assigned.length}</div>
+                                    <div className="count-panel-text-small">{new Intl.NumberFormat("en-IN").format(u24Assigned.length)}</div>
                                     <div className="small text-muted text-center">U24 Assigned</div>
                                 </div>
                             </div>
