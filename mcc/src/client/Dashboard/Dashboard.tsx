@@ -8,9 +8,9 @@ import PieChart from '../components/dashboard/PieChart';
 import BarChart from '../components/dashboard/BarChart';
 
 export function Dashboard() {
-    const [demographics, setDemographics] = useState(null);
-    const [living, setLiving] = useState(null);
-    const [u24Assigned, setu24Assigned] = useState(null);
+    const [demographics, setDemographics] = useState<[]>(null);
+    const [living, setLiving] = useState<[]>(null);
+    const [u24Assigned, setu24Assigned] = useState<[]>(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;
@@ -90,7 +90,7 @@ export function Dashboard() {
                     <div className="panel panel-default">
                         <div className="panel-heading">Center (Living Animals)</div>
                         <div className="panel-body">
-                            <PieChart fieldName = "colony" demographics={living} cutout = "30%" />
+                            <PieChart fieldName = "colony" demographics={living} cutout = "30%" collapseBelow = {0.025}  />
                         </div>
                     </div>
                 </div>

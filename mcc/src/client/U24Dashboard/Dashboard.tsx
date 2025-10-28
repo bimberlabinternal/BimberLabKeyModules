@@ -8,14 +8,14 @@ import BarChart, { ColorType } from '../components/dashboard/BarChart';
 import { ActiveElement, Chart, ChartEvent } from 'chart.js/dist/types/index';
 
 export function Dashboard() {
-    const [demographics, setDemographics] = useState(null);
-    const [living, setLiving] = useState(null);
-    const [u24Assigned, setu24Assigned] = useState(null);
-    const [availableForTransfer, setAvailableForTransfer] = useState(null);
-    const [requestRows, setRequestRows] = useState(null);
-    const [censusRows, setCensusRows] = useState(null);
-    const [birthData, setBirthData ] = useState(null);
-    const [breedingPairData, setBreedingPairData ] = useState(null);
+    const [demographics, setDemographics] = useState<[]>(null);
+    const [living, setLiving] = useState<[]>(null);
+    const [u24Assigned, setu24Assigned] = useState<[]>(null);
+    const [availableForTransfer, setAvailableForTransfer] = useState<[]>(null);
+    const [requestRows, setRequestRows] = useState<[]>(null);
+    const [censusRows, setCensusRows] = useState<[]>(null);
+    const [birthData, setBirthData ] = useState<[]>(null);
+    const [breedingPairData, setBreedingPairData ] = useState<[]>(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;

@@ -1,11 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-    Chart,
-    ArcElement,
-    Legend,
-    PieController,
-    Tooltip
-} from 'chart.js';
+import { ArcElement, Chart, Legend, PieController, Tooltip } from 'chart.js';
 
 Chart.register(ArcElement, Legend, PieController, Tooltip);
 
@@ -21,14 +15,12 @@ const colors = [
     "#999999"
 ];
 
-export default function PieChart(props) {
+export default function PieChart(props: {demographics: [], fieldName: string, cutout?: string, collapseBelow?: number }) {
     const canvas = useRef(null);
 
-    const { demographics } = props;
-    const { fieldName } = props;
-    const { cutout } = props || 0;
+    const { demographics, fieldName, cutout = '0', collapseBelow = 0 } = props;
 
-    const collectedData = demographics.reduce((acc, curr) => {
+    const collectedData  = demographics.reduce((acc, curr) => {
         const value = curr[fieldName] === null ? 'Unknown' : curr[fieldName];
         if (acc[value]) {
             acc[value] = acc[value] + 1;
@@ -37,7 +29,31 @@ export default function PieChart(props) {
         }
 
         return acc;
-    }, {});
+    }, new Map<string, bigint>())
+
+    if (collapseBelow) {
+        const total = Object.keys(collectedData).reduce((sum, keyName) => {
+            sum += collectedData[keyName]
+
+            return sum
+        }, 0)
+
+        const otherValue = Object.keys(collectedData).reduce((sum, keyName) => {
+            const val = collectedData[keyName]
+            const fraction = val / total
+            if (fraction < collapseBelow) {
+                delete collectedData[keyName]
+                sum += val
+            }
+
+            return sum
+        }, 0)
+
+        if (otherValue) {
+            collectedData['Other'] = otherValue
+        }
+    }
+
     const labels = Object.keys(collectedData).sort(Intl.Collator().compare);
     const data = labels.map(label => collectedData[label]);
 
