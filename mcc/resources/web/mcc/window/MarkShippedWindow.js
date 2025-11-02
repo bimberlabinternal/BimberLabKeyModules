@@ -228,7 +228,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                     uniqueIds.push(win.down('#usePreviousId-' + row.Id).getValue() ? row.Id : win.down('#newId-' + row.Id).getValue());
                 }, this);
 
-                LABKEY.Query.SelectRows({
+                LABKEY.Query.selectRows({
                     schemaName: 'study',
                     queryName: 'Demographics',
                     containerPath: targetFolder,
