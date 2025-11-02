@@ -208,7 +208,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             return;
         }
 
-        var targetFolderId = win.down('#targetFolder').store.findRecord('Path', targetFolder).get('EntityId');
         Ext4.Msg.wait('Saving...');
         LABKEY.Query.selectRows({
             schemaName: 'study',
@@ -224,143 +223,229 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                     return false;
                 }
 
-                var commands = [];
-                Ext4.Array.forEach(results.rows, function(row){
-                    var effectiveId = win.down('#usePreviousId-' + row.Id).getValue() ? row.Id : win.down('#newId-' + row.Id).getValue();
-                    var requestId = win.down('#requestId-' + row.Id).getValue();
-                    // This should be checked above, although perhaps case sensitivity could get involved:
-                    LDK.Assert.assertNotEmpty('Missing effective ID after query', effectiveId);
-
-                    var shouldAddDeparture = !row['Id/MostRecentDeparture/MostRecentDeparture'] ||
-                            row['Id/MostRecentDeparture/MostRecentDeparture'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
-                            row['Id/MostRecentDeparture/mccRequestId'] !== requestId ||
-                            row.Id !== effectiveId;
-                    if (shouldAddDeparture) {
-                        commands.push({
-                            command: 'insert',
-                            schemaName: 'study',
-                            queryName: 'Departure',
-                            rows: [{
-                                Id: row.Id,
-                                date: effectiveDate,
-                                source: row.colony,
-                                destination: centerName,
-                                mccRequestId: requestId,
-                                description: row.colony ? 'Original center: ' + row.colony : null,
-                                qcstate: null,
-                                objectId: null,
-                                QCStateLabel: 'Completed'
-                            }]
-                        });
-                    }
-
-                    // If going to a new LK folder, we're creating a whole new record:
-                    if (targetFolderId.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || effectiveId !== row.Id) {
-                        commands.push({
-                            command: 'insert',
-                            containerPath: targetFolder,
-                            schemaName: 'study',
-                            queryName: 'Demographics',
-                            rows: [{
-                                Id: effectiveId,
-                                date: effectiveDate,
-                                alternateIds: row.Id !== effectiveId ? row.Id : null,
-                                gender: row.gender,
-                                species: row.species,
-                                birth: row.birth,
-                                death: row.death,
-                                dam: row.dam,
-                                sire: row.sire,
-                                damMccAlias: row['damMccAlias/externalAlias'],
-                                sireMccAlias: row['sireMccAlias/externalAlias'],
-                                colony: centerName,
-                                source: row.colony,
-                                calculated_status: 'Alive',
-                                mccAlias: row['Id/mccAlias/externalAlias'],
-                                QCState: null,
-                                QCStateLabel: 'Completed',
-                                objectId: null
-                            }]
-                        });
-
-                        commands.push({
-                            command: 'update',
-                            containerPath: null, //Use current folder
-                            schemaName: 'study',
-                            queryName: 'Demographics',
-                            rows: [{
-                                Id: row.Id, // NOTE: always change the original record
-                                excludeFromCensus: true
-                            }]
-                        });
-                    }
-                    else {
-                        // Otherwise update the existing:
-                        commands.push({
-                            command: 'update',
-                            containerPath: targetFolder,
-                            schemaName: 'study',
-                            queryName: 'Demographics',
-                            rows: [{
-                                Id: row.Id,
-                                date: effectiveDate,
-                                alternateIds: null,
-                                gender: row.gender,
-                                species: row.species,
-                                birth: row.birth,
-                                death: row.death,
-                                dam: row.dam,
-                                sire: row.sire,
-                                colony: centerName,
-                                source: row.colony,
-                                calculated_status: 'Alive',
-                                QCState: null,
-                                QCStateLabel: 'Completed',
-                                objectId: null
-                            }]
-                        });
-                    }
-
-                    var shouldAddArrival = !row['Id/MostRecentArrival/MostRecentArrival'] ||
-                            row['Id/MostRecentArrival/MostRecentArrival'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
-                            row['Id/MostRecentArrival/mccRequestId'] !== requestId ||
-                            row.Id !== effectiveId;
-                    if (shouldAddArrival) {
-                        // And also add an arrival record. NOTE: set the date after the departure to get status to update properly
-                        var arrivalDate = new Date(effectiveDate).setMinutes(effectiveDate.getMinutes() + 1);
-                        commands.push({
-                            command: 'insert',
-                            containerPath: targetFolder,
-                            schemaName: 'study',
-                            queryName: 'Arrival',
-                            rows: [{
-                                Id: effectiveId,
-                                date: arrivalDate,
-                                source: centerName,
-                                mccRequestId: requestId,
-                                QCState: null,
-                                QCStateLabel: 'Completed',
-                                objectId: null
-                            }]
-                        });
-                    }
+                var uniqueIds = [];
+                Ext4.Array.forEach(results.rows, function(row) {
+                    uniqueIds.push(win.down('#usePreviousId-' + row.Id).getValue() ? row.Id : win.down('#newId-' + row.Id).getValue());
                 }, this);
 
-                LABKEY.Query.saveRows({
-                    commands: commands,
+                LABKEY.Query.SelectRows({
+                    schemaName: 'study',
+                    queryName: 'Demographics',
+                    containerPath: targetFolder,
+                    filterArray: [LABKEY.Filter.create('Id', uniqueIds.join(';'), LABKEY.Filter.Types.IN)],
+                    columns: 'Id,gender,species,birth,death,dam,sire,damMccAlias/externalAlias,sireMccAlias/externalAlias,calculated_status,Id/mccAlias/externalAlias,colony,source,lsid,objectid',
                     scope: this,
                     failure: LDK.Utils.getErrorCallback(),
-                    success: function() {
-                        Ext4.Msg.hide();
-                        Ext4.Msg.alert('Success', 'Transfer Added', function () {
-                            var dataRegion = LABKEY.DataRegions[this.dataRegionName];
-                            this.destroy();
-
-                            dataRegion.refresh();
+                    success: function(existingIdResults) {
+                        var preexistingIdsInTargetFolder = {};
+                        Ext4.Array.forEach(existingIdResults.rows, function(r){
+                            preexistingIdsInTargetFolder[r.Id] = r;
                         }, this);
+
+                        this.doSave(win, results, preexistingIdsInTargetFolder);
                     }
                 });
             }
         });
+    },
+
+    doSave: function(win, results, preexistingIdsInTargetFolder){
+        var effectiveDate = win.down('#effectiveDate').getValue();
+        var centerName = win.down('#centerName').getValue();
+        var targetFolder = win.down('#targetFolder').getValue();
+        var targetFolderId = win.down('#targetFolder').store.findRecord('Path', targetFolder).get('EntityId');
+
+        var commands = [];
+        var hadError = false;
+        Ext4.Array.forEach(results.rows, function(row){
+            var effectiveId = win.down('#usePreviousId-' + row.Id).getValue() ? row.Id : win.down('#newId-' + row.Id).getValue();
+            var requestId = win.down('#requestId-' + row.Id).getValue();
+            // This should be checked above, although perhaps case sensitivity could get involved:
+            LDK.Assert.assertNotEmpty('Missing effective ID after query', effectiveId);
+
+            var shouldAddDeparture = !row['Id/MostRecentDeparture/MostRecentDeparture'] ||
+                    row['Id/MostRecentDeparture/MostRecentDeparture'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
+                    row['Id/MostRecentDeparture/mccRequestId'] !== requestId ||
+                    row.Id !== effectiveId;
+            if (shouldAddDeparture) {
+                commands.push({
+                    command: 'insert',
+                    schemaName: 'study',
+                    queryName: 'Departure',
+                    rows: [{
+                        Id: row.Id,
+                        date: effectiveDate,
+                        source: row.colony,
+                        destination: centerName,
+                        mccRequestId: requestId,
+                        description: row.colony ? 'Original center: ' + row.colony : null,
+                        qcstate: null,
+                        objectId: null,
+                        QCStateLabel: 'Completed'
+                    }]
+                });
+            }
+
+            // If going to a new LK folder, we're creating a whole new record:
+            if (targetFolderId.toUpperCase() !== LABKEY.Security.currentContainer.id.toUpperCase() || effectiveId !== row.Id) {
+                if (Ext4.Object.getKeys(preexistingIdsInTargetFolder).indexOf(effectiveId) === -1) {
+                    // No existing record for this ID, make new record:
+                    commands.push({
+                        command: 'insert',
+                        containerPath: targetFolder,
+                        schemaName: 'study',
+                        queryName: 'Demographics',
+                        rows: [{
+                            Id: effectiveId,
+                            date: effectiveDate,
+                            alternateIds: row.Id !== effectiveId ? row.Id : null,
+                            gender: row.gender,
+                            species: row.species,
+                            birth: row.birth,
+                            death: row.death,
+                            dam: row.dam,
+                            sire: row.sire,
+                            damMccAlias: row['damMccAlias/externalAlias'],
+                            sireMccAlias: row['sireMccAlias/externalAlias'],
+                            colony: centerName,
+                            source: row.colony,
+                            calculated_status: 'Alive',
+                            mccAlias: row['Id/mccAlias/externalAlias'],
+                            QCState: null,
+                            QCStateLabel: 'Completed',
+                            objectId: null
+                        }]
+                    });
+                }
+                else {
+                    // There is an existing record for this ID, so merge/validate:
+                    console.log('Existing record found for: ' + effectiveId)
+                    var toUpdate = preexistingIdsInTargetFolder[effectiveId]
+
+                    var errors = []
+                    Ext4.Array.forEach(['gender', 'species', 'birth', 'death', 'dam', 'sire'], function(fieldName) {
+                        this.doFieldCheck(row, fieldName, toUpdate, fieldName, errors, effectiveId)
+                    }, this);
+
+                    toUpdate.colony = centerName
+                    toUpdate.source = toUpdate.source || row.colony
+                    toUpdate.calculated_status = toUpdate.calculated_status || 'Alive';
+
+                    if (row.Id !== effectiveId) {
+                        toUpdate.alternateIds = toUpdate.alternateIds ? toUpdate.alternateIds + ',' + row.Id : row.Id;
+                    }
+
+                    this.doFieldCheck(row, 'damMccAlias/externalAlias', toUpdate, 'damMccAlias', errors, effectiveId)
+                    this.doFieldCheck(row, 'sireMccAlias/externalAlias', toUpdate, 'sireMccAlias', errors, effectiveId)
+                    this.doFieldCheck(row, 'Id/mccAlias/externalAlias', toUpdate, 'mccAlias', errors, effectiveId)
+
+                    if (errors.length) {
+                        Ext4.Msg.hide();
+                        Ext4.Msg.alert('Error', 'Inconsistent data between source and destination demographics for: ' + effectiveId + + '<br>' + errors.join('<br>'));
+                        hadError = true;
+                        return false;
+                    }
+
+                    commands.push({
+                        command: 'update',
+                        containerPath: targetFolder,
+                        schemaName: 'study',
+                        queryName: 'Demographics',
+                        rows: [toUpdate]
+                    });
+                }
+
+                commands.push({
+                    command: 'update',
+                    containerPath: null, //Use current folder
+                    schemaName: 'study',
+                    queryName: 'Demographics',
+                    rows: [{
+                        Id: row.Id, // NOTE: always change the original record
+                        excludeFromCensus: true
+                    }]
+                });
+            }
+            else {
+                // Otherwise update the existing:
+                commands.push({
+                    command: 'update',
+                    containerPath: targetFolder,
+                    schemaName: 'study',
+                    queryName: 'Demographics',
+                    rows: [{
+                        Id: row.Id,
+                        date: effectiveDate,
+                        alternateIds: null,
+                        gender: row.gender,
+                        species: row.species,
+                        birth: row.birth,
+                        death: row.death,
+                        dam: row.dam,
+                        sire: row.sire,
+                        colony: centerName,
+                        source: row.colony,
+                        calculated_status: 'Alive',
+                        QCState: null,
+                        QCStateLabel: 'Completed',
+                        objectId: null
+                    }]
+                });
+            }
+
+            var shouldAddArrival = !row['Id/MostRecentArrival/MostRecentArrival'] ||
+                    row['Id/MostRecentArrival/MostRecentArrival'] !== Ext4.Date.format(row.effectiveDate, 'Y-m-d') ||
+                    row['Id/MostRecentArrival/mccRequestId'] !== requestId ||
+                    row.Id !== effectiveId;
+            if (shouldAddArrival) {
+                // And also add an arrival record. NOTE: set the date after the departure to get status to update properly
+                var arrivalDate = new Date(effectiveDate).setMinutes(effectiveDate.getMinutes() + 1);
+                commands.push({
+                    command: 'insert',
+                    containerPath: targetFolder,
+                    schemaName: 'study',
+                    queryName: 'Arrival',
+                    rows: [{
+                        Id: effectiveId,
+                        date: arrivalDate,
+                        source: centerName,
+                        mccRequestId: requestId,
+                        QCState: null,
+                        QCStateLabel: 'Completed',
+                        objectId: null
+                    }]
+                });
+            }
+        }, this);
+
+        if (hadError) {
+            return;
+        }
+
+        LABKEY.Query.saveRows({
+            commands: commands,
+            scope: this,
+            failure: LDK.Utils.getErrorCallback(),
+            success: function() {
+                Ext4.Msg.hide();
+                Ext4.Msg.alert('Success', 'Transfer Added', function () {
+                    var dataRegion = LABKEY.DataRegions[this.dataRegionName];
+                    this.destroy();
+
+                    dataRegion.refresh();
+                }, this);
+            }
+        });
+    },
+
+    doFieldCheck: function(row, fieldName1, toUpdate, fieldName2, errors, effectiveId) {
+        if (row[fieldName1]) {
+            if (toUpdate[fieldName2] && toUpdate[fieldName2] !== row[fieldName1]) {
+                errors.push('Pre-existing record for ' + effectiveId + ', but ' + fieldName2 + ' was inconsistent between old/new (' + toUpdate[fieldName2] + '/' + row[fieldName1] + ')')
+            }
+            else {
+                toUpdate[fieldName2] = row[fieldName1];
+            }
+        }
     }
 });
