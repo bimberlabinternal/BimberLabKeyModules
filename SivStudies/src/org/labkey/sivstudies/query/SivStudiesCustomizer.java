@@ -1,5 +1,6 @@
 package org.labkey.sivstudies.query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.AbstractTableInfo;
@@ -69,9 +70,16 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
 
             appendDemographicsColumns(ati);
 
+            addNumericValuesTrigger(ati);
             if ("viralLoads".equalsIgnoreCase(ds.getName()))
             {
                 customizeViralLoads(ati);
+            }
+
+            if ("assignment".equalsIgnoreCase(ds.getName()))
+            {
+                ati.addTriggerFactory(StudiesService.get().getStudiesTriggerFactory());
+                ati.addTriggerFactory(new AutoCreateDemographicsTrigger.Factory());
             }
         }
         else
@@ -425,13 +433,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                 UserSchema targetSchema = ds.getUserSchema().getDefaultSchema().getUserSchema(targetSchemaName);
                 QueryDefinition qd = QueryService.get().createQueryDef(u, targetSchemaContainer, targetSchema, name);
                 qd.setSql("SELECT\n" +
-                        "max(tr.date) as artInitiation,\n" +
-                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
-                        "CONVERT(age_in_months(CAST(max(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
+                        "min(tr.date) as artInitiation,\n" +
+                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
+                        "CONVERT(age_in_months(CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
                         "max(tr.enddate) as artRelease,\n" +
                         "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, INTEGER) as daysPostArtRelease,\n" +
                         "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE age_in_months(CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, FLOAT) as monthsPostArtRelease,\n" +
-                        "CAST(CASE WHEN CAST(max(tr.date) AS DATE) < CAST(c." + dateCol.getFieldKey().toString()  + " AS DATE) AND CAST(max(coalesce(tr.enddate, now())) AS DATE) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) THEN 'Y' ELSE null END as VARCHAR) as onArt,\n" +
+                        "CAST(CASE WHEN CAST(min(tr.date) AS DATE) <= CAST(c." + dateCol.getFieldKey().toString()  + " AS DATE) AND CAST(max(coalesce(tr.enddate, now())) AS DATE) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) THEN 'Y' ELSE null END as VARCHAR) as onArt,\n" +
                         "GROUP_CONCAT(DISTINCT tr.treatment) AS artTreatment,\n" +
                         "c." + pkCol.getFieldKey().toString() + "\n" +
                         "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
@@ -492,6 +500,31 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
         col.setFk(new QueryForeignKey(demographicsTable.getUserSchema(), null, targetQueryUserSchema, null, targetQueryName, ID_COL, ID_COL));
 
         return col;
+    }
+
+    private void addNumericValuesTrigger(AbstractTableInfo ati)
+    {
+        // This behavior conflicts with ViralLoadsTriggerFactory
+        if ("viralLoads".equalsIgnoreCase(ati.getName()))
+        {
+            return;
+        }
+
+        List<NumericValuesTrigger.StringTransformer> stringTransformers = new ArrayList<>();
+        if ("immunizations".equalsIgnoreCase(ati.getName()))
+        {
+            stringTransformers.add((ti, row, stringValue, propName, errors) -> {
+                if ("quantity".equalsIgnoreCase(propName) & ("Supernatant".equalsIgnoreCase(stringValue) | "Supernatent".equalsIgnoreCase(stringValue)))
+                {
+                    row.put("quantity", null);
+                    String comments = row.get("comments") == null ? null : StringUtils.trimToNull(String.valueOf(row.get("comments")));
+                    comments = (comments == null ? "" : comments + ", ") + "Quantity: Supernatant";
+                    row.put("comments", comments);
+                }
+            });
+        }
+
+        ati.addTriggerFactory(new NumericValuesTrigger.Factory(stringTransformers));
     }
 
     private void customizeViralLoads(AbstractTableInfo ati)

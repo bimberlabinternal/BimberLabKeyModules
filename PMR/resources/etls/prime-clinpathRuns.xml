@@ -19,6 +19,9 @@
                     <column>modified</column>
                     <column>QCState/Label</column>
                 </sourceColumns>
+                <sourceFilters>
+                    <sourceFilter column="qcstate/label" operator="eq" value="Completed"/>
+                </sourceFilters>
             </source>
             <destination schemaName="study" queryName="clinpathRuns" bulkLoad="true" targetOption="merge" batchSize="1000">
                 <alternateKeys>
@@ -38,6 +41,8 @@
                     <setting name="destSchema" value="study"/>
                     <setting name="destQuery" value="clinpathRuns"/>
                     <setting name="destColumn" value="objectId"/>
+
+                    <setting name="reportOnly" value="false"/>
                 </settings>
             </taskref>
         </transform>

@@ -7,6 +7,7 @@
         <column name="marker"/>
         <column name="result"/>
         <column name="score"/>
+        <column name="comments"/>
         <column name="dataSource"/>
     </columns>
     <sorts>

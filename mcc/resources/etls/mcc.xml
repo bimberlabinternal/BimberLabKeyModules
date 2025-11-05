@@ -38,7 +38,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true" batchSize="5000">
+            <destination schemaName="study" queryName="Demographics" targetOption="truncate" bulkLoad="true" batchSize="2500">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
@@ -86,6 +86,7 @@
                     <column>date</column>
                     <column>datatype</column>
                     <column>sra_accession</column>
+                    <column>total_reads</column>
                     <column>objectid</column>
                 </sourceColumns>
             </source>

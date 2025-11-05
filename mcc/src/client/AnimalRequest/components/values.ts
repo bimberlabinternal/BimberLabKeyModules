@@ -14,6 +14,7 @@ export const animalWellfarePlaceholder = "Animal welfare (proposed care and use)
 export const censusReasonPlaceholder = "Reason for not participating"
 
 export const certificationLabel = "I certify and I have obtained approval for this study from my institution."
+export const shippingAcknowledgementStatement = "I will be ready to receive animals within 60 days of approval, provided that they are available from a breeding center.  I understand that failure to do so will result in per diem charges billed to me."
 export const terminalProceduresLabel = "Includes terminal procedures?"
 
 export const fundingSourceOptions = [

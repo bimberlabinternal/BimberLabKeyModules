@@ -4,6 +4,6 @@ import { App } from '@labkey/api';
 
 import { GeneticsPlot } from '../GeneticsPlot';
 
-App.registerApp<any>('mccPcaWebpart', target => {
+App.registerApp<any>('geneticsPlotWebpart', target => {
     ReactDOM.render(<GeneticsPlot />, document.getElementById(target));
 }, true);

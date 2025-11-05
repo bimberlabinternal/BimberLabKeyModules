@@ -82,6 +82,17 @@ export default function ScatterChart(props: {data: any}) {
     }
 
     return (
+        <>
+        <div style={{paddingBottom: 20, maxWidth: 1000}}>
+            The MCC genomic database is extensive, with each individual being genotype at millions of variants
+            across the genome. One way to summarize a large dataset can be done using Principal Component Analysis
+            (PCA). PCA is a technique used across disciplines (from astronomy to genomics) that reduces the
+            information in a multi-dimensional dataset to (fewer) principal components (PC) that retain overall
+            trends and patterns in the original data. Biologically, this could mean merging together two variants
+            that are always inherited together into just one PC, making the data easier to analyze while maintaining
+            its most important patterns.
+        </div>
         <Scatter data={chartData} options={chartOptions}/>
+        </>
     );
 }

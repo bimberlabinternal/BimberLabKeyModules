@@ -48,6 +48,7 @@ export class AnimalRequestProps {
     vetlastname: string;
     vetemail: string;
     vetfirstname: string;
+    shippingAcknowledgement: boolean;
     objectid: string;
     comments: string;
 }
@@ -145,6 +146,7 @@ export async function queryRequestInformation(requestId, handleFailure) {
                 "iacucprotocol",
                 "grantnumber",
                 "applicationduedate",
+                "shippingAcknowledgement",
                 "comments",
                 "status"
             ],

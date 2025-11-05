@@ -8,9 +8,9 @@ import PieChart from '../components/dashboard/PieChart';
 import BarChart from '../components/dashboard/BarChart';
 
 export function Dashboard() {
-    const [demographics, setDemographics] = useState(null);
-    const [living, setLiving] = useState(null);
-    const [u24Assigned, setu24Assigned] = useState(null);
+    const [demographics, setDemographics] = useState<[]>(null);
+    const [living, setLiving] = useState<[]>(null);
+    const [u24Assigned, setu24Assigned] = useState<[]>(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;
@@ -66,20 +66,20 @@ export function Dashboard() {
                         <div className="panel-heading">Census</div>
                         <div className="row">
                             <div className="panel-body count-panel-body">
-                                <div className="count-panel-text">{demographics.length}</div>
+                                <div className="count-panel-text">{new Intl.NumberFormat("en-IN").format(demographics.length)}</div>
                                 <div className="small text-muted">Marmosets tracked by MCC</div>
                             </div>
                         </div>
                         <div className="row mcc-col-centered">
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small">{living.length}</div>
+                                    <div className="count-panel-text-small">{new Intl.NumberFormat("en-IN").format(living.length)}</div>
                                     <div className="small text-muted text-center">Living</div>
                                 </div>
                             </div>
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small">{u24Assigned.length}</div>
+                                    <div className="count-panel-text-small">{new Intl.NumberFormat("en-IN").format(u24Assigned.length)}</div>
                                     <div className="small text-muted text-center">U24 Assigned</div>
                                 </div>
                             </div>
@@ -88,9 +88,9 @@ export function Dashboard() {
                 </div>
                 <div className="col-md-4">
                     <div className="panel panel-default">
-                        <div className="panel-heading">Center (All Animals)</div>
+                        <div className="panel-heading">Center (Living Animals)</div>
                         <div className="panel-body">
-                            <PieChart fieldName = "colony" demographics={demographics} cutout = "30%" />
+                            <PieChart fieldName = "colony" demographics={living} cutout = "30%" collapseBelow = {0.025}  />
                         </div>
                     </div>
                 </div>
