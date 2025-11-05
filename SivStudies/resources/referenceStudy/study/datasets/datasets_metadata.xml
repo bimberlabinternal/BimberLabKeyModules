@@ -509,13 +509,22 @@
             <column columnName="assayType">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="tissue">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="sampleType">
                 <datatype>varchar</datatype>
             </column>
             <column columnName="population">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="result">
+            <column columnName="parentPopulation">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="percentOfParent">
+                <datatype>double</datatype>
+            </column>
+            <column columnName="absoluteCount">
                 <datatype>double</datatype>
             </column>
             <column columnName="units">
