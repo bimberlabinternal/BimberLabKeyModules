@@ -41,6 +41,29 @@ public class DefaultDatasetTrigger implements Trigger
     }
 
     @Override
+    public void afterInsert(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext, @Nullable Map<String, Object> existingRecord) throws ValidationException
+    {
+        afterUpsert(table, c, user, newRow, existingRecord, errors, extraContext);
+    }
+
+    @Override
+    public void afterInsert(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
+    {
+        afterInsert(table, c, user, newRow, errors, extraContext, null);
+    }
+
+    @Override
+    public void afterUpdate(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, @Nullable Map<String, Object> oldRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
+    {
+        afterUpsert(table, c, user, newRow, oldRow, errors, extraContext);
+    }
+
+    protected void afterUpsert(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, @Nullable Map<String, Object> oldRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
+    {
+
+    }
+
+    @Override
     public void beforeInsert(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext, @Nullable Map<String, Object> existingRecord) throws ValidationException
     {
         beforeUpsert(table, c, user, newRow, existingRecord, errors, extraContext);
@@ -84,4 +107,10 @@ public class DefaultDatasetTrigger implements Trigger
             }
         }
     }
+
+    protected Container getTargetContainer(Container c)
+    {
+        return c.isWorkbookOrTab() ? c.getParent() : c;
+    }
+
 }

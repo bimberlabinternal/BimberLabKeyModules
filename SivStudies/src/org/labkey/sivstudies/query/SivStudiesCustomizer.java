@@ -79,6 +79,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             if ("assignment".equalsIgnoreCase(ds.getName()))
             {
                 ati.addTriggerFactory(StudiesService.get().getStudiesTriggerFactory());
+                ati.addTriggerFactory(new AutoCreateDemographicsTrigger.Factory());
             }
         }
         else

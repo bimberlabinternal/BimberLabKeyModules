@@ -1,20 +1,30 @@
 package org.labkey.sivstudies.notification;
 
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
+import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.ldk.notification.AbstractNotification;
 import org.labkey.api.module.ModuleLoader;
+import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.security.User;
+import org.labkey.api.study.Study;
+import org.labkey.api.study.StudyService;
+import org.labkey.api.util.logging.LogHelper;
 import org.labkey.sivstudies.SivStudiesModule;
+import org.labkey.sivstudies.query.DefaultDatasetTrigger;
 
 import java.util.Date;
 
 public class SivStudiesDataValidationNotification extends AbstractNotification
 {
+    protected static final Logger _log = LogHelper.getLogger(DefaultDatasetTrigger.class, "Messages related to SivStudiesDataValidationNotification");
+
     public SivStudiesDataValidationNotification()
     {
         super(ModuleLoader.getInstance().getModule(SivStudiesModule.class));
@@ -65,6 +75,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         duplicateInfectionCheck(c, u, msg);
         infectionAnchorDateDiscordance(c, u, msg);
         pvlWithoutInfectionDate(c, u, msg);
+        idsMissingFromDemographics(c, u, msg);
 
         if (!msg.isEmpty())
         {
@@ -103,9 +114,14 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
 
     private void genericQueryCheck(Container c, User u, StringBuilder msg, String schemaName, String queryName, String message)
     {
+        genericQueryCheck(c, u, msg, schemaName, queryName, message, null);
+    }
+
+    private void genericQueryCheck(Container c, User u, StringBuilder msg, String schemaName, String queryName, String message, @Nullable SimpleFilter filter)
+    {
         TableInfo ti = getTableInfo(u, c, schemaName, queryName);
 
-        TableSelector ts = new TableSelector(ti);
+        TableSelector ts = new TableSelector(ti, filter, null);
         long count = ts.getRowCount();
         if (count > 0)
         {
@@ -118,5 +134,22 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
     private void pvlWithoutInfectionDate(Container c, User u, StringBuilder msg)
     {
         genericQueryCheck(c, u, msg, "study", "pvlWithoutInfectionDate", "animals with PVL data but no record of SIV infection");
+    }
+
+    private void idsMissingFromDemographics(Container c, User u, StringBuilder msg)
+    {
+        Study s = StudyService.get().getStudy(getTargetContainer(c));
+        if (s == null)
+        {
+            return;
+        }
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("DataSet/Demographics/" + s.getSubjectColumnName()), null, CompareType.ISBLANK);
+        genericQueryCheck(c, u, msg, "study", s.getSubjectNounSingular(), "IDs with data in the study not present in the demographics table", filter);
+    }
+
+    protected Container getTargetContainer(Container c)
+    {
+        return c.isWorkbookOrTab() ? c.getParent() : c;
     }
 }
