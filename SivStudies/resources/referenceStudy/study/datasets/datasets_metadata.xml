@@ -87,6 +87,9 @@
             <column columnName="reason">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Medications/Treatments</tableTitle>
     </table>
@@ -124,6 +127,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="reason">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -199,6 +205,9 @@
             <column columnName="qualresult">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Viral Loads</tableTitle>
     </table>
@@ -238,6 +247,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="method">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -318,8 +330,11 @@
             <column columnName="subgroup">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="cohortId">
+            <column columnName="cohortAlias">
                 <datatype>varchar</datatype>
+            </column>
+            <column columnName="cohortId">
+                <datatype>integer</datatype>
             </column>
             <column columnName="description">
                 <datatype>varchar</datatype>
@@ -360,6 +375,21 @@
             <column columnName="quantity_units">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="freezer">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="rack">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="box">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="position">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Samples</tableTitle>
     </table>
@@ -395,6 +425,9 @@
             <column columnName="score">
                 <datatype>double</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Genetic Data</tableTitle>
     </table>
@@ -421,6 +454,9 @@
             <column columnName="procedure">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="comments">
+                <datatype>varchar</datatype>
+            </column>
         </columns>
         <tableTitle>Procedures</tableTitle>
     </table>
@@ -445,6 +481,9 @@
                 <datatype>varchar</datatype>
             </column>
             <column columnName="description">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -482,7 +521,7 @@
             <column columnName="units">
                 <datatype>varchar</datatype>
             </column>
-            <column columnName="comment">
+            <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>
         </columns>
@@ -527,6 +566,9 @@
                 <datatype>timestamp</datatype>
                 <conceptURI>http://cpas.labkey.com/laboratory#sampleDate</conceptURI>
             </column>
+            <column columnName="enddate">
+                <datatype>timestamp</datatype>
+            </column>
             <column columnName="dataSource">
                 <datatype>varchar</datatype>
             </column>
@@ -542,6 +584,9 @@
             </column>
             <column columnName="string_value">
                 <datatype>varchar</datatype>
+            </column>
+            <column columnName="numDatapoints">
+                <datatype>integer</datatype>
             </column>
             <column columnName="comments">
                 <datatype>varchar</datatype>

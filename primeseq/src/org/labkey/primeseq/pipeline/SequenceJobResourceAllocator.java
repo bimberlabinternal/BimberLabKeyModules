@@ -96,6 +96,11 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 }
             }
         }
+        else if (job.getClass().getName().endsWith("ReferenceLibraryPipelineJob"))
+        {
+            // This almost always includes bwa-mem
+            return 72;
+        }
 
         return 36;
     }
@@ -179,8 +184,8 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isGeneticsTask(job))
         {
-            job.getLogger().debug("setting memory to 72");
-            return 72;
+            job.getLogger().debug("setting memory to 96");
+            return 96;
         }
 
         if (isCacheAlignerIndexesTask(job))

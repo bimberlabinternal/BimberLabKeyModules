@@ -75,6 +75,21 @@
             </preferredWebParts>
         </folderTab>
         <folderTab>
+            <name>geneticsDashboard</name>
+            <caption>Genetics</caption>
+            <selectors>
+                <selector>
+                    <view>genetics</view>
+                </selector>
+            </selectors>
+            <preferredWebParts>
+                <webPart>
+                    <name>Marmoset Genetics</name>
+                    <location>body</location>
+                </webPart>
+            </preferredWebParts>
+        </folderTab>
+        <folderTab>
             <name>requests</name>
             <caption>MCC Requests</caption>
             <selectors>

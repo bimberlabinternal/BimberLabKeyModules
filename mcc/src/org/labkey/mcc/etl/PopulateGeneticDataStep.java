@@ -68,7 +68,7 @@ public class PopulateGeneticDataStep implements TaskRefTask
         {
             //first select all rows from remote table
             SelectRowsCommand sr = new SelectRowsCommand(MccSchema.NAME, "genomicDatasetsSource");
-            sr.setColumns(Arrays.asList("Id", "date", "datatype", "sra_accession"));
+            sr.setColumns(Arrays.asList("Id", "date", "datatype", "sra_accession", "total_reads"));
 
             TableInfo aggregatedDemographics = QueryService.get().getUserSchema(job.getUser(), job.getContainer(), MccSchema.NAME).getTable("aggregatedDemographics");
 
@@ -104,6 +104,7 @@ public class PopulateGeneticDataStep implements TaskRefTask
                 newRow.put("date", x.get("date"));
                 newRow.put("datatype", x.get("datatype"));
                 newRow.put("sra_accession", x.get("sra_accession"));
+                newRow.put("total_reads", x.get("total_reads"));
 
                 toInsert.get(target).add(newRow);
             });

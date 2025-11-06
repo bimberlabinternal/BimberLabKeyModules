@@ -111,6 +111,7 @@ public class mGAPModule extends ExtendedSimpleModule
         ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Connection, "https://code.jquery.com", "https://*.fontawesome.com");
         ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Style, "https://code.jquery.com", "https://www.gstatic.com");
         ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Font, "https://*.fontawesome.com");
+        ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Connection, "https://oss.maxcdn.com");
 
         new PipelineStartup();
     }

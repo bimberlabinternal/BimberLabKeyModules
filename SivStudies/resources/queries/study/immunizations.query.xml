@@ -27,6 +27,10 @@
                     <column columnName="reason">
                         <columnTitle>Reason</columnTitle>
                     </column>
+                    <column columnName="comments">
+                        <columnTitle>Comments</columnTitle>
+                        <inputType>textarea</inputType>
+                    </column>
                     <column columnName="dataSource">
                         <columnTitle>Data Source</columnTitle>
                     </column>

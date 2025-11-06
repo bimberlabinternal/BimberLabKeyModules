@@ -4,6 +4,7 @@
         <column name="date"/>
         <column name="category"/>
         <column name="procedure"/>
+        <column name="comments"/>
         <column name="dataSource"/>
         <column name="viralLoad"/>
     </columns>

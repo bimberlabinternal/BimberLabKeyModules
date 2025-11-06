@@ -2,6 +2,7 @@
     <columns>
         <column name="Id"/>
         <column name="date"/>
+        <column name="enddate"/>
         <column name="outcome"/>
         <column name="numeric_value"/>
         <column name="string_value"/>

@@ -18,6 +18,9 @@
                     <column columnName="description">
                         <columnTitle>Description</columnTitle>
                     </column>
+                    <column columnName="comments">
+                        <columnTitle>Comments</columnTitle>
+                    </column>
                 </columns>
             </table>
         </tables>

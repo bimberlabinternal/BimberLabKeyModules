@@ -7,6 +7,7 @@
                     <column columnName="Id">
                         <conceptURI>http://cpas.labkey.com/Study#ParticipantId</conceptURI>
                         <url>laboratory/dataBrowser.view?subjectId=${Id}</url>
+                        <facetingBehavior>ALWAYS_OFF</facetingBehavior>
                     </column>
                     <column columnName="date">
                         <columnTitle>Date</columnTitle>
