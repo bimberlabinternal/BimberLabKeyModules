@@ -2,6 +2,7 @@ package org.labkey.sivstudies.etl;
 
 import org.apache.xmlbeans.XmlException;
 import org.jetbrains.annotations.NotNull;
+import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.TableInfo;
@@ -158,8 +159,8 @@ public class PerformManualIdrStepsTask implements TaskRefTask
         TableInfo ad = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "studies").getTable("subjectAnchorDates");
 
         Map<String, Set<Date>> existingRecords = new HashMap<>();
-        new TableSelector(ad, PageFlowUtil.set("Id", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), "SIV Infection"), null).forEachResults(rs -> {
-            String id = rs.getString(FieldKey.fromString("Id"));
+        new TableSelector(ad, PageFlowUtil.set("subjectId", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), "SIV Infection"), null).forEachResults(rs -> {
+            String id = rs.getString(FieldKey.fromString("subjectId"));
             if (!existingRecords.containsKey(id))
             {
                 existingRecords.put(id, new HashSet<>());
@@ -183,7 +184,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
             if (!existingRecords.containsKey(id) | !existingRecords.get(id).contains(date))
             {
                 toInsert.add(Map.of(
-                        "Id", id,
+                        "subjectId", id,
                         "date", date,
                         "category", "SIV Infection",
                         "sourceRecord", rs.getString(FieldKey.fromString("objectId"))
@@ -212,12 +213,12 @@ public class PerformManualIdrStepsTask implements TaskRefTask
         }
 
         final List<Map<String, Object>> toDelete = new ArrayList<>();
-        new TableSelector(ad, PageFlowUtil.set("Id", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), "SIV Infection"), null).forEachResults(rs -> {
-            String id = rs.getString(FieldKey.fromString("Id"));
+        new TableSelector(ad, PageFlowUtil.set("subjectId", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), "SIV Infection"), null).forEachResults(rs -> {
+            String id = rs.getString(FieldKey.fromString("subjectId"));
             Date date = rs.getDate(FieldKey.fromString("date"));
             if (!sourceRecords.containsKey(id) | !sourceRecords.get(id).contains(date))
             {
-                toDelete.add(Map.of("rowId", rs.getInt(FieldKey.fromString("rowId"))));
+                toDelete.add(new CaseInsensitiveHashMap<>(Map.of("rowid", rs.getInt(FieldKey.fromString("rowId")))));
             }
         });
 

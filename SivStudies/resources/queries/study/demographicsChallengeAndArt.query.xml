@@ -22,7 +22,7 @@
                         <columnTitle>Infection Date</columnTitle>
                     </column>
                     <column columnName="artInitiationDate">
-                        <columnTitle>ART Initiation (WPI)</columnTitle>
+                        <columnTitle>ART Initiation (DPI)</columnTitle>
                     </column>
                 </columns>
                 <titleColumn>allInfections</titleColumn>
