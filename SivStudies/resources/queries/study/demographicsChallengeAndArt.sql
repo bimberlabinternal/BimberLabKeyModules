@@ -12,6 +12,9 @@ SELECT
       WHEN t.category = 'SIV Infection' THEN t.date
       ELSE NULL
   END) as infectionDate,
-
+  min(CASE
+          WHEN t.category = 'ART' THEN t.timePostSivChallenge.daysPostInfection
+          ELSE NULL
+      END) as artInitiationDate
 FROM study.treatments t
 GROUP BY t.Id

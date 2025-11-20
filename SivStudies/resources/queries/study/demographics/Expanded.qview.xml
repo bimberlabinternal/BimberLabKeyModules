@@ -10,7 +10,8 @@
         <column name="projects/subgroups"/>
         <column name="immunizations/immunizations"/>
         <column name="sivART/allInfections"/>
-        <column name="sivART/allART"/>
+        <column name="sivART/artInitiationDate"/>
+        <column name="interventions/interventions"/>
         <column name="outcomes/outcomes"/>
     </columns>
     <sorts>

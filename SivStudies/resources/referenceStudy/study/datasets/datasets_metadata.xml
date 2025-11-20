@@ -110,11 +110,16 @@
                 <datatype>entityid</datatype>
                 <isKeyField>true</isKeyField>
             </column>
-
             <column columnName="category">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="backbone">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="treatment">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="antigens">
                 <datatype>varchar</datatype>
             </column>
             <column columnName="route">
@@ -128,6 +133,12 @@
             </column>
             <column columnName="reason">
                 <datatype>varchar</datatype>
+            </column>
+            <column columnName="isMock">
+                <datatype>boolean</datatype>
+            </column>
+            <column columnName="vectorId">
+                <datatype>integer</datatype>
             </column>
             <column columnName="comments">
                 <datatype>varchar</datatype>

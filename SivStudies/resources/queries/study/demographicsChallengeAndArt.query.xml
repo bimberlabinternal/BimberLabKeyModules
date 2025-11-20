@@ -10,12 +10,19 @@
                     </column>
                     <column columnName="allInfections">
                         <columnTitle>SIV Infection</columnTitle>
+                        <url>/query/executeQuery.view?schemaName=study&amp;query.queryName=treatments&amp;query.Id~eq=${Id}&amp;query.category~eq=SIV Infection</url>
+                        <urlTarget>_blank</urlTarget>
                     </column>
                     <column columnName="allART">
                         <columnTitle>ART</columnTitle>
+                        <url>/query/executeQuery.view?schemaName=study&amp;query.queryName=treatments&amp;query.Id~eq=${Id}&amp;query.category~eq=ART</url>
+                        <urlTarget>_blank</urlTarget>
                     </column>
                     <column columnName="infectionDate">
                         <columnTitle>Infection Date</columnTitle>
+                    </column>
+                    <column columnName="artInitiationDate">
+                        <columnTitle>ART Initiation (WPI)</columnTitle>
                     </column>
                 </columns>
                 <titleColumn>allInfections</titleColumn>
