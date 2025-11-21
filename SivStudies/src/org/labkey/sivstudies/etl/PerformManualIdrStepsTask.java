@@ -183,7 +183,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
         final Map<String, Set<Date>> sourceRecords = new HashMap<>();
         final List<Map<String, Object>> toInsert = new ArrayList<>();
-        new TableSelector(treatments, PageFlowUtil.set("Id", "date", "objectId"), new SimpleFilter(FieldKey.fromString("category"), treatmentCategory), null).forEachResults(rs -> {
+        new TableSelector(treatments, PageFlowUtil.set("Id", sourceDateField, "objectId"), new SimpleFilter(FieldKey.fromString("category"), treatmentCategory), null).forEachResults(rs -> {
             String id = rs.getString(FieldKey.fromString("Id"));
             Date date = rs.getDate(FieldKey.fromString(sourceDateField));
             if (date == null)
