@@ -273,6 +273,13 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             colInfo.setLabel("SIV/ART Dates");
             parentTable.addColumn(colInfo);
         }
+
+        if (parentTable.getColumn("pvlInfo") == null)
+        {
+            BaseColumnInfo colInfo = getWrappedIdCol(parentTable.getUserSchema(), "demographicsPVL", parentTable, "pvlInfo");
+            colInfo.setLabel("PVL Info");
+            parentTable.addColumn(colInfo);
+        }
     }
 
     private void appendPvlColumns(DatasetTable ds, String subjectColName, String dateColName)

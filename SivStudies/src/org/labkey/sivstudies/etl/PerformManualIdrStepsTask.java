@@ -39,6 +39,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
         pruneSivChallenges(pipelineJob);
         updateVaccineInformation(pipelineJob);
         updateChallengeAnchorDates(pipelineJob);
+        updateArtInitiationAnchorDates(pipelineJob);
 
         return new RecordedActionSet();
     }
@@ -68,7 +69,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
             if (existingRecords.get(id).contains(rs.getDate(FieldKey.fromString("date"))))
             {
-                toDelete.add(Map.of("lsid", rs.getString(FieldKey.fromString("lsid"))));
+                toDelete.add(new CaseInsensitiveHashMap<>(Map.of("lsid", rs.getString(FieldKey.fromString("lsid")))));
             }
         });
 
@@ -138,7 +139,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
             {
                 BatchValidationException bve = new BatchValidationException();
 
-                List<Map<String, Object>> oldKeys = toUpdate.stream().map(x -> Map.of("lsid", x.get("lsid"))).toList();
+                List<Map<String, Object>> oldKeys = toUpdate.stream().map(x -> (Map<String, Object>)new CaseInsensitiveHashMap<>(Map.of("lsid", x.get("lsid")))).toList();
                 ti.getUpdateService().updateRows(_containerUser.getUser(), _containerUser.getContainer(), toUpdate, oldKeys, bve, null, null);
 
                 if (bve.hasErrors())
@@ -155,11 +156,22 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
     private void updateChallengeAnchorDates(PipelineJob pipelineJob) throws PipelineJobException
     {
+        updateAnchorDates(pipelineJob, "SIV Infection", "SIV Infection", "date");
+    }
+
+    private void updateArtInitiationAnchorDates(PipelineJob pipelineJob) throws PipelineJobException
+    {
+        updateAnchorDates(pipelineJob, "ART Initiation", "ART", "date");
+        updateAnchorDates(pipelineJob, "ART End", "ART", "enddate");
+    }
+
+    private void updateAnchorDates(PipelineJob pipelineJob, String eventType, String treatmentCategory, String sourceDateField) throws PipelineJobException
+    {
         TableInfo treatments = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "study").getTable("treatments");
         TableInfo ad = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "studies").getTable("subjectAnchorDates");
 
         Map<String, Set<Date>> existingRecords = new HashMap<>();
-        new TableSelector(ad, PageFlowUtil.set("subjectId", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), "SIV Infection"), null).forEachResults(rs -> {
+        new TableSelector(ad, PageFlowUtil.set("subjectId", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), eventType), null).forEachResults(rs -> {
             String id = rs.getString(FieldKey.fromString("subjectId"));
             if (!existingRecords.containsKey(id))
             {
@@ -171,9 +183,13 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
         final Map<String, Set<Date>> sourceRecords = new HashMap<>();
         final List<Map<String, Object>> toInsert = new ArrayList<>();
-        new TableSelector(treatments, PageFlowUtil.set("Id", "date", "objectId"), new SimpleFilter(FieldKey.fromString("category"), "SIV Infection"), null).forEachResults(rs -> {
+        new TableSelector(treatments, PageFlowUtil.set("Id", "date", "objectId"), new SimpleFilter(FieldKey.fromString("category"), treatmentCategory), null).forEachResults(rs -> {
             String id = rs.getString(FieldKey.fromString("Id"));
-            Date date = rs.getDate(FieldKey.fromString("date"));
+            Date date = rs.getDate(FieldKey.fromString(sourceDateField));
+            if (date == null)
+            {
+                return;
+            }
 
             if (!sourceRecords.containsKey(id))
             {
@@ -183,18 +199,18 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
             if (!existingRecords.containsKey(id) | !existingRecords.get(id).contains(date))
             {
-                toInsert.add(Map.of(
+                toInsert.add(new CaseInsensitiveHashMap<>(Map.of(
                         "subjectId", id,
                         "date", date,
-                        "category", "SIV Infection",
+                        "category", eventType,
                         "sourceRecord", rs.getString(FieldKey.fromString("objectId"))
-                ));
+                )));
             }
         });
 
         if (!toInsert.isEmpty())
         {
-            pipelineJob.getLogger().info("Inserting " + toInsert.size() + " SIV challenge anchor date records");
+            pipelineJob.getLogger().info("Inserting " + toInsert.size() + " " + eventType + " anchor date records");
 
             try
             {
@@ -213,7 +229,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
         }
 
         final List<Map<String, Object>> toDelete = new ArrayList<>();
-        new TableSelector(ad, PageFlowUtil.set("subjectId", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), "SIV Infection"), null).forEachResults(rs -> {
+        new TableSelector(ad, PageFlowUtil.set("subjectId", "date", "rowid"), new SimpleFilter(FieldKey.fromString("eventLabel"), eventType), null).forEachResults(rs -> {
             String id = rs.getString(FieldKey.fromString("subjectId"));
             Date date = rs.getDate(FieldKey.fromString("date"));
             if (!sourceRecords.containsKey(id) | !sourceRecords.get(id).contains(date))
@@ -224,7 +240,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
         if (!toDelete.isEmpty())
         {
-            pipelineJob.getLogger().info("Deleting " + toDelete.size() + " SIV challenge anchor date records");
+            pipelineJob.getLogger().info("Deleting " + toDelete.size() + " " + eventType + " anchor date records");
 
             try
             {
