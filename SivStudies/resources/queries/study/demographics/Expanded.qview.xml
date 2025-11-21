@@ -6,13 +6,14 @@
         <column name="calculated_status"/>
         <column name="birth"/>
         <column name="death"/>
-        <column name="projects/categories"/>
+        <column name="sivART/ageAtInfection"/>
         <column name="projects/allStudies"/>
+        <column name="projects/studyDescription"/>
         <column name="projects/subgroups"/>
         <column name="immunizations/immunizations"/>
         <column name="sivART/allInfections"/>
         <column name="sivART/artInitiationDPI"/>
-        <column name="interventions/interventions"/>
+        <column name="interventions/allInterventions"/>
         <column name="outcomes/outcomes"/>
     </columns>
     <sorts>
