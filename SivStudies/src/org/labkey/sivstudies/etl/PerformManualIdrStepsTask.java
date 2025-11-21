@@ -197,7 +197,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
             }
             sourceRecords.get(id).add(date);
 
-            if (!existingRecords.containsKey(id) | !existingRecords.get(id).contains(date))
+            if (!sourceRecords.containsKey(id) || !sourceRecords.get(id).contains(date))
             {
                 toInsert.add(new CaseInsensitiveHashMap<>(Map.of(
                         "subjectId", id,
