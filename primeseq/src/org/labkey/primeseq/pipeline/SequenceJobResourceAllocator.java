@@ -92,7 +92,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
                 String aligner = params.get("alignment");
                 if (Arrays.asList("BWA-Mem", "BWA-Mem2", "STAR").contains(aligner))
                 {
-                    return 72;
+                    return 128;
                 }
             }
         }
@@ -102,7 +102,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return 72;
         }
 
-        return 36;
+        return 72;
     }
 
     @Override
