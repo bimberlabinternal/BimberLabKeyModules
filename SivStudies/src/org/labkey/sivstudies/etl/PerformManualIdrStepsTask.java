@@ -91,7 +91,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
     private static final Pattern mir126_RE = Pattern.compile("miR[- ]{0,1}126",  Pattern.CASE_INSENSITIVE);
     private static final Pattern mir142_RE = Pattern.compile("miR[- ]{0,1}142",  Pattern.CASE_INSENSITIVE);
-    private static final Pattern mir126_142_RE = Pattern.compile("miR[- ]{0,1}142[ ,-]126",  Pattern.CASE_INSENSITIVE);
+    private static final Pattern mir126_142_RE = Pattern.compile("miR[- ]{0,1}142[ ,-]{1,2}126",  Pattern.CASE_INSENSITIVE);
 
     private void updateVaccineInformation(PipelineJob pipelineJob) throws PipelineJobException
     {
