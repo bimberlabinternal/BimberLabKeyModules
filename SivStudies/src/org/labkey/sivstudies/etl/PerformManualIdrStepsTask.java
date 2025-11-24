@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class PerformManualIdrStepsTask implements TaskRefTask
 {
@@ -88,6 +89,10 @@ public class PerformManualIdrStepsTask implements TaskRefTask
         }
     }
 
+    private static final Pattern mir126_RE = Pattern.compile("miR[- ]{0,1}126",  Pattern.CASE_INSENSITIVE);
+    private static final Pattern mir142_RE = Pattern.compile("miR[- ]{0,1}142",  Pattern.CASE_INSENSITIVE);
+    private static final Pattern mir126_142_RE = Pattern.compile("miR[- ]{0,1}142[ ,-]126",  Pattern.CASE_INSENSITIVE);
+
     private void updateVaccineInformation(PipelineJob pipelineJob) throws PipelineJobException
     {
         TableInfo ti = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "study").getTable("immunizations");
@@ -105,17 +110,25 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
             if (backbone != null && backbone.contains("68-1"))
             {
-                if (treatment.contains("miR-142-126"))
+                if (mir126_142_RE.matcher(treatment).find())
                 {
                     updatedRow.put("backbone", "68-1 MHC-1A-only");
                 }
-                else if (treatment.contains("miR-126"))
+                else if (mir126_RE.matcher(treatment).find() && !treatment.contains("142"))
                 {
                     updatedRow.put("backbone", "68-1 MHC-E-only");
                 }
-                else if (treatment.contains("miR-142"))
+                else if (mir142_RE.matcher(treatment).find() && !treatment.contains("126"))
                 {
                     updatedRow.put("backbone", "68-1 MHC-II-only");
+                }
+                else if (treatment.contains("RhCMV FL"))
+                {
+                    updatedRow.put("backbone", "68-1 FL");
+                }
+                else if (treatment.contains("RhCMV") && treatment.contains("d186-189"))
+                {
+                    updatedRow.put("backbone", "68-1 d186-189");
                 }
             }
 
