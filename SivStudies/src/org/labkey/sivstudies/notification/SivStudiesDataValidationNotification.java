@@ -76,6 +76,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         infectionAnchorDateDiscordance(c, u, msg);
         pvlWithoutInfectionDate(c, u, msg);
         idsMissingFromDemographics(c, u, msg);
+        missingArtRecord(c, u, msg);
 
         if (!msg.isEmpty())
         {
@@ -146,6 +147,20 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
 
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("DataSet/Demographics/" + s.getSubjectColumnName()), null, CompareType.ISBLANK);
         genericQueryCheck(c, u, msg, "study", s.getSubjectNounSingular(), "IDs with data in the study not present in the demographics table", filter);
+    }
+
+    private void missingArtRecord(Container c, User u, StringBuilder msg)
+    {
+        Study s = StudyService.get().getStudy(getTargetContainer(c));
+        if (s == null)
+        {
+            return;
+        }
+
+        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("projects/studyDescription"), "ART", CompareType.CONTAINS);
+        filter.addCondition(FieldKey.fromString("projects/studyDescription"), "No ART", CompareType.DOES_NOT_CONTAIN);
+        filter.addCondition(FieldKey.fromString("sivART/artInitiationDPI"), null, CompareType.ISBLANK);
+        genericQueryCheck(c, u, msg, "study", s.getSubjectNounSingular(), "IDs assigned to an ART study without a record of ART", filter);
     }
 
     protected Container getTargetContainer(Container c)
