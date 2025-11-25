@@ -4,6 +4,7 @@
        <column name="date" />
        <column name="datatype" />
        <column name="sra_accession" />
+       <column name="total_reads" />
        <column name="history" />
    </columns>
    <sorts>

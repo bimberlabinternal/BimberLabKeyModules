@@ -8,14 +8,14 @@ import BarChart, { ColorType } from '../components/dashboard/BarChart';
 import { ActiveElement, Chart, ChartEvent } from 'chart.js/dist/types/index';
 
 export function Dashboard() {
-    const [demographics, setDemographics] = useState(null);
-    const [living, setLiving] = useState(null);
-    const [u24Assigned, setu24Assigned] = useState(null);
-    const [availableForTransfer, setAvailableForTransfer] = useState(null);
-    const [requestRows, setRequestRows] = useState(null);
-    const [censusRows, setCensusRows] = useState(null);
-    const [birthData, setBirthData ] = useState(null);
-    const [breedingPairData, setBreedingPairData ] = useState(null);
+    const [demographics, setDemographics] = useState<[]>(null);
+    const [living, setLiving] = useState<[]>(null);
+    const [u24Assigned, setu24Assigned] = useState<[]>(null);
+    const [availableForTransfer, setAvailableForTransfer] = useState<[]>(null);
+    const [requestRows, setRequestRows] = useState<[]>(null);
+    const [censusRows, setCensusRows] = useState<[]>(null);
+    const [birthData, setBirthData ] = useState<[]>(null);
+    const [breedingPairData, setBreedingPairData ] = useState<[]>(null);
 
     const ctx = getServerContext().getModuleContext('mcc') || {};
     const containerPath = ctx.MCCContainer || null;
@@ -147,20 +147,20 @@ export function Dashboard() {
                         <div className="panel-heading">U24 Census</div>
                         <div className="row">
                             <div className="panel-body count-panel-body">
-                                <div className="count-panel-text"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "animalData"})}>{u24Assigned.length}</a></div>
+                                <div className="count-panel-text"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "animalData"})}>{new Intl.NumberFormat("en-IN").format(u24Assigned.length)}</a></div>
                                 <div className="small text-muted text-center">Total U24 Animals</div>
                             </div>
                         </div>
                         <div className="row mcc-col-centered">
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "animalData", "u24.Availability~eq": "available for transfer"})}>{availableForTransfer.length}</a></div>
+                                    <div className="count-panel-text-small"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "animalData", "u24.Availability~eq": "available for transfer"})}>{new Intl.NumberFormat("en-IN").format(availableForTransfer.length)}</a></div>
                                     <div className="small text-muted text-center">Available</div>
                                 </div>
                             </div>
                             <div className="col-md-3">
                                 <div className="panel-body count-panel-body">
-                                    <div className="count-panel-text-small"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "requests"})}>{requestRows.length}</a></div>
+                                    <div className="count-panel-text-small"><a href={ActionURL.buildURL("project", "begin", "", {pageId: "requests"})}>{new Intl.NumberFormat("en-IN").format(requestRows.length)}</a></div>
                                     <div className="small text-muted text-center">Total Requests</div>
                                 </div>
                             </div>

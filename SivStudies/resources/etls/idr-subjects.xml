@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<etl xmlns="http://labkey.org/etl/xml">
+    <name>Hansen/IDR Subjects</name>
+    <description>Hansen/IDR Subjects</description>
+    <transforms>
+        <transform id="subjects" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.sivstudies.etl.AddMissingIdrSubjects">
+
+            </taskref>
+        </transform>
+    </transforms>
+    <schedule>
+        <cron expression="0 15 20 * * ?"/>
+    </schedule>
+</etl>
