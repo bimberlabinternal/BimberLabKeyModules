@@ -99,7 +99,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         else if (job.getClass().getName().endsWith("ReferenceLibraryPipelineJob"))
         {
             // This almost always includes bwa-mem
-            return 72;
+            return 128;
         }
 
         return 72;
