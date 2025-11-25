@@ -6,6 +6,7 @@ cohortStart as date,
 CASE
     WHEN contprog = 'C' THEN 'Controller'
     WHEN contprog = 'P' THEN 'Progressor'
+    ELSE contprog
 END as outcome,
 
 'Hansen/IDR' as dataSource

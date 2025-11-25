@@ -34,6 +34,8 @@
                     <setting name="destSchema" value="study"/>
                     <setting name="destQuery" value="blood"/>
                     <setting name="destColumn" value="objectId"/>
+
+                    <setting name="reportOnly" value="false"/>
                 </settings>
             </taskref>
         </transform>

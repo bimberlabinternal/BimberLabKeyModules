@@ -5,6 +5,7 @@
         <column name="timePostSivChallenge/daysPostInfection"/>
         <column name="category"/>
         <column name="description"/>
+        <column name="comments"/>
         <column name="dataSource"/>
     </columns>
     <sorts>

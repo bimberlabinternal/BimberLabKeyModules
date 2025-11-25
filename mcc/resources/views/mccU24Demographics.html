@@ -12,7 +12,10 @@ Ext4.onReady(function (){
         title: 'MCC Animals',
         schemaName: 'study',
         queryName: 'demographics',
-        viewName: LABKEY.ActionURL.getParameter('viewName') ?? 'U24 Assigned'
+        viewName: LABKEY.ActionURL.getParameter('viewName'),
+        removeableFilters: [
+            LABKEY.Filter.create('u24_status', true, LABKEY.Filter.Types.EQUALS)
+        ]
     }).render(webpart.wrapperDivId);
 });
 

@@ -8,6 +8,7 @@
         <column name="route"/>
         <column name="amount"/>
         <column name="amount_units"/>
+        <column name="comments"/>
         <column name="dataSource"/>
         <column name="viralLoad"/>
     </columns>

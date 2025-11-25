@@ -1,0 +1,22 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" hidden="false" canOverride="false">
+    <columns>
+        <column name="Id"/>
+        <column name="sex"/>
+        <column name="species"/>
+        <column name="calculated_status"/>
+        <column name="projects/categories"/>
+        <column name="projects/allStudies"/>
+        <column name="projects/subgroups"/>
+        <column name="sivART/allInfections"/>
+        <column name="sivART/artInitiationDate"/>
+        <column name="sivART/artReleaseDate"/>
+        <column name="sivART/artInitiationDPI"/>
+        <column name="sivART/artReleaseWPI"/>
+        <column name="pvlInfo/numPVL"/>
+        <column name="pvlInfo/numPVLPostArtRelease"/>
+        <column name="pvlInfo/lastPvlPostArtReleaseWeeks"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+</customView>
