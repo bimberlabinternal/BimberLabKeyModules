@@ -11,7 +11,7 @@ FROM (
       min(floor(age(t.DataSets.Demographics.birth, CASE WHEN t.category = 'SIV Infection' THEN t.date ELSE NULL END))) AS ageAtInfection,
 
       group_concat(DISTINCT CASE
-          WHEN t.category = 'ART' THEN (t.treatment || ' (' || t.timePostSivChallenge.timePostInfection || ')')
+          WHEN t.category = 'ART' THEN (t.treatment || ' (' || COALESCE(t.timePostSivChallenge.timePostInfection, 'Unk DPI') || ')')
           ELSE NULL
       END, char(10)) as allART,
       min(CASE
