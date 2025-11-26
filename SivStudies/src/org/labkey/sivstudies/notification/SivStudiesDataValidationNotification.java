@@ -77,6 +77,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         pvlWithoutInfectionDate(c, u, msg);
         idsMissingFromDemographics(c, u, msg);
         missingArtRecord(c, u, msg);
+        missingAnchorDates(c, u, msg);
 
         if (!msg.isEmpty())
         {
@@ -161,6 +162,17 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         filter.addCondition(FieldKey.fromString("projects/studyDescription"), "No ART", CompareType.DOES_NOT_CONTAIN);
         filter.addCondition(FieldKey.fromString("sivART/artInitiationDPI"), null, CompareType.ISBLANK);
         genericQueryCheck(c, u, msg, "study", s.getSubjectNounSingular(), "IDs assigned to an ART study without a record of ART", filter);
+    }
+
+    private void missingAnchorDates(Container c, User u, StringBuilder msg)
+    {
+        Study s = StudyService.get().getStudy(getTargetContainer(c));
+        if (s == null)
+        {
+            return;
+        }
+
+        genericQueryCheck(c, u, msg, "study", "missingAnchorDates", "records missing from the anchor dates table");
     }
 
     protected Container getTargetContainer(Container c)
