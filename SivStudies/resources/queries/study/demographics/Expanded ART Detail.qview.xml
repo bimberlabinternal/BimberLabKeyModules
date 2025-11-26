@@ -9,6 +9,7 @@
         <column name="immunizations/immunizations"/>
         <column name="sivART/allInfections"/>
         <column name="sivART/ageAtInfection"/>
+        <column name="sivART/allART"/>
         <column name="sivART/artInitiationDPI"/>
         <column name="sivART/artReleaseWPI"/>
         <column name="interventions/allInterventions"/>
