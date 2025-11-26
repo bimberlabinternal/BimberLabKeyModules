@@ -1,20 +1,10 @@
 SELECT
     t.Id,
-    group_concat(DISTINCT CASE
-      WHEN t.category = 'Intervention' THEN (t.treatment || ' (' || t.timePostSivChallenge.timePostInfection || ')')
-      ELSE NULL
-  END, char(10)) as allInterventions,
-    min(CASE
-            WHEN t.category = 'Intervention' THEN t.date
-            ELSE NULL
-        END) as firstInterventionDate,
-    min(CASE
-            WHEN t.category = 'Intervention' THEN t.timePostSivChallenge.daysPostInfection
-            ELSE NULL
-        END) as firstInterventionDPI,
-    min(CASE
-            WHEN t.category = 'Intervention' THEN t.timePostSivChallenge.weeksPostInfection
-            ELSE NULL
-        END) as firstInterventionWPI
+    group_concat(DISTINCT (t.treatment || ' (' || t.timePostSivChallenge.timePostInfection || ')'), char(10)) as allInterventions,
+    min(t.date) as firstInterventionDate,
+    min(t.timePostSivChallenge.daysPostInfection) as firstInterventionDPI,
+    min(t.timePostSivChallenge.weeksPostInfection) as firstInterventionWPI,
+    min(t.timePostSivChallenge.weeksPostInfection) - min(t.sivART.artReleaseWPI) as firstInterventionPostArtReleaseWeeks
 FROM study.treatments t
+WHERE t.category = 'Intervention'
 GROUP BY t.Id

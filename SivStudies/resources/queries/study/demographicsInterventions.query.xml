@@ -22,6 +22,9 @@
                     <column columnName="firstInterventionWPI">
                         <columnTitle>First Intervention (WPI)</columnTitle>
                     </column>
+                    <column columnName="firstInterventionPostArtReleaseWeeks">
+                        <columnTitle>First Intervention Relative to ART Release (Weeks)</columnTitle>
+                    </column>
                 </columns>
                 <titleColumn>allInterventions</titleColumn>
             </table>

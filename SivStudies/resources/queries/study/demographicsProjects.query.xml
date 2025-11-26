@@ -12,7 +12,13 @@
                         <columnTitle>Study Categories</columnTitle>
                     </column>
                     <column columnName="allStudies">
-                        <columnTitle>All Studies</columnTitle>
+                        <columnTitle>Studies</columnTitle>
+                    </column>
+                    <column columnName="allStudiesAndAnalyses">
+                        <columnTitle>Studies and Analyses</columnTitle>
+                    </column>
+                    <column columnName="analysisGroups">
+                        <columnTitle>Analyses</columnTitle>
                     </column>
                     <column columnName="subgroups">
                         <columnTitle>Subgroups/Treatments</columnTitle>

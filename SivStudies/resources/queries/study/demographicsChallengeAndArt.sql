@@ -5,7 +5,7 @@ FROM (
     SELECT
       t.Id,
       group_concat(DISTINCT CASE
-          WHEN t.category = 'SIV Infection' THEN (cast(month(t.date) as varchar) || '/' || cast(dayofmonth(t.date) as varchar) || '/' || cast(year(t.date) as varchar) || ' (' || t.treatment || ')')
+          WHEN t.category = 'SIV Infection' THEN (t.treatment || (CASE WHEN t.route IS NULL then '' ELSE (', ' || t.route) END) || (CASE WHEN t.amount IS NULL then '' ELSE (', ' || CAST(t.amount as VARCHAR) || ' ' || t.amount_units) END))
           ELSE NULL
       END, char(10)) as allInfections,
       min(floor(age(t.DataSets.Demographics.birth, CASE WHEN t.category = 'SIV Infection' THEN t.date ELSE NULL END))) AS ageAtInfection,
