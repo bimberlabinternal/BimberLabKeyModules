@@ -7,6 +7,7 @@ PID0 as date,
 
 FROM bimber_data.subjects
 WHERE PID0 IS NOT NULL
+AND Cohort NOT IN ('PC549', 'PC585') AND Cohort NOT LIKE 'W%'
 
 UNION ALL
 
@@ -19,3 +20,4 @@ D0 as date,
 
 FROM bimber_data.subjects
 WHERE D0 IS NOT NULL
+  AND Cohort NOT IN ('PC549', 'PC585') AND Cohort NOT LIKE 'W%'

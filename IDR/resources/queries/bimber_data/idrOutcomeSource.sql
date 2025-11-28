@@ -13,3 +13,4 @@ END as outcome,
 
 FROM bimber_data.subjects
 WHERE contprog IS NOT NULL AND contprog != ''
+AND Cohort NOT IN ('PC549', 'PC585') AND Cohort NOT LIKE 'W%'
