@@ -1,0 +1,21 @@
+<customView xmlns="http://labkey.org/data/xml/queryCustomView" hidden="false" canOverride="false">
+    <columns>
+        <column name="Id"/>
+        <column name="sex"/>
+        <column name="projects/allStudies"/>
+        <column name="projects/studyDescription"/>
+        <column name="projects/subgroups"/>
+        <column name="projects/analysisGroups"/>
+        <column name="immunizations/immunizations"/>
+        <column name="sivART/allInfections"/>
+        <column name="sivART/infectionDate"/>
+        <column name="sivART/ageAtInfection"/>
+        <column name="sivART/allART"/>
+        <column name="interventions/allInterventions"/>
+        <column name="interventions/firstInterventionDPI"/>
+        <column name="pvlInfo/numPVL"/>
+    </columns>
+    <sorts>
+        <sort column="Id" descending="false"/>
+    </sorts>
+</customView>
