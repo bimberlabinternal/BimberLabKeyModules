@@ -382,7 +382,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                         "JOIN studies.subjectAnchorDates ad ON (ad.subjectId = c." + idCol.getFieldKey().toSQLString() + ")\n" +
                         "WHERE ad.eventLabel = 'SIV Infection'\n" +
                         "GROUP BY c.date, c." + pkCol.getFieldKey().toString() + "\n" +
-                        "HAVING count(*) = 1) t"
+                        "HAVING count(DISTINCT c.date) = 1) t"
                 );
                 qd.setIsTemporary(true);
 
@@ -472,9 +472,10 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                         "GROUP_CONCAT(DISTINCT tr.treatment) AS artTreatment,\n" +
                         "c." + pkCol.getFieldKey().toString() + "\n" +
                         "FROM \"" + schemaName + "\".\"" + queryName + "\" c " +
+                        // TODO: consider whether this should include all dates
                         "JOIN study.treatments tr ON (tr.category = 'ART' AND CAST(tr.date AS DATE) <= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) AND tr.Id = c." + idCol.getFieldKey().toSQLString() + ")\n" +
                         "GROUP BY c." + dateCol.getFieldKey().toString()  + ", c." + pkCol.getFieldKey().toString() + "\n" +
-                        "HAVING COUNT(*) = 1"
+                        "HAVING COUNT(DISTINCT tr.date) = 1"
                 );
                 qd.setIsTemporary(true);
 
