@@ -1,0 +1,9 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="missingAnchorDates" tableDbType="TABLE" useColumnOrder="true">
+                <tableTitle>Missing Anchor Dates</tableTitle>
+            </table>
+        </tables>
+    </metadata>
+</query>
