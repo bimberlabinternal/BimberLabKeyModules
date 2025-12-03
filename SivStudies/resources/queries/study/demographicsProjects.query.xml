@@ -12,7 +12,16 @@
                         <columnTitle>Study Categories</columnTitle>
                     </column>
                     <column columnName="allStudies">
-                        <columnTitle>All Studies</columnTitle>
+                        <columnTitle>Studies</columnTitle>
+                        <url>/query/executeQuery.view?schemaName=study&amp;query.queryName=assignment&amp;query.Id~eq=${Id}</url>
+                        <urlTarget>_blank</urlTarget>
+                    </column>
+                    <column columnName="allStudiesAndAnalyses">
+                        <columnTitle>Studies and Analyses</columnTitle>
+                    </column>
+                    <column columnName="analysisGroups">
+                        <columnTitle>Analysis Groups</columnTitle>
+                        <displayWidth>150</displayWidth>
                     </column>
                     <column columnName="subgroups">
                         <columnTitle>Subgroups/Treatments</columnTitle>

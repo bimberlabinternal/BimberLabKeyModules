@@ -188,7 +188,7 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
             if (!workDirBase.exists())
             {
-                log.error("Unable to find workdir: " + workDirBase.getPath());
+                log.warn("Unable to find workdir: " + workDirBase.getPath());
                 return;
             }
 

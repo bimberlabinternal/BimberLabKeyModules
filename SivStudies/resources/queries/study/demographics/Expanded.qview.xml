@@ -4,8 +4,6 @@
         <column name="sex"/>
         <column name="species"/>
         <column name="calculated_status"/>
-        <column name="birth"/>
-        <column name="death"/>
         <column name="sivART/ageAtInfection"/>
         <column name="projects/allStudies"/>
         <column name="projects/studyDescription"/>
