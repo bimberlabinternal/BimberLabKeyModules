@@ -41,6 +41,9 @@ public class PerformManualIdrStepsTask implements TaskRefTask
         updateVaccineInformation(pipelineJob);
         updateChallengeAnchorDates(pipelineJob);
         updateArtInitiationAnchorDates(pipelineJob);
+        updateJS46();
+
+        // TODO: Set other cohort-by-cohort params
 
         return new RecordedActionSet();
     }
@@ -282,5 +285,45 @@ public class PerformManualIdrStepsTask implements TaskRefTask
     public void setContainerUser(ContainerUser containerUser)
     {
         _containerUser = containerUser;
+    }
+
+    private void updateJS46() throws PipelineJobException
+    {
+        updateTreatmentRecords("JS46", new SimpleFilter(FieldKey.fromString("treatment"), "SIV - Unknown"), Map.of("treatment", "SIVmac239", "route", "IV"));
+    }
+
+    private void updateTreatmentRecords(String cohortName, SimpleFilter treatmentFilter, final Map<String, Object> additionalProps) throws PipelineJobException
+    {
+        TableInfo assignments = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "study").getTable("assignment");
+        List<String> ids = new TableSelector(assignments, PageFlowUtil.set("Id"), new SimpleFilter(FieldKey.fromString("study"), cohortName), null).getArrayList(String.class);
+        treatmentFilter.addCondition(FieldKey.fromString("Id"), ids, CompareType.IN);
+
+        TableInfo treatments = QueryService.get().getUserSchema(_containerUser.getUser(), _containerUser.getContainer(), "study").getTable("treatments");
+        List<Map<String, Object>> toUpdate = new ArrayList<>();
+        new TableSelector(treatments, PageFlowUtil.set("lsid"), treatmentFilter, null).forEachMap(rs -> {
+            Map<String, Object> toAdd = new CaseInsensitiveHashMap<>(rs);
+            toAdd.putAll(additionalProps);
+            toUpdate.add(toAdd);
+        });
+
+        if (!toUpdate.isEmpty())
+        {
+            try
+            {
+                BatchValidationException bve = new BatchValidationException();
+
+                List<Map<String, Object>> oldKeys = toUpdate.stream().map(x -> (Map<String, Object>)new CaseInsensitiveHashMap<>(Map.of("lsid", x.get("lsid")))).toList();
+                treatments.getUpdateService().updateRows(_containerUser.getUser(), _containerUser.getContainer(), toUpdate, oldKeys, bve, null, null);
+
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+            }
+            catch (SQLException | BatchValidationException | QueryUpdateServiceException | InvalidKeyException e)
+            {
+                throw new PipelineJobException(e);
+            }
+        }
     }
 }
