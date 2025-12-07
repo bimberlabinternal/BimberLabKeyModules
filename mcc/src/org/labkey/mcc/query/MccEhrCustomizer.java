@@ -16,10 +16,11 @@ import org.labkey.api.query.ExprColumn;
 import org.labkey.api.query.FieldKey;
 import org.labkey.api.query.LookupForeignKey;
 import org.labkey.api.query.QueryForeignKey;
-import org.labkey.api.query.QueryService;
 import org.labkey.api.query.UserSchema;
+import org.labkey.api.security.User;
 import org.labkey.mcc.MccManager;
 import org.labkey.mcc.MccSchema;
+import org.labkey.mcc.security.MccRequestAdminPermission;
 
 public class MccEhrCustomizer extends AbstractTableCustomizer
 {
@@ -141,6 +142,39 @@ public class MccEhrCustomizer extends AbstractTableCustomizer
             col.setDescription("Summary of genomic data");
             ti.addColumn(col);
         }
+
+        // Only allow this for authorized users:
+        possiblyAddRequestSummary(ti);
+    }
+
+    private void possiblyAddRequestSummary(AbstractTableInfo ti)
+    {
+        if (ti.getColumn("mccTransfers") != null)
+        {
+            return;
+        }
+
+        Container animalDataContainer = MccManager.get().getMCCContainer(ti.getUserSchema().getContainer());
+        if (animalDataContainer == null)
+        {
+            return;
+        }
+
+        if (!animalDataContainer.equals(ti.getUserSchema().getContainer()))
+        {
+            return;
+        }
+
+        User u = ti.getUserSchema().getUser();
+        if (!animalDataContainer.hasPermission(u, MccRequestAdminPermission.class))
+        {
+            return;
+        }
+
+        var col = getWrappedIdCol(ti.getUserSchema(), ti, "mccTransfers", "demographicsMccTransfer");
+        col.setLabel("MCC Transfers");
+        col.setDescription("Summarizes MCC Transfer Information");
+        ti.addColumn(col);
     }
 
     private BaseColumnInfo getWrappedIdCol(UserSchema us, AbstractTableInfo ds, String name, String queryName)
