@@ -8,7 +8,9 @@ repositories {
 configurations.all {
     resolutionStrategy {
         // Related to: https://nvd.nist.gov/vuln/detail/CVE-2025-12183
-        force "at.yawk.lz4:lz4-java:${lz4Version}"
+        dependencySubstitution {
+            substitute module('org.lz4:lz4-java') using module("at.yawk.lz4:lz4-java:${lz4Version}")
+        }
     }
 }
 
