@@ -2,10 +2,6 @@ Ext4.define('TCRdb.window.DownloadCloneWindow', {
     extend: 'Ext.window.Window',
 
     statics: {
-        buttonHandler: function(dataRegionName) {
-            TCRdb.window.DownloadCloneWindow.showWindow(dataRegionName, 'downloadCloneMaterials', 'The goal of this is to download a ZIP with any extracted clone/read data for the selected sample(s), along with the reference sequence for the segments used.  These files can be imported into Geneious or a similar program to de novo assemble to construct the FL clone.  Note: per sample, it will export all reads overlapping any TCR segments.  This at minimum will tend to include both chains (i.e. 2 different CDR3s), and might include reads that either match a defunct TCR or other noise.');
-        },
-
         downloadSequenceHandler: function(dataRegionName){
             TCRdb.window.DownloadCloneWindow.showWindow(dataRegionName, 'downloadSequence', 'This will download the full sequence (if available) for the selected rows, along with the reference segments.');
         },
