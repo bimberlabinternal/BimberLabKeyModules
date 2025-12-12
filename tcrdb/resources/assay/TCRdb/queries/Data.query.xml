@@ -142,9 +142,6 @@
                         <item text="View Alignments">
                             <onClick>TCRdb.window.ExportDataWindow.viewAlignmentHandler(dataRegionName, arguments[0] ? arguments[0].ownerCt : null);</onClick>
                         </item>
-                        <item text="Download Clone Materials">
-                            <onClick>TCRdb.window.DownloadCloneWindow.buttonHandler(dataRegionName);</onClick>
-                        </item>
                         <item text="Download Clone Sequence">
                             <onClick>TCRdb.window.DownloadCloneWindow.downloadSequenceHandler(dataRegionName);</onClick>
                         </item>
