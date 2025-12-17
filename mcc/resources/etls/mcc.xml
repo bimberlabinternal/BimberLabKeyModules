@@ -33,6 +33,7 @@
                     <column>usage_future</column>
                     <column>date_of_observations</column>
                     <column>colony</column>
+                    <column>source</column>
                     <column>dam</column>
                     <column>sire</column>
                     <column>objectid</column>

@@ -1,0 +1,29 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="demographicsMccTransfer" tableDbType="NOT_IN_DB">
+                <tableTitle>MCC Transfers</tableTitle>
+                <description>Summary of MCC Transfers</description>
+                <columns>
+                    <column columnName="Id">
+                        <isKeyField>true</isKeyField>
+                        <isHidden>true</isHidden>
+                    </column>
+                    <column columnName="mccRequestId">
+                        <columnTitle>MCC Request ID</columnTitle>
+                    </column>
+                    <column columnName="piLastName">
+                        <columnTitle>PI Last Name</columnTitle>
+                    </column>
+                    <column columnName="piFirstName">
+                        <columnTitle>PI First Name</columnTitle>
+                    </column>
+                    <column columnName="piInstitution">
+                        <columnTitle>PI Institution</columnTitle>
+                    </column>
+                </columns>
+                <titleColumn>mccRequestId</titleColumn>
+            </table>
+        </tables>
+    </metadata>
+</query>
