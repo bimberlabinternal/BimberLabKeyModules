@@ -28,6 +28,7 @@ public class ProjectAssignmentTransform extends ColumnTransform
     private static final String U24_BREEDER = "U24 breeder";
     private static final String U24_OFFSPRING = "U24 offspring";
     private static final String U24_OTHER = "Other";
+    private static final String U24_INACTIVE = "U24 marmoset breeding- INACTIVE -";
 
     @Override
     protected Object doTransform(Object inputValue)
@@ -42,6 +43,10 @@ public class ProjectAssignmentTransform extends ColumnTransform
         {
             return getOrCreateFlag(U24_TITLE);
         }
+        else if (U24_INACTIVE.equalsIgnoreCase(String.valueOf(inputValue)))
+        {
+            return getOrCreateFlag(U24_INACTIVE);
+        }
         // SNPRC:
         else if (U24_BREEDER.equalsIgnoreCase(String.valueOf(inputValue)))
         {
@@ -51,8 +56,11 @@ public class ProjectAssignmentTransform extends ColumnTransform
         {
             return getOrCreateFlag(U24_OFFSPRING);
         }
-
-        return inputValue;
+        else
+        {
+            _log.error("Unknown flag value: " + inputValue + ", in folder: " + getContainerUser().getContainer().getPath());
+            return null;
+        }
     }
 
     private String getOrCreateFlag(String type)
