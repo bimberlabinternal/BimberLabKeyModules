@@ -129,7 +129,7 @@
                 <columnTitle>Clonotype</columnTitle>
             </column>
             <column columnName="activationFrequency">
-                <columnTitle>Activated Freq</columnTitle>
+                <columnTitle>Activated Freq (of parent population)</columnTitle>
             </column>
             <column columnName="backgroundFrequency">
                 <columnTitle>Background Freq</columnTitle>
