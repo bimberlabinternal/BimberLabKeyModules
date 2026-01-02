@@ -69,9 +69,9 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("SequenceAlignmentTask"));
     }
 
-    private boolean isCacheAlignerIndexesTask(PipelineJob job)
+    private boolean isCacheOrPrepareAlignerIndexesTask(PipelineJob job)
     {
-        return (job.getActiveTaskId() != null && job.getActiveTaskId().getNamespaceClass().getName().endsWith("CacheAlignerIndexesTask"));
+        return (job.getActiveTaskId() != null && (job.getActiveTaskId().getNamespaceClass().getName().endsWith("CacheAlignerIndexesTask") || job.getActiveTaskId().getNamespaceClass().getName().endsWith("PrepareAlignerIndexesTask")));
     }
 
     private boolean isSequenceSequenceOutputHandlerTask(PipelineJob job)
@@ -188,7 +188,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return 96;
         }
 
-        if (isCacheAlignerIndexesTask(job))
+        if (isCacheOrPrepareAlignerIndexesTask(job))
         {
             int mem = getAlignerIndexMem(job);
             job.getLogger().debug("setting memory to: " + mem);
