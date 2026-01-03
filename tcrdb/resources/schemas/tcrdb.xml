@@ -332,6 +332,9 @@
             <column columnName="comment">
 
             </column>
+            <column columnName="status">
+
+            </column>
             <column columnName="container">
                 <isHidden>true</isHidden>
             </column>
