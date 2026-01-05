@@ -78,6 +78,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         idsMissingFromDemographics(c, u, msg);
         missingArtRecord(c, u, msg);
         missingAnchorDates(c, u, msg);
+        duplicatePVLs(c, u, msg);
 
         if (!msg.isEmpty())
         {
@@ -173,6 +174,17 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         }
 
         genericQueryCheck(c, u, msg, "study", "missingAnchorDates", "records missing from the anchor dates table");
+    }
+
+    private void duplicatePVLs(Container c, User u, StringBuilder msg)
+    {
+        Study s = StudyService.get().getStudy(getTargetContainer(c));
+        if (s == null)
+        {
+            return;
+        }
+
+        genericQueryCheck(c, u, msg, "study", "duplicatePVLs", "duplicate PVL records");
     }
 
     protected Container getTargetContainer(Container c)
