@@ -476,7 +476,7 @@ public class PrimeseqController extends SpringActionController
                 catch (IOException | PipelineJobException e)
                 {
                     errors.reject(ERROR_MSG, "Unable to read pipeline JSON");
-                    _log.error(e);
+                    _log.error(e.getMessage(), e);
                     return null;
                 }
             }
