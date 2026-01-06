@@ -8,7 +8,7 @@ import {
 } from '../../AnimalRequest/components/values';
 import { Box, Button, Grid, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { ActionURL } from '@labkey/api';
-import { styled } from '@mui/styles';
+import { styled } from '@mui/material/styles';
 
 function formatPIName(request: AnimalRequestProps) {
     return(formatName(request.lastname, request.firstname, request.middleinitial))

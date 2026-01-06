@@ -125,7 +125,7 @@ export default function RabReviewForm(props: {requestId: string}) {
                 <TableCell>
                     <FormControl>
                         <InputLabel id={"review-input-label"}>Review</InputLabel>
-                        <Select id={"review"} variant={"outlined"} name={"review"} aria-label="Review" label={"Review"} labelId={"review-input-label"} error={hasSubmitted && !recordData[0].review} onChange={handleChange} required={true} value={recordData[0].review ?? ''} fullWidth={true} displayEmpty={true}>
+                        <Select id={"review"} variant="outlined" name={"review"} aria-label="Review" label={"Review"} labelId={"review-input-label"} error={hasSubmitted && !recordData[0].review} onChange={handleChange} required={true} value={recordData[0].review ?? ''} fullWidth={true} displayEmpty={true}>
                             <MenuItem value={""}>Not Decided</MenuItem>
                             <MenuItem value={"I recommend this proposal"}>I recommend this proposal</MenuItem>
                             <MenuItem value={"I recommend this proposal with conditions"}>I recommend this proposal with conditions</MenuItem>
