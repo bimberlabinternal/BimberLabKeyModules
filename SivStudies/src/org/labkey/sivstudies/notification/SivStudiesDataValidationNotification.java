@@ -162,7 +162,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("projects/studyDescription"), "ART", CompareType.CONTAINS);
         filter.addCondition(FieldKey.fromString("projects/studyDescription"), "No ART", CompareType.DOES_NOT_CONTAIN);
         filter.addCondition(FieldKey.fromString("sivART/artInitiationDPI"), null, CompareType.ISBLANK);
-        genericQueryCheck(c, u, msg, "study", s.getSubjectNounSingular(), "IDs assigned to an ART study without a record of ART", filter);
+        genericQueryCheck(c, u, msg, "study", "demographics", "IDs assigned to an ART study without a record of ART", filter);
     }
 
     private void missingAnchorDates(Container c, User u, StringBuilder msg)
