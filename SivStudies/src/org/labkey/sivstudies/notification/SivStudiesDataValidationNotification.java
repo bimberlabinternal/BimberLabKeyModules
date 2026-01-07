@@ -129,7 +129,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         if (count > 0)
         {
             msg.append("<b>WARNING: There are ").append(count).append(" " + message + "</b><br>\n");
-            msg.append("<p><a href='").append(getExecuteQueryUrl(c, schemaName, queryName, null)).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, schemaName, queryName, null, filter)).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
     }
