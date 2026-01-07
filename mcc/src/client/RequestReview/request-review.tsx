@@ -5,7 +5,7 @@ import Title from '../AnimalRequest/components/title';
 import RabReviewForm from './components/RabReviewForm';
 import InternalReviewForm from './components/InternalReviewForm';
 
-import { ThemeProvider } from '@mui/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import '../labkeyOverrides.css';
 import FinalReviewForm from './components/FinalReviewForm';

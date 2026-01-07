@@ -3,7 +3,7 @@ import { ActionURL, Filter, Query } from '@labkey/api';
 import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { AnimalRequestModel } from '../../components/RequestUtils';
 import SavingOverlay from '../../AnimalRequest/saving-overlay';
-import { styled } from '@mui/styles';
+import { styled } from '@mui/material/styles';
 
 const StyledTableHead = styled(TableCell)(({ theme }) => ({
     fontWeight: "bold",
@@ -156,14 +156,14 @@ export default function ResourceAssessmentForm(props: {requestData: AnimalReques
             <Table>
                 <TableBody>
                 <TableRow>
-                    <TableCell><TextField key={"preliminaryScore"} name={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant={'outlined'} value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
+                    <TableCell><TextField key={"preliminaryScore"} name={"preliminaryScore"} label={"Preliminary Score"} onChange={handleChange} variant="outlined" value={recordData.preliminaryScore || ''} disabled={true} fullWidth={true}/></TableCell>
                 </TableRow>
                 <TableRow>
-                    <TableCell width={800}><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Assessment"} required={true} minRows={4} multiline={true} onChange={handleChange} variant={'outlined'} defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
+                    <TableCell width={800}><TextField key={"resourceAvailabilityAssessment"} name={"resourceAvailabilityAssessment"} label={"Resource Availability Assessment"} required={true} minRows={4} multiline={true} onChange={handleChange} variant="outlined" defaultValue={recordData.resourceAvailabilityAssessment || ''} fullWidth={true} /></TableCell>
                 </TableRow>
                 </TableBody>
             </Table>
-            <Button key={"approveBtn"} variant={"contained"} style={{marginRight: 10}} type={'submit'}>Submit</Button>
+            <Button key={"approveBtn"} variant="contained" style={{marginRight: 10}} type={'submit'}>Submit</Button>
         </Box>
         </form>
         <SavingOverlay display={displayOverlay} />
