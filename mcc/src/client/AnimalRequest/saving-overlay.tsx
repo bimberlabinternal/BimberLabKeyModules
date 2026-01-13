@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function SavingOverlay(props) {
+export default function SavingOverlay(props: {display: boolean}) {
     if(props.display === false) {
         return (
             <>

@@ -93,13 +93,13 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
             {
                 RemoteWorkTask task = new RemoteWorkTask(jobGuids);
                 PipeRoot pr = PipelineService.get().getPipelineRootSetting(ContainerManager.getHomeContainer());
-                File subdir = new File(pr.getRootPath(), "clusterMaintenance");
+                File subdir = FileUtil.appendName(pr.getRootPath(), "clusterMaintenance");
                 if (!subdir.exists())
                 {
                     subdir.mkdirs();
                 }
 
-                File logFile = new File(subdir, "Maintenance-" + engine.getType() + "." + FileUtil.getTimestamp() + ".log");
+                File logFile = FileUtil.appendName(subdir, "Maintenance-" + engine.getType() + "." + FileUtil.getTimestamp() + ".log");
 
                 jr.execute(new Job()
                 {
@@ -113,7 +113,7 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
                         }
                         catch (PipelineValidationException e)
                         {
-                            _log.error(e);
+                            _log.error(e.getMessage(), e);
                         }
                     }
                 });
@@ -209,7 +209,7 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
                         }
                         catch (IOException e)
                         {
-                            _log.error(e);
+                            _log.error(e.getMessage(), e);
                             continue;
                         }
 

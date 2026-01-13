@@ -13,6 +13,7 @@
         <column name="flowQuantificationMethod" />
         <column name="nClones" />
         <column name="comment" />
+        <column name="status" />
         <column name="workbook" />
     </columns>
     <sorts>

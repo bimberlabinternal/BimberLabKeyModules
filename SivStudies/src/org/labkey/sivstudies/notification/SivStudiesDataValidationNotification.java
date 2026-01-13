@@ -78,6 +78,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         idsMissingFromDemographics(c, u, msg);
         missingArtRecord(c, u, msg);
         missingAnchorDates(c, u, msg);
+        duplicatePVLs(c, u, msg);
 
         if (!msg.isEmpty())
         {
@@ -128,7 +129,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         if (count > 0)
         {
             msg.append("<b>WARNING: There are ").append(count).append(" " + message + "</b><br>\n");
-            msg.append("<p><a href='").append(getExecuteQueryUrl(c, schemaName, queryName, null)).append("'>Click here to view them</a><br>\n\n");
+            msg.append("<p><a href='").append(getExecuteQueryUrl(c, schemaName, queryName, null, filter)).append("'>Click here to view them</a><br>\n\n");
             msg.append("<hr>\n\n");
         }
     }
@@ -161,7 +162,7 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         SimpleFilter filter = new SimpleFilter(FieldKey.fromString("projects/studyDescription"), "ART", CompareType.CONTAINS);
         filter.addCondition(FieldKey.fromString("projects/studyDescription"), "No ART", CompareType.DOES_NOT_CONTAIN);
         filter.addCondition(FieldKey.fromString("sivART/artInitiationDPI"), null, CompareType.ISBLANK);
-        genericQueryCheck(c, u, msg, "study", s.getSubjectNounSingular(), "IDs assigned to an ART study without a record of ART", filter);
+        genericQueryCheck(c, u, msg, "study", "demographics", "IDs assigned to an ART study without a record of ART", filter);
     }
 
     private void missingAnchorDates(Container c, User u, StringBuilder msg)
@@ -173,6 +174,17 @@ public class SivStudiesDataValidationNotification extends AbstractNotification
         }
 
         genericQueryCheck(c, u, msg, "study", "missingAnchorDates", "records missing from the anchor dates table");
+    }
+
+    private void duplicatePVLs(Container c, User u, StringBuilder msg)
+    {
+        Study s = StudyService.get().getStudy(getTargetContainer(c));
+        if (s == null)
+        {
+            return;
+        }
+
+        genericQueryCheck(c, u, msg, "study", "duplicatePVLs", "duplicate PVL records");
     }
 
     protected Container getTargetContainer(Container c)
