@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.stims ADD COLUMN status varchar(1000);

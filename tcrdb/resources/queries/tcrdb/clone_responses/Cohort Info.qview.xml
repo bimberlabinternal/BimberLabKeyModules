@@ -4,6 +4,7 @@
         <column name="cDNA_ID/sortId/sampleId/subjectId" />
         <column name="cDNA_ID/sortId/sampleId/sampleDate" />
         <column name="cDNA_ID/sortId/sampleId/stim" />
+        <column name="cloneName"/>
         <column name="chain" />
         <column name="vGene" />
         <column name="jGene" />

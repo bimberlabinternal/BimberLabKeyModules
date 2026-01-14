@@ -320,7 +320,7 @@ public class GenotypeAssaysManager
                 }
                 catch (Exception e)
                 {
-                    _log.error(e);
+                    _log.error(e.getMessage(), e);
                     throw new IllegalArgumentException(e.getMessage());
                 }
             }

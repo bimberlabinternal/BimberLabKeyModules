@@ -877,7 +877,7 @@ public class mGAPController extends SpringActionController
             }
             catch (Exception e)
             {
-                _log.error(e);
+                _log.error(e.getMessage(), e);
                 throw e;
             }
 

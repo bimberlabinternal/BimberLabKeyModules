@@ -158,6 +158,12 @@
             <column columnName="enrichmentFDR">
                 <columnTitle>Enrichment (FDR)</columnTitle>
             </column>
+            <column columnName="cloneName">
+                <columnTitle>Clone Name</columnTitle>
+            </column>
+            <column columnName="cdr3WithSegments">
+                <columnTitle>CDR3 With Segments</columnTitle>
+            </column>
             <column columnName="comments">
 
             </column>
@@ -324,6 +330,9 @@
                 <columnTitle># Clones</columnTitle>
             </column>
             <column columnName="comment">
+
+            </column>
+            <column columnName="status">
 
             </column>
             <column columnName="container">
