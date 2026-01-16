@@ -1,10 +1,10 @@
 <script type="text/javascript" nonce="<%=scriptNonce%>">
 
     Ext4.onReady(function () {
-        var analysisIds = LABKEY.ActionURL.getParameter('analysisIds');
+        var analysisId = LABKEY.ActionURL.getParameter('analysisId');
 
-        if (!analysisIds) {
-            alert('Must Provide At Least One Analysis Id');
+        if (!analysisId) {
+            alert('Must Provide An Analysis Id');
             return;
         }
 
@@ -15,7 +15,7 @@
             title: 'Haplotype Matches',
             items: [{
                 xtype: 'genotypeassays-haplotypepanel',
-                analysisIds: analysisIds.split(';'),
+                analysisIds: analysisId,
                 showCheckBoxes: true
             }]
         }).render(webpart.wrapperDivId);

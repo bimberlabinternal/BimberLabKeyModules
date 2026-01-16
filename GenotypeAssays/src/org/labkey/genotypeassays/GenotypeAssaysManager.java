@@ -26,6 +26,7 @@ import org.labkey.api.assay.AssayService;
 import org.labkey.api.collections.CaseInsensitiveHashMap;
 import org.labkey.api.collections.IntHashMap;
 import org.labkey.api.collections.IntHashSet;
+import org.labkey.api.data.AbstractTableInfo;
 import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
@@ -43,6 +44,7 @@ import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.exp.api.ExpRun;
 import org.labkey.api.laboratory.LaboratoryService;
 import org.labkey.api.query.FieldKey;
+import org.labkey.api.query.QueryDefinition;
 import org.labkey.api.query.QueryService;
 import org.labkey.api.query.ValidationException;
 import org.labkey.api.security.User;
@@ -91,7 +93,8 @@ public class GenotypeAssaysManager
     }
 
 
-    public Pair<List<Long>, List<Long>> cacheAnalyses(final ViewContext ctx, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
+    // TODO: review
+    public Pair<List<Long>, List<Long>> cacheAnalyses(final ViewContext ctx, final int analysisId, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
     {
         final User u = ctx.getUser();
         final List<Long> runsCreated = new ArrayList<>();
@@ -126,6 +129,8 @@ public class GenotypeAssaysManager
 
             AtomicInteger records = new AtomicInteger();
             TableSelector tsAlignments = new TableSelector(tableAlignments, cols.values(), new SimpleFilter(FieldKey.fromString("key"), Arrays.asList(pks), CompareType.IN), null);
+            tsAlignments.setNamedParameters(Map.of("AnalysisId", analysisId));
+
             tsAlignments.forEach(new Selector.ForEachBlock<ResultSet>()
             {
                 @Override
