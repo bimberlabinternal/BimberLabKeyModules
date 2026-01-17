@@ -1,7 +1,7 @@
 Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
     extend: 'Ext.panel.Panel',
     alias: 'widget.genotypeassays-haplotypepanel',
-    analysisIds: null,
+    analysisId: null,
     showCheckBoxes: false,
 
     initComponent: function(){
@@ -266,10 +266,11 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
                             }
                         }, this);
 
-                        Ext4.Msg.confirm('Publish Selected?', 'You have chosen to published the following haplotypes:<br><br>' + (haplotypeNames.length > 8 ? 'Too many to display' : haplotypeNames.join('<br>')) + '<br><br>Continue?', function (val) {
+                        Ext4.Msg.confirm('Publish Selected?', 'You have chosen to publish the following haplotypes:<br><br>' + (haplotypeNames.length > 8 ? 'Too many to display' : haplotypeNames.join('<br>')) + '<br><br>Continue?', function (val) {
                             if (val == 'yes') {
                                 Ext4.create('GenotypeAssays.window.PublishResultsWindow', {
                                     actionName: 'cacheHaplotypes',
+                                    analysisId: this.analysisId,
                                     json: json
                                 }).show();
                             }
@@ -460,10 +461,12 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
             schemaName: 'sequenceanalysis',
             queryName: 'alignment_summary_by_lineage',
             columns: 'analysis_id,analysis_id/readset,analysis_id/readset/subjectId,lineages,loci,total,total_reads,percent,total_reads_from_locus,percent_from_locus',
+            parameters: {
+                AnalysisId: this.analysisId
+            },
             apiVersion: 13.2,
             scope: this,
             filterArray: [
-                LABKEY.Filter.create('analysis_id', this.analysisIds.join(';'), LABKEY.Filter.Types.IN),
                 LABKEY.Filter.create('percent_from_locus', minPct || 0, LABKEY.Filter.Types.GTE)
             ],
             failure: LDK.Utils.getErrorCallback(),
@@ -502,9 +505,9 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
             sort: 'analysis_id',
             apiVersion: 13.2,
             scope: this,
-            filterArray: [
-                LABKEY.Filter.create('analysis_id', this.analysisIds.join(';'), LABKEY.Filter.Types.IN)
-            ],
+            parameters: {
+                AnalysisId: this.analysisId
+            },
             failure: LDK.Utils.getErrorCallback(),
             success: function(results){
                 this.lineageToAlleleMap = {};

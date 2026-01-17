@@ -11,26 +11,20 @@ Ext4.define('GenotypeAssays.window.PublishResultsWindow', {
                 return;
             }
 
+            const analysisId = dr.getParameters()?.AnalysisId;
+            if (!analysisId) {
+                Ext4.Msg.alert('Error', 'Error: unable to find analysisId. This should not occur.');
+                LDK.Assert.assertNotEmpty('Unable to find AnalysisId parameter from the DataRegion in PublishResultsWindow');
+
+                return;
+            }
+
             Ext4.create('GenotypeAssays.window.PublishResultsWindow', {
                 dataRegionName: dataRegionName,
+                analysisId: analysisId,
                 actionName: 'cacheAnalyses'
             }).show();
         }
-
-        // haplotypeButtonHandler: function(dataRegionName){
-        //     var dr = LABKEY.DataRegions[dataRegionName];
-        //     LDK.Assert.assertNotEmpty('Unable to find dataregion in PublishResultsWindow', dr);
-        //
-        //     if (!dr.getChecked().length) {
-        //         Ext4.Msg.alert('Error', 'No rows selected');
-        //         return;
-        //     }
-        //
-        //     Ext4.create('GenotypeAssays.window.PublishResultsWindow', {
-        //         dataRegionName: dataRegionName,
-        //         actionName: 'cacheHaplotypes'
-        //     }).show();
-        // }
     },
 
     initComponent: function(){
@@ -122,6 +116,7 @@ Ext4.define('GenotypeAssays.window.PublishResultsWindow', {
             scope: this,
             jsonData: {
                 alleleNames: alleleNames,
+                analysisId: this.analysisId,
                 json: Ext4.encode(this.json),
                 protocolId: protocol
             },
