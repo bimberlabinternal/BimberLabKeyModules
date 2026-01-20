@@ -1,1 +1,1 @@
-ALTER TABLE tcrdb.clone_responses ADD COLUMN cognateCdr3s varchar(4000);
+ALTER TABLE tcrdb.clone_responses ADD cognateCdr3s varchar(4000);
