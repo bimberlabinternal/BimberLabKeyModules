@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.clone_responses ADD status varchar(4000);

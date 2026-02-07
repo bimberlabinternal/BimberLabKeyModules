@@ -17,6 +17,7 @@
         <column name="oddsRatio" />
         <column name="enrichmentFDR" />
         <column name="comments"/>
+        <column name="status"/>
         <column name="cDNA_ID/sortId/sampleId/allProjects/projects" />
     </columns>
     <sorts>

@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.clone_responses ADD COLUMN cdr3WithProductive varchar(4000);

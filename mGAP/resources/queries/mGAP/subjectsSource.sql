@@ -12,13 +12,13 @@ SELECT
   d.status as status,
   m.subjectname as originalId,
   p1.externalAlias as sire,
-  coalesce(s.Id.parents.sire, d.sire) as originalSire,
+  coalesce(s.sire, d.sire) as originalSire,
   p2.externalAlias as dam,
-  coalesce(s.Id.parents.dam, d.dam) as originalDam,
+  coalesce(s.dam, d.dam) as originalDam,
 
 FROM mgap.animalMapping m
-LEFT JOIN "/Internal/PMR/".study.demographics s ON (m.subjectname = s.Id)
+LEFT JOIN PMR_Data.exportedDemographics s ON (m.subjectname = s.Id)
 LEFT JOIN mgap.demographics d ON (m.subjectname = d.subjectname)
-LEFT JOIN mgap.animalMapping p1 ON (p1.subjectname = coalesce(s.Id.parents.sire, d.sire))
-LEFT JOIN mgap.animalMapping p2 ON (p2.subjectname = coalesce(s.Id.parents.dam, d.dam))
+LEFT JOIN mgap.animalMapping p1 ON (p1.subjectname = coalesce(s.sire, d.sire))
+LEFT JOIN mgap.animalMapping p2 ON (p2.subjectname = coalesce(s.dam, d.dam))
 WHERE (s.Id IS NOT NULL OR d.subjectname IS NOT NULL)
