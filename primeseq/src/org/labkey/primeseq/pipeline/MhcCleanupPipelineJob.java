@@ -283,7 +283,11 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 final Map<String, Double> existingData = new HashMap<>();
                 SimpleFilter dataFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
                 dataFilter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.GT);
-                new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
+
+                TableSelector ts = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null);
+                ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+
+                ts.forEachResults(rs -> {
                     existingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
                 });
 
@@ -311,7 +315,10 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
                     filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getLineageThreshold(), CompareType.LT);
 
-                    List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                    ts = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("rowids"), filter, null);
+                    ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+
+                    List<String> lowFreqRowIdList = ts.getArrayList(String.class);
                     if (!lowFreqRowIdList.isEmpty())
                     {
                         getJob().getLogger().info("Analysis: " + analysisId + ", low freq lineages: " + lowFreqRowIdList.size());
@@ -329,7 +336,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     SimpleFilter filter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
                     filter.addCondition(FieldKey.fromString("percent_from_locus"), getPipelineJob().getAlleleGroupThreshold(), CompareType.LT);
 
-                    List<String> lowFreqRowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                    ts = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null);
+                    ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+                    List<String> lowFreqRowIdList = ts.getArrayList(String.class);
                     if (!lowFreqRowIdList.isEmpty())
                     {
                         getJob().getLogger().info("Analysis: " + analysisId + ", low freq allele groups: " + lowFreqRowIdList.size());
@@ -363,7 +372,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
                     filter.addCondition(FieldKey.fromString("totalLineages"), 1, CompareType.GT);
                     filter.addCondition(FieldKey.fromString("loci"), "MHC", CompareType.CONTAINS);
 
-                    List<String> rowIdList = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null).getArrayList(String.class);
+                    ts  = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), filter, null);
+                    ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+                    List<String> rowIdList = ts.getArrayList(String.class);
                     if (!rowIdList.isEmpty())
                     {
                         getJob().getLogger().info("Analysis: " + analysisId + ", multi-lineage records: " + rowIdList.size());
@@ -380,7 +391,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
                 {
                     SimpleFilter nAlignmentFilter = new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId, CompareType.EQUAL);
                     nAlignmentFilter.addCondition(FieldKey.fromString("nAlignments"), 1, CompareType.GT);
-                    List<String> redundantAlignmentSets = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), nAlignmentFilter, null).getArrayList(String.class);
+                    ts = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("rowids"), nAlignmentFilter, null);
+                    ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+                    List<String> redundantAlignmentSets = ts.getArrayList(String.class);
                     if (!redundantAlignmentSets.isEmpty())
                     {
                         getJob().getLogger().info("Analysis: " + analysisId + ", redundant alignment sets: " + redundantAlignmentSets.size());
@@ -446,7 +459,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
 
                 // verify ending data:
                 final Map<String, Double> endingData = new HashMap<>();
-                new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null).forEachResults(rs -> {
+                ts = new TableSelector(QueryService.get().getUserSchema(getJob().getUser(), getJob().getContainer(), "sequenceanalysis").getTable("alignment_summary_by_lineage"), PageFlowUtil.set("lineages", "percent_from_locus"), dataFilter, null);
+                ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+                ts.forEachResults(rs -> {
                     endingData.put(rs.getString(FieldKey.fromString("lineages")), rs.getDouble(FieldKey.fromString("percent_from_locus")));
                 });
 
@@ -515,7 +530,9 @@ public class MhcCleanupPipelineJob extends PipelineJob
         {
             this.analysisId = analysisId;
 
-            new TableSelector(QueryService.get().getUserSchema(u, c, "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("analysis_id", "alleles", "lineages", "totalLineages", "total_reads", "total_forward", "total_reverse", "valid_pairs", "rowids"), new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId), null).forEachResults(rs -> {
+            TableSelector ts = new TableSelector(QueryService.get().getUserSchema(u, c, "sequenceanalysis").getTable("alignment_summary_grouped"), PageFlowUtil.set("analysis_id", "alleles", "lineages", "totalLineages", "total_reads", "total_forward", "total_reverse", "valid_pairs", "rowids"), new SimpleFilter(FieldKey.fromString("analysis_id"), analysisId), null);
+            ts.setNamedParameters(Map.of("AnalysisId", analysisId));
+            ts.forEachResults(rs -> {
                 if (rs.getString(FieldKey.fromString("alleles")) == null)
                 {
                     return;

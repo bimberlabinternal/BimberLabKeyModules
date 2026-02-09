@@ -133,7 +133,7 @@ public class GenotypeAssaysController extends SpringActionController
                     }
 
                     String[] alleleNames = Arrays.stream(form.getAlleleNames()).map(StringEscapeUtils::unescapeHtml4).toArray(String[]::new);
-                    Pair<List<Long>, List<Long>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), protocol, alleleNames);
+                    Pair<List<Long>, List<Long>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), form.getAnalysisId(), protocol, alleleNames);
                     resultProperties.put("runsCreated", ret.first);
                     resultProperties.put("runsDeleted", ret.second);
                 }
@@ -159,6 +159,7 @@ public class GenotypeAssaysController extends SpringActionController
     {
         private String[] _alleleNames;
         private String _json;
+        private int _analysisId;
         private int _protocolId;
 
         public String[] getAlleleNames()
@@ -189,6 +190,16 @@ public class GenotypeAssaysController extends SpringActionController
         public void setJson(String json)
         {
             _json = json;
+        }
+
+        public int getAnalysisId()
+        {
+            return _analysisId;
+        }
+
+        public void setAnalysisId(int analysisId)
+        {
+            _analysisId = analysisId;
         }
     }
 

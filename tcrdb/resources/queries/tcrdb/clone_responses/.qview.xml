@@ -17,6 +17,7 @@
         <column name="oddsRatio" />
         <column name="enrichmentFDR" />
         <column name="comments"/>
+        <column name="status"/>
     </columns>
     <sorts>
         <sort column="cDNA_ID" descending="false" />
