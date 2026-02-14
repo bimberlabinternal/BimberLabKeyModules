@@ -310,6 +310,8 @@ public class CellRangerVDJUtils
             while ((line = reader.readNext()) != null)
             {
                 idx++;
+                Set<String> comments = new HashSet<>();
+
                 if (idx == 1)
                 {
                     _log.debug("parsing header, length: " + line.length);
@@ -346,7 +348,7 @@ public class CellRangerVDJUtils
                 if ("False".equalsIgnoreCase(line[headerToIdx.get(HEADER_FIELD.FULL_LENGTH)]))
                 {
                     notFullLength++;
-                    continue;
+                    comments.add("Not full length");
                 }
 
                 //NOTE: 10x appends "-1" to barcode sequences
@@ -435,10 +437,26 @@ public class CellRangerVDJUtils
                     am.jHit = removeNone(line[headerToIdx.get(HEADER_FIELD.J_GENE)]);
                     am.cHit = removeNone(line[headerToIdx.get(HEADER_FIELD.C_GENE)]);
                     am.cdr3Nt = removeNone(line[headerToIdx.get(HEADER_FIELD.CDR3_NT)]);
+                    if (!comments.isEmpty())
+                    {
+                        am.comment = StringUtils.join(comments, "\n");
+                    }
                 }
                 else
                 {
                     am = rows.get(key);
+                    if (!comments.isEmpty())
+                    {
+                        if (am.comment != null)
+                        {
+                            comments.addAll(Arrays.asList(am.comment.split("\n")));
+                            am.comment = StringUtils.join(comments, "\n");
+                        }
+                        else
+                        {
+                            am.comment = StringUtils.join(comments, "\n");
+                        }
+                    }
                 }
 
                 uniqueContigNames.add(am.coalescedContigName);
@@ -456,7 +474,7 @@ public class CellRangerVDJUtils
             _log.info("total rows marked as cells: " + totalCells);
             _log.info("total clonotype rows without CDR3: " + noCDR3);
             _log.info("total clonotype rows discarded for no C-gene: " + noCGene);
-            _log.info("total clonotype rows discarded for not full length: " + notFullLength);
+            _log.info("total clonotype rows not full length (these are imported): " + notFullLength);
             _log.info("total clonotype rows discarded for lacking consensus clonotype: " + noConsensusClonotype);
             _log.info("total clonotype rows skipped for unknown barcocdes: " + totalSkipped + " (" + (NumberFormat.getPercentInstance().format(totalSkipped / (double)totalCells)) + ")");
             _log.info("total clonotype rows skipped because they are doublets: " + doubletSkipped + " (" + (NumberFormat.getPercentInstance().format(doubletSkipped / (double)totalCells)) + ")");
@@ -614,6 +632,7 @@ public class CellRangerVDJUtils
         private String jHit;
         private String cHit;
         private int cdna;
+        private String comment;
 
         private final Set<String> barcodes = new HashSet<>();
         private String coalescedContigName;
@@ -648,6 +667,7 @@ public class CellRangerVDJUtils
         row.put("cdr3", assayModel.cdr3);
         row.put("cdr3_nt", assayModel.cdr3Nt);
         row.put("count", assayModel.barcodes.size());
+        row.put("comment", assayModel.comment);
 
         double fraction = (double)assayModel.barcodes.size() / totalCellsBySample.get(assayModel.cdna).size();
         row.put("fraction", fraction);
@@ -700,7 +720,7 @@ public class CellRangerVDJUtils
         JSONObject json = new JSONObject();
         json.put("Run", runProps);
 
-        File assayTmp = new File(outDir, FileUtil.makeLegalName("10x-assay-upload_" + FileUtil.getTimestamp() + ".txt"));
+        File assayTmp = FileUtil.appendName(outDir, FileUtil.makeLegalName("10x-assay-upload_" + FileUtil.getTimestamp() + ".txt"));
         if (assayTmp.exists())
         {
             assayTmp.delete();
