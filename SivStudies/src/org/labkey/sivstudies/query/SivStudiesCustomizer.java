@@ -464,9 +464,11 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                 qd.setSql("SELECT\n" +
                         "min(tr.date) as artInitiation,\n" +
                         "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), INTEGER) as daysPostArtInitiation,\n" +
+                        "CONVERT(TIMESTAMPDIFF('SQL_TSI_DAY', CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)) / 7, INTEGER) as weeksPostArtInitiation,\n" +
                         "CONVERT(age_in_months(CAST(min(tr.date) AS DATE), CAST(c." + dateColName + " AS DATE)), FLOAT) as monthsPostArtInitiation,\n" +
                         "max(tr.enddate) as artRelease,\n" +
                         "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, INTEGER) as daysPostArtRelease,\n" +
+                        "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE TIMESTAMPDIFF('SQL_TSI_DAY', CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END  / 7, INTEGER) as weeksPostArtRelease,\n" +
                         "CONVERT(CASE WHEN max(tr.enddate) IS NULL THEN NULL ELSE age_in_months(CAST(max(tr.enddate) AS DATE), CAST(c." + dateColName + " AS DATE)) END, FLOAT) as monthsPostArtRelease,\n" +
                         "CAST(CASE WHEN CAST(min(tr.date) AS DATE) <= CAST(c." + dateCol.getFieldKey().toString()  + " AS DATE) AND CAST(max(coalesce(tr.enddate, now())) AS DATE) >= CAST(c." + dateCol.getFieldKey().toString() + " AS DATE) THEN 'Y' ELSE null END as VARCHAR) as onArt,\n" +
                         "GROUP_CONCAT(DISTINCT tr.treatment) AS artTreatment,\n" +
@@ -499,9 +501,11 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                     ((BaseColumnInfo)ti.getColumn("artRelease")).setLabel("ART Release");
 
                     ((BaseColumnInfo)ti.getColumn("daysPostArtInitiation")).setLabel("Days Post-ART Initiation");
+                    ((BaseColumnInfo)ti.getColumn("weeksPostArtInitiation")).setLabel("Weeks Post-ART Initiation");
                     ((BaseColumnInfo)ti.getColumn("monthsPostArtInitiation")).setLabel("Months Post-ART Initiation");
 
                     ((BaseColumnInfo)ti.getColumn("daysPostArtRelease")).setLabel("Days Post-ART Release");
+                    ((BaseColumnInfo)ti.getColumn("weeksPostArtRelease")).setLabel("Weeks Post-ART Release");
                     ((BaseColumnInfo)ti.getColumn("monthsPostArtRelease")).setLabel("Months Post-ART Release");
 
                     ((BaseColumnInfo)ti.getColumn("artTreatment")).setLabel("ART Treatment(s)");
