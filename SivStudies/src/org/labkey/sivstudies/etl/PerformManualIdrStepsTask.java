@@ -294,7 +294,7 @@ public class PerformManualIdrStepsTask implements TaskRefTask
 
     private void updateJS46() throws PipelineJobException
     {
-        updateTreatmentRecords("JS46", new SimpleFilter(FieldKey.fromString("treatment"), "SIV - Unknown"), Map.of("treatment", "SIVmac239", "route", "IV"));
+        updateTreatmentRecords("JS46", new SimpleFilter(FieldKey.fromString("treatment"), "SIV - Unknown"), Map.of("treatment", "SIVmac239", "route", "Rectal", "amount", 1500, "amount_units", "TCID50"));
     }
 
     private void updateTreatmentRecords(String cohortName, SimpleFilter treatmentFilter, final Map<String, Object> additionalProps) throws PipelineJobException
