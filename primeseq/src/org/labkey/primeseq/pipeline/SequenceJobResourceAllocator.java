@@ -214,7 +214,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceSequenceOutputHandlerTask(job))
         {
-            File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
+            File jobXml = FileUtil.appendName(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
             if (jobXml.exists())
             {
                 try (BufferedReader reader = Readers.getReader(jobXml))
@@ -408,7 +408,13 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
     private boolean useExperimentalPartition(PipelineJob job)
     {
         Map<String, String> params = ((HasJobParams) job).getJobParams();
-        return StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useExperimentalPartition")) != null;
+        String rawVal = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useExperimentalPartition"));
+        if (rawVal == null)
+        {
+            return false;
+        }
+
+        return Boolean.parseBoolean(rawVal);
     }
 
     private boolean hasCellBender(PipelineJob job)
@@ -418,7 +424,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return false;
         }
 
-        File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
+        File jobXml = FileUtil.appendName(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
         if (jobXml.exists())
         {
             try (BufferedReader reader = Readers.getReader(jobXml))
