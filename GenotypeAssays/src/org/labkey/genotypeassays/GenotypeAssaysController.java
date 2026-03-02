@@ -24,6 +24,7 @@ import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
 import org.labkey.api.data.DbSchema;
+import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.SqlExecutor;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.exp.api.ExpProtocol;
@@ -31,6 +32,7 @@ import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.security.RequiresPermission;
 import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
+import org.labkey.api.util.HtmlString;
 import org.labkey.api.util.Pair;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.HtmlView;
@@ -53,7 +55,7 @@ public class GenotypeAssaysController extends SpringActionController
     }
 
     @RequiresPermission(ReadPermission.class)
-    public class MigrateLegacySSPAction extends ConfirmAction<Object>
+    public static class MigrateLegacySSPAction extends ConfirmAction<Object>
     {
         @Override
         public void validateCommand(Object form, Errors errors)
@@ -64,11 +66,11 @@ public class GenotypeAssaysController extends SpringActionController
         @Override
         public ModelAndView getConfirmView(Object form, BindException errors) throws Exception
         {
-            DbSchema schema = DbSchema.get("SSP_Assay");
+            DbSchema schema = DbSchema.get("SSP_Assay", DbSchemaType.Module);
             if (schema == null)
-                return new HtmlView("Either the legacy SSP module has not been installed, or it has already been removed");
+                return new HtmlView(HtmlString.of("Either the legacy SSP module has not been installed, or it has already been removed"));
             else
-                return new HtmlView("This allows an admin to copy any primers stored in the original SSP Assay module into the new genotyping module.  Any data has already been copied.  Do you want to continue?");
+                return new HtmlView(HtmlString.of("This allows an admin to copy any primers stored in the original SSP Assay module into the new genotyping module.  Any data has already been copied.  Do you want to continue?"));
         }
 
         @Override
@@ -76,7 +78,7 @@ public class GenotypeAssaysController extends SpringActionController
         {
             try
             {
-                DbSchema schema = DbSchema.get("SSP_Assay");
+                DbSchema schema = DbSchema.get("SSP_Assay", DbSchemaType.Module);
                 if (schema == null)
                     return true; //module not installed
 
@@ -113,7 +115,7 @@ public class GenotypeAssaysController extends SpringActionController
     }
 
     @RequiresPermission(UpdatePermission.class)
-    public class CacheAnalysesAction extends MutatingApiAction<CacheAnalysesForm>
+    public static class CacheAnalysesAction extends MutatingApiAction<CacheAnalysesForm>
     {
         @Override
         public ApiResponse execute(CacheAnalysesForm form, BindException errors)
@@ -193,7 +195,7 @@ public class GenotypeAssaysController extends SpringActionController
     }
 
     @RequiresPermission(UpdatePermission.class)
-    public class CacheHaplotypesAction extends MutatingApiAction<CacheAnalysesForm>
+    public static class CacheHaplotypesAction extends MutatingApiAction<CacheAnalysesForm>
     {
         @Override
         public ApiResponse execute(CacheAnalysesForm form, BindException errors)
