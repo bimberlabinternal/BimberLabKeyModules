@@ -421,7 +421,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
                     Ext4.Msg.wait('Loading...');
                     var fieldMap = {
-                        'Id/mccAlias/externalId': 'MCC_ID',
+                        'Id/mccAlias/externalAlias': 'MCC_ID',
                         'Id': 'Center Id',
                         'alternateIds': 'Previous IDs',
                         'colony': 'Colony',
@@ -453,7 +453,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         columns: Object.keys(fieldMap).join(','),
                         scope: this,
                         failure: LDK.Utils.getErrorCallback(),
-                        filterArray: [LABKEY.Filter.create('colony', colonyName)],
+                        filterArray: [
+                            LABKEY.Filter.create('colony', colonyName),
+                            LABKEY.Filter.create('calculated_status', 'Alive')
+                        ],
                         success: function (results) {
                             Ext4.Msg.hide();
 
@@ -561,7 +564,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         LABKEY.Query.selectRows({
             schemaName: 'study',
             queryName: 'demographics',
-            columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,Id/mccAlias/externalId,Id/death/date,Id/MostRecentDeparture/MostRecentDeparture',
+            columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,Id/mccAlias/externalAlias,Id/death/date,Id/MostRecentDeparture/MostRecentDeparture',
             scope: this,
             failure: LDK.Utils.getErrorCallback(),
             success: function(results) {
@@ -604,7 +607,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
             row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id.toLowerCase()) > -1;
             if (row.existingRecord) {
                 var existingRecord = demographicsRecords.rowMap[row.Id.toLowerCase()];
-                existingRecord.mccAlias = existingRecord['Id/mccAlias/externalId']
+                existingRecord.mccAlias = existingRecord['Id/mccAlias/externalAlias']
 
                 if (existingRecord.colony !== row.colony) {
                     row.errors.push('Colony does not match existing row: ' + existingRecord.colony);
