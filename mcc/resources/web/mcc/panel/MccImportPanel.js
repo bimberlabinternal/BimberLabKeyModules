@@ -450,7 +450,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                     LABKEY.Query.selectRows({
                         schemaName: 'study',
                         queryName: 'demographics',
-                        columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,,Id/death/date,Id/MostRecentDeparture/MostRecentDeparture',
+                        columns: Object.keys(fieldMap).join(','),
                         scope: this,
                         failure: LDK.Utils.getErrorCallback(),
                         filterArray: [LABKEY.Filter.create('colony', colonyName)],
