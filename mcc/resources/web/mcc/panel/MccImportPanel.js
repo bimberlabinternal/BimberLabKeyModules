@@ -408,11 +408,11 @@ Ext4.define('MCC.panel.MccImportPanel', {
                 href: LABKEY.ActionURL.getContextPath() + '/mcc/exampleData/MCC_Data_Template.xlsx'
             },{
                 xtype: 'button',
-                text: 'Download Template',
+                text: 'Download Template Data',
                 border: true,
                 scope: this,
                 handler: function(btn){
-                    var colonyName = btn.up('mcc-mccimportpanel').down('#centerName')
+                    var colonyName = btn.up('mcc-mccimportpanel').down('#centerName').getValue()
                     if (!colonyName) {
                         Ext4.Msg.alert('Error', 'Must enter the colony name')
                         return
@@ -456,7 +456,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         success: function (results) {
                             Ext4.Msg.hide();
 
-                            const rows = results.map(row => {
+                            const rows = results.rows.map(row => {
                                 const newRow = []
                                 Object.keys(fieldMap).forEach(key => {
                                     if (row[key] !== undefined) {
