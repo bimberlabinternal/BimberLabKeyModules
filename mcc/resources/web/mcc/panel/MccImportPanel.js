@@ -409,6 +409,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
             },{
                 xtype: 'button',
                 text: 'Download Template Data',
+                style: 'padding-left: 5px',
                 border: true,
                 scope: this,
                 handler: function(btn){
@@ -473,7 +474,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                                 fileName : 'MCC_Import_' + colonyName + '.xlsx',
                                 sheets : [{
                                     name: 'data',
-                                    data: Object.values(fieldMap).concat(rows)
+                                    data: [Object.values(fieldMap)].concat(rows)
                                 }]
                             });
                         }
