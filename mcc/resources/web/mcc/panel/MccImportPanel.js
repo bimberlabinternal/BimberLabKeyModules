@@ -29,7 +29,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         allowBlank: true
     },{
         name: 'Id',
-        labels: ['Id', 'animal ID', 'AnimalId', 'MarmId', 'Marm Id'],
+        labels: ['Id', 'animal ID', 'AnimalId', 'MarmId', 'Marm Id', 'Center Id'],
         allowRowSpan: false,
         alwaysShow: true,
         transform: 'animalId',
@@ -37,7 +37,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         expectInImport: true
     },{
         name: 'alternateIds',
-        labels: ['Alternate Ids', 'previous Ids'],
+        labels: ['Alternate Ids', 'AlternateIds', 'previous Ids'],
         allowRowSpan: false,
         alwaysShow: true,
         transform: 'alternateIds',
@@ -122,6 +122,13 @@ Ext4.define('MCC.panel.MccImportPanel', {
         allowBlank: false,
         transform: 'date'
     },{
+        name: 'mccAlias',
+        labels: ['mccAlias', 'MCC ID', 'mccId', 'MCC_ID'],
+        alwaysShow: true,
+        allowRowSpan: false,
+        allowBlank: true,
+        expectInImport: false
+    },{
         name: 'u24_status',
         labels: ['U24 status'],
         alwaysShow: false,
@@ -132,7 +139,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
     },{
         name: 'availability',
         // NOTE: availalble was a typo in one generation of the input templates:
-        labels: ['Available to Transfer', 'available to transfer', 'availalble to transfer'],
+        labels: ['Available to Transfer', 'available to transfer', 'available to transfer'],
         allowRowSpan: false,
         allowBlank: true,
         transform: 'available',
@@ -395,10 +402,83 @@ Ext4.define('MCC.panel.MccImportPanel', {
             style: 'margin-bottom: 20px;',
             items: [{
                 xtype: 'button',
-                text: 'Download Template',
+                text: 'Download Blank Template',
                 border: true,
                 scope: this,
                 href: LABKEY.ActionURL.getContextPath() + '/mcc/exampleData/MCC_Data_Template.xlsx'
+            },{
+                xtype: 'button',
+                text: 'Download Template',
+                border: true,
+                scope: this,
+                handler: function(btn){
+                    var colonyName = btn.up('mcc-mccimportpanel').down('#centerName')
+                    if (!colonyName) {
+                        Ext4.Msg.alert('Error', 'Must enter the colony name')
+                        return
+                    }
+
+                    Ext4.Msg.wait('Loading...');
+                    var fieldMap = {
+                        'mccAlias/externalId': 'MCC_ID',
+                        'Id': 'Center Id',
+                        'alternateIds': 'Previous IDs',
+                        'colony': 'Colony',
+                        'gender': 'Sex',
+                        'birth': 'Birth',
+                        'calculated_status': 'status',
+                        'Id/MostRecentDeparture/destination': 'Shipping Destination',
+                        'Id/MostRecentDeparture/MostRecentDeparture': 'Most Recent Departure Date',
+                        'death': 'Death',
+                        'deathCause': 'Cause of death',
+                        'dam': 'Dam',
+                        'sire': 'Sire',
+                        'Id/MostRecentWeight/MostRecentWeightGrams': 'Weight (g)',
+                        'Id/MostRecentWeight/MostRecentWeightDate': 'Date of Weight',
+                        'u24_status': 'U24 assigned?',
+                        'Id/mostRecentObservations/availability::observation': 'Availability',
+                        'Id/mostRecentObservations/current_housing_status::observation': 'Current Housing Status',
+                        'breeding partner ID': 'Breeding Partner ID',
+                        'Id/mostRecentObservations/infant_history::observation': 'Infant History',
+                        'Id/mostRecentObservations/fertility_status::observation': 'Fertility Status',
+                        'Id/mostRecentObservations/medical_history::observation': 'Medical History',
+                        'Id/mostRecentObservations/usage_current::observation': 'Usage (Current)',
+                        'Id/mostRecentObservations/usage_future::observation': 'Usage (Future)'
+                    }
+
+                    LABKEY.Query.selectRows({
+                        schemaName: 'study',
+                        queryName: 'demographics',
+                        columns: 'Id,alternateIds,dam,sire,birth,death,colony,objectid,lsid,,Id/death/date,Id/MostRecentDeparture/MostRecentDeparture',
+                        scope: this,
+                        failure: LDK.Utils.getErrorCallback(),
+                        filterArray: [LABKEY.Filter.create('colony', colonyName)],
+                        success: function (results) {
+                            Ext4.Msg.hide();
+
+                            const rows = results.map(row => {
+                                const newRow = []
+                                Object.keys(fieldMap).forEach(key => {
+                                    if (row[key] !== undefined) {
+                                        newRow.push(row[key])
+                                    } else {
+                                        newRow.push('')
+                                    }
+                                })
+
+                                return newRow
+                            })
+
+                            LABKEY.Utils.convertToExcel({
+                                fileName : 'MCC_Import_' + colonyName + '.xlsx',
+                                sheets : [{
+                                    name: 'data',
+                                    data: Object.values(fieldMap).concat(rows)
+                                }]
+                            });
+                        }
+                    });
+                }
             }]
         },{
             xtype: 'datefield',
@@ -523,13 +603,15 @@ Ext4.define('MCC.panel.MccImportPanel', {
             row.existingRecord = row.Id && demographicsRecords.allIds.indexOf(row.Id.toLowerCase()) > -1;
             if (row.existingRecord) {
                 var existingRecord = demographicsRecords.rowMap[row.Id.toLowerCase()];
+                existingRecord.mccAlias = existingRecord['mccAlias/externalId']
+
                 if (existingRecord.colony !== row.colony) {
                     row.errors.push('Colony does not match existing row: ' + existingRecord.colony);
                 }
                 else {
                     row.objectId = existingRecord.objectid;
 
-                    var fields = ['birth', 'dam', 'sire', 'source'];
+                    var fields = ['birth', 'dam', 'sire', 'source', 'mccAlias'];
                     for (var idx in fields) {
                         var fn = fields[idx];
 
@@ -1110,6 +1192,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
 
         Ext4.Array.forEach(rawData, function(row){
             if (row.existingRecord) {
+                // Note: this was merged with the existing values upstream of this
                 demographicsUpdates.push({
                     Id: row.Id,
                     date: row.date,
