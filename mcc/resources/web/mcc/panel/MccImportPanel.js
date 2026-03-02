@@ -461,7 +461,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                                 const newRow = []
                                 Object.keys(fieldMap).forEach(key => {
                                     if (row[key] !== undefined) {
-                                        newRow.push(Ext4.isArray(row[key]) ? row[key].join(',') : '')
+                                        newRow.push(Ext4.isArray(row[key]) ? row[key].join(',') : row[key])
                                     } else {
                                         newRow.push('')
                                     }
