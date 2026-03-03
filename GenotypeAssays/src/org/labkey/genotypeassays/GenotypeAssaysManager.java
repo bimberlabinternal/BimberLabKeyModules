@@ -90,7 +90,7 @@ public class GenotypeAssaysManager
         return _instance;
     }
 
-    public Pair<List<Long>, List<Long>> cacheAnalyses(final ViewContext ctx, final int analysisId, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
+    public Pair<List<Long>, List<Long>> cacheAnalyses(final ViewContext ctx, final ExpProtocol protocol, String[] pks) throws IllegalArgumentException
     {
         final User u = ctx.getUser();
         final List<Long> runsCreated = new ArrayList<>();
@@ -125,7 +125,6 @@ public class GenotypeAssaysManager
 
             AtomicInteger records = new AtomicInteger();
             TableSelector tsAlignments = new TableSelector(tableAlignments, cols.values(), new SimpleFilter(FieldKey.fromString("key"), Arrays.asList(pks), CompareType.IN), null);
-            tsAlignments.setNamedParameters(Map.of("AnalysisId", analysisId));
 
             tsAlignments.forEach(new Selector.ForEachBlock<ResultSet>()
             {
