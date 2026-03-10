@@ -165,7 +165,7 @@
                 <columnTitle>CDR3 With Segments</columnTitle>
             </column>
             <column columnName="cdr3WithProductive">
-                <description>CDR3 With Productivity</description>
+                <columnTitle>CDR3 With Productivity</columnTitle>
             </column>
             <column columnName="cognateCdr3s">
                 <columnTitle>Cognate CDR3s</columnTitle>
