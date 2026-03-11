@@ -33,6 +33,11 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 border: false,
                 style: 'padding-bottom: 10px;'
             },{
+                xtype: 'ldk-integerfield',
+                fieldLabel: 'Request ID',
+                itemId: 'requestId',
+                allowBlank: false
+            },{
                 xtype: 'datefield',
                 fieldLabel: 'Effective Date',
                 itemId: 'effectiveDate',
@@ -71,9 +76,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                     containerPath: ctx.MCCInternalDataContainer,
                     schemaName: 'core',
                     queryName: 'containers',
-                    columns: 'EntityId,Name,Parent,Path',
+                    columns: 'EntityId,title,Parent,Path',
                     containerFilter: 'CurrentAndSubfolders',
-                    sort: 'Name',
+                    sort: 'title',
                     autoLoad: true,
                     listeners: {
                         load: function(store) {
@@ -113,10 +118,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             width: 150
         },{
             xtype: 'displayfield',
-            value: 'Request ID',
-            width: 150
-        },{
-            xtype: 'displayfield',
             value: 'Keep Existing ID?',
             width: 150
         },{
@@ -129,11 +130,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
             fields = fields.concat([{
                 xtype: 'displayfield',
                 value: animalId,
-            },{
-                xtype: 'ldk-integerfield',
-                minValue: 1,
-                itemId: 'requestId-' + animalId,
-                allowBlank: true
             },{
                 xtype: 'checkbox',
                 itemId: 'usePreviousId-' + animalId,
@@ -158,7 +154,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         return {
             layout: {
                 type: 'table',
-                columns: 4
+                columns: 3
             },
             width: 600,
             border: false,
@@ -183,12 +179,13 @@ Ext4.define('MCC.window.MarkShippedWindow', {
 
         var win = btn.up('window');
         var lsids = win.rowIds;
+        var requestId = win.down('#requestId').getValue();
         var effectiveDate = win.down('#effectiveDate').getValue();
         var centerName = win.down('#centerName').getValue();
         var targetFolder = win.down('#targetFolder').getValue();
 
-        if (!effectiveDate || !centerName || !targetFolder) {
-            Ext4.Msg.alert('Error', 'Must provide date, center name, and target folder');
+        if (!requestId || !effectiveDate || !centerName || !targetFolder) {
+            Ext4.Msg.alert('Error', 'Must provide request Id, date, center name, and target folder');
             return;
         }
 
@@ -250,6 +247,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
     },
 
     doSave: function(win, results, preexistingIdsInTargetFolder){
+        var requestId = win.down('#requestId').getValue();
         var effectiveDate = win.down('#effectiveDate').getValue();
         var centerName = win.down('#centerName').getValue();
         var targetFolder = win.down('#targetFolder').getValue();
@@ -259,7 +257,6 @@ Ext4.define('MCC.window.MarkShippedWindow', {
         var hadError = false;
         Ext4.Array.forEach(results.rows, function(row){
             var effectiveId = win.down('#usePreviousId-' + row.Id).getValue() ? row.Id : win.down('#newId-' + row.Id).getValue();
-            var requestId = win.down('#requestId-' + row.Id).getValue();
             // This should be checked above, although perhaps case sensitivity could get involved:
             LDK.Assert.assertNotEmpty('Missing effective ID after query', effectiveId);
 
