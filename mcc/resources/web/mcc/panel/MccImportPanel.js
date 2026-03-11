@@ -138,7 +138,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         expectInImport: true
     },{
         name: 'availability',
-        // NOTE: availalble was a typo in one generation of the input templates:
+        // NOTE: available was a typo in one generation of the input templates:
         labels: ['Available to Transfer', 'available to transfer', 'available to transfer'],
         allowRowSpan: false,
         allowBlank: true,
@@ -396,7 +396,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
     getPanelItems: function(){
         return [{
             style: 'padding-top: 10px;',
-            html: 'This page is designed to help import MCC animal-level data. Use the fields below to download the excel template and paste data to import.<p>'
+            html: 'This page is designed to help import MCC animal-level data. Use the fields below to download the excel template and paste data to import. The general idea is: 1) Download a blank excel template. This excel workbook contains dropdowns, etc., 2) Use the second button to download a table with the current data for the selected colony. 3) Copy/paste that raw data into the template.<p>'
         },{
             layout: 'hbox',
             style: 'margin-bottom: 20px;',
@@ -424,27 +424,26 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         'Id/mccAlias/externalAlias': 'MCC_ID',
                         'Id': 'Center Id',
                         'alternateIds': 'Previous IDs',
-                        'colony': 'Colony',
+                        'colony': 'Current Colony',
+                        'source': 'Source Colony',
                         'gender': 'Sex',
                         'birth': 'Birth',
                         'calculated_status': 'status',
                         'Id/MostRecentDeparture/destination': 'Shipping Destination',
-                        'Id/MostRecentDeparture/MostRecentDeparture': 'Most Recent Departure Date',
+                        'Id/MostRecentDeparture/MostRecentDeparture': 'Shipping Date',
                         'death': 'Death',
-                        'deathCause': 'Cause of death',
-                        'dam': 'Dam',
-                        'sire': 'Sire',
+                        'deathCause': 'Cause of Death',
+                        'dam': 'Material ID',
+                        'sire': 'Paternal ID',
                         'Id/MostRecentWeight/MostRecentWeightGrams': 'Weight (g)',
                         'Id/MostRecentWeight/MostRecentWeightDate': 'Date of Weight',
-                        'u24_status': 'U24 assigned?',
+                        'u24_status': 'U24 Status',
                         'Id/mostRecentObservations/availability::observation': 'Availability',
                         'Id/mostRecentObservations/current_housing_status::observation': 'Current Housing Status',
                         'breeding partner ID': 'Breeding Partner ID',
                         'Id/mostRecentObservations/infant_history::observation': 'Infant History',
                         'Id/mostRecentObservations/fertility_status::observation': 'Fertility Status',
-                        'Id/mostRecentObservations/medical_history::observation': 'Medical History',
-                        'Id/mostRecentObservations/usage_current::observation': 'Usage (Current)',
-                        'Id/mostRecentObservations/usage_future::observation': 'Usage (Future)'
+                        'Id/mostRecentObservations/medical_history::observation': 'Medical History'
                     }
 
                     LABKEY.Query.selectRows({
@@ -463,7 +462,10 @@ Ext4.define('MCC.panel.MccImportPanel', {
                             const rows = results.rows.map(row => {
                                 const newRow = []
                                 Object.keys(fieldMap).forEach(key => {
-                                    if (row[key] !== undefined) {
+                                    // Always leave these empty:
+                                    if (key === 'Id/MostRecentWeight/MostRecentWeightGrams' || key === 'Id/MostRecentWeight/MostRecentWeightDate') {
+                                        newRow.push('')
+                                    } else if (row[key] !== undefined) {
                                         newRow.push(Ext4.isArray(row[key]) ? row[key].join(',') : row[key])
                                     } else {
                                         newRow.push('')
