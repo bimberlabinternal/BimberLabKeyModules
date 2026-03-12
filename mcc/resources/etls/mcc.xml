@@ -149,7 +149,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="1000">
+            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="2500">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
