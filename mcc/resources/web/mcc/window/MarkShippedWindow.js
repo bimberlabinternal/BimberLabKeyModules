@@ -66,7 +66,7 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                 fieldLabel: 'Target Folder',
                 itemId: 'targetFolder',
                 allowBlank: false,
-                displayField: 'title',
+                displayField: 'DisplayName',
                 valueField: 'Path',
                 triggerAction: 'all',
                 queryMode: 'local',
@@ -76,9 +76,9 @@ Ext4.define('MCC.window.MarkShippedWindow', {
                     containerPath: ctx.MCCInternalDataContainer,
                     schemaName: 'core',
                     queryName: 'containers',
-                    columns: 'EntityId,title,Parent,Path',
+                    columns: 'EntityId,DisplayName,Parent,Path',
                     containerFilter: 'CurrentAndSubfolders',
-                    sort: 'title',
+                    sort: 'DisplayName',
                     autoLoad: true,
                     listeners: {
                         load: function(store) {
