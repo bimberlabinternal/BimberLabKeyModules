@@ -121,8 +121,9 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
         sleep(100);
 
-        Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
         Ext4FieldRef.getForLabel(this, "Request ID").setValue(12345);
+
+        Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
         // This should fail initially:
