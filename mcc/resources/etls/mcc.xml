@@ -45,6 +45,12 @@
                 </alternateKeys>
             </destination>
         </transform>
+        <transform id="cacheDemographics" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.CacheDemographicsStep">
+                <settings>
+                </settings>
+            </taskref>
+        </transform>
         <transform type="SimpleQueryTransformStep" id="kinship">
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedKinship" >
@@ -149,7 +155,7 @@
                     <column>objectid</column>
                 </sourceColumns>
             </source>
-            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="1000">
+            <destination schemaName="study" queryName="clinical_observations" targetOption="truncate" bulkLoad="true" batchSize="2500">
                 <alternateKeys>
                     <column name="objectid"/>
                 </alternateKeys>
