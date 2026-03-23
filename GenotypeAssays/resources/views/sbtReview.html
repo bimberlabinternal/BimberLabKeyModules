@@ -159,11 +159,9 @@
                             //sort: '-percent',
                             containerPath: Laboratory.Utils.getQueryContainerPath(),
                             removeableFilters: [
-                                LABKEY.Filter.create('percent_from_locus', 0.25, LABKEY.Filter.Types.GTE)
+                                LABKEY.Filter.create('percent_from_locus', 0.25, LABKEY.Filter.Types.GTE),
+                                LABKEY.Filter.create('analysis_id', analysisId, LABKEY.Filter.Types.EQUALS)
                             ],
-                            parameters: {
-                                AnalysisId: analysisId
-                            },
                             scope: this,
                             success: this.onDataRegionLoad
                         })
@@ -180,12 +178,10 @@
                             containerPath: Laboratory.Utils.getQueryContainerPath(),
                             removeableFilters: [
                                 LABKEY.Filter.create('percent_from_locus', 0.25, LABKEY.Filter.Types.GTE),
-                                LABKEY.Filter.create('total_reads', 5, LABKEY.Filter.Types.GT),
-                                LABKEY.Filter.create('totalLineages', 1, LABKEY.Filter.Types.EQUAL)
+                                LABKEY.Filter.create('total_reads_from_locus', 5, LABKEY.Filter.Types.GT),
+                                LABKEY.Filter.create('totalLineages', 1, LABKEY.Filter.Types.EQUAL),
+                                LABKEY.Filter.create('analysis_id', analysisId, LABKEY.Filter.Types.EQUAL)
                             ],
-                            parameters: {
-                                AnalysisId: analysisId
-                            },
                             scope: this,
                             success: this.onDataRegionLoad
                         })
@@ -195,7 +191,7 @@
                         title: 'Haplotype Matches',
                         items: [{
                             xtype: 'genotypeassays-haplotypepanel',
-                            analysisId: [analysisId]
+                            analysisIds: [analysisId]
                         }]
                     },{
                         xtype: 'ldk-querypanel',

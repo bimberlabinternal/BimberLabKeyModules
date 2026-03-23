@@ -1,7 +1,7 @@
 Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
     extend: 'Ext.panel.Panel',
     alias: 'widget.genotypeassays-haplotypepanel',
-    analysisId: null,
+    analysisIds: null,
     showCheckBoxes: false,
 
     initComponent: function(){
@@ -461,13 +461,11 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
             schemaName: 'sequenceanalysis',
             queryName: 'alignment_summary_by_lineage',
             columns: 'analysis_id,analysis_id/readset,analysis_id/readset/subjectId,lineages,loci,total,total_reads,percent,total_reads_from_locus,percent_from_locus',
-            parameters: {
-                AnalysisId: this.analysisId
-            },
             apiVersion: 13.2,
             scope: this,
             filterArray: [
-                LABKEY.Filter.create('percent_from_locus', minPct || 0, LABKEY.Filter.Types.GTE)
+                LABKEY.Filter.create('percent_from_locus', minPct || 0, LABKEY.Filter.Types.GTE),
+                LABKEY.Filter.create('analysis_id', this.analysisIds, LABKEY.Filter.Types.IN)
             ],
             failure: LDK.Utils.getErrorCallback(),
             success: function(results){
@@ -501,13 +499,13 @@ Ext4.define('GenotypeAssays.panel.HaplotypePanel', {
             schemaName: 'sequenceanalysis',
             queryName: 'alignment_summary_grouped',
             columns: 'analysis_id,lineages,loci,alleles,total_reads,percent,total_reads_from_locus,percent_from_locus',
+            filterArray: [
+                LABKEY.Filter.create('analysis_id', this.analysisIds, LABKEY.Filter.Types.IN)
+            ],
             // This is designed to remove the view-level sorts:
             sort: 'analysis_id',
             apiVersion: 13.2,
             scope: this,
-            parameters: {
-                AnalysisId: this.analysisId
-            },
             failure: LDK.Utils.getErrorCallback(),
             success: function(results){
                 this.lineageToAlleleMap = {};

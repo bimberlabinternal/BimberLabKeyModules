@@ -14,6 +14,9 @@
                             query.sort=-Date&amp;
                         </url>
                     </column>
+                    <column columnName="destination">
+                        <columnTitle>Destination(s)</columnTitle>
+                    </column>
                     <column columnName="mccRequestId">
                         <columnTitle>MCC Request Id(s)</columnTitle>
                     </column>

@@ -214,7 +214,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
         if (isSequenceSequenceOutputHandlerTask(job))
         {
-            File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
+            File jobXml = FileUtil.appendName(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
             if (jobXml.exists())
             {
                 try (BufferedReader reader = Readers.getReader(jobXml))
@@ -384,7 +384,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         }
     }
 
-    private void possiblyAddDisk(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddDisk(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         Map<String, String> params = ((HasJobParams) job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localDisk"));
@@ -405,6 +405,18 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return hasCellBender(job) || StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus")) != null;
     }
 
+    private boolean useExperimentalPartition(PipelineJob job)
+    {
+        Map<String, String> params = ((HasJobParams) job).getJobParams();
+        String rawVal = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useExperimentalPartition"));
+        if (rawVal == null)
+        {
+            return false;
+        }
+
+        return Boolean.parseBoolean(rawVal);
+    }
+
     private boolean hasCellBender(PipelineJob job)
     {
         if (!isSequenceSequenceOutputHandlerTask(job))
@@ -412,7 +424,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             return false;
         }
 
-        File jobXml = new File(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
+        File jobXml = FileUtil.appendName(job.getLogFile().getParentFile(), FileUtil.getBaseName(job.getLogFile()) + ".job.json.txt");
         if (jobXml.exists())
         {
             try (BufferedReader reader = Readers.getReader(jobXml))
@@ -436,7 +448,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return false;
     }
 
-    private void possiblyAddGpus(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddGpus(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         Map<String, String> params = ((HasJobParams) job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus"));
@@ -457,7 +469,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         lines.add("#SBATCH --gres=gpu:" + val);
     }
 
-    private void possiblyAddExclusive(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddExclusive(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         Map<String, String> params = ((HasJobParams)job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useExclusive"));
@@ -478,7 +490,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         }
     }
 
-    private void possiblyAddSSD(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddSSD(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         Map<String, String> params = ((HasJobParams)job).getJobParams();
         String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localSSD"));
@@ -499,7 +511,7 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         }
     }
 
-    private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine engine, List<String> lines)
+    private void possiblyAddQOS(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
     {
         //first remove existing
         removeQueueLines(lines);
@@ -579,7 +591,16 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
 
     private String getPartition(PipelineJob job)
     {
-        return needsGPUs(job) ? "gpu" : "batch";
+        if (needsGPUs(job))
+        {
+            return "gpu";
+        }
+        else if (useExperimentalPartition(job))
+        {
+            return  "rhel96TESTING";
+        }
+
+        return "batch";
     }
 
     private Long getFileSize(PipelineJob job)

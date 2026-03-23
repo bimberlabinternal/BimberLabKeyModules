@@ -121,6 +121,8 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
         sleep(100);
 
+        Ext4FieldRef.getForLabel(this, "Request ID").setValue(12345);
+
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
 
@@ -180,6 +182,7 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
         sleep(100);
 
+        Ext4FieldRef.getForLabel(this, "Request ID").setValue(12345);
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
         _ext4Helper.queryOne("#usePreviousId-Animal2", Ext4FieldRef.class).setChecked(true);
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
@@ -237,6 +240,7 @@ public class MccTest extends BaseWebDriverTest
         waitAndClick(Ext4Helper.Locators.ext4Button("OK"));
         sleep(100);
 
+        Ext4FieldRef.getForLabel(this, "Request ID").setValue(12345);
         Ext4ComboRef.getForLabel(this, "Target Folder").setComboByDisplayValue("Other");
         _ext4Helper.queryOne("#newId-12345", Ext4FieldRef.class).setValue("TheNewId");
         waitAndClick(Ext4Helper.Locators.ext4Button("Submit"));
