@@ -2,6 +2,7 @@ select
 
     T1.Id,
     max(T1.date) as MostRecentDeparture,
+    group_concat(distinct t1.destination) as destination,
     group_concat(distinct t1.mccRequestId) as mccRequestId
 
 FROM study.departure T1
