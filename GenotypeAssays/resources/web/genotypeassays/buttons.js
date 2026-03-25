@@ -28,7 +28,7 @@ GenotypeAssays.buttons = new function(){
 
             var newForm = Ext4.DomHelper.append(document.getElementsByTagName('body')[0],
                     '<form method="POST" action="' + LABKEY.ActionURL.buildURL("genotypeassays", "bulkHaplotype", null) + '">' +
-                    '<input type="hidden" name="analysisId" value="' + Ext4.htmlEncode(checked[0]) + '" />' +
+                    '<input type="hidden" name="analysisIds" value="' + Ext4.htmlEncode(checked.join(';')) + '" />' +
                     '</form>');
             newForm.submit();
         }

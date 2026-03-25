@@ -39,7 +39,8 @@ public class ExacloudResourceSettings implements JobResourceSettings
                     put("minValue", 512);
                 }}, 1028),
                 ToolParameterDescriptor.create("localSSD", "Request Nodes With SSD Scratch", "If selected, -C ssdscratch will be added to the submit script, which limits to node with faster SSD scratch space.  This might be important for I/O intense jobs.", "checkbox", null, null),
-                ToolParameterDescriptor.create("gpus", "GPUs", "The number of GPUs requested for this job. If non-zero, the gpu partition will be used.", "ldk-integerfield", null, null)
+                ToolParameterDescriptor.create("gpus", "GPUs", "The number of GPUs requested for this job. If non-zero, the gpu partition will be used.", "ldk-integerfield", null, null),
+                ToolParameterDescriptor.create("useExperimentalPartition", "Use RHEL 9.6 Partition", "If selected, jobs will be submitted to the experimental rhel96TESTING partition.", "checkbox", null, null)
         );
     }
 

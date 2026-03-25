@@ -86,6 +86,7 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
                 continue;
             }
 
+            getPipelineCtx().getLogger().info("Storing results in database:");
             List<Map<String, Object>> toInsert = new ArrayList<>();
             try (CSVReader reader = new CSVReader(Readers.getReader(so.getFile()), '\t'))
             {
@@ -119,6 +120,10 @@ public class GeographicOriginStep extends AbstractPipelineStep implements Varian
                 {
                     throw new PipelineJobException(e);
                 }
+            }
+            else
+            {
+                getPipelineCtx().getLogger().info("No records to insert");
             }
         }
     }
