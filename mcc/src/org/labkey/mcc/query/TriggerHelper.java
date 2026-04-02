@@ -281,16 +281,14 @@ public class TriggerHelper
         }
     }
 
-    private TableInfo _mappingTable = null;
-
     private TableInfo getMappingTable()
     {
-        if (_mappingTable == null)
+        if (_animalMapping == null)
         {
-            _mappingTable = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+            _animalMapping = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
         }
 
-        return _mappingTable;
+        return _animalMapping;
     }
 
     public @Nullable String getMccAlias(String id) {
@@ -299,6 +297,8 @@ public class TriggerHelper
 
     public int ensureMccAliasExists(Collection<String> rawIds, Map<Object, Object> existingAliases)
     {
+        clearCachedTables();
+
         // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
         // Also, CaseInsensitiveSet will convert the keys to lowercase, which is problematic for case-sensitive databases
         final CaseInsensitiveHashMap<String> idMap = new CaseInsensitiveHashMap<>();
@@ -390,5 +390,10 @@ public class TriggerHelper
         {
             throw bve;
         }
+    }
+
+    public void clearCachedTables()
+    {
+        _animalMapping = null;
     }
 }
