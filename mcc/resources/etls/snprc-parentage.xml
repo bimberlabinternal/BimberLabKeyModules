@@ -14,6 +14,7 @@
                 </sourceColumns>
                 <sourceFilters>
                     <sourceFilter column="sire" operator="isnonblank" value=""/>
+                    <sourceFilter column="date" operator="isnonblank" value=""/>
                 </sourceFilters>
             </source>
             <destination schemaName="study" queryName="parentage" targetOption="truncate" bulkLoad="true">
@@ -41,6 +42,7 @@
                 </sourceColumns>
                 <sourceFilters>
                     <sourceFilter column="dam" operator="isnonblank" value=""/>
+                    <sourceFilter column="date" operator="isnonblank" value=""/>
                 </sourceFilters>
             </source>
             <destination schemaName="study" queryName="parentage" targetOption="append" bulkLoad="true">
