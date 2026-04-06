@@ -47,6 +47,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -299,7 +300,7 @@ public class TriggerHelper
 
     public int ensureMccAliasExists(Collection<String> rawIds, Map<Object, Object> existingAliases)
     {
-        if (!DbScope.getLabKeyScope().isTransactionActive())
+        if (DbScope.getLabKeyScope().getCurrentTransaction() != null && Objects.requireNonNull(DbScope.getLabKeyScope().getCurrentTransaction()).isAborted())
         {
             _log.info("No active transaction, skipping MCC ensureMccAliasExists()");
             return 0;
