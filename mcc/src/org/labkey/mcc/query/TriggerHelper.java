@@ -10,6 +10,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.DbScope;
 import org.labkey.api.data.DbSequence;
 import org.labkey.api.data.DbSequenceManager;
 import org.labkey.api.data.SimpleFilter;
@@ -29,6 +30,7 @@ import org.labkey.api.security.UserManager;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.settings.AppProps;
+import org.labkey.api.study.StudyService;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.UnauthorizedException;
@@ -297,74 +299,83 @@ public class TriggerHelper
 
     public int ensureMccAliasExists(Collection<String> rawIds, Map<Object, Object> existingAliases)
     {
-        clearCachedTables();
-
-        // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
-        // Also, CaseInsensitiveSet will convert the keys to lowercase, which is problematic for case-sensitive databases
-        final CaseInsensitiveHashMap<String> idMap = new CaseInsensitiveHashMap<>();
-        rawIds.stream().map(String::valueOf).forEach(x -> idMap.put(x, x));
-
-        CaseInsensitiveHashMap<String> ciExistingAliases = new CaseInsensitiveHashMap<>();
-        existingAliases.forEach((key, val) -> ciExistingAliases.put(String.valueOf(key), String.valueOf(val)));
-
-        SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), idMap.values(), CompareType.IN);
-
-        final Set<String> aliasesFound = new HashSet<>();
-        TableInfo ti = getMappingTable();
-        new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), filter, null).forEachResults(rs -> {
-            aliasesFound.add(rs.getString(FieldKey.fromString("subjectname")));
-            if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
-                if (!ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
-                {
-                    _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + "(" + ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))) + ") does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));
-                }
+        try (DbScope.Transaction transaction = StudyService.get().getDatasetSchema().getScope().ensureTransaction())
+        {
+            if (transaction.isAborted())
+            {
+                return 0;
             }
-        });
 
-        aliasesFound.forEach(idMap::remove);
-        if (idMap.isEmpty())
-        {
-            return 0;
-        }
+            // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
+            // Also, CaseInsensitiveSet will convert the keys to lowercase, which is problematic for case-sensitive databases
+            final CaseInsensitiveHashMap<String> idMap = new CaseInsensitiveHashMap<>();
+            rawIds.stream().map(String::valueOf).forEach(x -> idMap.put(x, x));
 
-        final List<Map<String, Object>> toAdd = new ArrayList<>();
-        try
-        {
-            AtomicInteger aliasesReused = new AtomicInteger(0);
-            idMap.forEach((key, id) -> {
-                CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
-                row.put("subjectname", id);
-                if (ciExistingAliases.containsKey(id))
+            CaseInsensitiveHashMap<String> ciExistingAliases = new CaseInsensitiveHashMap<>();
+            existingAliases.forEach((key, val) -> ciExistingAliases.put(String.valueOf(key), String.valueOf(val)));
+
+            SimpleFilter filter = new SimpleFilter(FieldKey.fromString("subjectname"), idMap.values(), CompareType.IN);
+
+            final Set<String> aliasesFound = new HashSet<>();
+            TableInfo ti = getMappingTable();
+            new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), filter, null).forEachResults(rs -> {
+                aliasesFound.add(rs.getString(FieldKey.fromString("subjectname")));
+                if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname"))))
                 {
-                    _log.info("Will re-use existing MCC alias: " + ciExistingAliases.get(id) + ", for ID: " + id);
-                    aliasesReused.getAndIncrement();
+                    if (!ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
+                    {
+                        _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + "(" + ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))) + ") does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));
+                    }
                 }
-
-                row.put("externalAlias", ciExistingAliases.get(id)); //NOTE: the trigger script will auto-assign a value if null, but we need to include this property on the input JSON
-
-                toAdd.add(row);
             });
 
-            if (!ciExistingAliases.isEmpty() && aliasesReused.get() != ciExistingAliases.size())
+            aliasesFound.forEach(idMap::remove);
+            if (idMap.isEmpty())
             {
-                _log.info("The existing aliases map, size: " + ciExistingAliases.size() + " does not equal the number of aliases actually used, which was: " + aliasesReused.get());
-                _log.info(ciExistingAliases);
+                return 0;
             }
 
-            BatchValidationException bve = new BatchValidationException();
-            ti.getUpdateService().insertRows(_user, _container, toAdd, bve, null, null);
-            if (bve.hasErrors())
+            final List<Map<String, Object>> toAdd = new ArrayList<>();
+            try
             {
-                throw bve;
-            }
+                AtomicInteger aliasesReused = new AtomicInteger(0);
+                idMap.forEach((key, id) -> {
+                    CaseInsensitiveHashMap<Object> row = new CaseInsensitiveHashMap<>();
+                    row.put("subjectname", id);
+                    if (ciExistingAliases.containsKey(id))
+                    {
+                        _log.info("Will re-use existing MCC alias: " + ciExistingAliases.get(id) + ", for ID: " + id);
+                        aliasesReused.getAndIncrement();
+                    }
 
-            return toAdd.size();
-        }
-        catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
-        {
-            _log.error("Error auto-creating MCC aliases during insert for folder: " + _container.getPath(), e);
-            toAdd.forEach(_log::error);
-            return 0;
+                    row.put("externalAlias", ciExistingAliases.get(id)); //NOTE: the trigger script will auto-assign a value if null, but we need to include this property on the input JSON
+
+                    toAdd.add(row);
+                });
+
+                if (!ciExistingAliases.isEmpty() && aliasesReused.get() != ciExistingAliases.size())
+                {
+                    _log.info("The existing aliases map, size: " + ciExistingAliases.size() + " does not equal the number of aliases actually used, which was: " + aliasesReused.get());
+                    _log.info(ciExistingAliases);
+                }
+
+                BatchValidationException bve = new BatchValidationException();
+                ti.getUpdateService().insertRows(_user, _container, toAdd, bve, null, null);
+                if (bve.hasErrors())
+                {
+                    throw bve;
+                }
+
+                transaction.commit();
+
+                return toAdd.size();
+            }
+            catch (BatchValidationException | DuplicateKeyException | QueryUpdateServiceException | SQLException e)
+            {
+                _log.error("Error auto-creating MCC aliases during insert for folder: " + _container.getPath(), e);
+                toAdd.forEach(_log::error);
+                return 0;
+            }
         }
     }
 
@@ -390,10 +401,5 @@ public class TriggerHelper
         {
             throw bve;
         }
-    }
-
-    public void clearCachedTables()
-    {
-        _animalMapping = null;
     }
 }
