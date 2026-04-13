@@ -20,6 +20,8 @@ function onInit(event, helper){
 }
 
 function onUpsert(helper, scriptErrors, row, oldRow){
+    row.objectId = row.objectId || (oldRow ? oldRow.objectId : null) || LABKEY.Utils.generateUUID().toUpperCase()
+
     if (row.status && row.status.match(/Undetermined/)) {
         row.status = 'Unknown';
     }
