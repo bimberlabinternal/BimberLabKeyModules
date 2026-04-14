@@ -10,6 +10,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
+import org.labkey.api.data.DbScope;
 import org.labkey.api.data.DbSequence;
 import org.labkey.api.data.DbSequenceManager;
 import org.labkey.api.data.SimpleFilter;
@@ -29,6 +30,7 @@ import org.labkey.api.security.UserManager;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.DeletePermission;
 import org.labkey.api.settings.AppProps;
+import org.labkey.api.study.StudyService;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.view.UnauthorizedException;
@@ -45,6 +47,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -281,16 +284,14 @@ public class TriggerHelper
         }
     }
 
-    private TableInfo _mappingTable = null;
-
     private TableInfo getMappingTable()
     {
-        if (_mappingTable == null)
+        if (_animalMapping == null)
         {
-            _mappingTable = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
+            _animalMapping = QueryService.get().getUserSchema(_user, _container, MccSchema.NAME).getTable(MccSchema.TABLE_ANIMAL_MAPPING);
         }
 
-        return _mappingTable;
+        return _animalMapping;
     }
 
     public @Nullable String getMccAlias(String id) {
@@ -299,6 +300,12 @@ public class TriggerHelper
 
     public int ensureMccAliasExists(Collection<String> rawIds, Map<Object, Object> existingAliases)
     {
+        if (DbScope.getLabKeyScope().getCurrentTransaction() != null && Objects.requireNonNull(DbScope.getLabKeyScope().getCurrentTransaction()).isAborted())
+        {
+            _log.info("No active transaction, skipping MCC ensureMccAliasExists()");
+            return 0;
+        }
+
         // NOTE: The incoming object can convert numeric IDs from strings to int, so manually convert:
         // Also, CaseInsensitiveSet will convert the keys to lowercase, which is problematic for case-sensitive databases
         final CaseInsensitiveHashMap<String> idMap = new CaseInsensitiveHashMap<>();
@@ -313,7 +320,8 @@ public class TriggerHelper
         TableInfo ti = getMappingTable();
         new TableSelector(ti, PageFlowUtil.set("subjectname", "externalAlias"), filter, null).forEachResults(rs -> {
             aliasesFound.add(rs.getString(FieldKey.fromString("subjectname")));
-            if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname")))) {
+            if (ciExistingAliases.containsKey(rs.getString(FieldKey.fromString("subjectname"))))
+            {
                 if (!ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))).equalsIgnoreCase(rs.getString(FieldKey.fromString("externalAlias"))))
                 {
                     _log.error("Incoming MCC alias for: " + rs.getString(FieldKey.fromString("subjectname")) + "(" + ciExistingAliases.get(rs.getString(FieldKey.fromString("subjectname"))) + ") does not match existing: " + rs.getString(FieldKey.fromString("externalAlias")));

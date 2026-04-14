@@ -330,7 +330,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
             possiblyAddQOS(job, engine, lines);
             possiblyAddHighIO(job, engine, lines);
             possiblyAddDisk(job, engine, lines);
-            possiblyAddSSD(job, engine, lines);
             possiblyAddGpus(job, engine, lines);
             possiblyAddExclusive(job, engine, lines);
         }
@@ -483,27 +482,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         {
             job.getLogger().info("Adding --exclusive flag");
             String line = "#SBATCH --exclusive";
-            if (!lines.contains(line))
-            {
-                lines.add(line);
-            }
-        }
-    }
-
-    private void possiblyAddSSD(PipelineJob job, RemoteExecutionEngine<?> engine, List<String> lines)
-    {
-        Map<String, String> params = ((HasJobParams)job).getJobParams();
-        String val = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.localSSD"));
-        if (val == null)
-        {
-            return;
-        }
-
-        boolean parsed = Boolean.parseBoolean(val);
-        if (parsed)
-        {
-            job.getLogger().info("Requiring local SSD scratch space");
-            String line = "#SBATCH -C ssdscratch";
             if (!lines.contains(line))
             {
                 lines.add(line);
