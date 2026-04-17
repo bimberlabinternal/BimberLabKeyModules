@@ -8,6 +8,7 @@ import org.labkey.api.data.Container;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.triggers.Trigger;
 import org.labkey.api.data.triggers.TriggerFactory;
+import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.SimpleValidationError;
 import org.labkey.api.query.ValidationException;
 import org.labkey.api.security.User;
@@ -15,7 +16,6 @@ import org.labkey.api.security.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class ViralLoadsTriggerFactory implements TriggerFactory
 {
@@ -33,19 +33,19 @@ public class ViralLoadsTriggerFactory implements TriggerFactory
     public static class ViralLoadTrigger implements Trigger
     {
         @Override
-        public void beforeInsert(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
+        public void beforeInsert(TableInfo table, Container c, User user, @Nullable QueryUpdateService.InsertOption insertOption, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
         {
-            beforeInsert(table, c, user, newRow, errors, extraContext, null);
+            beforeInsert(table, c, user, insertOption, newRow, errors, extraContext, null);
         }
 
         @Override
-        public void beforeInsert(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext, @Nullable Map<String, Object> existingRecord) throws ValidationException
+        public void beforeInsert(TableInfo table, Container c, User user, @Nullable QueryUpdateService.InsertOption insertOption, @Nullable Map<String, Object> newRow, ValidationException errors, Map<String, Object> extraContext, @Nullable Map<String, Object> existingRecord) throws ValidationException
         {
             handlePVL(newRow, c, errors);
         }
 
         @Override
-        public void beforeUpdate(TableInfo table, Container c, User user, @Nullable Map<String, Object> newRow, @Nullable Map<String, Object> oldRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
+        public void beforeUpdate(TableInfo table, Container c, User user, @Nullable QueryUpdateService.InsertOption insertOption, @Nullable Map<String, Object> newRow, @Nullable Map<String, Object> oldRow, ValidationException errors, Map<String, Object> extraContext) throws ValidationException
         {
             handlePVL(newRow, c, errors);
         }
