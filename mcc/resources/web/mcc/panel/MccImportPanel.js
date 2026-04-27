@@ -242,7 +242,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
         },
 
         damOrSire: function(val, panel, row) {
-            if (val && val.toUpperCase() === 'NA' || val.toUpperCase() === 'N/A') {
+            if (val && (val.toUpperCase() === 'NA' || val.toUpperCase() === 'N/A')) {
                 val = null;
             }
 
