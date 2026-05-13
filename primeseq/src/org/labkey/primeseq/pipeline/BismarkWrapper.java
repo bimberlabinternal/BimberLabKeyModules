@@ -81,7 +81,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
 
     public static class BismarkAlignmentStep extends AbstractAlignmentPipelineStep<BismarkWrapper> implements AlignmentStep
     {
-        public BismarkAlignmentStep(AlignmentStepProvider provider, PipelineContext ctx)
+        public BismarkAlignmentStep(AlignmentStepProvider<?> provider, PipelineContext ctx)
         {
             super(provider, ctx, new BismarkWrapper(ctx.getLogger()));
         }
@@ -112,8 +112,8 @@ public class BismarkWrapper extends AbstractCommandWrapper
 
             try
             {
-                File convertedGenome = new File(existingIndexDir, CONVERTED_GENOME_NAME);
-                File localIndexDir = new File(outputDirectory, "genome");
+                File convertedGenome = FileUtil.appendName(existingIndexDir, CONVERTED_GENOME_NAME);
+                File localIndexDir = FileUtil.appendName(outputDirectory, "genome");
                 if (localIndexDir.exists())
                 {
                     FileUtils.deleteDirectory(localIndexDir);
@@ -122,8 +122,8 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 output.addIntermediateFile(localIndexDir);
 
                 getPipelineCtx().getLogger().debug("adding Genome and FASTA symlinks");
-                Path link1 = Files.createSymbolicLink(new File(localIndexDir, CONVERTED_GENOME_NAME).toPath(), convertedGenome.toPath());
-                Path link2 = Files.createSymbolicLink(new File(localIndexDir, referenceGenome.getWorkingFastaFile().getName()).toPath(), referenceGenome.getWorkingFastaFile().toPath());
+                Path link1 = Files.createSymbolicLink(FileUtil.appendName(localIndexDir, CONVERTED_GENOME_NAME).toPath(), convertedGenome.toPath());
+                Path link2 = Files.createSymbolicLink(FileUtil.appendName(localIndexDir, referenceGenome.getWorkingFastaFile().getName()).toPath(), referenceGenome.getWorkingFastaFile().toPath());
                 //output.addIntermediateFile(link1.toFile());
                 //output.addIntermediateFile(link2.toFile());
 
@@ -173,9 +173,27 @@ public class BismarkWrapper extends AbstractCommandWrapper
             }
 
             String outputBasename = SequenceAnalysisService.get().getUnzippedBaseName(inputFastq1.getName()) + "_bismark_bt2" + (inputFastq2 == null ? "" : "_pe");
-            File bam = new File(outputDirectory, outputBasename + ".bam");
+            File bam = FileUtil.appendName(outputDirectory, outputBasename + ".bam");
+            File bamDone = new File(bam.getPath() + ".done");
+            output.addIntermediateFile(bamDone);
             getWrapper().setWorkingDir(outputDirectory);
-            getWrapper().execute(args);
+
+            if (!bamDone.exists())
+            {
+                getWrapper().execute(args);
+                try
+                {
+                    FileUtils.touch(bamDone);
+                }
+                catch (IOException e)
+                {
+                    throw new PipelineJobException(e);
+                }
+            }
+            else
+            {
+                getPipelineCtx().getLogger().debug("Done file exists, skipping re-run of bismark");
+            }
 
             if (!bam.exists())
             {
@@ -183,7 +201,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
             }
 
             output.addOutput(bam, AlignmentOutputImpl.BAM_ROLE);
-            File report = new File(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputFastq1.getName()) + "_bismark_bt2_" + (inputFastq2 == null ? "SE" : "PE") + "_report.txt");
+            File report = FileUtil.appendName(outputDirectory, SequenceAnalysisService.get().getUnzippedBaseName(inputFastq1.getName()) + "_bismark_bt2_" + (inputFastq2 == null ? "SE" : "PE") + "_report.txt");
             output.addOutput(report, "Bismark Summary Report");
             output.addSequenceOutput(report, rs.getName() + ": Bisulfite Conversion Stats", "Bismark Methylation Conversion Stats", rs.getRowId(), null, referenceGenome.getGenomeId(), null);
             output.addCommandsExecuted(getWrapper().getCommandsExecuted());
@@ -216,7 +234,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
             IndexOutputImpl output = new IndexOutputImpl(referenceGenome);
 
             //always make sure FASTA is in analysis directory
-            File localFasta = new File(outputDir, referenceGenome.getWorkingFastaFile().getName());
+            File localFasta = FileUtil.appendName(outputDir, referenceGenome.getWorkingFastaFile().getName());
             File indexOutputDir = localFasta.getParentFile();
 
             boolean hasCachedIndex = AlignerIndexUtil.hasCachedIndex(this.getPipelineCtx(), getIndexCachedDirName(getPipelineCtx().getJob()), referenceGenome);
@@ -255,20 +273,20 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 args.add(indexOutputDir.getPath());
                 getWrapper().execute(args);
 
-                File genomeBuild = new File(indexOutputDir, CONVERTED_GENOME_NAME);
-                File bowtie2TestFile = new File(genomeBuild, "CT_conversion/BS_CT.1.bt2");
+                File genomeBuild = FileUtil.appendName(indexOutputDir, CONVERTED_GENOME_NAME);
+                File bowtie2TestFile = FileUtil.appendPath(genomeBuild, org.labkey.api.util.Path.parse("CT_conversion/BS_CT.1.bt2"));
                 if (!bowtie2TestFile.exists())
                 {
                     throw new PipelineJobException("Unable to find file, expected: " + bowtie2TestFile.getPath());
                 }
 
-                File indexBaseDir = new File(localFasta.getParentFile(), getIndexCachedDirName(getPipelineCtx().getJob()));
+                File indexBaseDir = FileUtil.appendName(localFasta.getParentFile(), getIndexCachedDirName(getPipelineCtx().getJob()));
                 if (!indexBaseDir.exists())
                 {
                     indexBaseDir.mkdirs();
                 }
 
-                File movedDir = new File(indexBaseDir, genomeBuild.getName());
+                File movedDir = FileUtil.appendName(indexBaseDir, genomeBuild.getName());
                 try
                 {
                     FileUtils.moveDirectory(genomeBuild, movedDir);
@@ -335,7 +353,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 File queryNameSortBam;
                 if (SequencePipelineService.get().getBamSortOrder(inputBam) != SAMFileHeader.SortOrder.queryname)
                 {
-                    queryNameSortBam = new SamSorter(getPipelineCtx().getLogger()).execute(inputBam, new File(outputDir, basename + ".querySort.bam"), SAMFileHeader.SortOrder.queryname);
+                    queryNameSortBam = new SamSorter(getPipelineCtx().getLogger()).execute(inputBam, FileUtil.appendName(outputDir, basename + ".querySort.bam"), SAMFileHeader.SortOrder.queryname);
                     outputBasename = FileUtil.getBaseName(queryNameSortBam);
 
                     output.addIntermediateFile(queryNameSortBam);
@@ -389,11 +407,15 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 getWrapper().setWorkingDir(outputDir);
                 getWrapper().execute(args);
 
+                // TODO: optional Dedupe:
+                // samtools sort -n
+                // deduplicate_bismark [options] filename(s)
+
                 //add outputs
                 getWrapper().getLogger().debug("using basename: " + outputBasename);
-                output.addOutput(new File(outputDir, outputBasename + ".M-bias.txt"), "Bismark M-Bias Report");
+                output.addOutput(FileUtil.appendName(outputDir, outputBasename + ".M-bias.txt"), "Bismark M-Bias Report");
 
-                File graph1 = new File(outputDir, outputBasename + ".M-bias_R1.png");
+                File graph1 = FileUtil.appendName(outputDir, outputBasename + ".M-bias_R1.png");
                 if (graph1.exists())
                 {
                     output.addOutput(graph1, "Bismark M-Bias Image");
@@ -403,7 +425,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     getPipelineCtx().getLogger().warn("file not found: " + graph1.getPath());
                 }
 
-                File graph2 = new File(outputDir, outputBasename + ".M-bias_R2.png");
+                File graph2 = FileUtil.appendName(outputDir, outputBasename + ".M-bias_R2.png");
                 if (graph2.exists())
                 {
                     output.addOutput(graph2, "Bismark M-Bias Image");
@@ -413,7 +435,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     getPipelineCtx().getLogger().warn("file not found: " + graph2.getPath());
                 }
 
-                output.addOutput(new File(outputDir, outputBasename + ".bam_splitting_report.txt"), "Bismark Splitting Report");
+                output.addOutput(FileUtil.appendName(outputDir, outputBasename + ".bam_splitting_report.txt"), "Bismark Splitting Report");
 
                 //NOTE: because the data are likely directional, we will not encounter CTOB
                 // OT    –  original top strand
@@ -421,17 +443,17 @@ public class BismarkWrapper extends AbstractCommandWrapper
                 // OB    –  original bottom strand
                 // CTOB  –  complementary to original bottom strand
                 List<Pair<File, Integer>> CpGmethlyationData = Arrays.asList(
-                        Pair.of(new File(outputDir, "CpG_OT_" + outputBasename + ".txt.gz"), 0),
-                        Pair.of(new File(outputDir, "CpG_CTOT_" + outputBasename + ".txt.gz"), 0),
-                        Pair.of(new File(outputDir, "CpG_OB_" + outputBasename + ".txt.gz"), -1),
-                        Pair.of(new File(outputDir, "CpG_CTOB_" + outputBasename + ".txt.gz"), -1)
+                        Pair.of(FileUtil.appendName(outputDir, "CpG_OT_" + outputBasename + ".txt.gz"), 0),
+                        Pair.of(FileUtil.appendName(outputDir, "CpG_CTOT_" + outputBasename + ".txt.gz"), 0),
+                        Pair.of(FileUtil.appendName(outputDir, "CpG_OB_" + outputBasename + ".txt.gz"), -1),
+                        Pair.of(FileUtil.appendName(outputDir, "CpG_CTOB_" + outputBasename + ".txt.gz"), -1)
                 );
 
                 List<Pair<File, Integer>> NonCpGmethlyationData = Arrays.asList(
-                        Pair.of(new File(outputDir, "NonCpG_OT_" + outputBasename + ".txt.gz"), 0),
-                        Pair.of(new File(outputDir, "NonCpG_CTOT_" + outputBasename + ".txt.gz"), 0),
-                        Pair.of(new File(outputDir, "NonCpG_OB_" + outputBasename + ".txt.gz"), -1),
-                        Pair.of(new File(outputDir, "NonCpG_CTOB_" + outputBasename + ".txt.gz"), -1)
+                        Pair.of(FileUtil.appendName(outputDir, "NonCpG_OT_" + outputBasename + ".txt.gz"), 0),
+                        Pair.of(FileUtil.appendName(outputDir, "NonCpG_CTOT_" + outputBasename + ".txt.gz"), 0),
+                        Pair.of(FileUtil.appendName(outputDir, "NonCpG_OB_" + outputBasename + ".txt.gz"), -1),
+                        Pair.of(FileUtil.appendName(outputDir, "NonCpG_CTOB_" + outputBasename + ".txt.gz"), -1)
                 );
 
                 if (getProvider().getParameterByName("mbias_only") != null && getProvider().getParameterByName("mbias_only").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false))
@@ -443,8 +465,8 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     getPipelineCtx().getLogger().info("creating per-site summary report");
 
                     Integer minCoverageDepth = getProvider().getParameterByName("minCoverageDepth").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Integer.class);
-                    File siteReport = new File(outputDir, basename + ".CpG_Site_Summary.methylation.txt");
-                    File outputGff = new File(outputDir, basename + ".CpG_Site_Summary.gff");
+                    File siteReport = FileUtil.appendName(outputDir, basename + ".CpG_Site_Summary.methylation.txt");
+                    File outputGff = FileUtil.appendName(outputDir, basename + ".CpG_Site_Summary.gff");
 
                     produceSiteReport(getWrapper().getLogger(), siteReport, outputGff, CpGmethlyationData, minCoverageDepth);
                     if (siteReport.exists())
