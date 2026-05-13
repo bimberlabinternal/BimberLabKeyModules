@@ -79,6 +79,11 @@ public class BismarkWrapper extends AbstractCommandWrapper
         super(logger);
     }
 
+    protected File getDeduplicateExe()
+    {
+        return SequencePipelineService.get().getExeForPackage("BISMARKPATH", "deduplicate_bismark");
+    }
+
     public static class BismarkAlignmentStep extends AbstractAlignmentPipelineStep<BismarkWrapper> implements AlignmentStep
     {
         public BismarkAlignmentStep(AlignmentStepProvider<?> provider, PipelineContext ctx)
@@ -198,6 +203,35 @@ public class BismarkWrapper extends AbstractCommandWrapper
             if (!bam.exists())
             {
                 throw new PipelineJobException("Unable to find BAM: " + bam.getPath());
+            }
+
+            boolean deduplicate = getProvider().getParameterByName("deduplicate").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
+            if (deduplicate)
+            {
+                File dedupBam = FileUtil.appendName(outputDirectory, outputBasename + ".deduplicated.bam");
+
+                List<String> dedupArgs = new ArrayList<>(Arrays.asList(
+                        getWrapper().getDeduplicateExe().getPath(),
+                        "--bam",
+                        "-o",
+                        dedupBam.getPath()
+                ));
+
+                if (inputFastq2 != null)
+                {
+                    dedupArgs.add("--paired");
+                }
+
+                dedupArgs.add(bam.getPath());
+
+                getWrapper().execute(dedupArgs);
+                if (!dedupBam.exists())
+                {
+                    throw new PipelineJobException("Missing file: " + dedupBam.getPath());
+                }
+
+                output.addIntermediateFile(bam);
+                bam = dedupBam;
             }
 
             output.addOutput(bam, AlignmentOutputImpl.BAM_ROLE);
@@ -323,6 +357,9 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     }}, false),
                     ToolParameterDescriptor.createCommandLineParam(CommandLineParam.createSwitch("--non_directional"), "non_directional", "Non-Directional", "The sequencing library was constructed in a non strand-specific manner, alignments to all four bisulfite strands will be reported", "checkbox", new JSONObject(){{
 
+                    }}, false),
+                    ToolParameterDescriptor.create("deduplicate", "Run deduplicate", "If true, deduplicate_bismark will be run on the BAM", "checkbox", new JSONObject(){{
+
                     }}, false)
             ), null, "http://www.bioinformatics.babraham.ac.uk/projects/bismark/", true, false);
         }
@@ -406,10 +443,6 @@ public class BismarkWrapper extends AbstractCommandWrapper
 
                 getWrapper().setWorkingDir(outputDir);
                 getWrapper().execute(args);
-
-                // TODO: optional Dedupe:
-                // samtools sort -n
-                // deduplicate_bismark [options] filename(s)
 
                 //add outputs
                 getWrapper().getLogger().debug("using basename: " + outputBasename);
