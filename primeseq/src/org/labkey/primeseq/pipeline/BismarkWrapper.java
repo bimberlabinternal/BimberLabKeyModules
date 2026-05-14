@@ -212,9 +212,7 @@ public class BismarkWrapper extends AbstractCommandWrapper
 
                 List<String> dedupArgs = new ArrayList<>(Arrays.asList(
                         getWrapper().getDeduplicateExe().getPath(),
-                        "--bam",
-                        "-o",
-                        dedupBam.getPath()
+                        "--bam"
                 ));
 
                 if (inputFastq2 != null)
