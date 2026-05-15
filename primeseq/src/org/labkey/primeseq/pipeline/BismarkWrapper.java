@@ -1,6 +1,7 @@
 package org.labkey.primeseq.pipeline;
 
 import htsjdk.samtools.SAMFileHeader;
+import htsjdk.samtools.util.SequenceUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
@@ -208,28 +209,45 @@ public class BismarkWrapper extends AbstractCommandWrapper
             boolean deduplicate = getProvider().getParameterByName("deduplicate").extractValue(getPipelineCtx().getJob(), getProvider(), getStepIdx(), Boolean.class, false);
             if (deduplicate)
             {
-                File dedupBam = FileUtil.appendName(outputDirectory, outputBasename + ".deduplicated.bam");
-
-                List<String> dedupArgs = new ArrayList<>(Arrays.asList(
-                        getWrapper().getDeduplicateExe().getPath(),
-                        "--bam"
-                ));
-
-                if (inputFastq2 != null)
+                try
                 {
-                    dedupArgs.add("--paired");
+                    File queryNameSortBam = FileUtil.appendName(bam.getParentFile(), basename + ".querySort.bam");
+                    if (SequencePipelineService.get().getBamSortOrder(bam) != SAMFileHeader.SortOrder.queryname)
+                    {
+                        queryNameSortBam = new SamSorter(getPipelineCtx().getLogger()).execute(bam, queryNameSortBam, SAMFileHeader.SortOrder.queryname);
+                        output.addIntermediateFile(queryNameSortBam);
+                    }
+                    else
+                    {
+                        queryNameSortBam = bam;
+                    }
+
+                    File dedupBam = FileUtil.appendName(outputDirectory, FileUtil.getBaseName(queryNameSortBam) + ".deduplicated.bam");
+                    List<String> dedupArgs = new ArrayList<>(Arrays.asList(
+                            getWrapper().getDeduplicateExe().getPath(),
+                            "--bam"
+                    ));
+
+                    if (inputFastq2 != null)
+                    {
+                        dedupArgs.add("--paired");
+                    }
+
+                    dedupArgs.add(queryNameSortBam.getPath());
+
+                    getWrapper().execute(dedupArgs);
+                    if (!dedupBam.exists())
+                    {
+                        throw new PipelineJobException("Missing file: " + dedupBam.getPath());
+                    }
+
+                    output.addIntermediateFile(bam);
+                    bam = dedupBam;
                 }
-
-                dedupArgs.add(bam.getPath());
-
-                getWrapper().execute(dedupArgs);
-                if (!dedupBam.exists())
+                catch (IOException e)
                 {
-                    throw new PipelineJobException("Missing file: " + dedupBam.getPath());
+                    throw new PipelineJobException(e);
                 }
-
-                output.addIntermediateFile(bam);
-                bam = dedupBam;
             }
 
             output.addOutput(bam, AlignmentOutputImpl.BAM_ROLE);
