@@ -242,6 +242,9 @@ public class BismarkWrapper extends AbstractCommandWrapper
                     }
 
                     output.addIntermediateFile(bam);
+
+                    dedupBam = new SamSorter(getPipelineCtx().getLogger()).execute(dedupBam, null, SAMFileHeader.SortOrder.coordinate);
+
                     bam = dedupBam;
                 }
                 catch (IOException e)
