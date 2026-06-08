@@ -404,18 +404,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         return hasCellBender(job) || StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.gpus")) != null;
     }
 
-    private boolean useExperimentalPartition(PipelineJob job)
-    {
-        Map<String, String> params = ((HasJobParams) job).getJobParams();
-        String rawVal = StringUtils.trimToNull(params.get("resourceSettings.resourceSettings.useExperimentalPartition"));
-        if (rawVal == null)
-        {
-            return false;
-        }
-
-        return Boolean.parseBoolean(rawVal);
-    }
-
     private boolean hasCellBender(PipelineJob job)
     {
         if (!isSequenceSequenceOutputHandlerTask(job))
@@ -572,10 +560,6 @@ public class SequenceJobResourceAllocator implements ClusterResourceAllocator
         if (needsGPUs(job))
         {
             return "gpu";
-        }
-        else if (useExperimentalPartition(job))
-        {
-            return  "rhel96TESTING";
         }
 
         return "batch";

@@ -32,14 +32,13 @@ public class ExacloudResourceSettings implements JobResourceSettings
                     put("storeValues", "Default;LongJobs;VeryLongJobs");
                     put("multiSelect", false);
                 }}, null),
-                ToolParameterDescriptor.create("highIO", "Add HighIO Flag", "If selected, --qos=highio will be added, which limits the number of concurrent jobs that can run.", "checkbox", null, null),
+                //ToolParameterDescriptor.create("highIO", "Add HighIO Flag", "If selected, --qos=highio will be added, which limits the number of concurrent jobs that can run.", "checkbox", null, null),
                 ToolParameterDescriptor.create("time", "Requested Time (days/hours)", "If provided, this is passed to the --time argument.  This cannot be higher than the limit for your requested partition.  Examples are: '2124', '1-0' (1 day, 0 hours), '10-0' (10 days), and '0-72' (72 hours).  If left blank, this will be automatically assigned.", "textfield", null, null),
                 ToolParameterDescriptor.create("javaProcessXmx", "Java Process Xmx (GB)", "The value to be used as -Xmx for the LabKey remote java process.  Unless you have a good reason, do not change this", "ldk-integerfield", null, null),
                 ToolParameterDescriptor.create("localDisk", "Local Disk (GB)", "Do not change this unless you are certain.  Each job requests and uses local space (/mnt/scratch) for temp files.  If your job will require more space, consider increasing this.", "ldk-integerfield", new JSONObject(){{
                     put("minValue", 512);
                 }}, 1028),
-                ToolParameterDescriptor.create("gpus", "GPUs", "The number of GPUs requested for this job. If non-zero, the gpu partition will be used.", "ldk-integerfield", null, null),
-                ToolParameterDescriptor.create("useExperimentalPartition", "Use RHEL 9.6 Partition", "If selected, jobs will be submitted to the experimental rhel96TESTING partition.", "checkbox", null, null)
+                ToolParameterDescriptor.create("gpus", "GPUs", "The number of GPUs requested for this job. If non-zero, the gpu partition will be used.", "ldk-integerfield", null, null)
         );
     }
 
