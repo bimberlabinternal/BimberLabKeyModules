@@ -1,6 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { BarController, BarElement, CategoryScale, Chart, Legend, LinearScale, Tooltip } from 'chart.js';
-import { ActiveElement, ChartEvent } from 'chart.js/dist/types/index';
+import {
+    ActiveElement,
+    BarController,
+    BarElement,
+    CategoryScale,
+    Chart,
+    ChartEvent,
+    Legend,
+    LinearScale,
+    Tooltip
+} from 'chart.js';
 
 Chart.register(Legend, BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
