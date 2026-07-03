@@ -139,7 +139,7 @@ public class MccModule extends ExtendedSimpleModule
         SystemMaintenance.addTask(new MccMaintenanceTask());
 
         ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Connection, "https://cdn.datatables.net", "https://code.jquery.com", "https://*.fontawesome.com", "https://oss.maxcdn.com");
-        ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Style, "https://cdn.datatables.net", "https://code.jquery.com", "https://www.gstatic.com");
+        ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Style, "https://cdn.datatables.net", "https://code.jquery.com", "https://www.gstatic.com", "https://fonts.googleapis.com");
         ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Image, "https://cdn.datatables.net");
         ContentSecurityPolicyFilter.registerAllowedSources(this.getClass().getName(), Directive.Font, "https://*.fontawesome.com", "https://fonts.googleapis.com", "https://www.gstatic.com");
     }
