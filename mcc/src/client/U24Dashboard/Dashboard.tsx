@@ -5,7 +5,7 @@ import { ActionURL, Filter, getServerContext, Query } from '@labkey/api';
 
 import PieChart from '../components/dashboard/PieChart';
 import BarChart, { ColorType } from '../components/dashboard/BarChart';
-import { ActiveElement, Chart, ChartEvent } from 'chart.js/dist/types/index';
+import { ActiveElement, Chart, ChartEvent } from 'chart.js';
 
 export function Dashboard() {
     const [demographics, setDemographics] = useState<[]>(null);
