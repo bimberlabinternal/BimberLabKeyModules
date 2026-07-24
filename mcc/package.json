@@ -22,11 +22,11 @@
     "react-dom": "^17.0.0",
     "react-tooltip": "^5.28.0",
     "tsv": "^0.2.0",
-    "uuid": "^14.0.0",
+    "uuid": "^14.0.1",
     "google-palette": "^1.1.1"
   },
   "devDependencies": {
-    "@labkey/build": "^9.1.5",
+    "@labkey/build": "^10.0.0",
     "@types/chart.js": "^2.9.41",
     "@types/jexl": "^2.3.4",
     "@types/jquery": "^3.5.32",
