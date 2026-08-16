@@ -326,9 +326,16 @@ public class MccController extends SpringActionController
             if (form.getRequestIds() == null || form.getRequestIds().length == 0)
             {
                 errors.reject(ERROR_MSG, "No request IDs provided");
+                return;
             }
 
-            TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_USER_REQUESTS);
+            if (!mccContainer.hasPermission(getUser(), AdminPermission.class))
+            {
+                errors.reject(ERROR_MSG, "Admin permission on the MCC container is required");
+                return;
+            }
+
+            TableInfo ti = QueryService.get().getUserSchema(getUser(), mccContainer, MccSchema.NAME).getTable(MccSchema.TABLE_USER_REQUESTS);
             for (int requestId : form.getRequestIds())
             {
                 TableSelector ts = new TableSelector(ti, PageFlowUtil.set("userId"), new SimpleFilter(FieldKey.fromString("rowId"), requestId), null);

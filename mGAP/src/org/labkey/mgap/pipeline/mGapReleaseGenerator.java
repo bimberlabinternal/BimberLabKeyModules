@@ -828,7 +828,7 @@ public class mGapReleaseGenerator extends AbstractParameterizedOutputHandler<Seq
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             if (con.getResponseCode() != HttpURLConnection.HTTP_OK)
             {
-                log.error("bad request: " + url + ", orig: " + orig);
+                log.error("bad OMIM request. Parsed value: " + input + ", orig: " + orig);
                 return null;
             }
 

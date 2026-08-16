@@ -376,9 +376,16 @@ public class mGAPController extends SpringActionController
             if (form.getRequestIds() == null || form.getRequestIds().length == 0)
             {
                 errors.reject(ERROR_MSG, "No request IDs provided");
+                return;
             }
 
-            TableInfo ti = mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_USER_REQUESTS);
+            if (!mGapContainer.hasPermission(getUser(), AdminPermission.class))
+            {
+                errors.reject(ERROR_MSG, "Admin permission on the mGAP container is required");
+                return;
+            }
+
+            TableInfo ti = QueryService.get().getUserSchema(getUser(), mGapContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_USER_REQUESTS);
             for (int requestId : form.getRequestIds())
             {
                 TableSelector ts = new TableSelector(ti, PageFlowUtil.set("userId"), new SimpleFilter(FieldKey.fromString("rowId"), requestId), null);
@@ -387,14 +394,6 @@ public class mGAPController extends SpringActionController
                     errors.reject(ERROR_MSG, "No request found for request ID: " + requestId);
                     break;
                 }
-
-                //Note: if using LDAP, users will potentially get created automatically
-                //Integer userId = ts.getObject(Integer.class);
-                //if (userId != null)
-                //{
-                //    errors.reject(ERROR_MSG, "A user already exists for the request: " + requestId);
-                //    break;
-                //}
             }
         }
 
