@@ -23,6 +23,7 @@ import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.data.ContainerType;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
 import org.labkey.api.data.SqlExecutor;
@@ -134,6 +135,13 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
+                    if (!protocol.getContainer().getContainerFor(ContainerType.DataType.tabParent).equals(getContainer().getContainerFor(ContainerType.DataType.tabParent)))
+                    {
+                        errors.reject(ERROR_MSG, "Protocol is from the wrong container: " + form.getProtocolId());
+                        logger.error("CacheAnalysesAction targeted a protocol from the wrong container: {}, from {}, in the container: {}", form.getProtocolId(), protocol.getContainer().getPath(), getContainer().getPath());
+                        return null;
+                    }
+
                     String[] alleleNames = Arrays.stream(form.getAlleleNames()).map(StringEscapeUtils::unescapeHtml4).toArray(String[]::new);
                     Pair<List<Long>, List<Long>> ret = GenotypeAssaysManager.get().cacheAnalyses(getViewContext(), protocol, alleleNames);
                     resultProperties.put("runsCreated", ret.first);
@@ -211,6 +219,13 @@ public class GenotypeAssaysController extends SpringActionController
                     if (protocol == null)
                     {
                         errors.reject(ERROR_MSG, "Unknown protocol: " + form.getProtocolId());
+                        return null;
+                    }
+
+                    if (!protocol.getContainer().getContainerFor(ContainerType.DataType.tabParent).equals(getContainer().getContainerFor(ContainerType.DataType.tabParent)))
+                    {
+                        errors.reject(ERROR_MSG, "Protocol is from the wrong container: " + form.getProtocolId());
+                        logger.error("CacheHaplotypesAction targeted a protocol from the wrong container: {}, from {}, in the container: {}", form.getProtocolId(), protocol.getContainer().getPath(), getContainer().getPath());
                         return null;
                     }
 

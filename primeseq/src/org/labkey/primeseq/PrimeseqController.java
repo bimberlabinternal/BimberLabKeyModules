@@ -732,6 +732,12 @@ public class PrimeseqController extends SpringActionController
                     return false;
                 }
 
+                if (!sf.lookupContainer().hasPermission(getUser(), UpdatePermission.class))
+                {
+                    errors.reject(ERROR_MSG, "Insufficient permissions to update job: " + id);
+                    return false;
+                }
+
                 if (sf.getFilePath() == null)
                 {
                     errors.reject(ERROR_MSG, "Unable to find log file: " + sf.getJobId());
