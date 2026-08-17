@@ -941,8 +941,6 @@ public class MccController extends SpringActionController
                     }
                 }
 
-                transaction.commitAndKeepConnection();
-
                 // Update ID field of each dataset:
                 for (Dataset ds : s.getDatasets())
                 {
