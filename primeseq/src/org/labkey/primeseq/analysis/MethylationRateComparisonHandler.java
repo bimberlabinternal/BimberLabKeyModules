@@ -454,7 +454,7 @@ public class MethylationRateComparisonHandler implements SequenceOutputHandler<S
                 {
                     //end sorted
                     ctx.getLogger().info("sorting output");
-                    File sorted = new File(ctx.getOutputDir(), "tmp.bed");
+                    File sorted = FileUtil.appendName(ctx.getOutputDir(), "tmp.bed");
                     CommandWrapper wrapper = SequencePipelineService.get().getCommandWrapper(ctx.getLogger());
                     wrapper.execute(Arrays.asList("/bin/sh", "-c", "cat '" + finalOut.getPath() + "' | grep -v '^#' | sort -k1,1 -k2,2n -k3,3n"), ProcessBuilder.Redirect.appendTo(sorted));
                     finalOut.delete();

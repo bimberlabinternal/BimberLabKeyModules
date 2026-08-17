@@ -801,7 +801,7 @@ public class MccController extends SpringActionController
             }
 
             List<Integer> rowIds = Arrays.stream(form.getRowIds()).collect(Collectors.toList());
-            List<Integer> userIds = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS), PageFlowUtil.set("reviewerId"), new SimpleFilter(FieldKey.fromString("rowid"), rowIds, CompareType.IN), null).getArrayList(Integer.class);
+            List<Integer> userIds = new TableSelector(QueryService.get().getUserSchema(getUser(), getContainer(), MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_REVIEWS), PageFlowUtil.set("reviewerId"), new SimpleFilter(FieldKey.fromString("rowid"), rowIds, CompareType.IN), null).getArrayList(Integer.class);
             if (userIds.size() != form.getRowIds().length)
             {
                 errors.reject(ERROR_MSG, "Not all users in this request were found");
