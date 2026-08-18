@@ -1,9 +1,9 @@
-<%@ page import="org.apache.commons.lang3.StringUtils" %>
+<%@ page import="org.json.JSONArray" %>
+<%@ page import="org.labkey.api.util.JavaScriptFragment" %>
 <%@ page import="org.labkey.api.view.HttpView" %>
 <%@ page import="org.labkey.api.view.JspView" %>
 <%@ page import="org.labkey.api.view.template.ClientDependencies" %>
 <%@ page import="org.labkey.hivrc.query.AnalysisModel" %>
-<%@ page import="java.util.Arrays" %>
 <%@ page extends="org.labkey.api.jsp.JspBase" %>
 <%!
     @Override
@@ -53,7 +53,7 @@
             materials: <%=q(model.getMaterials())%>,
             methods: <%=q(model.getMethods())%>,
             results: <%=q(model.getResults())%>,
-            tags: <%=unsafe(model.getTags() == null || model.getTags().length == 0 ? "null" : "['" + unsafe(StringUtils.join(Arrays.asList(model.getTags()), "','")) + "']")%>
+            tags: <% if (model.getTags() == null || model.getTags().length == 0) { %><%=JavaScriptFragment.NULL%><% } else { %><%=new JSONArray(model.getTags())%><% } %>
         }).render(webpartId);
 
         if (LABKEY.Security.currentUser.canInsert) {
