@@ -27,12 +27,8 @@ public class SampleSummaryCustomizer extends AbstractTableCustomizer
             return;
         }
 
-        if (!ti.getSqlDialect().isSqlServer())
-        {
-            return;
-        }
-
-        SQLFragment sql = new SQLFragment("CASE WHEN HASHBYTES('sha1', " + ExprColumn.STR_TABLE_ALIAS + ".subjectId) = HASHBYTES('sha1', " + ExprColumn.STR_TABLE_ALIAS + ".aliasSubjectName) THEN NULL ELSE " + ExprColumn.STR_TABLE_ALIAS + ".aliasSubjectName END");
+        // Pairs up with the case-insensitive join in sampleSummary.sql: that supplies aliasSubjectName for ids differing only in case, and this case-sensitive comparison is what spots them
+        SQLFragment sql = new SQLFragment("CASE WHEN " + ExprColumn.STR_TABLE_ALIAS + ".subjectId = " + ExprColumn.STR_TABLE_ALIAS + ".aliasSubjectName THEN NULL ELSE " + ExprColumn.STR_TABLE_ALIAS + ".aliasSubjectName END");
         ExprColumn col = new ExprColumn(ti, fieldName, sql, JdbcType.VARCHAR, ti.getColumn("subjectId"), ti.getColumn("aliasSubjectName"));
         col.setLabel("Id Case Mismatch?");
         col.setFacetingBehaviorType(FacetingBehaviorType.ALWAYS_OFF);
