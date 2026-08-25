@@ -27,8 +27,12 @@ export default function SequenceDataTable(props: {data: any}) {
             autoHeight={true}
             columns={columns}
             rows={data}
+            showToolbar
             slots={{
                 toolbar: GridToolbar
+            }}
+            slotProps={{
+                toolbar: { sx: { justifyContent: 'flex-start' } }
             }}
             pageSizeOptions={[10,25,50,100]}
             paginationModel={pageModel}

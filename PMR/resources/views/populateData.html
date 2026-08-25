@@ -237,6 +237,20 @@ Ext4.onReady(function(){
             queryName: 'geographic_origins',
             pk: 'rowid'
         },{
+            label: 'Birth Condition Raw',
+            populateFn: 'populateFromFile',
+            moduleName: 'pmr',
+            schemaName: 'ehr_lookups',
+            queryName: 'birth_condition_raw',
+            pk: 'rowid'
+        },{
+            label: 'Birth Date Type',
+            populateFn: 'populateFromFile',
+            moduleName: 'pmr',
+            schemaName: 'ehr_lookups',
+            queryName: 'birth_date_type',
+            pk: 'rowid'
+        },{
             label: 'Birth Type',
             populateFn: 'populateFromFile',
             moduleName: 'pmr',

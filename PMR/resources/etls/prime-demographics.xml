@@ -48,7 +48,7 @@
         </transform>
     </transforms>
     <incrementalFilter timestampColumnName="modified" pkColumnName="objectid" className="ModifiedSinceFilterStrategy" >
-        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" timestampColumnName="Created" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="objectid">
+        <deletedRowsSource remoteSource="EHR_ClinicalSource" schemaName="AuditSummary" queryName="DatasetUpdateAuditLog" timestampColumnName="Created" deletedSourceKeyColumnName="primaryKey" targetKeyColumnName="Id">
             <sourceFilters>
                 <sourceFilter column="datasetid/Name" operator="eq" value="demographics" />
                 <sourceFilter column="Comment" operator="contains" value="Delete"/>
