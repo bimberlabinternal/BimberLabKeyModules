@@ -222,7 +222,7 @@ public class mGAPController extends SpringActionController
                         Container c = mGAPManager.get().getMGapContainer();
                         if (c == null)
                         {
-                            _log.warn("mGAP container was not set, using: " + c.getPath());
+                            _log.warn("mGAP container was not set, using: " + getContainer().getPath());
                             c = getContainer();
                         }
 
@@ -376,9 +376,16 @@ public class mGAPController extends SpringActionController
             if (form.getRequestIds() == null || form.getRequestIds().length == 0)
             {
                 errors.reject(ERROR_MSG, "No request IDs provided");
+                return;
             }
 
-            TableInfo ti = mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_USER_REQUESTS);
+            if (!mGapContainer.hasPermission(getUser(), AdminPermission.class))
+            {
+                errors.reject(ERROR_MSG, "Admin permission on the mGAP container is required");
+                return;
+            }
+
+            TableInfo ti = QueryService.get().getUserSchema(getUser(), mGapContainer, mGAPSchema.NAME).getTable(mGAPSchema.TABLE_USER_REQUESTS);
             for (int requestId : form.getRequestIds())
             {
                 TableSelector ts = new TableSelector(ti, PageFlowUtil.set("userId"), new SimpleFilter(FieldKey.fromString("rowId"), requestId), null);
@@ -387,14 +394,6 @@ public class mGAPController extends SpringActionController
                     errors.reject(ERROR_MSG, "No request found for request ID: " + requestId);
                     break;
                 }
-
-                //Note: if using LDAP, users will potentially get created automatically
-                //Integer userId = ts.getObject(Integer.class);
-                //if (userId != null)
-                //{
-                //    errors.reject(ERROR_MSG, "A user already exists for the request: " + requestId);
-                //    break;
-                //}
             }
         }
 
@@ -768,7 +767,7 @@ public class mGAPController extends SpringActionController
         {
             setTitle("Update Update SnpEff Annotation");
 
-            return new HtmlView("Do you want to continue?");
+            return HtmlView.of("Do you want to continue?");
         }
 
         @Override
@@ -793,10 +792,14 @@ public class mGAPController extends SpringActionController
             Sort sort = new Sort(FieldKey.fromString("contig"));
             sort.appendSortColumn(FieldKey.fromString("position"), Sort.SortDirection.ASC, false);
 
-            Integer outputFileId = new TableSelector(mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), Collections.singleton("vcfId")).getObject(releaseRowId, Integer.class);
+            Integer outputFileId = new TableSelector(us.getTable(mGAPSchema.TABLE_VARIANT_CATALOG_RELEASES), Collections.singleton("vcfId")).getObject(releaseRowId, Integer.class);
             ExpData data = SequenceOutputFile.getForId(outputFileId).getExpData();
-            File vcf = data.getFile();
+            if (!data.getContainer().hasPermission(getUser(), ReadPermission.class))
+            {
+                throw new UnauthorizedException("You don't have permission to read this resource");
+            }
 
+            File vcf = data.getFile();
             try (VCFFileReader reader = new VCFFileReader(vcf))
             {
                 try (CloseableIterator<VariantContext> it = reader.iterator())
@@ -1181,7 +1184,7 @@ public class mGAPController extends SpringActionController
         {
             setTitle("Update Annotation Table");
 
-            HtmlView view = new HtmlView("This will update the annotation table using the VariantAnnotation github repo. Do you want to continue?");
+            HtmlView view = HtmlView.of("This will update the annotation table using the VariantAnnotation github repo. Do you want to continue?");
             return view;
         }
 
@@ -1235,6 +1238,11 @@ public class mGAPController extends SpringActionController
                         toAdd.add(row);
                     }
                 }
+            }
+
+            if (toAdd.isEmpty())
+            {
+                throw new IllegalStateException("Something went wrong downloading data");
             }
 
             UserSchema us = QueryService.get().getUserSchema(getUser(), getContainer(), mGAPSchema.NAME);

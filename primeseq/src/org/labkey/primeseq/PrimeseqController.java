@@ -27,6 +27,8 @@ import org.labkey.api.action.ConfirmAction;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.ReadOnlyApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.audit.AuditLogService;
+import org.labkey.api.audit.provider.SiteSettingsAuditProvider;
 import org.labkey.api.cluster.ClusterService;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
@@ -56,6 +58,7 @@ import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.URLHelper;
 import org.labkey.api.view.ActionURL;
 import org.labkey.api.view.HtmlView;
+import org.labkey.api.view.UnauthorizedException;
 import org.labkey.api.writer.PrintWriters;
 import org.labkey.primeseq.pipeline.MhcCleanupPipelineJob;
 import org.springframework.validation.BindException;
@@ -237,7 +240,7 @@ public class PrimeseqController extends SpringActionController
                 html.append("Enter the following:<br>");
                 html.append("<table>");
                 html.append("<tr><td><label for='sourcePrefix'>File Prefix to Replace:</label></td>");
-                html.append("<td><input name='sourcePrefix' type='text' width='600' value='" + HtmlString.of(form.getSourcePrefix()) + "'></td>");
+                html.append("<td><input name='sourcePrefix' type='text' width='600' value='").append(HtmlString.of(form.getSourcePrefix())).append("'></td>");
                 html.append("</tr>");
                 html.append("<td><label for='replacementPrefix'>Replacement:</label></td>");
                 html.append("<td><input name='replacementPrefix' type='text' width='600' value='" + HtmlString.of(form.getReplacementPrefix()) + "'></td>");
@@ -326,7 +329,13 @@ public class PrimeseqController extends SpringActionController
                 SQLFragment sql = getSql(form);
 
                 SqlExecutor se = new SqlExecutor(DbScope.getLabKeyScope());
-                se.execute(sql);
+                int rows = se.execute(sql);
+
+                SiteSettingsAuditProvider.SiteSettingsAuditEvent event = new SiteSettingsAuditProvider.SiteSettingsAuditEvent(
+                        ContainerManager.getRoot(),
+                        "Updated site-wide file paths from " + form.getSourcePrefix() + " to " + form.getReplacementPrefix());
+                event.setChanges(rows + " row(s) updated in database tables");
+                AuditLogService.get().addEvent(getUser(), event);
             }
 
             return true;
@@ -499,7 +508,7 @@ public class PrimeseqController extends SpringActionController
         }
     }
 
-    @RequiresPermission(ReadPermission.class)
+    @RequiresPermission(UpdatePermission.class)
     public class SetResourceSettingsForJobAction extends MutatingApiAction<GetResourceSettingsForJobForm>
     {
         @Override
@@ -546,6 +555,11 @@ public class PrimeseqController extends SpringActionController
                     {
                         errors.reject(ERROR_MSG, "Changing cluster parameters is only supported for Sequence jobs");
                         return null;
+                    }
+
+                    if (!job.getContainer().hasPermission(getUser(), UpdatePermission.class))
+                    {
+                        throw new UnauthorizedException("Insufficient permissions to edit job");
                     }
 
                     JSONObject json = sj.getParameterJson();
@@ -729,6 +743,12 @@ public class PrimeseqController extends SpringActionController
                 if (sf == null)
                 {
                     errors.reject(ERROR_MSG, "Unable to find job: " + id);
+                    return false;
+                }
+
+                if (!sf.lookupContainer().hasPermission(getUser(), UpdatePermission.class))
+                {
+                    errors.reject(ERROR_MSG, "Insufficient permissions to update job: " + id);
                     return false;
                 }
 

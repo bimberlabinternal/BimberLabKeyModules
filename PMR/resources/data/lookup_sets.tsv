@@ -53,6 +53,7 @@ behavior_types	Behavior Types	value
 fecal_smear_score	Fecal Smear Scores	value
 problem_list_subcategory	Problem List Subcategory	value
 customer_affiliation	Customer Affiliation	value
+birth_condition_raw	Birth Condition Field Values	value	value
 birth_date_type	Birth Date Type	value
 birth_type	Birth Type Field Values	value
 chemistry_method	Chemistry Method Field Values	value

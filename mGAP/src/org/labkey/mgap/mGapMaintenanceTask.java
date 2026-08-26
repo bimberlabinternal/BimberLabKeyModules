@@ -19,6 +19,7 @@ import org.labkey.api.security.User;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
+import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.SystemMaintenance;
 import org.labkey.api.writer.PrintWriters;
@@ -83,12 +84,18 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         }
 
         PipeRoot pr = PipelineService.get().getPipelineRootSetting(c);
-        if (!pr.getRootPath().exists())
+        if (pr == null)
         {
+            log.error("PipeRoot is null for mGAP container: {}", c.getPath());
+            return;
+        }
+        else if (!pr.getRootPath().exists())
+        {
+            log.error("PipeRoot is null for mGAP container: {}, expected: {}", c.getPath(), pr.getRootFileLike().getPath());
             return;
         }
 
-        File baseDir = new File(pr.getRootPath(), mGAPManager.DATA_DIR_NAME);
+        File baseDir = FileUtil.appendName(pr.getRootPath(), mGAPManager.DATA_DIR_NAME);
         if (!baseDir.exists())
         {
             return;
@@ -134,7 +141,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
         for (String dirName : unexpectedDirs)
         {
             log.error("Unexpected directory present: " + dirName);
-            toDelete.add(new File(baseDir, dirName));
+            toDelete.add(FileUtil.appendName(baseDir, dirName));
         }
 
         List<String> missingDirs = new ArrayList<>(releaseIds);
@@ -166,7 +173,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
         if (!commandsToRun.isEmpty())
         {
-            File bashFile = new File(baseDir, "makeSymlinks.sh");
+            File bashFile = FileUtil.appendName(baseDir, "makeSymlinks.sh");
             log.error("There are missing symlinks. Please run " + bashFile.getPath());
 
             try (PrintWriter writer = PrintWriters.getPrintWriter(bashFile))
@@ -185,7 +192,7 @@ public class mGapMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
     private void inspectReleaseFolder(String releaseId, File baseDir, Container c, User u, final Logger log, final Set<File> toDelete, List<String> commandsToRun, Map<String, String> speciesToLatestTrack)
     {
-        File releaseDir = new File(baseDir, releaseId);
+        File releaseDir = FileUtil.appendName(baseDir, releaseId);
         if (!releaseDir.exists())
         {
             log.error("Missing folder: " + releaseDir.getPath());

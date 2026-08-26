@@ -326,9 +326,16 @@ public class MccController extends SpringActionController
             if (form.getRequestIds() == null || form.getRequestIds().length == 0)
             {
                 errors.reject(ERROR_MSG, "No request IDs provided");
+                return;
             }
 
-            TableInfo ti = MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_USER_REQUESTS);
+            if (!mccContainer.hasPermission(getUser(), AdminPermission.class))
+            {
+                errors.reject(ERROR_MSG, "Admin permission on the MCC container is required");
+                return;
+            }
+
+            TableInfo ti = QueryService.get().getUserSchema(getUser(), mccContainer, MccSchema.NAME).getTable(MccSchema.TABLE_USER_REQUESTS);
             for (int requestId : form.getRequestIds())
             {
                 TableSelector ts = new TableSelector(ti, PageFlowUtil.set("userId"), new SimpleFilter(FieldKey.fromString("rowId"), requestId), null);
@@ -794,7 +801,7 @@ public class MccController extends SpringActionController
             }
 
             List<Integer> rowIds = Arrays.stream(form.getRowIds()).collect(Collectors.toList());
-            List<Integer> userIds = new TableSelector(MccSchema.getInstance().getSchema().getTable(MccSchema.TABLE_REQUEST_REVIEWS), PageFlowUtil.set("reviewerId"), new SimpleFilter(FieldKey.fromString("rowid"), rowIds, CompareType.IN), null).getArrayList(Integer.class);
+            List<Integer> userIds = new TableSelector(QueryService.get().getUserSchema(getUser(), getContainer(), MccSchema.NAME).getTable(MccSchema.TABLE_REQUEST_REVIEWS), PageFlowUtil.set("reviewerId"), new SimpleFilter(FieldKey.fromString("rowid"), rowIds, CompareType.IN), null).getArrayList(Integer.class);
             if (userIds.size() != form.getRowIds().length)
             {
                 errors.reject(ERROR_MSG, "Not all users in this request were found");
@@ -933,8 +940,6 @@ public class MccController extends SpringActionController
                         }
                     }
                 }
-
-                transaction.commitAndKeepConnection();
 
                 // Update ID field of each dataset:
                 for (Dataset ds : s.getDatasets())
