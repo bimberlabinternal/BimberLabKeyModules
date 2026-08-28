@@ -427,6 +427,9 @@
             <column columnName="assayType">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="libraryType">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="marker">
                 <datatype>varchar</datatype>
             </column>

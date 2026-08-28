@@ -14,6 +14,9 @@
                     <column columnName="assayType">
                         <columnTitle>Assay Type</columnTitle>
                     </column>
+                    <column columnName="libraryType">
+                        <columnTitle>Library Type</columnTitle>
+                    </column>
                     <column columnName="marker">
                         <columnTitle>Marker/Allele</columnTitle>
                     </column>
