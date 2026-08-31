@@ -46,6 +46,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 /**
  * This task is designed to run remotely and will delete orphan working directories on a remote pipeline server
@@ -101,7 +102,7 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
 
                 File logFile = FileUtil.appendName(subdir, "Maintenance-" + engine.getType() + "." + FileUtil.getTimestamp() + ".log");
 
-                jr.execute(new Job()
+                Future<?> future = jr.execute(new Job()
                 {
                     @Override
                     public void run()
@@ -116,15 +117,16 @@ public class ClusterMaintenanceTask implements SystemMaintenance.MaintenanceTask
                             _log.error(e.getMessage(), e);
                         }
                     }
-                });
+                }, 0);
+
+                // Wait for this job to complete:
+                future.get();
             }
             catch (Exception e)
             {
                 log.error(e);
             }
         }
-
-        jr.waitForCompletion();
     }
 
     @Override
