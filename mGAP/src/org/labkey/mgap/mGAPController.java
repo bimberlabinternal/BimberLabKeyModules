@@ -40,10 +40,8 @@ import org.labkey.api.data.ColumnInfo;
 import org.labkey.api.data.CompareType;
 import org.labkey.api.data.Container;
 import org.labkey.api.data.ContainerManager;
-import org.labkey.api.data.CoreSchema;
 import org.labkey.api.data.DbSchema;
 import org.labkey.api.data.DbSchemaType;
-import org.labkey.api.data.DbScope;
 import org.labkey.api.data.Results;
 import org.labkey.api.data.SimpleFilter;
 import org.labkey.api.data.Sort;
@@ -51,6 +49,7 @@ import org.labkey.api.data.Table;
 import org.labkey.api.data.TableInfo;
 import org.labkey.api.data.TableSelector;
 import org.labkey.api.exp.api.ExpData;
+import org.labkey.api.ldk.LDKService;
 import org.labkey.api.module.AllowedDuringUpgrade;
 import org.labkey.api.module.ModuleLoader;
 import org.labkey.api.pipeline.PipelineUrls;
@@ -63,32 +62,26 @@ import org.labkey.api.query.QueryUpdateService;
 import org.labkey.api.query.UserSchema;
 import org.labkey.api.reader.Readers;
 import org.labkey.api.resource.Resource;
-import org.labkey.api.security.AuthenticationManager;
-import org.labkey.api.security.Group;
-import org.labkey.api.security.GroupManager;
 import org.labkey.api.security.IgnoresTermsOfUse;
-import org.labkey.api.security.MutableSecurityPolicy;
 import org.labkey.api.security.RequiresNoPermission;
 import org.labkey.api.security.RequiresPermission;
-import org.labkey.api.security.SecurityManager;
-import org.labkey.api.security.SecurityPolicyManager;
 import org.labkey.api.security.User;
 import org.labkey.api.security.UserManager;
 import org.labkey.api.security.ValidEmail;
 import org.labkey.api.security.permissions.AdminPermission;
 import org.labkey.api.security.permissions.ReadPermission;
-import org.labkey.api.security.roles.ReaderRole;
 import org.labkey.api.sequenceanalysis.SequenceAnalysisService;
 import org.labkey.api.sequenceanalysis.SequenceOutputFile;
 import org.labkey.api.sequenceanalysis.pipeline.ReferenceGenome;
 import org.labkey.api.settings.AppProps;
-import org.labkey.api.settings.LookAndFeelProperties;
 import org.labkey.api.studies.StudiesService;
 import org.labkey.api.util.ConfigurationException;
+import org.labkey.api.util.DOM;
 import org.labkey.api.util.ExceptionUtil;
 import org.labkey.api.util.FileUtil;
 import org.labkey.api.util.GUID;
 import org.labkey.api.util.HtmlString;
+import org.labkey.api.util.HtmlStringBuilder;
 import org.labkey.api.util.MailHelper;
 import org.labkey.api.util.PageFlowUtil;
 import org.labkey.api.util.Path;
@@ -98,7 +91,6 @@ import org.labkey.api.view.HtmlView;
 import org.labkey.api.view.NotFoundException;
 import org.labkey.api.view.UnauthorizedException;
 import org.labkey.mgap.pipeline.mGapSummarizer;
-import org.labkey.security.xml.GroupEnumType;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
@@ -117,6 +109,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.ZipEntry;
@@ -163,7 +156,7 @@ public class mGAPController extends SpringActionController
             {
                 try
                 {
-                    ValidEmail email = new ValidEmail(form.getEmail());
+                    ValidEmail email = new ValidEmail(form.getEmail());  //test if valid
                     if (!form.getEmail().equals(form.getEmailConfirmation()))
                     {
                         errors.reject(ERROR_MSG, "The email addresses you have entered do not match.  Please verify your email addresses below.");
@@ -190,7 +183,7 @@ public class mGAPController extends SpringActionController
         public Object execute(RequestUserForm form, BindException errors) throws Exception
         {
             ApiSimpleResponse response = new ApiSimpleResponse();
-
+            User adminUser = LDKService.get().getBackgroundAdminUser();
             try
             {
                 TableInfo ti = mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_USER_REQUESTS);
@@ -205,7 +198,7 @@ public class mGAPController extends SpringActionController
                 row.put("reason", form.getReason());
                 row.put("container", mGAPManager.get().getMGapContainer().getId());
 
-                Table.insert(UserManager.getGuestUser(), ti, row);
+                row = Table.insert(UserManager.getGuestUser(), ti, row);
 
                 Set<User> users = mGAPManager.get().getNotificationUsers();
                 if (users != null && !users.isEmpty())
@@ -227,12 +220,54 @@ public class mGAPController extends SpringActionController
                         }
 
                         DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=userRequests&query.viewName=Pending Requests", c);
-                        mail.setEncodedHtmlContent("A user requested an account on mGap.  <a href=\"" + AppProps.getInstance().getBaseServerUrl() + url.getActionURL().toString() + "\">Click here to view/approve this request</a>");
-                        mail.setFrom(getReplyEmail(getContainer()));
+                        HtmlStringBuilder builder = HtmlStringBuilder.of("A user requested an account on mGap. ").
+                                unsafeAppend("<a href=\"" + AppProps.getInstance().getBaseServerUrl() + Objects.requireNonNull(url.getActionURL()) + "\">Click here to view/approve this request</a>");
+
+                        boolean autoApprove = false;
+                        Integer requestId = null;
+                        if (form.getEmail().toLowerCase().endsWith(".edu") || form.getEmail().toLowerCase().endsWith(".gov"))
+                        {
+                            if (row.get("rowid") == null)
+                            {
+                                _log.error("Unable to find requestId for new mGAP request, will not auto-approve");
+                            }
+                            else if (adminUser == null)
+                            {
+                                _log.error("LDK Admin User is not set, unable to auto-approve mGAP request");
+                            }
+                            else
+                            {
+                                autoApprove = true;
+                                requestId = (int)row.get("rowid");
+                                builder.unsafeAppend(DOM.SPAN(DOM.at(DOM.Attribute.style, "font-weight:bold;"), " This request was automatically approved.").renderToString());
+                            }
+                        }
+
+                        builder.unsafeAppend(DOM.BR().renderToString());
+                        builder.unsafeAppend(DOM.BR().renderToString());
+                        builder.unsafeAppend(DOM.TABLE(
+                                DOM.TR(DOM.TD("Name:"), DOM.TD(form.getFirstName() + " " + form.getLastName())),
+                                DOM.TR(DOM.TD("Email:"), DOM.TD(form.getEmail())),
+                                DOM.TR(DOM.TD("Category:"), DOM.TD(form.getCategory())),
+                                DOM.TR(DOM.TD("Institution:"), DOM.TD(form.getInstitution())),
+                                DOM.TR(DOM.TD("Reason:"), DOM.TD(form.getReason()))
+                        ).renderToString());
+
+                        mail.setEncodedHtmlContent(builder.toString());
+                        mail.setFrom(mGAPManager.get().getReplyEmail(getContainer()));
                         mail.setSubject("mGap Account Request");
-                        mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[emails.size()]));
+                        mail.addRecipients(Message.RecipientType.TO, emails.toArray(new Address[0]));
 
                         MailHelper.send(mail, getUser(), c);
+
+                        if (autoApprove & !errors.hasErrors())
+                        {
+                            mGAPManager.get().approveUsers(Arrays.asList(requestId), getContainer(), adminUser, getViewContext(), errors);
+                            if (errors.hasErrors())
+                            {
+                                _log.error("Unable to automatically create mGAP user");
+                            }
+                        }
                     }
                     catch (Exception e)
                     {
@@ -401,119 +436,17 @@ public class mGAPController extends SpringActionController
         public Object execute(ApproveUserRequestsForm form, BindException errors) throws Exception
         {
             ApiSimpleResponse response = new ApiSimpleResponse();
-            List<SecurityManager.NewUserStatus> newUserStatusList = new ArrayList<>();
-            List<User> existingUsersGivenAccess = new ArrayList<>();
-            try (DbScope.Transaction transaction = CoreSchema.getInstance().getScope().ensureTransaction())
+
+            mGAPManager.get().approveUsers(Arrays.stream(form.getRequestIds()).boxed().toList(), getContainer(), getUser(), getViewContext(), errors);
+            if (errors.hasErrors())
             {
-                TableInfo ti = mGAPSchema.getInstance().getSchema().getTable(mGAPSchema.TABLE_USER_REQUESTS);
-                for (int requestId : form.getRequestIds())
-                {
-                    TableSelector ts = new TableSelector(ti, new SimpleFilter(FieldKey.fromString("rowId"), requestId), null);
-                    Map<String, Object> map = ts.getMap(requestId);
-
-                    User u;
-                    if (map.get("userId") != null)
-                    {
-                        Integer userId = asInteger(map.get("userId"));
-                        u = UserManager.getUser(userId);
-                        existingUsersGivenAccess.add(u);
-                    }
-                    else
-                    {
-                        ValidEmail ve = new ValidEmail((String) map.get("email"));
-                        u = UserManager.getUser(ve);
-                        if (u != null)
-                        {
-                            existingUsersGivenAccess.add(u);
-                        }
-                        else
-                        {
-                            SecurityManager.NewUserStatus st = SecurityManager.addUser(ve, getUser());
-                            u = st.getUser();
-                            u.setFirstName((String) map.get("firstName"));
-                            u.setLastName((String) map.get("lastName"));
-                            UserManager.updateUser(getUser(), u);
-
-                            if (st.isLdapOrSsoEmail())
-                            {
-                                existingUsersGivenAccess.add(st.getUser());
-                            }
-                            else
-                            {
-                                newUserStatusList.add(st);
-                            }
-                        }
-                    }
-
-                    Map<String, Object> row = new HashMap<>();
-                    row.put("rowId", requestId);
-                    row.put("userId", u.getUserId());
-                    Table.update(getUser(), ti, row, requestId);
-
-                    Container mGapContainer = mGAPManager.get().getMGapContainer();
-
-                    if (!mGapContainer.hasPermission(u, ReadPermission.class))
-                    {
-                        MutableSecurityPolicy policy = new MutableSecurityPolicy(mGapContainer.getPolicy());
-                        policy.addRoleAssignment(u, ReaderRole.class);
-                        SecurityPolicyManager.savePolicy(policy, getUser());
-                    }
-                    else
-                    {
-                        _log.info("user already has read permission on mGAP container: " + u.getDisplayName(getUser()));
-                    }
-                }
-
-                transaction.commit();
+                return null;
             }
-
-            Set<User> allUsers = new HashSet<>(existingUsersGivenAccess);
-
-            //send emails:
-            for (SecurityManager.NewUserStatus st : newUserStatusList)
-            {
-                SecurityManager.sendRegistrationEmail(getViewContext(), st.getEmail(), null, st, null);
-                allUsers.add(st.getUser());
-            }
-
-            Container mGapContainer = mGAPManager.get().getMGapContainer();
-            for (User u : existingUsersGivenAccess)
-            {
-                boolean isLDAP = AuthenticationManager.isLdapOrSsoEmail(new ValidEmail(u.getEmail()));
-
-                MailHelper.MultipartMessage mail = MailHelper.createMultipartMessage();
-                mail.setEncodedHtmlContent("Your account request has been approved for mGAP!  " + "<a href=\"" + AppProps.getInstance().getBaseServerUrl() + mGapContainer.getStartURL(getUser()) + "\">Click here to access the site.</a>" + (isLDAP ? "  Use your normal OHSU email/password to login." : ""));
-                mail.setFrom(getReplyEmail(getContainer()));
-                mail.setSubject("mGap Account Request");
-                mail.addRecipients(Message.RecipientType.TO, u.getEmail());
-
-                MailHelper.send(mail, getUser(), getContainer());
-            }
-
-            Group g = GroupManager.getGroup(mGapContainer, mGAPManager.GROUP_NAME, GroupEnumType.SITE);
-            if (g == null)
-            {
-                g = SecurityManager.createGroup(ContainerManager.getRoot(), mGAPManager.GROUP_NAME, getUser());
-            }
-
-            SecurityManager.addMembers(g, allUsers);
 
             response.put("success", !errors.hasErrors());
 
             return response;
         }
-    }
-
-    private String getReplyEmail(Container c)
-    {
-        LookAndFeelProperties lfp = LookAndFeelProperties.getInstance(getContainer());
-        String email = lfp.getSystemEmailAddress();
-        if (email == null)
-        {
-            return AppProps.getInstance().getAdministratorContactEmail(true);
-        }
-
-        return email;
     }
 
     public static class ApproveUserRequestsForm
