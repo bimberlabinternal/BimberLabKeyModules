@@ -221,7 +221,7 @@ public class mGAPController extends SpringActionController
 
                         DetailsURL url = DetailsURL.fromString("/query/executeQuery.view?schemaName=mgap&query.queryName=userRequests&query.viewName=Pending Requests", c);
                         HtmlStringBuilder builder = HtmlStringBuilder.of("A user requested an account on mGap. ").
-                                unsafeAppend("<a href=\"" + AppProps.getInstance().getBaseServerUrl() + Objects.requireNonNull(url.getActionURL()) + "\">Click here to view/approve this request</a>");
+                                unsafeAppend("<a href=\"" + AppProps.getInstance().getBaseServerUrl() + Objects.requireNonNull(url.getActionURL()) + "\">Click here to view/approve this request</a>.");
 
                         boolean autoApprove = false;
                         Integer requestId = null;
