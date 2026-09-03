@@ -238,7 +238,7 @@ public class mGAPController extends SpringActionController
                             else
                             {
                                 autoApprove = true;
-                                requestId = (int)row.get("rowid");
+                                requestId = Integer.parseInt(row.get("rowid").toString());
                                 builder.unsafeAppend(DOM.SPAN(DOM.at(DOM.Attribute.style, "font-weight:bold;"), " This request was automatically approved.").renderToString());
                             }
                         }
