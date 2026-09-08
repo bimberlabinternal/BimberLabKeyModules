@@ -22,10 +22,13 @@ import org.labkey.api.action.ApiResponse;
 import org.labkey.api.action.ApiSimpleResponse;
 import org.labkey.api.action.MutatingApiAction;
 import org.labkey.api.action.SpringActionController;
+import org.labkey.api.data.ContainerFilter;
+import org.labkey.api.data.ContainerManager;
 import org.labkey.api.data.ContainerType;
 import org.labkey.api.exp.api.ExpProtocol;
 import org.labkey.api.exp.api.ExperimentService;
 import org.labkey.api.security.RequiresPermission;
+import org.labkey.api.security.permissions.ReadPermission;
 import org.labkey.api.security.permissions.UpdatePermission;
 import org.labkey.api.util.Pair;
 import org.springframework.validation.BindException;
@@ -64,7 +67,7 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    if (!protocol.getContainer().getContainerFor(ContainerType.DataType.tabParent).equals(getContainer().getContainerFor(ContainerType.DataType.tabParent)))
+                    if (!new ContainerFilter.CurrentAndSubfoldersPlusShared(getContainer().getContainerFor(ContainerType.DataType.tabParent), getUser()).generateIds(getContainer().getContainerFor(ContainerType.DataType.tabParent), ReadPermission.class, getContextualRoles()).contains(protocol.getContainer().getEntityId()))
                     {
                         errors.reject(ERROR_MSG, "Protocol is from the wrong container: " + form.getProtocolId());
                         logger.error("CacheAnalysesAction targeted a protocol from the wrong container: {}, from {}, in the container: {}", form.getProtocolId(), protocol.getContainer().getPath(), getContainer().getPath());
@@ -151,7 +154,7 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    if (!protocol.getContainer().getContainerFor(ContainerType.DataType.tabParent).equals(getContainer().getContainerFor(ContainerType.DataType.tabParent)))
+                    if (!new ContainerFilter.CurrentAndSubfoldersPlusShared(getContainer().getContainerFor(ContainerType.DataType.tabParent), getUser()).generateIds(getContainer().getContainerFor(ContainerType.DataType.tabParent), ReadPermission.class, getContextualRoles()).contains(protocol.getContainer().getEntityId()))
                     {
                         errors.reject(ERROR_MSG, "Protocol is from the wrong container: " + form.getProtocolId());
                         logger.error("CacheHaplotypesAction targeted a protocol from the wrong container: {}, from {}, in the container: {}", form.getProtocolId(), protocol.getContainer().getPath(), getContainer().getPath());
