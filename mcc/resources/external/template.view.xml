@@ -1,0 +1,6 @@
+<view xmlns="http://labkey.org/data/xml/view" frame="none" title="MCC Website">
+    <requiresNoPermission />
+    <!-- This is an alternative mechanism to load our dependencies: -->
+    <dependencies>
+    </dependencies>
+</view>
