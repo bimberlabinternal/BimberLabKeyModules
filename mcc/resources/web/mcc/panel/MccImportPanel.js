@@ -453,7 +453,8 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         'breeding partner ID': 'Breeding Partner ID',
                         'Id/mostRecentObservations/infant_history::observation': 'Infant History',
                         'Id/mostRecentObservations/fertility_status::observation': 'Fertility Status',
-                        'Id/mostRecentObservations/medical_history::observation': 'Medical History'
+                        'Id/genomicData/datatypes': 'Genomic Datasets',
+                        'Id/genomicData/sra_accession': 'SRA Accession(s)'
                     }
 
                     LABKEY.Query.selectRows({
@@ -463,8 +464,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         scope: this,
                         failure: LDK.Utils.getErrorCallback(),
                         filterArray: [
-                            LABKEY.Filter.create('colony', colonyName),
-                            LABKEY.Filter.create('calculated_status', 'Alive')
+                            LABKEY.Filter.create('colony', colonyName)
                         ],
                         success: function (results) {
                             Ext4.Msg.hide();
