@@ -443,7 +443,7 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         'Id/MostRecentDeparture/MostRecentDeparture': 'Shipping Date',
                         'death': 'Death',
                         'deathCause': 'Cause of Death',
-                        'dam': 'Material ID',
+                        'dam': 'Maternal ID',
                         'sire': 'Paternal ID',
                         'Id/MostRecentWeight/MostRecentWeightGrams': 'Weight (g)',
                         'Id/MostRecentWeight/MostRecentWeightDate': 'Date of Weight',
@@ -453,6 +453,9 @@ Ext4.define('MCC.panel.MccImportPanel', {
                         'breeding partner ID': 'Breeding Partner ID',
                         'Id/mostRecentObservations/infant_history::observation': 'Infant History',
                         'Id/mostRecentObservations/fertility_status::observation': 'Fertility Status',
+                        'Id/mostRecentObservations/medical_history::observation': 'Medical History',
+                        'Id/mostRecentObservations/usage_current::observation': 'Usage (Current)',
+                        'Id/mostRecentObservations/usage_future::observation': 'Usage (Future)',
                         'Id/genomicData/datatypes': 'Genomic Datasets',
                         'Id/genomicData/sra_accession': 'SRA Accession(s)'
                     }
