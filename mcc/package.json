@@ -8,6 +8,7 @@
     "start-link": "cross-env LINK=true npm run start",
     "build-dev": "npm run clean && cross-env NODE_ENV=development rspack build --config node_modules/@labkey/build/configs/dev.config.js",
     "build-prod": "npm run clean && cross-env NODE_ENV=production rspack build --config node_modules/@labkey/build/configs/prod.config.js",
+    "download-website": "node ./resources/external/fetch-mcc-website.mjs",
     "clean": "rimraf resources/web/mcc/gen && rimraf resources/web/gen"
   },
   "dependencies": {
