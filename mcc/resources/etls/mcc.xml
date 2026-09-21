@@ -113,7 +113,6 @@
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedCensus" >
                 <sourceColumns>
-                    <column>Id</column>
                     <column>yearNo</column>
                     <column>startdate</column>
                     <column>enddate</column>
