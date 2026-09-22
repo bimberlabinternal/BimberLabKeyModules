@@ -62,6 +62,7 @@ public class MccTest extends BaseWebDriverTest
         doRequestFormTest();
         doRequestFormTestWithFailure();
         doRequestFormTestWithWithdraw();
+        doWebsiteTest();
 
         testInvalidId();
 
@@ -1081,5 +1082,15 @@ public class MccTest extends BaseWebDriverTest
         }
 
         Assert.assertEquals("Duplicate aliases found: " + StringUtils.join(duplicates, ", "), 0, duplicates.size());
+    }
+
+    public void doWebsiteTest() throws Exception
+    {
+        // This ensures the HTML isnt manged during the build step:
+        beginAt("/mcc-index.view");
+        waitForElement(Locator.tagWithText("a", "Learn about marmosets"));
+        waitAndClick(Locator.tagContainingText("a", "learn").withClass("dropdown-toggle"));
+        waitAndClickAndWait(Locator.tagContainingText("a", "what is a marmoset"));
+        waitForElement(Locator.tagWithText("h1", "The common marmoset"));
     }
 }
