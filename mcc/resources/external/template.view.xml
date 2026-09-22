@@ -1,6 +1,6 @@
-<view xmlns="http://labkey.org/data/xml/view" frame="none" title="MCC Website">
+<!-- Used by fetch-mcc-website.mjs to generate a .view.xml for each MCC website page without the Labkey header. -->
+<view xmlns="http://labkey.org/data/xml/view" template="none" frame="none" title="MCC Website">
     <requiresNoPermission />
-    <!-- This is an alternative mechanism to load our dependencies: -->
     <dependencies>
     </dependencies>
 </view>
