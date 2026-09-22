@@ -32,6 +32,7 @@ const ASSETS_URL = `<%=contextPath%>/gen/${ASSETS_DIR_NAME}/`;
 const MANIFEST = join(VIEW_GEN_DIR, '.mcc-website-manifest.json');
 
 const IGNORED_FILES = new Set(['.DS_Store']);
+const SERVER_URL = /https?:\/\/mcc\.ohsu\.edu\/?/gi;
 
 async function main() {
     const tmp = await mkdtemp(join(tmpdir(), 'mcc-website-'));
@@ -186,6 +187,9 @@ function transformHtml(html, fileName, viewNames) {
 
     // Remove DOCTYPE, since this is not an embedded page 
     ret = ret.replace(/^\s*<!DOCTYPE[^>]*>\s*/i, '');
+
+    // Absolute links to the live server: href="https://mcc.ohsu.edu/login-login.view" replaced with href="<%=contextPath%>/login-login.view"
+    ret = ret.replace(SERVER_URL, '<%=contextPath%>/');
 
     // Asset paths: href="assets/..", src="/assets/..", style="background: url(&quot;assets/..&quot;)"
     ret = ret.replace(/(["'(]|&quot;)\/?assets\//g, `$1${ASSETS_URL}`);
