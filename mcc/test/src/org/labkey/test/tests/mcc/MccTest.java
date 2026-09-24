@@ -1086,7 +1086,7 @@ public class MccTest extends BaseWebDriverTest
 
     public void doWebsiteTest() throws Exception
     {
-        // This ensures the HTML isnt manged during the build step:
+        // This ensures the HTML isnt mangled during the build step:
         beginAt("/mcc-index.view");
         waitForElement(Locator.tagWithText("a", "Learn about marmosets"));
         waitAndClick(Locator.tagContainingText("a", "learn").withClass("dropdown-toggle"));

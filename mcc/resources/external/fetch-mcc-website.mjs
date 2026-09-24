@@ -189,12 +189,12 @@ function transformHtml(html, fileName, viewNames) {
     ret = ret.replace(/^\s*<!DOCTYPE[^>]*>\s*/i, '');
 
     // Absolute links to the live server: href="https://mcc.ohsu.edu/login-login.view" replaced with href="<%=contextPath%>/login-login.view"
-    ret = ret.replace(SERVER_URL, '<%=contextPath%>/');
+    ret = ret.replace(SERVER_URL, '<%=contextPath%>');
 
     // Asset paths: href="assets/..", src="/assets/..", style="background: url(&quot;assets/..&quot;)"
     ret = ret.replace(/(["'(]|&quot;)\/?assets\//g, `$1${ASSETS_URL}`);
 
-    // Links between pages: href="index.html#mission" replaced with href="<%=contextPath%><%=containerPath%>/mcc-index.view#mission"
+    // Links between pages: href="index.html#mission" replaced with href="<%=contextPath%><%=containerPath%>mcc-index.view#mission"
     ret = ret.replace(/href=(["'])([^"'#?:/]+\.html)([#?][^"']*)?\1/gi, (match, quote, target, suffix = '') => {
         const viewName = viewNames.get(target.toLowerCase());
         if (!viewName) {
@@ -202,7 +202,7 @@ function transformHtml(html, fileName, viewNames) {
             return match;
         }
 
-        return `href=${quote}<%=contextPath%><%=containerPath%>/${CONTROLLER}-${viewName}.view${suffix}${quote}`;
+        return `href=${quote}<%=contextPath%><%=containerPath%>${CONTROLLER}-${viewName}.view${suffix}${quote}`;
     });
 
     // Inject per-request nonce
