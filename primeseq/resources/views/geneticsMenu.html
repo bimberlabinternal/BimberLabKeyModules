@@ -131,6 +131,7 @@
                     }
 
                     if (toAdd.length)
+                        toAdd.sort((a, b) => (a.get('title') || a.get('name')).localeCompare(b.get('title') || b.get('name')))
                         section.store.add(toAdd);
                 }, this);
             }, this)

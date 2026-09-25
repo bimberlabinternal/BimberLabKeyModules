@@ -1,13 +1,11 @@
 <view xmlns="http://labkey.org/data/xml/view" template="app" frame="none" title="mGAP">
     <requiresNoPermission/>
     <dependencies>
-        <dependency path="ldk.context"/>
-        <dependency path="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"/>
-        <dependency path="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"/>
-        <dependency path="mGAP/welcome/css/bootstrap.min.css"/>
+        <dependency path="clientapi"/>
         <dependency path="mGAP/welcome/css/welcome.css"/>
-        <dependency path="https://code.jquery.com/jquery-3.2.1.min.js"/>
-        <dependency path="mGAP/welcome/js/jquery.cycle.all.js"/>
-        <dependency path="mGAP/welcome/js/bootstrap.min.js"/>
+        <dependency path="https://code.jquery.com/jquery-3.7.1.min.js"/>
+        <dependency path="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"/>
+        <dependency path="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"/>
+        <dependency path="mGAP/welcome/js/jquery.cycle2.min.js"/>
     </dependencies>
 </view>
