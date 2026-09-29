@@ -3,6 +3,12 @@
     <name>MCC_Aggregation</name>
     <description>Aggregate MCC Data</description>
     <transforms>
+        <transform id="qc" type="TaskRefTransformStep">
+            <taskref ref="org.labkey.mcc.etl.FailUnlessMccFolderStep">
+                <settings>
+                </settings>
+            </taskref>
+        </transform>
         <!--This will create MCC aliases as-needed-->
         <transform id="step0" type="TaskRefTransformStep">
             <taskref ref="org.labkey.mcc.etl.PopulateIdsStep">
@@ -107,7 +113,6 @@
             <description>Copy to target</description>
             <source schemaName="mcc" queryName="aggregatedCensus" >
                 <sourceColumns>
-                    <column>Id</column>
                     <column>yearNo</column>
                     <column>startdate</column>
                     <column>enddate</column>

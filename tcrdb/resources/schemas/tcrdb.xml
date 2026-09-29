@@ -269,10 +269,10 @@
                 <columnTitle>Synthesized?</columnTitle>
             </column>
             <column columnName="animals">
-                <columnTitle>Animals With Clone</columnTitle>
+                <columnTitle>Subject(s) With Clone</columnTitle>
             </column>
             <column columnName="responses">
-                <columnTitle>Responses With Clone</columnTitle>
+                <columnTitle>Response(s) With Clone</columnTitle>
             </column>
             <column columnName="container">
                 <isHidden>true</isHidden>

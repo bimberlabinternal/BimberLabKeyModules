@@ -14,6 +14,16 @@
             }
         });
     }(jQuery, LABKEY));
+
+    $(document).ready(function () {
+        $('#slideshow').cycle({
+            fx: 'fade',
+            pager: '#smallnav',
+            pause: 1,
+            speed: 1800,
+            timeout: 3500
+        });
+    });
 </script>
 <div class="full" id="slideshow">
     <img src="<%=contextPath%>/mGAP/welcome/images/102_6203.jpg" class="bgM"/>
@@ -22,85 +32,53 @@
     <img src="<%=contextPath%>/mGAP/welcome/images/102_6416.jpg" class="bgM"/>
 </div>
 <div>
-    <!-- Navigation -->
-    <nav class="navbar navbar-inverse navbar-fixed-bottom" role="navigation">
-        <div class="container">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-            </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li>
-                        <a href="#" data-toggle="modal" data-target="#aboutModal">About</a>
+    <nav class="navbar navbar-expand-lg bg-dark fixed-bottom fs-3 py-2" id="navbar" data-bs-theme="dark">
+        <div class="container-fluid">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item mx-lg-3">
+                        <a class="nav-link shadow-none" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">About</a>
                     </li>
-                    <li>
-                        <a href="<%=contextPath%>/login-login.view?returnUrl=<%=contextPath%>/project/mGAP/start.view?" id="login-el">Login</a>
+                    <li class="nav-item mx-lg-3">
+                        <a class="nav-link" href="<%=contextPath%>/login-login.view?returnUrl=<%=contextPath%>/project/mGAP/start.view?" id="login-el">Login</a>
                     </li>
-                    <li>
-                        <a href="<%=contextPath%>/mGAP/requestLogin.view">Request Access</a>
+                    <li class="nav-item mx-lg-3">
+                        <a class="nav-link" href="<%=contextPath%>/mGAP/requestLogin.view">Request Access</a>
                     </li>
-                    <li>
-                        <a href="<%=contextPath%>/mGap-contact.view?returnUrl=<%=contextPath%>/">Help</a>
+                    <li class="nav-item mx-lg-3">
+                        <a class="nav-link" href="<%=contextPath%>/mGap-contact.view?returnUrl=<%=contextPath%>/">Help</a>
                     </li>
                 </ul>
             </div>
-            <!-- /.navbar-collapse -->
         </div>
-        <!-- /.container -->
     </nav>
 
     <!-- Page Content -->
     <div class="container">
-        <div class="row">
-            <div class="col-md-6 col-sm-12">
-                <h1 class="title">mGAP</h1>
-                <h3 class="title">The Macaque Genotype And Phenotype Resource</h3>
-                <!--<h5 class="title">Supported By NIH R24OD021324</h5>-->
+        <div class="row justify-content-md-center mt-5">
+            <div>
+                <h1 class="title mx-lg-3">mGAP</h1>
+                <h3 class="title mx-lg-3">The Macaque Genotype And Phenotype Resource</h3>
             </div>
         </div>
-        <!-- /.row -->
     </div>
-    <!-- /.container -->
-
-    <script type="text/javascript" nonce="<%=scriptNonce%>">
-        $(document).ready(function () {
-            $('#slideshow').cycle({
-                fx: 'fade',
-                pager: '#smallnav',
-                pause: 1,
-                speed: 1800,
-                timeout: 3500
-            });
-        });
-    </script>
 </div>
 
 
 <!-- Modal -->
-<div id="aboutModal" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-
-        <!-- Modal content-->
+<div id="aboutModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">About mGAP</h4>
+                <h4 class="modal-title" id="modalTitle">About mGAP</h4>
             </div>
             <div class="modal-body">
                 The Macaque Genotype and Phenotype Resource (mGAP) provides access to genotype data collected on a large, pedigreed, rhesus macaque colony housed at the Oregon National Primate Research Center (ONPRC).  We hope to provide researchers with the tools to explore naturally occurring genetic variation in macaques.  Our database of DNA variants is curated and heavily annotated, and can either be viewed through our genome browser or downloaded for external use.
                 <br><br>
                 <i>To request an account, please use the 'Request Access' link at the bottom of this page.  mGAP is an NIH funded project, supported by R24OD021324.</i>
-
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
