@@ -67,7 +67,7 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    if (!new ContainerFilter.CurrentAndSubfoldersPlusShared(getContainer().getContainerFor(ContainerType.DataType.tabParent), getUser()).generateIds(getContainer().getContainerFor(ContainerType.DataType.tabParent), ReadPermission.class, getContextualRoles()).contains(protocol.getContainer().getEntityId()))
+                    if (!new ContainerFilter.CurrentAndSubfoldersPlusShared(getContainer().getContainerFor(ContainerType.DataType.tabParent), getUser()).generateIds(getContainer().getContainerFor(ContainerType.DataType.tabParent), ReadPermission.class, getViewContext().getContextualRoles()).contains(protocol.getContainer().getEntityId()))
                     {
                         errors.reject(ERROR_MSG, "Protocol is from the wrong container: " + form.getProtocolId());
                         logger.error("CacheAnalysesAction targeted a protocol from the wrong container: {}, from {}, in the container: {}", form.getProtocolId(), protocol.getContainer().getPath(), getContainer().getPath());
@@ -154,7 +154,7 @@ public class GenotypeAssaysController extends SpringActionController
                         return null;
                     }
 
-                    if (!new ContainerFilter.CurrentAndSubfoldersPlusShared(getContainer().getContainerFor(ContainerType.DataType.tabParent), getUser()).generateIds(getContainer().getContainerFor(ContainerType.DataType.tabParent), ReadPermission.class, getContextualRoles()).contains(protocol.getContainer().getEntityId()))
+                    if (!new ContainerFilter.CurrentAndSubfoldersPlusShared(getContainer().getContainerFor(ContainerType.DataType.tabParent), getUser()).generateIds(getContainer().getContainerFor(ContainerType.DataType.tabParent), ReadPermission.class, getViewContext().getContextualRoles()).contains(protocol.getContainer().getEntityId()))
                     {
                         errors.reject(ERROR_MSG, "Protocol is from the wrong container: " + form.getProtocolId());
                         logger.error("CacheHaplotypesAction targeted a protocol from the wrong container: {}, from {}, in the container: {}", form.getProtocolId(), protocol.getContainer().getPath(), getContainer().getPath());
