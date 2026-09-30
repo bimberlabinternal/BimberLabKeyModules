@@ -54,3 +54,23 @@ dependencies {
             )
     )
 }
+
+// The npm build runs resources/external/fetch-mcc-website.mjs, which pulls the MCC website from
+// GitHub at build time. Gradle can't fingerprint that, so never skip or cache this task.
+def mccWebsiteTask = project.tasks.named("npm_run_download-website")
+
+mccWebsiteTask.configure {
+    outputs.cacheIf {false}
+}
+
+project.tasks.named('processModuleResources').configure {
+    dependsOn mccWebsiteTask
+}
+
+project.tasks.named("npm_run_build-prod").configure {
+    finalizedBy mccWebsiteTask.get()
+}
+
+project.tasks.named("npm_run_build-dev").configure {
+    finalizedBy mccWebsiteTask.get()
+}

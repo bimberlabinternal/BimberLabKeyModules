@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.labkey.api.util.FileUtil;
 import org.labkey.remoteapi.query.SelectRowsCommand;
 import org.labkey.remoteapi.query.TruncateTableCommand;
 import org.labkey.serverapi.reader.Readers;
@@ -62,13 +63,13 @@ public class PMRTest extends BaseWebDriverTest
     @BeforeClass
     public static void setupProject() throws Exception
     {
-        PMRTest init = (PMRTest)getCurrentTest();
+        PMRTest init = getCurrentTest();
         init.doSetup();
     }
 
     private File getKinshipPath()
     {
-        return new File(TestFileUtils.getDefaultFileRoot(getProjectName()), "kinshipEtlDir");
+        return FileUtil.appendName(TestFileUtils.getDefaultFileRoot(getProjectName()), "kinshipEtlDir");
     }
 
     private void doSetup()

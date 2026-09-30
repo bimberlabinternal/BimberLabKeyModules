@@ -137,7 +137,7 @@ FROM "/data/Colonies/UCSD/".study.demographics d
                         o."fertility_status::observation" as fertility_status,
                         o."medical_history::observation" as medical_history,
                         o."usage_current::observation" as usage_current,
-                        o."usage_current::observation" as usage_future,
+                        o."usage_future::observation" as usage_future,
                         o."breeding_partner_id::observation" as breeding_partner_id
                     FROM "/data/Colonies/UCSD/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
@@ -186,7 +186,7 @@ FROM "/data/Colonies/Other/".study.demographics d
                         o."fertility_status::observation" as fertility_status,
                         o."medical_history::observation" as medical_history,
                         o."usage_current::observation" as usage_current,
-                        o."usage_current::observation" as usage_future,
+                        o."usage_future::observation" as usage_future,
                         o."breeding_partner_id::observation" as breeding_partner_id
                     FROM "/data/Colonies/Other/".study.mostRecentObservationsPivoted o
 ) o ON (o.Id = d.Id)
