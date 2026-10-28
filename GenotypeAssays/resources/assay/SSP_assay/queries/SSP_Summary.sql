@@ -17,7 +17,8 @@ SELECT
       THEN max(m.Result)
     ELSE 'DISCREPANCY'
   END
-  AS Status
+  AS Status,
+  max(m.modified) as modified
 
 FROM Data m
 WHERE m.result != 'FAIL' and m.result != 'IND'
