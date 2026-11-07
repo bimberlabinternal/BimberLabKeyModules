@@ -22,5 +22,5 @@ SELECT
 
 FROM Data m
 WHERE m.result IS NOT NULL AND m.result != 'FAIL' and m.result != 'IND'
-    AND NOT ISEQUAL(m.statusflag, 'Exclude')
+    AND is_distinct_from(m.statusflag, 'Exclude')
 GROUP BY m.subjectId, m.PrimerPair.ref_nt_name
