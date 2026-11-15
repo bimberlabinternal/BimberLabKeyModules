@@ -565,6 +565,12 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
             stringTransformers.add((ti, row, stringValue, propName, errors) -> {
                 if ("quantity".equalsIgnoreCase(propName))
                 {
+                    if (StringUtils.trimToNull(stringValue) == null)
+                    {
+                        _log.error("SivStudiesCustomizer / Unit parsing failed for: {}. A null/empty value was provided, but this should be caught upstream", stringValue);
+                        return;
+                    }
+
                     final Matcher matcher = UNIT_REGEX.matcher(stringValue);
                     if (matcher.find())
                     {

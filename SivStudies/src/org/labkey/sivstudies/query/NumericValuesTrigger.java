@@ -1,5 +1,6 @@
 package org.labkey.sivstudies.query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +90,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             }
 
             // The Rlabkey API sending NAs as strings is another common problem:
-            if ("NA".equalsIgnoreCase(val) || "null".equalsIgnoreCase(val))
+            if ("NA".equalsIgnoreCase(val) || "null".equalsIgnoreCase(val) || StringUtils.trimToNull(val) == null)
             {
                 row.put(propName, null);
                 continue;
