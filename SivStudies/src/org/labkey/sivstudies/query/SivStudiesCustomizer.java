@@ -1,6 +1,7 @@
 package org.labkey.sivstudies.query;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.Logger;
 import org.labkey.api.collections.CaseInsensitiveHashSet;
 import org.labkey.api.data.AbstractTableInfo;
@@ -31,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SivStudiesCustomizer extends AbstractTableCustomizer
 {
@@ -554,6 +557,39 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                     String comments = row.get("comments") == null ? null : StringUtils.trimToNull(String.valueOf(row.get("comments")));
                     comments = (comments == null ? "" : comments + ", ") + "Quantity: Supernatant";
                     row.put("comments", comments);
+                }
+            });
+
+            final Set<String> KNOWN_UNITS = new CaseInsensitiveHashSet("ug", "units");
+            final Pattern UNIT_REGEX = Pattern.compile("^\\d+(\\.\\d+)?([a-zA-Z ]+)$");
+            stringTransformers.add((ti, row, stringValue, propName, errors) -> {
+                if ("quantity".equalsIgnoreCase(propName))
+                {
+                    final Matcher matcher = UNIT_REGEX.matcher(stringValue);
+                    if (matcher.find())
+                    {
+                        String stringPart = matcher.group(2);
+                        String numericPart = stringValue.replace(stringPart, "");
+                        stringPart = StringUtils.trimToNull(stringPart);
+
+                        if (!NumberUtils.isCreatable(numericPart))
+                        {
+                            _log.error("SivStudiesCustomizer / Unit parsing failed for: {}", stringValue);
+                        }
+
+                        row.put("quantity", numericPart);
+                        if (KNOWN_UNITS.contains(stringPart))
+                        {
+                            row.put("quantity_units", stringPart);
+                        }
+                        else
+                        {
+                            _log.error("SivStudiesCustomizer / Unit parsing encountered unknown parsed string: {}", stringValue);
+                            String comments = row.get("comments") == null ? null : StringUtils.trimToNull(String.valueOf(row.get("comments")));
+                            comments = (comments == null ? "" : comments + ", ") + "Original quantity: " + stringValue;
+                            row.put("comments", comments);
+                        }
+                    }
                 }
             });
         }

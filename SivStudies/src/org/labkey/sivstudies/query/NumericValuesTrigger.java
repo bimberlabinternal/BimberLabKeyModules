@@ -75,9 +75,9 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             }
 
             String val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
-            if (NumberUtils.isCreatable(val))
+            if (val == null || NumberUtils.isCreatable(val))
             {
-                return;
+                continue;
             }
 
             // commas are a common problem:
@@ -85,14 +85,14 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             if (NumberUtils.isCreatable(val))
             {
                 row.put(propName, val);
-                return;
+                continue;
             }
 
             // The Rlabkey API sending NAs as strings is another common problem:
             if ("NA".equalsIgnoreCase(val) || "null".equalsIgnoreCase(val))
             {
                 row.put(propName, null);
-                return;
+                continue;
             }
 
             for (StringTransformer stringTransformer : _stringTransformers)
@@ -104,7 +104,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             if (val == null || NumberUtils.isCreatable(val))
             {
                 row.put(propName, val);
-                return;
+                continue;
             }
 
             errors.addError(new SimpleValidationError("Non-numeric value for field " + propName + ": " + val, propName, ValidationException.SEVERITY.ERROR));
