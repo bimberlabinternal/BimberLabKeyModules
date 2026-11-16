@@ -98,8 +98,11 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
 
             for (StringTransformer stringTransformer : _stringTransformers)
             {
-                stringTransformer.inspectValue(table, row, val, propName, errors);
-                val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
+                if (stringTransformer.inspectValue(table, row, val, propName, errors))
+                {
+                    // If the prior transformer edited the value, use this:
+                    val = String.valueOf(row.get(propName));
+                }
             }
 
             if (val == null || NumberUtils.isCreatable(val))
@@ -114,7 +117,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
 
     public interface StringTransformer
     {
-        // This method allows code to inspect and modify non-numeric values
-        public void inspectValue(TableInfo ti, Map<String, Object> row, String stringValue, String propName, ValidationException errors);
+        // This method allows code to inspect and modify non-numeric values. Return true if the value was altered. If the value was altered, it should be stored in row[[propName]], and this value will be passed to the next transformer
+        public boolean inspectValue(TableInfo ti, Map<String, Object> row, String stringValue, String propName, ValidationException errors);
     }
 }

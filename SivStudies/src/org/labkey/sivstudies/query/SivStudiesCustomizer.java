@@ -557,7 +557,11 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                     String comments = row.get("comments") == null ? null : StringUtils.trimToNull(String.valueOf(row.get("comments")));
                     comments = (comments == null ? "" : comments + ", ") + "Quantity: Supernatant";
                     row.put("comments", comments);
+
+                    return true;
                 }
+
+                return false;
             });
 
             final Set<String> KNOWN_UNITS = new CaseInsensitiveHashSet("ug", "units");
@@ -568,7 +572,7 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                     if (StringUtils.trimToNull(stringValue) == null)
                     {
                         _log.error("SivStudiesCustomizer / Unit parsing failed for: {}. A null/empty value was provided, but this should be caught upstream", stringValue);
-                        return;
+                        return false;
                     }
 
                     final Matcher matcher = UNIT_REGEX.matcher(stringValue);
@@ -595,8 +599,12 @@ public class SivStudiesCustomizer extends AbstractTableCustomizer
                             comments = (comments == null ? "" : comments + ", ") + "Original quantity: " + stringValue;
                             row.put("comments", comments);
                         }
+
+                        return true;
                     }
                 }
+
+                return false;
             });
         }
 
