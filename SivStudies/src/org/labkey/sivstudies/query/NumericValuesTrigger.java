@@ -101,7 +101,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
                 if (stringTransformer.inspectValue(table, row, val, propName, errors))
                 {
                     // If the prior transformer edited the value, use this:
-                    val = String.valueOf(row.get(propName));
+                    val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
                 }
             }
 
