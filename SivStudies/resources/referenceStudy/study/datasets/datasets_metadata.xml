@@ -497,6 +497,9 @@
             <column columnName="description">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="accessions">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="comments">
                 <datatype>varchar</datatype>
             </column>

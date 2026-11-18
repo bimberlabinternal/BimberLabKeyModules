@@ -12,6 +12,12 @@
                     <column columnName="category">
                         <columnTitle>Category</columnTitle>
                     </column>
+                    <column columnName="accessions">
+                        <columnTitle>Accession #(s)</columnTitle>
+                        <displayColumnFactory>
+                            <className>org.labkey.studies.query.AccessionsDisplayColumnFactory</className>
+                        </displayColumnFactory>
+                    </column>
                     <column columnName="dataSource">
                         <columnTitle>Data Source</columnTitle>
                     </column>
