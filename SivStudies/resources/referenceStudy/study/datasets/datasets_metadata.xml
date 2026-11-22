@@ -242,6 +242,12 @@
             <column columnName="category">
                 <datatype>varchar</datatype>
             </column>
+            <column columnName="sampletype">
+                <datatype>varchar</datatype>
+            </column>
+            <column columnName="tissue">
+                <datatype>varchar</datatype>
+            </column>
             <column columnName="test">
                 <datatype>varchar</datatype>
             </column>
