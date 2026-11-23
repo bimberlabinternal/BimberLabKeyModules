@@ -46,13 +46,7 @@ public class TCRdbModule extends ExtendedSimpleModule
     @Override
     public Double getSchemaVersion()
     {
-        return 15.65;
-    }
-
-    @Override
-    public boolean hasScripts()
-    {
-        return true;
+        return 15.66;
     }
 
     @Override

@@ -17,8 +17,10 @@ SELECT
       THEN max(m.Result)
     ELSE 'DISCREPANCY'
   END
-  AS Status
+  AS Status,
+  max(m.modified) as modified
 
 FROM Data m
-WHERE m.result != 'FAIL' and m.result != 'IND'
+WHERE m.result IS NOT NULL AND m.result != 'FAIL' and m.result != 'IND'
+    AND is_distinct_from(m.statusflag, 'Exclude')
 GROUP BY m.subjectId, m.PrimerPair.ref_nt_name

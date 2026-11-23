@@ -1,0 +1,21 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="studyCohorts" tableDbType="TABLE" useColumnOrder="false">
+                <columns>
+                    <column columnName="cohortsSummary" wrappedColumnName="rowId">
+                        <isUnselectable>true</isUnselectable>
+                        <shownInInsertView>false</shownInInsertView>
+                        <shownInUpdateView>false</shownInUpdateView>
+                        <columnTitle>Summary Information</columnTitle>
+                        <fk>
+                            <fkDbSchema>studies</fkDbSchema>
+                            <fkTable>studyCohortSummary</fkTable>
+                            <fkColumnName>rowId</fkColumnName>
+                        </fk>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>

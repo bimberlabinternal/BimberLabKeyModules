@@ -16,6 +16,7 @@
         <column name="totalCellsForSample" />
         <column name="oddsRatio" />
         <column name="enrichmentFDR" />
+        <column name="method"/>
         <column name="comments"/>
         <column name="status"/>
     </columns>
