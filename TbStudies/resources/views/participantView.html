@@ -1,0 +1,7 @@
+<script type="text/javascript" nonce="<%=scriptNonce%>">
+    // NOTE: this is intended to be set as the study participant view through the UI.
+    // Loading ClientDependencies is a pain through that mechanism, so this just redirects
+    Ext4.onReady(function (){
+        window.location = LABKEY.ActionURL.buildURL('laboratory', 'dataBrowser', null, {subjectId: LABKEY.ActionURL.getParameter('participantId')});
+    });
+</script>
