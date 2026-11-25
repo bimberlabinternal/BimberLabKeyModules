@@ -1,5 +1,6 @@
 package org.labkey.sivstudies.query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,9 +76,9 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             }
 
             String val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
-            if (NumberUtils.isCreatable(val))
+            if (val == null || NumberUtils.isCreatable(val))
             {
-                return;
+                continue;
             }
 
             // commas are a common problem:
@@ -85,26 +86,33 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
             if (NumberUtils.isCreatable(val))
             {
                 row.put(propName, val);
-                return;
+                continue;
             }
 
             // The Rlabkey API sending NAs as strings is another common problem:
-            if ("NA".equalsIgnoreCase(val) || "null".equalsIgnoreCase(val))
+            if ("NA".equalsIgnoreCase(val) || "null".equalsIgnoreCase(val) || StringUtils.trimToNull(val) == null)
             {
                 row.put(propName, null);
-                return;
+                continue;
             }
 
             for (StringTransformer stringTransformer : _stringTransformers)
             {
-                stringTransformer.inspectValue(table, row, val, propName, errors);
-                val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
+                if (stringTransformer.inspectValue(table, row, val, propName, errors))
+                {
+                    // If the prior transformer edited the value, use this:
+                    val = row.get(propName) == null ? null : String.valueOf(row.get(propName));
+                    if (val == null)
+                    {
+                        break;
+                    }
+                }
             }
 
             if (val == null || NumberUtils.isCreatable(val))
             {
                 row.put(propName, val);
-                return;
+                continue;
             }
 
             errors.addError(new SimpleValidationError("Non-numeric value for field " + propName + ": " + val, propName, ValidationException.SEVERITY.ERROR));
@@ -113,7 +121,7 @@ public class NumericValuesTrigger extends DefaultDatasetTrigger
 
     public interface StringTransformer
     {
-        // This method allows code to inspect and modify non-numeric values
-        public void inspectValue(TableInfo ti, Map<String, Object> row, String stringValue, String propName, ValidationException errors);
+        // This method allows code to inspect and modify non-numeric values. Return true if the value was altered. If the value was altered, it should be stored in row[[propName]], and this value will be passed to the next transformer
+        public boolean inspectValue(TableInfo ti, Map<String, Object> row, String stringValue, String propName, ValidationException errors);
     }
 }

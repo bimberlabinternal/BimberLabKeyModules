@@ -1,0 +1,1 @@
+ALTER TABLE tcrdb.clone_responses ADD method varchar(4000);

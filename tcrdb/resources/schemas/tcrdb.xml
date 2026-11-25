@@ -170,6 +170,9 @@
             <column columnName="cognateCdr3s">
                 <columnTitle>Cognate CDR3s</columnTitle>
             </column>
+            <column columnName="method">
+
+            </column>
             <column columnName="status">
                 <columnTitle>Status</columnTitle>
             </column>

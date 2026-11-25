@@ -25,9 +25,6 @@
         <dataset name="viralloads" showByDefault="true" category="Research" type="Standard" id="8">
             <tags/>
         </dataset>
-        <dataset name="samples" showByDefault="true" category="Research" type="Standard" id="9">
-            <tags/>
-        </dataset>
         <dataset name="immunizations" showByDefault="true" category="Research" type="Standard" id="10">
             <tags/>
         </dataset>

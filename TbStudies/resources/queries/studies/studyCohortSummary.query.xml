@@ -1,0 +1,38 @@
+<query xmlns="http://labkey.org/data/xml/query">
+    <metadata>
+        <tables xmlns="http://labkey.org/data/xml">
+            <table tableName="studiesSummary" tableDbType="TABLE" useColumnOrder="true">
+                <tableTitle>Study Cohort Summary</tableTitle>
+                <columns>
+                    <column columnName="rowId">
+
+                    </column>
+                    <column columnName="studyName">
+                        <columnTitle>Study Name</columnTitle>
+                    </column>
+                    <column columnName="description">
+
+                    </column>
+                    <column columnName="labelOrName">
+                        <columnTitle>Cohort Name</columnTitle>
+                    </column>
+                    <column columnName="numAnimals">
+                        <columnTitle># Animals</columnTitle>
+                    </column>
+                    <column columnName="sexes">
+                        <columnTitle>Sex(es)</columnTitle>
+                    </column>
+                    <column columnName="challenges">
+                        <columnTitle>SIV Challenges</columnTitle>
+                    </column>
+                    <column columnName="artInitiationsDPI">
+                        <columnTitle>ART Initiation(s) (DPI)</columnTitle>
+                    </column>
+                    <column columnName="interventions">
+                        <columnTitle>Interventions</columnTitle>
+                    </column>
+                </columns>
+            </table>
+        </tables>
+    </metadata>
+</query>
